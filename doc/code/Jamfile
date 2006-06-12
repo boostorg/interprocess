@@ -1,0 +1,43 @@
+# Boost interprocess Library test Jamfile
+#  (C) Copyright Ion Gaztañaga 2004-2006.
+#  Use, modification, and distribution are subject to the 
+#  Boost Software License, Version 1.0. (See accompanying file 
+#  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+#  See http://www.boost.org/libs/test for the library home page.
+
+# Declare the location of this subproject relative to the root.
+subproject libs/interprocess/doc/code ;
+
+# bring in rules for testing
+import testing ;
+
+{
+     template boost_interprocess_test_dll
+         : ## sources ##
+             <lib>../../../test/build/boost_unit_test_framework
+             <lib>../../../thread/build/boost_thread
+         : ## requirements ##
+             <sysinclude>$(BOOST_ROOT)
+             <runtime-link>dynamic
+             <threading>multi
+         : ## default build ##
+            release
+     ;
+
+     test-suite "interprocess"
+         : 
+           [ run doc_bufferstream.cpp              <template>boost_interprocess_test_dll ]
+           [ run doc_cont.cpp                      <template>boost_interprocess_test_dll ]
+           [ run doc_cont_mapA.cpp                 <template>boost_interprocess_test_dll ]
+           [ run doc_cont_mapB.cpp                 <template>boost_interprocess_test_dll ]
+           [ run doc_ipc_messageA.cpp              <template>boost_interprocess_test_dll ]
+           [ run doc_ipc_messageB.cpp              <template>boost_interprocess_test_dll ]
+           [ run doc_named_allocA.cpp              <template>boost_interprocess_test_dll ]
+           [ run doc_named_allocB.cpp              <template>boost_interprocess_test_dll ]
+           [ run doc_managed_heap_memory.cpp         <template>boost_interprocess_test_dll ]
+           [ run doc_managed_mapped_file.cpp        <template>boost_interprocess_test_dll ]
+           [ run doc_offset_ptr.cpp                <template>boost_interprocess_test_dll ]
+           [ run doc_vectorstream.cpp              <template>boost_interprocess_test_dll ]
+     ;
+}

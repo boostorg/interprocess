@@ -1,0 +1,85 @@
+#  Boost.Interproces library documentation Jamfile  ---------------------------------
+#
+#  Copyright Ion Gaztañaga 2005-2006. Use, modification and
+#  distribution is subject to the Boost Software License, Version
+#  1.0. (See accompanying file LICENSE_1_0.txt or copy at
+#  http://www.boost.org/LICENSE_1_0.txt)
+#
+#  See http://www.boost.org for updates, documentation, and revision history.
+
+project boost/interprocess/doc ;
+
+import boostbook : boostbook ;
+using quickbook ;
+#import doxygen : doxygen ;
+
+boostbook interprocess
+:
+   interprocess.xml
+#   interprocess.doxygen
+:
+   <xsl:param>boost.root=../../../..
+;
+
+#doxygen interprocess.doxygen
+#:
+#   ../../../boost/interprocess/errors.hpp
+#   ../../../boost/interprocess/exceptions.hpp
+#   ../../../boost/interprocess/mapped_file.hpp
+#   ../../../boost/interprocess/interprocess_fwd.hpp
+#   ../../../boost/interprocess/managed_external_buffer.hpp
+#   ../../../boost/interprocess/managed_heap_memory.hpp
+#   ../../../boost/interprocess/managed_mapped_file.hpp
+#   ../../../boost/interprocess/managed_shared_memory.hpp
+#   ../../../boost/interprocess/mapped_file.hpp
+#   ../../../boost/interprocess/offset_ptr.hpp
+#   ../../../boost/interprocess/shared_memory.hpp
+#   ../../../boost/interprocess/segment_manager.hpp
+   # allocators
+#   ../../../boost/interprocess/allocators/allocator.hpp
+#   ../../../boost/interprocess/allocators/cached_node_allocator.hpp
+#   ../../../boost/interprocess/allocators/node_allocator.hpp
+#   ../../../boost/interprocess/allocators/private_node_allocator.hpp
+#   ../../../boost/interprocess/allocators/detail/node_pool.hpp
+   # indexes
+#   ../../../boost/interprocess/indexes/flat_map_index.hpp
+#   ../../../boost/interprocess/indexes/map_index.hpp
+#   ../../../boost/interprocess/indexes/null_index.hpp
+#   ../../../boost/interprocess/indexes/unordered_map_index.hpp
+   # ipc
+#   ../../../boost/interprocess/ipc/message_queue.hpp
+   # mem_algo
+#   ../../../boost/interprocess/mem_algo/detail/simple_seq_fit_impl.hpp
+#   ../../../boost/interprocess/mem_algo/multi_simple_seq_fit.hpp
+#   ../../../boost/interprocess/mem_algo/simple_seq_fit.hpp
+   # smart_ptr
+#   ../../../boost/interprocess/smart_ptr/intrusive_ptr.hpp
+#   ../../../boost/interprocess/smart_ptr/scoped_ptr.hpp
+   # streams
+#   ../../../boost/interprocess/streams/bufferstream.hpp
+#   ../../../boost/interprocess/streams/vectorstream.hpp
+   # sync
+#   ../../../boost/interprocess/sync/interprocess_barrier.hpp
+#   ../../../boost/interprocess/sync/interprocess_condition.hpp
+#   ../../../boost/interprocess/sync/lock_options.hpp
+#   ../../../boost/interprocess/sync/interprocess_mutex.hpp
+#   ../../../boost/interprocess/sync/mutex_family.hpp
+#   ../../../boost/interprocess/sync/named_mutex.hpp
+#   ../../../boost/interprocess/sync/named_recursive_mutex.hpp
+#   ../../../boost/interprocess/sync/named_semaphore.hpp
+#   ../../../boost/interprocess/sync/null_mutex.hpp
+#   ../../../boost/interprocess/sync/interprocess_recursive_mutex.hpp
+#   ../../../boost/interprocess/sync/scoped_lock.hpp
+#   ../../../boost/interprocess/sync/interprocess_semaphore.hpp
+#   ../../../boost/interprocess/sync/sharable_lock.hpp
+#   ../../../boost/interprocess/sync/interprocess_sharable_mutex.hpp
+#:
+#    <doxygen:param>HIDE_SCOPE_NAMES=YES
+#    <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+#    <doxygen:param>EXTRACT_ALL=NO
+#    <doxygen:param>EXTRACT_PRIVATE=NO
+#    <doxygen:param>ENABLE_PREPROCESSING=YES
+#    <doxygen:param>MACRO_EXPANSION=YES
+#    <doxygen:param>EXPAND_ONLY_PREDEF=YES
+#    <doxygen:param>SEARCH_INCLUDES=YES
+#;
