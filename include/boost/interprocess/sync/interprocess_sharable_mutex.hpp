@@ -4,7 +4,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/interprocess/ for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 
@@ -217,7 +217,7 @@ class interprocess_sharable_mutex
                if(++m->shared_count == INT_MAX){
                   scoped_lock<interprocess_mutex> lock(m->shared_mutex, *pt);
                   if(!lock.locked()){
-	                  ++m->completed_shared_count;
+                      ++m->completed_shared_count;
                      return false;
                   }
                   m->shared_count          -= m->completed_shared_count;
@@ -268,16 +268,16 @@ class interprocess_sharable_mutex
                   }
                   if(m->shared_count > 0){
                      //This logic is for timed a infinite waits
-	                  m->completed_shared_count = -m->shared_count;
+                      m->completed_shared_count = -m->shared_count;
                      a_priority_wlock_rollback rollback(this);
 
-	                  do{
+                      do{
                         if(!this->priv_waiting
                               (lock_shared, m->shared_cond, timed, pt)){
                            m->shared_count = 0;
                            return false;
                         }
-	                  }while (m->completed_shared_count < 0);
+                      }while (m->completed_shared_count < 0);
 
                      m->shared_count = 0;
                      rollback.release();
@@ -630,7 +630,7 @@ class interprocess_sharable_mutex
                      //m->shared_mutex.do_lock();
                      scoped_lock<interprocess_mutex> lock(m->shared_mutex, *pt);
                      if(!lock.locked()){
-	                     ++m->completed_shared_count;
+                         ++m->completed_shared_count;
                         return false;
                      }
                      m->shared_count          -= m->completed_shared_count;
@@ -703,10 +703,10 @@ class interprocess_sharable_mutex
                   }
                   if(m->shared_count > 0){
                      //This logic is for timed a infinite waits
-	                  m->completed_shared_count = -m->shared_count;
+                      m->completed_shared_count = -m->shared_count;
                      a_priority_wlock_rollback rollback(this);
 
-	                  do{
+                      do{
                         if(timed && !pt){
                            m->shared_count = 0;
                            return false;
@@ -720,7 +720,7 @@ class interprocess_sharable_mutex
                         else{
                            m->shared_cond.wait(lock_shared);
                         }
-	                  }while (m->completed_shared_count < 0);
+                      }while (m->completed_shared_count < 0);
 
                      m->shared_count = 0;
                      rollback.release();
@@ -1068,7 +1068,7 @@ class interprocess_sharable_mutex
                      scoped_lock<interprocess_mutex> lock
                         (m_mutex_shared_completed, *pt);
                      if(!lock.locked()){
-	                     ++m_completed_shared_count;
+                         ++m_completed_shared_count;
                         return false;
                      }
                      m_shared_count          -= m_completed_shared_count;
@@ -1197,9 +1197,9 @@ class interprocess_sharable_mutex
          }
          if(m_shared_count > 0){
             //This logic is for timed a infinite waits
-	         m_completed_shared_count = -m_shared_count;
+             m_completed_shared_count = -m_shared_count;
             a_priority_wlock_rollback rollback(this);
-	         do{
+             do{
                if(timed){
                   if(!m_reader_shared_cond.timed_wait(lock_shared, *pt)){
                      return false;
@@ -1208,7 +1208,7 @@ class interprocess_sharable_mutex
                else{
                   m_reader_shared_cond.wait(lock_shared);
                }
-	         }while (m_completed_shared_count < 0);
+             }while (m_completed_shared_count < 0);
             m_shared_count = 0;
             rollback.release();
          }

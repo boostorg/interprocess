@@ -30,7 +30,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/interprocess/ for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -296,9 +296,9 @@ class deque_base
    };
 
    //Vector iterator
-	class iterator : public const_iterator
-	{
-	   public:
+    class iterator : public const_iterator
+    {
+       public:
       typedef std::random_access_iterator_tag   iterator_category;
       typedef val_alloc_val                     value_type;
       typedef ptr_alloc_ptr                     pointer;
@@ -328,37 +328,37 @@ class deque_base
       reference operator[](difference_type n) const { return *(*this + n); }
 
       //Increment / Decrement
-		iterator& operator++()  
+        iterator& operator++()  
          { this->const_iterator::operator++(); return *this;  }
 
-		iterator operator++(int)
+        iterator operator++(int)
          { iterator tmp = *this; ++*this; return tmp; }
-		
+        
       iterator& operator--()
-   		{  this->const_iterator::operator--(); return *this;  }
+        {  this->const_iterator::operator--(); return *this;  }
 
-		iterator operator--(int)
-	      {  iterator tmp = *this; --*this; return tmp; }
+        iterator operator--(int)
+          {  iterator tmp = *this; --*this; return tmp; }
 
       // Arithmetic
-		iterator& operator+=(difference_type off)
-		   {  this->const_iterator::operator+=(off); return *this;  }
+        iterator& operator+=(difference_type off)
+           {  this->const_iterator::operator+=(off); return *this;  }
 
-		iterator operator+(difference_type off) const
-			{  return iterator(this->const_iterator::operator+(off));  }
+        iterator operator+(difference_type off) const
+            {  return iterator(this->const_iterator::operator+(off));  }
 
-		friend iterator operator+(difference_type off, const iterator& right)
+        friend iterator operator+(difference_type off, const iterator& right)
          {  return iterator(off+static_cast<const const_iterator &>(right)); }
 
-		iterator& operator-=(difference_type off)
-			{  this->const_iterator::operator-=(off); return *this;   }
+        iterator& operator-=(difference_type off)
+            {  this->const_iterator::operator-=(off); return *this;   }
 
-		iterator operator-(difference_type off) const
-			{  return iterator(this->const_iterator::operator-(off));  }
+        iterator operator-(difference_type off) const
+            {  return iterator(this->const_iterator::operator-(off));  }
 
-		difference_type operator-(const const_iterator& right) const
-			{  return static_cast<const const_iterator&>(*this) - right;   }
-	};
+        difference_type operator-(const const_iterator& right) const
+            {  return static_cast<const const_iterator&>(*this) - right;   }
+    };
 
    deque_base(const allocator_type& a, std::size_t num_elements)
       : allocator_type(a), map_allocator_type(a),

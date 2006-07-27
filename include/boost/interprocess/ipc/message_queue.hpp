@@ -4,7 +4,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/interprocess/ for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 
@@ -242,18 +242,18 @@ class message_queue::priority_functor
 */
 class message_queue::mq_hdr_t
    : public priority_functor
-{	
+{
    typedef offset_ptr<msg_hdr_t> msg_hdr_ptr_t;
 public:
    /*!Constructor. This object must be constructed in the beginning of the 
       shared memory of the size returned by the function "get_mem_size".
       This constructor initializes the needed resources and creates
       the internal structures like the priority index. This can throw.*/
-	mq_hdr_t(std::size_t max_num_msg, std::size_t max_msg_size)
+    mq_hdr_t(std::size_t max_num_msg, std::size_t max_msg_size)
       : m_max_num_msg(max_num_msg), 
          m_max_msg_size(max_msg_size),
          m_cur_num_msg(0)
-   	{  this->initialize_memory();  }
+    {  this->initialize_memory();  }
 
    /*!Returns the inserted message with top priority*/
    msg_hdr_t * top_msg()

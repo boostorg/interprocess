@@ -16,7 +16,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/interprocess/ for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -100,13 +100,13 @@ class basic_vectorbuf
    {  
       //Update high water if necessary
       //And resize vector to remove extra size
-	   if (this->m_mode & std::ios_base::out){
-		   if (mp_high_water < base_t::pptr()){
+       if (this->m_mode & std::ios_base::out){
+           if (mp_high_water < base_t::pptr()){
             //Restore the vector's size if necessary
-			   mp_high_water = base_t::pptr();
+               mp_high_water = base_t::pptr();
          }
          m_vect.resize(mp_high_water - &m_vect[0]);
-	   }
+       }
 
       //Now swap vector
       m_vect.swap(vect);
@@ -122,14 +122,14 @@ class basic_vectorbuf
       Does not throw.*/
    const vector_type &vector() const 
    {  
-	   if (this->m_mode & std::ios_base::out){
-		   if (mp_high_water < base_t::pptr()){
+       if (this->m_mode & std::ios_base::out){
+           if (mp_high_water < base_t::pptr()){
             //Restore the vector's size if necessary
-			   mp_high_water = base_t::pptr();
+               mp_high_water = base_t::pptr();
          }
          m_vect.resize(mp_high_water - &m_vect[0]);
          const_cast<basic_vectorbuf * const>(this)->set_pointers();
-	   }
+       }
       return m_vect; 
    }
 
@@ -161,24 +161,24 @@ class basic_vectorbuf
       // The initial write position is the beginning of the vector.
       if(m_mode & std::ios_base::out){
          this->setp(&m_vect[0], &m_vect[m_vect.size()]);
-		   if (m_mode & (std::ios_base::app | std::ios_base::ate))
-			   base_t::pbump((int)m_vect.size());
+           if (m_mode & (std::ios_base::app | std::ios_base::ate))
+               base_t::pbump((int)m_vect.size());
       }
-	   mp_high_water = &m_vect[0] + m_vect.size();
+       mp_high_water = &m_vect[0] + m_vect.size();
    }
 
    protected:
    virtual int_type underflow()
    {
-	   if (base_t::gptr() == 0)
-		   return CharTraits::eof();
-	   if (mp_high_water < base_t::pptr())
-		   mp_high_water = base_t::pptr();
-	   if (base_t::egptr() < mp_high_water)
-		   base_t::setg(base_t::eback(), base_t::gptr(), mp_high_water);
-	   if (base_t::gptr() < base_t::egptr())
-		   return CharTraits::to_int_type(*base_t::gptr());
-	   return CharTraits::eof();
+       if (base_t::gptr() == 0)
+           return CharTraits::eof();
+       if (mp_high_water < base_t::pptr())
+           mp_high_water = base_t::pptr();
+       if (base_t::egptr() < mp_high_water)
+           base_t::setg(base_t::eback(), base_t::gptr(), mp_high_water);
+       if (base_t::gptr() < base_t::egptr())
+           return CharTraits::to_int_type(*base_t::gptr());
+       return CharTraits::eof();
    }
 
    virtual int_type pbackfail(int_type c = CharTraits::eof())
@@ -214,10 +214,10 @@ class basic_vectorbuf
                if(this->pptr() < this->epptr()) {
                   *this->pptr() = CharTraits::to_char_type(c);
                            this->pbump(1);
-		            if (mp_high_water < base_t::pptr())
-			            mp_high_water = base_t::pptr();
-		            if ((m_mode & std::ios_base::in) && base_t::egptr() < mp_high_water)
-			            base_t::setg(base_t::eback(), base_t::gptr(), mp_high_water);
+                    if (mp_high_water < base_t::pptr())
+                        mp_high_water = base_t::pptr();
+                    if ((m_mode & std::ios_base::in) && base_t::egptr() < mp_high_water)
+                        base_t::setg(base_t::eback(), base_t::gptr(), mp_high_water);
                   return c;
                }
                else
@@ -226,20 +226,20 @@ class basic_vectorbuf
             else {
                try{
                   typedef typename vector_type::difference_type dif_t;
-		            dif_t inpos  = base_t::gptr() - base_t::eback();
-		            dif_t outpos = base_t::pptr() - base_t::pbase() + 1;
-		            dif_t hipos = mp_high_water - base_t::pbase();
-		            if (hipos < outpos)
-			            hipos = outpos;
-		            m_vect.push_back(CharTraits::to_char_type(c));
-		            m_vect.resize(m_vect.capacity());
-		            char_type* p = const_cast<char_type*>(&m_vect[0]);
-		            if (m_mode & std::ios_base::in)
-			            base_t::setg(p, p + inpos, p + hipos);
-		            base_t::setp(p, p + (dif_t)m_vect.size());
-		            base_t::pbump((int)outpos);
-		            mp_high_water = base_t::pbase() + hipos;
-		            return c;
+                    dif_t inpos  = base_t::gptr() - base_t::eback();
+                    dif_t outpos = base_t::pptr() - base_t::pbase() + 1;
+                    dif_t hipos = mp_high_water - base_t::pbase();
+                    if (hipos < outpos)
+                        hipos = outpos;
+                    m_vect.push_back(CharTraits::to_char_type(c));
+                    m_vect.resize(m_vect.capacity());
+                    char_type* p = const_cast<char_type*>(&m_vect[0]);
+                    if (m_mode & std::ios_base::in)
+                        base_t::setg(p, p + inpos, p + hipos);
+                    base_t::setp(p, p + (dif_t)m_vect.size());
+                    base_t::pbump((int)outpos);
+                    mp_high_water = base_t::pbase() + hipos;
+                    return c;
                }
                catch(...){
                   return CharTraits::eof();
@@ -279,11 +279,11 @@ class basic_vectorbuf
          return pos_type(off_type(-1));
 
       off_type newoff;
-	   off_type limit = static_cast<off_type>
-	                  (mode & std::ios_base::out ?
+       off_type limit = static_cast<off_type>
+                      (mode & std::ios_base::out ?
                       mp_high_water - base_t::pbase() :
                       mp_high_water - base_t::eback()
-	                  );
+                      );
 
       switch(dir) {
          case std::ios_base::beg:
@@ -302,16 +302,16 @@ class basic_vectorbuf
 
       newoff += off;
 
-	   if (newoff < 0 || newoff > limit)
-		   return pos_type(-1);
-	   if (m_mode & std::ios_base::app && mode & std::ios_base::out && newoff != limit)
-		   return pos_type(-1);
-	   if (in)
-		   base_t::setg(base_t::eback(), base_t::eback() + newoff, base_t::egptr());
-	   if (out){
-		   base_t::setp(base_t::pbase(), base_t::epptr());
-		   base_t::pbump((int)newoff);
-	   }
+       if (newoff < 0 || newoff > limit)
+           return pos_type(-1);
+       if (m_mode & std::ios_base::app && mode & std::ios_base::out && newoff != limit)
+           return pos_type(-1);
+       if (in)
+           base_t::setg(base_t::eback(), base_t::eback() + newoff, base_t::egptr());
+       if (out){
+           base_t::setp(base_t::pbase(), base_t::epptr());
+           base_t::pbump((int)newoff);
+       }
       return pos_type(newoff);
    }
 

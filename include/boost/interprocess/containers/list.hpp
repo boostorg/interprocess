@@ -161,7 +161,7 @@ struct interprocess_list_alloc
 
    void priv_init()
    {
-		m_node = NodeAlloc::allocate(1);
+        m_node = NodeAlloc::allocate(1);
 
       if(!boost::has_trivial_constructor<NodePtr>::value){
          scoped_ptr<Node, Deallocator>node_deallocator(m_node, *this);
@@ -171,9 +171,9 @@ struct interprocess_list_alloc
             typedef typename PtrAlloc::pointer NodePtrPtr;
             NodePtrPtr  pnext(PtrAlloc::address(m_node->m_next)), 
                pprev(PtrAlloc::address(m_node->m_prev));
-		      PtrAlloc::construct(pnext, m_node);
+              PtrAlloc::construct(pnext, m_node);
             scoped_ptr<NodePtr, PtrDestructor> next_destroy(pnext, *this);
-		      PtrAlloc::construct(pprev, m_node);
+              PtrAlloc::construct(pprev, m_node);
             next_destroy.release();
          }
          node_deallocator.release();
@@ -395,102 +395,102 @@ public:
 
 public:
    //list const_iterator
-	class const_iterator
+    class const_iterator
       : public boost::iterator<std::bidirectional_iterator_tag, 
                                  value_type,         list_difference_type, 
                                  list_const_pointer, list_const_reference>
-	{
+    {
     private:
       const NodePtr &get_ptr() const   {  return   m_ptr;  }
       NodePtr &get_ptr()               {  return   m_ptr;  }
 
     protected:
       NodePtr m_ptr;
-		explicit const_iterator(NodePtr ptr)  : m_ptr(ptr){}
+        explicit const_iterator(NodePtr ptr)  : m_ptr(ptr){}
       void prot_incr() { m_ptr = m_ptr->m_next; }
       void prot_decr() { m_ptr = m_ptr->m_prev; }
 
-	 public:
+     public:
       friend class list<T, A>;
       typedef list_difference_type        difference_type;
 
       //Constructors
-		const_iterator() : m_ptr(0){}
+        const_iterator() : m_ptr(0){}
 
       //Pointer like operators
-		const_reference operator*()  const 
+        const_reference operator*()  const 
          { return  m_ptr->m_data;  }
 
-		const_pointer   operator->() const 
+        const_pointer   operator->() const 
          { return  const_pointer(&m_ptr->m_data); }
 
       //Increment / Decrement
-		const_iterator& operator++()       
+        const_iterator& operator++()       
          { prot_incr();  return *this; }
 
-		const_iterator operator++(int)      
+        const_iterator operator++(int)      
          { NodePtr tmp = m_ptr; ++*this; return const_iterator(tmp);  }
 
-		const_iterator& operator--()
-			{	prot_decr(); return *this;   }
+        const_iterator& operator--()
+            {   prot_decr(); return *this;   }
 
-		const_iterator operator--(int)
-			{  NodePtr tmp = m_ptr; --*this; return const_iterator(tmp); }
+        const_iterator operator--(int)
+            {  NodePtr tmp = m_ptr; --*this; return const_iterator(tmp); }
 
       //Comparison operators
-		bool operator==   (const const_iterator& r)  const
-			{  return m_ptr == r.m_ptr;  }
+        bool operator==   (const const_iterator& r)  const
+            {  return m_ptr == r.m_ptr;  }
 
-		bool operator!=   (const const_iterator& r)  const
-			{  return m_ptr != r.m_ptr;  }
+        bool operator!=   (const const_iterator& r)  const
+            {  return m_ptr != r.m_ptr;  }
 
-		bool operator<    (const const_iterator& r)  const
-			{  return m_ptr < r.m_ptr;  }
+        bool operator<    (const const_iterator& r)  const
+            {  return m_ptr < r.m_ptr;  }
 
-		bool operator<=   (const const_iterator& r)  const
-			{  return m_ptr <= r.m_ptr;  }
+        bool operator<=   (const const_iterator& r)  const
+            {  return m_ptr <= r.m_ptr;  }
 
-		bool operator>    (const const_iterator& r)  const
-			{  return m_ptr > r.m_ptr;  }
+        bool operator>    (const const_iterator& r)  const
+            {  return m_ptr > r.m_ptr;  }
 
-		bool operator>=   (const const_iterator& r)  const
-			{  return m_ptr >= r.m_ptr;  }
-	};
+        bool operator>=   (const const_iterator& r)  const
+            {  return m_ptr >= r.m_ptr;  }
+    };
 
    //list iterator
-	class iterator : public const_iterator
-	{
+    class iterator : public const_iterator
+    {
     protected:
-		explicit iterator(NodePtr ptr) : const_iterator(ptr){}
+        explicit iterator(NodePtr ptr) : const_iterator(ptr){}
 
-	 public:
+     public:
       friend class list<T, A>;
       typedef list_pointer       pointer;
       typedef list_reference     reference;
 
       //Constructors
-		iterator(){}
+        iterator(){}
 
       //Pointer like operators
-		reference operator*()  const {  return  this->m_ptr->m_data;  }
-		pointer   operator->() const {  return  pointer(&this->m_ptr->m_data);  }
+        reference operator*()  const {  return  this->m_ptr->m_data;  }
+        pointer   operator->() const {  return  pointer(&this->m_ptr->m_data);  }
 
       //Increment / Decrement
-		iterator& operator++()  
+        iterator& operator++()  
          { this->prot_incr(); return *this;  }
 
-		iterator operator++(int)
+        iterator operator++(int)
          { NodePtr tmp = this->m_ptr; ++*this; return iterator(tmp); }
-		
+        
       iterator& operator--()
-   		{  this->prot_decr(); return *this;  }
+        {  this->prot_decr(); return *this;  }
 
-		iterator operator--(int)
-	      {  iterator tmp = *this; --*this; return tmp; }
-	};
+        iterator operator--(int)
+          {  iterator tmp = *this; --*this; return tmp; }
+    };
 
-	typedef boost::reverse_iterator<iterator>        reverse_iterator;
-	typedef boost::reverse_iterator<const_iterator>  const_reverse_iterator;
+    typedef boost::reverse_iterator<iterator>        reverse_iterator;
+    typedef boost::reverse_iterator<const_iterator>  const_reverse_iterator;
 
    explicit list(const allocator_type &a = A()) 
       : AllocHolder(a)
@@ -666,8 +666,8 @@ public:
             this->priv_transfer(position.get_ptr(), x.m_node->m_next, x.m_node);
       }
       else{
-		   this->insert(position, x.begin(), x.end());
-		   x.clear();
+           this->insert(position, x.begin(), x.end());
+           x.clear();
       }
    }
 
@@ -680,8 +680,8 @@ public:
          this->priv_transfer(position.get_ptr(), i.get_ptr(), j.get_ptr());
       }
       else{
-		   this->insert(position, *i);
-		   x.erase(i);
+           this->insert(position, *i);
+           x.erase(i);
       }
    }
 
@@ -692,8 +692,8 @@ public:
             this->priv_transfer(position.get_ptr(), first.get_ptr(), last.get_ptr());
       }
       else{
-		   this->insert(position, x.begin(), x.end());
-		   x.erase(first, last);
+           this->insert(position, x.begin(), x.end());
+           x.erase(first, last);
       }
    }
 

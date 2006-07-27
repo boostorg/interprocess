@@ -16,7 +16,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/shmem for documentation.
+// See http://www.boost.org/libs/shmem/ for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -225,8 +225,8 @@ class basic_string : private basic_string_base<Alloc>
    typedef typename Alloc::difference_type         difference_type;
    typedef const_pointer                           const_iterator;
    typedef pointer                                 iterator;
-	typedef boost::reverse_iterator<iterator>       reverse_iterator;
-	typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef boost::reverse_iterator<iterator>       reverse_iterator;
+    typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
    static const size_type npos;
 
  public:                         // Constructor, destructor, assignment.
@@ -541,21 +541,21 @@ class basic_string : private basic_string_base<Alloc>
                                   const CharT val, A& al)
    {
       //Save initial position
-	   FwdIt init = first;
+       FwdIt init = first;
 
-	   BOOST_TRY{
+       BOOST_TRY{
          //Construct objects
-	      for (; count--; ++first){
-		      al.construct(first, val);
+          for (; count--; ++first){
+              al.construct(first, val);
          }
       }
-	   BOOST_CATCH(...){
+       BOOST_CATCH(...){
          //Call destructors
-	      for (; init != first; ++init){
-		      al.destroy(init);
+          for (; init != first; ++init){
+              al.destroy(init);
          }
-	      BOOST_RETHROW
-	   }
+          BOOST_RETHROW
+       }
       BOOST_CATCH_END
    }
 
@@ -564,23 +564,23 @@ class basic_string : private basic_string_base<Alloc>
                                  FwdIt dest,    A& al)
    {
       //Save initial destination position
-	   FwdIt dest_init = dest;
+       FwdIt dest_init = dest;
 
-	   BOOST_TRY{
+       BOOST_TRY{
          //Try to build objects
-	      for (; first != last; ++dest, ++first){
-		      al.construct(dest, *first);
+          for (; first != last; ++dest, ++first){
+              al.construct(dest, *first);
          }
       }
-	   BOOST_CATCH(...){
+       BOOST_CATCH(...){
          //Call destructors
-	      for (; dest_init != dest; ++dest_init){
-		      al.destroy(dest_init);
+          for (; dest_init != dest; ++dest_init){
+              al.destroy(dest_init);
          }
-	      BOOST_RETHROW;
-	   }
+          BOOST_RETHROW;
+       }
       BOOST_CATCH_END
-	   return (dest);
+       return (dest);
    }
 
    template <class InputIter>

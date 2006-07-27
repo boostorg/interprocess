@@ -4,7 +4,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/interprocess/ for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 
@@ -171,8 +171,8 @@ inline void interprocess_upgradable_mutex::lock()
 
    //The exclusive lock must block in the first gate
    //if an exclusive or upgradable lock has been acquired
-	while (this->m_ctrl.exclusive_in || this->m_ctrl.upgradable_in){
-		this->m_first_gate.wait(lock);
+    while (this->m_ctrl.exclusive_in || this->m_ctrl.upgradable_in){
+        this->m_first_gate.wait(lock);
    }
 
    //Mark that exclusive lock has been acquired
@@ -182,8 +182,8 @@ inline void interprocess_upgradable_mutex::lock()
    exclusive_rollback rollback(this->m_ctrl, this->m_first_gate);
 
    //Now wait until all readers are gone
-	while (this->m_ctrl.num_upr_shar){
-		this->m_second_gate.wait(lock);
+    while (this->m_ctrl.num_upr_shar){
+        this->m_second_gate.wait(lock);
    }
    rollback.release();
 }
@@ -211,8 +211,8 @@ inline bool interprocess_upgradable_mutex::timed_lock
 
    //The exclusive lock must block in the first gate
    //if an exclusive or upgradable lock has been acquired
-	while (this->m_ctrl.exclusive_in || this->m_ctrl.upgradable_in){
-		if(!this->m_first_gate.timed_wait(lock, abs_time))
+    while (this->m_ctrl.exclusive_in || this->m_ctrl.upgradable_in){
+        if(!this->m_first_gate.timed_wait(lock, abs_time))
          return false;
    }
 
@@ -223,8 +223,8 @@ inline bool interprocess_upgradable_mutex::timed_lock
    exclusive_rollback rollback(this->m_ctrl, this->m_first_gate);
 
    //Now wait until all readers are gone
-	while (this->m_ctrl.num_upr_shar){
-		if(!this->m_second_gate.timed_wait(lock, abs_time)){
+    while (this->m_ctrl.num_upr_shar){
+        if(!this->m_second_gate.timed_wait(lock, abs_time)){
          return false;
       }
    }
@@ -248,9 +248,9 @@ inline void interprocess_upgradable_mutex::lock_upgradable()
    //The upgradable lock must block in the first gate
    //if an exclusive or upgradable lock has been acquired
    //or there are too many sharable locks
-	while(this->m_ctrl.exclusive_in || this->m_ctrl.upgradable_in
+    while(this->m_ctrl.exclusive_in || this->m_ctrl.upgradable_in
          || ((~this->m_ctrl.num_upr_shar) == 0)){
-		this->m_first_gate.wait(lock);
+        this->m_first_gate.wait(lock);
    }
 
    //Mark that upgradable lock has been acquired
@@ -266,7 +266,7 @@ inline bool interprocess_upgradable_mutex::try_lock_upgradable()
    //The upgradable lock must fail
    //if an exclusive or upgradable lock has been acquired
    //or there are too many sharable locks
-	if(!lock.locked() 
+    if(!lock.locked() 
       || this->m_ctrl.exclusive_in 
       || this->m_ctrl.upgradable_in 
       || ((~this->m_ctrl.num_upr_shar) == 0)){
@@ -288,10 +288,10 @@ inline bool interprocess_upgradable_mutex::timed_lock_upgradable
    //The upgradable lock must block in the first gate
    //if an exclusive or upgradable lock has been acquired
    //or there are too many sharable locks
-	while(this->m_ctrl.exclusive_in 
+    while(this->m_ctrl.exclusive_in 
          || this->m_ctrl.upgradable_in
          || ((~this->m_ctrl.num_upr_shar) == 0)){
-		if(!this->m_first_gate.timed_wait(lock, abs_time)){
+        if(!this->m_first_gate.timed_wait(lock, abs_time)){
          return false;
       }
    }
@@ -322,9 +322,9 @@ inline void interprocess_upgradable_mutex::lock_sharable()
    //The sharable lock must block in the first gate
    //if an exclusive lock has been acquired
    //or there are too many sharable locks
-	while(this->m_ctrl.exclusive_in
+    while(this->m_ctrl.exclusive_in
         || ((~this->m_ctrl.num_upr_shar) == 0)){
-		this->m_first_gate.wait(lock);
+        this->m_first_gate.wait(lock);
    }
 
    //Increment sharable count
@@ -338,10 +338,10 @@ inline bool interprocess_upgradable_mutex::try_lock_sharable()
    //The sharable lock must fail
    //if an exclusive lock has been acquired
    //or there are too many sharable locks
-	if(!lock.locked()
+    if(!lock.locked()
       || this->m_ctrl.exclusive_in
       || ((~this->m_ctrl.num_upr_shar) == 0)){
-		return false;
+        return false;
    }
 
    //Increment sharable count
@@ -358,9 +358,9 @@ inline bool interprocess_upgradable_mutex::timed_lock_sharable
    //The sharable lock must block in the first gate
    //if an exclusive lock has been acquired
    //or there are too many sharable locks
-	while (this->m_ctrl.exclusive_in
+    while (this->m_ctrl.exclusive_in
          || ((~this->m_ctrl.num_upr_shar) == 0)){
-		if(!this->m_first_gate.timed_wait(lock, abs_time)){
+        if(!this->m_first_gate.timed_wait(lock, abs_time)){
          return false;
       }
    }
@@ -375,14 +375,14 @@ inline void interprocess_upgradable_mutex::unlock_sharable()
    scoped_lock_t lock(m_mut);
    //Decrement sharable count
    --this->m_ctrl.num_upr_shar;
-	if (this->m_ctrl.num_upr_shar == 0){
-		this->m_second_gate.notify_one();
+    if (this->m_ctrl.num_upr_shar == 0){
+        this->m_second_gate.notify_one();
    }
    //Check if there are blocked sharable because of
    //there were too many sharable
-	else if((~(this->m_ctrl.num_upr_shar+1)) == 0){
-		this->m_first_gate.notify_all();
-	}
+    else if((~(this->m_ctrl.num_upr_shar+1)) == 0){
+        this->m_first_gate.notify_all();
+    }
 }
 
 //Downgrading
@@ -397,7 +397,7 @@ inline void interprocess_upgradable_mutex::unlock_and_lock_upgradable()
    //The sharable count should be 0 so increment it
    this->m_ctrl.num_upr_shar   = 1;
    //Notify readers that they can enter
-	m_first_gate.notify_all();
+    m_first_gate.notify_all();
 }
 
 inline void interprocess_upgradable_mutex::unlock_and_lock_sharable()
@@ -408,7 +408,7 @@ inline void interprocess_upgradable_mutex::unlock_and_lock_sharable()
    //The sharable count should be 0 so increment it
    this->m_ctrl.num_upr_shar   = 1;
    //Notify readers that they can enter
-	m_first_gate.notify_all();
+    m_first_gate.notify_all();
 }
 
 inline void interprocess_upgradable_mutex::unlock_upgradable_and_lock_sharable()
@@ -417,7 +417,7 @@ inline void interprocess_upgradable_mutex::unlock_upgradable_and_lock_sharable()
    //Unmark it as upgradable (we don't have to decrement count)
    this->m_ctrl.upgradable_in    = 0;
    //Notify readers/upgradable that they can enter
-	m_first_gate.notify_all();
+    m_first_gate.notify_all();
 }
 
 //Upgrading
@@ -435,8 +435,8 @@ inline void interprocess_upgradable_mutex::unlock_upgradable_and_lock()
    //Prepare rollback
    upgradable_to_exclusive_rollback rollback(m_ctrl);
 
-	while (this->m_ctrl.num_upr_shar){
-		this->m_second_gate.wait(lock);
+    while (this->m_ctrl.num_upr_shar){
+        this->m_second_gate.wait(lock);
    }
    rollback.release();
 }
@@ -445,9 +445,9 @@ inline bool interprocess_upgradable_mutex::try_unlock_upgradable_and_lock()
 {
    scoped_lock_t lock(m_mut, try_to_lock);
    //Check if there are no readers
-	if(!lock.locked()
+    if(!lock.locked()
       || this->m_ctrl.num_upr_shar != 1){
-		return false;
+        return false;
    }
    //Now unlock upgradable and mark exclusive
    this->m_ctrl.upgradable_in = 0;
@@ -472,8 +472,8 @@ inline bool interprocess_upgradable_mutex::timed_unlock_upgradable_and_lock
    //Prepare rollback
    upgradable_to_exclusive_rollback rollback(m_ctrl);
 
-	while (this->m_ctrl.num_upr_shar){
-		if(!this->m_second_gate.timed_wait(lock, abs_time)){
+    while (this->m_ctrl.num_upr_shar){
+        if(!this->m_second_gate.timed_wait(lock, abs_time)){
          return false;
       }
    }
@@ -502,7 +502,7 @@ inline bool interprocess_upgradable_mutex::try_unlock_sharable_and_lock_upgradab
 
    //The upgradable lock must fail
    //if an exclusive or upgradable lock has been acquired
-	if(!lock.locked()
+    if(!lock.locked()
       || this->m_ctrl.exclusive_in 
       || this->m_ctrl.upgradable_in){
       return false;

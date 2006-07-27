@@ -16,7 +16,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/interprocess/ for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -224,8 +224,8 @@ class basic_string_base : private A
 
    protected:
    pointer     m_start;
-	size_type   m_length;	// current length of string
-	size_type   m_storage;	// current storage reserved for string
+    size_type   m_length;   // current length of string
+    size_type   m_storage;  // current storage reserved for string
 
    void swap(basic_string_base& other) 
    {
@@ -320,8 +320,8 @@ class basic_string : private basic_string_base<A>
    typedef typename A::difference_type         difference_type;
    typedef const_pointer                           const_iterator;
    typedef pointer                                 iterator;
-	typedef boost::reverse_iterator<iterator>       reverse_iterator;
-	typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef boost::reverse_iterator<iterator>       reverse_iterator;
+    typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
    static const size_type npos;
 
    private:
@@ -634,21 +634,21 @@ class basic_string : private basic_string_base<A>
                                   const CharT val, Alloc& al)
    {
       //Save initial position
-	   FwdIt init = first;
+       FwdIt init = first;
 
-	   BOOST_TRY{
+       BOOST_TRY{
          //Construct objects
-	      for (; count--; ++first){
-		      al.construct(first, val);
+          for (; count--; ++first){
+              al.construct(first, val);
          }
       }
-	   BOOST_CATCH(...){
+       BOOST_CATCH(...){
          //Call destructors
-	      for (; init != first; ++init){
-		      al.destroy(init);
+          for (; init != first; ++init){
+              al.destroy(init);
          }
-	      BOOST_RETHROW
-	   }
+          BOOST_RETHROW
+       }
       BOOST_CATCH_END
    }
 
@@ -657,24 +657,24 @@ class basic_string : private basic_string_base<A>
                                      FwdIt dest,    Alloc& al)
    {
       //Save initial destination position
-	   FwdIt dest_init = dest;
+       FwdIt dest_init = dest;
       size_type constructed = 0;
 
-	   BOOST_TRY{
+       BOOST_TRY{
          //Try to build objects
-	      for (; first != last; ++dest, ++first, ++constructed){
-		      al.construct(dest, *first);
+          for (; first != last; ++dest, ++first, ++constructed){
+              al.construct(dest, *first);
          }
       }
-	   BOOST_CATCH(...){
+       BOOST_CATCH(...){
          //Call destructors
-	      for (; constructed--; ++dest_init){
-		      al.destroy(dest_init);
+          for (; constructed--; ++dest_init){
+              al.destroy(dest_init);
          }
-	      BOOST_RETHROW;
-	   }
+          BOOST_RETHROW;
+       }
       BOOST_CATCH_END
-	   return (constructed);
+       return (constructed);
    }
 
    public:                         // Assign

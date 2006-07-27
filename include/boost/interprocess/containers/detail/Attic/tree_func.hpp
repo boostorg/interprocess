@@ -30,7 +30,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/interprocess/ for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -811,40 +811,40 @@ class rb_tree_const_iterator
 template <class Node>
 class rb_tree_iterator : public rb_tree_const_iterator<Node>
 {
-	private:
+    private:
    typedef rb_tree_const_iterator<Node>                  base_t;
    typedef typename base_t::node_pointer                 node_pointer;
    typedef typename base_t::basic_node_pointer           basic_node_pointer;
-	public:
+    public:
    typedef typename Node::pointer                        pointer;
    typedef typename Node::reference                      reference;
 
    //Constructors
-	rb_tree_iterator()
+    rb_tree_iterator()
    {}
-	explicit rb_tree_iterator(const node_pointer &ptr) 
+    explicit rb_tree_iterator(const node_pointer &ptr) 
       : base_t(ptr)
    {}
-	explicit rb_tree_iterator(const basic_node_pointer &ptr) 
+    explicit rb_tree_iterator(const basic_node_pointer &ptr) 
       : base_t(ptr)
    {}
 
    //Pointer like operators
-	reference operator*()  const {  return  this->mp_node->value();  }
-	pointer   operator->() const {  return  pointer(&this->mp_node->value());  }
+    reference operator*()  const {  return  this->mp_node->value();  }
+    pointer   operator->() const {  return  pointer(&this->mp_node->value());  }
 
    //Increment / Decrement
-	rb_tree_iterator& operator++()  
+    rb_tree_iterator& operator++()  
       {  base_t::operator++(); return *this;  }
 
-	rb_tree_iterator operator++(int)
+    rb_tree_iterator operator++(int)
       { node_pointer tmp = this->mp_node; ++*this; return rb_tree_iterator(tmp); }
-	
+    
    rb_tree_iterator& operator--()
-   	{  base_t::operator--(); return *this;  }
+    {  base_t::operator--(); return *this;  }
 
-	rb_tree_iterator operator--(int)
-	   {  rb_tree_iterator tmp = *this; --*this; return tmp; }
+    rb_tree_iterator operator--(int)
+       {  rb_tree_iterator tmp = *this; --*this; return tmp; }
 };
 
 } //namespace detail {
