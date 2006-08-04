@@ -2,15 +2,15 @@
    #include <boost/interprocess/detail/workaround.hpp>
 
    #include <boost/interprocess/managed_shared_memory.hpp>
-   #include <cstddef>
 
    int main ()
    {
       using namespace boost::interprocess;
 
-      //A shared memory front-end that is able to 
-      //allocate raw memory buffers from a shared memory segment
-      //Connect to the shared memory segment and initialize needed resources
+      //An special shared memory from which we are
+      //able to allocate raw memory buffers.
+      //Connect to the already created shared memory segment
+      //and initialize needed resources
       managed_shared_memory segment(open_only, "MySharedMemory");  //segment name
 
       //An handle from the base address can identify any byte of the shared 

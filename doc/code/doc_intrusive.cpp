@@ -59,7 +59,7 @@
 
    int main ()
    {
-      managed_shared_memory::remove("my_shmem");
+      shared_memory_object::remove("my_shmem");
       //Create shared memory
       managed_shared_memory shmem(create_only, "my_shmem", 10000);
       //Create the unique reference counted object in shared memory

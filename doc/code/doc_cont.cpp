@@ -8,8 +8,8 @@
    {
       using namespace boost::interprocess;
 
-      managed_shared_memory::remove("MySharedMemory");
-      //Shared memory front-end that is able to construct objects
+      shared_memory_object::remove("MySharedMemory");
+      //A managed shared memory where we can construct objects
       //associated with a c-string
       managed_shared_memory segment(create_only,
                                   "MySharedMemory",  //segment name

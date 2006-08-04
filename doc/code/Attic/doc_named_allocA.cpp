@@ -2,16 +2,18 @@
    #include <boost/interprocess/detail/workaround.hpp>
 
    #include <boost/interprocess/managed_shared_memory.hpp>
+   #include <utility>
 
    int main ()
    {
       using namespace boost::interprocess;
       typedef std::pair<double, int> MyType;
 
-      //A shared memory front-end that is able to construct 
-      //objects associated with a c-string
-      //Create the shared memory segment and initialize resources
-      managed_shared_memory::remove("MySharedMemory");
+      //An special shared memory where we can
+      //construct objects associated with a name.
+      //First remove any old shared memory of the same name, create 
+      //the shared memory segment and initialize needed resources
+      shared_memory_object::remove("MySharedMemory");
       managed_shared_memory segment(
          create_only,
          "MySharedMemory",   //segment name

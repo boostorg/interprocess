@@ -38,7 +38,7 @@
    int main ()
    {
       //Create shared memory
-      managed_shared_memory::remove("my_shmem");
+      shared_memory_object::remove("my_shmem");
       managed_shared_memory shmem(create_only, "my_shmem", 10000);
 
       //In the first try, there will be no exceptions

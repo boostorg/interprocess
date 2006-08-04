@@ -20,7 +20,7 @@
          MyShmStringVector;
 
       //Open shared memory
-      managed_shared_memory::remove("myshm");
+      shared_memory_object::remove("myshm");
       managed_shared_memory shm(create_only, "myshm", 10000);
 
       //Create allocators

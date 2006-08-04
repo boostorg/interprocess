@@ -15,8 +15,10 @@
 
    int main ()
    {
-      //Create shared memory
-      managed_shared_memory::remove("MySharedMemory");
+      //Destroy any previous shared memory with the name to be used.
+      //Create an special shared memory from which we can
+      //allocate buffers of raw memory.
+      shared_memory_object::remove("MySharedMemory");
       managed_shared_memory segment(
          create_only, 
          "MySharedMemory",//segment name

@@ -21,7 +21,7 @@
    int main ()
    {
       //Create shared memory
-      managed_shared_memory::remove("MySharedMemory");
+      shared_memory_object::remove("MySharedMemory");
       managed_shared_memory segment(
          create_only, 
          "MySharedMemory",//segment name

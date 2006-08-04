@@ -3,6 +3,7 @@
 
    #include <boost/interprocess/managed_shared_memory.hpp>
    #include <cstddef>
+   #include <utility>
    #include <assert.h>
 
    int main ()
@@ -10,8 +11,10 @@
       using namespace boost::interprocess;
       typedef std::pair<double, int> MyType;
 
-      //A shared memory front-end that is able to construct 
-      //objects associated with a c-string
+      //An special shared memory where we can
+      //construct objects associated with a name.
+      //Connect to the already created shared memory segment
+      //and initialize needed resources
       managed_shared_memory segment(
          open_only, 
          "MySharedMemory");
