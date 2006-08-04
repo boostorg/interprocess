@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztaï¿½ga 2004-2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -25,7 +25,6 @@
 #include "boost_interprocess_check.hpp"
 #include "util.hpp"
 #include <boost/thread/thread.hpp>
-#include <boost/thread/xtime.hpp>
 #include <iostream>
 
 namespace boost { namespace interprocess { namespace test {
@@ -43,7 +42,7 @@ struct test_lock
 
       // Test the lock's constructors.
       {
-         lock_type lock(interprocess_mutex, boost::interprocess::dont_lock);
+         lock_type lock(interprocess_mutex, boost::interprocess::defer_lock);
          BOOST_INTERPROCES_CHECK(!lock);
       }
       lock_type lock(interprocess_mutex);
@@ -73,7 +72,7 @@ struct test_trylock
          BOOST_INTERPROCES_CHECK(lock ? true : false);
       }
       {
-         try_to_lock_type lock(interprocess_mutex, boost::interprocess::dont_lock);
+         try_to_lock_type lock(interprocess_mutex, boost::interprocess::defer_lock);
          BOOST_INTERPROCES_CHECK(!lock);
       }
       try_to_lock_type lock(interprocess_mutex);
@@ -103,14 +102,14 @@ struct test_timedlock
 
       // Test the lock's constructors.
       {
-         // Construct and initialize an xtime for a fast time out.
-         boost::posix_time::ptime pt = delay(1, 0);
+         // Construct and initialize an ptime for a fast time out.
+         boost::posix_time::ptime pt = delay(1*BaseSeconds, 0);
 
          timed_lock_type lock(interprocess_mutex, pt);
          BOOST_INTERPROCES_CHECK(lock ? true : false);
       }
       {
-         timed_lock_type lock(interprocess_mutex, boost::interprocess::dont_lock);
+         timed_lock_type lock(interprocess_mutex, boost::interprocess::defer_lock);
          BOOST_INTERPROCES_CHECK(!lock);
       }
       timed_lock_type lock(interprocess_mutex);
@@ -123,7 +122,7 @@ struct test_timedlock
       BOOST_INTERPROCES_CHECK(lock ? true : false);
       lock.unlock();
       BOOST_INTERPROCES_CHECK(!lock);
-      boost::posix_time::ptime pt = delay(10, 0);
+      boost::posix_time::ptime pt = delay(10*BaseSeconds, 0);
       BOOST_INTERPROCES_CHECK(lock.timed_lock(pt));
       BOOST_INTERPROCES_CHECK(lock ? true : false);
    }
@@ -143,8 +142,8 @@ struct test_recursive_lock
          lock_type lock2(mx);
       }
       {
-         lock_type lock1(mx, dont_lock);
-         lock_type lock2(mx, dont_lock);
+         lock_type lock1(mx, defer_lock);
+         lock_type lock2(mx, defer_lock);
       }
       {
          lock_type lock1(mx, try_to_lock);
@@ -152,7 +151,7 @@ struct test_recursive_lock
       }
       {
          //This should always lock
-         boost::posix_time::ptime pt = delay(3);
+         boost::posix_time::ptime pt = delay(3*BaseSeconds);
          lock_type lock1(mx, pt);
          lock_type lock2(mx, pt);
       }
@@ -168,7 +167,7 @@ void lock_and_sleep(void *arg, M &sm)
    data<M> *pdata = (data<M> *) arg;
    boost::interprocess::scoped_lock<M> l(sm);
    if(pdata->m_secs){
-      boost::thread::sleep(xsecs(pdata->m_secs*BaseSeconds));
+      boost::thread::sleep(xsecs(pdata->m_secs));
    }
    else{
       boost::thread::sleep(xsecs(3*BaseSeconds));
@@ -182,7 +181,7 @@ template<typename M>
 void try_lock_and_sleep(void *arg, M &sm)
 {
    data<M> *pdata = (data<M> *) arg;
-   boost::interprocess::scoped_lock<M> l(sm, boost::interprocess::dont_lock);
+   boost::interprocess::scoped_lock<M> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
       boost::thread::sleep(xsecs(3*BaseSeconds));
       ++shared_val;
@@ -196,7 +195,7 @@ void timed_lock_and_sleep(void *arg, M &sm)
    data<M> *pdata = (data<M> *) arg;
    boost::posix_time::ptime pt(delay(pdata->m_secs));
    boost::interprocess::scoped_lock<M> 
-      l (sm, boost::interprocess::dont_lock);
+      l (sm, boost::interprocess::defer_lock);
    if (l.timed_lock(pt)){
       boost::thread::sleep(xsecs(3*BaseSeconds));
       ++shared_val;
@@ -293,8 +292,8 @@ void test_mutex_timed_lock()
       pm2 = &m2;
    }
 
-   data<M> d1(1, 3);
-   data<M> d2(2, 3);
+   data<M> d1(1, 3*BaseSeconds);
+   data<M> d2(2, 3*BaseSeconds);
 
    // Locker one launches, holds the lock for 3*BaseSeconds seconds.
    boost::thread tm1(thread_adapter<M>(&timed_lock_and_sleep, &d1, *pm1));

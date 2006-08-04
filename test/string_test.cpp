@@ -17,8 +17,8 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
 #include <cstddef>
 #include <new>
 
@@ -42,12 +42,12 @@ struct StringEqual
 {
    bool operator ()(const StdString &stdstring, const ShmString &shmstring) const
    {
-      return strcmp(stdstring.c_str(), shmstring.c_str()) == 0; 
+      return std::strcmp(stdstring.c_str(), shmstring.c_str()) == 0; 
    }
 
    bool operator ()(const ShmString &shmstring, const StdString &stdstring) const
    {
-      return strcmp(stdstring.c_str(), shmstring.c_str()) == 0; 
+      return std::strcmp(stdstring.c_str(), shmstring.c_str()) == 0; 
    }
 };
 
@@ -68,7 +68,7 @@ bool Print(ShmStringVector *shmvect, StdStringVector *stdvect)
       std::cout << *beg << std::endl;
    }
 
-   std::cout << "stdvect" << static_cast<unsigned int>(stdvect->size()) << std::endl;
+   std::cout << "stdvect: " << static_cast<unsigned int>(stdvect->size()) << std::endl;
    for(StdStringVector::iterator beg = stdvect->begin(),
                                  end = stdvect->end();
        beg != end; ++beg){
@@ -82,7 +82,7 @@ int main ()
    const int MaxSize = 100;
 
    //Create shared memory
-   managed_shared_memory::remove("MySharedMemory");
+   shared_memory_object::remove("MySharedMemory");
    managed_shared_memory segment
          (create_only,
          "MySharedMemory",//segment name
@@ -107,15 +107,18 @@ int main ()
    for(i = 0; i < MaxSize; ++i){
       auxShmString = "String";
       auxStdString = "String";
-      sprintf(buffer, "%i", i);
+      std::sprintf(buffer, "%i", i);
       auxShmString += buffer;
       auxStdString += buffer;
       shmStringVect->push_back(auxShmString);
       stdStringVect->push_back(auxStdString);
    }
 
-   if(!CheckEqual(shmStringVect, stdStringVect)) return 1;
-   
+   if(!CheckEqual(shmStringVect, stdStringVect)){
+      Print(shmStringVect, stdStringVect);
+      return 1;
+   }
+
    ShmString shm_swapper(segment.get_segment_manager());
    StdString std_swapper;
    shm_swapper.swap(auxShmString);

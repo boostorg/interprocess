@@ -30,7 +30,7 @@ struct test_wait
 
       // Test the lock's constructors.
       {
-         wait_type lock(interprocess_mutex, boost::interprocess::dont_lock);
+         wait_type lock(interprocess_mutex, boost::interprocess::defer_lock);
          BOOST_INTERPROCES_CHECK(!lock);
       }
       wait_type lock(interprocess_mutex);
@@ -58,7 +58,7 @@ struct test_try_wait
          BOOST_INTERPROCES_CHECK(lock ? true : false);
       }
       {
-         try_to_wait_type lock(interprocess_mutex, boost::interprocess::dont_lock);
+         try_to_wait_type lock(interprocess_mutex, boost::interprocess::defer_lock);
          BOOST_INTERPROCES_CHECK(!lock);
       }
       try_to_wait_type lock(interprocess_mutex);
@@ -93,7 +93,7 @@ struct test_timed_wait
          BOOST_INTERPROCES_CHECK(lock ? true : false);
       }
       {
-         timed_wait_type lock(interprocess_mutex, boost::interprocess::dont_lock);
+         timed_wait_type lock(interprocess_mutex, boost::interprocess::defer_lock);
          BOOST_INTERPROCES_CHECK(!lock);
       }
       timed_wait_type lock(interprocess_mutex);
@@ -123,8 +123,8 @@ struct test_recursive_lock
          wait_type lock2(mx);
       }
       {
-         wait_type lock1(mx, dont_lock);
-         wait_type lock2(mx, dont_lock);
+         wait_type lock1(mx, defer_lock);
+         wait_type lock2(mx, defer_lock);
       }
       {
          wait_type lock1(mx, try_to_lock);
@@ -156,7 +156,7 @@ template<typename P>
 void try_wait_and_sleep(void *arg, P &sm)
 {
    data<P> *pdata = (data<P> *) arg;
-   boost::interprocess::scoped_lock<P> l(sm, boost::interprocess::dont_lock);
+   boost::interprocess::scoped_lock<P> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
       boost::thread::sleep(xsecs(3*BaseSeconds));
       ++shared_val;
@@ -170,7 +170,7 @@ void timed_wait_and_sleep(void *arg, P &sm)
    data<P> *pdata = (data<P> *) arg;
    boost::posix_time::ptime pt(delay(pdata->m_secs));
    boost::interprocess::scoped_lock<P> 
-      l (sm, boost::interprocess::dont_lock);
+      l (sm, boost::interprocess::defer_lock);
    if (l.timed_lock(pt)){
       boost::thread::sleep(xsecs(3*BaseSeconds));
       ++shared_val;

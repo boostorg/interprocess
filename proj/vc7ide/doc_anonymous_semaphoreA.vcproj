@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="doc_cont_mapB"
-	ProjectGUID="{58CCE183-6092-48FE-A4F7-BA0D3A792651}"
+	Name="doc_anonymous_semaphoreA"
+	ProjectGUID="{5CB81183-29FB-F843-24FF-022050100544}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -13,7 +13,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="../../Bin/Win32/Debug"
-			IntermediateDirectory="Debug/doc_cont_mapB"
+			IntermediateDirectory="Debug/doc_anonymous_semaphoreA"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -33,11 +33,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/doc_cont_mapB_d.exe"
+				OutputFile="$(OutDir)/doc_anonymous_semaphoreA_d.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/doc_cont_mapB.pdb"
+				ProgramDatabaseFile="$(OutDir)/doc_anonymous_semaphoreA.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 				FixedBaseAddress="1"/>
@@ -65,7 +65,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="../../Bin/Win32/Release"
-			IntermediateDirectory="Release/doc_cont_mapB"
+			IntermediateDirectory="Release/doc_anonymous_semaphoreA"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -82,7 +82,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/doc_cont_mapB.exe"
+				OutputFile="$(OutDir)/doc_anonymous_semaphoreA.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
@@ -118,15 +118,15 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{4BEFCAB1-8AC0-3B5C-AF1B-9522D75AFFA2}">
 			<File
-				RelativePath="..\..\doc\code\doc_cont_mapB.cpp">
+				RelativePath="..\..\doc\code\doc_anonymous_semaphoreA.cpp">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{918033FA-7644-7A5C-AFB8-62FB5FA585CB}">
 		</Filter>
 	</Files>
 	<Globals>

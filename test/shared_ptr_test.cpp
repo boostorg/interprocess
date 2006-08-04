@@ -55,7 +55,7 @@ int simple_test()
    typedef shared_ptr<base_class, base_class_allocator, base_deleter_t>    base_shared_ptr;
    typedef weak_ptr<base_class, base_class_allocator, base_deleter_t>      base_weak_ptr;
 
-   managed_shared_memory::remove("shm_name");
+   shared_memory_object::remove("shm_name");
    managed_shared_memory shmem(create_only, "shm_name", 10000);
 
    {
@@ -131,8 +131,8 @@ int string_shared_ptr_vector_insertion_test()
    typedef vector<string_weak_ptr_t, string_weak_ptr_allocator_t>
       string_weak_ptr_vector_t;
 
-   //A shared memory front-end
-   managed_shared_memory::remove("shm_name");
+   //A shared memory managed memory classes
+   shared_memory_object::remove("shm_name");
    managed_shared_memory shmem(create_only, "shm_name", 20000);
 
    {  
@@ -408,7 +408,7 @@ int basic_shared_ptr_test()
 
    typedef weak_ptr<Y, v_allocator_t, y_deleter_t> y_weak_ptr;
 
-   managed_shared_memory::remove("shm_name");
+   shared_memory_object::remove("shm_name");
    managed_shared_memory shmem(create_only, "shm_name", 10000);
    {
       v_allocator_t  v_allocator (shmem.get_segment_manager());

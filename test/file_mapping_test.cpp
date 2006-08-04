@@ -30,18 +30,19 @@ int main ()
 
       {
          //Create a file mapping
-         file_mapping mapping("my_file", file_mapping::rw_mode);
+         file_mapping mapping("my_file", file_mapping::read_write);
          //Create two mapped regions, one half of the file each
          mapped_region region (mapping
+                              ,mapped_region::read_write
                               ,0
                               ,FileSize/2
-                              ,file_mapping::rw_mode
-                              ,0);
+                              );
 
-         mapped_region region2(mapping, FileSize/2
+         mapped_region region2(mapping
+                              ,mapped_region::read_write
+                              ,FileSize/2
                               ,FileSize - FileSize/2
-                              ,file_mapping::rw_mode
-                              ,0);
+                              );
 
          //Fill two regions with a pattern   
          unsigned char *filler = static_cast<unsigned char*>(region.get_address());
@@ -99,14 +100,12 @@ int main ()
       //Now check the pattern mapping a single read only mapped_region
       {
          //Create a file mapping
-         file_mapping mapping("my_file", file_mapping::ro_mode);
+         file_mapping mapping("my_file", file_mapping::read_only);
 
          //Create a single regions, mapping all the file
          mapped_region region (mapping
-                              ,0
-                              ,0
-                              ,file_mapping::ro_mode
-                              ,0);
+                              ,mapped_region::read_only
+                              );
 
          //Check pattern
          unsigned char *pattern = static_cast<unsigned char*>(region.get_address());

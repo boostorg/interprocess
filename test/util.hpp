@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztaï¿½ga 2004-2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -20,12 +20,6 @@
 
 #ifndef BOOST_INTERPROCESS_TEST_UTIL_HEADER
 #define BOOST_INTERPROCESS_TEST_UTIL_HEADER
-/*
-#include <boost/thread/xtime.hpp>
-#include <boost/thread/interprocess_mutex.hpp>
-#include <boost/thread/interprocess_condition.hpp>
-#include <boost/thread/thread.hpp>
-*/
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
@@ -58,8 +52,8 @@ inline boost::posix_time::ptime delay(int secs, int msecs=0, int nsecs = 0)
    using namespace boost::posix_time;
    int count = static_cast<int>(double(nsecs)*
                (double(time_duration::ticks_per_second())/double(1000000000.0)));
-   return   microsec_clock::universal_time() + 
-            boost::posix_time::time_duration(0, 0, secs, count);
+   boost::posix_time::ptime cur = microsec_clock::universal_time();
+   return cur +=  boost::posix_time::time_duration(0, 0, secs, count);
 }
 
 inline bool in_range(const boost::posix_time::ptime& xt, int secs=1)

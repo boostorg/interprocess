@@ -26,7 +26,7 @@ int main ()
    const int memsize = 65536;
    const char *const shMemName = "MySharedMemory";
 
-   managed_shared_memory::remove(shMemName);
+   shared_memory_object::remove(shMemName);
 
    //Create shared memory
    managed_shared_memory segment(create_only, shMemName, memsize);

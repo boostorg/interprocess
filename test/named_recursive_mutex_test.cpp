@@ -19,7 +19,7 @@
 struct deleter
 {
    ~deleter()
-   {  boost::interprocess::named_mutex::remove("named_recursive_mutex"); }
+   {  boost::interprocess::named_recursive_mutex::remove("named_recursive_mutex"); }
 };
 
 //This wrapper is necessary to have a default constructor
@@ -60,7 +60,7 @@ int main ()
 {
    using namespace boost::interprocess;
    try{
-      named_mutex::remove("named_recursive_mutex");
+      named_recursive_mutex::remove("named_recursive_mutex");
       test::test_named_creation<named_mutex_creation_test_wrapper>();
       test::test_all_lock<named_recursive_mutex_lock_test_wrapper>();
       test::test_all_mutex<false, named_recursive_mutex_lock_test_wrapper>();

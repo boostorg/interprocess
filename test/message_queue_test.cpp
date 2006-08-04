@@ -12,6 +12,7 @@
 
 #include <boost/interprocess/ipc/message_queue.hpp>
 #include <boost/interprocess/managed_external_buffer.hpp>
+#include <boost/interprocess/managed_heap_memory.hpp>
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/containers/set.hpp>
 #include <boost/interprocess/allocators/node_allocator.hpp>
@@ -74,7 +75,7 @@ bool test_priority_order()
       tstamp_prev    = tstamp;
    }
    return true;
-};
+}
 
 //This test creates a in memory data-base using Interprocess machinery and 
 //serializes it through a message queue. Then rebuilds the data-base in 
@@ -96,8 +97,8 @@ bool test_serialize_db()
    const std::size_t BufferSize  = 65536;
    const std::size_t MaxMsgSize  = 100;
 
-   //Allocate two memory buffers from heap using vector<char>
-   std::vector<char> buffer1(BufferSize, 0), buffer2(BufferSize, 0);
+   //Allocate a memory buffer to hold the destiny database using vector<char>
+   std::vector<char> buffer_destiny(BufferSize, 0);
 
    message_queue::remove("message_queue");
    //Create the message-queues
@@ -106,18 +107,13 @@ bool test_serialize_db()
    //Open previously created message-queue simulating other process
    message_queue mq2(open_only, "message_queue");
 
-   //interprocess machinery to manage previously allocated buffer1 and buffer2
-   managed_external_buffer db1, db2;      
-
-   //Create Interprocess machinery in the first buffer
-   if(!db1.create(&buffer1[0], buffer1.size())){
-      return false;
-   }
+   //A managed heap memory to create the origin database
+   managed_heap_memory db_origin(buffer_destiny.size());
 
    //Construct the map in the first buffer
-   MyMap *map1 = db1.construct<MyMap>("MyMap")
+   MyMap *map1 = db_origin.construct<MyMap>("MyMap")
                                      (MyLess(), 
-                                      db1.get_segment_manager());
+                                      db_origin.get_segment_manager());
    if(!map1)
       return false;
 
@@ -141,26 +137,18 @@ bool test_serialize_db()
    //through mq2 to the second buffer
    while(1){
       //Send a fragment of buffer1 through mq1
-      std::size_t bytes_to_send = MaxMsgSize < (BufferSize - sent) ? 
-                                    MaxMsgSize : (BufferSize - sent);
-      switch(mq1.send(&buffer1[sent], bytes_to_send, 0)){
-         case message_queue::ok:
-            sent += bytes_to_send;         
-         break;
-
-         default:
-            return false;
-      }
-      //Receive the fragment through mq2 to buffer2
-      switch(mq2.receive(&buffer2[total_recvd], BufferSize - recvd, 
-                         recvd,                 priority)){   
-         case message_queue::ok:
-            total_recvd += recvd; 
-         break;
-
-         default:
-            return false;
-      }
+      std::size_t bytes_to_send = MaxMsgSize < (db_origin.get_size() - sent) ? 
+                                    MaxMsgSize : (db_origin.get_size() - sent);
+      mq1.send( &static_cast<char*>(db_origin.get_address())[sent]
+              , bytes_to_send
+              , 0);
+      sent += bytes_to_send;
+      //Receive the fragment through mq2 to buffer_destiny
+      mq2.receive( &buffer_destiny[total_recvd]
+                 , BufferSize - recvd
+                 , recvd
+                 , priority);
+      total_recvd += recvd;
 
       //Check if we have received all the buffer
       if(total_recvd == BufferSize){
@@ -168,14 +156,12 @@ bool test_serialize_db()
       }
    }
    
-   //The second buffer will contain a copy of the buffer1 
-   //map so let's open Interprocess machinery in the second buffer  
-   if(!db2.open(&buffer2[0], BufferSize)){
-      return false;
-   }
+   //The buffer will contain a copy of the original database 
+   //so let's interpret the buffer with managed_external_buffer
+   managed_external_buffer db_destiny(open_only, &buffer_destiny[0], BufferSize);
 
    //Let's find the map
-   std::pair<MyMap *, std::size_t> ret = db2.find<MyMap>("MyMap");
+   std::pair<MyMap *, std::size_t> ret = db_destiny.find<MyMap>("MyMap");
    MyMap *map2 = ret.first;
 
    //Check if we have found it
@@ -201,17 +187,14 @@ bool test_serialize_db()
    }
    
    //Destroy maps from db-s
-   db1.destroy_ptr(map1);
-   db2.destroy_ptr(map2);
-
-   db1.close();
-   db2.close();
+   db_origin.destroy_ptr(map1);
+   db_destiny.destroy_ptr(map2);
 
    return true;
 }
 
 static const int MsgSize = 10;
-static const int NumMsg  = 10000;
+static const int NumMsg  = 1000;
 static char msgsend [10];
 static char msgrecv [10];
 

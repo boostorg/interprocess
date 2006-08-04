@@ -81,7 +81,7 @@ int main ()
       //Compare several shared memory vector operations with std::vector
       {
          //Create shared memory
-         my_managed_shared_memory::remove(shMemName);
+         shared_memory_object::remove(shMemName);
          my_managed_shared_memory segment(create_only, shMemName, Memsize);
 
          segment.reserve_named_objects(100);

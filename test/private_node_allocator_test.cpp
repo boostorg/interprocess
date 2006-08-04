@@ -54,7 +54,7 @@ int main ()
    const int max = 100;
 
    //Named new capable shared mem allocator
-   wmanaged_shared_memory::remove(shMemName);
+   shared_memory_object::remove(shMemName);
    wmanaged_shared_memory segment(create_only, shMemName, memsize);
 
    //Shared memory allocator must be always be initialized

@@ -32,7 +32,7 @@ int main ()
          > my_managed_shared_memory;
 
       //Create shared memory
-      my_managed_shared_memory::remove(shMemName);
+      shared_memory_object::remove(shMemName);
       my_managed_shared_memory segment(create_only, shMemName, memsize);
 
       //Now take the segment manager and launch memory test

@@ -6,7 +6,7 @@
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <sstream>
 //#include <strstream>
-#include <string.h>
+#include <cstring>
 #include <vector>
 #include <iostream>
 #include <boost/date_time/posix_time/ptime.hpp>
@@ -37,7 +37,7 @@ static int vectorstream_test()
          std_stringstream << "testline: " << i << std::endl;
       }
 
-      if(strcmp(my_stringstream.vector().c_str(), std_stringstream.str().c_str()) != 0){
+      if(std::strcmp(my_stringstream.vector().c_str(), std_stringstream.str().c_str()) != 0){
          return 1;
       }
 
@@ -67,7 +67,7 @@ static int vectorstream_test()
       }
       //Add final null to form a c string
       myvector.push_back(0);
-      if(strcmp(&(my_vectorstream.vector()[0]), std_stringstream.str().c_str()) != 0){
+      if(std::strcmp(&(my_vectorstream.vector()[0]), std_stringstream.str().c_str()) != 0){
          return 1;
       }
       myvector.pop_back();
@@ -94,7 +94,7 @@ static int vectorstream_test()
          my_stringstream  << "testline: " << i << std::endl;
          std_stringstream << "testline: " << i << std::endl;
       }
-      if(strcmp(my_stringstream.vector().c_str(), std_stringstream.str().c_str()) != 0){
+      if(std::strcmp(my_stringstream.vector().c_str(), std_stringstream.str().c_str()) != 0){
          assert(0);   return 1;
       }
       for(int i = 0; i < 100; ++i){

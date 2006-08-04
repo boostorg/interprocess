@@ -25,13 +25,13 @@ createdir:
 	@mkdir -p ../../bin/linux
 
 ../../bin/linux/test_%.out: ../../test/%.cpp 
-	$(CC) $< -Wall -g -pthread -DBOOST_DATE_TIME_NO_LIB -lstdc++ -lrt -lboost_thread-gcc-mt -I$(BOOST_ROOT) -L$(BOOST_LIBS) -o $@
+	$(CC) $< -Wall -pedantic -g -pthread -DBOOST_DATE_TIME_NO_LIB -lstdc++ -lrt -lboost_thread-gcc-mt -I$(BOOST_ROOT) -L$(BOOST_LIBS) -o $@
 
 ../../bin/linux/ex_%.out: ../../example/%.cpp 
-	$(CC) $< -Wall -g -pthread -DBOOST_DATE_TIME_NO_LIB -lstdc++ -lrt -lboost_thread-gcc-mt -I$(BOOST_ROOT) -L$(BOOST_LIBS) -o $@
+	$(CC) $< -Wall -pedantic -g -pthread -DBOOST_DATE_TIME_NO_LIB -lstdc++ -lrt -lboost_thread-gcc-mt -I$(BOOST_ROOT) -L$(BOOST_LIBS) -o $@
 
 ../../bin/linux/doc_%.out: ../../doc/code/%.cpp 
-	$(CC) $< -Wall -g -pthread -DBOOST_DATE_TIME_NO_LIB -lstdc++ -lrt -lboost_thread-gcc-mt -I$(BOOST_ROOT) -L$(BOOST_LIBS) -o $@
+	$(CC) $< -Wall -pedantic -g -pthread -DBOOST_DATE_TIME_NO_LIB -lstdc++ -lrt -lboost_thread-gcc-mt -I$(BOOST_ROOT) -L$(BOOST_LIBS) -o $@
 
 clean:
 	rm -f *.o

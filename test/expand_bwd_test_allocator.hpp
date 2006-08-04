@@ -187,9 +187,7 @@ bool operator!=(const expand_bwd_test_allocator<T>  &alloc1,
 {  return true; }
 
 }  //namespace test {
-
 }  //namespace interprocess {
-
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>

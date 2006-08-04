@@ -24,7 +24,7 @@ my_shared_objects_t;
 int main ()
 {
    //Create shared memory
-   my_shared_objects_t::remove("MySharedMemory");
+   shared_memory_object::remove("MySharedMemory");
    my_shared_objects_t segment
       (create_only,
       "MySharedMemory",//segment name

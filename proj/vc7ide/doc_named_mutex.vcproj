@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="doc_cont_mapA"
-	ProjectGUID="{58CCE183-6092-48FE-A4F7-BA0D3A792652}"
+	Name="doc_named_mutex"
+	ProjectGUID="{58C181B3-9516-463E-2F12-122155400054}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -13,7 +13,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="../../Bin/Win32/Debug"
-			IntermediateDirectory="Debug/doc_cont_mapA"
+			IntermediateDirectory="Debug/doc_named_mutex"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -33,11 +33,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/doc_cont_mapA_d.exe"
+				OutputFile="$(OutDir)/doc_named_mutex_d.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/doc_cont_mapA.pdb"
+				ProgramDatabaseFile="$(OutDir)/doc_named_mutex.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 				FixedBaseAddress="1"/>
@@ -65,7 +65,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="../../Bin/Win32/Release"
-			IntermediateDirectory="Release/doc_cont_mapA"
+			IntermediateDirectory="Release/doc_named_mutex"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -82,7 +82,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/doc_cont_mapA.exe"
+				OutputFile="$(OutDir)/doc_named_mutex.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
@@ -118,15 +118,15 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{ABE712F1-C925-3745-2A10-7214FFA752A2}">
 			<File
-				RelativePath="..\..\doc\code\doc_cont_mapA.cpp">
+				RelativePath="..\..\doc\code\doc_named_mutex.cpp">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{91338150-57CA-4674-85A6-6216EFEF5BFB}">
 		</Filter>
 	</Files>
 	<Globals>

@@ -51,7 +51,7 @@ int main ()
       //Remove the file it is already created
       std::remove(FileName);
 
-      //Named allocate capable memory mapped file front-end
+      //Named allocate capable memory mapped file managed memory class
       managed_mapped_file mfile(create_only, FileName, FileSize);
 
       //Construct the STL-like allocator with the segment manager

@@ -38,7 +38,7 @@ int main ()
    const int memsize = 16384;
    const char *const shMemName = "MySharedMemory";
 
-   managed_shared_memory::remove(shMemName);
+   shared_memory_object::remove(shMemName);
 
    //Named allocate capable shared mem allocator
    managed_shared_memory segment(create_only, shMemName, memsize);

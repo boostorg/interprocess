@@ -65,7 +65,7 @@ int set_test ()
    const int max = 100;
 
    //Create shared memory
-   ManagedSharedMemory::remove(shMemName);
+   shared_memory_object::remove(shMemName);
    ManagedSharedMemory segment(create_only, shMemName, memsize);
 
    segment.reserve_named_objects(100);

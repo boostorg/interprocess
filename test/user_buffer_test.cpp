@@ -57,13 +57,12 @@ int main ()
    static char static_buffer[memsize];
 
    //Named new capable user mem allocator
-   wmanaged_external_buffer user_buffer;
+   wmanaged_external_buffer user_buffer(create_only, static_buffer, memsize);
 
    //Named new capable heap mem allocator
    wmanaged_heap_memory heap_buffer(memsize);
 
    //Initialize memory
-   user_buffer.create(static_buffer, memsize);
    user_buffer.reserve_named_objects(100);
    heap_buffer.reserve_named_objects(100);
 
@@ -167,7 +166,6 @@ int main ()
    if(!CheckEqual(userlist, stdlist, heaplist)) return 1;
    
    user_buffer.destroy<MyUserList>(L"MyUserList");
-   user_buffer.close();
    delete stdlist;
 
    //Fill heap buffer until is full
@@ -180,10 +178,6 @@ int main ()
    
    std::size_t heap_list_size = heaplist->size();
 
-   //Try to grow the buffer
-
-
-
    //Copy heap buffer to another 
    const char *insert_beg = detail::char_ptr_cast(heap_buffer.get_address());
    const char *insert_end = insert_beg + heap_buffer.get_size();
@@ -192,12 +186,15 @@ int main ()
    heap_buffer.destroy<MyHeapList>(L"MyHeapList");
    //Resize copy buffer
    grow_copy.resize(memsize*2);
-   //Open Interprocess machinery in the new buffer
-   user_buffer.open(&grow_copy[0], memsize);
+
+   //Open Interprocess machinery in the new managed external buffer
+   wmanaged_external_buffer user_buffer2(open_only, &grow_copy[0], memsize);
+
    //Expand old Interprocess machinery to the new size
-   user_buffer.grow(memsize);
+   user_buffer2.grow(memsize);
+
    //Get a pointer to the full list
-   userlist = user_buffer.find<MyUserList>(L"MyHeapList").first;
+   userlist = user_buffer2.find<MyUserList>(L"MyHeapList").first;
    if(!userlist){
       return 1;
    }
@@ -216,7 +213,7 @@ int main ()
       return 1;
    }
 
-   user_buffer.destroy_ptr(userlist);
+   user_buffer2.destroy_ptr(userlist);
 
    return 0;
 }

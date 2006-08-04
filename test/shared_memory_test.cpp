@@ -13,9 +13,8 @@
 #include <boost/interprocess/shared_memory.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include "named_creation_template.hpp"
-#include <memory.h>  //for memset
-#include <string.h>  //for strcmp
-#include <iostream>  //for strcmp
+#include <cstring>   //for strcmp, memset
+#include <iostream>  //for cout
 
 static const std::size_t ShmSize = 1000;
 static const char *      ShmName = "shared_memory";
@@ -24,7 +23,7 @@ struct shared_memory_eraser
 {
    ~shared_memory_eraser()
    {
-      boost::interprocess::shared_memory_mapping::remove(ShmName);
+      boost::interprocess::shared_memory_object::remove(ShmName);
    }
 };
 
@@ -55,12 +54,12 @@ int main ()
 {
    using namespace boost::interprocess;
    try{
-      shared_memory_mapping::remove(ShmName);
+      shared_memory_object::remove(ShmName);
       test::test_named_creation<shared_memory_creation_test_wrapper>();
 
       //Create and get name, size and address
       {  
-         shared_memory_mapping::remove(ShmName);
+         shared_memory_object::remove(ShmName);
          shared_memory shm1(create_only, ShmName, ShmSize);
 
          //Compare size
@@ -68,12 +67,12 @@ int main ()
             return 1;
 
          //Compare name
-         if(strcmp(shm1.get_name(), ShmName) != 0){
+         if(std::strcmp(shm1.get_name(), ShmName) != 0){
             return 1;
          }
 
          //Overwrite all memory
-         memset(shm1.get_address(), 0, ShmSize);
+         std::memset(shm1.get_address(), 0, ShmSize);
       }
    }
    catch(std::exception &ex){

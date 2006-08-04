@@ -54,7 +54,7 @@ int main ()
    const char *const shMemName = "MySharedMemory";
    const int max = 100;
 
-   wmanaged_shared_memory::remove(shMemName);
+   shared_memory_object::remove(shMemName);
 
    //Create managed shared memory
    wmanaged_shared_memory segment(create_only, shMemName, memsize);

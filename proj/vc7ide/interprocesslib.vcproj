@@ -118,6 +118,9 @@
 				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\shared_ptr.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\unique_ptr.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\weak_ptr.hpp">
 			</File>
 			<Filter
@@ -232,13 +235,16 @@
 				RelativePath="..\..\..\..\boost\interprocess\sync\interprocess_semaphore.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\sync\interprocess_sharable_mutex.hpp">
+				RelativePath="..\..\..\..\boost\interprocess\sync\interprocess_upgradable_mutex.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\sync\lock_options.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\sync\mutex_family.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\sync\named_condition.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\sync\named_mutex.hpp">
@@ -250,6 +256,9 @@
 				RelativePath="..\..\..\..\boost\interprocess\sync\named_semaphore.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\sync\named_upgradable_mutex.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\sync\null_mutex.hpp">
 			</File>
 			<File
@@ -257,6 +266,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\sync\sharable_lock.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\sync\upgradable_lock.hpp">
 			</File>
 			<Filter
 				Name="win32"
@@ -266,12 +278,6 @@
 				</File>
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\win32\interprocess_mutex.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\win32\interprocess_recursive_mutex.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\win32\interprocess_recursive_mutex.hpp">
 				</File>
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\win32\interprocess_semaphore.hpp">
@@ -323,6 +329,13 @@
 					RelativePath="..\..\..\..\boost\interprocess\sync\posix\semaphore_wrapper.hpp">
 				</File>
 			</Filter>
+			<Filter
+				Name="emulation"
+				Filter="">
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_recursive_mutex.hpp">
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Memory algorithms"
@@ -347,12 +360,9 @@
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\ipc\message_queue.hpp">
 			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\ipc\named_fifo.hpp">
-			</File>
 		</Filter>
 		<Filter
-			Name="Front-ends"
+			Name="Managed Memory Classes"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
@@ -380,7 +390,7 @@
 				RelativePath="..\..\..\..\boost\interprocess\mapped_file.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\memory_mapping.hpp">
+				RelativePath="..\..\..\..\boost\interprocess\memory_mappable.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\segment_manager.hpp">
@@ -414,6 +424,9 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\managed_memory_impl.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\move.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\multi_segment_services.hpp">
 			</File>
 			<File
@@ -424,6 +437,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\os_file_functions.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\os_thread_functions.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\utilities.hpp">
@@ -444,6 +460,9 @@
 			<File
 				RelativePath="..\..\doc\Jamfile.v2">
 			</File>
+			<File
+				RelativePath="..\..\doc\old_interprocess.qbk">
+			</File>
 		</Filter>
 		<Filter
 			Name="Indexes"
@@ -455,7 +474,7 @@
 				RelativePath="..\..\..\..\boost\interprocess\indexes\map_index.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\indexes\null_map_index.hpp">
+				RelativePath="..\..\..\..\boost\interprocess\indexes\null_index.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\indexes\unordered_map_index.hpp">
@@ -468,21 +487,18 @@
 				Name="Test"
 				Filter="">
 				<File
-					RelativePath="..\..\test\Jamfile">
+					RelativePath="..\..\test\Jamfile.v2">
 				</File>
 			</Filter>
 			<Filter
 				Name="Example"
 				Filter="">
-				<File
-					RelativePath="..\..\example\Jamfile">
-				</File>
 			</Filter>
 			<Filter
 				Name="Doc"
 				Filter="">
 				<File
-					RelativePath="..\..\doc\code\Jamfile">
+					RelativePath="..\..\doc\code\Jamfile.v2">
 				</File>
 			</Filter>
 		</Filter>
@@ -504,6 +520,9 @@
 			</File>
 			<File
 				RelativePath="..\..\test\boost_interprocess_check.hpp">
+			</File>
+			<File
+				RelativePath="..\..\test\condition_test_template.hpp">
 			</File>
 			<File
 				RelativePath="..\..\test\expand_bwd_test_allocator.hpp">
@@ -554,6 +573,25 @@
 					RelativePath="..\mingw\MakeAll">
 				</File>
 			</Filter>
+		</Filter>
+		<Filter
+			Name="Doc"
+			Filter="">
+			<File
+				RelativePath="..\..\doc\code\doc_anonymous_condition_shared_data.hpp">
+			</File>
+			<File
+				RelativePath="..\..\doc\code\doc_anonymous_mutex_shared_data.hpp">
+			</File>
+			<File
+				RelativePath="..\..\doc\code\doc_anonymous_semaphore_shared_data.hpp">
+			</File>
+			<File
+				RelativePath="..\..\doc\code\doc_named_condition_shared_data.hpp">
+			</File>
+			<File
+				RelativePath="..\..\doc\code\doc_upgradable_mutex_shared_data.hpp">
+			</File>
 		</Filter>
 		<File
 			RelativePath="..\..\..\..\boost\interprocess\interprocess_fwd.hpp">

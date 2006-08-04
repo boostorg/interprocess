@@ -15,7 +15,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/offset_ptr.hpp>
-#include <boost/interprocess/smart_ptr/unique_ptr_emulation.hpp>
+#include <boost/interprocess/smart_ptr/unique_ptr.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/list.hpp>
@@ -24,14 +24,12 @@
 
 using namespace boost::interprocess;
 
-
 class MyClass
 {
    public:
    MyClass()
    {}
 };
-
 
 //Deleter. Takes a pointer to the segment manager which
 //has a function to delete the object from the shared memory
@@ -50,8 +48,8 @@ struct MyDeleter
    offset_ptr<managed_shared_memory::segment_manager> m_mngr;
 };
 
-typedef boost_ext::unique_ptr<MyClass, MyDeleter> my_unique_ptr_class;
-
+typedef unique_ptr<MyClass, MyDeleter> my_unique_ptr_class;
+/*
 //Explicit instantiation of shared memory set
 template class set   <my_unique_ptr_class
                      ,std::less<my_unique_ptr_class>
@@ -76,7 +74,7 @@ typedef list<my_unique_ptr_class
             ,allocator  <my_unique_ptr_class
                         ,managed_shared_memory::segment_manager>
             > MyList;
-
+*/
 //This explicit instantiation fails
 //Because, for example, this iterator copy expression fails:
 // *target = *source;
@@ -90,7 +88,7 @@ typedef list<my_unique_ptr_class
 int main()
 {
    //Create managed shared memory
-   managed_shared_memory::remove("mysegment");
+   shared_memory_object::remove("mysegment");
    managed_shared_memory segment(create_only, "mysegment", 1000);
    
    //Create to unique_ptr using dynamic allocation
@@ -105,11 +103,11 @@ int main()
 
    //Test some copy constructors
    my_unique_ptr_class my_ptr3(0, segment.get_segment_manager());
-   my_unique_ptr_class my_ptr4(boost_ext::move(my_ptr3));
+   my_unique_ptr_class my_ptr4(move(my_ptr3));
 
    //This does not compile
-   //my_unique_ptr_class my_ptr4         (my_ptr3);
-
+//   my_unique_ptr_class my_ptr4         (my_ptr3);
+/*
    //Construct a list and fill
    MyList list(segment.get_segment_manager());
 
@@ -146,7 +144,7 @@ int main()
       assert(set.rbegin()->get() == ptr1);
       assert(set.begin()->get()  == ptr2);
    }
-
+*/
    return 0;
 }
 

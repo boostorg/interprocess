@@ -54,7 +54,7 @@ int main ()
 
    //Named new capable shared mem allocator
    //Create shared memory
-   wmanaged_shared_memory::remove(shMemName);
+   shared_memory_object::remove(shMemName);
    wmanaged_shared_memory segment(create_only, shMemName, memsize);
 
    segment.reserve_named_objects(100);

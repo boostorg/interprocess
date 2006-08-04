@@ -23,27 +23,28 @@ int main ()
       const std::size_t FileSize = 99999*2;
       {
          //Remove shared memory
-         shared_memory_mapping::remove("my_file");
+         shared_memory_object::remove("my_file");
 
          //Create shared memory and file mapping
-         shared_memory_mapping mapping(create_only, "my_file", shared_memory_mapping::rw_mode);
+         shared_memory_object mapping(create_only, "my_file", shared_memory_object::read_write);
          mapping.truncate(FileSize);
       }
 
       {
          //Create a file mapping
-         shared_memory_mapping mapping(open_only, "my_file", shared_memory_mapping::rw_mode);
+         shared_memory_object mapping(open_only, "my_file", shared_memory_object::read_write);
 
          //Create two mapped regions, one half of the file each
          mapped_region region (mapping
+                              ,mapped_region::read_write
                               ,0
                               ,FileSize/2
-                              ,shared_memory_mapping::rw_mode
                               ,0);
 
-         mapped_region region2(mapping, FileSize/2
+         mapped_region region2(mapping
+                              ,mapped_region::read_write
+                              ,FileSize/2
                               ,FileSize - FileSize/2
-                              ,shared_memory_mapping::rw_mode
                               ,0);
 
          //Fill two regions with a pattern   
@@ -65,9 +66,9 @@ int main ()
       //See if the pattern is correct in the file using two mapped regions
       {
          //Create a file mapping
-         shared_memory_mapping mapping(open_only, "my_file", shared_memory_mapping::rw_mode);
-         mapped_region region(mapping, 0, FileSize/2, shared_memory_mapping::rw_mode,0);
-         mapped_region region2(mapping, FileSize/2, 0/*FileSize - FileSize/2*/, shared_memory_mapping::rw_mode,0);
+         shared_memory_object mapping(open_only, "my_file", shared_memory_object::read_write);
+         mapped_region region(mapping, mapped_region::read_write, 0, FileSize/2, 0);
+         mapped_region region2(mapping, mapped_region::read_write, FileSize/2, 0/*FileSize - FileSize/2*/, 0);
 
          unsigned char *checker = (unsigned char*)region.get_address();
          //Check pattern
@@ -95,14 +96,11 @@ int main ()
       //Now check the pattern mapping a single read only mapped_region
       {
          //Create a file mapping
-         shared_memory_mapping mapping(open_only, "my_file", shared_memory_mapping::ro_mode);
+         shared_memory_object mapping(open_only, "my_file", shared_memory_object::read_only);
 
          //Create a single regions, mapping all the file
          mapped_region region (mapping
-                              ,0
-                              ,0
-                              ,shared_memory_mapping::ro_mode
-                              ,0);
+                              ,mapped_region::read_only);
 
          //Check pattern
          unsigned char *pattern = static_cast<unsigned char*>(region.get_address());

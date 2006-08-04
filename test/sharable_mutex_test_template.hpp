@@ -60,7 +60,7 @@ template<typename SM>
 void try_exclusive(void *arg, SM &sm)
 {
    data<SM> *pdata = (data<SM> *) arg;
-   boost::interprocess::scoped_lock<SM> l(sm, boost::interprocess::dont_lock);
+   boost::interprocess::scoped_lock<SM> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
       boost::thread::sleep(xsecs(3*BaseSeconds));
       shared_val += 10;
@@ -72,7 +72,7 @@ template<typename SM>
 void try_shared(void *arg, SM &sm)
 {
    data<SM> *pdata = (data<SM> *) arg;
-   boost::interprocess::sharable_lock<SM> l(sm, boost::interprocess::dont_lock);
+   boost::interprocess::sharable_lock<SM> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
       if(pdata->m_secs){
          boost::thread::sleep(xsecs(pdata->m_secs*BaseSeconds));
@@ -87,7 +87,7 @@ void timed_exclusive(void *arg, SM &sm)
    data<SM> *pdata = (data<SM> *) arg;
    boost::posix_time::ptime pt(delay(pdata->m_secs));
    boost::interprocess::scoped_lock<SM> 
-      l (sm, boost::interprocess::dont_lock);
+      l (sm, boost::interprocess::defer_lock);
    if (l.timed_lock(pt)){
       boost::thread::sleep(xsecs(3*BaseSeconds));
       shared_val += 10;
@@ -101,7 +101,7 @@ void timed_shared(void *arg, SM &sm)
    data<SM> *pdata = (data<SM> *) arg;
    boost::posix_time::ptime pt(delay(pdata->m_secs));
    boost::interprocess::sharable_lock<SM> 
-      l(sm, boost::interprocess::dont_lock);
+      l(sm, boost::interprocess::defer_lock);
    if (l.timed_lock(pt)){
       if(pdata->m_secs){
          boost::thread::sleep(xsecs(pdata->m_secs*BaseSeconds));

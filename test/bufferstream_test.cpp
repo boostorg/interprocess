@@ -3,7 +3,7 @@
 
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <sstream>
-#include <string.h>
+#include <cstring>
 
 using namespace boost::interprocess;
 
@@ -32,7 +32,7 @@ static int bufferstream_test()
          std_stringstream  << "testline: " << i << std::endl;
       }
 
-      if(strcmp(buffer, std_stringstream.str().c_str()) != 0){
+      if(std::strcmp(buffer, std_stringstream.str().c_str()) != 0){
          return 1;
       }
 
@@ -79,7 +79,7 @@ static int bufferstream_test()
       }
      
       //Contents should be different
-      if(strcmp(buffer, std_stringstream.str().c_str()) == 0){
+      if(std::strcmp(buffer, std_stringstream.str().c_str()) == 0){
          return 1;
       }
       //The stream shouldn't be in good health

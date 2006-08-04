@@ -7,6 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
@@ -17,7 +18,7 @@ int main ()
 {
    using namespace boost::interprocess;
 
-   managed_shared_memory::remove("MySharedMemory");
+   shared_memory_object::remove("MySharedMemory");
 
    //Create managed shared memory
    managed_shared_memory segment(create_only, 
@@ -25,7 +26,7 @@ int main ()
                                65536);           //segment size in bytes;
 
    //Allocate a portion of the segment
-   void * shptr   = segment.allocate(1024/*bytes to allocate*/);
+   void * shptr   = segment.allocate(1024);
    managed_shared_memory::handle_t handle = segment.get_handle_from_address(shptr);
    (void)handle;
 
@@ -62,4 +63,3 @@ int main ()
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
-

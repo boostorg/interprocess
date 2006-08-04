@@ -40,7 +40,6 @@ void PrintContents(const Container &cont, const char *contName)
 }  //namespace interprocess{
 }  //namespace boost{
 
-
 #include <boost/interprocess/detail/config_end.hpp>
 
 #endif //#ifndef BOOST_PRINTCONTAINER_HPP

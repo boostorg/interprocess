@@ -73,7 +73,7 @@ static inline void test_named_creation()
    std::cout   << "dont_create_and_open<" 
                << typeid(NamedResource).name() << ">" << std::endl;
    dont_create_and_open<NamedResource>();
-};
+}
 
 }}}   //namespace boost { namespace interprocess { namespace test {
 #endif   //BOOST_INTERPROCESS_TEST_NAMED_RESOURCE_TEMPLATE_HEADER
