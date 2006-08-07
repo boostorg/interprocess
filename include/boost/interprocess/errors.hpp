@@ -10,6 +10,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 //
+//  Copyright © 2006 Ion Gaztañaga
 //  Copyright © 2002 Beman Dawes
 //  Copyright © 2001 Dietmar Kühl 
 //  Use, modification, and distribution is subject to the Boost Software
@@ -62,7 +63,7 @@ static inline int system_error_code() // artifact of POSIX and WINDOWS error rep
 
 
 # ifdef BOOST_WINDOWS
-void fill_system_message(int sys_err_code, std::string &str)
+inline void fill_system_message(int sys_err_code, std::string &str)
 {
    void *lpMsgBuf;
    winapi::format_message( 
@@ -83,7 +84,7 @@ void fill_system_message(int sys_err_code, std::string &str)
       str.erase( str.size()-1 );
 }
 # else
-void fill_system_message( int system_error, std::string &str)
+inline void fill_system_message( int system_error, std::string &str)
 {  str = std::strerror(system_error);  }
 # endif
 
