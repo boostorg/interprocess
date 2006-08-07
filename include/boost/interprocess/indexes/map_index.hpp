@@ -43,7 +43,7 @@ struct map_index_aux
 };
 
 /*!Index type based in boost::interprocess::map. Just derives from boost::interprocess::map 
-   and defines the interface needed by the shared named object creation class*/
+   and defines the interface needed by managed memory segments*/
 template <class MapConfig>
 class map_index
    //Derive class from map specialization
@@ -66,7 +66,7 @@ class map_index
       {  /*Does nothing, map has not reserve or rehash*/  }
 };
 
-/*!Trait classes to detect if an index is a node
+/*!Trait class to detect if an index is a node
    index. This allows more efficient operations
    when deallocating named objects.*/
 template<class MapConfig>

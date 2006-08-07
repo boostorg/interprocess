@@ -21,20 +21,8 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/noncopyable.hpp>
-
-#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-#  include <boost/interprocess/sync/win32/win32_sync_primitives.hpp>
-#  include <boost/interprocess/sync/named_mutex.hpp>
-
-#else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-
-#include <unistd.h>     //close
-#include <string>       //std::string
-#include <pthread.h>    //pthread_* family
-#include <boost/interprocess/sync/posix/pthread_helpers.hpp>
-#  include <boost/interprocess/sync/named_mutex.hpp>
-#endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+#include <boost/interprocess/shared_memory.hpp>
+#include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
 
 /*!\file
    Describes a named interprocess_mutex class for inter-process synchronization
@@ -43,12 +31,17 @@
 namespace boost {
 namespace interprocess {
 
-/*!A recursive interprocess_mutex with a global name, so it can be found from different 
-   processes. This interprocess_mutex can't be placed in shared memory, and
-   each process should have it's own interprocess_mutex.*/
-class named_recursive_mutex : private boost::noncopyable
+/*!A recursive mutex with a global name, so it can be found from different 
+   processes. This mutex can't be placed in shared memory, and
+   each process should have it's own named_recursive_mutex.*/
+class named_recursive_mutex
 {
- public:
+   //Non-copyable
+   named_recursive_mutex();
+   named_recursive_mutex(const named_recursive_mutex &);
+   named_recursive_mutex &operator=(const named_recursive_mutex &);
+
+   public:
    /*!Creates a global interprocess_mutex with a name.*/
    named_recursive_mutex(detail::create_only_t create_only, const char *name);
 
@@ -86,105 +79,91 @@ class named_recursive_mutex : private boost::noncopyable
    /*! Erases a named recursive mutex from the system*/
    static bool remove(const char *name);
 
- private:
-   named_mutex    m_mutex;
-   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-   typedef unsigned long   thread_type;
-   static thread_type s_get_invalid_thread_id(){ return thread_type(0xffffffff); }
-   static thread_type s_get_current_thread_id(){ return winapi::current_thread_id(); }
-   static bool s_thread_equal(thread_type a, thread_type b){ return a ==  b; }
-   #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-   typedef pthread_t       thread_type;
-   static thread_type s_get_invalid_thread_id(){ return thread_type(false); }
-   static thread_type s_get_current_thread_id(){ return pthread_self(); }
-   static bool s_thread_equal(thread_type a, thread_type b){ return pthread_equal(a, b) != 0; }
-   #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-   thread_type    m_valid_id;
-   unsigned int   m_count;
+   private:
+
+   interprocess_recursive_mutex *mutex() const
+   {  return static_cast<interprocess_recursive_mutex*>(m_shmem.get_address()); }
+
+   shared_memory        m_shmem;
+
+   class construct_func_t;
+};
+
+class named_recursive_mutex::construct_func_t
+{
+   public:
+   enum CreationType {  open_only, open_or_create, create_only  };
+
+   construct_func_t(CreationType type)
+      :  m_creation_type(type){}
+
+   bool operator()(const mapped_region &region, bool created) const
+   {   
+      switch(m_creation_type){
+         case open_only:
+            return true;
+         break;
+         case create_only:
+         case open_or_create:
+            if(created){
+               new(region.get_address())interprocess_recursive_mutex;
+            }
+            return true;
+         break;
+
+         default:
+            return false;
+         break;
+      }
+      return true;
+   }
+   private:
+   CreationType       m_creation_type;
 };
 
 inline named_recursive_mutex::~named_recursive_mutex()
 {}
 
-inline named_recursive_mutex::named_recursive_mutex
-   (detail::create_only_t, const char *name)
-   :  m_mutex(boost::interprocess::create_only, name)
-   ,  m_valid_id(named_recursive_mutex::s_get_invalid_thread_id())
-   ,  m_count(0)
+inline named_recursive_mutex::named_recursive_mutex(detail::create_only_t, const char *name)
+   :  m_shmem  (create_only
+               ,name
+               ,sizeof(interprocess_recursive_mutex)
+               ,memory_mappable::read_write
+               ,0
+               ,construct_func_t(construct_func_t::create_only))
 {}
 
-inline named_recursive_mutex::named_recursive_mutex
-   (detail::open_or_create_t, const char *name)
-   :  m_mutex(boost::interprocess::open_or_create, name)
-   ,  m_valid_id(named_recursive_mutex::s_get_invalid_thread_id())
-   ,  m_count(0)
+inline named_recursive_mutex::named_recursive_mutex(detail::open_or_create_t, const char *name)
+   :  m_shmem  (open_or_create
+               ,name
+               ,sizeof(interprocess_recursive_mutex)
+               ,memory_mappable::read_write
+               ,0
+               ,construct_func_t(construct_func_t::open_or_create))
 {}
 
-
-inline named_recursive_mutex::named_recursive_mutex
-   (detail::open_only_t, const char *name)
-   :  m_mutex(boost::interprocess::open_only, name)
-   ,  m_valid_id(named_recursive_mutex::s_get_invalid_thread_id())
-   ,  m_count(0)
+inline named_recursive_mutex::named_recursive_mutex(detail::open_only_t, const char *name)
+   :  m_shmem  (open_only
+               ,name
+               ,memory_mappable::read_write
+               ,0
+               ,construct_func_t(construct_func_t::open_only))
 {}
 
 inline void named_recursive_mutex::lock()
-{
-   thread_type tid = named_recursive_mutex::s_get_current_thread_id();
-   if (named_recursive_mutex::s_thread_equal(m_valid_id, tid)){
-      ++m_count;
-   }
-   else{
-      m_mutex.lock();
-      m_valid_id = tid;
-      ++m_count;
-   }
-}
+{  this->mutex()->lock();  }
 
 inline void named_recursive_mutex::unlock()
-{
-   thread_type tid = named_recursive_mutex::s_get_current_thread_id();
-   assert(named_recursive_mutex::s_thread_equal(m_valid_id, tid));
-
-   --m_count;
-   if(!m_count){
-      m_valid_id = named_recursive_mutex::s_get_invalid_thread_id();
-      m_mutex.unlock();
-   }
-}
+{  this->mutex()->unlock();  }
 
 inline bool named_recursive_mutex::try_lock()
-{
-   thread_type tid = named_recursive_mutex::s_get_current_thread_id();
-   if (named_recursive_mutex::s_thread_equal(m_valid_id, tid)){
-      ++m_count;
-      return true;
-   }
-   else if(m_mutex.try_lock()){
-      m_valid_id = tid;
-      ++m_count;
-      return true;
-   }
-   return false;
-}
+{  return this->mutex()->try_lock();  }
 
 inline bool named_recursive_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
-{
-   thread_type tid = named_recursive_mutex::s_get_current_thread_id();
-   if (named_recursive_mutex::s_thread_equal(m_valid_id, tid)){
-      ++m_count;
-      return true;
-   }
-   else if(m_mutex.timed_lock(abs_time)){
-      m_valid_id = tid;
-      ++m_count;
-      return true;
-   }
-   return false;
-}
+{  return this->mutex()->timed_lock(abs_time);  }
 
 inline bool named_recursive_mutex::remove(const char *name)
-{  return named_mutex::remove(name); }
+{  return shared_memory_object::remove(name); }
 
 }  //namespace interprocess {
 }  //namespace boost {

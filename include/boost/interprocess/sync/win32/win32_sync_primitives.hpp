@@ -42,12 +42,34 @@ static const unsigned long mutex_all_access     = (0x000F0000L)|(0x00100000L)|0x
 
 static const unsigned long page_readonly        = 0x02;
 static const unsigned long page_readwrite       = 0x04;
+static const unsigned long page_writecopy       = 0x08;
 
-static const unsigned long file_map_read        = 0x0004;
-static const unsigned long file_map_write       = 0x0002;
-static const unsigned long file_map_all_access  = (0x000F0000L) | (0x0001) | 
-                                                   file_map_write | file_map_read | 
-                                                   (0x0008)| (0x0010);
+static const unsigned long standard_rights_required   = 0x000F0000L;
+static const unsigned long section_query              = 0x0001;
+static const unsigned long section_map_write          = 0x0002;
+static const unsigned long section_map_read           = 0x0004;
+static const unsigned long section_map_execute        = 0x0008;
+static const unsigned long section_extend_size        = 0x0010;
+static const unsigned long section_all_access         = standard_rights_required |
+                                                        section_query            |
+                                                        section_map_write        |
+                                                        section_map_read         |
+                                                        section_map_execute      |
+                                                        section_extend_size      |
+                                                        section_all_access       ;
+
+static const unsigned long file_map_copy        = section_query;
+static const unsigned long file_map_write       = section_map_write;
+static const unsigned long file_map_read        = section_map_read;
+static const unsigned long file_map_all_access  = section_all_access;
+
+#define SECTION_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED|SECTION_QUERY|\
+                            SECTION_MAP_WRITE |      \
+                            SECTION_MAP_READ |       \
+                            SECTION_MAP_EXECUTE |    \
+                            SECTION_EXTEND_SIZE)
+
+static const unsigned long FILE_MAP_WRITE       = 0x0002;
 
 static const unsigned long file_share_read      = 0x00000001;
 static const unsigned long file_share_write     = 0x00000002;
@@ -112,7 +134,7 @@ struct interprocess_overlapped
       struct {
          unsigned long offset;
          unsigned long offset_high;
-      };
+      }dummy;
       void *pointer;
    };
 
@@ -138,7 +160,7 @@ struct system_info {
         struct {
             unsigned short wProcessorArchitecture;
             unsigned short wReserved;
-        };
+        } dummy;
     };
     unsigned long dwPageSize;
     void * lpMinimumApplicationAddress;
@@ -224,7 +246,7 @@ static inline unsigned long make_lang_id(unsigned long p, unsigned long s)
 static inline void sched_yield()
 {  Sleep(1);   }
 
-static inline unsigned long current_thread_id()
+static inline unsigned long get_current_thread_id()
 {  return GetCurrentThreadId();  }
 
 static inline unsigned int close_handle(void* handle)

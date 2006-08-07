@@ -20,97 +20,36 @@
 
 #include <boost/type_traits/is_pointer.hpp>
 
-//Predeclaration of pointer casts
-namespace boost
+
+namespace boost{
+namespace interprocess{
+
+template<class T>
+class cast_to;
+
+template<class T>
+class cast_to<T*>
 {
-   template<class T, class U>
-   T static_pointer_cast(const U &r);
-   template<class T, class U>
-   T const_pointer_cast(const U &r);
-   template<class T, class U>
-   T dynamic_pointer_cast(const U &r);
-   template<class T, class U>
-   T reinterpret_pointer_cast(const U &r);
-}  //namespace boost
+   public:
+   template<class S>
+   static T* using_static_cast(S *s)
+   {  return static_cast<T*>(s); }
 
-namespace boost { namespace interprocess { namespace detail {
+   template<class S>
+   static T* using_dynamic_cast(S *s)
+   {  return dynamic_cast<T*>(s); }
 
-template<class T, class U> 
-inline T do_static_cast_impl(const U &r, const boost::false_type)
-{  
-   return static_pointer_cast<typename T::value_type>(r);  
-}
+   template<class S>
+   static T* using_const_cast(S *s)
+   {  return const_cast<T*>(s); }
 
-template<class T, class U> 
-inline T do_static_cast_impl(const U &r, const boost::true_type)
-{  
-   return static_cast<T>(r);  
-}
+   template<class S>
+   static T* using_reinterpret_cast(S *s)
+   {  return reinterpret_cast<T*>(s); }
+};
 
-template<class T, class U> 
-inline T do_dynamic_cast_impl(const U &r, const boost::false_type)
-{  
-   return dynamic_pointer_cast<typename T::value_type>(r);  
-}
-
-template<class T, class U> 
-inline T do_dynamic_cast_impl(const U &r, const boost::true_type)
-{  
-   return dynamic_cast<T>(r);  
-}
-
-template<class T, class U> 
-inline T do_reinterpret_cast_impl(const U &r, const boost::false_type)
-{  
-   return reinterpret_pointer_cast<typename T::value_type>(r);  
-}
-
-template<class T, class U> 
-inline T do_reinterpret_cast_impl(const U &r, const boost::true_type)
-{  
-   return reinterpret_cast<T>(r);  
-}
-
-template<class T, class U> 
-inline T do_const_cast_impl(const U &r, const boost::false_type)
-{  
-   return const_pointer_cast<typename T::value_type>(r);  
-}
-
-template<class T, class U> 
-inline T do_const_cast_impl(const U &r, const boost::true_type)
-{  
-   return const_cast<T>(r);  
-}
-
-}  //namespace detail {
-
-template<class T, class U> 
-inline T do_static_cast(const U &r)
-{  
-   return detail::do_static_cast_impl<T>(r, typename boost::is_pointer<U>::type());  
-}
-
-template<class T, class U> 
-inline T do_dynamic_cast(const U &r)
-{  
-   return detail::do_dynamic_cast_impl<T>(r, typename boost::is_pointer<U>::type());  
-}
-
-template<class T, class U> 
-inline T do_reinterpret_cast(const U &r)
-{  
-   return detail::do_reinterpret_cast_impl<T>(r, typename boost::is_pointer<U>::type());  
-}
-
-template<class T, class U> 
-inline T do_const_cast(const U &r)
-{  
-   return detail::do_const_cast_impl<T>(r, typename boost::is_pointer<U>::type());  
-}
-
-
-}}   //namespace boost { namespace interprocess { 
+}  //namespace interprocess{
+}  //namespace boost{
 
 #include <boost/interprocess/detail/config_end.hpp>
 

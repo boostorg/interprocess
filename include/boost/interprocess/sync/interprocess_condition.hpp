@@ -45,9 +45,16 @@ namespace posix_time
 
 namespace interprocess {
 
-class interprocess_condition : private noncopyable
+class named_condition;
+
+class interprocess_condition
 {
- public:
+   //Non-copyable
+   interprocess_condition(const interprocess_condition &);
+   interprocess_condition &operator=(const interprocess_condition &);
+   friend class named_condition;
+
+   public:
    /*!Constructs a interprocess_condition*/
    interprocess_condition();
 
@@ -70,7 +77,7 @@ class interprocess_condition : private noncopyable
    {
       if (!lock)
          throw lock_exception();
-      do_wait(*lock.interprocess_mutex());
+      do_wait(*lock.mutex());
    }
 
    /*!The same as: while (!pred()) wait(lock)*/
@@ -81,7 +88,7 @@ class interprocess_condition : private noncopyable
          throw lock_exception();
 
       while (!pred())
-         do_wait(*lock.interprocess_mutex());
+         do_wait(*lock.mutex());
    }
 
    /*!Releases the lock on the interprocess_mutex object associated with lock, blocks 
@@ -95,7 +102,7 @@ class interprocess_condition : private noncopyable
       if (!lock)
             throw lock_exception();
 
-      return do_timed_wait(abs_time, *lock.interprocess_mutex());
+      return do_timed_wait(abs_time, *lock.mutex());
    }
 
    /*!The same as:   while (!pred()) { 
@@ -108,7 +115,7 @@ class interprocess_condition : private noncopyable
             throw lock_exception();
 
       while (!pred()){
-            if (!do_timed_wait(abs_time, *lock.interprocess_mutex()))
+            if (!do_timed_wait(abs_time, *lock.mutex()))
                return false;
       }
 
@@ -117,7 +124,9 @@ class interprocess_condition : private noncopyable
 
  private:
    void do_wait(interprocess_mutex  &mut);
+
    bool do_timed_wait(const boost::posix_time::ptime &abs_time, interprocess_mutex &mut);
+
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
    enum { SLEEP, NOTIFY_ONE, NOTIFY_ALL };
    interprocess_mutex m_enter_mut;

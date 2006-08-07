@@ -93,9 +93,18 @@ inline global_lock::global_lock()
    
 inline bool global_lock::acquire()
 {  
+   const unsigned int BufSize = 64;
+   char globalMutexName[BufSize];
+   const char *prefix = "/boost_shmem_shm_global_mutex-";
+   if((strlen(getenv("LOGNAME") + strlen(prefix) + 1)) > BufSize){
+      return false;      
+   }
+   strcpy(globalMutexName, prefix);
+   strcat(globalMutexName, getenv("LOGNAME"));
    mode_t mode = S_IRWXG | S_IRWXO | S_IRWXU;
-   m_sem = sem_open("/boost_shmem_shm_global_mutex", O_CREAT, mode, 1);
-   if(m_sem == ((sem_t*)-1))
+   m_sem = sem_open(globalMutexName, O_CREAT, mode, 1);
+
+   if(m_sem == SEM_FAILED)
       return false;
    m_acquired = sem_wait(m_sem) == 0; 
    return m_acquired;  

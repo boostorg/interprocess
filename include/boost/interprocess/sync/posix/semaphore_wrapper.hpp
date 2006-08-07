@@ -19,33 +19,40 @@ namespace boost {
 namespace interprocess {
 namespace detail {
 
-class semaphore_wrapper : private boost::noncopyable
+class semaphore_wrapper
 {
+   semaphore_wrapper();
+   semaphore_wrapper(const semaphore_wrapper&);
+   semaphore_wrapper &operator= (const semaphore_wrapper &);
  public:
    semaphore_wrapper(int initialCount)
    {
-      if(sem_init(&m_sem, 1, initialCount) != 0){
+      int ret = sem_init(&m_sem, 1, initialCount);
+      if(ret != 0){
          throw interprocess_exception(system_error_code());
       }
    }
 
    ~semaphore_wrapper()
    {
-      if(sem_destroy(&m_sem) != 0){  
+      int ret = sem_destroy(&m_sem);
+      if(ret != 0){  
          assert(0);
       }
    }
 
    void post()
    {
-      if(sem_post(&m_sem) != 0){
+      int ret = sem_post(&m_sem);
+      if(ret != 0){
          throw interprocess_exception(system_error_code());
       }
    }
 
    void wait()
    {
-      if(sem_wait(&m_sem) != 0){
+      int ret = sem_wait(&m_sem);
+      if(ret != 0){
          throw interprocess_exception(system_error_code());
       }
    }

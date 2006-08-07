@@ -38,7 +38,7 @@ class multi_simple_seq_fit
 {
    typedef detail::simple_seq_fit_impl<MutexFamily, VoidPtr> base_t;
  public:
-   /*!Constructor. "size" is the total size of the fixed size memory segment, 
+   /*!Constructor. "size" is the total size of the managed memory segment, 
       "extra_hdr_bytes" indicates the extra bytes beginning in the sizeof(multi_simple_seq_fit)
       offset that the allocator should not use at all.*/
    multi_simple_seq_fit           (std::size_t size, std::size_t extra_hdr_bytes)

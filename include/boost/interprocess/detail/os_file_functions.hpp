@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion GaztaÃ±aga 2005-2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -26,7 +26,7 @@
 #  endif
 #endif
 
-#include <string.h>
+#include <cstring>
 
 namespace boost {
 namespace interprocess {
@@ -68,9 +68,10 @@ inline bool close_file(OS_file_handle_t hnd)
 
 inline bool acquire_file_lock(OS_file_handle_t hnd)
 {  
+   static winapi::interprocess_overlapped overlapped;
    const unsigned long len = 0xffffffff;
-   winapi::interprocess_overlapped overlapped;
-   memset(&overlapped, 0, sizeof(overlapped));
+//   winapi::interprocess_overlapped overlapped;
+//   std::memset(&overlapped, 0, sizeof(overlapped));
    return winapi::lock_file_ex
       (hnd, winapi::lockfile_exclusive_lock, 0, len, len, &overlapped);
 }
@@ -79,7 +80,7 @@ inline bool try_acquire_file_lock(OS_file_handle_t hnd, bool &acquired)
 {  
    const unsigned long len = 0xffffffff;
    winapi::interprocess_overlapped overlapped;
-   memset(&overlapped, 0, sizeof(overlapped));
+   std::memset(&overlapped, 0, sizeof(overlapped));
    if(!winapi::lock_file_ex
       (hnd, winapi::lockfile_exclusive_lock | winapi::lockfile_fail_immediately, 
        0, len, len, &overlapped)){
@@ -123,7 +124,7 @@ inline bool release_file_lock(OS_file_handle_t hnd)
 {  
    const unsigned long len = 0xffffffff;
    winapi::interprocess_overlapped overlapped;
-   memset(&overlapped, 0, sizeof(overlapped));
+   std::memset(&overlapped, 0, sizeof(overlapped));
    return winapi::unlock_file_ex(hnd, 0, len, len, &overlapped);
 }
 
@@ -131,7 +132,7 @@ inline bool acquire_file_lock_sharable(OS_file_handle_t hnd)
 {  
    const unsigned long len = 0xffffffff;
    winapi::interprocess_overlapped overlapped;
-   memset(&overlapped, 0, sizeof(overlapped));
+   std::memset(&overlapped, 0, sizeof(overlapped));
    return winapi::lock_file_ex(hnd, 0, 0, len, len, &overlapped);
 }
 
@@ -139,7 +140,7 @@ inline bool try_acquire_file_lock_sharable(OS_file_handle_t hnd, bool &acquired)
 {  
    const unsigned long len = 0xffffffff;
    winapi::interprocess_overlapped overlapped;
-   memset(&overlapped, 0, sizeof(overlapped));
+   std::memset(&overlapped, 0, sizeof(overlapped));
    if(!winapi::lock_file_ex
       (hnd, winapi::lockfile_fail_immediately, 0, len, len, &overlapped)){
       return winapi::get_last_error() == winapi::error_lock_violation ? 
@@ -206,7 +207,7 @@ inline bool close_file(OS_file_handle_t hnd)
 {  return ::close(hnd) == 0;   }
 
 inline bool acquire_file_lock(OS_file_handle_t hnd)
-{  
+{
    struct ::flock lock;
    lock.l_type    = F_WRLCK;
    lock.l_whence  = SEEK_SET;
@@ -216,7 +217,7 @@ inline bool acquire_file_lock(OS_file_handle_t hnd)
 }
 
 inline bool try_acquire_file_lock(OS_file_handle_t hnd, bool &acquired)
-{  
+{
    struct ::flock lock;
    lock.l_type    = F_WRLCK;
    lock.l_whence  = SEEK_SET;
@@ -224,7 +225,7 @@ inline bool try_acquire_file_lock(OS_file_handle_t hnd, bool &acquired)
    lock.l_len     = 0;
    int ret = ::fcntl(hnd, F_SETLK, &lock);
    if(ret == -1){
-      return (errno != EAGAIN && errno != EACCES) ? 
+      return (errno != EAGAIN && errno != EACCES) ?
                acquired = false, true : false;
    }
    return (acquired = true);
@@ -232,7 +233,7 @@ inline bool try_acquire_file_lock(OS_file_handle_t hnd, bool &acquired)
 
 inline bool timed_acquire_file_lock
    (OS_file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
-{  
+{
    //Obtain current count and target time
    boost::posix_time::ptime now = 
       boost::posix_time::microsec_clock::universal_time();
@@ -260,13 +261,16 @@ inline bool timed_acquire_file_lock
 }
 
 inline bool release_file_lock(OS_file_handle_t hnd)
-{  
+{
+   return 0 == lockf(hnd, F_ULOCK, 0);
+/*
    struct ::flock lock;
    lock.l_type    = F_UNLCK;
    lock.l_whence  = SEEK_SET;
    lock.l_start   = 0;
    lock.l_len     = 0;
    return -1 != ::fcntl(hnd, F_SETLK, &lock);
+*/
 }
 
 inline bool acquire_file_lock_sharable(OS_file_handle_t hnd)

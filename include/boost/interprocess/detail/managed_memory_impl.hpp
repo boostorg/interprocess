@@ -28,7 +28,6 @@
 #include <boost/interprocess/segment_manager.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 //
-#include <boost/noncopyable.hpp>
 #include <boost/ref.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 //
@@ -62,6 +61,10 @@ template<
         >
 class basic_managed_memory_impl
 {
+   //Non-copyable
+   basic_managed_memory_impl(const basic_managed_memory_impl &);
+   basic_managed_memory_impl &operator=(const basic_managed_memory_impl &);
+
    public:
    typedef segment_manager
                <CharType, MemoryAlgorithm, IndexType> segment_manager;

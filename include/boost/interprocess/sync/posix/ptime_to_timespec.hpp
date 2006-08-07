@@ -23,10 +23,10 @@ namespace detail {
 
 inline timespec ptime_to_timespec (const boost::posix_time::ptime &tm)
 {
-   const boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));   
+   const boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
    boost::posix_time::time_duration duration (tm - epoch);
    timespec ts;
-   ts.tv_sec  = duration.seconds();
+   ts.tv_sec  = duration.total_seconds();
    ts.tv_nsec = duration.total_nanoseconds() % 1000000000;
    return ts;
 }

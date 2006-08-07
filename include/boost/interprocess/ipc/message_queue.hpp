@@ -4,7 +4,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess/ for documentation.
+// See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 
@@ -20,11 +20,13 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/exceptions.hpp>
 #include <boost/type_traits/alignment_of.hpp>
 
 #include <algorithm> //std::lower_bound
 #include <cstddef>   //std::size_t
-#include <string.h>  //memcpy
+#include <cstring>   //memcpy
+
 
 /*!\file
    Describes an inter-process message queue. This class allows sending
@@ -42,16 +44,6 @@ class message_queue
 
    message_queue();
  public:
-   /*!Result types when sending or receiving messages*/
-   enum result_t  { 
-                  ok, 
-                  internal_error, 
-                  empty, 
-                  full, 
-                  too_small_buffer, 
-                  timeout,  
-                  too_big_buffer, 
-                  };
 
    /*!Creates a process shared message queue with name "name". For this message queue,
       the maximum number of messages will be "max_num_msg" and the maximum message size
@@ -82,89 +74,77 @@ class message_queue
 
    /*!Sends a message stored in buffer "buffer" with size "buffer_size" in the 
       message queue with priority "priority". If the message queue is full
-      the sender is blocked. Returns "ok" if message is placed in the message
-      queue, "internal_error" if message queue is corrupted, or "too_big_buffer"
-      if parameter "buffer_size" is bigger than the maximum message size allowed
-      in the queue. Never throws*/
-   result_t send    (const void *buffer,     std::size_t buffer_size, 
-                     unsigned int priority);
+      the sender is blocked. Throws interprocess_error on error.*/
+   void send (const void *buffer,     std::size_t buffer_size, 
+              unsigned int priority);
 
-   /*!Sends a message stored in buffer "buffer" with size "buffer_size" in the 
+   /*!Sends a message stored in buffer "buffer" with size "buffer_size" through the 
       message queue with priority "priority". If the message queue is full
-      the sender is not blocked. Returns "ok" if message is placed in the message
-      queue, "internal_error" if message queue is corrupted, "too_big_buffer"
-      if parameter "buffer_size" is bigger than the maximum message size allowed
-      in the queue and "full" if message queue is full and message can't be
-      placed there. Never throws*/
-   result_t try_send    (const void *buffer,     std::size_t buffer_size, 
+      the sender is not blocked and returns false, otherwise returns true.
+      Throws interprocess_error on error.*/
+   bool try_send    (const void *buffer,     std::size_t buffer_size, 
                          unsigned int priority);
 
    /*!Sends a message stored in buffer "buffer" with size "buffer_size" in the 
       message queue with priority "priority". If the message queue is full
-      the sender is retries until time "abs_time" is reached. Returns "ok" if message 
-      is placed in the message queue, "internal_error" if message queue is corrupted, 
-      "too_big_buffer" if parameter "buffer_size" is bigger than the maximum message 
-      size allowed in the queue and "timeout" if message can't be placed and time 
-      "abs_time" is reached. Never throws*/
-   result_t timed_send    (const void *buffer,     std::size_t buffer_size, 
+      the sender is retries until time "abs_time" is reached. Returns true if
+      the message has been successfully sent. Returns false if timeout is reached.
+      Throws interprocess_error on error.*/
+   bool timed_send    (const void *buffer,     std::size_t buffer_size, 
                            unsigned int priority,  const boost::posix_time::ptime& abs_time);
 
    /*!Receives a message from the message queue. The message is stored in buffer 
       "buffer", which has size "buffer_size". The received message has size 
-      "recvd_size" and priority "priority". If the message queue is empty
-      the receiver is blocked. Returns "ok" if a message is received from the 
-      message queue, "internal_error" if message queue is corrupted, or 
-      "too_small_buffer" if parameter "buffer_size" is smaller than the maximum 
-      message size allowed in the queue. Never throws*/
-   result_t receive (void *buffer,           std::size_t buffer_size, 
+      "recvd_size" and priority "priority". If the message queue is full
+      the sender is blocked. Throws interprocess_error on error.*/
+   void receive (void *buffer,           std::size_t buffer_size, 
+                 std::size_t &recvd_size,unsigned int &priority);
+
+   /*!Receives a message from the message queue. The message is stored in buffer 
+      "buffer", which has size "buffer_size". The received message has size 
+      "recvd_size" and priority "priority". If the message queue is full
+      the sender is not blocked and returns false, otherwise returns true.
+      Throws interprocess_error on error.*/
+   bool try_receive (void *buffer,           std::size_t buffer_size, 
                      std::size_t &recvd_size,unsigned int &priority);
 
    /*!Receives a message from the message queue. The message is stored in buffer 
       "buffer", which has size "buffer_size". The received message has size 
-      "recvd_size" and priority "priority". If the message queue is empty
-      the receiver is not blocked. Returns "ok" if a message is received from the 
-      message queue, "internal_error" if message queue is corrupted, 
-      "too_small_buffer" if parameter "buffer_size" is smaller than the maximum 
-      message size allowed in the queue or "empty" is message queue is empty. 
-      Never throws*/
-   result_t try_receive (void *buffer,           std::size_t buffer_size, 
-                         std::size_t &recvd_size,unsigned int &priority);
-
-   /*!Receives a message from the message queue. The message is stored in buffer 
-      "buffer", which has size "buffer_size". The received message has size 
-      "recvd_size" and priority "priority". If the message queue is empty
-      the receiver retries until time "abs_time" is reached. Returns "ok" if a message is
-      received from the message queue, "internal_error" if message queue is 
-      corrupted, "too_small_buffer" if parameter "buffer_size" is smaller than the 
-      maximum message size allowed in the queue or "timeout" is message queue is 
-      empty. Never throws*/
-   result_t timed_receive (void *buffer,           std::size_t buffer_size, 
-                           std::size_t &recvd_size,unsigned int &priority,
-                           const boost::posix_time::ptime &abs_time);
+      "recvd_size" and priority "priority". If the message queue is full
+      the sender is retries until time "abs_time" is reached. Returns true if
+      the message has been successfully sent. Returns false if timeout is reached.
+      Throws interprocess_error on error.*/
+   bool timed_receive (void *buffer,           std::size_t buffer_size, 
+                       std::size_t &recvd_size,unsigned int &priority,
+                       const boost::posix_time::ptime &abs_time);
 
    /*!Returns the maximum number of messages allowed by the queue. The message
       queue must be opened or created previously. Otherwise, returns 0. 
       Never throws*/
-   std::size_t get_max_num_msg() const;
+   std::size_t get_max_msg() const;
 
    /*!Returns the maximum size of message allowed by the queue. The message
       queue must be opened or created previously. Otherwise, returns 0. 
       Never throws*/
    std::size_t get_max_msg_size() const;
 
+   /*!Returns the number of messages currently stored. 
+      Never throws*/
+   std::size_t get_num_msg();
+
    /*!Removes the message queue from the system. Never throws*/
    static bool remove(const char *name);
    
    private:
    typedef boost::posix_time::ptime ptime;
-   result_t receive(block_t block,
-                  void *buffer,            std::size_t buffer_size, 
-                  std::size_t &recvd_size, unsigned int &priority,
-                  const ptime &abs_time = ptime());
+   bool do_receive(block_t block,
+                   void *buffer,            std::size_t buffer_size, 
+                   std::size_t &recvd_size, unsigned int &priority,
+                   const ptime &abs_time);
 
-   result_t send(block_t block,
-               const void *buffer,      std::size_t buffer_size, 
-               unsigned int priority,   const ptime &abs_time = ptime());
+   bool do_send(block_t block,
+                const void *buffer,      std::size_t buffer_size, 
+                unsigned int priority,   const ptime &abs_time);
 
    /*!Returns the needed memory size for the shared message queue. Never throws*/
    static std::size_t get_mem_size(std::size_t max_msg_size, std::size_t max_num_msg);
@@ -209,8 +189,8 @@ class message_queue::priority_functor
 
 /*!This header is placed in the beginning of the shared memory and contains 
    the data to control the queue. This class initializes the shared memory 
-   in the following way in ascending memory address with proper alignment
-   fillings (title is a c pseudo-code to explain better the structure):
+   in the following way: in ascending memory address with proper alignment
+   fillings:
    
    -> mq_hdr_t: 
       Main control block that controls the rest of the elements
@@ -242,22 +222,30 @@ class message_queue::priority_functor
 */
 class message_queue::mq_hdr_t
    : public priority_functor
-{
+{	
    typedef offset_ptr<msg_hdr_t> msg_hdr_ptr_t;
 public:
    /*!Constructor. This object must be constructed in the beginning of the 
       shared memory of the size returned by the function "get_mem_size".
       This constructor initializes the needed resources and creates
       the internal structures like the priority index. This can throw.*/
-    mq_hdr_t(std::size_t max_num_msg, std::size_t max_msg_size)
+	mq_hdr_t(std::size_t max_num_msg, std::size_t max_msg_size)
       : m_max_num_msg(max_num_msg), 
          m_max_msg_size(max_msg_size),
          m_cur_num_msg(0)
-    {  this->initialize_memory();  }
+   	{  this->initialize_memory();  }
 
    /*!Returns the inserted message with top priority*/
    msg_hdr_t * top_msg()
       {  return mp_index[m_cur_num_msg-1].get();   }
+
+   /*!Returns true if the message queue is full*/
+   bool is_full() const
+      {  return m_cur_num_msg == m_max_num_msg;  }
+
+   /*!Returns true if the message queue is empty*/
+   bool is_empty() const
+      {  return !m_cur_num_msg;  }
 
    /*!Frees the top priority message and saves it in the free message list*/
    void free_top_msg()
@@ -278,7 +266,7 @@ public:
       it = std::lower_bound(it, it_end, free, static_cast<priority_functor&>(*this));
       //Make room in that position
       std::copy_backward(it, it_end, it_end+1);
-      //Insert the free message in correct position
+      //Insert the free message in the correct position
       *it = free;
       ++m_cur_num_msg;
    }
@@ -338,11 +326,11 @@ public:
    //Current number of messages
    std::size_t                m_cur_num_msg;
    //Mutex to protect data structures
-   interprocess_mutex               m_mutex;
+   interprocess_mutex         m_mutex;
    //Condition block receivers when there are no messages
-   interprocess_condition           m_cond_recv;
+   interprocess_condition     m_cond_recv;
    //Condition block senders when the queue is full
-   interprocess_condition           m_cond_send;
+   interprocess_condition     m_cond_send;
 };
 
 
@@ -391,7 +379,7 @@ inline message_queue::message_queue(detail::create_only_t create_only,
    :  m_shmem(create_only, 
               name, 
               get_mem_size(max_msg_size, max_num_msg),
-              memory_mapping::rw_mode,
+              memory_mappable::read_write,
               (void*)0,
               //Prepare initialization functor
               initialization_func_t (max_num_msg, max_msg_size))
@@ -410,7 +398,7 @@ inline message_queue::message_queue(detail::open_or_create_t open_or_create,
    :  m_shmem(open_or_create, 
               name, 
               get_mem_size(max_msg_size, max_num_msg),
-              memory_mapping::rw_mode,
+              memory_mappable::read_write,
               (void*)0,
               //Prepare initialization functor
               initialization_func_t (max_num_msg, max_msg_size))
@@ -424,36 +412,33 @@ inline message_queue::message_queue(detail::open_only_t open_only,
    //Create shared memory and execute functor atomically
    :  m_shmem(open_only, 
               name,
-              memory_mapping::rw_mode,
+              memory_mappable::read_write,
               (void*)0,
               //Prepare initialization functor
               initialization_func_t ())
 {}
 
-inline message_queue::result_t 
-     message_queue::send(const void *buffer,      std::size_t buffer_size, 
-                                unsigned int priority)
-   {  return this->send(blocking, buffer, buffer_size, priority); }
+inline void message_queue::send
+   (const void *buffer, std::size_t buffer_size, unsigned int priority)
+{  this->do_send(blocking, buffer, buffer_size, priority, ptime()); }
 
-inline message_queue::result_t 
-     message_queue::try_send(const void *buffer,      std::size_t buffer_size, 
-                                    unsigned int priority)
-   {  return this->send(non_blocking, buffer, buffer_size, priority); }
+inline bool message_queue::try_send
+   (const void *buffer, std::size_t buffer_size, unsigned int priority)
+{  return this->do_send(non_blocking, buffer, buffer_size, priority, ptime()); }
 
-inline message_queue::result_t 
-     message_queue::timed_send(const void *buffer,      std::size_t buffer_size, 
-                                      unsigned int priority,   const boost::posix_time::ptime &abs_time)
-   {  return this->send(timed, buffer, buffer_size, priority, abs_time); }
+inline bool message_queue::timed_send
+   (const void *buffer, std::size_t buffer_size
+   ,unsigned int priority, const boost::posix_time::ptime &abs_time)
+{  return this->do_send(timed, buffer, buffer_size, priority, abs_time); }
 
-inline message_queue::result_t 
-     message_queue::send(block_t block,
+inline bool message_queue::do_send(block_t block,
                                 const void *buffer,      std::size_t buffer_size, 
                                 unsigned int priority,   const boost::posix_time::ptime &abs_time)
 {
    mq_hdr_t *p_hdr = static_cast<mq_hdr_t*>(m_shmem.get_address());
    //Check if buffer is smaller than maximum allowed
    if (buffer_size > p_hdr->m_max_msg_size) {
-      return too_big_buffer;
+      throw interprocess_exception(size_error);
    }
 
    //---------------------------------------------
@@ -461,34 +446,36 @@ inline message_queue::result_t
    //---------------------------------------------
    {
       //If the queue is full execute blocking logic
-      if (p_hdr->m_cur_num_msg >= p_hdr->m_max_num_msg) {
+      if (p_hdr->is_full()) {
 
          switch(block){
             case non_blocking :
-               return full;
+               return false;
             break;
 
             case blocking :
-               while (p_hdr->m_cur_num_msg >= p_hdr->m_max_num_msg){
+               do{
                   p_hdr->m_cond_send.wait(lock);
                }
+               while (p_hdr->is_full());
             break;
 
             case timed :
-               while (p_hdr->m_cur_num_msg >= p_hdr->m_max_num_msg){
+               do{
                   if(!p_hdr->m_cond_send.timed_wait(lock, abs_time))
-                     return timeout;
+                     return false;
                }
+               while (p_hdr->is_full());
             break;
             default:
-               return internal_error;
+               throw interprocess_exception();
          }
       }
       
       //Get the first free message from free message queue
       msg_hdr_t *free_msg = p_hdr->free_msg();
       if (free_msg == 0) {
-         return internal_error;
+         throw interprocess_exception();
       }
 
       //Copy control data to the free message
@@ -496,46 +483,46 @@ inline message_queue::result_t
       free_msg->len      = buffer_size;
 
       //Copy user buffer to the message
-      memcpy(free_msg->data(), buffer, buffer_size);
+      std::memcpy(free_msg->data(), buffer, buffer_size);
 
+//      bool was_empty = p_hdr->is_empty();
       //Insert the first free message in the priority queue
       p_hdr->queue_free_msg();
       
       //If this message changes the queue empty state, notify it to receivers
-      if (p_hdr->m_cur_num_msg == 1){
+//      if (was_empty){
          p_hdr->m_cond_recv.notify_one();
-      }
+//      }
    }  // Lock end
 
-   return ok;
+   return true;
 }
 
-inline message_queue::result_t 
-   message_queue::receive(void *buffer,              std::size_t buffer_size, 
-                                 std::size_t &recvd_size,   unsigned int &priority)
-   {  return this->receive(blocking, buffer, buffer_size, recvd_size, priority); }
+inline void message_queue::receive(void *buffer,              std::size_t buffer_size, 
+                                   std::size_t &recvd_size,   unsigned int &priority)
+{  this->do_receive(blocking, buffer, buffer_size, recvd_size, priority, ptime()); }
 
-inline message_queue::result_t 
+inline bool
    message_queue::try_receive(void *buffer,              std::size_t buffer_size, 
-                                     std::size_t &recvd_size,   unsigned int &priority)
-   {  return this->receive(non_blocking, buffer, buffer_size, recvd_size, priority); }
+                              std::size_t &recvd_size,   unsigned int &priority)
+{  return this->do_receive(non_blocking, buffer, buffer_size, recvd_size, priority, ptime()); }
 
-inline message_queue::result_t 
+inline bool
    message_queue::timed_receive(void *buffer,              std::size_t buffer_size, 
-                                       std::size_t &recvd_size,   unsigned int &priority,
-                                       const boost::posix_time::ptime &abs_time)
-   {  return this->receive(timed, buffer, buffer_size, recvd_size, priority, abs_time); }
+                                std::size_t &recvd_size,   unsigned int &priority,
+                                const boost::posix_time::ptime &abs_time)
+{  return this->do_receive(timed, buffer, buffer_size, recvd_size, priority, abs_time); }
 
-inline message_queue::result_t 
-   message_queue::receive(block_t block,
-                                 void *buffer,              std::size_t buffer_size, 
-                                 std::size_t &recvd_size,   unsigned int &priority,
-                                 const boost::posix_time::ptime &abs_time)
+inline bool
+   message_queue::do_receive(block_t block,
+                          void *buffer,              std::size_t buffer_size, 
+                          std::size_t &recvd_size,   unsigned int &priority,
+                          const boost::posix_time::ptime &abs_time)
 {
    mq_hdr_t *p_hdr = static_cast<mq_hdr_t*>(m_shmem.get_address());
    //Check if buffer is big enough for any message
    if (buffer_size < p_hdr->m_max_msg_size) {
-      return too_small_buffer;
+      throw interprocess_exception(size_error);
    }
 
    //---------------------------------------------
@@ -543,28 +530,30 @@ inline message_queue::result_t
    //---------------------------------------------
    {
       //If there are no messages execute blocking logic
-      if (p_hdr->m_cur_num_msg == 0) {
+      if (p_hdr->is_empty()) {
          switch(block){
             case non_blocking :
-               return empty;
+               return false;
             break;
 
             case blocking :
-               while (p_hdr->m_cur_num_msg == 0){
+               do{
                   p_hdr->m_cond_recv.wait(lock);
                }
+               while (p_hdr->is_empty());
             break;
 
             case timed :
-               while (p_hdr->m_cur_num_msg == 0){
+               do{
                   if(!p_hdr->m_cond_recv.timed_wait(lock, abs_time))
-                     return timeout;
+                     return false;
                }
+               while (p_hdr->is_empty());
             break;
 
             //Paranoia check
             default:
-               return internal_error;
+               throw interprocess_exception();
          }
       }
 
@@ -573,7 +562,7 @@ inline message_queue::result_t
 
       //Paranoia check
       if (top_msg == 0) {
-         return internal_error;
+         throw interprocess_exception();
       }
 
       //Get data from the message
@@ -581,24 +570,26 @@ inline message_queue::result_t
       priority       = top_msg->priority;
 
       //Copy data to receiver's bufers
-      memcpy(buffer, top_msg->data(), recvd_size);
+      std::memcpy(buffer, top_msg->data(), recvd_size);
+
+//      bool was_full = p_hdr->is_full();
 
       //Free top message and put it in the free message list
       p_hdr->free_top_msg();
 
       //If this reception changes the queue full state, notify senders
-      if (p_hdr->m_cur_num_msg == (p_hdr->m_max_num_msg-1)){
+//      if (was_full){
          p_hdr->m_cond_send.notify_one();
-      }
+//      }
    }  //Lock end
 
-   return ok;
+   return true;
 }
 
-inline std::size_t message_queue::get_max_num_msg() const
+inline std::size_t message_queue::get_max_msg() const
 {  
    mq_hdr_t *p_hdr = static_cast<mq_hdr_t*>(m_shmem.get_address());
-   return p_hdr ? p_hdr->m_max_msg_size : 0;  }
+   return p_hdr ? p_hdr->m_max_num_msg : 0;  }
 
 inline std::size_t message_queue::get_max_msg_size() const
 {  
@@ -606,8 +597,23 @@ inline std::size_t message_queue::get_max_msg_size() const
    return p_hdr ? p_hdr->m_max_msg_size : 0;  
 }
 
+inline std::size_t message_queue::get_num_msg()
+{  
+   mq_hdr_t *p_hdr = static_cast<mq_hdr_t*>(m_shmem.get_address());
+   if(p_hdr){
+      //---------------------------------------------
+      scoped_lock<interprocess_mutex> lock(p_hdr->m_mutex);
+      //---------------------------------------------
+      return p_hdr->m_cur_num_msg;
+   }
+
+   return 0;  
+}
+
+   std::size_t get_num_msg();
+
 inline bool message_queue::remove(const char *name)
-{  return shared_memory::remove(name);  }
+{  return shared_memory_object::remove(name);  }
 
 }} //namespace boost{  namespace interprocess{
 

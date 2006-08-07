@@ -33,15 +33,13 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-
-#include <boost/noncopyable.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <assert.h>
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-#  include <boost/interprocess/sync/win32/win32_sync_primitives.hpp>
+#  include <boost/interprocess/detail/os_thread_functions.hpp>
 #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 #  include <pthread.h>
 #  include <errno.h>
@@ -59,33 +57,51 @@ namespace interprocess {
 /*!Wraps a interprocess_mutex that can be placed in shared memory and can be 
    shared between processes. Allows several locking calls by the same 
    process. Allows timed lock tries*/
-class interprocess_recursive_mutex : private boost::noncopyable
+class interprocess_recursive_mutex
 {
-public:
+   //Non-copyable
+   interprocess_recursive_mutex(const interprocess_recursive_mutex &);
+   interprocess_recursive_mutex &operator=(const interprocess_recursive_mutex &);
+
+   public:
+   /*!Constructor. Throws interprocess_exception on error.*/
    interprocess_recursive_mutex();
+
+   /*!Destructor. If any process uses the mutex after the destructor is called
+      the result is undefined. Does not throw.*/
   ~interprocess_recursive_mutex();
 
-   /*!Locks interprocess_mutex, sleeps when interprocess_mutex is already locked.
-      Throws interprocess_exception if a severe error is found*/
+   /*!Effects: The calling thread tries to obtain ownership of the mutex, and
+         if another thread has ownership of the mutex, it waits until it can
+         obtain the ownership. If a thread takes ownership of the mutex the
+         mutex must be unlocked by the same mutex. The mutex must be unlocked
+         the same number of times it is locked.
+      Throws: interprocess_exception on error.*/
    void lock(void);
 
    /*! Tries to lock the interprocess_mutex, returns false when interprocess_mutex 
-      is already locked, returns true when success.
-      Throws interprocess_exception if a severe error is found*/
+      is already locked, returns true when success. The mutex must be unlocked
+      the same number of times it is locked.
+      Throws: interprocess_exception if a severe error is found*/
    bool try_lock(void);
 
    /*! Tries to lock the interprocess_mutex, if interprocess_mutex can't be locked before
-      abs_time time, returns false.
-      Throws interprocess_exception if a severe error is found*/
+      abs_time time, returns false. The mutex must be unlocked
+         the same number of times it is locked.
+      Throws: interprocess_exception if a severe error is found*/
    bool timed_lock(const boost::posix_time::ptime &abs_time);
 
-   /*! Unlocks the interprocess_mutex */
+   /*!Effects: The calling thread releases the exclusive ownership of the mutex.
+         If the mutex supports recursive locking, the mutex must be unlocked the
+         same number of times it is locked.
+      Throws: interprocess_exception on error.*/
    void unlock(void);
 
+   private:
    #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-   interprocess_mutex   m_shared_timed_mutex;
-   unsigned int         m_nLockCount;
-   unsigned long        m_nOwner;
+   interprocess_mutex      m_mutex;
+   unsigned int            m_nLockCount;
+   detail::OS_thread_id_t  m_nOwner;
    #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
    #if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
       pthread_mutex_t m_mut;   
@@ -104,7 +120,7 @@ public:
 }  //namespace boost {
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-#  include <boost/interprocess/sync/win32/interprocess_recursive_mutex.hpp>
+#  include <boost/interprocess/sync/emulation/interprocess_recursive_mutex.hpp>
 #else 
 #  include <boost/interprocess/sync/posix/interprocess_recursive_mutex.hpp>
 #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)

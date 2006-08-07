@@ -30,7 +30,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess/ for documentation.
+// See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -101,7 +101,8 @@ struct rb_tree_node
 
    static node_pointer downcast(basic_node_pointer upclass_pointer/*const basic_node_pointer &upclass_pointer*/)
    {
-      return boost::interprocess::do_static_cast<node_pointer>(upclass_pointer);
+      return boost::interprocess::cast_to<node_pointer>::using_static_cast(upclass_pointer);
+//      return boost::interprocess::do_static_cast<node_pointer>(upclass_pointer);
    }
 
    const value_type &value() const   {  return m_value; }
@@ -431,8 +432,8 @@ class rb_tree
    typedef typename allocator_type::difference_type   difference_type;
    typedef rb_tree_const_iterator<node_val_t>         const_iterator;
    typedef rb_tree_iterator<node_val_t>               iterator;
-    typedef boost::reverse_iterator<iterator>          reverse_iterator;
-    typedef boost::reverse_iterator<const_iterator>    const_reverse_iterator;
+	typedef boost::reverse_iterator<iterator>          reverse_iterator;
+	typedef boost::reverse_iterator<const_iterator>    const_reverse_iterator;
 
    rb_tree(const Compare& comp = Compare(), 
            const allocator_type& a = allocator_type())

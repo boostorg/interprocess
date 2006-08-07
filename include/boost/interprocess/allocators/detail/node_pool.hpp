@@ -22,7 +22,6 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/math/common_factor_ct.hpp>
-#include <boost/noncopyable.hpp>
 #include <cstddef>
 #include <assert.h>
 
@@ -41,8 +40,13 @@ namespace detail {
    responsibility of user classes. Node size (NodeSize) and the number of
    nodes allocated per chunk (NumAlloc) are known at compile time*/
 template<class SegmentManager, std::size_t NodeSize, std::size_t NumAlloc >
-class private_node_pool : private boost::noncopyable
+class private_node_pool
 {
+   //Non-copyable
+   private_node_pool();
+   private_node_pool(const private_node_pool &);
+   private_node_pool &operator=(const private_node_pool &);
+
    typedef typename SegmentManager::void_pointer void_pointer;
    typedef typename pointer_to_other<void_pointer, char>::type char_ptr_t;
 

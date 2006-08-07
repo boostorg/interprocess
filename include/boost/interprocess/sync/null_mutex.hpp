@@ -30,7 +30,8 @@ namespace posix_time
 
 namespace interprocess {
 
-/*!Wraps a interprocess_mutex that does nothing */
+/*!Implements a mutex that simulates a mutex without doing any operation and
+   simulates a successful operation.*/
 class null_mutex
 {
    null_mutex(const null_mutex&);
@@ -38,23 +39,99 @@ class null_mutex
 
    public:
 
-   /*!Empty constructor */
+   /*!Constructor. Empty.*/
    null_mutex(){}
 
-   /*!Empty destructor */
-  ~null_mutex(){}
+   /*!Destructor. Empty.*/
+   ~null_mutex(){}
 
-   /*!Does nothing */
+   /*!Simulates a mutex lock() operation. Empty function. Does not throw.*/
    void lock(){}
 
-   /*!Returns true */
-   bool try_lock(){  return true;   }
+   /*!Simulates a mutex try_lock() operation. Returns always true. Does not throw.*/
+   bool try_lock()
+   {  return true;   }
 
-   /*!Returns true */
-   bool timed_lock(const boost::posix_time::ptime &abs_time){  return true;   }
+   /*!Simulates a mutex timed_lock() operation. Returns always true. Does not throw.*/
+   bool timed_lock(const boost::posix_time::ptime &abs_time)
+   {  return true;   }
 
-   /*!Does nothing */
+   /*!Simulates a mutex unlock() operation. Empty function. Does not throw.*/
    void unlock(){}
+
+   /*!Simulates a mutex lock_sharable() operation. Empty function.
+      Does not throw.*/
+   void lock_sharable(){}
+
+   /*!Simulates a mutex try_lock_sharable() operation. Returns always true.
+      Does not throw.*/
+   bool try_lock_sharable()
+   {  return true;   }
+
+   /*!Simulates a mutex timed_lock_sharable() operation. Returns always true.
+      Does not throw.*/
+   bool timed_lock_sharable(const boost::posix_time::ptime &abs_time)
+   {  return true;   }
+
+   /*!Simulates a mutex unlock_sharable() operation. Empty function.
+      Does not throw.*/
+   void unlock_sharable(){}
+
+   /*!Simulates a mutex lock_upgradable() operation. Empty function.
+      Does not throw.*/
+   void lock_upgradable(){}
+
+   /*!Simulates a mutex try_lock_upgradable() operation. Returns always true.
+      Does not throw.*/
+   bool try_lock_upgradable()
+   {  return true;   }
+
+   /*!Simulates a mutex timed_lock_upgradable() operation. Returns always true.
+      Does not throw.*/
+   bool timed_lock_upgradable(const boost::posix_time::ptime &abs_time)
+   {  return true;   }
+
+   /*!Simulates a mutex unlock_upgradable() operation. Empty function.
+      Does not throw.*/
+   void unlock_upgradable(){}
+
+   /*!Simulates unlock_and_lock_upgradable(). Empty function.
+      Does not throw.*/
+   void unlock_and_lock_upgradable(){}
+
+   /*!Simulates unlock_and_lock_sharable(). Empty function.
+      Does not throw.*/
+   void unlock_and_lock_sharable(){}
+
+   /*!Simulates unlock_upgradable_and_lock_sharable(). Empty function.
+      Does not throw.*/
+   void unlock_upgradable_and_lock_sharable(){}
+
+   //Promotions
+
+   /*!Simulates unlock_upgradable_and_lock(). Empty function.
+      Does not throw.*/
+   void unlock_upgradable_and_lock(){}
+
+   /*!Simulates try_unlock_upgradable_and_lock(). Returns always true.
+      Does not throw.*/
+   bool try_unlock_upgradable_and_lock()
+   {  return true;   }
+
+   /*!Simulates timed_unlock_upgradable_and_lock(). Returns always true.
+      Does not throw.*/
+   bool timed_unlock_upgradable_and_lock(const boost::posix_time::ptime &abs_time)
+   {  return true;   }
+
+   /*!Simulates try_unlock_sharable_and_lock(). Returns always true.
+      Does not throw.*/
+   bool try_unlock_sharable_and_lock()
+   {  return true;   }
+
+   /*!Simulates try_unlock_sharable_and_lock_upgradable(). Returns always true.
+      Does not throw.*/
+   bool try_unlock_sharable_and_lock_upgradable()
+   {  return true;   }
    
    #if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
    private:
@@ -63,7 +140,6 @@ class null_mutex
 };
 
 }  //namespace interprocess {
-
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>

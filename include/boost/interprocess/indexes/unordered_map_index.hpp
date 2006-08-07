@@ -55,7 +55,7 @@ struct unordered_map_index_aux
 };
 
 /*!Index type based in unordered_map. Just derives from unordered_map and
-   defines the interface needed by the shared named object creation class*/
+   defines the interface needed by managed memory segments*/
 template <class MapConfig>
 class unordered_map_index
    //Derive class from unordered_map specialization
@@ -80,7 +80,7 @@ class unordered_map_index
       {  base_type::rehash(n);  }
 };
 
-/*!Trait classes to detect if an index is a node
+/*!Trait class to detect if an index is a node
    index. This allows more efficient operations
    when deallocating named objects.*/
 template<class MapConfig>

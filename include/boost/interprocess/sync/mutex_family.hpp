@@ -34,16 +34,16 @@ namespace interprocess {
    based on boost::interprocess synchronization objects.*/
 struct mutex_family
 {
-   typedef boost::interprocess::interprocess_mutex                 mutex_t;
-   typedef boost::interprocess::interprocess_recursive_mutex       recursive_mutex_t;
+   typedef boost::interprocess::interprocess_mutex                 mutex_type;
+   typedef boost::interprocess::interprocess_recursive_mutex       recursive_mutex_type;
 };
 
 /*!Describes interprocess_mutex family to use with Interprocess frameworks 
    based on null operation synchronization objects.*/
 struct null_mutex_family
 {
-   typedef boost::interprocess::null_mutex                   mutex_t;
-   typedef boost::interprocess::null_mutex                   recursive_mutex_t;
+   typedef boost::interprocess::null_mutex                   mutex_type;
+   typedef boost::interprocess::null_mutex                   recursive_mutex_type;
 };
 
 }  //namespace interprocess {

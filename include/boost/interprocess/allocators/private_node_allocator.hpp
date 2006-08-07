@@ -59,7 +59,7 @@ class private_node_allocator
    typedef typename detail::pointer_to_other
       <void_pointer, segment_manager>::type              segment_mngr_ptr_t;
    typedef typename SegmentManager::
-      mutex_family::mutex_t                              mutex_t;
+      mutex_family::mutex_type                              mutex_type;
    typedef private_node_allocator
       <T, N, SegmentManager>                             self_t;
 

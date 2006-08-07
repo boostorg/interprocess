@@ -21,7 +21,6 @@
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/allocators/allocation_type.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
@@ -52,8 +51,13 @@ namespace detail {
    This class is intended as a base class for single segment and multi-segment
    implementations.*/
 template<class MutexFamily, class VoidPointer>
-class simple_seq_fit_impl : private boost::noncopyable
+class simple_seq_fit_impl
 {
+   //Non-copyable
+   simple_seq_fit_impl();
+   simple_seq_fit_impl(const simple_seq_fit_impl &);
+   simple_seq_fit_impl &operator=(const simple_seq_fit_impl &);
+
    public:
    /*!Shared interprocess_mutex family used for the rest of the Interprocess framework*/
    typedef MutexFamily        mutex_family;
@@ -95,7 +99,7 @@ class simple_seq_fit_impl : private boost::noncopyable
    };
 
    /*!Shared interprocess_mutex to protect memory allocate/deallocate*/
-   typedef typename MutexFamily::mutex_t        interprocess_mutex;
+   typedef typename MutexFamily::mutex_type        interprocess_mutex;
 
    /*!This struct includes needed data and derives from
       interprocess_mutex to allow EBO when using null interprocess_mutex*/
@@ -110,7 +114,7 @@ class simple_seq_fit_impl : private boost::noncopyable
    }  m_header;
 
    public:
-   /*!Constructor. "size" is the total size of the fixed size memory segment, 
+   /*!Constructor. "size" is the total size of the managed memory segment, 
       "extra_hdr_bytes" indicates the extra bytes beginning in the sizeof(simple_seq_fit_impl)
       offset that the allocator should not use at all.*/
    simple_seq_fit_impl           (std::size_t size, std::size_t extra_hdr_bytes);

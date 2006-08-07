@@ -132,8 +132,8 @@ inline bool interprocess_mutex::timed_lock(const boost::posix_time::ptime &abs_t
 {
    timespec ts = detail::ptime_to_timespec(abs_time);
    int res = pthread_mutex_timedlock(&m_mut, &ts);
-   if (res == EDEADLK || (res != 0 || res != ETIMEDOUT))
-   throw lock_exception();
+   if (res == EDEADLK || (res != 0 && res != ETIMEDOUT))
+      throw lock_exception();
    return res == 0;
 }
 

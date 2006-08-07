@@ -27,12 +27,12 @@ inline interprocess_condition::~interprocess_condition()
 
 inline void interprocess_condition::notify_one()
 {
-   notify(NOTIFY_ONE);
+   this->notify(NOTIFY_ONE);
 }
 
 inline void interprocess_condition::notify_all()
 {
-   notify(NOTIFY_ALL);
+   this->notify(NOTIFY_ALL);
 }
 
 inline void interprocess_condition::notify(long command)
@@ -46,25 +46,34 @@ inline void interprocess_condition::notify(long command)
    m_enter_mut.lock();
 
    //Return if there are no waiters
-   if(!winapi::exchange_and_add(&m_num_waiters, 0)) { 
+//   if(!winapi::exchange_and_add(&m_num_waiters, 0)){
+   if(!m_num_waiters) { 
       m_enter_mut.unlock();
       return;
    }
 
    //Notify that all threads should execute wait logic
-   BOOST_INTERLOCKED_COMPARE_EXCHANGE((long*)&m_command, command, SLEEP);
+   while(SLEEP != BOOST_INTERLOCKED_COMPARE_EXCHANGE((long*)&m_command, command, SLEEP)){
+      winapi::sched_yield();
+   }
+/*
+   //Wait until the threads are waked
+   while(SLEEP != winapi::exchange_and_add((long*)&m_command, 0)){
+      winapi::sched_yield();
+   }
+*/
    //The enter interprocess_mutex will rest locked until the last waiting thread unlocks it
 }
 
 inline void interprocess_condition::do_wait(interprocess_mutex &mut)
 {
-   do_timed_wait(false, boost::posix_time::ptime(), mut);
+   this->do_timed_wait(false, boost::posix_time::ptime(), mut);
 }
 
 inline bool interprocess_condition::do_timed_wait
    (const boost::posix_time::ptime &abs_time, interprocess_mutex &mut)
 {
-   return do_timed_wait(true, abs_time, mut);
+   return this->do_timed_wait(true, abs_time, mut);
 }
 
 inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
@@ -102,7 +111,8 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
    while(1){
       //The thread sleeps/spins until a interprocess_condition commands a notification
       //Notification occurred, we will lock the checking interprocess_mutex so that
-      while(winapi::exchange_and_add(&m_command, 0) == SLEEP){
+      while(m_command == SLEEP){
+//      while(winapi::exchange_and_add(&m_command, 0) == SLEEP){
          winapi::sched_yield();
 
          //Check for timeout
@@ -141,7 +151,8 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
         //---------------------------------------------------------------
          boost::interprocess::scoped_lock<interprocess_mutex> lock(m_check_mut);
          //---------------------------------------------------------------
-         long result = BOOST_INTERLOCKED_COMPARE_EXCHANGE((long*)&m_command, SLEEP, NOTIFY_ONE);
+         long result = BOOST_INTERLOCKED_COMPARE_EXCHANGE
+                        ((long*)&m_command, SLEEP, NOTIFY_ONE);
          if(result == SLEEP){
             //Other thread has been notified and since it was a NOTIFY one
             //command, this thread must sleep again

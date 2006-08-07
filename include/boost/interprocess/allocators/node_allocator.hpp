@@ -59,7 +59,7 @@ class node_allocator
    typedef typename detail::
       pointer_to_other<void_pointer, char>::type         char_pointer;
    typedef typename SegmentManager::
-      mutex_family::mutex_t                              mutex_t;
+      mutex_family::mutex_type                              mutex_type;
    typedef node_allocator
       <T, N, SegmentManager>                             self_t;
 
@@ -108,7 +108,7 @@ class node_allocator
       : mp_node_pool(other.get_node_pool()) 
    {  
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), N>   node_pool_t;
       node_pool_t *node_pool  = static_cast<node_pool_t*>(other.get_node_pool());
       node_pool->inc_ref_count();   
    }
@@ -134,7 +134,7 @@ class node_allocator
    segment_manager* get_segment_manager()const
    {  
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), N>   node_pool_t;
       node_pool_t *node_pool  = static_cast<node_pool_t*>
          (detail::get_pointer(mp_node_pool));
       return node_pool->get_segment_manager();
@@ -167,7 +167,7 @@ class node_allocator
    pointer allocate(size_type count, cvoid_pointer = 0)
    {  
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), N>   node_pool_t;
       node_pool_t *node_pool  = static_cast<node_pool_t*>
          (detail::get_pointer(mp_node_pool));
       return pointer(static_cast<T*>(node_pool->allocate(count)));
@@ -177,7 +177,7 @@ class node_allocator
    void deallocate(const pointer &ptr, size_type count)
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), N>   node_pool_t;
       node_pool_t *node_pool  = static_cast<node_pool_t*>
          (detail::get_pointer(mp_node_pool));
       node_pool->deallocate(detail::get_pointer(ptr), count);
@@ -197,7 +197,7 @@ class node_allocator
    struct get_or_create_func
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), N>   node_pool_t;
 
       /*!This connects or constructs the unique instance of node_pool_t
          Can throw boost::interprocess::bad_alloc*/
@@ -233,7 +233,7 @@ class node_allocator
    struct destroy_if_last_link_func
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t,sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type,sizeof(T), N>   node_pool_t;
 
       /*!Decrements reference count and destroys the object if there is no 
          more attached allocators. Never throws*/
@@ -260,7 +260,7 @@ class node_allocator
    void priv_destroy_if_last_link()
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t,sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type,sizeof(T), N>   node_pool_t;
       //Get segment manager
       segment_manager *named_segment_mngr = this->get_segment_manager();
       //Get node pool pointer
@@ -273,7 +273,7 @@ class node_allocator
 
  private:
    // We can't instantiate a pointer like this:
-   // detail::shared_node_pool<SegmentManager, mutex_t, 
+   // detail::shared_node_pool<SegmentManager, mutex_type, 
    //                             sizeof(T), N> *mp_node_pool;
    // since it can provoke an early instantiation of T, that could be 
    // incomplete at that moment (for example, a node of a node-based container)

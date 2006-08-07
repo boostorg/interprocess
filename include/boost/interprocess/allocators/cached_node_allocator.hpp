@@ -57,7 +57,7 @@ class cached_node_allocator
    typedef SegmentManager                                 segment_manager;
    typedef typename detail::
       pointer_to_other<void_pointer, char>::type          char_pointer;
-   typedef typename SegmentManager::mutex_family::mutex_t mutex_t;
+   typedef typename SegmentManager::mutex_family::mutex_type mutex_type;
    typedef cached_node_allocator<T, SegmentManager>       self_t;
    enum { DEFAULT_MAX_CACHED_NODES = 64 };
 
@@ -114,7 +114,7 @@ class cached_node_allocator
         m_max_cached_nodes(other.get_max_cached_nodes())
    {  
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), NumAlloc>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NumAlloc>   node_pool_t;
       node_pool_t *node_pool = static_cast<node_pool_t*>(other.get_node_pool());
       node_pool->inc_ref_count();   
    }
@@ -147,7 +147,7 @@ class cached_node_allocator
    segment_manager* get_segment_manager()const
    {  
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), NumAlloc>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NumAlloc>   node_pool_t;
       node_pool_t *node_pool = static_cast<node_pool_t*>(detail::get_pointer(mp_node_pool));
       return node_pool->get_segment_manager();  
    }
@@ -191,7 +191,7 @@ class cached_node_allocator
    pointer allocate(size_type count, cvoid_pointer hint = 0)
    {  
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), NumAlloc>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NumAlloc>   node_pool_t;
       
       void * ret;
       
@@ -219,7 +219,7 @@ class cached_node_allocator
    void deallocate(const pointer &ptr, size_type count)
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), NumAlloc>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NumAlloc>   node_pool_t;
 
       if(count == 1){
          //Check if cache is full
@@ -262,7 +262,7 @@ class cached_node_allocator
    struct get_or_create_func
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), NumAlloc>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NumAlloc>   node_pool_t;
 
       /*!This connects or constructs the unique instance of node_pool_t
          Can throw boost::interprocess::bad_alloc*/
@@ -287,7 +287,7 @@ class cached_node_allocator
    void priv_deallocate_all_cached_nodes()
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), NumAlloc>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NumAlloc>   node_pool_t;
       node_pool_t *node_pool = static_cast<node_pool_t*>
          (detail::get_pointer(mp_node_pool));
       node_pool->deallocate_nodes(detail::get_pointer(mp_cached));
@@ -308,7 +308,7 @@ class cached_node_allocator
       //Check n
       if(n==0) return;   
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t, sizeof(T), NumAlloc>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NumAlloc>   node_pool_t;
       node_pool_t *node_pool = static_cast<node_pool_t*>
          (detail::get_pointer(mp_node_pool));
 
@@ -342,7 +342,7 @@ class cached_node_allocator
    struct destroy_if_last_link_func
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t,sizeof(T), NumAlloc>   node_pool_t;
+               <SegmentManager, mutex_type,sizeof(T), NumAlloc>   node_pool_t;
 
       /*!Decrements reference count and destroys the object if there is no 
          more attached allocators. Never throws*/
@@ -369,7 +369,7 @@ class cached_node_allocator
    void priv_destroy_if_last_link()
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_t,sizeof(T), NumAlloc>   node_pool_t;
+               <SegmentManager, mutex_type,sizeof(T), NumAlloc>   node_pool_t;
       //Get segment manager
       segment_manager *segment_mngr = this->get_segment_manager();
       //Get pool pointer
@@ -382,7 +382,7 @@ class cached_node_allocator
 
  private:
    // We can't instantiate a pointer like this:
-   // detail::shared_node_pool<SegmentManager, mutex_t, 
+   // detail::shared_node_pool<SegmentManager, mutex_type, 
    //                             sizeof(T), NumAlloc> *mp_node_pool;
    // since it can provoke an early instantiation of T, that could be 
    // incomplete at that moment (for example, a node of a node-based container)

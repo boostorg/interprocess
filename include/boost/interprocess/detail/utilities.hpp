@@ -4,7 +4,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess/ for documentation.
+// See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 
@@ -23,7 +23,6 @@
 #include <boost/detail/no_exceptions_support.hpp>
 
 #include <boost/type_traits/has_nothrow_destructor.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/call_traits.hpp>
 #include <algorithm>
 #include <functional>
@@ -205,7 +204,7 @@ struct pointer_to_other< T*, U >
 
 //Anti-exception node eraser
 template<class Cont>
-class value_eraser : boost::noncopyable
+class value_eraser
 {
    public:
    value_eraser(Cont & cont, typename Cont::iterator it) 
@@ -243,7 +242,7 @@ struct has_convertible_construct
    enum {   value = false };
 };
 
-/*!Trait classes to detect if an index is a node
+/*!Trait class to detect if an index is a node
    index. This allows more efficient operations
    when deallocating named objects.*/
 template <class Index>
@@ -305,12 +304,12 @@ class constant_iterator
    //Give access to private core functions
    friend class boost::iterator_core_access;
 
-    public:
-    explicit constant_iterator(const T &ref, Difference range_size)
+	public:
+	explicit constant_iterator(const T &ref, Difference range_size)
       :  m_ptr(&ref), m_num(range_size){}
 
    //Constructors
-    constant_iterator()
+	constant_iterator()
       :  m_ptr(0), m_num(0){}
 
    private:
@@ -341,29 +340,29 @@ void uninitialized_fill_n(FwdIt first,  Count count,
                           const T& val, Alloc& al)
 {
    //Save initial position
-    FwdIt init = first;
+	FwdIt init = first;
 
-    BOOST_TRY{
+	BOOST_TRY{
       //Construct objects
-       for (; count--; ++first){
-           al.construct(first, val);
+	   for (; count--; ++first){
+		   al.construct(first, val);
       }
    }
-    BOOST_CATCH(...){
+	BOOST_CATCH(...){
       //Call destructors
-       for (; init != first; ++init){
-           al.destroy(init);
+	   for (; init != first; ++init){
+		   al.destroy(init);
       }
-       BOOST_RETHROW;
-    }
+	   BOOST_RETHROW;
+	}
    BOOST_CATCH_END
 }
 
 template<class InIt, class OutIt>
 InIt copy_n(InIt first, typename std::iterator_traits<InIt>::difference_type length, OutIt dest)
-{
-    for (; length--; ++dest, ++first)
-        *dest = *first;
+{	
+	for (; length--; ++dest, ++first)
+		*dest = *first;
    return first;
 }
 
@@ -374,23 +373,23 @@ typename std::iterator_traits<InIt>::difference_type
                         FwdIt dest,    Alloc& al)
 {
    //Save initial destination position
-    FwdIt dest_init = dest;
+	FwdIt dest_init = dest;
    typename std::iterator_traits<InIt>::difference_type constructed = 0;
-    BOOST_TRY{
+	BOOST_TRY{
       //Try to build objects
-       for (; first != last; ++dest, ++first, ++constructed){
-           al.construct(dest, *first);
+	   for (; first != last; ++dest, ++first, ++constructed){
+		   al.construct(dest, *first);
       }
    }
-    BOOST_CATCH(...){
+	BOOST_CATCH(...){
       //Call destructors
-       for (; dest_init != dest; ++dest_init){
-           al.destroy(dest_init);
+	   for (; dest_init != dest; ++dest_init){
+		   al.destroy(dest_init);
       }
-       BOOST_RETHROW;
-    }
+	   BOOST_RETHROW;
+	}
    BOOST_CATCH_END
-    return (constructed);
+	return (constructed);
 }
 
 template<class InIt, class FwdIt, class Alloc> inline
@@ -399,23 +398,23 @@ FwdIt
                       FwdIt dest,    Alloc& al)
 {
    //Save initial destination position
-    FwdIt dest_init = dest;
+	FwdIt dest_init = dest;
    typename std::iterator_traits<InIt>::difference_type constructed = 0;
-    BOOST_TRY{
+	BOOST_TRY{
       //Try to build objects
-       for (; first != last; ++dest, ++first, ++constructed){
-           al.construct(dest, *first);
+	   for (; first != last; ++dest, ++first, ++constructed){
+		   al.construct(dest, *first);
       }
    }
-    BOOST_CATCH(...){
+	BOOST_CATCH(...){
       //Call destructors
-       for (; dest_init != dest; ++dest_init){
-           al.destroy(dest_init);
+	   for (; dest_init != dest; ++dest_init){
+		   al.destroy(dest_init);
       }
-       BOOST_RETHROW;
-    }
+	   BOOST_RETHROW;
+	}
    BOOST_CATCH_END
-    return (dest);
+	return (dest);
 }
 
 template<class InIt, class FwdIt, class Alloc> inline
@@ -425,23 +424,23 @@ InIt n_uninitialized_copy_n
     FwdIt dest,    Alloc& al)
 {
    //Save initial destination position
-    FwdIt dest_init = dest;
+	FwdIt dest_init = dest;
    typename std::iterator_traits<InIt>::difference_type new_count = count+1;
 
-    BOOST_TRY{
+	BOOST_TRY{
       //Try to build objects
-       for (; --new_count; ++dest, ++first){
-           al.construct(dest, *first);
+	   for (; --new_count; ++dest, ++first){
+		   al.construct(dest, *first);
       }
    }
-    BOOST_CATCH(...){
+	BOOST_CATCH(...){
       //Call destructors
       new_count = count - new_count;
-       for (; new_count--; ++dest_init){
-           al.destroy(dest_init);
+	   for (; new_count--; ++dest_init){
+		   al.destroy(dest_init);
       }
-       BOOST_RETHROW;
-    }
+	   BOOST_RETHROW;
+	}
    BOOST_CATCH_END
    return first;
 }
@@ -485,24 +484,24 @@ InpIt2 uninitialized_copy_n_copy_n
    typename std::iterator_traits<InpIt2>::difference_type c2 = n2+1;
    FwdIt dest_init = result;
 
-    BOOST_TRY{
+	BOOST_TRY{
       //Try to build objects
-       for (; --c1; ++result, ++first1){
-           alloc.construct(result, *first1);
+	   for (; --c1; ++result, ++first1){
+		   alloc.construct(result, *first1);
       }
-       for (; --c2; ++result, ++first2){
-           alloc.construct(result, *first2);
+	   for (; --c2; ++result, ++first2){
+		   alloc.construct(result, *first2);
       }
    }
-    BOOST_CATCH(...){
+	BOOST_CATCH(...){
       //Call destructors
    typename std::iterator_traits<FwdIt>::
       difference_type c = (n1 - c1) + (n2 - c2);
-       for (; c--; ++dest_init){
-           alloc.destroy(dest_init);
+	   for (; c--; ++dest_init){
+		   alloc.destroy(dest_init);
       }
-       BOOST_RETHROW;
-    }
+	   BOOST_RETHROW;
+	}
    BOOST_CATCH_END
    return first2;
 }
@@ -535,7 +534,49 @@ SizeType
    return max_size;
 }
 
-}}   //namespace boost { namespace interprocess { 
+namespace detail {
+
+struct two {char _[2];};
+
+namespace pointer_type_imp {
+
+template <class U> static two  test(...);
+template <class U> static char test(typename U::pointer* = 0);
+
+}  //namespace pointer_type_imp {
+
+template <class T>
+struct has_pointer_type
+{
+    static const bool value = sizeof(pointer_type_imp::test<T>(0)) == 1;
+};
+
+namespace pointer_type_imp {
+
+template <class T, class D, bool = has_pointer_type<D>::value>
+struct pointer_type
+{
+    typedef typename D::pointer type;
+};
+
+template <class T, class D>
+struct pointer_type<T, D, false>
+{
+    typedef T* type;
+};
+
+}  //namespace pointer_type_imp {
+
+template <class T, class D>
+struct pointer_type
+{
+    typedef typename pointer_type_imp::pointer_type<T,
+        typename boost::remove_reference<D>::type>::type type;
+};
+
+}  //namespace detail {
+}  //namespace interprocess { 
+}  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>
 

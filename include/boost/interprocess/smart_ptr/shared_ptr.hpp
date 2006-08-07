@@ -127,19 +127,22 @@ class shared_ptr
 
    template<class Y>
    shared_ptr(shared_ptr<Y, VA, D> const & r, detail::static_cast_tag)
-      :  m_pn(do_static_cast<typename detail::pointer_to_other<pointer, T>::type>(r.m_pn.get_pointer()),
+      :  m_pn(cast_to<typename detail::pointer_to_other<pointer, T>::type>::
+            using_static_cast(r.m_pn.get_pointer()),
               r.m_pn) 
    {}
 
    template<class Y>
    shared_ptr(shared_ptr<Y, VA, D> const & r, detail::const_cast_tag)
-      :  m_pn(do_const_cast<typename detail::pointer_to_other<pointer, T>::type>(r.m_pn.get_pointer()),
+      :  m_pn(cast_to<typename detail::pointer_to_other<pointer, T>::type>::
+            using_const_cast(r.m_pn.get_pointer()),
               r.m_pn) 
    {}
 
    template<class Y>
    shared_ptr(shared_ptr<Y, VA, D> const & r, detail::dynamic_cast_tag)
-      :  m_pn(do_dynamic_cast<typename detail::pointer_to_other<pointer, T>::type>(r.m_pn.get_pointer()),
+      :  m_pn(cast_to<typename detail::pointer_to_other<pointer, T>::type>::
+            using_dynamic_cast(r.m_pn.get_pointer()),
               r.m_pn) 
    {
       if(!m_pn.get_pointer()){ // need to allocate new counter -- the cast failed
@@ -270,6 +273,34 @@ typename detail::pointer_to_other<shared_ptr<T, VA, D>, D>::type
 */
 } // namespace interprocess
 } // namespace boost
+
+namespace boost{
+namespace interprocess{
+
+/*!Simulation of cast operators between pointers.*/
+template<class T, class VA, class D>
+class cast_to< shared_ptr<T, VA, D> >
+{
+   public:
+   template<class S>
+   static shared_ptr<T, VA, D> using_static_cast(const shared_ptr<S, VA, D> &s)
+   {  return shared_ptr<T, VA, D>(s, detail::static_cast_tag());   }
+
+   template<class S>
+   static shared_ptr<T, VA, D> using_reinterpret_cast(const shared_ptr<S, VA, D> &s)
+   {  return shared_ptr<T, VA, D>(s, detail::reinterpret_cast_tag());   }
+
+   template<class S>
+   static shared_ptr<T, VA, D> using_const_cast(const shared_ptr<S, VA, D> &s)
+   {  return shared_ptr<T, VA, D>(s, detail::const_cast_tag());   }
+
+   template<class S>
+   static shared_ptr<T, VA, D> using_dynamic_cast(const shared_ptr<S, VA, D> &s)
+   {  return shared_ptr<T, VA, D>(s, detail::dynamic_cast_tag());   }
+};
+
+}  //namespace interprocess{
+}  //namespace boost{
 
 #include <boost/interprocess/detail/config_end.hpp>
 

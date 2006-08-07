@@ -40,10 +40,10 @@ struct flat_map_index_aux
 };
 
 /*!Index type based in flat_map. Just derives from flat_map and
-   defines the interface needed by the shared named object creation class*/
+   defines the interface needed by managed memory segments.*/
 template <class MapConfig>
 class flat_map_index
-   //Derive class from map specialization
+   //Derive class from flat_map specialization
    : public flat_map_index_aux<MapConfig>::index_t
 {
    typedef flat_map_index_aux<MapConfig>        index_aux;

@@ -222,32 +222,66 @@ inline typename boost::interprocess::intrusive_ptr<T, VP>::pointer
 {  return p.get();   }
 
 /*Emulates static cast operator. Does not throw*/
+/*
 template<class T, class U, class VP>
 inline boost::interprocess::intrusive_ptr<T, VP> static_pointer_cast
    (boost::interprocess::intrusive_ptr<U, VP> const & p)
 {  return do_static_cast<U>(p.get());  }
-
+*/
 /*Emulates const cast operator. Does not throw*/
+/*
 template<class T, class U, class VP>
 inline boost::interprocess::intrusive_ptr<T, VP> const_pointer_cast
    (boost::interprocess::intrusive_ptr<U, VP> const & p)
 {  return do_const_cast<U>(p.get());   }
+*/
 
 /*Emulates dynamic cast operator. Does not throw*/
+/*
 template<class T, class U, class VP>
 inline boost::interprocess::intrusive_ptr<T, VP> dynamic_pointer_cast
    (boost::interprocess::intrusive_ptr<U, VP> const & p)
 {  return do_dynamic_cast<U>(p.get()); }
+*/
 
 /*Emulates reinterpret cast operator. Does not throw*/
+/*
 template<class T, class U, class VP>
 inline boost::interprocess::intrusive_ptr<T, VP>reinterpret_pointer_cast
    (boost::interprocess::intrusive_ptr<U, VP> const & p)
 {  return do_reinterpret_cast<U>(p.get());   }
+*/
 
 } // namespace interprocess
-
 } // namespace boost
+
+namespace boost{
+namespace interprocess{
+
+/*!Simulation of cast operators between pointers.*/
+template<class T, class VP>
+class cast_to< intrusive_ptr<T, VP> >
+{
+   public:
+   template<class S>
+   static intrusive_ptr<T, VP> using_static_cast(const intrusive_ptr<S, VP> &s)
+   {  return intrusive_ptr<T, VP>(s, detail::static_cast_tag());   }
+
+   template<class S>
+   static intrusive_ptr<T, VP> using_reinterpret_cast(const intrusive_ptr<S, VP> &s)
+   {  return intrusive_ptr<T, VP>(s, detail::reinterpret_cast_tag());   }
+
+   template<class S>
+   static intrusive_ptr<T, VP> using_const_cast(const intrusive_ptr<S, VP> &s)
+   {  return intrusive_ptr<T, VP>(s, detail::const_cast_tag());   }
+
+   template<class S>
+   static intrusive_ptr<T, VP> using_dynamic_cast(const intrusive_ptr<S, VP> &s)
+   {  return intrusive_ptr<T, VP>(s, detail::dynamic_cast_tag());   }
+};
+
+}  //namespace interprocess{
+}  //namespace boost{
 
 #include <boost/interprocess/detail/config_end.hpp>
 

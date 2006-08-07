@@ -32,7 +32,7 @@ namespace interprocess {
    Deleter::pointer type (that is, if typename Deleter::pointer is 
    offset_ptr<void>, the internal pointer will be offset_ptr<T>).*/
 template<class T, class Deleter>
-class scoped_ptr  // noncopyable
+class scoped_ptr
    : private Deleter
 {
    scoped_ptr(scoped_ptr const &);

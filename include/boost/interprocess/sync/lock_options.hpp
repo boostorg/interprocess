@@ -23,18 +23,30 @@
 */
 
 namespace boost {
+
+namespace posix_time
+{  class ptime;   }
+
 namespace interprocess {
 
 namespace detail{
-   struct dont_lock_t{};
-   struct try_to_lock_t {};
+   /*!Type to indicate to a mutex lock constructor that must not lock the mutex.*/
+   struct defer_lock_type{};
+   /*!Type to indicate to a mutex lock constructor that must try to lock the mutex.*/
+   struct try_to_lock_type {};
+   /*!Type to indicate to a mutex lock constructor that the mutex is already locked.*/
+   struct accept_ownership_type{};
 }  //namespace detail{
 
-static const detail::dont_lock_t    dont_lock   = detail::dont_lock_t();
-static const detail::try_to_lock_t  try_to_lock = detail::try_to_lock_t();
+/*!An object of type defer_lock_type.*/
+static const detail::defer_lock_type      defer_lock      = detail::defer_lock_type();
+/*!An object of type try_to_lock_type.*/
+static const detail::try_to_lock_type     try_to_lock    = detail::try_to_lock_type();
+/*!An object of type accept_ownership_ts.*/
+static const detail::accept_ownership_type  accept_ownership = detail::accept_ownership_type();
 
-} // namespace interprocess
-} // namespace boost
+} // namespace interprocess {
+} // namespace boost{
 
 #include <boost/interprocess/detail/config_end.hpp>
 

@@ -30,7 +30,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess/ for documentation.
+// See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -178,151 +178,151 @@ class vector : private detail::vector_alloc_holder<A>
 
    public:
    //Vector const_iterator
-    class const_iterator
+	class const_iterator
       : public boost::iterator<std::random_access_iterator_tag
                               ,value_type
                               ,vec_diff
                               ,vec_cptr
                               ,vec_cref>
-    {
+	{
       private:
       vec_ptr get_ptr() const    {  return   m_ptr;  }
 
       protected:
       vec_ptr m_ptr;
-        explicit const_iterator(vec_ptr ptr)  : m_ptr(ptr){}
+		explicit const_iterator(vec_ptr ptr)  : m_ptr(ptr){}
 
-       public:
+	   public:
       friend class vector<T, A>;
       typedef vec_diff        difference_type;
 
       //Constructors
-        const_iterator() : m_ptr(0){}
+		const_iterator() : m_ptr(0){}
 
       //Pointer like operators
-        const_reference operator*()   const  
+		const_reference operator*()   const  
       {  return *m_ptr;  }
 
-        const_pointer   operator->()  const  
+		const_pointer   operator->()  const  
       {  return  m_ptr;  }
 
-        const_reference operator[](difference_type off) const
+		const_reference operator[](difference_type off) const
       {  return m_ptr[off];   }
 
       //Increment / Decrement
-        const_iterator& operator++()       
+		const_iterator& operator++()       
       { ++m_ptr;  return *this; }
 
-        const_iterator operator++(int)      
+		const_iterator operator++(int)      
       { vec_ptr tmp = m_ptr; ++*this; return const_iterator(tmp);  }
 
-        const_iterator& operator--()
-        {   --m_ptr; return *this;   }
+		const_iterator& operator--()
+		{	--m_ptr; return *this;   }
 
-        const_iterator operator--(int)
-        {  vec_ptr tmp = m_ptr; --*this; return const_iterator(tmp); }
+		const_iterator operator--(int)
+		{  vec_ptr tmp = m_ptr; --*this; return const_iterator(tmp); }
 
       //Arithmetic
-        const_iterator& operator+=(difference_type off)
-        {  m_ptr += off; return *this;   }
+		const_iterator& operator+=(difference_type off)
+		{  m_ptr += off; return *this;   }
 
-        const_iterator operator+(difference_type off) const
-        {  return const_iterator(m_ptr+off);  }
+		const_iterator operator+(difference_type off) const
+		{  return const_iterator(m_ptr+off);  }
 
-        friend const_iterator operator+(difference_type off, const const_iterator& right)
-        {  return const_iterator(off + right.m_ptr); }
+		friend const_iterator operator+(difference_type off, const const_iterator& right)
+		{  return const_iterator(off + right.m_ptr); }
 
-        const_iterator& operator-=(difference_type off)
-        {  m_ptr -= off; return *this;   }
+		const_iterator& operator-=(difference_type off)
+		{  m_ptr -= off; return *this;   }
 
-        const_iterator operator-(difference_type off) const
-        {  return const_iterator(m_ptr-off);  }
+		const_iterator operator-(difference_type off) const
+		{  return const_iterator(m_ptr-off);  }
 
-        difference_type operator-(const const_iterator& right) const
-        {  return m_ptr - right.m_ptr;   }
+		difference_type operator-(const const_iterator& right) const
+		{  return m_ptr - right.m_ptr;   }
 
       //Comparison operators
-        bool operator==   (const const_iterator& r)  const
-        {  return m_ptr == r.m_ptr;  }
+		bool operator==   (const const_iterator& r)  const
+		{  return m_ptr == r.m_ptr;  }
 
-        bool operator!=   (const const_iterator& r)  const
-        {  return m_ptr != r.m_ptr;  }
+		bool operator!=   (const const_iterator& r)  const
+		{  return m_ptr != r.m_ptr;  }
 
-        bool operator<    (const const_iterator& r)  const
-        {  return m_ptr < r.m_ptr;  }
+		bool operator<    (const const_iterator& r)  const
+		{  return m_ptr < r.m_ptr;  }
 
-        bool operator<=   (const const_iterator& r)  const
-        {  return m_ptr <= r.m_ptr;  }
+		bool operator<=   (const const_iterator& r)  const
+		{  return m_ptr <= r.m_ptr;  }
 
-        bool operator>    (const const_iterator& r)  const
-        {  return m_ptr > r.m_ptr;  }
+		bool operator>    (const const_iterator& r)  const
+		{  return m_ptr > r.m_ptr;  }
 
-        bool operator>=   (const const_iterator& r)  const
-        {  return m_ptr >= r.m_ptr;  }
-    };
+		bool operator>=   (const const_iterator& r)  const
+		{  return m_ptr >= r.m_ptr;  }
+	};
 
    //Vector iterator
-    class iterator
+	class iterator
       :  public const_iterator
-    {
+	{
       protected:
-        explicit iterator(vec_ptr ptr) : const_iterator(ptr){}
+		explicit iterator(vec_ptr ptr) : const_iterator(ptr){}
 
-       public:
+	   public:
       friend class vector<T, A>;
       typedef vec_ptr   pointer;
       typedef vec_ref   reference;
 
       //Constructors
-        iterator(){}
+		iterator(){}
 
       //Pointer like operators
-        reference operator*()  const  
+		reference operator*()  const  
       {  return *this->m_ptr;  }
 
-        pointer   operator->() const  
+		pointer   operator->() const  
       {  return  this->m_ptr;  }
 
-        reference operator[](difference_type off) const 
+		reference operator[](difference_type off) const 
       {  return this->m_ptr[off];   }
 
       //Increment / Decrement
-        iterator& operator++()  
+		iterator& operator++()  
       { ++this->m_ptr; return *this;  }
 
-        iterator operator++(int)
+		iterator operator++(int)
       { pointer tmp = this->m_ptr; ++*this; return iterator(tmp); }
-        
+		
       iterator& operator--()
-    {  --this->m_ptr; return *this;  }
+   	{  --this->m_ptr; return *this;  }
 
-        iterator operator--(int)
-       {  iterator tmp = *this; --*this; return iterator(tmp); }
+		iterator operator--(int)
+	   {  iterator tmp = *this; --*this; return iterator(tmp); }
 
       // Arithmetic
-        iterator& operator+=(difference_type off)
-        {  this->m_ptr += off;  return *this;  }
+		iterator& operator+=(difference_type off)
+		{  this->m_ptr += off;  return *this;  }
 
-        iterator operator+(difference_type off) const
-        {  return iterator(this->m_ptr+off);  }
+		iterator operator+(difference_type off) const
+		{  return iterator(this->m_ptr+off);  }
 
-        friend iterator operator+(difference_type off, const iterator& right)
-        {  return iterator(off + right.m_ptr); }
+		friend iterator operator+(difference_type off, const iterator& right)
+		{  return iterator(off + right.m_ptr); }
 
-        iterator& operator-=(difference_type off)
-        {  this->m_ptr -= off; return *this;   }
+		iterator& operator-=(difference_type off)
+		{  this->m_ptr -= off; return *this;   }
 
-        iterator operator-(difference_type off) const
-        {  return iterator(this->m_ptr-off);  }
+		iterator operator-(difference_type off) const
+		{  return iterator(this->m_ptr-off);  }
 
-        difference_type operator-(const const_iterator& right) const
-        {  return *((const_iterator*)this) - right;   }
-    };
+		difference_type operator-(const const_iterator& right) const
+		{  return *((const_iterator*)this) - right;   }
+	};
 
    //Reverse iterators
    typedef typename boost::reverse_iterator<iterator>   
       reverse_iterator;
-    typedef typename boost::reverse_iterator<const_iterator>                 
+	typedef typename boost::reverse_iterator<const_iterator>                 
       const_reverse_iterator;
 
    public:
@@ -463,8 +463,9 @@ class vector : private detail::vector_alloc_holder<A>
          this->construct(this->m_start + this->m_size, x);
          ++this->m_size;
       }
-
-      this->insert(this->end(), static_cast<size_type>(1), x);
+      else{
+         this->insert(this->end(), static_cast<size_type>(1), x);
+      }
    }
    
    void swap(vector<T, A>& x) 

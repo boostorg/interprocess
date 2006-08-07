@@ -21,7 +21,6 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/noncopyable.hpp>
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 #  include <boost/interprocess/sync/win32/win32_sync_primitives.hpp>
@@ -48,9 +47,13 @@ namespace interprocess {
 
 /*!Wraps a interprocess_semaphore that can be placed in shared memory and can be 
    shared between processes. Allows timed lock tries*/
-class interprocess_semaphore : private boost::noncopyable
+class interprocess_semaphore
 {
- public:
+   //Non-copyable
+   interprocess_semaphore(const interprocess_semaphore &);
+   interprocess_semaphore &operator=(const interprocess_semaphore &);
+
+   public:
    /*!Creates a interprocess_semaphore with the given initial count. 
       interprocess_exception if there is an error.*/
    interprocess_semaphore(int initialCount);

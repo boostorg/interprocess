@@ -23,8 +23,6 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/interprocess/shared_memory.hpp>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
-#include <boost/noncopyable.hpp>
-
 
 /*!\file
    Describes a named semaphore class for inter-process synchronization
@@ -37,9 +35,14 @@ namespace interprocess {
 /*!A interprocess_semaphore with a global name, so it can be found from different 
    processes. Allows several resource sharing patterns and efficient 
    acknowledgment mechanisms.*/
-class named_semaphore : private boost::noncopyable
+class named_semaphore
 {
- public:
+   //Non-copyable
+   named_semaphore();
+   named_semaphore(const named_semaphore &);
+   named_semaphore &operator=(const named_semaphore &);
+
+   public:
    /*!Creates a global interprocess_semaphore with a name, and an initial count. 
       It will return an false if the interprocess_semaphore is already created.*/
    named_semaphore(detail::create_only_t, const char *name, int initialCount);
@@ -54,7 +57,7 @@ class named_semaphore : private boost::noncopyable
       created. If it is not previously created this function return false.*/
    named_semaphore(detail::open_only_t, const char *name);
 
-   /*!Destroys the named interprocess_semaphore. Does not throw*/
+   /*!Destroys the named semaphore. Does not throw*/
    ~named_semaphore();
 
    /*!Increments the interprocess_semaphore count. If there are processes/threads blocked waiting
@@ -79,11 +82,8 @@ class named_semaphore : private boost::noncopyable
       returns true. If there is an error throws sem_exception*/
    bool timed_wait(const boost::posix_time::ptime &abs_time);
 
-   /*! Erases a named semaphore from the system*/
+   /*!Erases a named semaphore from the system*/
    static bool remove(const char *name);
-
-   /*!Returns the interprocess_semaphore count*/
-//   int get_count() const;
 
    private:
    shared_memory        m_shmem;
@@ -132,7 +132,7 @@ inline named_semaphore::named_semaphore
    :  m_shmem  (create_only
                ,name
                ,sizeof(interprocess_semaphore)
-               ,memory_mapping::rw_mode
+               ,memory_mappable::read_write
                ,0
                ,construct_func_t(construct_func_t::create_only, initialCount))
 {}
@@ -142,7 +142,7 @@ inline named_semaphore::named_semaphore
    :  m_shmem  (open_or_create
                ,name
                ,sizeof(interprocess_semaphore)
-               ,memory_mapping::rw_mode
+               ,memory_mappable::read_write
                ,0
                ,construct_func_t(construct_func_t::open_or_create, initialCount))
 {}
@@ -151,7 +151,7 @@ inline named_semaphore::named_semaphore
    (detail::open_only_t, const char *name)
    :  m_shmem  (open_only
                ,name
-               ,memory_mapping::rw_mode
+               ,memory_mappable::read_write
                ,0
                ,construct_func_t(construct_func_t::open_only, 0))
 {}
@@ -169,7 +169,7 @@ inline bool named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time
 {  return static_cast<interprocess_semaphore*>(m_shmem.get_address())->timed_wait(abs_time);   }
 
 inline bool named_semaphore::remove(const char *name)
-{  return shared_memory::remove(name); }
+{  return shared_memory_object::remove(name); }
 
 }  //namespace interprocess {
 
