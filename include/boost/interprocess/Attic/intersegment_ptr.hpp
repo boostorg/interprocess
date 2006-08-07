@@ -20,6 +20,7 @@
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/generic_cast.hpp>
 #include <boost/interprocess/detail/cast_tags.hpp>
 #include <boost/assert.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
@@ -67,7 +68,7 @@ struct flat_map_intersegment
          offset_t  offset1, offset2;
          {
             //------------------------------------------------------------------
-            boost::interprocess::scoped_lock<typename mappings_t::mutex_t> lock(s_map);
+            boost::interprocess::scoped_lock<typename mappings_t::mutex_type> lock(s_map);
             //------------------------------------------------------------------
             get_segment_and_offset(ptr,  id1, offset1);
             get_segment_and_offset(this, id2, offset2);
@@ -88,7 +89,7 @@ struct flat_map_intersegment
          segment_t id1, id2;
          {
             //------------------------------------------------------------------
-            boost::interprocess::scoped_lock<typename mappings_t::mutex_t> lock(s_map);
+            boost::interprocess::scoped_lock<typename mappings_t::mutex_type> lock(s_map);
             //------------------------------------------------------------------
             offset_t  off;
             get_segment_and_offset(&other, id1, off);
@@ -111,7 +112,7 @@ struct flat_map_intersegment
       else{
          {
             //------------------------------------------------------------------
-            boost::interprocess::scoped_lock<typename mappings_t::mutex_t> lock(s_map);
+            boost::interprocess::scoped_lock<typename mappings_t::mutex_type> lock(s_map);
             //------------------------------------------------------------------
             get_segment_and_offset(this, id1, off);
             segment_t target_segment = segment_t(id1+m_distance);
@@ -129,7 +130,7 @@ struct flat_map_intersegment
       offset_t  off;
       {
          //------------------------------------------------------------------
-         boost::interprocess::scoped_lock<typename mappings_t::mutex_t> lock(s_map);
+         boost::interprocess::scoped_lock<typename mappings_t::mutex_type> lock(s_map);
          //------------------------------------------------------------------
          get_segment_and_offset(&other, id1, off);
          get_segment_and_offset(this,   id2, off);
@@ -167,7 +168,7 @@ struct flat_map_intersegment
          offset_t  off;
          {
             //------------------------------------------------------------------
-            boost::interprocess::scoped_lock<typename mappings_t::mutex_t> lock(s_map);
+            boost::interprocess::scoped_lock<typename mappings_t::mutex_type> lock(s_map);
             //------------------------------------------------------------------
             get_segment_and_offset(this, id1, off);
             get_segment_and_offset(&y,   id2, off);
@@ -185,7 +186,7 @@ struct flat_map_intersegment
       offset_t  off;
       {
          //------------------------------------------------------------------
-         boost::interprocess::scoped_lock<typename mappings_t::mutex_t> lock(s_map);
+         boost::interprocess::scoped_lock<typename mappings_t::mutex_type> lock(s_map);
          //------------------------------------------------------------------
          get_segment_and_offset(this, id1, off);
          get_segment_and_offset(&y,   id2, off);
@@ -201,7 +202,7 @@ struct flat_map_intersegment
    {  
       {
          //------------------------------------------------------------------
-         boost::interprocess::scoped_lock<typename mappings_t::mutex_t>     lock(s_map);
+         boost::interprocess::scoped_lock<typename mappings_t::mutex_type>     lock(s_map);
          //------------------------------------------------------------------
          get_segment_and_offset(addr, group, id);
       }
@@ -214,7 +215,7 @@ struct flat_map_intersegment
    {
       typedef typename mappings_t::group_to_data_t::iterator it_t;
       //------------------------------------------------------------------
-      boost::interprocess::scoped_lock<typename mappings_t::mutex_t>     lock(s_map);
+      boost::interprocess::scoped_lock<typename mappings_t::mutex_type>     lock(s_map);
       //------------------------------------------------------------------
       it_t it(s_map.group_to_data.find(group));
       if(it == s_map.group_to_data.end()){
@@ -237,7 +238,7 @@ struct flat_map_intersegment
 
       BOOST_TRY{
          //------------------------------------------------------------------
-         boost::interprocess::scoped_lock<typename mappings_t::mutex_t> lock(s_map);
+         boost::interprocess::scoped_lock<typename mappings_t::mutex_type> lock(s_map);
          //------------------------------------------------------------------
          //Check if there are too many groups
          if(s_map.group_to_data.size() >= (s_max_value - 1) ){
@@ -279,7 +280,7 @@ struct flat_map_intersegment
    static bool delete_group(std::size_t group)
    {
       //------------------------------------------------------------------
-      boost::interprocess::scoped_lock<typename mappings_t::mutex_t>  lock(s_map);
+      boost::interprocess::scoped_lock<typename mappings_t::mutex_type>  lock(s_map);
       //------------------------------------------------------------------
       typedef typename mappings_t::segment_to_ptr_t::iterator  it_t;
 
@@ -333,7 +334,7 @@ struct flat_map_intersegment
 
          {  
             //------------------------------------------------------------------
-            boost::interprocess::scoped_lock<typename mappings_t::mutex_t>     lock(s_map);
+            boost::interprocess::scoped_lock<typename mappings_t::mutex_type>     lock(s_map);
             //------------------------------------------------------------------
             //This can throw
             ptr_to_segment_ret_t ptr_to_segment_ret = 
@@ -373,7 +374,7 @@ struct flat_map_intersegment
       typedef typename mappings_t::segment_to_ptr_t::iterator  segment_to_ptr_it_t;
 
       {  //------------------------------------------------------------------
-         boost::interprocess::scoped_lock<typename mappings_t::mutex_t>     lock(s_map);
+         boost::interprocess::scoped_lock<typename mappings_t::mutex_type>     lock(s_map);
          //------------------------------------------------------------------
          ptr_to_segment_it_t ptr_to_segment_it = s_map.ptr_to_segment.find(base_address);
          if(ptr_to_segment_it == s_map.ptr_to_segment.end()){
@@ -408,7 +409,7 @@ struct flat_map_intersegment
       //Compose segment identification
       segment_t segment = (group << s_shift) | id;
       {  //------------------------------------------------------------------
-         boost::interprocess::scoped_lock<typename mappings_t::mutex_t>     lock(s_map);
+         boost::interprocess::scoped_lock<typename mappings_t::mutex_type>     lock(s_map);
          //------------------------------------------------------------------
          segment_to_ptr_it_t segment_to_ptr_it = s_map.segment_to_ptr.find(segment);
          if(segment_to_ptr_it == s_map.segment_to_ptr.end()){
@@ -447,7 +448,7 @@ struct flat_map_intersegment
       };
 
       /*!Mutex to preserve integrity in multi-threaded enviroments*/
-      typedef Mutex        mutex_t;
+      typedef Mutex        mutex_type;
       /*!Maps base addresses and segment information 
          (size and segment group and id)*/
       typedef boost::interprocess::flat_map
@@ -868,6 +869,34 @@ struct has_trivial_destructor
    : public true_type{};
 
 }  //namespace boost {
+
+namespace boost{
+namespace interprocess{
+
+/*!Simulation of cast operators between pointers.*/
+template<class T>
+class cast_to< intersegment_ptr<T> >
+{
+   public:
+   template<class S>
+   static intersegment_ptr<T> using_static_cast(const intersegment_ptr<S> &s)
+   {  return intersegment_ptr<T>(s, detail::static_cast_tag());   }
+
+   template<class S>
+   static intersegment_ptr<T> using_reinterpret_cast(const intersegment_ptr<S> &s)
+   {  return intersegment_ptr<T>(s, detail::reinterpret_cast_tag());   }
+
+   template<class S>
+   static intersegment_ptr<T> using_const_cast(const intersegment_ptr<S> &s)
+   {  return intersegment_ptr<T>(s, detail::const_cast_tag());   }
+
+   template<class S>
+   static intersegment_ptr<T> using_dynamic_cast(const intersegment_ptr<S> &s)
+   {  return intersegment_ptr<T>(s, detail::dynamic_cast_tag());   }
+};
+
+}  //namespace interprocess{
+}  //namespace boost{
 
 #include <boost/interprocess/detail/config_end.hpp>
 

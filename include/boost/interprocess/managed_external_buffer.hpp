@@ -17,9 +17,8 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-
+#include <boost/interprocess/detail/creation_tags.hpp>
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
-#include <string.h>  //for memcpy
 
 /*!\file
    Describes a named user memory allocation user class. 
@@ -45,19 +44,38 @@ class basic_managed_external_buffer
       <CharType, AllocationAlgorithm, IndexType>    base_t;
  public:
    /*!Creates and places the segment manager. This can throw*/
-   bool  create   (void *addr, std::size_t size)
-      {  return base_t::create_impl(addr, size);  }
- 
-   /*!Connects to a created the segment manager. Never throws.*/
-   bool  open     (void *addr, std::size_t size)
-      {  return base_t::open_impl(addr, size);  }
+   basic_managed_external_buffer
+      (detail::create_only_t, void *addr, std::size_t size)
+   {
+      if(!base_t::create_impl(addr, size)){
+         throw interprocess_exception();//return false;
+      }
+   }
 
-   /*!Frees resources. Never throws.*/
-   void close()
-      {  base_t::close_impl();   }
+   /*!Creates and places the segment manager. This can throw*/
+   basic_managed_external_buffer
+      (detail::open_only_t, void *addr, std::size_t size)
+   {
+      if(!base_t::open_impl(addr, size)){
+         throw interprocess_exception();//return false;
+      }
+   }
 
    void grow(std::size_t extra_bytes)
       {  base_t::grow(extra_bytes);   }
+
+/*
+   bool  create   (void *addr, std::size_t size)
+      {  return base_t::create_impl(addr, size);  }
+ 
+
+   bool  open     (void *addr, std::size_t size)
+      {  return base_t::open_impl(addr, size);  }
+
+
+   void close()
+      {  base_t::close_impl();   }
+*/
 };
 
 }  //namespace interprocess {

@@ -77,15 +77,15 @@ class basic_managed_mapped_file
    public: //functions
 
    typedef enum { 
-                  ro_mode = file_mapping::ro_mode, 
-                  rw_mode = file_mapping::rw_mode,
+                  read_only = file_mapping::read_only, 
+                  read_write = file_mapping::read_write
                 }    accessmode_t;
 
    /*!Creates shared memory and creates and places the segment manager. 
       This can throw.*/
    basic_managed_mapped_file(detail::create_only_t create_only, const char *name,
                              std::size_t size, const void *addr = 0)
-      : m_mfile(create_only, name, size, memory_mapping::rw_mode, addr, 
+      : m_mfile(create_only, name, size, memory_mappable::read_write, addr, 
                 create_open_func(get_this_pointer(), create_open_func::DoCreate))
    {}
 
@@ -96,7 +96,7 @@ class basic_managed_mapped_file
    basic_managed_mapped_file (detail::open_or_create_t open_or_create,
                               const char *name, std::size_t size, 
                               const void *addr = 0)
-      : m_mfile(open_or_create, name, size, memory_mapping::rw_mode, addr, 
+      : m_mfile(open_or_create, name, size, memory_mappable::read_write, addr, 
                 create_open_func(get_this_pointer(), 
                 create_open_func::DoCreateOrOpen))
    {}
@@ -105,7 +105,7 @@ class basic_managed_mapped_file
       Never throws.*/
    basic_managed_mapped_file (detail::open_only_t open_only, const char* name, 
                               const void *addr = 0)
-      : m_mfile(open_only, name, memory_mapping::rw_mode, addr, 
+      : m_mfile(open_only, name, memory_mappable::read_write, addr, 
                 create_open_func(get_this_pointer(), 
                 create_open_func::DoOpen))
    {}
@@ -123,7 +123,7 @@ class basic_managed_mapped_file
       file.close();
 
       //Create mapped file
-      if(!m_mfile.open(name, 0, size, (file_mapping::accessmode_t)rw_mode)){
+      if(!m_mfile.open(name, 0, size, (file_mapping::accessmode_t)read_write)){
          return false;
       }
 
@@ -137,7 +137,7 @@ class basic_managed_mapped_file
       return true;    
    }
 
-   bool open(const char *name, accessmode_t mode = rw_mode)
+   bool open(const char *name, accessmode_t mode = read_write)
    {
       //Open file and get size
       std::ifstream file(name, std::ios::binary);
@@ -203,7 +203,7 @@ class basic_managed_mapped_file
       }
 
       if(!m_mfile.open(m_filename.c_str(), 0, new_size, 
-                       (file_mapping::accessmode_t)rw_mode)){
+                       (file_mapping::accessmode_t)read_write)){
          return false;
       }
 

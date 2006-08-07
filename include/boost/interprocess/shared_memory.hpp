@@ -18,7 +18,6 @@
 #include <boost/type_traits/alignment_of.hpp>
 #include <boost/type_traits/type_with_alignment.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/detail/workaround.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
@@ -28,10 +27,10 @@
 #include <boost/function.hpp>
 #include <boost/interprocess/detail/global_lock.hpp>
 #include <boost/compatibility/cpp_c_headers/cstddef>
-#include <boost/interprocess/memory_mapping.hpp>
-#include <boost/optional.hpp>
-#include <boost/utility/in_place_factory.hpp>
-
+#include <boost/interprocess/memory_mappable.hpp>
+//#include <boost/optional.hpp>
+//#include <boost/utility/in_place_factory.hpp>
+/*
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 #  include <boost/interprocess/sync/win32/win32_sync_primitives.hpp>
 #else
@@ -48,7 +47,7 @@
 #  endif
 
 #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-
+*/
 
 /*!\file
    Describes shared_memory class
@@ -60,42 +59,39 @@ namespace interprocess {
 
 /*!A class that wraps a shared memory mapping that can be used to
    create mapped regions from the mapped files*/
-class shared_memory_mapping : public memory_mapping
+class shared_memory_object : public memory_mappable
 {
    enum type_t {   DoCreate, DoOpen, DoCreateOrOpen  };
    public:
 
-   /*!Opens a file mapping of file "filename", starting in offset 
-      "file_offset", and the mapping's size will be "size". The mapping 
-      can be opened for read-only "ro_mode" or read-write "rw_mode. modes.*/
-//   shared_memory_mapping(const char *filename,   memory_mapping::accessmode_t mode);
+   shared_memory_object();
 
-   // Creates a shared memory object with name "name" and size "size", with the access mode "mode"
-   // If the file previously exists, throws an error
-   shared_memory_mapping(detail::create_only_t, const char *name, memory_mapping::accessmode_t mode)
+   /*!Creates a shared memory object with name "name" and size "size", with the access mode "mode"
+      If the file previously exists, throws an error.*/
+   shared_memory_object(detail::create_only_t, const char *name, memory_mappable::accessmode_t mode)
    {  this->priv_open_or_create(DoCreate, name, mode);  }
 
-   // Tries to create a shared memory object with name "name" and size "size", with the
-   // access mode "mode". If the file previously exists, it tries to open it with mode "mode".
-   // Otherwise throws an error.
-   shared_memory_mapping(detail::open_or_create_t, const char *name, memory_mapping::accessmode_t mode)
+   /*!Tries to create a shared memory object with name "name" and size "size", with the
+      access mode "mode". If the file previously exists, it tries to open it with mode "mode".
+      Otherwise throws an error.*/
+   shared_memory_object(detail::open_or_create_t, const char *name, memory_mappable::accessmode_t mode)
    {  this->priv_open_or_create(DoCreateOrOpen, name, mode);  }
 
    // Tries to open a shared memory object with name "name", with the access mode "mode". 
    // If the file does not previously exist, it throws an error.
-   shared_memory_mapping(detail::open_only_t, const char *name, memory_mapping::accessmode_t mode)
+   shared_memory_object(detail::open_only_t, const char *name, memory_mappable::accessmode_t mode)
    {  this->priv_open_or_create(DoOpen, name, mode);  }
 
    // Erases a shared memory object from the system.
    static bool remove(const char *name);
    
    //Sets the size of the shared memory mapping
-   void truncate(memory_mapping::mapping_offset_t length);
+   void truncate(memory_mappable::mapping_offset_t length);
 
    // Closes the shared memory mapping. All mapped regions are still
    // valid after destruction. The shared memory object still exists and
    // can be newly opened.
-   ~shared_memory_mapping();
+   ~shared_memory_object();
 
    /*!Returns the name of the file.*/
    const char *get_name() const;
@@ -111,24 +107,24 @@ class shared_memory_mapping : public memory_mapping
    void priv_close();
 
    bool priv_open_or_create(type_t type, const char *filename, 
-                            memory_mapping::accessmode_t mode);
+                            memory_mappable::accessmode_t mode);
 
    std::string    m_filename;
 };
 
-inline shared_memory_mapping::~shared_memory_mapping() 
+inline shared_memory_object::~shared_memory_object() 
 {  this->priv_close(); }
 
 /*!Returns the name of the file.*/
-inline const char *shared_memory_mapping::get_name() const
+inline const char *shared_memory_object::get_name() const
 {  return m_filename.c_str(); }
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
-inline bool shared_memory_mapping::priv_open_or_create
+inline bool shared_memory_object::priv_open_or_create
    (type_t type, 
     const char *filename,
-    memory_mapping::accessmode_t mode)
+    memory_mappable::accessmode_t mode)
 {
    m_filename = filename;
 
@@ -167,10 +163,10 @@ inline bool shared_memory_mapping::priv_open_or_create
    unsigned long file_creation_flags  = 0;
 
    //Set accesses
-   if (mode == rw_mode){
+   if (mode == read_write){
       file_access       |= winapi::generic_read | winapi::generic_write;
    }
-   else if (mode == ro_mode){
+   else if (mode == read_only){
       file_access       |= winapi::generic_read;
    }
 
@@ -192,7 +188,7 @@ inline bool shared_memory_mapping::priv_open_or_create
    }
 
    //Open file using windows API since we need the handle
-   memory_mapping::mapping_handle_t hnd = winapi::create_file  
+   memory_mappable::mapping_handle_t hnd = winapi::create_file  
       (shmfile.c_str(), file_access, file_creation_flags, winapi::file_attribute_temporary);
 
    //Check for error
@@ -202,11 +198,11 @@ inline bool shared_memory_mapping::priv_open_or_create
       throw interprocess_exception(err);
    }
 
-   memory_mapping::assign_data(hnd, mode);
+   memory_mappable::assign_data(hnd, mode);
    return true;
 }
 
-inline bool shared_memory_mapping::remove(const char *filename)
+inline bool shared_memory_object::remove(const char *filename)
 {
    try{
       //Make sure a temporary path is created for shared memory
@@ -237,45 +233,45 @@ inline bool shared_memory_mapping::remove(const char *filename)
    }
 }
 
-inline void shared_memory_mapping::truncate(memory_mapping::mapping_offset_t length)
+inline void shared_memory_object::truncate(memory_mappable::mapping_offset_t length)
 {
-   if(!winapi::set_file_pointer_ex( memory_mapping::get_mapping_handle(), length
+   if(!winapi::set_file_pointer_ex( memory_mappable::get_mapping_handle(), length
                                , 0, winapi::file_begin)){
       error_info err = winapi::get_last_error();
       throw interprocess_exception(err);
    }
 
-   if(!winapi::set_end_of_file(memory_mapping::get_mapping_handle())){
+   if(!winapi::set_end_of_file(memory_mappable::get_mapping_handle())){
       error_info err = winapi::get_last_error();
       throw interprocess_exception(err);
    }
 }
 
-inline void shared_memory_mapping::priv_close()
+inline void shared_memory_object::priv_close()
 {
-   if(memory_mapping::get_mapping_handle() != winapi::invalid_handle_value){
-      winapi::close_handle(memory_mapping::get_mapping_handle());
-      memory_mapping::assign_data
-         (winapi::invalid_handle_value, memory_mapping::get_mode());
+   if(memory_mappable::get_mapping_handle() != winapi::invalid_handle_value){
+      winapi::close_handle(memory_mappable::get_mapping_handle());
+      memory_mappable::assign_data
+         (winapi::invalid_handle_value, memory_mappable::get_mode());
    }
 }
 
 #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
-inline bool shared_memory_mapping::priv_open_or_create
+inline bool shared_memory_object::priv_open_or_create
    (type_t type, 
     const char *filename,
-    memory_mapping::accessmode_t mode)
+    memory_mappable::accessmode_t mode)
 {
    m_filename = filename;
 
    //Create new mapping
 
    int oflag = 0;
-   if(mode == memory_mapping::ro_mode){
+   if(mode == memory_mappable::read_only){
       oflag |= O_RDONLY;
    }
-   else if(mode == memory_mapping::rw_mode){
+   else if(mode == memory_mappable::read_write){
       oflag |= O_RDWR;
    }
    else{
@@ -301,7 +297,7 @@ inline bool shared_memory_mapping::priv_open_or_create
    }
 
    //Open file using windows API since we need the handle
-   memory_mapping::mapping_handle_t hnd = shm_open
+   memory_mappable::mapping_handle_t hnd = shm_open
       (filename, oflag, S_IRWXO | S_IRWXG | S_IRWXU);
 
    //Check for error
@@ -311,29 +307,29 @@ inline bool shared_memory_mapping::priv_open_or_create
       throw interprocess_exception(err);
    }
 
-   memory_mapping::assign_data(hnd, mode);
+   memory_mappable::assign_data(hnd, mode);
    return true;
 }
 
-inline bool shared_memory_mapping::remove(const char *filename)
+inline bool shared_memory_object::remove(const char *filename)
 {
    return 0 != shm_unlink(filename);
 }
 
-inline void shared_memory_mapping::truncate(memory_mapping::mapping_offset_t length)
+inline void shared_memory_object::truncate(memory_mappable::mapping_offset_t length)
 {
-   if(0 != ftruncate(memory_mapping::get_mapping_handle(), length)){
+   if(0 != ftruncate(memory_mappable::get_mapping_handle(), length)){
       error_info err(system_error_code());
       throw interprocess_exception(err);
    }
 }
 
-inline void shared_memory_mapping::priv_close()
+inline void shared_memory_object::priv_close()
 {
-   if(memory_mapping::get_mapping_handle() != -1){
-      ::close(memory_mapping::get_mapping_handle());
-      memory_mapping::assign_data
-         (-1, memory_mapping::get_mode());
+   if(memory_mappable::get_mapping_handle() != -1){
+      ::close(memory_mappable::get_mapping_handle());
+      memory_mappable::assign_data
+         (-1, memory_mappable::get_mode());
    }
 }
 
@@ -341,16 +337,20 @@ inline void shared_memory_mapping::priv_close()
 
 
 /*!A class that wraps basic shared memory management*/
-class shared_memory : private boost::noncopyable
+class shared_memory
 {
-   enum type_t {   DoCreate, DoOpen, DoCreateOrOpen  };
+   //Non-copyable
    shared_memory();
+   shared_memory(const shared_memory &);
+   shared_memory &operator=(const shared_memory &);
+
+   enum type_t {   DoCreate, DoOpen, DoCreateOrOpen  };
 
    public:
 
    /*!Creates a shared memory segment with name "name", with size "size".
       If the segment was previously created it throws an error.
-      The segment can be created in two modes: read-only "ro_mode" or read-write "rw_mode".
+      The segment can be created in two modes: read-only "read_only" or read-write "read_write".
       The user can also specify the mapping address in "addr". If "addr" is 0,
       the operating system will choose the mapping address.
 
@@ -360,12 +360,12 @@ class shared_memory : private boost::noncopyable
    shared_memory(detail::create_only_t, 
                  const char *name,
                  std::size_t size,
-                 memory_mapping::accessmode_t mode = memory_mapping::rw_mode,
+                 memory_mappable::accessmode_t mode = memory_mappable::read_write,
                  const void *addr = 0);
 
    /*!Opens a shared memory segment with name "name". If it was previously 
       created throws an error.
-      The segment can be opened in two modes: read-only "ro_mode" or read-write "rw_mode".
+      The segment can be opened in two modes: read-only "read_only" or read-write "read_write".
       The user can also specify the mapping address in "addr". If "addr" is 0,
       the operating system will choose the mapping address.
 
@@ -374,13 +374,13 @@ class shared_memory : private boost::noncopyable
       (like std::bad_alloc)*/
    shared_memory(detail::open_only_t, 
                  const char *name,
-                 memory_mapping::accessmode_t mode = memory_mapping::rw_mode,
+                 memory_mappable::accessmode_t mode = memory_mappable::read_write,
                  const void *addr = 0);
 
    /*!Creates a shared memory segment with name "name", and size "size" if
       the shared memory was not previously created. If it was previously 
       created it tries to open it. User can specify the mapping address in "addr".
-      The segment can be opened in two modes: read-only "ro_mode" or read-write "rw_mode".
+      The segment can be opened in two modes: read-only "read_only" or read-write "read_write".
       If "addr" is 0, the operating system will choose the mapping address.
 
       This function can throw boost::inteprocess_exception and
@@ -389,7 +389,7 @@ class shared_memory : private boost::noncopyable
    shared_memory(detail::open_or_create_t, 
                  const char *name,
                  std::size_t size,
-                 memory_mapping::accessmode_t mode = memory_mapping::rw_mode,
+                 memory_mappable::accessmode_t mode = memory_mappable::read_write,
                  const void *addr = 0);
 
    /*!Creates a shared memory segment with name "name", with size "size".
@@ -424,7 +424,7 @@ class shared_memory : private boost::noncopyable
    shared_memory(detail::create_only_t, 
                  const char *name,
                  std::size_t size,
-                 memory_mapping::accessmode_t mode,
+                 memory_mappable::accessmode_t mode,
                  const void *addr,
                  const ConstructFunc &construct_func);
 
@@ -461,7 +461,7 @@ class shared_memory : private boost::noncopyable
    template <class ConstructFunc>
    shared_memory(detail::open_only_t, 
                  const char *name,
-                 memory_mapping::accessmode_t mode,
+                 memory_mappable::accessmode_t mode,
                  const void *addr,
                  const ConstructFunc &construct_funcc);
 
@@ -499,7 +499,7 @@ class shared_memory : private boost::noncopyable
    shared_memory(detail::open_or_create_t, 
                  const char *name,
                  std::size_t size,
-                 memory_mapping::accessmode_t mode,
+                 memory_mappable::accessmode_t mode,
                  const void *addr,
                  const ConstructFunc &construct_func);
 
@@ -526,9 +526,6 @@ class shared_memory : private boost::noncopyable
       constructor. Never throws.*/
    const char *get_name() const;
 
-   /*!Erases a shared memory object from the system.*/
-   static bool remove(const char *name);
-
    #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
    typedef void * OS_handle_t;
    #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
@@ -546,7 +543,7 @@ class shared_memory : private boost::noncopyable
 
    template <class ConstructFunc>
    bool priv_open_or_create(type_t type, const char *name, std::size_t size,
-                            memory_mapping::accessmode_t mode, const void *addr, 
+                            memory_mappable::accessmode_t mode, const void *addr, 
                             ConstructFunc construct_func);
    mapped_region     m_mapped_region;
    std::string       m_name;
@@ -554,21 +551,21 @@ class shared_memory : private boost::noncopyable
 
 inline shared_memory::shared_memory
    (detail::create_only_t, const char *name, std::size_t size, 
-   memory_mapping::accessmode_t mode, const void *addr)
+   memory_mappable::accessmode_t mode, const void *addr)
 {
    this->priv_open_or_create(DoCreate, name, size, mode, addr, null_mapped_region_function());
 }
 
 inline shared_memory::shared_memory
    (detail::open_only_t, const char *name, 
-   memory_mapping::accessmode_t mode, const void *addr)
+   memory_mappable::accessmode_t mode, const void *addr)
 {
    this->priv_open_or_create(DoOpen, name, 0, mode, addr, null_mapped_region_function());
 }
 
 inline shared_memory::shared_memory
    (detail::open_or_create_t, const char *name, std::size_t size, 
-   memory_mapping::accessmode_t mode, const void *addr)
+   memory_mappable::accessmode_t mode, const void *addr)
 {
    this->priv_open_or_create(DoCreateOrOpen, name, size, mode, addr, null_mapped_region_function());
 }
@@ -576,7 +573,7 @@ inline shared_memory::shared_memory
 template <class ConstructFunc>
 inline shared_memory::shared_memory
    (detail::create_only_t, const char *name, std::size_t size, 
-   memory_mapping::accessmode_t mode, const void *addr, 
+   memory_mappable::accessmode_t mode, const void *addr, 
    const ConstructFunc &construct_func)
 {
    this->priv_open_or_create(DoCreate, name, size, mode, addr, construct_func);
@@ -585,7 +582,7 @@ inline shared_memory::shared_memory
 template <class ConstructFunc>
 inline shared_memory::shared_memory
    (detail::open_only_t, const char *name,
-   memory_mapping::accessmode_t mode, const void *addr, 
+   memory_mappable::accessmode_t mode, const void *addr, 
    const ConstructFunc &construct_func)
 {
    this->priv_open_or_create(DoOpen, name, 0, mode, addr, construct_func);
@@ -594,15 +591,11 @@ inline shared_memory::shared_memory
 template <class ConstructFunc>
 inline shared_memory::shared_memory
    (detail::open_or_create_t, const char *name, std::size_t size, 
-   memory_mapping::accessmode_t mode, const void *addr, 
+   memory_mappable::accessmode_t mode, const void *addr, 
    const ConstructFunc &construct_func)
 {
    this->priv_open_or_create(DoCreateOrOpen, name, size, mode, addr, construct_func);
 }
-
-   /*!Erases a shared memory object from the system.*/
-inline bool shared_memory::remove(const char *name)
-{  return shared_memory_mapping::remove(name);  }
 
 inline shared_memory::~shared_memory() 
 {}
@@ -618,8 +611,8 @@ inline const char *shared_memory::get_name()  const
 
 inline void shared_memory::swap(shared_memory &other)
 {
-   detail::do_swap(this->m_name,    other.m_name);
-   detail::do_swap(this->m_mapped_region, other.m_mapped_region);
+   this->m_name.swap(other.m_name);
+   this->m_mapped_region.swap(other.m_mapped_region);
 }
 
 inline void swap(shared_memory &x, shared_memory &y)
@@ -628,7 +621,7 @@ inline void swap(shared_memory &x, shared_memory &y)
 template <class ConstructFunc> inline 
 bool shared_memory::priv_open_or_create
    (shared_memory::type_t type,  const char *name, std::size_t size, 
-   memory_mapping::accessmode_t mode, const void *addr,
+   memory_mappable::accessmode_t mode, const void *addr,
    ConstructFunc construct_func)
 {
    error_info err;
@@ -645,38 +638,41 @@ bool shared_memory::priv_open_or_create
       #endif
    }
 
-   //shared_memory_mapping has no default constructor.
-   //And embedded system paranoids like me don't like dynamic memoryç
-   //boost::optional does not solve well in place factories
-   boost::optional<shared_memory_mapping> mapping;
-   
    //Do some in-place construction
    bool created = false;
    switch(type){
       case DoOpen:
       {
-         mapping = in_place(open_only, name, memory_mapping::rw_mode);
+         shared_memory_object mapping(open_only, name, memory_mappable::read_write);
+         mapped_region region(mapping, (mapped_region::accessmode_t)mode, 0, size, addr);
+         m_mapped_region.swap(region);
       }
       break;
       case DoCreateOrOpen:
       {
          try{
-            mapping = in_place(create_only, name, memory_mapping::rw_mode);
-            mapping->truncate(size);
+            shared_memory_object mapping(create_only, name, memory_mappable::read_write);
+            mapping.truncate(size);
+            mapped_region region(mapping, (mapped_region::accessmode_t)mode, 0, size, addr);
+            m_mapped_region.swap(region);
             created = true;
          }
          catch(interprocess_exception &ex){
             if(ex.get_error_code() != already_exists_error){
                throw;
             }
-            mapping = in_place(open_only, name, memory_mapping::rw_mode);            
+            shared_memory_object mapping(open_only, name, memory_mappable::read_write);
+            mapped_region region(mapping, (mapped_region::accessmode_t)mode, 0, size, addr);
+            m_mapped_region.swap(region);
          }
       }
       break;
       case DoCreate:
       {
-         mapping = in_place(create_only, name, memory_mapping::rw_mode);
-         mapping->truncate(size);
+         shared_memory_object mapping(create_only, name, memory_mappable::read_write);
+         mapping.truncate(size);
+         mapped_region region(mapping, (mapped_region::accessmode_t)mode, 0, size, addr);
+         m_mapped_region.swap(region);
          created = true;
       }
       break;
@@ -684,11 +680,6 @@ bool shared_memory::priv_open_or_create
       break;
    }
    
-   mapped_region mapped(*mapping, 0, size, /*file_mapping::rw_mode*/mode, addr);
-
-   //Now swap mapped region
-   m_mapped_region.swap(mapped);
-
    //Execute atomic functor
    construct_func(m_mapped_region, created);
 

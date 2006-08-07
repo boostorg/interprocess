@@ -305,17 +305,17 @@ class basic_managed_multi_shared_memory
          switch(type){
             case create_open_func::DoCreate:
                shm.reset(new shared_memory(create_only, name, size
-                                          ,memory_mapping::rw_mode, addr, func));
+                                          ,memory_mappable::read_write, addr, func));
             break;
 
             case create_open_func::DoOpen:
                shm.reset(new shared_memory(open_only, name
-                                          ,memory_mapping::rw_mode, addr, func));
+                                          ,memory_mappable::read_write, addr, func));
             break;
 
             case create_open_func::DoOpenOrCreate:
                shm.reset(new shared_memory( boost::interprocess::open_or_create
-                                          , name, size, memory_mapping::rw_mode
+                                          , name, size, memory_mappable::read_write
                                           , addr, func));
             break;
 

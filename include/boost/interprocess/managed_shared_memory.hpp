@@ -119,7 +119,7 @@ class basic_managed_shared_memory
       This can throw.*/
    basic_managed_shared_memory(detail::create_only_t create_only, const char *name,
                              std::size_t size, const void *addr = 0)
-      : m_shmem(create_only, name, size, memory_mapping::rw_mode, addr, 
+      : m_shmem(create_only, name, size, memory_mappable::read_write, addr, 
                 create_open_func(get_this_pointer(), create_open_func::DoCreate))
    {}
 
@@ -130,7 +130,7 @@ class basic_managed_shared_memory
    basic_managed_shared_memory (detail::open_or_create_t open_or_create,
                               const char *name, std::size_t size, 
                               const void *addr = 0)
-      : m_shmem(open_or_create, name, size, memory_mapping::rw_mode, addr, 
+      : m_shmem(open_or_create, name, size, memory_mappable::read_write, addr, 
                 create_open_func(get_this_pointer(), 
                 create_open_func::DoCreateOrOpen))
    {}
@@ -139,14 +139,14 @@ class basic_managed_shared_memory
       Never throws.*/
    basic_managed_shared_memory (detail::open_only_t open_only, const char* name, 
                               const void *addr = 0)
-      : m_shmem(open_only, name, memory_mapping::rw_mode, addr, 
+      : m_shmem(open_only, name, memory_mappable::read_write, addr, 
                 create_open_func(get_this_pointer(), 
                 create_open_func::DoOpen))
    {}
-
+/*
    static bool remove(const char *name)
-   {  return shared_memory::remove(name);  }
-
+   {  return shared_memory_object::remove(name);  }
+*/
    /*!Creates shared memory from file. Never throws.*/
 /*
    template<class CharT> 

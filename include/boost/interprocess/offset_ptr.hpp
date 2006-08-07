@@ -21,6 +21,7 @@
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/cast_tags.hpp>
+#include <boost/interprocess/detail/generic_cast.hpp>
 #include <boost/assert.hpp>
 #include <boost/type_traits/has_trivial_constructor.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
@@ -329,6 +330,35 @@ struct has_trivial_destructor
 {};
 
 }  //namespace boost {
+
+
+namespace boost{
+namespace interprocess{
+
+/*!Simulation of cast operators between pointers.*/
+template<class T>
+class cast_to< offset_ptr<T> >
+{
+   public:
+   template<class S>
+   static offset_ptr<T> using_static_cast(const offset_ptr<S> &s)
+   {  return offset_ptr<T>(s, detail::static_cast_tag());   }
+
+   template<class S>
+   static offset_ptr<T> using_reinterpret_cast(const offset_ptr<S> &s)
+   {  return offset_ptr<T>(s, detail::reinterpret_cast_tag());   }
+
+   template<class S>
+   static offset_ptr<T> using_const_cast(const offset_ptr<S> &s)
+   {  return offset_ptr<T>(s, detail::const_cast_tag());   }
+
+   template<class S>
+   static offset_ptr<T> using_dynamic_cast(const offset_ptr<S> &s)
+   {  return offset_ptr<T>(s, detail::dynamic_cast_tag());   }
+};
+
+}  //namespace interprocess{
+}  //namespace boost{
 
 #include <boost/interprocess/detail/config_end.hpp>
 

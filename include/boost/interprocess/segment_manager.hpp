@@ -19,7 +19,6 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/config.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
@@ -245,6 +244,11 @@ template<class CharType
         ,template<class IndexConfig> class IndexType>
 class segment_manager : private MemoryAlgorithm
 { 
+   //Non-copyable
+   segment_manager();
+   segment_manager(const segment_manager &);
+   segment_manager &operator=(const segment_manager &);
+
    public:
    typedef typename MemoryAlgorithm::void_pointer void_pointer;
 
@@ -599,7 +603,7 @@ class segment_manager : private MemoryAlgorithm
    }
 
    /*!Preallocates needed index resources to optimize the 
-      creation of "num" named objects in the fixed size memory segment.
+      creation of "num" named objects in the managed memory segment.
       Can throw boost::interprocess::bad_alloc if there is no enough memory.*/
    void reserve_named_objects(std::size_t num)
    {  
@@ -610,7 +614,7 @@ class segment_manager : private MemoryAlgorithm
    }
 
    /*!Preallocates needed index resources to optimize the 
-      creation of "num" unique objects in the fixed size memory segment.
+      creation of "num" unique objects in the managed memory segment.
       Can throw boost::interprocess::bad_alloc if there is no enough memory.*/
    void reserve_unique_objects(std::size_t num)
    {  
@@ -1092,7 +1096,7 @@ class segment_manager : private MemoryAlgorithm
                   sizeof(MemoryAlgorithm));
    }
 
-   typedef typename MemoryAlgorithm::mutex_family::recursive_mutex_t   rmutex;
+   typedef typename MemoryAlgorithm::mutex_family::recursive_mutex_type   rmutex;
 
    /*!This struct includes needed data and derives from
       rmutex to allow EBO when using null interprocess_mutex*/
