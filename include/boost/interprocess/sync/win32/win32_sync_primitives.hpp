@@ -63,14 +63,6 @@ static const unsigned long file_map_write       = section_map_write;
 static const unsigned long file_map_read        = section_map_read;
 static const unsigned long file_map_all_access  = section_all_access;
 
-#define SECTION_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED|SECTION_QUERY|\
-                            SECTION_MAP_WRITE |      \
-                            SECTION_MAP_READ |       \
-                            SECTION_MAP_EXECUTE |    \
-                            SECTION_EXTEND_SIZE)
-
-static const unsigned long FILE_MAP_WRITE       = 0x0002;
-
 static const unsigned long file_share_read      = 0x00000001;
 static const unsigned long file_share_write     = 0x00000002;
 
