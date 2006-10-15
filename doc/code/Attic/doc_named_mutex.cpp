@@ -16,7 +16,7 @@
             
             //Do some operations...
 
-            //Write to console atomically
+            //Write to file atomically
             scoped_lock<named_mutex> lock(mutex);
             file << "Process name, ";
             file << "This is iteration #" << i;

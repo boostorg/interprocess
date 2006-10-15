@@ -26,13 +26,13 @@ createdir:
 	@mkdir -p ../../bin/qnx
 
 ../../bin/qnx/test_%.out: ../../test/%.cpp 
-	$(CC) $< -Wall -pedantic -DBOOST_DATE_TIME_NO_LIB -lboost_thread-gcc-mt-s -I$(BOOST_ROOT) -o $@
+	$(CC) $< -Wall -DBOOST_DATE_TIME_NO_LIB -lboost_thread-gcc-mt-s -I$(BOOST_ROOT) -o $@
 
 ../../bin/qnx/ex_%.out: ../../example/%.cpp 
-	$(CC) $< -Wall -pedantic -DBOOST_DATE_TIME_NO_LIB -lboost_thread-gcc-mt-s -I$(BOOST_ROOT) -o $@
+	$(CC) $< -Wall -DBOOST_DATE_TIME_NO_LIB -lboost_thread-gcc-mt-s -I$(BOOST_ROOT) -o $@
 
 ../../bin/qnx/doc_%.out: ../../doc/code/%.cpp 
-	$(CC) $< -Wall -pedantic -DBOOST_DATE_TIME_NO_LIB -lboost_thread-gcc-mt-s -I$(BOOST_ROOT) -o $@
+	$(CC) $< -Wall -DBOOST_DATE_TIME_NO_LIB -lboost_thread-gcc-mt-s -I$(BOOST_ROOT) -o $@
 
 clean:
 	rm -f *.o

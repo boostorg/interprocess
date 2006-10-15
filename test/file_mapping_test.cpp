@@ -13,7 +13,8 @@
 
 #include <fstream>
 #include <iostream>
-#include <boost/interprocess/mapped_file.hpp>
+#include <boost/interprocess/file_mapping.hpp>
+#include <boost/interprocess/mapped_region.hpp>
 
 using namespace boost::interprocess;
 
@@ -30,16 +31,16 @@ int main ()
 
       {
          //Create a file mapping
-         file_mapping mapping("my_file", file_mapping::read_write);
+         file_mapping mapping("my_file", read_write);
          //Create two mapped regions, one half of the file each
          mapped_region region (mapping
-                              ,mapped_region::read_write
+                              ,read_write
                               ,0
                               ,FileSize/2
                               );
 
          mapped_region region2(mapping
-                              ,mapped_region::read_write
+                              ,read_write
                               ,FileSize/2
                               ,FileSize - FileSize/2
                               );
@@ -100,11 +101,11 @@ int main ()
       //Now check the pattern mapping a single read only mapped_region
       {
          //Create a file mapping
-         file_mapping mapping("my_file", file_mapping::read_only);
+         file_mapping mapping("my_file", read_only);
 
          //Create a single regions, mapping all the file
          mapped_region region (mapping
-                              ,mapped_region::read_only
+                              ,read_only
                               );
 
          //Check pattern

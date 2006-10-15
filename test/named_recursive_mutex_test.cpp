@@ -11,7 +11,6 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/named_recursive_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "mutex_test_template.hpp"
 #include "named_creation_template.hpp"

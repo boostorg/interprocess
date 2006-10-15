@@ -10,7 +10,8 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/shared_memory.hpp>
+#include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include "named_creation_template.hpp"
 #include <cstring>   //for strcmp, memset
@@ -19,9 +20,9 @@
 static const std::size_t ShmSize = 1000;
 static const char *      ShmName = "shared_memory";
 
-struct shared_memory_eraser
+struct eraser
 {
-   ~shared_memory_eraser()
+   ~eraser()
    {
       boost::interprocess::shared_memory_object::remove(ShmName);
    }
@@ -30,22 +31,24 @@ struct shared_memory_eraser
 //This wrapper is necessary to have a common constructor
 //in generic named_creation_template functions
 class shared_memory_creation_test_wrapper
-   : public boost::interprocess::shared_memory
+   : public eraser
+   , public boost::interprocess::detail::managed_open_or_create_impl
+      <boost::interprocess::shared_memory_object>
 {
+   typedef boost::interprocess::detail::managed_open_or_create_impl
+      <boost::interprocess::shared_memory_object> shared_memory;
+
    public:
    shared_memory_creation_test_wrapper(boost::interprocess::detail::create_only_t)
-      :  boost::interprocess::shared_memory
-            (boost::interprocess::create_only, ShmName, ShmSize)
+      :  shared_memory(boost::interprocess::create_only, ShmName, ShmSize)
    {}
 
    shared_memory_creation_test_wrapper(boost::interprocess::detail::open_only_t)
-      :  boost::interprocess::shared_memory
-            (boost::interprocess::open_only, ShmName)
+      :  shared_memory(boost::interprocess::open_only, ShmName)
    {}
 
    shared_memory_creation_test_wrapper(boost::interprocess::detail::open_or_create_t)
-      :  boost::interprocess::shared_memory
-            (boost::interprocess::open_or_create, ShmName, ShmSize)
+      :  shared_memory(boost::interprocess::open_or_create, ShmName, ShmSize)
    {}
 };
 
@@ -53,6 +56,8 @@ class shared_memory_creation_test_wrapper
 int main ()
 {
    using namespace boost::interprocess;
+   typedef detail::managed_open_or_create_impl<shared_memory_object> shared_memory;
+
    try{
       shared_memory_object::remove(ShmName);
       test::test_named_creation<shared_memory_creation_test_wrapper>();
@@ -62,17 +67,13 @@ int main ()
          shared_memory_object::remove(ShmName);
          shared_memory shm1(create_only, ShmName, ShmSize);
 
-         //Compare size
-         if(shm1.get_size() != ShmSize)
-            return 1;
-
          //Compare name
          if(std::strcmp(shm1.get_name(), ShmName) != 0){
             return 1;
          }
 
          //Overwrite all memory
-         std::memset(shm1.get_address(), 0, ShmSize);
+         std::memset(shm1.get_address(), 0, shm1.get_size());
       }
    }
    catch(std::exception &ex){
@@ -82,4 +83,3 @@ int main ()
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
-

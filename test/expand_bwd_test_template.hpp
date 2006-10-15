@@ -17,18 +17,21 @@
 
 namespace boost { namespace interprocess { namespace test {
 
-struct int_holder
+template<class T>
+struct value_holder
 {
-   int_holder(int val): m_value(val){}
-   int_holder(): m_value(0){}
-   ~int_holder(){ m_value = 0; }
-   bool operator == (const int_holder &other) const
+   value_holder(T val): m_value(val){}
+   value_holder(): m_value(0){}
+   ~value_holder(){ m_value = 0; }
+   bool operator == (const value_holder &other) const
    {  return m_value == other.m_value; }
-   bool operator != (const int_holder &other) const
+   bool operator != (const value_holder &other) const
    {  return m_value != other.m_value; }
 
-   int m_value;
+   T m_value;
 };
+
+typedef value_holder<int> int_holder;
 
 //Function to check if both sets are equal
 template <class Vector1, class Vector2>
@@ -42,11 +45,12 @@ static bool CheckEqualVector(const Vector1 &vector1, const Vector2 &vector2)
 template<class Vector>
 static bool CheckUninitializedIsZero(const Vector & v)
 {
+   typedef  typename Vector::value_type value_type;
    typename Vector::size_type sz    = v.size();
    typename Vector::size_type extra = v.capacity() - v.size();
-   int_holder comp;
+   value_type comp(0);
 
-   const int_holder *holder = &v[0] + sz;
+   const value_type *holder = &v[0] + sz;
 
    while(extra--){
       if(*holder++ != comp)
@@ -58,10 +62,11 @@ static bool CheckUninitializedIsZero(const Vector & v)
 
 //This function tests all the possible combinations when
 //inserting data in a vector and expanding backwards
-template<class IntVectorWithExpandBwdAllocator>
+template<class VectorWithExpandBwdAllocator>
 bool test_insert_with_expand_bwd()
 {
-   typedef std::vector<int_holder> IntVect;
+   typedef typename VectorWithExpandBwdAllocator::value_type value_type;
+   typedef std::vector<value_type> Vect;
    const int MemorySize = 1000;
 
    //Distance old and new buffer
@@ -85,24 +90,24 @@ bool test_insert_with_expand_bwd()
 
    for(int iteration = 0; iteration < Iterations; ++iteration)
    {
-      IntVect memory;
+      Vect memory;
       memory.resize(MemorySize);
 
-      IntVect initial_data;
+      Vect initial_data;
       initial_data.resize(InitialSize[iteration]);
       for(int i = 0; i < InitialSize[iteration]; ++i){
-         initial_data[i] = i;
+         initial_data[i] = value_type(i);
       }
 
-      IntVect data_to_insert;
+      Vect data_to_insert;
       data_to_insert.resize(InsertSize[iteration]);
       for(int i = 0; i < InsertSize[iteration]; ++i){
-         data_to_insert[i] = -i;
+         data_to_insert[i] = value_type(-i);
       }
 
-      expand_bwd_test_allocator<int_holder> alloc
+      expand_bwd_test_allocator<value_type> alloc
          (&memory[0], memory.size(), Offset[iteration]);
-      IntVectorWithExpandBwdAllocator vector(alloc);
+      VectorWithExpandBwdAllocator vector(alloc);
       vector.insert( vector.begin()
                    , initial_data.begin(), initial_data.end());
       vector.insert( vector.begin() + Position[iteration]
@@ -112,15 +117,7 @@ bool test_insert_with_expand_bwd()
       //Now check that values are equal
       if(!CheckEqualVector(vector, initial_data)){
          std::cout << "test_assign_with_expand_bwd::CheckEqualVector failed." << std::endl 
-                   << "   Class: " << typeid(IntVectorWithExpandBwdAllocator).name() << std::endl
-                   << "   Iteration: " << iteration << std::endl;
-         return false;
-      }
-
-      //Now check that uninitialized values are zero
-      if(!CheckUninitializedIsZero(vector)){
-         std::cout << "test_assign_with_expand_bwd::CheckUninitializedIsZero failed." << std::endl 
-                   << "   Class: " << typeid(IntVectorWithExpandBwdAllocator).name() << std::endl
+                   << "   Class: " << typeid(VectorWithExpandBwdAllocator).name() << std::endl
                    << "   Iteration: " << iteration << std::endl;
          return false;
       }
@@ -131,10 +128,11 @@ bool test_insert_with_expand_bwd()
 
 //This function tests all the possible combinations when
 //inserting data in a vector and expanding backwards
-template<class IntVectorWithExpandBwdAllocator>
+template<class VectorWithExpandBwdAllocator>
 bool test_assign_with_expand_bwd()
 {
-   typedef std::vector<int_holder> IntVect;
+   typedef typename VectorWithExpandBwdAllocator::value_type value_type;
+   typedef std::vector<value_type> Vect;
    const int MemorySize = 200;
 
    const int Offset[]      = { 50, 50, 50};
@@ -144,27 +142,27 @@ bool test_assign_with_expand_bwd()
 
    for(int iteration = 0; iteration <Iterations; ++iteration)
    {
-      IntVect memory;
+      Vect memory;
       memory.resize(MemorySize);
 
       //Create initial data
-      IntVect initial_data;
+      Vect initial_data;
       initial_data.resize(InitialSize[iteration]);
       for(int i = 0; i < InitialSize[iteration]; ++i){
          initial_data[i] = i;
       }
 
       //Create data to assign
-      IntVect data_to_assign;
+      Vect data_to_assign;
       data_to_assign.resize(AssignSize[iteration]);
       for(int i = 0; i < AssignSize[iteration]; ++i){
          data_to_assign[i] = -i;
       }
 
       //Insert initial data to the vector to test
-      expand_bwd_test_allocator<int_holder> alloc
+      expand_bwd_test_allocator<value_type> alloc
          (&memory[0], memory.size(), Offset[iteration]);
-      IntVectorWithExpandBwdAllocator vector(alloc);
+      VectorWithExpandBwdAllocator vector(alloc);
       vector.insert( vector.begin()
                    , initial_data.begin(), initial_data.end());
 
@@ -175,15 +173,7 @@ bool test_assign_with_expand_bwd()
       //Now check that values are equal
       if(!CheckEqualVector(vector, initial_data)){
          std::cout << "test_assign_with_expand_bwd::CheckEqualVector failed." << std::endl 
-                   << "   Class: " << typeid(IntVectorWithExpandBwdAllocator).name() << std::endl
-                   << "   Iteration: " << iteration << std::endl;
-         return false;
-      }
-
-      //Now check that uninitialized values are zero
-      if(!CheckUninitializedIsZero(vector)){
-         std::cout << "test_assign_with_expand_bwd::CheckUninitializedIsZero failed." << std::endl 
-                   << "   Class: " << typeid(IntVectorWithExpandBwdAllocator).name() << std::endl
+                   << "   Class: " << typeid(VectorWithExpandBwdAllocator).name() << std::endl
                    << "   Iteration: " << iteration << std::endl;
          return false;
       }
@@ -193,24 +183,24 @@ bool test_assign_with_expand_bwd()
 }
 
 //This function calls all tests
-template<class IntVectorWithExpandBwdAllocator>
+template<class VectorWithExpandBwdAllocator>
 bool test_all_expand_bwd()
 {
    std::cout << "Starting test_insert_with_expand_bwd." << std::endl << "  Class: "
-             << typeid(IntVectorWithExpandBwdAllocator).name() << std::endl;
+             << typeid(VectorWithExpandBwdAllocator).name() << std::endl;
 
-   if(!test_insert_with_expand_bwd<IntVectorWithExpandBwdAllocator>()){
+   if(!test_insert_with_expand_bwd<VectorWithExpandBwdAllocator>()){
       std::cout << "test_allocation_direct_deallocation failed. Class: "
-                << typeid(IntVectorWithExpandBwdAllocator).name() << std::endl;
+                << typeid(VectorWithExpandBwdAllocator).name() << std::endl;
       return false;
    }
 
    std::cout << "Starting test_assign_with_expand_bwd." << std::endl << "  Class: "
-             << typeid(IntVectorWithExpandBwdAllocator).name() << std::endl;
+             << typeid(VectorWithExpandBwdAllocator).name() << std::endl;
 
-   if(!test_assign_with_expand_bwd<IntVectorWithExpandBwdAllocator>()){
+   if(!test_assign_with_expand_bwd<VectorWithExpandBwdAllocator>()){
       std::cout << "test_allocation_direct_deallocation failed. Class: "
-                << typeid(IntVectorWithExpandBwdAllocator).name() << std::endl;
+                << typeid(VectorWithExpandBwdAllocator).name() << std::endl;
       return false;
    }
 

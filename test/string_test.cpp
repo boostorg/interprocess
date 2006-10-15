@@ -21,64 +21,61 @@
 #include <cstdio>
 #include <cstddef>
 #include <new>
+#include "dummy_test_allocator.hpp"
+#include "check_equal_containers.hpp"
+#include "expand_bwd_test_allocator.hpp"
+#include "expand_bwd_test_template.hpp"
+#include "allocator_v1.hpp"
 
 using namespace boost::interprocess;
 
-//Explicit instantiation of interprocess::basic_string
-//Explicit instantiation of a interprocess::vector of interprocess::strings
-typedef allocator<char, managed_shared_memory::segment_manager> ShmemAllocatorChar;
-typedef basic_string<char, std::char_traits<char>, ShmemAllocatorChar> ShmString;
-typedef allocator<ShmString, managed_shared_memory::segment_manager> ShmemVectorAllocator;
-typedef vector<ShmString, ShmemVectorAllocator> ShmStringVector;
-template class basic_string<char, std::char_traits<char>, ShmemAllocatorChar>;
-template class vector<ShmString, ShmemVectorAllocator>;
+typedef test::dummy_test_allocator<char>           DummyCharAllocator; 
+typedef basic_string<char, std::char_traits<char>, DummyCharAllocator> DummyString;
+typedef test::dummy_test_allocator<DummyString>    DummyStringAllocator;
+typedef test::dummy_test_allocator<wchar_t>              DummyWCharAllocator; 
+typedef basic_string<wchar_t, std::char_traits<wchar_t>, DummyWCharAllocator> DummyWString;
+typedef test::dummy_test_allocator<DummyWString>         DummyWStringAllocator;
 
-typedef std::allocator<char>  StdAllocatorChar;
-typedef std::basic_string<char, std::char_traits<char>, StdAllocatorChar> StdString;
-typedef std::allocator<StdString> StdVectorAllocator;
-typedef vector<StdString, StdVectorAllocator> StdStringVector;
+//Explicit instantiations of interprocess::basic_string
+template class basic_string<char, std::char_traits<char>, DummyCharAllocator>;
+template class basic_string<wchar_t, std::char_traits<wchar_t>, DummyWCharAllocator>;
+//Explicit instantiation of interprocess::vectors of interprocess::strings
+template class vector<DummyString, DummyStringAllocator>;
+template class vector<DummyWString, DummyWStringAllocator>;
 
 struct StringEqual
 {
-   bool operator ()(const StdString &stdstring, const ShmString &shmstring) const
+   template<class Str1, class Str2>
+   bool operator ()(const Str1 &string1, const Str2 &string2) const
    {
-      return std::strcmp(stdstring.c_str(), shmstring.c_str()) == 0; 
-   }
-
-   bool operator ()(const ShmString &shmstring, const StdString &stdstring) const
-   {
-      return std::strcmp(stdstring.c_str(), shmstring.c_str()) == 0; 
+      if(string1.size() != string2.size())
+         return false;
+      return std::char_traits<typename Str1::value_type>::compare
+         (string1.c_str(), string2.c_str(), string1.size()) == 0;
    }
 };
 
 //Function to check if both lists are equal
-bool CheckEqual(ShmStringVector *shmvect, StdStringVector *stdvect)
+template<class StrVector1, class StrVector2>
+bool CheckEqualStringVector(StrVector1 *strvect1, StrVector2 *strvect2)
 {
-   return std::equal(stdvect->begin(), stdvect->end(), 
-                     shmvect->begin(), StringEqual() );
+   StringEqual comp;
+   return std::equal(strvect1->begin(), strvect1->end(), 
+                     strvect2->begin(), comp);
 }
 
-//Function to check if both lists are equal
-bool Print(ShmStringVector *shmvect, StdStringVector *stdvect)
+template<class CharType, template<class T, class SegmentManager> class AllocatorType >
+int string_test()
 {
-   std::cout << "shmvect: " << static_cast<unsigned int>(shmvect->size()) << std::endl;
-   for(ShmStringVector::iterator beg = shmvect->begin(),
-                                 end = shmvect->end();
-       beg != end; ++beg){
-      std::cout << *beg << std::endl;
-   }
+   typedef std::allocator<CharType>  StdAllocatorChar;
+   typedef std::basic_string<CharType, std::char_traits<CharType>, StdAllocatorChar> StdString;
+   typedef std::allocator<StdString> StdStringAllocator;
+   typedef vector<StdString, StdStringAllocator> StdStringVector;
+   typedef AllocatorType<CharType, managed_shared_memory::segment_manager> ShmemAllocatorChar;
+   typedef basic_string<CharType, std::char_traits<CharType>, ShmemAllocatorChar> ShmString;
+   typedef AllocatorType<ShmString, managed_shared_memory::segment_manager> ShmemStringAllocator;
+   typedef vector<ShmString, ShmemStringAllocator> ShmStringVector;
 
-   std::cout << "stdvect: " << static_cast<unsigned int>(stdvect->size()) << std::endl;
-   for(StdStringVector::iterator beg = stdvect->begin(),
-                                 end = stdvect->end();
-       beg != end; ++beg){
-      std::cout << *beg << std::endl;
-   }
-   return true;
-}
-
-int main ()
-{
    const int MaxSize = 100;
 
    //Create shared memory
@@ -92,8 +89,8 @@ int main ()
 
    //Initialize vector with a range or iterators and allocator
    ShmStringVector *shmStringVect = 
-      segment.find_or_construct<ShmStringVector>
-                                ("ShmStringVector", std::nothrow)  //object name 
+      segment.construct<ShmStringVector>
+                                (anonymous_instance, std::nothrow)  //object name 
                                 (shmallocator);
 
    StdStringVector *stdStringVect = new StdStringVector;
@@ -101,10 +98,10 @@ int main ()
    ShmString auxShmString (segment.get_segment_manager());
    StdString auxStdString(StdString(auxShmString.begin(), auxShmString.end() ));
 
-   char buffer [20];
+   CharType buffer [20];
 
-   int i;
-   for(i = 0; i < MaxSize; ++i){
+   //First, push back
+   for(int i = 0; i < MaxSize; ++i){
       auxShmString = "String";
       auxStdString = "String";
       std::sprintf(buffer, "%i", i);
@@ -114,32 +111,102 @@ int main ()
       stdStringVect->push_back(auxStdString);
    }
 
-   if(!CheckEqual(shmStringVect, stdStringVect)){
-      Print(shmStringVect, stdStringVect);
+   if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
       return 1;
    }
 
+   //Now push back moving 
+   for(int i = 0; i < MaxSize; ++i){
+      auxShmString = "String";
+      auxStdString = "String";
+      std::sprintf(buffer, "%i", i);
+      auxShmString += buffer;
+      auxStdString += buffer;
+      shmStringVect->push_back(move(auxShmString));
+      stdStringVect->push_back(auxStdString);
+   }
+
+   if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
+      return 1;
+   }
+
+   //push front
+   for(int i = 0; i < MaxSize; ++i){
+      auxShmString = "String";
+      auxStdString = "String";
+      std::sprintf(buffer, "%i", i);
+      auxShmString += buffer;
+      auxStdString += buffer;
+      shmStringVect->insert(shmStringVect->begin(), auxShmString);
+      stdStringVect->insert(stdStringVect->begin(), auxStdString);
+   }
+
+   if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
+      return 1;
+   }
+
+   //Now push front moving 
+   for(int i = 0; i < MaxSize; ++i){
+      auxShmString = "String";
+      auxStdString = "String";
+      std::sprintf(buffer, "%i", i);
+      auxShmString += buffer;
+      auxStdString += buffer;
+      shmStringVect->insert(shmStringVect->begin(), move(auxShmString));
+      stdStringVect->insert(stdStringVect->begin(), auxStdString);
+   }
+
+   if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
+      return 1;
+   }
+
+   //Now test long and short representation swapping
+   auxShmString = "String";
+   auxStdString = "String";
    ShmString shm_swapper(segment.get_segment_manager());
    StdString std_swapper;
    shm_swapper.swap(auxShmString);
    std_swapper.swap(auxStdString);
-   if(!StringEqual()(auxShmString, auxStdString)) return 1;   
+   if(!StringEqual()(auxShmString, auxStdString))
+      return 1;   
+   if(!StringEqual()(shm_swapper, std_swapper))
+      return 1;   
 
    shm_swapper.swap(auxShmString);
    std_swapper.swap(auxStdString);
+   if(!StringEqual()(auxShmString, auxStdString))
+      return 1;   
+   if(!StringEqual()(shm_swapper, std_swapper))
+      return 1;   
 
-   if(!StringEqual()(auxShmString, auxStdString)) return 1;   
+   auxShmString = "LongLongLongLongLongLongLongLongLongLongLongLongLongString";
+   auxStdString = "LongLongLongLongLongLongLongLongLongLongLongLongLongString";
+   shm_swapper = ShmString (segment.get_segment_manager());
+   std_swapper = StdString ();
+   shm_swapper.swap(auxShmString);
+   std_swapper.swap(auxStdString);
+   if(!StringEqual()(auxShmString, auxStdString))
+      return 1;   
+   if(!StringEqual()(shm_swapper, std_swapper))
+      return 1;   
 
+   shm_swapper.swap(auxShmString);
+   std_swapper.swap(auxStdString);
+   if(!StringEqual()(auxShmString, auxStdString))
+      return 1;   
+   if(!StringEqual()(shm_swapper, std_swapper))
+      return 1;   
+
+   //No sort
    std::sort(shmStringVect->begin(), shmStringVect->end());
    std::sort(stdStringVect->begin(), stdStringVect->end());
+   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-   if(!CheckEqual(shmStringVect, stdStringVect)) return 1;
-
-   const char prefix []    = "Prefix";
+   const CharType prefix []    = "Prefix";
    const int  prefix_size  = sizeof(prefix)/sizeof(prefix[0])-1;
-   const char sufix []     = "Suffix";
+   const CharType sufix []     = "Suffix";
 
-   for(i = 0; i < MaxSize; ++i){
+   for(int i = 0; i < MaxSize; ++i){
       (*shmStringVect)[i].append(sufix);
       (*stdStringVect)[i].append(sufix);
       (*shmStringVect)[i].insert((*shmStringVect)[i].begin(), 
@@ -148,30 +215,30 @@ int main ()
                                  prefix, prefix + prefix_size);
    }
 
-   if(!CheckEqual(shmStringVect, stdStringVect)) return 1;
+   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-   for(i = 0; i < MaxSize; ++i){
+   for(int i = 0; i < MaxSize; ++i){
       std::reverse((*shmStringVect)[i].begin(), (*shmStringVect)[i].end());
       std::reverse((*stdStringVect)[i].begin(), (*stdStringVect)[i].end());
    }
 
-   if(!CheckEqual(shmStringVect, stdStringVect)) return 1;
+   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-   for(i = 0; i < MaxSize; ++i){
+   for(int i = 0; i < MaxSize; ++i){
       std::reverse((*shmStringVect)[i].begin(), (*shmStringVect)[i].end());
       std::reverse((*stdStringVect)[i].begin(), (*stdStringVect)[i].end());
    }
 
-   if(!CheckEqual(shmStringVect, stdStringVect)) return 1;
+   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-   for(i = 0; i < MaxSize; ++i){
+   for(int i = 0; i < MaxSize; ++i){
       std::sort(shmStringVect->begin(), shmStringVect->end());
       std::sort(stdStringVect->begin(), stdStringVect->end());
    }
 
-   if(!CheckEqual(shmStringVect, stdStringVect)) return 1;
+   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-   for(i = 0; i < MaxSize; ++i){
+   for(int i = 0; i < MaxSize; ++i){
       (*shmStringVect)[i].replace((*shmStringVect)[i].begin(), 
                                   (*shmStringVect)[i].end(),
                                   "String");
@@ -180,18 +247,43 @@ int main ()
                                   "String");
    }
 
-   if(!CheckEqual(shmStringVect, stdStringVect)) return 1;
+   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
    shmStringVect->erase(std::unique(shmStringVect->begin(), shmStringVect->end()),
                         shmStringVect->end());
    stdStringVect->erase(std::unique(stdStringVect->begin(), stdStringVect->end()),
                         stdStringVect->end());
-//   Print(shmStringVect, stdStringVect);
-   if(!CheckEqual(shmStringVect, stdStringVect)) return 1;
+   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
    //When done, delete vector
-   segment.destroy<ShmStringVector>("ShmStringVector");
+   segment.destroy_ptr(shmStringVect);
    delete stdStringVect;
+
+   return 0;
+}
+
+bool test_expand_bwd()
+{
+   //Now test all back insertion possibilities
+   typedef test::expand_bwd_test_allocator<char>
+      allocator_type;
+   typedef basic_string<char, std::char_traits<char>, allocator_type>
+      string_type;
+   return  test::test_all_expand_bwd<string_type>();
+}
+
+int main()
+{
+   if(string_test<char, allocator>()){
+      return 1;
+   }
+
+   if(string_test<char, test::allocator_v1>()){
+      return 1;
+   }
+
+   if(!test_expand_bwd())
+      return 1;
 
    return 0;
 }

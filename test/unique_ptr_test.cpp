@@ -21,6 +21,9 @@
 #include <boost/interprocess/containers/list.hpp>
 #include <boost/interprocess/containers/set.hpp>
 #include <boost/interprocess/containers/vector.hpp>
+#include <boost/interprocess/containers/string.hpp>
+#include <boost/interprocess/containers/string.hpp>
+#include <stdio.h>
 
 using namespace boost::interprocess;
 
@@ -49,47 +52,40 @@ struct MyDeleter
 };
 
 typedef unique_ptr<MyClass, MyDeleter> my_unique_ptr_class;
-/*
-//Explicit instantiation of shared memory set
-template class set   <my_unique_ptr_class
-                     ,std::less<my_unique_ptr_class>
-                     ,allocator  <my_unique_ptr_class
-                                 ,managed_shared_memory::segment_manager>
-                     >;
-
 typedef set <my_unique_ptr_class
             ,std::less<my_unique_ptr_class>
             ,allocator  <my_unique_ptr_class
                         ,managed_shared_memory::segment_manager>
             > MySet;
 
-//Explicit instantiation of shared memory list
-template class list  <my_unique_ptr_class
-                     ,allocator  <my_unique_ptr_class
-                                 ,managed_shared_memory::segment_manager>
-                     >;
-
-
 typedef list<my_unique_ptr_class
             ,allocator  <my_unique_ptr_class
                         ,managed_shared_memory::segment_manager>
             > MyList;
-*/
-//This explicit instantiation fails
-//Because, for example, this iterator copy expression fails:
-// *target = *source;
-//
-//template class vector   <my_unique_ptr_class
-//                        ,allocator  <my_unique_ptr_class
-//                                    ,managed_shared_memory::segment_manager>
-//                        >;
 
+typedef vector <my_unique_ptr_class
+               ,allocator  <my_unique_ptr_class
+                           ,managed_shared_memory::segment_manager>
+            > MyVector;
+
+typedef basic_string<char
+                    ,std::char_traits<char>
+                    ,allocator<char
+                              ,managed_shared_memory::segment_manager>
+            > MyString;
+
+typedef allocator<MyString
+                 ,managed_shared_memory::segment_manager
+            > MyStrAllocator;
+
+
+typedef vector <MyString, MyStrAllocator> MyStringVector;
 
 int main()
 {
    //Create managed shared memory
    shared_memory_object::remove("mysegment");
-   managed_shared_memory segment(create_only, "mysegment", 1000);
+   managed_shared_memory segment(create_only, "mysegment", 10000);
    
    //Create to unique_ptr using dynamic allocation
    my_unique_ptr_class my_ptr (segment.construct<MyClass>(anonymous_instance)()
@@ -105,30 +101,34 @@ int main()
    my_unique_ptr_class my_ptr3(0, segment.get_segment_manager());
    my_unique_ptr_class my_ptr4(move(my_ptr3));
 
-   //This does not compile
-//   my_unique_ptr_class my_ptr4         (my_ptr3);
-/*
    //Construct a list and fill
    MyList list(segment.get_segment_manager());
 
    //Insert from my_unique_ptr_class
-   list.push_back(my_ptr);
-
-   //Insert from CONST my_unique_ptr_class
-   list.push_back(my_ptr2);
+   list.push_front(move(my_ptr));
+   list.push_back(move(my_ptr2));
 
    //Check pointers
    assert(my_ptr.get() == 0);
    assert(my_ptr2.get() == 0);
    assert(list.begin()->get() == ptr1);
    assert(list.rbegin()->get() == ptr2);
+/*
+   MyList list2(move(list));
+   list2.swap(move(MyList(segment.get_segment_manager())));
+   list.swap(move(MyList(segment.get_segment_manager())));
+*/
+
+   assert(list.begin()->get() == ptr1);
+   assert(list.rbegin()->get() == ptr2);
 
    //Construct a set and fill
-   MySet set(std::less<my_unique_ptr_class>(), segment.get_segment_manager());
+   typedef std::less<my_unique_ptr_class> set_less_t;
+   MySet set(set_less_t(), segment.get_segment_manager());
 
    //Insert in set from list passing ownership
-   set.insert(*list.begin());
-   set.insert(*list.rbegin());
+   set.insert(move(*list.begin()));
+   set.insert(move(*list.rbegin()));
 
    //Check pointers
    assert(list.begin()->get() == 0);
@@ -144,7 +144,47 @@ int main()
       assert(set.rbegin()->get() == ptr1);
       assert(set.begin()->get()  == ptr2);
    }
+/*
+   MySet set2(move(set));
+   set2.swap(move(MySet(set_less_t(), segment.get_segment_manager())));
+   set.swap(move(MySet(set_less_t(), segment.get_segment_manager())));
 */
+
+   //Now with vector
+   MyVector vector(segment.get_segment_manager());
+
+   //Insert from my_unique_ptr_class
+   if(ptr1 < ptr2){
+      vector.insert(vector.begin(), move(*set.begin()));
+      vector.insert(vector.end(),   move(*set.rbegin()));
+   }
+   else{
+      vector.insert(vector.begin(), move(*set.rbegin()));
+      vector.insert(vector.end(),   move(*set.begin()));
+   }
+
+   //Check pointers
+   assert(my_ptr.get() == 0);
+   assert(my_ptr2.get() == 0);
+   assert(vector.begin()->get() == ptr1);
+   assert(vector.rbegin()->get() == ptr2);
+
+   MyVector vector2(move(vector));
+   vector2.swap(vector);
+
+   assert(vector.begin()->get() == ptr1);
+   assert(vector.rbegin()->get() == ptr2);
+   
+   MyStringVector strvect(segment.get_segment_manager());
+
+   char buffer[64];
+   for(int i = 0; i < 100; ++i){
+      MyString str(segment.get_segment_manager());
+      sprintf(buffer, "%d", i);
+      str = buffer;
+      strvect.push_back(move(str));
+   }
+
    return 0;
 }
 

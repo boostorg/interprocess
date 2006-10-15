@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gazta�ga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -27,8 +27,9 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/xtime.hpp>
 
-#include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <algorithm>
+#include <iostream>
 
 #ifndef DEFAULT_EXECUTION_MONITOR_TYPE
 #   define DEFAULT_EXECUTION_MONITOR_TYPE execution_monitor::use_condition

@@ -2,6 +2,7 @@
    #include <boost/interprocess/detail/workaround.hpp>
 
    #include <boost/interprocess/containers/vector.hpp>
+   #include <boost/interprocess/allocator/allocator.hpp>
    #include <boost/interprocess/managed_shared_memory.hpp>
 
    int main ()

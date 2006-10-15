@@ -20,7 +20,7 @@
 #include <boost/interprocess/managed_heap_memory.hpp>
 #include <boost/interprocess/containers/list.hpp>
 #include <boost/interprocess/allocators/node_allocator.hpp>
-#include "printcontainer.hpp"
+#include "print_container.hpp"
 
 /******************************************************************************/
 /*                                                                            */
@@ -150,7 +150,7 @@ int main ()
    }
 
    MyUserList otheruserlist(*userlist);
-   MyHeapList otherheaplist(*userlist);
+   MyHeapList otherheaplist(*heaplist);
    MyStdList otherstdlist(*stdlist);
    userlist->splice(userlist->begin(), otheruserlist);
    heaplist->splice(heaplist->begin(), otherheaplist);

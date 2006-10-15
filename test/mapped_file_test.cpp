@@ -10,7 +10,8 @@
 
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/vector.hpp>
-#include <boost/interprocess/mapped_file.hpp>
+#include <boost/interprocess/detail/file_wrapper.hpp>
+#include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include "named_creation_template.hpp"
 #include <cstdio>
 #include <cstring>
@@ -30,28 +31,31 @@ struct file_destroyer
 //This wrapper is necessary to have a common constructor
 //in generic named_creation_template functions
 class mapped_file_creation_test_wrapper
-   : public file_destroyer, public boost::interprocess::mapped_file
+   : public file_destroyer
+   , public boost::interprocess::detail::managed_open_or_create_impl
+      <boost::interprocess::detail::file_wrapper>
 {
+   typedef boost::interprocess::detail::managed_open_or_create_impl
+      <boost::interprocess::detail::file_wrapper> mapped_file;
    public:
    mapped_file_creation_test_wrapper(boost::interprocess::detail::create_only_t)
-      :  boost::interprocess::mapped_file
-            (boost::interprocess::create_only, FileName, FileSize)
+      :  mapped_file(boost::interprocess::create_only, FileName, FileSize)
    {}
 
    mapped_file_creation_test_wrapper(boost::interprocess::detail::open_only_t)
-      :  boost::interprocess::mapped_file
-            (boost::interprocess::open_only, FileName)
+      :  mapped_file(boost::interprocess::open_only, FileName)
    {}
 
    mapped_file_creation_test_wrapper(boost::interprocess::detail::open_or_create_t)
-      :  boost::interprocess::mapped_file
-            (boost::interprocess::open_or_create, FileName, FileSize)
+      :  mapped_file(boost::interprocess::open_or_create, FileName, FileSize)
    {}
 };
 
 int main ()
 {
    using namespace boost::interprocess;
+   typedef boost::interprocess::detail::managed_open_or_create_impl
+      <boost::interprocess::detail::file_wrapper> mapped_file;
    std::remove(FileName);
    test::test_named_creation<mapped_file_creation_test_wrapper>();
 
@@ -59,17 +63,13 @@ int main ()
    {  
       mapped_file file1(create_only, FileName, FileSize);
 
-      //Compare size
-      if(file1.get_size() != FileSize)
-         return 1;
-
       //Compare name
       if(std::strcmp(file1.get_name(), FileName) != 0){
          return 1;
       }
 
       //Overwrite all memory
-      std::memset(file1.get_address(), 0, FileSize);
+      std::memset(file1.get_address(), 0, file1.get_size());
    }
    std::remove(FileName);
    return 0;

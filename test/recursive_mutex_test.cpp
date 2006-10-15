@@ -11,7 +11,6 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "mutex_test_template.hpp"
 #include "named_creation_template.hpp"
@@ -19,7 +18,6 @@
 int main ()
 {
    using namespace boost::interprocess;
-
    test::test_all_lock<interprocess_recursive_mutex>();
    test::test_all_mutex<true, interprocess_recursive_mutex>();
    test::test_all_recursive_lock<interprocess_recursive_mutex>();

@@ -1,4 +1,5 @@
-   #include <boost/interprocess/shared_memory.hpp>
+   #include <boost/interprocess/shared_memory_object.hpp>
+   #include <boost/interprocess/mapped_region.hpp>
    #include <boost/interprocess/sync/scoped_lock.hpp>
    #include <iostream>
    #include <cstdio>
@@ -16,7 +17,7 @@
          shared_memory_object shm
             (create_only               //only create
             ,"shared_memory"           //name
-            ,memory_mappable::read_write   //read-write mode
+            ,read_write   //read-write mode
             );
 
          //Set size
@@ -25,7 +26,7 @@
          //Map the whole shared memory in this process
          mapped_region region
             (shm                       //What to map
-            ,mapped_region::read_write //Map it as read-write
+            ,read_write //Map it as read-write
             );
 
          //Get the address of the mapped region

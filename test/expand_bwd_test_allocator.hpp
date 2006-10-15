@@ -61,8 +61,10 @@ class expand_bwd_test_allocator
    typedef T                                    value_type;
    typedef T *                                  pointer;
    typedef const T *                            const_pointer;
-   typedef T &                                  reference;
-   typedef const T &                            const_reference;
+   typedef typename workaround::random_it
+      <T>::reference                            reference;
+   typedef typename workaround::random_it
+      <T>::const_reference                      const_reference;
    typedef std::size_t                          size_type;
    typedef std::ptrdiff_t                       difference_type;
 
@@ -94,7 +96,8 @@ class expand_bwd_test_allocator
    const_pointer address(const_reference value) const
    {  return const_pointer(boost::addressof(value));  }
 
-   pointer allocate(size_type count, cvoid_ptr hint = 0);
+   pointer allocate(size_type count, cvoid_ptr hint = 0)
+   {  return 0; }
 
    void deallocate(const pointer &ptr, size_type)
    { }
@@ -124,9 +127,8 @@ class expand_bwd_test_allocator
                          size_type preferred_size,
                          size_type &received_size, const pointer &reuse = 0)
    {
-      if(!(command & expand_bwd)){
-         assert(0);
-      }
+      //This allocator only expands backwards!
+      assert(m_allocations == 0 || (command & expand_bwd));
       
       received_size = limit_size;
 
@@ -146,6 +148,7 @@ class expand_bwd_test_allocator
       }
       else{
          assert(0);
+         throw std::bad_alloc();
       }
       return std::pair<pointer, bool>(0, true);
    }
@@ -167,7 +170,6 @@ class expand_bwd_test_allocator
    void deallocate_one(const pointer &p)
    {  return this->deallocate(p, 1);  }
 
-   private:
    pointer           mp_buffer;
    size_type         m_size;
    difference_type   m_offset;

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gazta�ga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -10,7 +10,6 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/named_semaphore.hpp>
-#include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "named_creation_template.hpp"

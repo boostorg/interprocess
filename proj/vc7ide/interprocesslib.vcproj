@@ -194,6 +194,12 @@
 				RelativePath="..\..\..\..\boost\interprocess\allocators\allocator.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\allocators\allocator_v1.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\allocators\allocator_v1_to_v2.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\allocators\cached_node_allocator.hpp">
 			</File>
 			<File
@@ -227,9 +233,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\sync\interprocess_recursive_mutex.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\sync\interprocess_semaphore.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\sync\interprocess_semaphore.hpp">
@@ -271,33 +274,11 @@
 				RelativePath="..\..\..\..\boost\interprocess\sync\upgradable_lock.hpp">
 			</File>
 			<Filter
-				Name="win32"
-				Filter="">
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\win32\interprocess_condition.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\win32\interprocess_mutex.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\win32\interprocess_semaphore.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\win32\named_mutex.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\win32\named_recursive_mutex.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\win32\named_semaphore.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\win32\win32_sync_primitives.hpp">
-				</File>
-			</Filter>
-			<Filter
 				Name="posix"
 				Filter="">
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\posix\interprocess_barrier.hpp">
+				</File>
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\posix\interprocess_condition.hpp">
 				</File>
@@ -309,15 +290,6 @@
 				</File>
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\posix\interprocess_semaphore.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\posix\named_mutex.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\posix\named_recursive_mutex.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\posix\named_semaphore.hpp">
 				</File>
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\posix\pthread_helpers.hpp">
@@ -333,7 +305,19 @@
 				Name="emulation"
 				Filter="">
 				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_barrier.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_condition.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_mutex.hpp">
+				</File>
+				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_recursive_mutex.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_semaphore.hpp">
 				</File>
 			</Filter>
 		</Filter>
@@ -355,13 +339,6 @@
 			</Filter>
 		</Filter>
 		<Filter
-			Name="IPC"
-			Filter="">
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\ipc\message_queue.hpp">
-			</File>
-		</Filter>
-		<Filter
 			Name="Managed Memory Classes"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
@@ -370,6 +347,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\exceptions.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\file_mapping.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\managed_external_buffer.hpp">
@@ -387,21 +367,24 @@
 				RelativePath="..\..\..\..\boost\interprocess\managed_shared_memory.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\mapped_file.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\memory_mappable.hpp">
+				RelativePath="..\..\..\..\boost\interprocess\mapped_region.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\segment_manager.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\shared_memory.hpp">
+				RelativePath="..\..\..\..\boost\interprocess\shared_memory_object.hpp">
 			</File>
 		</Filter>
 		<Filter
 			Name="Detail"
 			Filter="">
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\atomic.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\sync\emulation\atomic.hpp">
+			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\cast_tags.hpp">
 			</File>
@@ -415,6 +398,9 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\creation_tags.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\file_wrapper.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\generic_cast.hpp">
 			</File>
 			<File
@@ -424,7 +410,16 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\managed_memory_impl.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\managed_open_or_create_impl.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\move.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\move_iterator.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\moved_default_iterator.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\multi_segment_services.hpp">
@@ -442,14 +437,27 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\os_thread_functions.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\posix_time_types_wrk.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\utilities.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\version_type.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\win32_api.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\workaround.hpp">
 			</File>
+			<Filter
+				Name="IPC"
+				Filter="">
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\ipc\message_queue.hpp">
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Documentation"
@@ -459,9 +467,6 @@
 			</File>
 			<File
 				RelativePath="..\..\doc\Jamfile.v2">
-			</File>
-			<File
-				RelativePath="..\..\doc\old_interprocess.qbk">
 			</File>
 		</Filter>
 		<Filter
@@ -522,13 +527,28 @@
 				RelativePath="..\..\test\boost_interprocess_check.hpp">
 			</File>
 			<File
+				RelativePath="..\..\test\checkequalcontainers.hpp">
+			</File>
+			<File
 				RelativePath="..\..\test\condition_test_template.hpp">
+			</File>
+			<File
+				RelativePath="..\..\test\dummy_test_allocator.hpp">
 			</File>
 			<File
 				RelativePath="..\..\test\expand_bwd_test_allocator.hpp">
 			</File>
 			<File
 				RelativePath="..\..\test\expand_bwd_test_template.hpp">
+			</File>
+			<File
+				RelativePath="..\..\test\list_test.hpp">
+			</File>
+			<File
+				RelativePath="..\..\test\map_test.hpp">
+			</File>
+			<File
+				RelativePath="..\..\test\movable_int.hpp">
 			</File>
 			<File
 				RelativePath="..\..\test\mutex_test_template.hpp">
@@ -544,6 +564,9 @@
 			</File>
 			<File
 				RelativePath="..\..\test\set_test.hpp">
+			</File>
+			<File
+				RelativePath="..\..\test\sharable_mutex_test_template.hpp">
 			</File>
 			<File
 				RelativePath="..\..\test\util.hpp">

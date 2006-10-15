@@ -1,6 +1,6 @@
 [library Interprocess
     [quickbook 1.4]
-    [version 1.0]
+    [version 2006-10-13]
     [authors [Gazta&ntilde;aga, Ion]]
     [copyright 2005- 2006 Ion Gazta&ntilde;aga]
     [purpose Interprocess communication utilities]
@@ -60,8 +60,8 @@ memory to another process, and you are done. Let's see the example:
 
       //An special shared memory from which we are
       //able to allocate raw memory buffers.
-      //First remove any old shared memory of the same name and 
-      //create the shared memory segment and initialize needed resources
+      //First remove any old shared memory of the same name, create 
+      //the shared memory segment and initialize needed resources
       shared_memory_object::remove("MySharedMemory");
       managed_shared_memory segment
          (create_only, 
@@ -91,6 +91,7 @@ memory to another process, and you are done. Let's see the example:
 In receiver process one just could write the following lines:
 
 [/ doc_ipc_messageB.cpp]
+
 [c++]
 
    #include <boost/interprocess/managed_shared_memory.hpp>
@@ -299,7 +300,7 @@ just if it was any other object. Just execute this first process:
 
 [c++]
 
-   #include <boost/interprocess/managed_shared_memory.hpp>
+#include <boost/interprocess/managed_shared_memory.hpp>
    #include <boost/interprocess/containers/vector.hpp>
    #include <boost/interprocess/allocators/allocator.hpp>
 
@@ -549,7 +550,7 @@ To manage shared memory, you just need to include the following header:
 
 [c++]
 
-   #include <boost/interprocess/shared_memory.hpp>
+   #include <boost/interprocess/shared_memory_object.hpp>
 
 [endsect]
 
@@ -568,7 +569,7 @@ just as if it was a file:
       shared_memory_object shm_obj
          (create_only                  //only create
          ,"shared_memory"              //name
-         ,memory_mappable::read_write  //read-write mode
+         ,read_write  //read-write mode
          );
 
 * To open or create a shared memory segment:
@@ -579,7 +580,7 @@ just as if it was a file:
       shared_memory_object shm_obj
          (open_or_create               //open or create
          ,"shared_memory"              //name
-         ,memory_mappable::read_only   //read-only mode
+         ,read_only   //read-only mode
          );
 
 * To only open a shared memory segment. Throws if does not exist:
@@ -590,7 +591,7 @@ just as if it was a file:
       shared_memory_object shm_obj
          (open_only                    //only open
          ,"shared_memory"              //name
-         ,memory_mappable::read_write  //read-write mode
+         ,read_write  //read-write mode
          );
 
 When a shared memory object is created, its size is 0.
@@ -635,7 +636,7 @@ is a `memory_mappable` object:
       //Map the second half of the memory
       mapped_region region
          ( shm                      //Memory-mappable object
-         , mapped_region::read_write//Access mode
+         , read_write//Access mode
          , ShmSize/2                //Offset from the beginning of shm
          , ShmSize-ShmSize/2        //Length of the region
          );
@@ -659,16 +660,17 @@ For more details regarding `mapped_region` see the
 
 [section:shared_memory_a_simple_example A Simple Example]
 
-Let's see a simple example of shared memory use. A server process creates a file,
-maps it and initializes all the bytes to a value. After that, 
+Let's see a simple example of shared memory use. A server process creates a
+shared memory object, maps it and initializes all the bytes to a value. After that, 
 a client process opens the shared memory, maps it, and checks
 that the data is correctly initialized. This is the server process:
 
-[/ doc_shared_memory.cppW]
+[/ doc_shared_memory.cpp]
 
 [c++]
 
-   #include <boost/interprocess/shared_memory.hpp>
+   #include <boost/interprocess/shared_memory_object.hpp>
+   #include <boost/interprocess/mapped_region.hpp>
    #include <iostream>
    #include <cstring>
 
@@ -676,20 +678,23 @@ that the data is correctly initialized. This is the server process:
    {
       using namespace boost::interprocess;
       try{
+         //Erase previous shared memory
+         shared_memory_object::remove("shared_memory");
+
          //Create a shared memory object.
          shared_memory_object shm
-            (create_only                  //only open
-            ,"shared_memory"              //name
-            ,memory_mappable::read_write  //read-write mode
+            (create_only               //only create
+            ,"shared_memory"           //name
+            ,read_write   //read-write mode
             );
 
-         //Set the size of the shared memory segment
+         //Set size
          shm.truncate(1000);
 
          //Map the whole shared memory in this process
          mapped_region region
             (shm                       //What to map
-            ,mapped_region::read_write //Map it as read-write
+            ,read_write //Map it as read-write
             );
 
          //Get the address of the mapped region
@@ -712,7 +717,7 @@ Now the client process:
 
 [c++]
 
-   #include <boost/interprocess/shared_memory.hpp>
+   #include <boost/interprocess/shared_memory_object.hpp>
    #include <iostream>
 
    int main ()
@@ -721,15 +726,15 @@ Now the client process:
       try{
          //Open already created shared memory object.
          shared_memory_object shm
-            (open_only                 //only create
+            (open_only                 //only open
             ,"shared_memory"           //name
-            ,memory_mappable::read_only//read-only mode
+            ,read_only//read-only mode
             );
 
          //Map the whole shared memory in this process
          mapped_region region
             (shm                       //What to map
-            ,mapped_region::read_only  //Map it as read-only
+            ,read_only  //Map it as read-only
             );
 
          //Get the address of the mapped region
@@ -822,7 +827,7 @@ To manage mapped files, you just need to include the following header:
 
 [c++]
 
-   #include <boost/interprocess/mapped_file.hpp>
+   #include <boost/interprocess/file_mapping.hpp>
 
 [endsect]
 
@@ -837,7 +842,7 @@ achieved in [*Boost.Interprocess] creating a `file_mapping` object:
       using boost::interprocess;
       file_mapping m_file
          ("/usr/home/file"             //filename
-         ,memory_mappable::read_write  //read-write mode
+         ,read_write  //read-write mode
          );
 
 Now we can use the newly created object to create mapped regions. For more details
@@ -862,7 +867,7 @@ devices that have also mapping capabilities:
       //Map the second half of the file
       mapped_region region
          ( m_file                   //Memory-mappable object
-         , mapped_region::read_write//Access mode
+         , read_write//Access mode
          , FileSize/2               //Offset from the beginning of shm
          , FileSize-FileSize/2      //Length of the region
          );
@@ -917,7 +922,7 @@ that the data is correctly initialized. This is the server process:
 
 [c++]
 
-   #include <boost/interprocess/mapped_file.hpp>
+   #include <boost/interprocess/file_mapping.hpp>
    #include <iostream>
    #include <fstream>
    #include <cstring>
@@ -938,12 +943,12 @@ that the data is correctly initialized. This is the server process:
          fbuf.close();
 
          //Create a file mapping.
-         file_mapping m_file("file.bin", memory_mappable::read_write);
+         file_mapping m_file("file.bin", read_write);
 
          //Map the whole file in this process
          mapped_region region
             (m_file                    //What to map
-            ,mapped_region::read_write //Map it as read-write
+            ,read_write //Map it as read-write
             );
 
          if(region.get_size() != 10000)
@@ -969,7 +974,7 @@ Now the client process:
 
 [c++]
 
-   #include <boost/interprocess/mapped_file.hpp>
+   #include <boost/interprocess/file_mapping.hpp>
    #include <iostream>
    #include <cstddef>
    #include <vector>
@@ -979,12 +984,12 @@ Now the client process:
       using namespace boost::interprocess;
       try{
          //Open the file mapping
-         file_mapping m_file ("file.bin", memory_mappable::read_only);
+         file_mapping m_file ("file.bin", read_only);
 
          //Map the whole file in this process
          mapped_region region
             (m_file                    //What to map
-            ,mapped_region::read_only  //Map it as read-only
+            ,read_only  //Map it as read-only
             );
 
          //Get the address of the mapped region
@@ -1087,7 +1092,7 @@ To map an object in a fixed address, the user can specify that address in the
 [c++]
 
    mapped_region region ( shm                         //Map shared memory
-                        , mapped_region::read_write   //Map it as read-write
+                        , read_write   //Map it as read-write
                         , 0                           //Map from offset 0
                         , 0                           //Map until the end
                         , (void*)0x3F000000           //Map it exactly there
@@ -1116,7 +1121,7 @@ parameters should be multiples of that value. This value is, tipically, 4KB or 8
    //These might fail because the offset is not a multiple of the page size
    //and we are using fixed address mapping
    mapped_region region1( shm                         //Map shared memory
-                        , mapped_region::read_write   //Map it as read-write
+                        , read_write   //Map it as read-write
                         , 1                           //Map from offset 1
                         , 1                           //Map 1 byte
                         , (void*)0x3F000000           //Aligned mapping address
@@ -1124,7 +1129,7 @@ parameters should be multiples of that value. This value is, tipically, 4KB or 8
 
    //These might fail because the address is not a multiple of the page size
    mapped_region region2( shm                         //Map shared memory
-                        , mapped_region::read_write   //Map it as read-write
+                        , read_write   //Map it as read-write
                         , 0                           //Map from offset 0
                         , 1                           //Map 1 byte
                         , (void*)0x3F000001           //Not aligned mapping address
@@ -1139,7 +1144,7 @@ more resources than necessary. If the user specifies the following 1 byte mappin
    //Map one byte of the shared memory object.
    //A whole memory page will be used for this.
    mapped_region region ( shm                         //Map shared memory
-                        , mapped_region::read_write   //Map it as read-write
+                        , read_write   //Map it as read-write
                         , 0                           //Map from offset 0
                         , 1                           //Map 1 byte
                         );
@@ -1153,7 +1158,7 @@ mapped regions for a file with as size = 2*page_size bytes:
    //Map the first quarter of the file
    //This will use a whole page
    mapped_region region1( shm                         //Map shared memory
-                        , mapped_region::read_write   //Map it as read-write
+                        , read_write   //Map it as read-write
                         , 0                           //Map from offset 0
                         , page_size/2                 //Map page_size/2 bytes
                         );
@@ -1161,7 +1166,7 @@ mapped regions for a file with as size = 2*page_size bytes:
    //Map the rest of the file
    //This will use a 2 pages
    mapped_region region2( shm                         //Map shared memory
-                        , mapped_region::read_write   //Map it as read-write
+                        , read_write   //Map it as read-write
                         , page_size/2                 //Map from offset 0
                         , 3*page_size/2               //Map page_size/2 bytes
                         );
@@ -1172,14 +1177,14 @@ page size. The mapping with the minimum resource usage would be to map whole pag
 
    //Map the whole first half: uses 1 page
    mapped_region region1( shm                         //Map shared memory
-                        , mapped_region::read_write   //Map it as read-write
+                        , read_write   //Map it as read-write
                         , 0                           //Map from offset 0
                         , page_size                   //Map page_size/2 bytes
                         );
 
    //Map the second half: uses 1 page
    mapped_region region2( shm                         //Map shared memory
-                        , mapped_region::read_write   //Map it as read-write
+                        , read_write   //Map it as read-write
                         , page_size                   //Map from offset 0
                         , page_size                   //Map page_size/2 bytes
                         );
@@ -1194,7 +1199,7 @@ function that returns that value:
 
    //This mapping will optimally use system resources
    mapped_region region ( shm                         //Map shared memory
-                        , mapped_region::read_write   //Map it as read-write
+                        , read_write   //Map it as read-write
                         , 0                           //Map from offset 0
                         , page_size                   //Map whole page
                         );
@@ -1592,7 +1597,7 @@ the the cyclic buffer and start writing traces:
 
 [c++]
 
-   #include <boost/interprocess/shared_memory.hpp>
+   #include <boost/interprocess/shared_memory_object.hpp>
    #include <boost/interprocess/sync/scoped_lock.hpp>
    #include "doc_anonymous_mutex_shared_data.hpp"
    #include <iostream>
@@ -1610,7 +1615,7 @@ the the cyclic buffer and start writing traces:
          shared_memory_object shm
             (create_only               //only create
             ,"shared_memory"           //name
-            ,memory_mappable::read_write   //read-write mode
+            ,read_write   //read-write mode
             );
 
          //Set size
@@ -1619,7 +1624,7 @@ the the cyclic buffer and start writing traces:
          //Map the whole shared memory in this process
          mapped_region region
             (shm                       //What to map
-            ,mapped_region::read_write   //Map it as read-write
+            ,read_write   //Map it as read-write
             );
 
          //Get the address of the mapped region
@@ -1662,7 +1667,7 @@ and starts writing traces:
 
 [c++]
 
-   #include <boost/interprocess/shared_memory.hpp>
+   #include <boost/interprocess/shared_memory_object.hpp>
    #include <boost/interprocess/sync/scoped_lock.hpp>
    #include "doc_anonymous_mutex_shared_data.hpp"
    #include <iostream>
@@ -1676,13 +1681,13 @@ and starts writing traces:
          shared_memory_object shm
             (open_only                    //only create
             ,"shared_memory"              //name
-            ,memory_mappable::read_write  //read-write mode
+            ,read_write  //read-write mode
             );
 
          //Map the whole shared memory in this process
          mapped_region region
             (shm                       //What to map
-            ,mapped_region::read_write //Map it as read-write
+            ,read_write //Map it as read-write
             );
 
          //Get the address of the mapped region
@@ -1874,7 +1879,7 @@ to indicate that there are no more messages to print:
 
 [c++]
 
-   #include <boost/interprocess/shared_memory.hpp>
+   #include <boost/interprocess/shared_memory_object.hpp>
    #include <boost/interprocess/sync/scoped_lock.hpp>
    #include <iostream>
    #include "doc_anonymous_condition_shared_data.hpp"
@@ -1891,7 +1896,7 @@ to indicate that there are no more messages to print:
          shared_memory_object shm
             (create_only               //only create
             ,"shared_memory"           //name
-            ,memory_mappable::read_write   //read-write mode
+            ,read_write   //read-write mode
             );
 
          //Set size
@@ -1900,7 +1905,7 @@ to indicate that there are no more messages to print:
          //Map the whole shared memory in this process
          mapped_region region
             (shm                       //What to map
-            ,mapped_region::read_write //Map it as read-write
+            ,read_write //Map it as read-write
             );
 
          //Get the address of the mapped region
@@ -1945,7 +1950,7 @@ until the "last message" message is received:
 
 [c++]
 
-   #include <boost/interprocess/shared_memory.hpp>
+   #include <boost/interprocess/shared_memory_object.hpp>
    #include <boost/interprocess/sync/scoped_lock.hpp>
    #include <iostream>
    #include "doc_anonymous_condition_shared_data.hpp"
@@ -1962,13 +1967,13 @@ until the "last message" message is received:
          shared_memory_object shm
             (open_only                    //only create
             ,"shared_memory"              //name
-            ,memory_mappable::read_write  //read-write mode
+            ,read_write  //read-write mode
             );
 
          //Map the whole shared memory in this process
          mapped_region region
             (shm                       //What to map
-            ,mapped_region::read_write //Map it as read-write
+            ,read_write //Map it as read-write
             );
 
          //Get the address of the mapped region
@@ -2100,7 +2105,7 @@ is full:
 
 [c++]
 
-   #include <boost/interprocess/shared_memory.hpp>
+   #include <boost/interprocess/shared_memory_object.hpp>
    #include <iostream>
    #include "doc_anonymous_semaphore_shared_data.hpp"
 
@@ -2116,7 +2121,7 @@ is full:
          shared_memory_object shm
             (create_only                  //only create
             ,"shared_memory"              //name
-            ,memory_mappable::read_write  //read-write mode
+            ,read_write  //read-write mode
             );
 
          //Set size
@@ -2125,7 +2130,7 @@ is full:
          //Map the whole shared memory in this process
          mapped_region region
             (shm                       //What to map
-            ,mapped_region::read_write //Map it as read-write
+            ,read_write //Map it as read-write
             );
 
          //Get the address of the mapped region
@@ -2161,7 +2166,7 @@ to it's own buffer:
 
 [c++]
 
-   #include <boost/interprocess/shared_memory.hpp>
+   #include <boost/interprocess/shared_memory_object.hpp>
    #include <iostream>
    #include "doc_anonymous_semaphore_shared_data.hpp"
 
@@ -2174,13 +2179,13 @@ to it's own buffer:
          shared_memory_object shm
             (open_only                    //only create
             ,"shared_memory"              //name
-            ,memory_mappable::read_write  //read-write mode
+            ,read_write  //read-write mode
             );
 
          //Map the whole shared memory in this process
          mapped_region region
             (shm                       //What to map
-            ,mapped_region::read_write //Map it as read-write
+            ,read_write //Map it as read-write
             );
 
          //Get the address of the mapped region
@@ -3417,7 +3422,40 @@ This will produce a compilation error:
 
 [endsect]
 
-[section:file_lock_careful Be Careful With Iostream Writing]
+[section:file_lock_not_thread_safe Caution: Synchronization limitations]
+
+If you plan to use file locks just like a named mutex, be careful, because portable 
+file locks have synchronization limitations, mainly because different implementations
+(POSIX, Windows) offer different guarantees. Interprocess file locks have the following
+limitations:
+
+*  It's unspecified if a `file_lock` synchronizes [*two threads from the same process].
+*  It's unspecified if a process can use two `file_lock` objects pointing to the same file.
+
+The first limitation comes mainly from POSIX, since a file handle is a per-process attribute
+and not a per-thread attribute. This means that if a thread uses a `file_lock` object to lock
+a file, other threads will see the file as locked.
+Windows file locking mechanism, on the other hand, offer thread-synchronization guarantees
+so a thread trying to lock the already locked file, would block.
+
+The second limitation comes from the fact that file locking synchronization state
+is tied with a single file descriptor in Windows. This means that if two `file_lock` 
+objects are created pointing to the same file, no synchronization is guaranteed. In
+POSIX, when two file descriptors are used to lock a file if a descriptor is closed,
+all file locks set by the calling process are cleared.
+
+To sum up, if you plan to use file locking in your processes, use the following
+restrictions:
+
+*  [*For each file, use a single `file_lock` object per process.]
+*  [*Use the same thread to lock and unlock a file.]
+*  If you are using a std::fstream/native file handle to write to the file
+      while using file locks on that file, [*don't close the file before
+      releasing all the locks of the file.]
+
+[endsect]
+
+[section:file_lock_careful_iostream Be Careful With Iostream Writing]
 
 As we've seen file locking can be useful to synchronize two processes
 reading and writing to a file, but [*make sure data is written to the file]
@@ -3470,13 +3508,13 @@ processes. The memory segment can be mapped in different address in each process
    shared_memory_object shm_obj
       (open_only                    //open or create
       ,"shared_memory"              //name
-      ,memory_mappable::read_only   //read-only mode
+      ,read_only   //read-only mode
       );
 
    //Map the whole shared memory
    mapped_region region
       ( shm                         //Memory-mappable object
-      , mapped_region::read_write   //Access mode
+      , read_write   //Access mode
       );   
 
    //This address can be different in each process
@@ -4715,6 +4753,7 @@ in the managed memory segment just like any other object with [*Boost.Interproce
 [c++]
 
    #include <boost/interprocess/containers/vector.hpp>
+   #include <boost/interprocess/allocators/allocator.hpp>
    #include <boost/interprocess/managed_shared_memory.hpp>
 
    int main ()
@@ -4845,6 +4884,93 @@ Let's see an example:
       MyShmStringVector *myshmvector = 
          shm.construct<MyShmStringVector>("myshmvector")(stringallocator);
       myshmvector->insert(myshmvector->begin(), 10, mystring);
+
+      //Destroy vector. This will free all strings that the vector contains
+      shm.destroy_ptr(myshmvector);
+      return 0;
+   }
+
+[endsect]
+
+[section:stl_container_move_semantics Move semantics in Interprocess containers]
+
+[*Boost.Interprocess] containers support move semantics, which means that the contents
+of a container can be moved from a container two another one, without any copying. The
+contents of the source container are transferred to the target container and the source
+container is left in default-constructed state.
+
+When using containers of containers, we can also use move-semantics to insert
+objects in the container, avoiding unnecessary copies.
+
+
+To transfer the contents of a container to another one, use 
+`boost::interprocess::move()` function, as shown in the example. For more details
+about functions supporting move-semantics, see the reference section of
+Boost.Interprocess containers:
+
+[/doc_move_containers.cpp]
+
+[c++]
+
+   #include <boost/interprocess/managed_shared_memory.hpp>
+   #include <boost/interprocess/containers/vector.hpp>
+   #include <boost/interprocess/containers/string.hpp>
+   #include <boost/interprocess/allocators/allocator.hpp>
+   #include <cassert>
+
+   int main ()
+   {
+      using namespace boost::interprocess;
+
+      //Typedefs
+      typedef managed_shared_memory::segment_manager     SegmentManager;
+      typedef allocator<char, SegmentManager>            CharAllocator;
+      typedef basic_string<char, std::char_traits<char>
+                          ,CharAllocator>                MyShmString;
+      typedef allocator<MyShmString, SegmentManager>     StringAllocator;      
+      typedef vector<MyShmString, StringAllocator>       MyShmStringVector;
+
+      //Remove old shared memory and create new one
+      shared_memory_object::remove("myshm");
+      managed_shared_memory shm(create_only, "myshm", 10000);
+
+      //Create allocators
+      CharAllocator     charallocator  (shm.get_segment_manager());
+      StringAllocator   stringallocator(shm.get_segment_manager());
+
+      //Create a vector of strings in shared memory.
+      MyShmStringVector *myshmvector = 
+         shm.construct<MyShmStringVector>("myshmvector")(stringallocator);
+
+      //Insert 50 strings in shared memory. The strings will be allocated
+      //only once and no string copy-constructor will be called when inserting
+      //strings, leading to a great performance.
+      MyShmString string_to_compare(charallocator);
+      string_to_compare = "this is a long, long, long, long, long, long, string...";
+      
+      myshmvector->reserve(50);
+      for(int i = 0; i < 50; ++i){
+         MyShmString move_me(string_to_compare);
+         //In the following line, no string copy-constructor will be called.
+         //"move_me"'s contents will be transferred to the string created in
+         //the vector
+         myshmvector->push_back(move(move_me));
+
+         //The source string is in default constructed state
+         assert(move_me.empty());
+
+         //The newly created string will be equal to the "move_me"'s old contents
+         assert(myshmvector->back() == string_to_compare);
+      }
+
+      //Now erase a string...
+      myshmvector->pop_back();
+
+      //...And insert one in the first position.
+      //No string copy-constructor or assignments will be called, but
+      //move constructors and move-assignments. No memory allocation 
+      //function will be called in this operations!!
+      myshmvector->insert(myshmvector->begin(), move(string_to_compare));
 
       //Destroy vector. This will free all strings that the vector contains
       shm.destroy_ptr(myshmvector);
@@ -5907,10 +6033,10 @@ basic_vectorbuf and basic_vectorstream here:
          Does not throw.*/
       const vector_type &vector() const;
 
-      /*!Calls resize() method of the internal vector.
+      /*!Preallocates memory from the internal vector.
          Resets the stream to the first position.
-         Throws if the internals vector's resize throws.*/
-      void resize(typename vector_type::size_type size);
+         Throws if the internals vector's memory allocation throws.*/
+      void reserve(typename vector_type::size_type size);
    };
 
    /*!A basic_iostream class that holds a character vector specified by CharVector
@@ -5955,10 +6081,10 @@ basic_vectorbuf and basic_vectorstream here:
          Does not throw.*/
       const vector_type &vector() const;
 
-      /*!Calls resize() method of the internal vector.
+      /*!Preallocates memory from the internal vector.
          Resets the stream to the first position.
-         Throws if the internals vector's resize throws.*/
-      void resize(typename vector_type::size_type size);
+         Throws if the internals vector's memory allocation throws.*/
+      void reserve(typename vector_type::size_type size);
    };
 
 The vector type is templatized, so that we can use any type of vector:
@@ -6004,7 +6130,7 @@ Let's see an example to see how to use vectorstream:
       shared_memory_object::remove("MySharedMemory");
       managed_shared_memory segment(
          create_only, 
-         "MySharedMemory", //segment name
+         "MySharedMemory",//segment name
          65536);           //segment size in bytes
 
       //Construct shared memory vector
@@ -6072,7 +6198,6 @@ Let's see an example to see how to use vectorstream:
       segment.destroy_ptr(mystring);
       return 0;
    }
-
    
 [endsect]
 
@@ -6188,9 +6313,9 @@ alternative to sprintf/sscanf functions. Let's see an example:
    {
       shared_memory_object::remove("MySharedMemory");
       //Create shared memory
-      managed_shared_memory segment(create_only
-                                   ,"MySharedMemory"  //segment name
-                                   ,65536);
+      managed_shared_memory segment(create_only, 
+                                  "MySharedMemory",  //segment name
+                                  65536);
 
       //Fill data
       std::vector<int> data, data2;
@@ -7111,10 +7236,11 @@ than the current copy semantics containers.
 
 [endsect]
 
-
 [endsect]
 
 [section:thanks_to Thanks to...]
+
+[section:thanks_to_people People]
 
 Many people have contributed with ideas and revisions, so this is the place to
 thank them:
@@ -7127,6 +7253,7 @@ thank them:
 
 *  Thanks to [*Hiang Swee Chiang], [*Phil Endecott], [*Rene Rivera],
    [*Harold Pirtle], [*Paul Ryan] [*Shumin Wu], [*Michal Wozniak], [*Peter Johnson]
+   [*Alex Ott], [*Shane Guillory], [*Steven Wooding]
    and [*Kim Barrett] for their bug fixes and library testing.
 
 *  Thanks to [*Martin Adrian] who suggested the use of Interprocess framework for user defined buffers.
@@ -7139,7 +7266,7 @@ thank them:
 *  Thanks to [*Daniel James] for his unordered_map/set family and his help with allocators.
    His great unordered implementation has been a reference to design exception safe containers.  
 
-*  Thanks to [*Howard Hinnant] for his patience explaining allocator swapping,
+*  Thanks to [*Howard Hinnant] for his amazing help, specially explaining allocator swapping,
    move semantics and for developing upgradable mutex and lock transfer features.
 
 *  Thanks to [*Pavel Vozenilek] for his continuous review process, suggestions, code and 
@@ -7147,6 +7274,71 @@ thank them:
    many and great advices.
 
 *  And finally, thank you to all Boosters. *Long live to C++!*
+
+[endsect]
+
+[section:thanks_to_license_notes License notes]
+
+[*Boost.Interprocess] STL containers are based on the SGI STL library implementation:
+
+Copyright (c) 1996,1997 Silicon Graphics Computer Systems, Inc. Permission to use, 
+copy, modify, distribute and sell this software and its documentation for any 
+purpose is hereby granted without fee, provided that the above copyright notice 
+appear in all copies and that both that copyright notice and this permission 
+notice appear in supporting documentation. Silicon Graphics makes no representations 
+about the suitability of this software for any purpose. It is provided "as is" 
+without express or implied warranty. 
+
+Copyright (c) 1994 Hewlett-Packard Company Permission to use, copy, modify, 
+distribute and sell this software and its documentation for any purpose is hereby 
+granted without fee, provided that the above copyright notice appear in all copies 
+and that both that copyright notice and this permission notice appear in supporting 
+documentation. Hewlett-Packard Company makes no representations about the suitability 
+of this software for any purpose. It is provided "as is" without express or implied 
+warranty. 
+
+[endsect]
+
+[endsect]
+
+[section:changes Changes...]
+
+[section:changes_interprocess_2006_10_13 Changes in Interprocess 2006-10-13...]
+
+*  Implemented N1780 proposal to LWG issue 233: ['Insertion hints in associative containers]
+   in interprocess `boost::interprocess::multiset` and `boost::interprocess::multimap` class.
+
+*  [*Source breaking]: A shared memory object is now used including
+   `shared_memory_object.hpp` header instead of `shared memory.hpp`.
+
+*  [*ABI breaking]: Changed global mutex when initializing managed shared memory
+   and memory mapped files. This change tries to minimize deadlocks.
+
+*  [*Source breaking]: Changed shared memory, memory mapped files and mapped region's
+   open mode to a single `boost::interprocess::mode_t` type.
+
+*  Added extra WIN32_LEAN_AND_MEAN before including DateTime headers to avoid socket
+   redefinition errors when using Interprocess and Asio in windows.
+
+*  [*ABI breaking]: `mapped_region` constructor no longer requires classes
+   derived from memory_mappable, but classes the fulfill the MemoryMappable concept.
+
+*  Added in-place reallocation capabilities to basic_string.
+
+*  [*ABI breaking]: Reimplemented and optimized small string optimization. The narrow
+   string class has zero byte overhead with an internal 11 byte buffer in 32 systems!
+   
+*  Added move semantics to containers. Experimental and not documented yet. Improves
+   performance when using containers of containers.
+
+*  [*ABI breaking]: End nodes of node containers (list, slist, map/set) are now
+   embedded in the containers instead of allocated using the allocator. This
+   allows no-throw move-constructors and improves performance.
+
+*  [*ABI breaking]: [*slist] and [*list] containers now have constant-time
+   ['size()] function. The size of the container is added as a member.
+
+[endsect]
 
 [endsect]
 

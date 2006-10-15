@@ -24,7 +24,7 @@
 
 #include <boost/interprocess/sync/interprocess_condition.hpp>
 #include <boost/thread/thread.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/thread/xtime.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
@@ -379,10 +379,15 @@ void do_test_condition_queue_notify_all(void)
 template <class Condition, class Mutex>
 bool do_test_condition()
 {
+   std::cout << "do_test_condition_notify_one<" << typeid(Condition).name() << "," << typeid(Mutex).name() << std::endl;
    do_test_condition_notify_one<Condition, Mutex>();
+   std::cout << "do_test_condition_notify_all<" << typeid(Condition).name() << "," << typeid(Mutex).name() << std::endl;
    do_test_condition_notify_all<Condition, Mutex>();
+   std::cout << "do_test_condition_waits<" << typeid(Condition).name() << "," << typeid(Mutex).name() << std::endl;
    do_test_condition_waits<Condition, Mutex>();
+   std::cout << "do_test_condition_queue_notify_one<" << typeid(Condition).name() << "," << typeid(Mutex).name() << std::endl;
    do_test_condition_queue_notify_one<Condition, Mutex>();
+   std::cout << "do_test_condition_queue_notify_all<" << typeid(Condition).name() << "," << typeid(Mutex).name() << std::endl;
    do_test_condition_queue_notify_all<Condition, Mutex>();
    return true;
 }

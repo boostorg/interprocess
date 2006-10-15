@@ -25,6 +25,7 @@
 #include <boost/interprocess/sync/interprocess_barrier.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
+#include <iostream>
 
 namespace {
 
@@ -51,6 +52,9 @@ void barrier_thread()
 
 int main ()
 {
+
+   try{
+
    boost::thread_group g;
    global_parameter = 0;
 
@@ -58,6 +62,16 @@ int main ()
       g.create_thread(&barrier_thread);
 
    g.join_all();
+   }
+   catch(std::exception &e){
+      std::cout << "Exception cached: " << e.what() << std::endl;
+      return 1;
+   }
+   catch(...){
+      std::cout << "unkwnown exception catched" << std::endl;
+      return 1;
+   }
+
    return 0;
 }
 

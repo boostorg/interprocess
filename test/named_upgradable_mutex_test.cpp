@@ -64,9 +64,11 @@ int main ()
       named_upgradable_mutex::remove("named_upgradable_mutex");
 
       test::test_named_creation<named_upgradable_mutex_creation_test_wrapper>();
+/*
       test::test_all_lock<named_upgradable_mutex_lock_test_wrapper>();
       test::test_all_mutex<true, named_upgradable_mutex_lock_test_wrapper>();
       test::test_all_sharable_mutex<true, named_upgradable_mutex_lock_test_wrapper>();
+*/
    }
    catch(std::exception &ex){
       std::cout << ex.what() << std::endl;

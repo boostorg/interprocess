@@ -12,7 +12,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <vector>
 #include <deque>
 #include <iostream>
 #include <functional>
@@ -20,7 +19,15 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/deque.hpp>
 #include <boost/interprocess/indexes/flat_map_index.hpp>
-#include "printcontainer.hpp"
+#include "print_container.hpp"
+#include "check_equal_containers.hpp"
+#include "dummy_test_allocator.hpp"
+#include "movable_int.hpp"
+#include <boost/interprocess/allocators/allocator.hpp>
+#include "allocator_v1.hpp"
+#include <boost/interprocess/exceptions.hpp>
+#include <boost/interprocess/detail/move_iterator.hpp>
+#include <boost/interprocess/detail/move.hpp>
 
 //***************************************************************//
 //                                                               //
@@ -30,118 +37,185 @@
 //                                                               //
 //***************************************************************//
 
-//Explicit instantiation to detect compilation errors
-template class boost::interprocess::deque<int, std::allocator<int> >;
-
 using namespace boost::interprocess;
 
-//Customize managed_shared_memory class
-
-typedef basic_managed_shared_memory
-   <char,
-    simple_seq_fit<mutex_family>,
-    flat_map_index
-   > my_managed_shared_memory;
-
-//Alias allocator type
-typedef allocator<int, my_managed_shared_memory::segment_manager>
-   shmem_node_allocator_t;
-
-//Alias deque types
-typedef deque<int, shmem_node_allocator_t>         MyShmDeque;
-typedef std::deque<int>                            MyStdDeque;
-
-//template class deque<int, shmem_node_allocator_t>;
+//Explicit instantiation to detect compilation errors
+template class boost::interprocess::deque<test::movable_and_copyable_int, 
+   test::dummy_test_allocator<test::movable_and_copyable_int> >;
 
 //Function to check if both sets are equal
-bool CheckEqual(MyShmDeque *shmdeque, MyStdDeque *stddeque)
+template<class V1, class V2>
+bool copyable_only(V1 *shmdeque, V2 *stddeque, boost::false_type)
 {
-   if(shmdeque->size() != stddeque->size())
-      return false;
-   return std::equal(shmdeque->begin(), shmdeque->end(), stddeque->begin());
+   return true;
 }
 
-int main ()
+//Function to check if both sets are equal
+template<class V1, class V2>
+bool copyable_only(V1 *shmdeque, V2 *stddeque, boost::true_type)
 {
-   const int memsize = 655360;
+   typedef typename V1::value_type IntType;
+   std::size_t size = shmdeque->size();
+   stddeque->insert(stddeque->end(), 50, 1);
+   shmdeque->insert(shmdeque->end(), 50, 1);
+   if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+   {
+   IntType move_me(1);
+   stddeque->insert(stddeque->begin()+size/2, 50, 1);
+   shmdeque->insert(shmdeque->begin()+size/2, 50, move(move_me));
+   if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+   }
+   {
+   IntType move_me(2);
+   shmdeque->assign(shmdeque->size()/2, move(move_me));
+   stddeque->assign(stddeque->size()/2, 2);
+   if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+   }
+   return true;
+}
+
+template<class IntType, template<class T, class SegmentManager> class AllocatorType >
+bool do_test()
+{
+   //Customize managed_shared_memory class
+   typedef basic_managed_shared_memory
+      <char,
+      simple_seq_fit<mutex_family>,
+      flat_map_index
+      > my_managed_shared_memory;
+
+   //Alias AllocatorType type
+   typedef AllocatorType<IntType, my_managed_shared_memory::segment_manager>
+      shmem_allocator_t;
+
+   //Alias deque types
+   typedef deque<IntType, shmem_allocator_t>   MyShmDeque;
+   typedef std::deque<int>                     MyStdDeque;
+   const int Memsize = 65536;
    const char *const shMemName = "MySharedMemory";
    const int max = 100;
 
    shared_memory_object::remove(shMemName);
 
    //Create shared memory
-   my_managed_shared_memory segment(create_only, shMemName, memsize);
+   my_managed_shared_memory segment(create_only, shMemName, Memsize);
 
    segment.reserve_named_objects(100);
 
    //Shared memory allocator must be always be initialized
    //since it has no default constructor
-   MyShmDeque *shmdeque = segment.construct<MyShmDeque>("MyShmDeque")
+   MyShmDeque *shmdeque = segment.template construct<MyShmDeque>("MyShmDeque")
                            (segment.get_segment_manager());
 
    MyStdDeque *stddeque = new MyStdDeque;
 
-   int i, j;
-   for(i = 0; i < max; ++i){
-      shmdeque->insert(shmdeque->end(), i);
-      stddeque->insert(stddeque->end(), i);
-   }
-   if(!CheckEqual(shmdeque, stddeque)) return 1;
+   try{
+      //Compare several shared memory deque operations with std::deque
+      int i;
+      for(i = 0; i < max; ++i){
+         IntType move_me(i);
+         shmdeque->insert(shmdeque->end(), move(move_me));
+         stddeque->insert(stddeque->end(), i);
+      }
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
 
-   MyShmDeque::iterator it;
-   MyShmDeque::const_iterator cit = it;
+      typename MyShmDeque::iterator it;
+      typename MyShmDeque::const_iterator cit = it;
 
-   shmdeque->erase(shmdeque->begin()++);
-   stddeque->erase(stddeque->begin()++);
-   if(!CheckEqual(shmdeque, stddeque)) return 1;
+      shmdeque->erase(shmdeque->begin()++);
+      stddeque->erase(stddeque->begin()++);
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
 
-   shmdeque->erase(shmdeque->begin());
-   stddeque->erase(stddeque->begin());
-   if(!CheckEqual(shmdeque, stddeque)) return 1;
-
-   std::vector<int> aux_vect;
-   #if !BOOST_WORKAROUND(BOOST_DINKUMWARE_STDLIB, == 1)
-   aux_vect.assign(50, -1);
-   shmdeque->insert(shmdeque->end(), aux_vect.begin(), aux_vect.end());
-   stddeque->insert(stddeque->end(), aux_vect.begin(), aux_vect.end());
-   if(!CheckEqual(shmdeque, stddeque)) return 1;
-   #endif
-
-   shmdeque->insert(shmdeque->begin()+shmdeque->size()/2, 50, aux_vect[0]);
-   stddeque->insert(stddeque->begin()+stddeque->size()/2, 50, aux_vect[0]);
-   if(!CheckEqual(shmdeque, stddeque)) return 1;
-
-   #if !BOOST_WORKAROUND(BOOST_DINKUMWARE_STDLIB, == 1)
-   for(i = 0, j = static_cast<int>(shmdeque->size()); i < j; ++i){
       shmdeque->erase(shmdeque->begin());
       stddeque->erase(stddeque->begin());
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+
+      {
+         //Initialize values
+         IntType aux_vect[50];
+         for(int i = 0; i < 50; ++i){
+            IntType move_me (-1);
+            aux_vect[i] = move(move_me);
+         }
+         int aux_vect2[50];
+         for(int i = 0; i < 50; ++i){
+            aux_vect2[i] = -1;
+         }
+
+         shmdeque->insert(shmdeque->end()
+                           ,detail::make_move_iterator(&aux_vect[0])
+                           ,detail::make_move_iterator(aux_vect + 50));
+         stddeque->insert(stddeque->end(), aux_vect2, aux_vect2 + 50);
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+
+         for(int i = 0, j = static_cast<int>(shmdeque->size()); i < j; ++i){
+            shmdeque->erase(shmdeque->begin());
+            stddeque->erase(stddeque->begin());
+         }
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+      }
+      {
+         IntType aux_vect[50];
+         for(int i = 0; i < 50; ++i){
+            IntType move_me(-1);
+            aux_vect[i] = move(move_me);
+         }
+         int aux_vect2[50];
+         for(int i = 0; i < 50; ++i){
+            aux_vect2[i] = -1;
+         }
+         shmdeque->insert(shmdeque->begin()
+                           ,detail::make_move_iterator(&aux_vect[0])
+                           ,detail::make_move_iterator(aux_vect + 50));
+         stddeque->insert(stddeque->begin(), aux_vect2, aux_vect2 + 50);
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+      }
+
+      if(!copyable_only(shmdeque, stddeque
+                     ,boost::integral_constant
+                     <bool, !is_movable<IntType>::value>())){
+         return false;
+      }
+
+      shmdeque->erase(shmdeque->begin());
+      stddeque->erase(stddeque->begin());
+
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+
+      for(i = 0; i < max; ++i){
+         IntType move_me(i);
+         shmdeque->insert(shmdeque->begin(), move(move_me));
+         stddeque->insert(stddeque->begin(), i);
+      }
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+
+      segment.template destroy<MyShmDeque>("MyShmDeque");
+      delete stddeque;
    }
-   if(!CheckEqual(shmdeque, stddeque)) return 1;
-   #endif
-
-   #if !BOOST_WORKAROUND(BOOST_DINKUMWARE_STDLIB, == 1)
-   shmdeque->insert(shmdeque->begin(), aux_vect.begin(), aux_vect.end());
-   shmdeque->insert(shmdeque->begin(), aux_vect.begin(), aux_vect.end());
-   stddeque->insert(stddeque->begin(), aux_vect.begin(), aux_vect.end());
-   stddeque->insert(stddeque->begin(), aux_vect.begin(), aux_vect.end());
-   if(!CheckEqual(shmdeque, stddeque)) return 1;
-   #endif
-
-   shmdeque->erase(shmdeque->begin());
-   stddeque->erase(stddeque->begin());
-
-   if(!CheckEqual(shmdeque, stddeque)) return 1;
-
-   for(i = 0; i < max; ++i){
-      shmdeque->insert(shmdeque->begin(), i);
-      stddeque->insert(stddeque->begin(), i);
+   catch(std::exception &ex){
+      std::cout << ex.what() << std::endl;
+      return false;
    }
-   if(!CheckEqual(shmdeque, stddeque)) return 1;
-
-   segment.destroy<MyShmDeque>("MyShmDeque");
-   delete stddeque;
+   
+   std::cout << std::endl << "Test OK!" << std::endl;
+   return true;
 
    return 0;
 }
+
+int main ()
+{
+   if(!do_test<int, allocator>())
+      return 1;
+
+   if(!do_test<test::movable_int, allocator>())
+      return 1;
+
+   if(!do_test<int, test::allocator_v1>())
+      return 1;
+
+   return 0;
+}
+
 
 #include <boost/interprocess/detail/config_end.hpp>
