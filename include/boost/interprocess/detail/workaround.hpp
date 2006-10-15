@@ -4,7 +4,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess/ for documentation.
+// See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 
@@ -31,10 +31,35 @@
 #  include <cstddef>
 #endif
 
-#if !((defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)) && \
-      ((defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L) || \
-        defined(_XOPEN_VERSION) && _XOPEN_VERSION >= 500)
-#define BOOST_INTERPROCESS_USE_PTHREAD_BARRIER
+#if !(defined BOOST_WINDOWS) || (defined BOOST_DISABLE_WIN32)
+   #if defined(_POSIX_THREAD_PROCESS_SHARED) && (_POSIX_THREAD_PROCESS_SHARED - 0 > 0)
+   #if !defined(__CYGWIN__)
+      #define BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+   #endif
+   #endif
+
+   #if defined(_POSIX_BARRIERS) && (defined _POSIX_BARRIERS - 0 > 0)
+      #define BOOST_INTERPROCESS_POSIX_BARRIERS
+   #endif   //
+
+   #if defined(_POSIX_SEMAPHORES) && (defined _POSIX_SEMAPHORES - 0 > 0)
+      #define BOOST_INTERPROCESS_POSIX_SEMAPHORES
+   #endif
+
+   #if ((defined _V6_ILP32_OFFBIG)  &&(_V6_ILP32_OFFBIG   - 0 > 0)) ||\
+       ((defined _V6_LP64_OFF64)    &&(_V6_LP64_OFF64     - 0 > 0)) ||\
+       ((defined _V6_LPBIG_OFFBIG)  &&(_V6_LPBIG_OFFBIG   - 0 > 0)) ||\
+       ((defined _XBS5_ILP32_OFFBIG)&&(_XBS5_ILP32_OFFBIG - 0 > 0)) ||\
+       ((defined _XBS5_LP64_OFF64)  &&(_XBS5_LP64_OFF64   - 0 > 0)) ||\
+       ((defined _XBS5_LPBIG_OFFBIG)&&(_XBS5_LPBIG_OFFBIG - 0 > 0)) ||\
+       ((defined _FILE_OFFSET_BITS) &&(_FILE_OFFSET_BITS  - 0 >= 64))||\
+       ((defined _FILE_OFFSET_BITS) &&(_FILE_OFFSET_BITS  - 0 >= 64))
+      #define BOOST_INTERPROCESS_UNIX_64_BIT_OR_BIGGER_OFF_T
+   #else
+   #if defined(_POSIX_SHARED_MEMORY_OBJECTS) && (defined _POSIX_SHARED_MEMORY_OBJECTS - 0 > 0)
+      #define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
+   #endif
+   #endif
 #endif
 
 namespace boost {
@@ -109,9 +134,7 @@ template<> struct random_it<const volatile void>
 };
 
 }  //namespace workaround
-
 }  //namespace interprocess {
-
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>

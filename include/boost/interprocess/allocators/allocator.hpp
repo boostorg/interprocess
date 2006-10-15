@@ -21,10 +21,10 @@
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/allocators/allocation_type.hpp>
 #include <boost/utility/addressof.hpp>
-#include <boost/assert.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
+#include <boost/assert.hpp>
 #include <memory>
 #include <algorithm>
 #include <cstddef>
@@ -138,6 +138,11 @@ class allocator
    void construct(const pointer &ptr, const Convertible &value)
    {  new(detail::get_pointer(ptr)) value_type(value);  }
 
+   /*!Default construct an object. 
+      Throws if T's default constructor throws*/
+   void construct(const pointer &ptr)
+   {  new(detail::get_pointer(ptr)) value_type;  }
+
    /*!Destroys object. Throws if object's destructor throws*/
    void destroy(const pointer &ptr)
    {  BOOST_ASSERT(ptr != 0); (*ptr).~value_type();  }
@@ -212,6 +217,7 @@ struct has_convertible_construct
 {
    enum {   value = true };
 };
+
 
 }  //namespace interprocess {
 

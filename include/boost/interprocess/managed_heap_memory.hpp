@@ -18,6 +18,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/detail/move.hpp>
 #include <vector>
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
@@ -33,7 +34,7 @@ namespace interprocess {
 namespace detail {
 
    /*!This class defines an operator() that creates a heap memory
-      ofthe requested size. The rest of the parameters are
+      of the requested size. The rest of the parameters are
       passed in the constructor. The class a template parameter
       to be used with create_from_file/create_from_istream functions
       of basic_named_object classes*/
@@ -97,6 +98,16 @@ class basic_managed_heap_memory
       }
 //      return true;
    }
+
+   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   basic_managed_heap_memory
+      (detail::moved_object<basic_managed_heap_memory> &moved)
+   {  this->swap(moved.get());   }
+
+   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   basic_managed_heap_memory &operator=
+      (detail::moved_object<basic_managed_heap_memory> &moved)
+   {  this->swap(moved.get());   return *this;  }
  
    /*!Creates the object from file. Never throws.*/
 /*
@@ -170,6 +181,14 @@ class basic_managed_heap_memory
       base_t::open_impl(&m_heapmem[0], m_heapmem.size());
       base_t::grow(extra_bytes);
       return true;
+   }
+
+   /*!Swaps the ownership of the managed heap memories managed by *this and other.
+      Never throws.*/
+   void swap(basic_managed_heap_memory &other)
+   {
+      base_t::swap(other);
+      m_heapmem.swap(other.m_heapmem);
    }
 
    private:

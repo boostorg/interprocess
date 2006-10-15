@@ -19,7 +19,8 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
-#include <boost/interprocess/shared_memory.hpp>
+#include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
+#include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
 
 /*!\file
@@ -83,16 +84,16 @@ class basic_managed_shared_memory
       create_open_func(basic_managed_shared_memory * const frontend, type_t type)
          : m_frontend(frontend), m_type(type){}
 
-      bool operator()(const mapped_region &region, bool created) const
+      bool operator()(void *addr, std::size_t size, bool created) const
       {  
          if(((m_type == DoOpen)   &&  created) || 
             ((m_type == DoCreate) && !created))
             return false;
 
          if(created)
-            return m_frontend->create_impl(region.get_address(), region.get_size());
+            return m_frontend->create_impl(addr, size);
          else
-            return m_frontend->open_impl  (region.get_address(), region.get_size());
+            return m_frontend->open_impl  (addr, size);
       }
       basic_managed_shared_memory *m_frontend;
       type_t                       m_type;
@@ -119,7 +120,7 @@ class basic_managed_shared_memory
       This can throw.*/
    basic_managed_shared_memory(detail::create_only_t create_only, const char *name,
                              std::size_t size, const void *addr = 0)
-      : m_shmem(create_only, name, size, memory_mappable::read_write, addr, 
+      : m_shmem(create_only, name, size, read_write, addr, 
                 create_open_func(get_this_pointer(), create_open_func::DoCreate))
    {}
 
@@ -130,7 +131,7 @@ class basic_managed_shared_memory
    basic_managed_shared_memory (detail::open_or_create_t open_or_create,
                               const char *name, std::size_t size, 
                               const void *addr = 0)
-      : m_shmem(open_or_create, name, size, memory_mappable::read_write, addr, 
+      : m_shmem(open_or_create, name, size, read_write, addr, 
                 create_open_func(get_this_pointer(), 
                 create_open_func::DoCreateOrOpen))
    {}
@@ -139,10 +140,28 @@ class basic_managed_shared_memory
       Never throws.*/
    basic_managed_shared_memory (detail::open_only_t open_only, const char* name, 
                               const void *addr = 0)
-      : m_shmem(open_only, name, memory_mappable::read_write, addr, 
+      : m_shmem(open_only, name, read_write, addr, 
                 create_open_func(get_this_pointer(), 
                 create_open_func::DoOpen))
    {}
+
+   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   basic_managed_shared_memory
+      (detail::moved_object<basic_managed_shared_memory> &moved)
+   {  this->swap(moved.get());   }
+
+   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   basic_managed_shared_memory &operator=
+      (detail::moved_object<basic_managed_shared_memory> &moved)
+   {  this->swap(moved.get());   return *this;  }
+
+   /*!Swaps the ownership of the managed shared memories managed by *this and other.
+      Never throws.*/
+   void swap(basic_managed_shared_memory &other)
+   {
+      base_t::swap(other);
+      m_shmem.swap(other.m_shmem);
+   }
 /*
    static bool remove(const char *name)
    {  return shared_memory_object::remove(name);  }
@@ -167,12 +186,11 @@ class basic_managed_shared_memory
    }
 */
 
- private:
-   shared_memory  m_shmem;
+   private:
+   detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
 };
 
 }  //namespace interprocess {
-
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>

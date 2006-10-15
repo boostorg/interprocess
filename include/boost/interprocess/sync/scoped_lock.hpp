@@ -26,7 +26,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/utility.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 /*!\file
    Describes the scoped_lock class.
@@ -356,6 +356,13 @@ class scoped_lock
    private:
    mutex_type *mp_mutex; 
    bool        m_locked;
+};
+
+/*!This class is movable*/
+template <class M>
+struct is_movable<scoped_lock<M> >
+{
+   enum {   value = true };
 };
 
 } // namespace interprocess

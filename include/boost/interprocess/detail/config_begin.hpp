@@ -23,6 +23,8 @@
    #pragma warning (disable : 4244) // possible loss of data
    #pragma warning (disable : 4521) ////Disable "multiple copy constructors specified"
    #pragma warning (disable : 4522)
+   #pragma warning (disable : 4146)
+   #pragma warning (disable : 4267) //conversion from 'X' to 'Y', possible loss of data
 #endif
 
 #include <boost/config.hpp>

@@ -16,7 +16,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess/ for documentation.
+// See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -32,14 +32,6 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#ifdef min
-#undef min
-#endif
-
-#ifdef max
-#undef max
-#endif
-
 #include <boost/detail/workaround.hpp>
 #include <boost/config.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
@@ -47,6 +39,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/allocators/allocation_type.hpp>
+#include <boost/interprocess/detail/move.hpp>
 #include <boost/type_traits/is_integral.hpp>
 #include <functional>
 #include <string>
@@ -59,7 +52,9 @@
 #include <ios>
 #include <locale>
 #include <cstddef>
-//#include <ctype>
+#include <climits>
+#include <boost/type_traits/type_with_alignment.hpp>
+#include <boost/type_traits/alignment_of.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 
 // Standard C++ string class.  This class has performance
@@ -86,12 +81,13 @@ namespace boost { namespace interprocess {
 // an exception-safe version of basic_string.  The constructor allocates,
 // but does not initialize, a block of memory.  The destructor
 // deallocates, but does not destroy elements within, a block of
-// memory.  The destructor assumes that this->m_start either is the internal buffer, 
+// memory.  The destructor assumes that the memory either is the internal buffer, 
 // or else points to a block of memory that was allocated using _String_base's 
 // allocator and whose size is this->m_storage.
 template <class A>
 class basic_string_base : private A
 {
+   basic_string_base();
  public:
    typedef A allocator_type;
    typedef typename A::pointer     pointer;
@@ -101,25 +97,142 @@ class basic_string_base : private A
    allocator_type get_allocator() const { return *this; }
 
    basic_string_base(const allocator_type& a)
-      : allocator_type(a), 
-      m_start(0), 
-      m_length(0), 
-      m_storage(0)
-   {}
+      : allocator_type(a)
+   {  init(); }
 
    basic_string_base(const allocator_type& a, std::size_t n)
-      : allocator_type(a), 
-      m_start(0), 
-      m_length(0), 
-      m_storage(0)
-   { if(n)  this->allocate_block(n); }
+      : allocator_type(a)
+   {  
+      this->init(); 
+      this->allocate_initial_block(n);
+   }
+
+   basic_string_base(const detail::moved_object<basic_string_base<A> >& b)
+      :  allocator_type(static_cast<allocator_type&>(b.get()))
+   {  
+      init();
+      this->swap(b.get()); 
+   }
 
    ~basic_string_base() 
-   { this->deallocate_block(); }
+   {  
+      this->deallocate_block(); 
+      if(!this->is_short()){
+         static_cast<long_t*>(static_cast<void*>(&m_repr.r))->~long_t();
+      }
+   }
+
+   private:
+
+   //This is the structure controlling a long string 
+   struct long_t
+   {
+      size_type      is_short  : 1;
+	   size_type      length    : (sizeof(size_type)*CHAR_BIT - 1);
+	   size_type      storage;
+      pointer        start;
+
+      long_t()
+      {}
+
+      long_t(const long_t &other)
+      {
+         this->is_short = other.is_short;
+         length   = other.length;
+         storage  = other.storage;
+         start    = other.start;
+      }
+
+      long_t &operator =(const long_t &other)
+      {
+         this->is_short = other.is_short;
+         length   = other.length;
+         storage  = other.storage;
+         start    = other.start;
+         return *this;
+      }
+   };
+
+   //This basic type should have the same alignment as long_t
+   typedef typename type_with_alignment<boost::alignment_of<long_t>::value>::type
+      long_alignment_type;
+
+   //This type is the first part of the structure controlling a short string
+   //The "data" member stores
+   struct short_header
+   {
+      unsigned char  is_short  : 1;
+      unsigned char  length    : (CHAR_BIT - 1);
+   };
+
+   //This type has the same alignment and size as long_t but it's POD
+   //so, unlike long_t, it can be placed in a union
+   struct long_raw_t
+   {
+      long_alignment_type  a;
+      unsigned char        b[sizeof(long_t) - sizeof(long_alignment_type)];
+   };
 
    protected:
-   enum {   InternalBufferSize = 16   };
-   enum {   MinAllocation = InternalBufferSize*2   };
+
+   enum  {  MinInternalBufferChars = 8
+         ,  AlignmentOfValueType = alignment_of<value_type>::value
+         ,  ShortDataOffset = detail::ct_rounded_size<sizeof(short_header)
+         ,  AlignmentOfValueType>::value
+         ,  ZeroCostInternalBufferChars =
+               (sizeof(long_t) - ShortDataOffset)/sizeof(value_type)
+         ,  UnalignedFinalInternalBufferChars =
+               (ZeroCostInternalBufferChars > MinInternalBufferChars) ?
+                ZeroCostInternalBufferChars : MinInternalBufferChars
+         };
+
+   struct short_t
+   {
+      short_header   h; 
+      value_type     data[UnalignedFinalInternalBufferChars];
+   };
+
+   union repr_t
+   {
+      long_raw_t  r;
+      short_t     s;
+
+      short_t &short_repr() const
+      {  return *const_cast<short_t *>(&s);  }
+
+      long_t &long_repr() const
+      {  return *static_cast<long_t*>(const_cast<void*>(static_cast<const void*>(&r)));  }
+   } m_repr;
+
+   enum  {  InternalBufferChars = (sizeof(repr_t) - ShortDataOffset)/sizeof(value_type)  };
+
+   private:
+
+   enum {   MinAllocation = InternalBufferChars*2   };
+
+   protected:
+   bool is_short() const
+   {  return static_cast<bool>(m_repr.s.h.is_short != 0);  }
+
+   void is_short(bool yes)
+   {  
+      if(yes && !this->is_short()){
+         static_cast<long_t*>(static_cast<void*>(&m_repr.r))->~long_t();
+      }
+      else{
+         new(static_cast<void*>(&m_repr.r))long_t();
+      }
+      m_repr.s.h.is_short = yes;
+   }
+
+   private:
+   void init()
+   {
+      m_repr.s.h.is_short = 1;
+      m_repr.s.h.length   = 0;
+   }
+
+   protected:
 
    typedef boost::integral_constant<unsigned, 1>      allocator_v1;
    typedef boost::integral_constant<unsigned, 2>      allocator_v2;
@@ -130,14 +243,14 @@ class basic_string_base : private A
       allocation_command(allocation_type command,
                          size_type limit_size, 
                          size_type preferred_size,
-                         size_type &received_size, const pointer &reuse = 0)
+                         size_type &received_size, pointer reuse = 0)
    {
-      if (limit_size > InternalBufferSize)
-         return this->allocation_command
-            (command, limit_size, preferred_size, received_size, reuse, alloc_version());
-      received_size = InternalBufferSize;
-      return std::pair<pointer, bool>(m_buf_holder.m_buf
-                                     ,reuse == pointer(m_buf_holder.m_buf));
+      if(this->is_short() && (command & (expand_fwd | expand_bwd)) ){
+         reuse = pointer(0);
+         command &= ~(expand_fwd | expand_bwd);
+      }
+      return this->allocation_command
+         (command, limit_size, preferred_size, received_size, reuse, alloc_version());
    }
 
    std::pair<pointer, bool>
@@ -159,7 +272,7 @@ class basic_string_base : private A
                          size_type limit_size, 
                          size_type preferred_size,
                          size_type &received_size,
-                         const pointer &reuse,
+                         pointer reuse,
                          allocator_v2)
    {
       return A::allocation_command(command, limit_size, preferred_size, 
@@ -167,11 +280,11 @@ class basic_string_base : private A
    }
 
    size_type next_capacity(size_type additional_objects) const
-   {  return get_next_capacity(A::max_size(), this->m_storage, additional_objects);  }
+   {  return get_next_capacity(A::max_size(), this->priv_storage(), additional_objects);  }
 
    void deallocate(pointer p, std::size_t n) 
    {  
-      if (p && (n > InternalBufferSize))
+      if (p && (n > InternalBufferChars))
          allocator_type::deallocate(p, n);
    }
 
@@ -184,20 +297,24 @@ class basic_string_base : private A
    void destroy(pointer p)
    { allocator_type::destroy(p); }
 
-   void allocate_block(std::size_t n)
-   { 
+   void allocate_initial_block(std::size_t n)
+   {
       if (n <= this->max_size()) {
-         size_type new_cap = this->next_capacity(n);
-         m_start  = this->allocation_command(allocate_new, n, new_cap, new_cap).first;
-         this->m_length = 0;
-         m_storage = new_cap;
+         if(n > InternalBufferChars){
+            size_type new_cap = this->next_capacity(n);
+            pointer p = this->allocation_command(allocate_new, n, new_cap, new_cap).first;
+            this->is_short(false);
+            this->priv_addr(p);
+            this->priv_size(0);
+            this->priv_storage(new_cap);
+         }
       }
       else
          throw_length_error();
    }
 
    void deallocate_block() 
-   {  this->deallocate(m_start, m_storage);  }
+   {  this->deallocate(this->priv_addr(), this->priv_storage());  }
       
    std::size_t max_size() const
    {  return A::max_size() - 1; }
@@ -215,35 +332,58 @@ class basic_string_base : private A
    const A & get_alloc() const
    {  return *this;  }
 
-   private:
-   union Buffer
-   {
-      value_type m_buf[InternalBufferSize];
-      value_type dummy;
-   } m_buf_holder;
-
    protected:
-   pointer     m_start;
-    size_type   m_length;   // current length of string
-    size_type   m_storage;  // current storage reserved for string
+   size_type priv_capacity() const
+   { return this->priv_storage() - 1; }
+
+   pointer priv_addr() const
+   {  return this->is_short() ? pointer(&m_repr.short_repr().data[0]) : m_repr.long_repr().start;  }
+
+   void priv_addr(pointer addr)
+   {  m_repr.long_repr().start = addr;  }
+
+   size_type priv_storage() const
+   {  return this->is_short() ? InternalBufferChars : m_repr.long_repr().storage;  }
+
+   void priv_storage(size_type storage)
+   {  
+      if(!this->is_short())
+         m_repr.long_repr().storage = storage;
+   }
+
+   size_type priv_size() const
+   {  return this->is_short() ? m_repr.short_repr().h.length : m_repr.long_repr().length;  }
+
+   void priv_size(size_type sz)
+   {  
+      if(this->is_short())
+         m_repr.s.h.length = (unsigned char)sz;
+      else
+         m_repr.long_repr().length = static_cast<typename A::size_type>(sz);
+   }
 
    void swap(basic_string_base& other) 
    {
-      detail::do_swap(this->m_start, other.m_start);
-      detail::do_swap(this->m_buf_holder, other.m_buf_holder);
-      value_type *this_buf  = detail::get_pointer(this->m_start);
-      value_type *other_buf = detail::get_pointer(other.m_start);
-
-      if(this_buf == other.m_buf_holder.m_buf){
-         this->m_start = this->m_buf_holder.m_buf;
+      if(this->is_short()){
+         if(other.is_short()){
+            std::swap(m_repr, other.m_repr);
+         }
+         else{
+            repr_t copy(m_repr);
+            m_repr.long_repr() = other.m_repr.long_repr();
+            other.m_repr = copy;
+         }
       }
-      
-      if(other_buf == this->m_buf_holder.m_buf){
-         other.m_start = other.m_buf_holder.m_buf;
+      else{
+         if(other.is_short()){
+            repr_t copy(other.m_repr);
+            other.m_repr.long_repr() = m_repr.long_repr();
+            m_repr = copy;
+         }
+         else{
+            std::swap(m_repr.long_repr(), other.m_repr.long_repr());
+         }
       }
-
-      detail::do_swap(this->m_length, other.m_length);
-      detail::do_swap(this->m_storage, other.m_storage);
 
       allocator_type & this_al = this->get_alloc(), &other_al = other.get_alloc();
       if(this_al != other_al){
@@ -274,7 +414,7 @@ class basic_string : private basic_string_base<A>
 {
    private:
    typedef basic_string_base<A> base_t;
-   enum {   InternalBufferSize = base_t::InternalBufferSize   };
+   enum {   InternalBufferChars = base_t::InternalBufferChars   };
 
    protected:
    // A helper class to use a char_traits as a function object.
@@ -320,8 +460,8 @@ class basic_string : private basic_string_base<A>
    typedef typename A::difference_type         difference_type;
    typedef const_pointer                           const_iterator;
    typedef pointer                                 iterator;
-    typedef boost::reverse_iterator<iterator>       reverse_iterator;
-    typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
+	typedef boost::reverse_iterator<iterator>       reverse_iterator;
+	typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
    static const size_type npos;
 
    private:
@@ -332,7 +472,7 @@ class basic_string : private basic_string_base<A>
       { return base_t::get_allocator(); }
 
    explicit basic_string(const allocator_type& a = allocator_type())
-      : base_t(a, InternalBufferSize)
+      : base_t(a, InternalBufferChars)
    { this->priv_terminate_string(); }
 
    struct reserve_t {};
@@ -346,6 +486,10 @@ class basic_string : private basic_string_base<A>
       : base_t(s.get_allocator()) 
    { this->priv_range_initialize(s.begin(), s.end()); }
 
+   basic_string(const detail::moved_object<basic_string>& s) 
+      : base_t(move((base_t&)s.get()))
+   {}
+
    basic_string(const basic_string& s, size_type pos, size_type n = npos,
                const allocator_type& a = allocator_type()) 
       : base_t(a) 
@@ -354,7 +498,7 @@ class basic_string : private basic_string_base<A>
          this->throw_out_of_range();
       else
          this->priv_range_initialize
-            (s.begin() + pos, s.begin() + pos + std::min(n, s.size() - pos));
+            (s.begin() + pos, s.begin() + pos + min_value(n, s.size() - pos));
    }
 
    basic_string(const CharT* s, size_type n,
@@ -389,12 +533,21 @@ class basic_string : private basic_string_base<A>
    }
 
    ~basic_string() 
-   { this->destroy(this->m_start, this->m_length + 1); }
+   {}
       
    basic_string& operator=(const basic_string& s)
    {
       if (&s != this) 
          this->assign(s.begin(), s.end());
+      return *this;
+   }
+
+   basic_string& operator=(const detail::moved_object<basic_string>& ms)
+   {
+      basic_string &s = ms.get();
+      if (&s != this){
+         this->swap(s);
+      }
       return *this;
    }
 
@@ -416,31 +569,15 @@ class basic_string : private basic_string_base<A>
    // Helper functions used by constructors.  It is a severe error for
    // any of them to be called anywhere except from within constructors.
    void priv_terminate_string() 
-   {
-      BOOST_TRY{
-         this->priv_construct_null(this->m_start + this->m_length);
-      }
-      BOOST_CATCH(...){
-         this->destroy(this->m_start, this->m_length);
-         BOOST_RETHROW
-      }
-      BOOST_CATCH_END
-   }
+   {  this->priv_construct_null(this->priv_addr() + this->priv_size());  }
 
    template <class InputIter>
    void priv_range_initialize(InputIter f, InputIter l,
                               std::input_iterator_tag)
    {
-      this->allocate_block(InternalBufferSize);
-      this->priv_construct_null(this->m_start + this->m_length);
-      BOOST_TRY{
-         this->append(f, l);
-      }
-      BOOST_CATCH(...){
-         this->destroy(this->m_start, this->m_length + 1);
-         BOOST_RETHROW
-      }
-      BOOST_CATCH_END
+      this->allocate_initial_block(InternalBufferChars);
+      this->priv_construct_null(this->priv_addr() + this->priv_size());
+      this->append(f, l);
    }
 
    template <class ForwardIter>
@@ -448,9 +585,9 @@ class basic_string : private basic_string_base<A>
                               std::forward_iterator_tag)
    {
       difference_type n = std::distance(f, l);
-      this->allocate_block(std::max<difference_type>(n+1, InternalBufferSize));
-      priv_uninitialized_copy(f, l, this->m_start, this->get_alloc());
-      this->m_length = n;
+      this->allocate_initial_block(max_value<difference_type>(n+1, InternalBufferChars));
+      priv_uninitialized_copy(f, l, this->priv_addr(), this->get_alloc());
+      this->priv_size(n);
       this->priv_terminate_string();
    }
 
@@ -464,9 +601,9 @@ class basic_string : private basic_string_base<A>
    template <class Integer>
    void priv_initialize_dispatch(Integer n, Integer x, boost::mpl::true_)
    {
-      this->allocate_block(std::max<difference_type>(n+1, InternalBufferSize));
-      priv_uninitialized_fill_n(this->m_start, n, x, this->get_alloc());
-      this->m_length = n;
+      this->allocate_initial_block(max_value<difference_type>(n+1, InternalBufferChars));
+      priv_uninitialized_fill_n(this->priv_addr(), n, x, this->get_alloc());
+      this->priv_size(n);
       this->priv_terminate_string();
    }
 
@@ -475,22 +612,22 @@ class basic_string : private basic_string_base<A>
    {  this->priv_range_initialize(f, l);  }
     
    public:                         // Iterators.
-   iterator begin()             { return this->m_start; }
-   iterator end()               { return this->m_start + this->m_length; }
-   const_iterator begin() const { return this->m_start; }
-   const_iterator end()   const { return this->m_start + this->m_length; }  
+   iterator begin()             { return this->priv_addr(); }
+   iterator end()               { return this->priv_addr() + this->priv_size(); }
+   const_iterator begin() const { return this->priv_addr(); }
+   const_iterator end()   const { return this->priv_addr() + this->priv_size(); }  
 
    reverse_iterator rbegin()             
-      { return reverse_iterator(this->m_start + this->m_length); }
+      { return reverse_iterator(this->priv_addr() + this->priv_size()); }
    reverse_iterator rend()               
-      { return reverse_iterator(this->m_start); }
+      { return reverse_iterator(this->priv_addr()); }
    const_reverse_iterator rbegin() const 
-      { return const_reverse_iterator(this->m_start + this->m_length); }
+      { return const_reverse_iterator(this->priv_addr() + this->priv_size()); }
    const_reverse_iterator rend()   const 
-      { return const_reverse_iterator(this->m_start); }
+      { return const_reverse_iterator(this->priv_addr()); }
 
  public:                         // Size, capacity, etc.
-   size_type size() const     { return this->m_length; }
+   size_type size() const     { return this->priv_size(); }
    size_type length() const   { return this->size(); }
 
    size_type max_size() const { return base_t::max_size(); }
@@ -513,63 +650,53 @@ class basic_string : private basic_string_base<A>
          this->throw_length_error();
 
       if (this->capacity() < res_arg){
-         size_type n = std::max(res_arg, this->size()) + 1;
+         size_type n = max_value(res_arg, this->size()) + 1;
          size_type new_cap = this->next_capacity(n);
          pointer new_start = this->allocation_command
             (allocate_new, n, new_cap, new_cap).first;
          size_type new_length = 0;
 
-         BOOST_TRY{
-            new_length += priv_uninitialized_copy
-               (this->m_start, this->m_start + this->m_length, new_start, this->get_alloc());
-            this->priv_construct_null(new_start + new_length);
-         }
-         BOOST_CATCH(...){
-            this->destroy(new_start, new_length);
-            this->deallocate(new_start, new_cap);
-            BOOST_RETHROW
-         }
-         BOOST_CATCH_END
-
-         this->destroy(this->m_start, this->m_length + 1);
+         new_length += priv_uninitialized_copy
+            (this->priv_addr(), this->priv_addr() + this->priv_size(), new_start, this->get_alloc());
+         this->priv_construct_null(new_start + new_length);
          this->deallocate_block();
-         this->m_start   = new_start;
-         this->m_length  = new_length;
-         this->m_storage = new_cap;
+         this->is_short(false);
+         this->priv_addr(new_start);
+         this->priv_size(new_length);
+         this->priv_storage(new_cap);
       }
    }
 
    size_type capacity() const
-   { return this->m_storage - 1; }
+   { return this->priv_capacity(); }
 
    void clear()
    {
       if (!empty()) {
-         Traits::assign(*this->m_start, this->priv_null());
-         this->destroy(this->m_start+1, this->m_length);
-         this->m_length = 0;
+         Traits::assign(*this->priv_addr(), this->priv_null());
+         this->priv_size(0);
       }
    } 
 
-   bool empty() const { return !this->m_length; }
+   bool empty() const { return !this->priv_size(); }
 
    public:                         // Element access.
 
    const_reference operator[](size_type n) const
-      { return *(this->m_start + n); }
+      { return *(this->priv_addr() + n); }
    reference operator[](size_type n)
-      { return *(this->m_start + n); }
+      { return *(this->priv_addr() + n); }
 
    const_reference at(size_type n) const {
       if (n >= size())
-      this->throw_out_of_range();
-      return *(this->m_start + n);
+         this->throw_out_of_range();
+      return *(this->priv_addr() + n);
    }
 
    reference at(size_type n) {
       if (n >= size())
       this->throw_out_of_range();
-      return *(this->m_start + n);
+      return *(this->priv_addr() + n);
    }
 
    public:                         // Append, operator+=, push_back.
@@ -591,7 +718,7 @@ class basic_string : private basic_string_base<A>
       if (pos > s.size())
       this->throw_out_of_range();
       return this->append(s.begin() + pos,
-                          s.begin() + pos + std::min(n, s.size() - pos));
+                          s.begin() + pos + min_value(n, s.size() - pos));
    }
 
    basic_string& append(const CharT* s, size_type n) 
@@ -609,10 +736,10 @@ class basic_string : private basic_string_base<A>
 
    void push_back(CharT c)
    {
-      if ((this->m_length + 1) < this->m_storage){
-         this->priv_construct_null(this->m_start + (this->m_length + 1));
-         Traits::assign(this->m_start[this->m_length], c);
-         ++this->m_length;
+      if (this->priv_size() < this->capacity()){
+         this->priv_construct_null(this->priv_addr() + (this->priv_size() + 1));
+         Traits::assign(this->priv_addr()[this->priv_size()], c);
+         this->priv_size(this->priv_size()+1);
       }
       else{
          //No enough memory, insert a new object at the end
@@ -622,9 +749,8 @@ class basic_string : private basic_string_base<A>
 
    void pop_back()
    {
-      Traits::assign(this->m_start[this->m_length-1], this->priv_null());
-      this->destroy(this->m_start + this->m_length);
-      --this->m_length;
+      Traits::assign(this->priv_addr()[this->priv_size()-1], this->priv_null());
+      this->priv_size(this->priv_size()-1);;
    }
 
    private: // Helper functions for append.
@@ -634,21 +760,21 @@ class basic_string : private basic_string_base<A>
                                   const CharT val, Alloc& al)
    {
       //Save initial position
-       FwdIt init = first;
+	   FwdIt init = first;
 
-       BOOST_TRY{
+	   BOOST_TRY{
          //Construct objects
-          for (; count--; ++first){
-              al.construct(first, val);
+	      for (; count--; ++first){
+		      al.construct(first, val);
          }
       }
-       BOOST_CATCH(...){
+	   BOOST_CATCH(...){
          //Call destructors
-          for (; init != first; ++init){
-              al.destroy(init);
+	      for (; init != first; ++init){
+		      al.destroy(init);
          }
-          BOOST_RETHROW
-       }
+	      BOOST_RETHROW
+	   }
       BOOST_CATCH_END
    }
 
@@ -657,37 +783,40 @@ class basic_string : private basic_string_base<A>
                                      FwdIt dest,    Alloc& al)
    {
       //Save initial destination position
-       FwdIt dest_init = dest;
+	   FwdIt dest_init = dest;
       size_type constructed = 0;
 
-       BOOST_TRY{
+	   BOOST_TRY{
          //Try to build objects
-          for (; first != last; ++dest, ++first, ++constructed){
-              al.construct(dest, *first);
+	      for (; first != last; ++dest, ++first, ++constructed){
+		      al.construct(dest, *first);
          }
       }
-       BOOST_CATCH(...){
+	   BOOST_CATCH(...){
          //Call destructors
-          for (; constructed--; ++dest_init){
-              al.destroy(dest_init);
+	      for (; constructed--; ++dest_init){
+		      al.destroy(dest_init);
          }
-          BOOST_RETHROW;
-       }
+	      BOOST_RETHROW;
+	   }
       BOOST_CATCH_END
-       return (constructed);
+	   return (constructed);
    }
 
    public:                         // Assign
 
    basic_string& assign(const basic_string& s) 
-   { return this->assign(s.begin(), s.end()); }
+   {  return this->operator=(s); }
+
+   basic_string& assign(const detail::moved_object<basic_string>& ms) 
+   {  return this->operator=(ms);}
 
    basic_string& assign(const basic_string& s, 
                         size_type pos, size_type n) {
       if (pos > s.size())
       this->throw_out_of_range();
       return this->assign(s.begin() + pos, 
-                          s.begin() + pos + std::min(n, s.size() - pos));
+                          s.begin() + pos + min_value(n, s.size() - pos));
    }
 
    basic_string& assign(const CharT* s, size_type n)
@@ -714,12 +843,12 @@ class basic_string : private basic_string_base<A>
    {
       const std::ptrdiff_t n = l - f;
       if (static_cast<size_type>(n) <= size()) {
-         Traits::copy(detail::get_pointer(this->m_start), f, n);
-         this->erase(this->m_start + n, this->m_start + this->m_length);
+         Traits::copy(detail::get_pointer(this->priv_addr()), f, n);
+         this->erase(this->priv_addr() + n, this->priv_addr() + this->priv_size());
       }
       else {
-         Traits::copy(detail::get_pointer(this->m_start), f, size());
-         this->append(f + size(), l);
+         Traits::copy(detail::get_pointer(this->priv_addr()), f, this->priv_size());
+         this->append(f + this->priv_size(), l);
       }
       return *this;
    }
@@ -735,15 +864,15 @@ class basic_string : private basic_string_base<A>
                                       boost::mpl::false_)
    {
       size_type cur = 0;
-      CharT *ptr = detail::get_pointer(this->m_start);
-      while (f != l && cur != this->m_length) {
+      CharT *ptr = detail::get_pointer(this->priv_addr());
+      while (f != l && cur != this->priv_size()) {
          Traits::assign(*ptr, *f);
          ++f;
          ++cur;
          ++ptr;
       }
       if (f == l)
-         this->erase(this->m_start + cur, this->m_start + this->m_length);
+         this->erase(this->priv_addr() + cur, this->priv_addr() + this->priv_size());
       else
          this->append(f, l);
       return *this;
@@ -757,7 +886,7 @@ class basic_string : private basic_string_base<A>
          this->throw_out_of_range();
       if (this->size() > this->max_size() - s.size())
          this->throw_length_error();
-      this->insert(this->m_start + pos, s.begin(), s.end());
+      this->insert(this->priv_addr() + pos, s.begin(), s.end());
       return *this;
    }
 
@@ -766,12 +895,12 @@ class basic_string : private basic_string_base<A>
    {
       if (pos > this->size() || beg > s.size())
          this->throw_out_of_range();
-      size_type len = std::min(n, s.size() - beg);
+      size_type len = min_value(n, s.size() - beg);
       if (this->size() > this->max_size() - len)
          this->throw_length_error();
       const CharT *beg_ptr = detail::get_pointer(s.begin()) + beg;
       const CharT *end_ptr = beg_ptr + len;
-      this->insert(this->m_start + pos, beg_ptr, end_ptr);
+      this->insert(this->priv_addr() + pos, beg_ptr, end_ptr);
       return *this;
    }
 
@@ -781,7 +910,7 @@ class basic_string : private basic_string_base<A>
          this->throw_out_of_range();
       if (this->size() > this->max_size() - n)
          this->throw_length_error();
-      this->insert(this->m_start + pos, s, s + n);
+      this->insert(this->priv_addr() + pos, s, s + n);
       return *this;
    }
 
@@ -792,7 +921,7 @@ class basic_string : private basic_string_base<A>
       size_type len = Traits::length(s);
       if (this->size() > this->max_size() - len)
          this->throw_length_error();
-      this->insert(this->m_start + pos, s, s + len);
+      this->insert(this->priv_addr() + pos, s, s + len);
       return *this;
    }
       
@@ -802,16 +931,16 @@ class basic_string : private basic_string_base<A>
          this->throw_out_of_range();
       if (this->size() > this->max_size() - n)
          this->throw_length_error();
-      this->insert(this->m_start + pos, n, c);
+      this->insert(this->priv_addr() + pos, n, c);
       return *this;
    }
 
    iterator insert(iterator position, CharT c) 
    {
-      size_type new_offset = position - this->m_start + 1;
+      size_type new_offset = position - this->priv_addr() + 1;
       this->insert(position, cvalue_iterator(c, 1),
                              cvalue_iterator());
-      return this->m_start + new_offset;
+      return this->priv_addr() + new_offset;
    }
 
    void insert(iterator position, std::size_t n, CharT c)
@@ -847,70 +976,101 @@ class basic_string : private basic_string_base<A>
    {
       if (first != last) {
          size_type n = std::distance(first, last);
-         size_type remaining = this->m_storage - this->m_length - 1;
+         size_type remaining = this->capacity() - this->priv_size();
+         const size_type old_size = this->size();
+         pointer old_start = this->priv_addr();
+         bool enough_capacity = false;
+         std::pair<pointer, bool> allocation_ret;
+         size_type new_cap = 0;
+
+         //Check if we have enough capacity
          if (remaining >= n){
+            enough_capacity = true;            
+         }
+         else {
+            //Otherwise expand current buffer or allocate new storage
+            new_cap  = this->next_capacity(n);
+            allocation_ret = this->allocation_command
+                  (allocate_new | expand_fwd | expand_bwd, old_size + n + 1, 
+                     new_cap, new_cap, old_start);
+
+            //Check forward expansion
+            if(old_start == allocation_ret.first){
+               enough_capacity = true;
+               this->priv_storage(new_cap);
+            }
+         }
+
+         //Reuse same buffer
+         if(enough_capacity){
             const size_type elems_after =
-               this->m_length - (position - this->m_start);
-            size_type old_length = this->m_length;
+               this->priv_size() - (position - this->priv_addr());
+            size_type old_length = this->priv_size();
             if (elems_after >= n) {
-               pointer pointer_past_last = this->m_start + this->m_length + 1;
-               priv_uninitialized_copy(this->m_start + (this->m_length - n + 1),
+               pointer pointer_past_last = this->priv_addr() + this->priv_size() + 1;
+               priv_uninitialized_copy(this->priv_addr() + (this->priv_size() - n + 1),
                                        pointer_past_last,
                                        pointer_past_last, *this);
-               this->m_length += n;
+
+               this->priv_size(this->priv_size()+n);
                Traits::move(detail::get_pointer(position + n),
-                            detail::get_pointer(position),
-                            (elems_after - n) + 1);
+                           detail::get_pointer(position),
+                           (elems_after - n) + 1);
                this->priv_copy(first, last, position);
             }
             else {
                ForwardIter mid = first;
                std::advance(mid, elems_after + 1);
-               priv_uninitialized_copy(mid, last, this->m_start + this->m_length + 1, *this);
-               this->m_length += n - elems_after;
-               BOOST_TRY{
-                  priv_uninitialized_copy
-                     (position, this->m_start + old_length + 1, 
-                      this->m_start + this->m_length, *this);
-                  this->m_length += elems_after;
-               }
-               BOOST_CATCH(...){
-                  this->destroy(this->m_start + (old_length + 1), this->m_length - (old_length + 1));
-                  this->m_length = old_length;
-                  BOOST_RETHROW
-               }
-               BOOST_CATCH_END
+
+               priv_uninitialized_copy(mid, last, this->priv_addr() + this->priv_size() + 1, *this);
+               this->priv_size(this->priv_size() + (n - elems_after));
+               priv_uninitialized_copy
+                  (position, this->priv_addr() + old_length + 1, 
+                  this->priv_addr() + this->priv_size(), *this);
+               this->priv_size(this->priv_size() + elems_after);
                this->priv_copy(first, mid, position);
             }
          }
-         else {
-            const size_type old_size = this->size();        
-            size_type new_cap  = this->next_capacity(n);
-            pointer new_start =
-               this->allocation_command
-                  (allocate_new, old_size + n + 1, new_cap, new_cap).first;
-            size_type new_length = 0;
-            BOOST_TRY{
+         else{
+            pointer new_start = allocation_ret.first;
+            if(!allocation_ret.second){
+               //Copy data to new buffer
+               size_type new_length = 0;
+               //This can't throw, since characters are POD
                new_length += priv_uninitialized_copy
-                              (this->m_start, position, new_start, *this);
+                              (this->priv_addr(), position, new_start, *this);
                new_length += priv_uninitialized_copy
                               (first, last, new_start + new_length, *this);
                new_length += priv_uninitialized_copy
-                              (position, this->m_start + this->m_length, 
-                               new_start + new_length, *this);
+                              (position, this->priv_addr() + this->priv_size(), 
+                              new_start + new_length, *this);
                this->priv_construct_null(new_start + new_length);
+
+               this->deallocate_block();
+               this->is_short(false);
+               this->priv_addr(new_start);
+               this->priv_size(new_length);
+               this->priv_storage(new_cap);
             }
-            BOOST_CATCH(...){
-               this->destroy(new_start, new_length);
-               this->deallocate(new_start, new_cap);
-               BOOST_RETHROW
+            else{
+               //value_type is POD, so backwards expansion is much easier 
+               //than with vector<T>
+               value_type *oldbuf = detail::get_pointer(old_start);
+               value_type *newbuf = detail::get_pointer(new_start);
+               value_type *pos    = detail::get_pointer(position);
+               size_type  before  = pos - oldbuf;
+
+               //First move old data
+               Traits::move(newbuf, oldbuf, before);
+               Traits::move(newbuf + before + n, pos, old_size - before);
+               //Now initialize the new data
+               priv_uninitialized_copy(first, last, new_start + before, *this);
+               this->priv_construct_null(new_start + (old_size + n));
+               this->is_short(false);
+               this->priv_addr(new_start);
+               this->priv_size(old_size + n);
+               this->priv_storage(new_cap);
             }
-            BOOST_CATCH_END
-            this->destroy(this->m_start, this->m_length + 1);
-            this->deallocate_block();
-            this->m_start   = new_start;
-            this->m_length  = new_length;
-            this->m_storage = new_cap; 
          }
       }
    }
@@ -944,7 +1104,7 @@ class basic_string : private basic_string_base<A>
    {
       if (pos > size())
          this->throw_out_of_range();
-      erase(this->m_start + pos, this->m_start + pos + std::min(n, size() - pos));
+      erase(this->priv_addr() + pos, this->priv_addr() + pos + min_value(n, size() - pos));
       return *this;
    }  
 
@@ -953,9 +1113,8 @@ class basic_string : private basic_string_base<A>
       // The move includes the terminating null.
       Traits::move(detail::get_pointer(position), 
                    detail::get_pointer(position + 1), 
-                   this->m_length - (position - this->m_start));
-      this->destroy(this->m_start + this->m_length);
-      --this->m_length;
+                   this->priv_size() - (position - this->priv_addr()));
+      this->priv_size(this->priv_size()-1);
       return position;
    }
 
@@ -965,10 +1124,9 @@ class basic_string : private basic_string_base<A>
          size_type num_erased = last - first;
          Traits::move(detail::get_pointer(first), 
                       detail::get_pointer(last), 
-                      (this->m_length + 1)-(last - this->m_start));
-         size_type new_length = this->m_length - num_erased;
-         this->destroy(this->m_start + new_length + 1, num_erased);
-         this->m_length = new_length;
+                      (this->priv_size() + 1)-(last - this->priv_addr()));
+         size_type new_length = this->priv_size() - num_erased;
+         this->priv_size(new_length);
       }
       return first;
    }
@@ -980,11 +1138,11 @@ class basic_string : private basic_string_base<A>
    {
       if (pos > size())
          this->throw_out_of_range();
-      const size_type len = std::min(n, size() - pos);
+      const size_type len = min_value(n, size() - pos);
       if (this->size() - len >= this->max_size() - s.size())
          this->throw_length_error();
-      return this->replace(this->m_start + pos, this->m_start + pos + len, 
-                     s.begin(), s.end());
+      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len, 
+                           s.begin(), s.end());
    }
 
    basic_string& replace(size_type pos1, size_type n1,
@@ -993,12 +1151,12 @@ class basic_string : private basic_string_base<A>
    {
       if (pos1 > size() || pos2 > s.size())
          this->throw_out_of_range();
-      const size_type len1 = std::min(n1, size() - pos1);
-      const size_type len2 = std::min(n2, s.size() - pos2);
+      const size_type len1 = min_value(n1, size() - pos1);
+      const size_type len2 = min_value(n2, s.size() - pos2);
       if (this->size() - len1 >= this->max_size() - len2)
          this->throw_length_error();
-      return this->replace(this->m_start + pos1, this->m_start + pos1 + len1,
-                     s.m_start + pos2, s.m_start + pos2 + len2);
+      return this->replace(this->priv_addr() + pos1, this->priv_addr() + pos1 + len1,
+                     s.priv_addr() + pos2, s.priv_addr() + pos2 + len2);
    }
 
    basic_string& replace(size_type pos, size_type n1,
@@ -1006,10 +1164,10 @@ class basic_string : private basic_string_base<A>
    {
       if (pos > size())
          this->throw_out_of_range();
-      const size_type len = std::min(n1, size() - pos);
+      const size_type len = min_value(n1, size() - pos);
       if (n2 > this->max_size() || size() - len >= this->max_size() - n2)
          this->throw_length_error();
-      return this->replace(this->m_start + pos, this->m_start + pos + len,
+      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len,
                      s, s + n2);
    }
 
@@ -1018,11 +1176,11 @@ class basic_string : private basic_string_base<A>
    {
       if (pos > size())
          this->throw_out_of_range();
-      const size_type len = std::min(n1, size() - pos);
+      const size_type len = min_value(n1, size() - pos);
       const size_type n2 = Traits::length(s);
       if (n2 > this->max_size() || size() - len >= this->max_size() - n2)
          this->throw_length_error();
-      return this->replace(this->m_start + pos, this->m_start + pos + len,
+      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len,
                      s, s + Traits::length(s));
    }
 
@@ -1031,10 +1189,10 @@ class basic_string : private basic_string_base<A>
    {
       if (pos > size())
          this->throw_out_of_range();
-      const size_type len = std::min(n1, size() - pos);
+      const size_type len = min_value(n1, size() - pos);
       if (n2 > this->max_size() || size() - len >= this->max_size() - n2)
          this->throw_length_error();
-      return this->replace(this->m_start + pos, this->m_start + pos + len, n2, c);
+      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len, n2, c);
    }
 
    basic_string& replace(iterator first, iterator last, 
@@ -1134,21 +1292,24 @@ class basic_string : private basic_string_base<A>
    {
       if (pos > size())
          this->throw_out_of_range();
-      const size_type len = std::min(n, size() - pos);
-      Traits::copy(s, detail::get_pointer(this->m_start + pos), len);
+      const size_type len = min_value(n, size() - pos);
+      Traits::copy(s, detail::get_pointer(this->priv_addr() + pos), len);
       return len;
    }
 
    void swap(basic_string& s) 
    {  base_t::swap(s);  }
 
+   void swap(const detail::moved_object<basic_string>& ms) 
+   {  this->swap(ms.get());  }
+
  public:                         // Conversion to C string.
 
    const CharT* c_str() const 
-   {  return detail::get_pointer(this->m_start); }
+   {  return detail::get_pointer(this->priv_addr()); }
 
    const CharT* data()  const 
-   {  return detail::get_pointer(this->m_start); }
+   {  return detail::get_pointer(this->priv_addr()); }
 
  public:                         // find.
 
@@ -1163,9 +1324,9 @@ class basic_string : private basic_string_base<A>
       if (pos + n > size())
          return npos;
       else {
-         pointer finish = this->m_start + this->m_length;
+         pointer finish = this->priv_addr() + this->priv_size();
          const const_iterator result =
-            std::search(detail::get_pointer(this->m_start + pos), 
+            std::search(detail::get_pointer(this->priv_addr() + pos), 
                    detail::get_pointer(finish),
                    s, s + n, Eq_traits<Traits>());
          return result != finish ? result - begin() : npos;
@@ -1177,9 +1338,9 @@ class basic_string : private basic_string_base<A>
       if (pos >= size())
          return npos;
       else {
-         pointer finish = this->m_start + this->m_length;
+         pointer finish = this->priv_addr() + this->priv_size();
          const const_iterator result =
-            std::find_if(this->m_start + pos, finish,
+            std::find_if(this->priv_addr() + pos, finish,
                   std::bind2nd(Eq_traits<Traits>(), c));
          return result != finish ? result - begin() : npos;
       }
@@ -1200,9 +1361,9 @@ class basic_string : private basic_string_base<A>
       if (n > len)
          return npos;
       else if (n == 0)
-         return std::min(len, pos);
+         return min_value(len, pos);
       else {
-         const const_iterator last = begin() + std::min(len - n, pos) + n;
+         const const_iterator last = begin() + min_value(len - n, pos) + n;
          const const_iterator result = find_end(begin(), last,
                                                 s, s + n,
                                                 Eq_traits<Traits>());
@@ -1217,7 +1378,7 @@ class basic_string : private basic_string_base<A>
       if (len < 1)
          return npos;
       else {
-         const const_iterator last = begin() + std::min(len - 1, pos) + 1;
+         const const_iterator last = begin() + min_value(len - 1, pos) + 1;
          const_reverse_iterator rresult =
             std::find_if(const_reverse_iterator(last), rend(),
                   std::bind2nd(Eq_traits<Traits>(), c));
@@ -1239,8 +1400,8 @@ class basic_string : private basic_string_base<A>
       if (pos >= size())
          return npos;
       else {
-         pointer finish = this->m_start + this->m_length;
-         const_iterator result = std::find_first_of(this->m_start + pos, finish,
+         pointer finish = this->priv_addr() + this->priv_size();
+         const_iterator result = std::find_first_of(this->priv_addr() + pos, finish,
                                                     s, s + n,
                                                     Eq_traits<Traits>());
          return result != finish ? result - begin() : npos;
@@ -1266,12 +1427,12 @@ class basic_string : private basic_string_base<A>
       if (len < 1)
          return npos;
       else {
-         const const_iterator last = this->m_start + std::min(len - 1, pos) + 1;
+         const const_iterator last = this->priv_addr() + min_value(len - 1, pos) + 1;
          const const_reverse_iterator rresult =
             std::find_first_of(const_reverse_iterator(last), rend(),
                                s, s + n,
                                Eq_traits<Traits>());
-         return rresult != rend() ? (rresult.base() - 1) - this->m_start : npos;
+         return rresult != rend() ? (rresult.base() - 1) - this->priv_addr() : npos;
       }
    }
 
@@ -1293,10 +1454,10 @@ class basic_string : private basic_string_base<A>
       if (pos > size())
          return npos;
       else {
-         pointer finish = this->m_start + this->m_length;
-         const_iterator result = std::find_if(this->m_start + pos, finish,
+         pointer finish = this->priv_addr() + this->priv_size();
+         const_iterator result = std::find_if(this->priv_addr() + pos, finish,
                                     Not_within_traits<Traits>(s, s + n));
-         return result != finish ? result - this->m_start : npos;
+         return result != finish ? result - this->priv_addr() : npos;
       }
    }
 
@@ -1305,9 +1466,9 @@ class basic_string : private basic_string_base<A>
       if (pos > size())
          return npos;
       else {
-         pointer finish = this->m_start + this->m_length;
+         pointer finish = this->priv_addr() + this->priv_size();
          const_iterator result
-            = std::find_if(this->m_start + pos, finish,
+            = std::find_if(this->priv_addr() + pos, finish,
                      std::not1(std::bind2nd(Eq_traits<Traits>(), c)));
          return result != finish ? result - begin() : npos;
       }
@@ -1329,7 +1490,7 @@ class basic_string : private basic_string_base<A>
       if (len < 1)
          return npos;
       else {
-         const const_iterator last = begin() + std::min(len - 1, pos) + 1;
+         const const_iterator last = begin() + min_value(len - 1, pos) + 1;
          const const_reverse_iterator rresult =
             std::find_if(const_reverse_iterator(last), rend(),
                     Not_within_traits<Traits>(s, s + n));
@@ -1344,7 +1505,7 @@ class basic_string : private basic_string_base<A>
       if (len < 1)
          return npos;
       else {
-         const const_iterator last = begin() + std::min(len - 1, pos) + 1;
+         const const_iterator last = begin() + min_value(len - 1, pos) + 1;
          const_reverse_iterator rresult =
             std::find_if(const_reverse_iterator(last), rend(),
                   std::not1(std::bind2nd(Eq_traits<Traits>(), c)));
@@ -1358,22 +1519,22 @@ class basic_string : private basic_string_base<A>
    {
       if (pos > size())
          this->throw_out_of_range();
-      return basic_string(this->m_start + pos, 
-                          this->m_start + pos + std::min(n, size() - pos), this->get_alloc());
+      return basic_string(this->priv_addr() + pos, 
+                          this->priv_addr() + pos + min_value(n, size() - pos), this->get_alloc());
    }
 
  public:                         // Compare
 
    int compare(const basic_string& s) const 
-   { return this->s_compare(this->m_start, this->m_start + this->m_length, s.m_start, s.m_start + s.m_length); }
+   { return this->s_compare(this->priv_addr(), this->priv_addr() + this->priv_size(), s.priv_addr(), s.priv_addr() + s.priv_size()); }
 
    int compare(size_type pos1, size_type n1, const basic_string& s) const 
    {
       if (pos1 > size())
          this->throw_out_of_range();
-      return this->s_compare(this->m_start + pos1, 
-                        this->m_start + pos1 + std::min(n1, size() - pos1),
-                        s.m_start, s.m_start + s.m_length);
+      return this->s_compare(this->priv_addr() + pos1, 
+                        this->priv_addr() + pos1 + min_value(n1, size() - pos1),
+                        s.priv_addr(), s.priv_addr() + s.priv_size());
    }
       
    int compare(size_type pos1, size_type n1,
@@ -1381,21 +1542,21 @@ class basic_string : private basic_string_base<A>
                size_type pos2, size_type n2) const {
       if (pos1 > size() || pos2 > s.size())
       this->throw_out_of_range();
-      return this->s_compare(this->m_start + pos1, 
-                        this->m_start + pos1 + std::min(n1, size() - pos1),
-                        s.m_start + pos2, 
-                        s.m_start + pos2 + std::min(n2, size() - pos2));
+      return this->s_compare(this->priv_addr() + pos1, 
+                        this->priv_addr() + pos1 + min_value(n1, size() - pos1),
+                        s.priv_addr() + pos2, 
+                        s.priv_addr() + pos2 + min_value(n2, size() - pos2));
    }
 
    int compare(const CharT* s) const 
-   {  return this->s_compare(this->m_start, this->m_start + this->m_length, s, s + Traits::length(s));   }
+   {  return this->s_compare(this->priv_addr(), this->priv_addr() + this->priv_size(), s, s + Traits::length(s));   }
 
    int compare(size_type pos1, size_type n1, const CharT* s) const 
    {
       if (pos1 > size())
          this->throw_out_of_range();
-      return this->s_compare(this->m_start + pos1, 
-                        this->m_start + pos1 + std::min(n1, size() - pos1),
+      return this->s_compare(this->priv_addr() + pos1, 
+                        this->priv_addr() + pos1 + min_value(n1, size() - pos1),
                         s, s + Traits::length(s));
    }
 
@@ -1404,8 +1565,8 @@ class basic_string : private basic_string_base<A>
    {
       if (pos1 > size())
          this->throw_out_of_range();
-      return this->s_compare(this->m_start + pos1, 
-                        this->m_start + pos1 + std::min(n1, size() - pos1),
+      return this->s_compare(this->priv_addr() + pos1, 
+                        this->priv_addr() + pos1 + min_value(n1, size() - pos1),
                         s, s + n2);
    }
 
@@ -1417,7 +1578,7 @@ public:                        // Helper function for compare.
       const std::ptrdiff_t n2 = l2 - f2;
       const int cmp = Traits::compare(detail::get_pointer(f1), 
                                       detail::get_pointer(f2), 
-                                      std::min(n1, n2));
+                                      min_value(n1, n2));
       return cmp != 0 ? cmp : (n1 < n2 ? -1 : (n1 > n2 ? 1 : 0));
    }
 };
@@ -1444,6 +1605,24 @@ operator+(const basic_string<CharT,Traits,A>& x,
    result.append(x);
    result.append(y);
    return result;
+}
+
+template <class CharT, class Traits, class A>
+inline detail::moved_object<basic_string<CharT,Traits,A> >
+operator+(const detail::moved_object<basic_string<CharT,Traits,A> >& mx,
+          const basic_string<CharT,Traits,A>& y)
+{
+   mx.get() += y;
+   return mx;
+}
+
+template <class CharT, class Traits, class A>
+inline detail::moved_object<basic_string<CharT,Traits,A> >
+operator+(const basic_string<CharT,Traits,A>& x,
+          const detail::moved_object<basic_string<CharT,Traits,A> >& my)
+{
+   my.get() += x;
+   return my;
 }
 
 template <class CharT, class Traits, class A>
@@ -1633,7 +1812,18 @@ operator>=(const basic_string<CharT,Traits,A>& x, const CharT* s)
 template <class CharT, class Traits, class A>
 inline void swap(basic_string<CharT,Traits,A>& x,
                  basic_string<CharT,Traits,A>& y) 
-   {  x.swap(y);  }
+{  x.swap(y);  }
+
+template <class CharT, class Traits, class A>
+inline void swap(const detail::moved_object<basic_string<CharT,Traits,A> >& mx,
+                 basic_string<CharT,Traits,A>& y) 
+{  mx.get().swap(y);  }
+
+template <class CharT, class Traits, class A>
+inline void swap(basic_string<CharT,Traits,A>& x,
+                 const detail::moved_object<basic_string<CharT,Traits,A> >& my) 
+{  x.swap(my.get());  }
+
 
 // I/O.  
 
@@ -1688,6 +1878,12 @@ operator<<(std::basic_ostream<CharT, Traits>& os,
 }
 
 template <class CharT, class Traits, class A>
+std::basic_ostream<CharT, Traits>&
+operator<<(std::basic_ostream<CharT, Traits>& os, 
+           const detail::moved_object<basic_string<CharT,Traits,A> >& ms)
+{  return os << ms.get();  }
+
+template <class CharT, class Traits, class A>
 std::basic_istream<CharT, Traits>& 
 operator>>(std::basic_istream<CharT, Traits>& is,
            basic_string<CharT,Traits,A>& s)
@@ -1735,6 +1931,12 @@ operator>>(std::basic_istream<CharT, Traits>& is,
    return is;
 }
 
+template <class CharT, class Traits, class A>
+std::basic_istream<CharT, Traits>& 
+operator>>(std::basic_istream<CharT, Traits>& is,
+           const detail::moved_object<basic_string<CharT,Traits,A> >& ms)
+{  return is >> ms.get();  }
+
 template <class CharT, class Traits, class A>    
 std::basic_istream<CharT, Traits>& 
 getline(std::istream& is,
@@ -1778,11 +1980,38 @@ getline(std::basic_istream<CharT, Traits>& is,
    return getline(is, s, '\n');
 }
 
+template <class CharT, class Traits, class A>    
+std::basic_istream<CharT, Traits>& 
+getline(std::istream& is,
+        const detail::moved_object<basic_string<CharT,Traits,A> >& ms,
+        CharT delim)
+{  return getline(is, ms.get(), delim);   }
+
+template <class CharT, class Traits, class A>    
+std::basic_istream<CharT, Traits>& 
+getline(std::istream& is,
+        const detail::moved_object<basic_string<CharT,Traits,A> >& ms)
+{  return getline(is, ms.get());   }
+
 template <class Ch, class A>
 inline std::size_t hash_value(basic_string<Ch, std::char_traits<Ch>, A> const& v)
 {
    return hash_range(v.begin(), v.end());
 }
+
+/*!This class is movable*/
+template <class C, class T, class A>
+struct is_movable<basic_string<C, T, A> >
+{
+   enum {   value = true };
+};
+
+/*!This class is movable*/
+template <class A>
+struct is_movable<basic_string_base<A> >
+{
+   enum {   value = true };
+};
 
 typedef basic_string<char, std::char_traits<char>, std::allocator<char> > string;
 

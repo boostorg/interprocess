@@ -18,8 +18,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-//#include <boost/date_time/posix_time/ptime.hpp>
-//#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
@@ -27,11 +26,16 @@
 #include <boost/limits.hpp>
 #include <cassert>
 
-#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-#  include <boost/interprocess/sync/win32/win32_sync_primitives.hpp>
+#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+   #include <pthread.h>
+   #include <errno.h>   
+   #include <boost/interprocess/sync/posix/pthread_helpers.hpp>
+   #define BOOST_INTERPROCESS_USE_POSIX
 #else
-#  include <errno.h>
-#  include <pthread.h>
+   #include <boost/interprocess/detail/atomic.hpp>
+   #include <boost/cstdint.hpp>
+   #include <boost/interprocess/detail/os_thread_functions.hpp>
+   #define BOOST_INTERPROCESS_USE_GENERIC_EMULATION
 #endif
 
 /*!\file
@@ -106,7 +110,7 @@ class interprocess_condition
    }
 
    /*!The same as:   while (!pred()) { 
-                        if (!timed_wait(lock, abs_time)) return false; 
+                        if (!timed_wait(lock, abs_time)) return pred(); 
                      } return true;*/
    template <typename L, typename Pr>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
@@ -115,8 +119,8 @@ class interprocess_condition
             throw lock_exception();
 
       while (!pred()){
-            if (!do_timed_wait(abs_time, *lock.mutex()))
-               return false;
+         if (!do_timed_wait(abs_time, *lock.mutex()))
+            return pred();
       }
 
       return true;
@@ -127,28 +131,32 @@ class interprocess_condition
 
    bool do_timed_wait(const boost::posix_time::ptime &abs_time, interprocess_mutex &mut);
 
-#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-   enum { SLEEP, NOTIFY_ONE, NOTIFY_ALL };
-   interprocess_mutex m_enter_mut;
-   interprocess_mutex     m_check_mut;
-   volatile long    m_command;
-   volatile long    m_num_waiters;
-   bool do_timed_wait(bool tout_enabled, const boost::posix_time::ptime &abs_time, interprocess_mutex &mut);
-   void notify(long command);
-#else
-   pthread_cond_t   m_condition;
-#endif
+   #if defined (BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
+      enum { SLEEP = 0, NOTIFY_ONE, NOTIFY_ALL };
+      interprocess_mutex m_enter_mut;
+      interprocess_mutex     m_check_mut;
+      volatile boost::uint32_t    m_command;
+      volatile boost::uint32_t    m_num_waiters;
+      bool do_timed_wait(bool tout_enabled, const boost::posix_time::ptime &abs_time, interprocess_mutex &mut);
+      void notify(boost::uint32_t command);
+   #elif defined(BOOST_INTERPROCESS_USE_POSIX)
+      pthread_cond_t   m_condition;
+   #endif
 };
 
 }  //namespace interprocess
 
 }  // namespace boost
 
-#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-#  include <boost/interprocess/sync/win32/interprocess_condition.hpp>
-#else 
+#ifdef BOOST_INTERPROCESS_USE_GENERIC_EMULATION
+#  undef BOOST_INTERPROCESS_USE_GENERIC_EMULATION
+#  include <boost/interprocess/sync/emulation/interprocess_condition.hpp>
+#endif
+
+#ifdef BOOST_INTERPROCESS_USE_POSIX
+#  undef BOOST_INTERPROCESS_USE_POSIX
 #  include <boost/interprocess/sync/posix/interprocess_condition.hpp>
-#endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+#endif
 
 #include <boost/interprocess/detail/config_end.hpp>
 

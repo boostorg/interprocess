@@ -18,7 +18,6 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
 #include <assert.h>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 
@@ -104,7 +103,7 @@ class file_lock
    void unlock_sharable();
 
    private:
-   detail::OS_file_handle_t m_file_hnd;
+   handle_t m_file_hnd;
 };
 
 inline file_lock::file_lock(const char *name)

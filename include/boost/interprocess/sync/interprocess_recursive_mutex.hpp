@@ -33,18 +33,21 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
-#include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <assert.h>
 
-#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-#  include <boost/interprocess/detail/os_thread_functions.hpp>
-#else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-#  include <pthread.h>
-#  include <errno.h>
-#  include <boost/interprocess/sync/posix/pthread_helpers.hpp>   
-#endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+   #include <pthread.h>
+   #include <errno.h>   
+   #include <boost/interprocess/sync/posix/pthread_helpers.hpp>
+   #define BOOST_INTERPROCESS_USE_POSIX
+#else
+   #include <boost/interprocess/detail/atomic.hpp>
+   #include <boost/cstdint.hpp>
+   #include <boost/interprocess/detail/os_thread_functions.hpp>
+   #include <boost/interprocess/sync/interprocess_mutex.hpp>
+   #define BOOST_INTERPROCESS_USE_GENERIC_EMULATION
+#endif
 
 /*!\file
    Describes interprocess_recursive_mutex and shared_recursive_try_mutex classes
@@ -98,20 +101,20 @@ class interprocess_recursive_mutex
    void unlock(void);
 
    private:
-   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+   #if defined (BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
    interprocess_mutex      m_mutex;
    unsigned int            m_nLockCount;
    detail::OS_thread_id_t  m_nOwner;
-   #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-   #if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
-      pthread_mutex_t m_mut;   
-   #else //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
-      pthread_mutex_t   m_mut;
-      pthread_cond_t    m_unlocked;
-      pthread_t         m_thread_id;
-      bool              m_valid_id;
-      unsigned int      m_count;
-   #endif   //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
+   #else    //#if defined (BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
+      #if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
+         pthread_mutex_t m_mut;   
+      #else //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
+         pthread_mutex_t   m_mut;
+         pthread_cond_t    m_unlocked;
+         pthread_t         m_thread_id;
+         bool              m_valid_id;
+         unsigned int      m_count;
+      #endif   //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
    #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 };
 
@@ -119,11 +122,15 @@ class interprocess_recursive_mutex
 
 }  //namespace boost {
 
-#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+#ifdef BOOST_INTERPROCESS_USE_GENERIC_EMULATION
+#  undef BOOST_INTERPROCESS_USE_GENERIC_EMULATION
 #  include <boost/interprocess/sync/emulation/interprocess_recursive_mutex.hpp>
-#else 
+#endif
+
+#ifdef BOOST_INTERPROCESS_USE_POSIX
+#  undef BOOST_INTERPROCESS_USE_POSIX
 #  include <boost/interprocess/sync/posix/interprocess_recursive_mutex.hpp>
-#endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+#endif
 
 #include <boost/interprocess/detail/config_end.hpp>
 

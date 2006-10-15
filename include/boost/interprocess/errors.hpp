@@ -10,7 +10,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright © 2006 Ion Gaztañaga
 //  Copyright © 2002 Beman Dawes
 //  Copyright © 2001 Dietmar Kühl 
 //  Use, modification, and distribution is subject to the Boost Software
@@ -35,7 +34,7 @@
 #include <string>
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-#  include <boost/interprocess/sync/win32/win32_sync_primitives.hpp>
+#  include <boost/interprocess/detail/win32_api.hpp>
 #else
 #  ifdef BOOST_HAS_UNISTD_H
 #    include <errno.h>        //Errors
@@ -84,7 +83,7 @@ inline void fill_system_message(int sys_err_code, std::string &str)
       str.erase( str.size()-1 );
 }
 # else
-inline void fill_system_message( int system_error, std::string &str)
+static inline void fill_system_message( int system_error, std::string &str)
 {  str = std::strerror(system_error);  }
 # endif
 
@@ -111,7 +110,7 @@ enum error_code_t
    sem_error,
    mode_error,
    size_error,
-   bad_sharable_lock
+   corrupted_error,
 };
 
 typedef int    native_error_t;

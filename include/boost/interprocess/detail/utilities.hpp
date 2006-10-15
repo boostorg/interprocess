@@ -21,7 +21,7 @@
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/get_pointer.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
-
+#include <boost/interprocess/detail/move.hpp>
 #include <boost/type_traits/has_nothrow_destructor.hpp>
 #include <boost/call_traits.hpp>
 #include <algorithm>
@@ -120,7 +120,7 @@ struct scoped_destructor_n
    scoped_destructor_n(Allocator& a, size_type n)
          : m_alloc(a), m_n(n){}
 
-   void operator()(pointer &ptr)
+   void operator()(pointer ptr)
    {
       for(size_type i = 0; i < m_n; ++i, ++ptr)
          m_alloc.destroy(ptr);
@@ -259,7 +259,6 @@ struct is_multisegment_ptr
    enum {   value = false };
 };
 
-
 /*!A Interprocess shared pointer deleter that uses the segment manager's 
    destroy_ptr function to destroy the shared resource.*/
 template<class T, class SegmentManager>
@@ -335,6 +334,108 @@ class constant_iterator
    {  return m_num - other.m_num;   }
 };
 
+template <class T, class Difference = std::ptrdiff_t>
+class repeat_iterator
+   :  public boost::iterator_facade
+         < repeat_iterator<T, Difference>
+         , T
+         , boost::random_access_traversal_tag
+         , T &
+         , Difference>
+{
+   typedef boost::iterator_facade
+         < repeat_iterator<T, Difference>
+         , T
+         , boost::random_access_traversal_tag
+         , T &
+         , Difference>  super_t;
+
+   typedef  repeat_iterator<T, Difference> this_type;
+   //Give access to private core functions
+   friend class boost::iterator_core_access;
+
+	public:
+	explicit repeat_iterator(T &ref, Difference range_size)
+      :  m_ptr(&ref), m_num(range_size){}
+
+   //Constructors
+	repeat_iterator()
+      :  m_ptr(0), m_num(0){}
+
+   private:
+   T *         m_ptr;
+   Difference  m_num;
+
+   void increment()
+   { --m_num; }
+
+   void decrement()
+   { ++m_num; }
+
+   bool equal(const this_type &other) const
+   {  return m_num == other.m_num;   }
+
+   T & dereference() const
+   { return *m_ptr; }
+
+   void advance(Difference n)
+   {  m_num -= n; }
+
+   Difference distance_to(const this_type &other)const
+   {  return m_num - other.m_num;   }
+};
+
+/*
+template <class T, class Difference = std::ptrdiff_t>
+class moved_default_iterator
+   :  public boost::iterator_facade
+         < moved_default_iterator<T, Difference>
+         , T
+         , boost::random_access_traversal_tag
+         , typename move_type<value_type>::type
+         , Difference>
+{
+   typedef boost::iterator_facade
+         < moved_default_iterator<T, Difference>
+         , T
+         , boost::random_access_traversal_tag
+         , typename move_type<value_type>::type
+         , Difference>  super_t;
+
+   typedef  moved_default_iterator<T, Difference> this_type;
+   //Give access to private core functions
+   friend class boost::iterator_core_access;
+
+	public:
+	explicit moved_default_iterator(T &ref, Difference range_size)
+      :  m_ptr(&ref), m_num(range_size){}
+
+   //Constructors
+	moved_default_iterator()
+      :  m_ptr(0), m_num(0){}
+
+   private:
+   Difference  m_num;
+
+   void increment()
+   { --m_num; }
+
+   void decrement()
+   { ++m_num; }
+
+   bool equal(const this_type &other) const
+   {  return m_num == other.m_num;   }
+
+   typename move_type<value_type>::type dereference() const
+   { return move(T()); }
+
+   void advance(Difference n)
+   {  m_num -= n; }
+
+   Difference distance_to(const this_type &other)const
+   {  return m_num - other.m_num;   }
+};
+*/
 template<class FwdIt, class Count, class T, class Alloc> inline
 void uninitialized_fill_n(FwdIt first,  Count count, 
                           const T& val, Alloc& al)
@@ -391,11 +492,26 @@ typename std::iterator_traits<InIt>::difference_type
    BOOST_CATCH_END
 	return (constructed);
 }
+/*
+template<class BiIt1, class BiIt2> inline
+BiIt2 move_backward(BiIt1 _First, BiIt1 last, BiIt2 dest)
+{
+	while (_First != last)
+		*--dest = move(*--last);
+	return (dest);
+}
 
+template<class InIt, class OutIt> inline
+OutIt move(InIt first, InIt last, OutIt dest)
+{
+	for (; first != last; ++dest, ++first)
+		*dest = move(*first);
+	return (dest);
+}
+*/
 template<class InIt, class FwdIt, class Alloc> inline
-FwdIt
-   uninitialized_copy(InIt first,   InIt last, 
-                      FwdIt dest,    Alloc& al)
+FwdIt uninitialized_copy(InIt first,   InIt last, 
+                         FwdIt dest,    Alloc& al)
 {
    //Save initial destination position
 	FwdIt dest_init = dest;
@@ -507,11 +623,11 @@ InpIt2 uninitialized_copy_n_copy_n
 }
 
 template<class T>
-T max_value(const T &a, const T &b)
+const T &max_value(const T &a, const T &b)
 {  return a > b ? a : b;   }
 
 template<class T>
-T min_value(const T &a, const T &b)
+const T &min_value(const T &a, const T &b)
 {  return a < b ? a : b;   }
 
 template <class SizeType>
@@ -574,7 +690,140 @@ struct pointer_type
         typename boost::remove_reference<D>::type>::type type;
 };
 
+template <class T1, class T2>
+struct pair
+{
+	typedef T1 first_type;
+	typedef T2 second_type;
+
+	T1 first;
+	T2 second;
+
+	pair()
+	   : first(), second()
+   {}
+
+	pair(const T1& x, const T2& y)
+      : first(x), second(y)
+   {}
+
+   template <class D, class S>
+	pair(const std::pair<D, S>& p)
+      : first(p.first), second(p.second)
+   {}
+
+   template <class D, class S>
+	pair(const detail::moved_object<std::pair<D, S> >& p)
+		: first(move(p.get().first)), second(move(p.get().second))
+   {}
+
+	template <class U, class V>
+   pair(const detail::moved_object<U> &x, const detail::moved_object<V> &y)
+		: first(move(x.get())), second(move(y.get()))
+   {}
+
+	pair(const detail::moved_object<pair> &p)
+		: first(move(p.get().first)), second(move(p.get().second))
+   {}
+
+	pair& operator=(const detail::moved_object<pair> &p)
+	{
+		first  = move(p.get().first);
+		second = move(p.get().second);
+		return *this;
+	}
+
+	pair& operator=(const pair &p)
+	{
+		first  = p.first;
+		second = p.second;
+		return *this;
+	}
+
+   template <class D, class S>
+	pair& operator=(const detail::moved_object<std::pair<D, S> > &p)
+	{
+		first  = move(p.get().first);
+		second = move(p.get().second);
+		return *this;
+	}
+
+	void swap(const detail::moved_object<pair> &p)
+   {  std::swap(*this, p.get()); }
+
+	void swap(pair& p)
+   {  std::swap(*this, p); }
+};
+
+template <class T1, class T2>
+inline bool operator==(const pair<T1,T2>& x, const pair<T1,T2>& y)
+{  return static_cast<bool>(x.first == y.first && x.second == y.second);  }
+
+template <class T1, class T2>
+inline bool operator< (const pair<T1,T2>& x, const pair<T1,T2>& y)
+{  return static_cast<bool>(x.first < y.first ||
+	                      (!(y.first < x.first) && x.second < y.second)); }
+
+template <class T1, class T2>
+inline bool operator!=(const pair<T1,T2>& x, const pair<T1,T2>& y)
+{  return static_cast<bool>(!(x == y));  }
+
+template <class T1, class T2>
+inline bool operator> (const pair<T1,T2>& x, const pair<T1,T2>& y)
+{  return y < x;  }
+
+template <class T1, class T2>
+inline bool operator>=(const pair<T1,T2>& x, const pair<T1,T2>& y)
+{  return static_cast<bool>(!(x < y)); }
+
+template <class T1, class T2>
+inline bool operator<=(const pair<T1,T2>& x, const pair<T1,T2>& y)
+{  return static_cast<bool>(!(y < x)); }
+
+template <class T1, class T2>
+inline pair<T1, T2> make_pair(T1 x, T2 y)
+{  return pair<T1, T2>(x, y); }
+
+template <class T1, class T2>
+inline void swap(const detail::moved_object<pair<T1, T2> > &x, pair<T1, T2>& y)
+{
+	swap(x.get().first, y.first);
+	swap(x.get().second, y.second);
+}
+
+template <class T1, class T2>
+inline void swap(pair<T1, T2>& x, const detail::moved_object<pair<T1, T2> > &y)
+{
+	swap(x.first, y.get().first);
+	swap(x.second, y.get().second);
+}
+
+template <class T1, class T2>
+inline void swap(pair<T1, T2>& x, pair<T1, T2>& y)
+{
+	swap(x.first, y.first);
+	swap(x.second, y.second);
+}
+
 }  //namespace detail {
+
+/*!The pair is movable if any of its members is movable*/
+template <class T1, class T2>
+struct is_movable<boost::interprocess::detail::pair<T1, T2> >
+{
+   enum {  value = is_movable<T1>::value || is_movable<T2>::value };
+};
+
+/*!The pair is movable if any of its members is movable*/
+template <class T1, class T2>
+struct is_movable<std::pair<T1, T2> >
+{
+   enum {  value = is_movable<T1>::value || is_movable<T2>::value };
+};
+
+enum create_enum_t
+{  DoCreate, DoOpen, DoCreateOrOpen   };
+
 }  //namespace interprocess { 
 }  //namespace boost {
 

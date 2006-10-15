@@ -12,7 +12,7 @@
 #define BOOST_INTERPROCESS_POSIX_SEMAPHORE_WRAPPER_HPP
 
 #include <boost/interprocess/sync/posix/ptime_to_timespec.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/exceptions.hpp>
 
 namespace boost {

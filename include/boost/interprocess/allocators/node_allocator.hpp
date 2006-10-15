@@ -266,6 +266,7 @@ class node_allocator
       //Get node pool pointer
       node_pool_t  *node_pool = static_cast<node_pool_t*>
          (detail::get_pointer(mp_node_pool));
+
       //Execute destruction functor atomically
       destroy_if_last_link_func func(named_segment_mngr, node_pool);
       named_segment_mngr->atomic_func(func);

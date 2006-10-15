@@ -35,7 +35,6 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
 #include <boost/aligned_storage.hpp>
-#include <boost/type_traits/alignment_of.hpp>
 #include <stddef.h>
 
 #include <string>
@@ -148,7 +147,7 @@ struct alloc_info_t
    std::size_t          m_allocation_type;
 
    static std::size_t get_offset()
-   {  return ct_rounded_size<sizeof(alloc_info_t<T>), sizeof(T)>::value;  }
+   {  return ct_rounded_size<sizeof(alloc_info_t<T>), boost::alignment_of<T>::value>::value;  }
 
    static T *get_data_from_info(const void *info)
    {  
@@ -816,6 +815,7 @@ class segment_manager : private MemoryAlgorithm
       void *memory            = detail::get_pointer(it->second.m_ptr);
       char *stored_name       = detail::char_ptr_cast
                                  (detail::get_pointer(it->first.mp_str));
+
       //Check if the distance between the name pointer and the memory pointer 
       //is correct (this can detect incorrect T type in destruction)
       ctrl_data_t *ctrl_data  = reinterpret_cast<ctrl_data_t *>(memory);
@@ -973,7 +973,7 @@ class segment_manager : private MemoryAlgorithm
       }
       //Initialize the node value_eraser to erase inserted node
       //if something goes wrong
-      detail::value_eraser<index_type> value_eraser(index, insert_ret.first);
+      detail::value_eraser<index_type> value_eraser(index, it);
 
       const bool NodeIndex = is_node_index<index_t>::value;   //change this
       typedef detail::alloc_name_t<CharT, index_it, NodeIndex>  alloc_name_t;
@@ -993,11 +993,11 @@ class segment_manager : private MemoryAlgorithm
       }
       else{
          buffer_ptr = this->allocate(allocsize, std::nothrow_t());
-         if(!buffer_ptr)   return 0; 
+         if(!buffer_ptr)
+            return 0; 
       }
 
       //Set pointer and control data
-      insert_ret.first->second.m_ptr   = buffer_ptr;
       ctrl_data_t *ctrl_data           = static_cast<ctrl_data_t*>(buffer_ptr);
       ctrl_data->m_allocation_type     = type;
       ctrl_data->m_num                 = num;
@@ -1011,13 +1011,17 @@ class segment_manager : private MemoryAlgorithm
 
       //If this is a node container, store also the iterator
       if(NodeIndex){
-         new(&alloc_name->get_it()) index_it(insert_ret.first);
+         new(&alloc_name->get_it()) index_it(it);
       }
 
       //Do the ugly cast, please mama, forgive me!
       //This new key points to an identical string, so it must have the 
       //same position than the overwritten key according to the predicate
-      const_cast<key_type &>(insert_ret.first->first).mp_str = name_ptr;
+      const_cast<key_type &>(it->first).mp_str  = name_ptr;
+      it->second.m_ptr                          = buffer_ptr;
+
+      //This assignment is redundant but VC8 generates has problems without it
+      it->second.m_ptr = detail::get_pointer(it->second.m_ptr);
 
       //Avoid constructions if constructor is trivial
       if(!CtorFunc::is_trivial){

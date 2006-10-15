@@ -84,6 +84,7 @@ struct has_version
    template <class U> static char test(typename U::version*);
    public:
    static const bool value = sizeof(test<T>(0)) == 1;
+   void dummy(){}
 };
 
 template <class T, bool = has_version<T>::value>

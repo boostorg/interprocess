@@ -55,7 +55,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess/ for documentation.
+// See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 
@@ -73,6 +73,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/detail/allocator_utilities.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
+#include <boost/interprocess/detail/move.hpp>
 #include <algorithm>
 #include <functional>
 #include <utility>
@@ -87,8 +88,8 @@ template <class Key, class Value, class KeyOfValue,
           class Compare, class Alloc>
 class flat_tree
 {
-   typedef boost::interprocess::vector<Value, Alloc>         vector_t;
-   typedef typename vector_t::allocator_type          allocator_t;
+   typedef boost::interprocess::vector<Value, Alloc>  vector_t;
+   typedef Alloc/*typename vector_t::allocator_type*/          allocator_t;
 
  public:
    class value_compare
@@ -152,8 +153,8 @@ class flat_tree
    typedef typename allocator_type::difference_type   difference_type;
    typedef typename vector_t::iterator                iterator;
    typedef typename vector_t::const_iterator          const_iterator;
-    typedef boost::reverse_iterator<iterator>          reverse_iterator;
-    typedef boost::reverse_iterator<const_iterator>    const_reverse_iterator;
+	typedef boost::reverse_iterator<iterator>          reverse_iterator;
+	typedef boost::reverse_iterator<const_iterator>    const_reverse_iterator;
    
 
    // allocation/deallocation
@@ -166,10 +167,15 @@ class flat_tree
       :  m_data(x.m_data, x.m_data.m_vect)
    { }
 
-   ~flat_tree() { }
+   flat_tree(const detail::moved_object<flat_tree> &x)
+      :  m_data(move(x.get().m_data))
+   { }
+
+   ~flat_tree()
+   { }
 
    flat_tree&  operator=(const flat_tree& x)
-      {  flat_tree(x).swap(*this); return *this;  }
+   {  flat_tree(x).swap(*this); return *this;  }
 
  public:    
    // accessors:
@@ -214,38 +220,36 @@ class flat_tree
 
    void swap(flat_tree& other) 
    {
-      vector_t & myvect    = this->m_data.m_vect;
-      vector_t & othervect = other.m_data.m_vect;
-      myvect.swap(othervect);
       value_compare& mycomp    = this->m_data;
       value_compare& othercomp = other.m_data;
       detail::do_swap(mycomp, othercomp);
+      vector_t & myvect    = this->m_data.m_vect;
+      vector_t & othervect = other.m_data.m_vect;
+      myvect.swap(othervect);
    }
-    
+
+   void swap(const detail::moved_object<flat_tree>& other) 
+   {  this->swap(other.get());   }
+
  public:
    // insert/erase
    std::pair<iterator,bool> insert_unique(const value_type& val)
    {  return this->priv_insert_unique(this->begin(), this->end(), val); }
 
-   // insert/erase
-   std::pair<iterator,bool> priv_insert_unique
-      (iterator beg, iterator end, const value_type& val)
-   {
-      bool found = true;
-      const value_compare &value_comp  = this->m_data;
-      iterator i = this->priv_lower_bound(beg, end, KeyOfValue()(val));
-
-      if (i == end || value_comp(val, *i)){
-         i = this->m_data.m_vect.insert(i, val);
-         found = false;
-      }
-      return std::make_pair(i, !found);
-   }
+   std::pair<iterator,bool> insert_unique(const detail::moved_object<value_type>& mval)
+   {  return this->priv_insert_unique(this->begin(), this->end(), mval); }
 
    iterator insert_equal(const value_type& val)
    {
       iterator i = this->upper_bound(KeyOfValue()(val));
       i = this->m_data.m_vect.insert(i, val);
+      return i;
+   }
+
+   iterator insert_equal(const detail::moved_object<value_type>& mval)
+   {
+      iterator i = this->upper_bound(KeyOfValue()(mval.get()));
+      i = this->m_data.m_vect.insert(i, mval);
       return i;
    }
 
@@ -309,6 +313,40 @@ class flat_tree
       }
    }
 
+   iterator insert_unique(iterator pos, const detail::moved_object<value_type>& mval)
+   {
+      const value_type &val = mval.get();
+      const value_compare &value_comp = this->m_data;
+
+      if(pos == this->end() || value_comp(val, *pos)){
+         if(pos != this->begin() && !value_comp(val, pos[-1])){
+            if(value_comp(pos[-1], val)){
+               return this->m_data.m_vect.insert(pos, mval);
+            }
+            else{
+               return pos;
+            }
+         }
+         return this->priv_insert_unique(this->begin(), pos, mval).first;
+      }
+      /* Works, but increases code complexity
+      //Next check
+      else if (value_comp(*pos, val) && !value_comp(pos[1], val)){
+         if(value_comp(val, pos[1])){
+            return this->m_data.m_vect.insert(pos+1, mval);
+         }
+         else{
+            return pos;
+         }
+      }*/
+      else{
+         //[... pos ... val ... ]
+         //The hint is before the insertion position, so insert it
+         //in the remaining range
+         return this->priv_insert_unique(pos, this->end(), mval).first;
+      }
+   }
+
    iterator insert_equal(iterator pos, const value_type& val)
    {
    /* N1780
@@ -344,6 +382,45 @@ class flat_tree
          return this->m_data.m_vect.insert
             //(this->lower_bound(KeyOfValue()(val)), val);
             (this->priv_lower_bound(pos, this->end(), KeyOfValue()(val)), val);
+      }
+   }
+
+   iterator insert_equal(iterator pos, const detail::moved_object<value_type>& mval)
+   {
+   /* N1780
+      To insert val at pos:
+      if pos == end || val <= *pos
+         if pos == begin || val >= *(pos-1)
+            insert val before pos
+         else
+            insert val before upper_bound(val)
+      else if pos+1 == end || val <= *(pos+1)
+         insert val after pos
+      else
+         insert val before lower_bound(val)
+   */
+      const value_type &val = mval.get();
+      const value_compare &value_comp = this->m_data;
+
+      if(pos == this->end() || !value_comp(*pos, val)){
+         if (pos == this->begin() || !value_comp(val, pos[-1])){
+            return this->m_data.m_vect.insert(pos, mval);
+         }
+         else{
+            return this->m_data.m_vect.insert
+//               (this->upper_bound(KeyOfValue()(val)), val);
+               (this->priv_upper_bound(this->begin(), pos, KeyOfValue()(val)), mval);
+         }
+      }
+      /*Works, but increases code complexity
+      else if (++pos == this->end() || !value_comp(*pos, val)){
+         return this->m_data.m_vect.insert(pos, mval);
+      }
+      */
+      else{
+         return this->m_data.m_vect.insert
+            //(this->lower_bound(KeyOfValue()(val)), val);
+            (this->priv_lower_bound(pos, this->end(), KeyOfValue()(val)), mval);
       }
    }
 
@@ -448,6 +525,35 @@ class flat_tree
       { this->m_data.m_vect.reserve(count);   }
 
  private:
+
+   // insert/erase
+   std::pair<iterator,bool> priv_insert_unique
+      (iterator beg, iterator end, const value_type& val)
+   {
+      bool found = true;
+      const value_compare &value_comp  = this->m_data;
+      iterator i = this->priv_lower_bound(beg, end, KeyOfValue()(val));
+
+      if (i == end || value_comp(val, *i)){
+         i = this->m_data.m_vect.insert(i, val);
+         found = false;
+      }
+      return std::make_pair(i, !found);
+   }
+
+   std::pair<iterator,bool> priv_insert_unique
+      (iterator beg, iterator end, const detail::moved_object<value_type>& mval)
+   {
+      bool found = true;
+      const value_compare &value_comp  = this->m_data;
+      iterator i = this->priv_lower_bound(beg, end, KeyOfValue()(mval.get()));
+
+      if (i == end || value_comp(mval.get(), *i)){
+         i = this->m_data.m_vect.insert(i, mval);
+         found = false;
+      }
+      return std::make_pair(i, !found);
+   }
 
    template <class RanIt>
    RanIt priv_lower_bound(RanIt first, RanIt last,

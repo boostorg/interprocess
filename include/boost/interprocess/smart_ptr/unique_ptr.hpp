@@ -89,8 +89,14 @@ class unique_ptr
    typedef typename detail::pointer_type<T, D>::type pointer;
 
    // constructors
-   unique_ptr() : ptr_(pointer()) {}
-   explicit unique_ptr(pointer p) : ptr_(p) {}
+   unique_ptr()
+      :  ptr_(pointer())
+   {}
+
+   explicit unique_ptr(pointer p)
+      :  ptr_(p)
+   {}
+
    unique_ptr(pointer p
              ,typename boost::mpl::if_<boost::is_reference<D>
                   ,D
@@ -105,7 +111,7 @@ class unique_ptr
    unique_ptr(detail::moved_object<unique_ptr> u)
       : ptr_(u.get().release(), u.get().get_deleter())
    {}
-
+/*
    template <class U, class E>
    unique_ptr(const unique_ptr<U, E>& u,
       typename boost::enable_if_c<
@@ -119,6 +125,21 @@ class unique_ptr
             nat
             >::type = nat())
       : ptr_(const_cast<unique_ptr<U,E>&>(u).release(), u.get_deleter())
+   {}
+*/
+   template <class U, class E>
+   unique_ptr(const detail::moved_object<unique_ptr<U, E> >& u,
+      typename boost::enable_if_c<
+            boost::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
+            boost::is_convertible<E, D>::value &&
+            (
+               !boost::is_reference<D>::value ||
+               boost::is_same<D, E>::value
+            )
+            ,
+            nat
+            >::type = nat())
+      : ptr_(const_cast<unique_ptr<U,E>&>(u.get()).release(), u.get().get_deleter())
    {}
 
    // destructor
@@ -150,12 +171,23 @@ class unique_ptr
    }
 
    // observers
-   typename boost::add_reference<T>::type operator*()  const {return *ptr_.first();}
-   pointer operator->() const {return ptr_.first();}
-   pointer get()        const {return ptr_.first();}
-   deleter_reference       get_deleter()       {return ptr_.second();}
-   deleter_const_reference get_deleter() const {return ptr_.second();}
-   operator int nat::*() const {return ptr_.first() ? &nat::for_bool_ : 0;}
+   typename boost::add_reference<T>::type operator*()  const
+   {  return *ptr_.first();   }
+
+   pointer operator->() const
+   {  return ptr_.first(); }
+
+   pointer get()        const
+   {  return ptr_.first(); }
+
+   deleter_reference       get_deleter()       
+   {  return ptr_.second();   }
+
+   deleter_const_reference get_deleter() const 
+   {  return ptr_.second();   }
+
+   operator int nat::*() const 
+   {  return ptr_.first() ? &nat::for_bool_ : 0;   }
 
    // modifiers
    pointer release()
@@ -167,15 +199,18 @@ class unique_ptr
 
    void reset(pointer p = pointer())
    {
-      if (ptr_.first() != p)
-      {
+      if (ptr_.first() != p){
          if (ptr_.first())
-               ptr_.second()(ptr_.first());
+            ptr_.second()(ptr_.first());
          ptr_.first() = p;
       }
    }
 
-   void swap(unique_ptr& u) {ptr_.swap(u.ptr_);}
+   void swap(unique_ptr& u)
+   {  ptr_.swap(u.ptr_);   }
+   
+   void swap(detail::moved_object<unique_ptr> mu)
+   {  ptr_.swap(mu.get().ptr_);  }
 
    private:
    boost::compressed_pair<pointer, D> ptr_;
@@ -375,13 +410,15 @@ bool operator >(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y)
 template <class T1, class D1, class T2, class D2> inline
 bool operator>=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y)
 {  return x.get() >= y.get(); }
-/*
-template <class T, class D> inline
-unique_ptr<T, D> move(unique_ptr<T, D>& p)
+
+/*!This class has move constructor*/
+
+template <class T, class D>
+struct is_movable<unique_ptr<T, D> >
 {
-    return unique_ptr<T, D>(p.release(), p.get_deleter());
-}
-*/
+   enum {   value = true };
+};
+
 }  //namespace interprocess{
 }  //namespace boost{
 

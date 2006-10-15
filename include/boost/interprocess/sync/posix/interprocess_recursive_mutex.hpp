@@ -25,7 +25,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/sync/posix/ptime_to_timespec.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 namespace boost {
 
@@ -110,6 +110,9 @@ inline void interprocess_recursive_mutex::lock()
 {
    int res = 0;
    res = pthread_mutex_lock(&m_mut);
+   if(res != 0){
+      throw inteprocess_exception(system_error_code());
+   }
    assert(res == 0);
 
    pthread_t tid = pthread_self();

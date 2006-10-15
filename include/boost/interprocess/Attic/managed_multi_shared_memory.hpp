@@ -23,7 +23,7 @@
 #include <boost/detail/no_exceptions_support.hpp>
 //#include <boost/interprocess/detail/multi_segment_services.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/shared_memory.hpp>
+#include <boost/interprocess/shared_memory_object.hpp>
 #include <list>
 #include <new>
 #include <boost/interprocess/containers/string.hpp>
@@ -146,13 +146,11 @@ class basic_managed_multi_shared_memory
                        type_t type, std::size_t segment_number)
          : mp_frontend(frontend), m_type(type), m_segment_number(segment_number){}
 
-      bool operator()(const mapped_region &region, bool created) const
+      bool operator()(void *addr, std::size_t size, bool created) const
       {  
          if(((m_type == DoOpen)   &&  created) || 
             ((m_type == DoCreate) && !created))
             return false;
-         void *addr        = region.get_address();
-         std::size_t size  = region.get_size();
          std::size_t group = mp_frontend->m_group_services.get_group();
          bool mapped       = false;
          bool impl_done    = false;
@@ -305,17 +303,17 @@ class basic_managed_multi_shared_memory
          switch(type){
             case create_open_func::DoCreate:
                shm.reset(new shared_memory(create_only, name, size
-                                          ,memory_mappable::read_write, addr, func));
+                                          ,read_write, addr, func));
             break;
 
             case create_open_func::DoOpen:
                shm.reset(new shared_memory(open_only, name
-                                          ,memory_mappable::read_write, addr, func));
+                                          ,read_write, addr, func));
             break;
 
             case create_open_func::DoOpenOrCreate:
                shm.reset(new shared_memory( boost::interprocess::open_or_create
-                                          , name, size, memory_mappable::read_write
+                                          , name, size, read_write
                                           , addr, func));
             break;
 

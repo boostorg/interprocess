@@ -55,7 +55,7 @@
 #include <functional>
 #include <memory>
 #include <boost/interprocess/containers/tree.hpp>
-
+#include <boost/interprocess/detail/move.hpp>
 
 namespace boost { namespace interprocess {
 
@@ -113,6 +113,7 @@ class map
    // allocation/deallocation
 
    map() : m_tree(Pred(), allocator_type()) {}
+
    explicit map(const Pred& comp,
                 const allocator_type& a = allocator_type())
       : m_tree(comp, a) {}
@@ -131,8 +132,14 @@ class map
    map(const map<Key,T,Pred,Alloc>& x) 
       : m_tree(x.m_tree) {}
 
+   map(const detail::moved_object<map<Key,T,Pred,Alloc> >& x) 
+      : m_tree(move(x.get().m_tree)) {}
+
    map<Key,T,Pred,Alloc>& operator=(const map<Key, T, Pred, Alloc>& x)
       {  m_tree = x.m_tree;   return *this;  }
+
+   map<Key,T,Pred,Alloc>& operator=(const detail::moved_object<map<Key,T,Pred,Alloc> >& x)
+      {  m_tree.swap(x.get().m_tree);   return *this;  }
 
    // accessors:
 
@@ -180,6 +187,7 @@ class map
 
    T& operator[](const key_type& k) 
    {
+      //we can optimize this
       iterator i = lower_bound(k);
       // i->first is greater than or equivalent to k.
       if (i == end() || key_comp()(k, (*i).first))
@@ -187,26 +195,60 @@ class map
       return (*i).second;
    }
 
+   T& operator[](const detail::moved_object<key_type>& mk) 
+   {
+      key_type &k = mk.get();
+      //we can optimize this
+      iterator i = lower_bound(k);
+      // i->first is greater than or equivalent to k.
+      if (i == end() || key_comp()(k, (*i).first))
+         i = insert(i, value_type(k, move(T())));
+      return (*i).second;
+   }
+
    void swap(map<Key,T,Pred,Alloc>& x) 
       { m_tree.swap(x.m_tree); }
+
+   void swap(const detail::moved_object<map<Key,T,Pred,Alloc> >& x) 
+      { m_tree.swap(x.get().m_tree); }
 
    // insert/erase
 
    std::pair<iterator,bool> insert(const value_type& x) 
       { return m_tree.insert_unique(x); }
 
+   std::pair<iterator,bool> insert(const std::pair<key_type, mapped_type>& x) 
+      { return m_tree.insert_unique(x); }
+
+   std::pair<iterator,bool> insert(const detail::moved_object<std::pair<key_type, mapped_type> > &x) 
+      { return m_tree.insert_unique(x); }
+/*
+   std::pair<iterator,bool> insert(const detail::moved_object<value_type>& x) 
+      { return m_tree.insert_unique(x); }
+*/
+/*
    std::pair<iterator,bool> insert_from(const key_type& k,
                                         const mapped_type& m)
       {  return m_tree.insert_unique(value_type(k, m));  }      
-
+*/
    iterator insert(iterator position, const value_type& x)
       { return m_tree.insert_unique(position, x); }
 
+   iterator insert(iterator position, const detail::moved_object<std::pair<key_type, mapped_type> > &x)
+      { return m_tree.insert_unique(position, x); }
+
+   iterator insert(iterator position, const std::pair<key_type, mapped_type>& x)
+      { return m_tree.insert_unique(position, x); }
+/*
+   iterator insert(iterator position, const detail::moved_object<value_type>& x)
+      { return m_tree.insert_unique(position, x); }
+*/
+/*
    iterator insert_from(iterator position,
                         const key_type& k,
                         const mapped_type& m)
       { return m_tree.insert_unique(position, value_type(k, m)); }
-
+*/
    template <class InputIterator>
    void insert(InputIterator first, InputIterator last) 
       {  m_tree.insert_unique(first, last);  }
@@ -295,6 +337,24 @@ inline void swap(map<Key,T,Pred,Alloc>& x,
                  map<Key,T,Pred,Alloc>& y) 
    {  x.swap(y);  }
 
+template <class Key, class T, class Pred, class Alloc>
+inline void swap(const detail::moved_object<map<Key,T,Pred,Alloc> >& x, 
+                 map<Key,T,Pred,Alloc>& y) 
+   {  x.get().swap(y);  }
+
+template <class Key, class T, class Pred, class Alloc>
+inline void swap(map<Key,T,Pred,Alloc>& x, 
+                 const detail::moved_object<map<Key,T,Pred,Alloc> >& y) 
+   {  x.swap(y.get());  }
+
+
+/*!This class is movable*/
+template <class T, class P, class A>
+struct is_movable<map<T, P, A> >
+{
+   enum {   value = true };
+};
+
 // Forward declaration of operators < and ==, needed for friend declaration.
 
 template <class Key, class T, class Pred, class Alloc>
@@ -367,9 +427,16 @@ class multimap
    multimap(const multimap<Key,T,Pred,Alloc>& x) 
       : m_tree(x.m_tree) { }
 
+   multimap(const detail::moved_object<multimap<Key,T,Pred,Alloc> >& x) 
+      : m_tree(move(x.get().m_tree)) { }
+
    multimap<Key,T,Pred,Alloc>&
    operator=(const multimap<Key,T,Pred,Alloc>& x) 
       {  m_tree = x.m_tree;   return *this;  }
+
+   multimap<Key,T,Pred,Alloc>&
+   operator=(const detail::moved_object<multimap<Key,T,Pred,Alloc> >& x) 
+      {  m_tree.swap(move(x.get().m_tree));   return *this;  }
 
    // accessors:
 
@@ -418,22 +485,40 @@ class multimap
    void swap(multimap<Key,T,Pred,Alloc>& x) 
       { m_tree.swap(x.m_tree); }
 
+   void swap(const detail::moved_object<multimap<Key,T,Pred,Alloc> >& x) 
+      { m_tree.swap(x.get().m_tree); }
+
    // insert/erase
 
    iterator insert(const value_type& x) 
       { return m_tree.insert_equal(x); }
 
+   iterator insert(const std::pair<key_type, mapped_type>& x) 
+      { return m_tree.insert_equal(x); }
+
+   iterator insert(const detail::moved_object<std::pair<key_type, mapped_type> >& x) 
+      { return m_tree.insert_equal(x); }
+/*
    iterator insert_from(const key_type    &k,
                         const mapped_type &m)
       {  return m_tree.insert_equal(value_type(k, m));  }
+*/
 
-   iterator insert(iterator position, const value_type& x) 
-      {  return m_tree.insert_equal(position, x);  }
+   iterator insert(iterator position, const value_type& x)
+      { return m_tree.insert_equal(position, x); }
 
+   iterator insert(iterator position, const std::pair<key_type, mapped_type>& x)
+      { return m_tree.insert_equal(position, x); }
+
+   iterator insert(iterator position, const detail::moved_object<std::pair<key_type, mapped_type> >& x)
+      { return m_tree.insert_equal(position, x); }
+
+/*
    iterator insert_from(iterator position,
                         const key_type    &k,
                         const mapped_type &m)
       {  return m_tree.insert_equal(position, value_type(k, m));  }
+*/
 
    template <class InputIterator>
    void insert(InputIterator first, InputIterator last) 
@@ -524,6 +609,22 @@ template <class Key, class T, class Pred, class Alloc>
 inline void swap(multimap<Key,T,Pred,Alloc>& x, 
                  multimap<Key,T,Pred,Alloc>& y) 
    {  x.swap(y);  }
+
+template <class Key, class T, class Pred, class Alloc>
+inline void swap(const detail::moved_object<multimap<Key,T,Pred,Alloc> >& x, 
+                 multimap<Key,T,Pred,Alloc>& y) 
+   {  x.get().swap(y);  }
+
+template <class Key, class T, class Pred, class Alloc>
+inline void swap(multimap<Key,T,Pred,Alloc>& x, 
+                 const detail::moved_object<multimap<Key,T,Pred,Alloc> >& y) 
+   {  x.swap(y.get());  }
+
+template <class T, class P, class A>
+struct is_movable<multimap<T, P, A> >
+{
+   enum {   value = true };
+};
 
 }} //namespace boost { namespace interprocess {
 

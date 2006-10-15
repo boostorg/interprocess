@@ -11,8 +11,7 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_PTIME_TO_TIMESPEC_HPP
 #define BOOST_INTERPROCESS_DETAIL_PTIME_TO_TIMESPEC_HPP
 
-#include <boost/date_time/posix_time/ptime.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <time.h>
 
 namespace boost {

@@ -538,14 +538,15 @@ class basic_managed_memory_impl
       mp_header = static_cast<segment_manager*>(addr);  
    }
    
+   void swap(basic_managed_memory_impl &other)
+   {  std::swap(mp_header, other.mp_header); }
+
    private:
    segment_manager *mp_header;
 };
 
 }  //namespace detail {
-
 }  //namespace interprocess {
-
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>

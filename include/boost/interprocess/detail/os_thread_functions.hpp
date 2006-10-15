@@ -15,13 +15,14 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-#  include <boost/interprocess/sync/win32/win32_sync_primitives.hpp>
+#  include <boost/interprocess/detail/win32_api.hpp>
 #else
 #  ifdef BOOST_HAS_UNISTD_H
-#    include <pthread.h>
-#    include <unistd.h>
+#     include <pthread.h>
+#     include <unistd.h>
+#     include <sched.h>
 #  else
-#    error Unknown platform
+#     error Unknown platform
 #  endif
 #endif
 
@@ -39,8 +40,11 @@ inline OS_thread_id_t get_current_thread_id()
 inline OS_thread_id_t get_invalid_thread_id()
 {  return OS_thread_id_t(0xffffffff);  }
 
-inline OS_thread_id_t equal_thread_id(OS_thread_id_t id1, OS_thread_id_t id2)
+inline bool equal_thread_id(OS_thread_id_t id1, OS_thread_id_t id2)
 {  return id1 == id2;  }
+
+inline void thread_yield()
+{  winapi::sched_yield();  }
 
 #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
@@ -49,14 +53,17 @@ typedef pthread_t OS_thread_id_t;
 inline pthread_t get_current_thread_id()
 {  return pthread_self();  }
 
-inline OS_thread_id_t invalid_thread_id()
+inline OS_thread_id_t get_invalid_thread_id()
 {  
    static pthread_t invalid_id;
    return invalid_id;
 }
 
-inline OS_thread_id_t equal_thread_id(OS_thread_id_t id1, OS_thread_id_t id2)
+inline bool equal_thread_id(OS_thread_id_t id1, OS_thread_id_t id2)
 {  return 0 != pthread_equal(id1, id2);  }
+
+inline void thread_yield()
+{  sched_yield();  }
 
 #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 

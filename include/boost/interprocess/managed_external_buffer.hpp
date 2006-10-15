@@ -19,6 +19,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
+#include <boost/interprocess/detail/move.hpp>
 
 /*!\file
    Describes a named user memory allocation user class. 
@@ -61,9 +62,23 @@ class basic_managed_external_buffer
       }
    }
 
-   void grow(std::size_t extra_bytes)
-      {  base_t::grow(extra_bytes);   }
+   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   basic_managed_external_buffer
+      (detail::moved_object<basic_managed_external_buffer> &moved)
+   {  this->swap(moved.get());   }
 
+   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   basic_managed_external_buffer &operator=
+      (detail::moved_object<basic_managed_external_buffer> &moved)
+   {  this->swap(moved.get());   return *this;  }
+
+   void grow(std::size_t extra_bytes)
+   {  base_t::grow(extra_bytes);   }
+
+   /*!Swaps the ownership of the managed heap memories managed by *this and other.
+      Never throws.*/
+   void swap(basic_managed_external_buffer &other)
+   {  base_t::swap(other); }
 /*
    bool  create   (void *addr, std::size_t size)
       {  return base_t::create_impl(addr, size);  }

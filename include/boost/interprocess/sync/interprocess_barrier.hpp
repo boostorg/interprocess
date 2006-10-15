@@ -33,21 +33,23 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#if defined BOOST_INTERPROCESS_USE_PTHREAD_BARRIER
+#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED &&\
+    defined BOOST_INTERPROCESS_POSIX_BARRIERS
 #  include <pthread.h>
 #  include <errno.h>   
-#  include <boost/interprocess/sync/posix/pthread_helpers.hpp>   
-#else    //#if defined BOOST_INTERPROCESS_USE_PTHREAD_BARRIER
+#  include <boost/interprocess/sync/posix/pthread_helpers.hpp>
+#  define BOOST_INTERPROCESS_USE_POSIX
+#else
 #  include <boost/interprocess/sync/interprocess_mutex.hpp>
 #  include <boost/interprocess/sync/scoped_lock.hpp>
 #  include <boost/interprocess/sync/interprocess_condition.hpp>
 #  include <stdexcept>
-#endif   //#if defined BOOST_INTERPROCESS_USE_PTHREAD_BARRIER
+#  define BOOST_INTERPROCESS_USE_GENERIC_EMULATION
+#endif
 
 #  include <boost/interprocess/exceptions.hpp>
 
 namespace boost {
-
 namespace interprocess {
 
 /*!An object of class barrier is a synchronization primitive that 
@@ -78,78 +80,30 @@ class barrier
    bool wait();
 
    private:
-   #if defined BOOST_INTERPROCESS_USE_PTHREAD_BARRIER
-      pthread_barrier_t    m_barrier;
-   #else //#if defined BOOST_INTERPROCESS_USE_PTHREAD_BARRIER
+   #if defined(BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
       interprocess_mutex m_mutex;
       interprocess_condition m_cond;
       unsigned int m_threshold;
       unsigned int m_count;
       unsigned int m_generation;
-   #endif//#if defined BOOST_INTERPROCESS_USE_PTHREAD_BARRIER
+   #else //#if defined BOOST_INTERPROCESS_USE_POSIX
+      pthread_barrier_t    m_barrier;
+   #endif//#if defined BOOST_INTERPROCESS_USE_POSIX
 };
 
-#if defined BOOST_INTERPROCESS_USE_PTHREAD_BARRIER
-
-inline barrier::barrier(unsigned int count)
-{
-   if (count == 0)
-      throw std::invalid_argument("count cannot be zero.");
-   detail::barrierattr_wrapper barrier_attr;
-   detail::barrier_initializer barrier
-      (m_barrier, barrier_attr, static_cast<int>(count));
-   barrier.release();
-}
-
-inline barrier::~barrier()
-{
-   int res = pthread_barrier_destroy(&m_barrier);
-   assert(res  == 0);(void)res;
-}
-
-inline bool barrier::wait()
-{
-   int res = pthread_barrier_wait(&m_barrier);
-
-   if (res != PTHREAD_BARRIER_SERIAL_THREAD || res != 0)
-      throw interprocess_exception(system_error_code());
-   return res == PTHREAD_BARRIER_SERIAL_THREAD;
-}
-
-#else //#if defined BOOST_INTERPROCESS_USE_PTHREAD_BARRIER
-
-inline barrier::barrier(unsigned int count)
-   : m_threshold(count), m_count(count), m_generation(0)
-{
-   if (count == 0)
-      throw std::invalid_argument("count cannot be zero.");
-}
-
-inline barrier::~barrier(){}
-
-inline bool barrier::wait()
-{
-   scoped_lock<interprocess_mutex> lock(m_mutex);
-   unsigned int gen = m_generation;
-
-   if (--m_count == 0){
-      m_generation++;
-      m_count = m_threshold;
-      m_cond.notify_all();
-      return true;
-   }
-
-   while (gen == m_generation){
-      m_cond.wait(lock);
-   }
-   return false;
-}
-
-#endif   //#if defined BOOST_INTERPROCESS_USE_PTHREAD_BARRIER
-
 }  // namespace interprocess
-
 }  // namespace boost
+
+
+#ifdef BOOST_INTERPROCESS_USE_GENERIC_EMULATION
+#  undef BOOST_INTERPROCESS_USE_GENERIC_EMULATION
+#  include <boost/interprocess/sync/emulation/interprocess_barrier.hpp>
+#endif
+
+#ifdef BOOST_INTERPROCESS_USE_POSIX
+#  undef BOOST_INTERPROCESS_USE_POSIX
+#  include <boost/interprocess/sync/posix/interprocess_barrier.hpp>
+#endif
 
 #include <boost/interprocess/detail/config_end.hpp>
 

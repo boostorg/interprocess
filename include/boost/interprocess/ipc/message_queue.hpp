@@ -14,7 +14,8 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/interprocess/shared_memory.hpp>
+#include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
@@ -165,7 +166,7 @@ class message_queue
    class initialization_func_t;
    friend class initialization_func_t;
 
-   shared_memory  m_shmem;
+   detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
 };
 
 /*!This header is the prefix of each message in the queue*/
@@ -283,7 +284,8 @@ public:
          r_hdr_size     = detail::ct_rounded_size<sizeof(mq_hdr_t), index_align>::value,
          r_index_size   = detail::get_rounded_size(sizeof(msg_hdr_ptr_t)*max_num_msg, msg_hdr_align),
          r_max_msg_size = detail::get_rounded_size(max_msg_size, msg_hdr_align) + sizeof(msg_hdr_t);
-      return r_hdr_size + r_index_size + (max_num_msg*r_max_msg_size);
+      return r_hdr_size + r_index_size + (max_num_msg*r_max_msg_size) + 
+         detail::managed_open_or_create_impl<shared_memory_object>::ManagedOpenOrCreateUserOffset;
    }
 
    /*!Initializes the memory structures to preallocate messages and constructs the
@@ -343,12 +345,12 @@ class message_queue::initialization_func_t
                          std::size_t maxmsgsize = 0)
       : m_maxmsg (maxmsg), m_maxmsgsize(maxmsgsize) {}
 
-   bool operator()(const mapped_region &region, bool created)
+   bool operator()(void *address, std::size_t size, bool created)
    {
       char      *mptr;
 
       if(created){
-         mptr     = reinterpret_cast<char*>(region.get_address());
+         mptr     = reinterpret_cast<char*>(address);
          //Construct the message queue header at the beginning
          BOOST_TRY{
             new (mptr) mq_hdr_t(m_maxmsg, m_maxmsgsize);
@@ -379,7 +381,7 @@ inline message_queue::message_queue(detail::create_only_t create_only,
    :  m_shmem(create_only, 
               name, 
               get_mem_size(max_msg_size, max_num_msg),
-              memory_mappable::read_write,
+              read_write,
               (void*)0,
               //Prepare initialization functor
               initialization_func_t (max_num_msg, max_msg_size))
@@ -398,7 +400,7 @@ inline message_queue::message_queue(detail::open_or_create_t open_or_create,
    :  m_shmem(open_or_create, 
               name, 
               get_mem_size(max_msg_size, max_num_msg),
-              memory_mappable::read_write,
+              read_write,
               (void*)0,
               //Prepare initialization functor
               initialization_func_t (max_num_msg, max_msg_size))
@@ -412,7 +414,7 @@ inline message_queue::message_queue(detail::open_only_t open_only,
    //Create shared memory and execute functor atomically
    :  m_shmem(open_only, 
               name,
-              memory_mappable::read_write,
+              read_write,
               (void*)0,
               //Prepare initialization functor
               initialization_func_t ())
@@ -463,7 +465,7 @@ inline bool message_queue::do_send(block_t block,
             case timed :
                do{
                   if(!p_hdr->m_cond_send.timed_wait(lock, abs_time))
-                     return false;
+                     return !p_hdr->is_full();
                }
                while (p_hdr->is_full());
             break;
@@ -546,7 +548,7 @@ inline bool
             case timed :
                do{
                   if(!p_hdr->m_cond_recv.timed_wait(lock, abs_time))
-                     return false;
+                     return !p_hdr->is_empty();
                }
                while (p_hdr->is_empty());
             break;
@@ -609,8 +611,6 @@ inline std::size_t message_queue::get_num_msg()
 
    return 0;  
 }
-
-   std::size_t get_num_msg();
 
 inline bool message_queue::remove(const char *name)
 {  return shared_memory_object::remove(name);  }

@@ -17,10 +17,11 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
-#include <boost/interprocess/mapped_file.hpp>
-#include <string>
-#include <fstream>
+#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/detail/file_wrapper.hpp>
+#include <boost/interprocess/detail/move.hpp>
 
 /*!\file
    Describes a named shared memory object allocation user class. 
@@ -56,16 +57,16 @@ class basic_managed_mapped_file
       create_open_func(basic_managed_mapped_file * const frontend, type_t type)
          : m_frontend(frontend), m_type(type){}
 
-      bool operator()(const mapped_region &region, bool created) const
+      bool operator()(void *addr, std::size_t size, bool created) const
       {  
          if(((m_type == DoOpen)   &&  created) || 
             ((m_type == DoCreate) && !created))
             return false;
 
          if(created)
-            return m_frontend->create_impl(region.get_address(), region.get_size());
+            return m_frontend->create_impl(addr, size);
          else
-            return m_frontend->open_impl  (region.get_address(), region.get_size());
+            return m_frontend->open_impl  (addr, size);
       }
       basic_managed_mapped_file *m_frontend;
       type_t                     m_type;
@@ -76,16 +77,11 @@ class basic_managed_mapped_file
 
    public: //functions
 
-   typedef enum { 
-                  read_only = file_mapping::read_only, 
-                  read_write = file_mapping::read_write
-                }    accessmode_t;
-
    /*!Creates shared memory and creates and places the segment manager. 
       This can throw.*/
    basic_managed_mapped_file(detail::create_only_t create_only, const char *name,
                              std::size_t size, const void *addr = 0)
-      : m_mfile(create_only, name, size, memory_mappable::read_write, addr, 
+      : m_mfile(create_only, name, size, read_write, addr, 
                 create_open_func(get_this_pointer(), create_open_func::DoCreate))
    {}
 
@@ -96,7 +92,7 @@ class basic_managed_mapped_file
    basic_managed_mapped_file (detail::open_or_create_t open_or_create,
                               const char *name, std::size_t size, 
                               const void *addr = 0)
-      : m_mfile(open_or_create, name, size, memory_mappable::read_write, addr, 
+      : m_mfile(open_or_create, name, size, read_write, addr, 
                 create_open_func(get_this_pointer(), 
                 create_open_func::DoCreateOrOpen))
    {}
@@ -105,72 +101,37 @@ class basic_managed_mapped_file
       Never throws.*/
    basic_managed_mapped_file (detail::open_only_t open_only, const char* name, 
                               const void *addr = 0)
-      : m_mfile(open_only, name, memory_mappable::read_write, addr, 
+      : m_mfile(open_only, name, read_write, addr, 
                 create_open_func(get_this_pointer(), 
                 create_open_func::DoOpen))
    {}
 
+   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   basic_managed_mapped_file
+      (detail::moved_object<basic_managed_mapped_file> &moved)
+   {  this->swap(moved.get());   }
+
+   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   basic_managed_mapped_file &operator=
+      (detail::moved_object<basic_managed_mapped_file> &moved)
+   {  this->swap(moved.get());   return *this;  }
+
    /*!Destructor. Never throws.*/
    ~basic_managed_mapped_file()
-      {}
-/*
-   bool create(const char *name, std::size_t size)
+   {}
+
+   /*!Swaps the ownership of the managed mapped memories managed by *this and other.
+      Never throws.*/
+   void swap(basic_managed_mapped_file &other)
    {
-      //Create file with given size
-      std::ofstream file(name, std::ios::binary | std::ios::trunc);
-      file.seekp(static_cast<std::streamoff>(size-1));
-      file.write("", 1);
-      file.close();
-
-      //Create mapped file
-      if(!m_mfile.open(name, 0, size, (file_mapping::accessmode_t)read_write)){
-         return false;
-      }
-
-      //Create Interprocess machinery
-      if(!base_t::create_impl(m_mfile.get_address(), size)){
-         close();
-         return false;
-      }
-
-      m_filename = name;
-      return true;    
+      base_t::swap(other);
+      m_mfile.swap(other.m_mfile);
    }
 
-   bool open(const char *name, accessmode_t mode = read_write)
-   {
-      //Open file and get size
-      std::ifstream file(name, std::ios::binary);
-      std::size_t size = file.seekg(0, std::ios::end).tellg();
-      file.close();
-
-      //Create mapped file
-      if(!m_mfile.open(name, 0, size, (file_mapping::accessmode_t)mode)){
-         return false;
-      }
-
-      //Open Interprocess machinery
-      if(!base_t::open_impl(m_mfile.get_address(), size)){
-         close();
-         return false;
-      }
-
-      m_filename = name;
-      return true;    
-   }
-*/
    /*!Flushes cached data to file. Never throws*/
    bool flush()
-      {  return m_mfile.flush();  }
+   {  return m_mfile.flush();  }
 
-   /*!Frees resources. Never throws.*/
-/*
-   void close()
-   {  
-      base_t::close_impl();
-      m_mfile.close();
-   }
-*/
    /*!Tries to resize mapped file so that we have room for 
       more objects. 
       WARNING: The memory mapping can change. To be able to use
@@ -203,7 +164,7 @@ class basic_managed_mapped_file
       }
 
       if(!m_mfile.open(m_filename.c_str(), 0, new_size, 
-                       (file_mapping::accessmode_t)read_write)){
+                       (file_mapping::mode_t)read_write)){
          return false;
       }
 
@@ -215,8 +176,7 @@ class basic_managed_mapped_file
    }
 */
    private:
-   mapped_file m_mfile;
-   std::string       m_filename;
+   detail::managed_open_or_create_impl<detail::file_wrapper> m_mfile;
 };
 
 }  //namespace interprocess {
@@ -226,4 +186,3 @@ class basic_managed_mapped_file
 #include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //BOOST_INTERPROCESS_MANAGED_MAPPED_FILE_HPP
-

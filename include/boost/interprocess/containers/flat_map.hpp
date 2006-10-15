@@ -55,8 +55,10 @@
 #include <utility>
 #include <functional>
 #include <memory>
+#include <boost/detail/allocator_utilities.hpp>
 #include <boost/interprocess/containers/detail/flat_tree.hpp>
-
+#include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/move.hpp>
 
 namespace boost { namespace interprocess {
 
@@ -76,13 +78,44 @@ template <class Key, class T, class Pred, class Alloc>
 class flat_map 
 {
  private:
+   //This is the real tree stored here. It's based on a movable pair
+   typedef detail::flat_tree<Key, 
+                           detail::pair<Key, T>, 
+                           detail::select1st< detail::pair<Key, T> >, 
+                           Pred, 
+                           typename boost::detail::allocator::
+                              rebind_to<Alloc, detail::pair<Key, T> >::type> impl_tree_t;
+
+   //This is the tree that we should store if pair was movable
    typedef detail::flat_tree<Key, 
                            std::pair<Key, T>, 
                            detail::select1st< std::pair<Key, T> >, 
                            Pred, 
                            Alloc> tree_t;
-   tree_t m_flat_tree;  // flat tree representing flat_map
 
+//   tree_t m_flat_tree;  // flat tree representing flat_map
+   impl_tree_t m_flat_tree;  // flat tree representing flat_map
+
+   typedef typename impl_tree_t::value_type             impl_value_type;
+   typedef typename impl_tree_t::pointer                impl_pointer;
+   typedef typename impl_tree_t::const_pointer          impl_const_pointer;
+   typedef typename impl_tree_t::reference              impl_reference;
+   typedef typename impl_tree_t::const_reference        impl_const_reference;
+   typedef typename impl_tree_t::value_compare          impl_value_compare;
+   typedef typename impl_tree_t::iterator               impl_iterator;
+   typedef typename impl_tree_t::const_iterator         impl_const_iterator;
+   typedef typename impl_tree_t::reverse_iterator       impl_reverse_iterator;
+   typedef typename impl_tree_t::const_reverse_iterator impl_const_reverse_iterator;
+   typedef typename impl_tree_t::allocator_type         impl_allocator_type;
+   typedef detail::moved_object<impl_value_type>        impl_moved_value_type;
+/*
+   template<class D, class S>
+   static D &force(S &s)
+   {  return *(reinterpret_cast<D*>(&s)); }
+*/
+   template<class D, class S>
+   static D &force(const S &s)
+   {  return *const_cast<D*>((reinterpret_cast<const D*>(&s))); }
  public:
    // typedefs:
    typedef typename tree_t::key_type               key_type;
@@ -105,59 +138,65 @@ class flat_map
    // allocation/deallocation
 
    explicit flat_map(const Pred& comp = Pred(), const allocator_type& a = allocator_type()) 
-      : m_flat_tree(comp, a) {}
+      : m_flat_tree(comp, force<impl_allocator_type>(a)) {}
 
    template <class InputIterator>
    flat_map(InputIterator first, InputIterator last)
-      : m_flat_tree(Pred(), allocator_type())
+      : m_flat_tree(Pred(), force<impl_allocator_type>(allocator_type()))
       { m_flat_tree.insert_unique(first, last); }
 
    template <class InputIterator>
    flat_map(InputIterator first, InputIterator last, const Pred& comp = Pred(),
          const allocator_type& a = allocator_type())
-      : m_flat_tree(comp, a) 
+      : m_flat_tree(comp, force<impl_allocator_type>(a)) 
       { m_flat_tree.insert_unique(first, last); }
 
    flat_map(const flat_map<Key,T,Pred,Alloc>& x) 
       : m_flat_tree(x.m_flat_tree) {}
 
+   flat_map(const detail::moved_object<flat_map<Key,T,Pred,Alloc> >& x) 
+      : m_flat_tree(move(x.get().m_flat_tree)) {}
+
    flat_map<Key,T,Pred,Alloc>& operator=(const flat_map<Key, T, Pred, Alloc>& x)
       {  m_flat_tree = x.m_flat_tree;   return *this;  }
+
+   flat_map<Key,T,Pred,Alloc>& operator=(const detail::moved_object<flat_map<Key, T, Pred, Alloc> >& x)
+      {  m_flat_tree.swap(x.get().m_flat_tree);   return *this;  }
 
    // accessors:
 
    key_compare key_comp() const 
-      { return m_flat_tree.key_comp(); }
+      { return force<key_compare>(m_flat_tree.key_comp()); }
 
    value_compare value_comp() const 
-      { return value_compare(m_flat_tree.key_comp()); }
+      { return value_compare(force<key_compare>(m_flat_tree.key_comp())); }
 
    allocator_type get_allocator() const 
-      { return m_flat_tree.get_allocator(); }
+      { return force<allocator_type>(m_flat_tree.get_allocator()); }
 
    iterator begin() 
-      { return m_flat_tree.begin(); }
+      { return force<iterator>(m_flat_tree.begin()); }
 
    const_iterator begin() const 
-      { return m_flat_tree.begin(); }
+      { return force<const_iterator>(m_flat_tree.begin()); }
 
    iterator end() 
-      { return m_flat_tree.end(); }
+      { return force<iterator>(m_flat_tree.end()); }
 
    const_iterator end() const 
-      { return m_flat_tree.end(); }
+      { return force<const_iterator>(m_flat_tree.end()); }
 
    reverse_iterator rbegin() 
-      { return m_flat_tree.rbegin(); }
+      { return force<reverse_iterator>(m_flat_tree.rbegin()); }
 
    const_reverse_iterator rbegin() const 
-      { return m_flat_tree.rbegin(); }
+      { return force<const_reverse_iterator>(m_flat_tree.rbegin()); }
 
    reverse_iterator rend() 
-      { return m_flat_tree.rend(); }
+      { return force<reverse_iterator>(m_flat_tree.rend()); }
 
    const_reverse_iterator rend() const 
-      { return m_flat_tree.rend(); }
+      { return force<const_reverse_iterator>(m_flat_tree.rend()); }
 
    bool empty() const 
       { return m_flat_tree.empty(); }
@@ -177,29 +216,52 @@ class flat_map
       return (*i).second;
    }
 
+   T &operator[](const detail::moved_object<key_type>& mk) 
+   {
+      key_type &k = mk.get();
+      iterator i = lower_bound(k);
+      // i->first is greater than or equivalent to k.
+      if (i == end() || key_comp()(k, (*i).first))
+         i = insert(i, value_type(k, move(T())));
+      return (*i).second;
+   }
+
    void swap(flat_map<Key,T,Pred,Alloc>& x) 
       { m_flat_tree.swap(x.m_flat_tree); }
+
+   void swap(const detail::moved_object<flat_map<Key,T,Pred,Alloc> >& x) 
+      { m_flat_tree.swap(x.get().m_flat_tree); }
 
    // insert/erase
 
    std::pair<iterator,bool> insert(const value_type& x) 
-      { return m_flat_tree.insert_unique(x); }
+      { return force<std::pair<iterator,bool> >(
+         m_flat_tree.insert_unique(force<impl_value_type>(x))); }
+
+   std::pair<iterator,bool> insert(const detail::moved_object<value_type>& x) 
+      { return force<std::pair<iterator,bool> >(
+         m_flat_tree.insert_unique(force<impl_moved_value_type>(x))); }
 
    iterator insert(iterator position, const value_type& x)
-      { return m_flat_tree.insert_unique(position, x); }
+      { return force<iterator>(
+         m_flat_tree.insert_unique(force<impl_iterator>(position), force<impl_value_type>(x))); }
+
+   iterator insert(iterator position, const detail::moved_object<value_type>& x)
+      { return force<iterator>(
+         m_flat_tree.insert_unique(force<impl_iterator>(position), force<impl_moved_value_type>(x))); }
 
    template <class InputIterator>
    void insert(InputIterator first, InputIterator last) 
       {  m_flat_tree.insert_unique(first, last);  }
 
    void erase(const_iterator position) 
-      { m_flat_tree.erase(position); }
+      { m_flat_tree.erase(force<impl_const_iterator>(position)); }
 
    size_type erase(const key_type& x) 
       { return m_flat_tree.erase(x); }
 
    void erase(const_iterator first, const_iterator last)
-      { m_flat_tree.erase(first, last); }
+      { m_flat_tree.erase(force<impl_const_iterator>(first), force<impl_const_iterator>(last)); }
 
    void clear() 
       { m_flat_tree.clear(); }
@@ -207,31 +269,31 @@ class flat_map
    // flat_map operations:
 
    iterator find(const key_type& x) 
-      { return m_flat_tree.find(x); }
+      { return force<iterator>(m_flat_tree.find(x)); }
 
    const_iterator find(const key_type& x) const 
-      { return m_flat_tree.find(x); }
+      { return force<const_iterator>(m_flat_tree.find(x)); }
 
    size_type count(const key_type& x) const 
       {  return m_flat_tree.find(x) == m_flat_tree.end() ? 0 : 1;  }
 
    iterator lower_bound(const key_type& x) 
-      {  return m_flat_tree.lower_bound(x); }
+      {  return force<iterator>(m_flat_tree.lower_bound(x)); }
 
    const_iterator lower_bound(const key_type& x) const 
-      {  return m_flat_tree.lower_bound(x); }
+      {  return force<const_iterator>(m_flat_tree.lower_bound(x)); }
 
    iterator upper_bound(const key_type& x) 
-      {  return m_flat_tree.upper_bound(x); }
+      {  return force<iterator>(m_flat_tree.upper_bound(x)); }
 
    const_iterator upper_bound(const key_type& x) const 
-      {  return m_flat_tree.upper_bound(x); }
+      {  return force<const_iterator>(m_flat_tree.upper_bound(x)); }
      
    std::pair<iterator,iterator> equal_range(const key_type& x) 
-      {  return m_flat_tree.equal_range(x); }
+      {  return force<std::pair<iterator,iterator> >(m_flat_tree.equal_range(x)); }
 
    std::pair<const_iterator,const_iterator> equal_range(const key_type& x) const 
-      {  return m_flat_tree.equal_range(x); }
+      {  return force<std::pair<const_iterator,const_iterator> >(m_flat_tree.equal_range(x)); }
 
    size_type capacity() const           
       { return m_flat_tree.capacity(); }
@@ -282,6 +344,23 @@ inline void swap(flat_map<Key,T,Pred,Alloc>& x,
                  flat_map<Key,T,Pred,Alloc>& y) 
    {  x.swap(y);  }
 
+template <class Key, class T, class Pred, class Alloc>
+inline void swap(const detail::moved_object<flat_map<Key,T,Pred,Alloc> >& x, 
+                 flat_map<Key,T,Pred,Alloc>& y) 
+   {  x.get().swap(y);  }
+
+template <class Key, class T, class Pred, class Alloc>
+inline void swap(flat_map<Key,T,Pred,Alloc>& x, 
+                 const detail::moved_object<flat_map<Key,T,Pred,Alloc> >& y) 
+   {  x.swap(y.get());  }
+
+/*!This class is movable*/
+template <class T, class P, class A>
+struct is_movable<flat_map<T, P, A> >
+{
+   enum {   value = true };
+};
+
 // Forward declaration of operators < and ==, needed for friend declaration.
 
 template <class Key, class T, 
@@ -301,12 +380,42 @@ template <class Key, class T, class Pred, class Alloc>
 class flat_multimap 
 {
  private:
+   //This is the real tree stored here. It's based on a movable pair
+   typedef detail::flat_tree<Key, 
+                           detail::pair<Key, T>, 
+                           detail::select1st< detail::pair<Key, T> >, 
+                           Pred, 
+                           typename boost::detail::allocator::
+                              rebind_to<Alloc, detail::pair<Key, T> >::type> impl_tree_t;
+
    typedef detail::flat_tree<Key, 
                            std::pair<Key, T>, 
                            detail::select1st< std::pair<Key, T> >, 
                            Pred, 
                            Alloc> tree_t;
-   tree_t m_flat_tree;  // flat tree representing flat_map
+//   tree_t m_flat_tree;  // flat tree representing flat_multimap
+   impl_tree_t m_flat_tree;  // flat tree representing flat_map
+
+   typedef typename impl_tree_t::value_type             impl_value_type;
+   typedef typename impl_tree_t::pointer                impl_pointer;
+   typedef typename impl_tree_t::const_pointer          impl_const_pointer;
+   typedef typename impl_tree_t::reference              impl_reference;
+   typedef typename impl_tree_t::const_reference        impl_const_reference;
+   typedef typename impl_tree_t::value_compare          impl_value_compare;
+   typedef typename impl_tree_t::iterator               impl_iterator;
+   typedef typename impl_tree_t::const_iterator         impl_const_iterator;
+   typedef typename impl_tree_t::reverse_iterator       impl_reverse_iterator;
+   typedef typename impl_tree_t::const_reverse_iterator impl_const_reverse_iterator;
+   typedef typename impl_tree_t::allocator_type         impl_allocator_type;
+   typedef detail::moved_object<impl_value_type>        impl_moved_value_type;
+/*
+   template<class D, class S>
+   static D &force(S &s)
+   {  return *(reinterpret_cast<D*>(&s)); }
+*/
+   template<class D, class S>
+   static D &force(const S &s)
+   {  return *const_cast<D*>((reinterpret_cast<const D*>(&s))); }
 
  public:
    // typedefs:
@@ -330,56 +439,62 @@ class flat_multimap
    // allocation/deallocation
    explicit flat_multimap(const Pred& comp = Pred(),
                           const allocator_type& a = allocator_type())
-      : m_flat_tree(comp, a) { }
+      : m_flat_tree(comp, force<impl_allocator_type>(a)) { }
 
    template <class InputIterator>
    flat_multimap(InputIterator first, InputIterator last,
             const Pred& comp        = Pred(),
             const allocator_type& a = allocator_type())
-      : m_flat_tree(comp, a) 
+      : m_flat_tree(comp, force<impl_allocator_type>(a)) 
       { m_flat_tree.insert_equal(first, last); }
 
    flat_multimap(const flat_multimap<Key,T,Pred,Alloc>& x) 
       : m_flat_tree(x.m_flat_tree) { }
 
+   flat_multimap(const detail::moved_object<flat_multimap<Key,T,Pred,Alloc> >& x) 
+      : m_flat_tree(move(x.get().m_flat_tree)) { }
+
    flat_multimap<Key,T,Pred,Alloc>&
    operator=(const flat_multimap<Key,T,Pred,Alloc>& x) 
       {  m_flat_tree = x.m_flat_tree;   return *this;  }
 
+   flat_multimap<Key,T,Pred,Alloc>&
+   operator=(const detail::moved_object<flat_multimap<Key,T,Pred,Alloc> >& x) 
+      {  m_flat_tree.swap(x.get().m_flat_tree);   return *this;  }
    // accessors:
 
    key_compare key_comp() const 
-      { return m_flat_tree.key_comp(); }
+      { return force<key_compare>(m_flat_tree.key_comp()); }
 
    value_compare value_comp() const 
-      { return value_compare(m_flat_tree.key_comp()); }
+      { return value_compare(force<key_compare>(m_flat_tree.key_comp())); }
 
    allocator_type get_allocator() const 
-      { return m_flat_tree.get_allocator(); }
+      { return force<allocator_type>(m_flat_tree.get_allocator()); }
 
    iterator begin() 
-      { return m_flat_tree.begin(); }
+      { return force<iterator>(m_flat_tree.begin()); }
 
    const_iterator begin() const 
-      { return m_flat_tree.begin(); }
+      { return force<const_iterator>(m_flat_tree.begin()); }
 
    iterator end() 
-      { return m_flat_tree.end(); }
+      { return force<iterator>(m_flat_tree.end()); }
 
    const_iterator end() const 
-      { return m_flat_tree.end(); }
+      { return force<const_iterator>(m_flat_tree.end()); }
 
    reverse_iterator rbegin() 
-      { return m_flat_tree.rbegin(); }
+      { return force<reverse_iterator>(m_flat_tree.rbegin()); }
 
    const_reverse_iterator rbegin() const 
-      { return m_flat_tree.rbegin(); }
+      { return force<const_reverse_iterator>(m_flat_tree.rbegin()); }
 
    reverse_iterator rend() 
-      { return m_flat_tree.rend(); }
+      { return force<reverse_iterator>(m_flat_tree.rend()); }
 
    const_reverse_iterator rend() const 
-      { return m_flat_tree.rend(); }
+      { return force<const_reverse_iterator>(m_flat_tree.rend()); }
 
    bool empty() const 
       { return m_flat_tree.empty(); }
@@ -393,59 +508,67 @@ class flat_multimap
    void swap(flat_multimap<Key,T,Pred,Alloc>& x) 
       { m_flat_tree.swap(x.m_flat_tree); }
 
-   // insert/erase
+   void swap(const detail::moved_object<flat_multimap<Key,T,Pred,Alloc> >& x) 
+      { m_flat_tree.swap(x.get().m_flat_tree); }
 
+   // insert/erase
    iterator insert(const value_type& x) 
-      { return m_flat_tree.insert_equal(x); }
+      { return force<iterator>(m_flat_tree.insert_equal(force<impl_value_type>(x))); }
+
+   iterator insert(const detail::moved_object<value_type>& x) 
+      { return force<iterator>(m_flat_tree.insert_equal(force<impl_moved_value_type>(x))); }
 
    iterator insert(iterator position, const value_type& x) 
-      {  return m_flat_tree.insert_equal(position, x);  }
+      { return force<iterator>(m_flat_tree.insert_equal(force<impl_iterator>(position), force<impl_value_type>(x))); }
+
+   iterator insert(iterator position, const detail::moved_object<value_type>& x) 
+      { return force<iterator>(m_flat_tree.insert_equal(force<impl_iterator>(position), force<impl_moved_value_type>(x))); }
 
    template <class InputIterator>
    void insert(InputIterator first, InputIterator last) 
       {  m_flat_tree.insert_equal(first, last); }
 
    void erase(const_iterator position) 
-      { m_flat_tree.erase(position); }
+      { m_flat_tree.erase(force<impl_const_iterator>(position)); }
 
    size_type erase(const key_type& x) 
       { return m_flat_tree.erase(x); }
 
    void erase(const_iterator first, const_iterator last)
-      { m_flat_tree.erase(first, last); }
+      { m_flat_tree.erase(force<impl_const_iterator>(first), force<impl_const_iterator>(last)); }
 
    void clear() 
       { m_flat_tree.clear(); }
 
    // flat_multimap operations:
 
-   iterator find(const key_type& x) 
-      { return m_flat_tree.find(x); }
+   iterator find(const key_type& x)
+      { return force<iterator>(m_flat_tree.find(x)); }
 
    const_iterator find(const key_type& x) const 
-      { return m_flat_tree.find(x); }
+      { return force<const_iterator>(m_flat_tree.find(x)); }
 
    size_type count(const key_type& x) const 
       { return m_flat_tree.count(x); }
 
    iterator lower_bound(const key_type& x) 
-      {return m_flat_tree.lower_bound(x); }
+      {return force<iterator>(m_flat_tree.lower_bound(x)); }
 
    const_iterator lower_bound(const key_type& x) const 
-      {  return m_flat_tree.lower_bound(x);  }
+      {  return force<const_iterator>(m_flat_tree.lower_bound(x));  }
 
    iterator upper_bound(const key_type& x) 
-      {return m_flat_tree.upper_bound(x); }
+      {return force<iterator>(m_flat_tree.upper_bound(x)); }
 
    const_iterator upper_bound(const key_type& x) const 
-      {  return m_flat_tree.upper_bound(x); }
+      {  return force<const_iterator>(m_flat_tree.upper_bound(x)); }
 
    std::pair<iterator,iterator> equal_range(const key_type& x) 
-      {  return m_flat_tree.equal_range(x);   }
+      {  return force<std::pair<iterator,iterator> >(m_flat_tree.equal_range(x));   }
 
    std::pair<const_iterator,const_iterator> 
       equal_range(const key_type& x) const 
-      {  return m_flat_tree.equal_range(x);   }
+      {  return force<std::pair<const_iterator,const_iterator> >(m_flat_tree.equal_range(x));   }
 
    size_type capacity() const           
       { return m_flat_tree.capacity(); }
@@ -496,6 +619,24 @@ template <class Key, class T, class Pred, class Alloc>
 inline void swap(flat_multimap<Key,T,Pred,Alloc>& x, 
                  flat_multimap<Key,T,Pred,Alloc>& y) 
    {  x.swap(y);  }
+
+template <class Key, class T, class Pred, class Alloc>
+inline void swap(const detail::moved_object<flat_multimap<Key,T,Pred,Alloc> >& x, 
+                 flat_multimap<Key,T,Pred,Alloc>& y) 
+   {  x.get().swap(y);  }
+
+
+template <class Key, class T, class Pred, class Alloc>
+inline void swap(flat_multimap<Key,T,Pred,Alloc>& x, 
+                 const detail::moved_object<flat_multimap<Key,T,Pred,Alloc> > & y) 
+   {  x.swap(y.get());  }
+
+/*!This class is movable*/
+template <class T, class P, class A>
+struct is_movable<flat_multimap<T, P, A> >
+{
+   enum {   value = true };
+};
 
 }} //namespace boost { namespace interprocess {
 

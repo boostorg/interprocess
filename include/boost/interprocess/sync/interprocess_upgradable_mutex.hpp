@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion GaztaÃ±aga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -325,7 +325,7 @@ inline bool interprocess_upgradable_mutex::timed_lock
    //if an exclusive or upgradable lock has been acquired
 	while (this->m_ctrl.exclusive_in || this->m_ctrl.upgradable_in){
 		if(!this->m_first_gate.timed_wait(lock, abs_time))
-         return false;
+         return !(this->m_ctrl.exclusive_in || this->m_ctrl.upgradable_in);
    }
 
    //Mark that exclusive lock has been acquired
@@ -337,7 +337,7 @@ inline bool interprocess_upgradable_mutex::timed_lock
    //Now wait until all readers are gone
 	while (this->m_ctrl.num_upr_shar){
 		if(!this->m_second_gate.timed_wait(lock, abs_time)){
-         return false;
+         return !(this->m_ctrl.num_upr_shar);
       }
    }
    rollback.release();
@@ -404,7 +404,9 @@ inline bool interprocess_upgradable_mutex::timed_lock_upgradable
          || this->m_ctrl.upgradable_in
          || this->m_ctrl.num_upr_shar == constants::max_readers){
 		if(!this->m_first_gate.timed_wait(lock, abs_time)){
-         return false;
+         return!(this->m_ctrl.exclusive_in 
+               || this->m_ctrl.upgradable_in
+               || this->m_ctrl.num_upr_shar == constants::max_readers);
       }
    }
 
@@ -473,7 +475,8 @@ inline bool interprocess_upgradable_mutex::timed_lock_sharable
 	while (this->m_ctrl.exclusive_in
          || this->m_ctrl.num_upr_shar == constants::max_readers){
 		if(!this->m_first_gate.timed_wait(lock, abs_time)){
-         return false;
+         return!(this->m_ctrl.exclusive_in
+               || this->m_ctrl.num_upr_shar == constants::max_readers);
       }
    }
 
@@ -586,7 +589,7 @@ inline bool interprocess_upgradable_mutex::timed_unlock_upgradable_and_lock
 
 	while (this->m_ctrl.num_upr_shar){
 		if(!this->m_second_gate.timed_wait(lock, abs_time)){
-         return false;
+         return !(this->m_ctrl.num_upr_shar);
       }
    }
    rollback.release();

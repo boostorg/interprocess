@@ -30,7 +30,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/interprocess/sync/win32/win32_sync_primitives.hpp>
+#include <boost/interprocess/detail/win32_api.hpp>
 #include <typeinfo>
 
 namespace boost {

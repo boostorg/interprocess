@@ -49,12 +49,13 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-
+#include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <utility>
 #include <functional>
 #include <memory>
 #include <boost/interprocess/containers/tree.hpp>
+#include <boost/interprocess/detail/move.hpp>
 
 
 namespace boost {   namespace interprocess {
@@ -115,8 +116,14 @@ class set
    set(const set<T,Pred,Alloc>& x) 
       : m_tree(x.m_tree) {}
 
+   set(const detail::moved_object<set<T,Pred,Alloc> >& x) 
+      : m_tree(move(x.get().m_tree)) {}
+
    set<T,Pred,Alloc>& operator=(const set<T, Pred, Alloc>& x)
-      {  m_tree = x.m_tree;   return *this;  }
+      {  m_tree = m_tree;   return *this;  }
+
+   set<T,Pred,Alloc>& operator=(const detail::moved_object<set<T, Pred, Alloc> >& x)
+      {  m_tree.swap(x.get().m_tree);   return *this;  }
 
    // accessors:
 
@@ -165,11 +172,20 @@ class set
    void swap(set<T,Pred,Alloc>& x) 
       { m_tree.swap(x.m_tree); }
 
+   void swap(const detail::moved_object<set<T,Pred,Alloc> >& x) 
+      { m_tree.swap(x.get().m_tree); }
+
    // insert/erase
    std::pair<iterator,bool> insert(const value_type& x) 
       {  return m_tree.insert_unique(x);  }
 
+   std::pair<iterator,bool> insert(const detail::moved_object<value_type>& x) 
+      {  return m_tree.insert_unique(x);  }
+
    iterator insert(iterator position, const value_type& x) 
+      {  return m_tree.insert_unique(position, x); }
+
+   iterator insert(iterator position, const detail::moved_object<value_type>& x) 
       {  return m_tree.insert_unique(position, x); }
 
    template <class InputIterator>
@@ -261,6 +277,23 @@ inline void swap(set<T,Pred,Alloc>& x,
                  set<T,Pred,Alloc>& y) 
 {  x.swap(y);  }
 
+template <class T, class Pred, class Alloc>
+inline void swap(set<T,Pred,Alloc>& x, 
+                 detail::moved_object<set<T,Pred,Alloc> >& y) 
+{  x.swap(y.get());  }
+
+template <class T, class Pred, class Alloc>
+inline void swap(detail::moved_object<set<T,Pred,Alloc> >& y, 
+                 set<T,Pred,Alloc>& x) 
+{  y.swap(x.get());  }
+
+/*!This class is movable*/
+template <class T, class P, class A>
+struct is_movable<set<T, P, A> >
+{
+   enum {   value = true };
+};
+
 // Forward declaration of operators < and ==, needed for friend declaration.
 
 template <class T, class Pred, class Alloc>
@@ -317,8 +350,14 @@ class multiset
    multiset(const multiset<T,Pred,Alloc>& x) 
       : m_tree(x.m_tree) {}
 
+   multiset(const detail::moved_object<multiset<T,Pred,Alloc> >& x) 
+      : m_tree(move(x.get().m_tree)) {}
+
    multiset<T,Pred,Alloc>& operator=(const multiset<T,Pred,Alloc>& x) 
       {  m_tree = x.m_tree;   return *this;  }
+
+   multiset<T,Pred,Alloc>& operator=(const detail::moved_object<multiset<T,Pred,Alloc> >& x) 
+      {  m_tree.swap(x.get().m_tree);   return *this;  }
 
    // accessors:
 
@@ -367,11 +406,20 @@ class multiset
    void swap(multiset<T,Pred,Alloc>& x) 
       { m_tree.swap(x.m_tree); }
 
+   void swap(const detail::moved_object<multiset<T,Pred,Alloc> >& x) 
+      { m_tree.swap(x.get().m_tree); }
+
    // insert/erase
    iterator insert(const value_type& x) 
       {  return m_tree.insert_equal(x);   }
 
+   iterator insert(const detail::moved_object<value_type>& x) 
+      {  return m_tree.insert_equal(x);  }
+
    iterator insert(iterator position, const value_type& x) 
+      {  return m_tree.insert_equal(position, x);  }
+
+   iterator insert(iterator position, const detail::moved_object<value_type>& x) 
       {  return m_tree.insert_equal(position, x);  }
 
    template <class InputIterator>
@@ -462,6 +510,24 @@ template <class T, class Pred, class Alloc>
 inline void swap(multiset<T,Pred,Alloc>& x, 
                  multiset<T,Pred,Alloc>& y) 
 {  x.swap(y);  }
+
+template <class T, class Pred, class Alloc>
+inline void swap(multiset<T,Pred,Alloc>& x, 
+                 detail::moved_object<multiset<T,Pred,Alloc> >& y) 
+{  x.swap(y.get());  }
+
+template <class T, class Pred, class Alloc>
+inline void swap(detail::moved_object<multiset<T,Pred,Alloc> >& y, 
+                 multiset<T,Pred,Alloc>& x) 
+{  y.swap(x.get());  }
+
+/*!This class is movable*/
+template <class T, class P, class A>
+struct is_movable<multiset<T, P, A> >
+{
+   enum {   value = true };
+};
+
 
 }} //namespace boost {   namespace interprocess {
 

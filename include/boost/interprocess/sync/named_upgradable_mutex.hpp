@@ -19,10 +19,10 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/shared_memory.hpp>
+#include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/sync/interprocess_upgradable_mutex.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 /*!\file
    Describes a named upgradable mutex class for inter-process synchronization
@@ -211,7 +211,7 @@ class named_upgradable_mutex
    interprocess_upgradable_mutex *mutex() const
    {  return static_cast<interprocess_upgradable_mutex*>(m_shmem.get_address()); }
 
-   shared_memory        m_shmem;
+   detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
 
    class construct_func_t;
 };
@@ -224,7 +224,7 @@ class named_upgradable_mutex::construct_func_t
    construct_func_t(CreationType type)
       :  m_creation_type(type){}
 
-   bool operator()(const mapped_region &region, bool created) const
+   bool operator()(void *address, std::size_t size, bool created) const
    {   
       switch(m_creation_type){
          case open_only:
@@ -233,7 +233,7 @@ class named_upgradable_mutex::construct_func_t
          case create_only:
          case open_or_create:
             if(created){
-               new(region.get_address())interprocess_upgradable_mutex;
+               new(address)interprocess_upgradable_mutex;
             }
             return true;
          break;
@@ -255,8 +255,10 @@ inline named_upgradable_mutex::named_upgradable_mutex
    (detail::create_only_t, const char *name)
    :  m_shmem  (create_only
                ,name
-               ,sizeof(interprocess_upgradable_mutex)
-               ,memory_mappable::read_write
+               ,sizeof(interprocess_upgradable_mutex) +
+                  detail::managed_open_or_create_impl<shared_memory_object>::
+                     ManagedOpenOrCreateUserOffset
+               ,read_write
                ,0
                ,construct_func_t(construct_func_t::create_only))
 {}
@@ -265,8 +267,10 @@ inline named_upgradable_mutex::named_upgradable_mutex
    (detail::open_or_create_t, const char *name)
    :  m_shmem  (open_or_create
                ,name
-               ,sizeof(interprocess_upgradable_mutex)
-               ,memory_mappable::read_write
+               ,sizeof(interprocess_upgradable_mutex) +
+                  detail::managed_open_or_create_impl<shared_memory_object>::
+                     ManagedOpenOrCreateUserOffset
+               ,read_write
                ,0
                ,construct_func_t(construct_func_t::open_or_create))
 {}
@@ -275,7 +279,7 @@ inline named_upgradable_mutex::named_upgradable_mutex
    (detail::open_only_t, const char *name)
    :  m_shmem  (open_only
                ,name
-               ,memory_mappable::read_write
+               ,read_write
                ,0
                ,construct_func_t(construct_func_t::open_only))
 {}

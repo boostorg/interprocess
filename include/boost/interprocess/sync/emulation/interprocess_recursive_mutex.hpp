@@ -24,7 +24,7 @@
 // It is provided "as is" without express or implied warranty.
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/interprocess/exceptions.hpp>
 
@@ -39,8 +39,8 @@ inline interprocess_recursive_mutex::~interprocess_recursive_mutex(){}
 
 inline void interprocess_recursive_mutex::lock()
 {
-   unsigned long pNumber = detail::get_current_thread_id();
-   if(pNumber == m_nOwner){
+   detail::OS_thread_id_t th_id = detail::get_current_thread_id();
+   if(detail::equal_thread_id(th_id, m_nOwner)){
       if((unsigned int)(m_nLockCount+1) == 0){
          //Overflow, throw an exception
          throw interprocess_exception();
@@ -49,15 +49,15 @@ inline void interprocess_recursive_mutex::lock()
    }
    else{
       m_mutex.lock();
-      m_nOwner = pNumber;
+      m_nOwner = th_id;
       m_nLockCount = 1;
    }
 }
 
 inline bool interprocess_recursive_mutex::try_lock()
 {
-   unsigned long pNumber = detail::get_current_thread_id();
-   if(pNumber == m_nOwner) {  // we own it
+   detail::OS_thread_id_t th_id = detail::get_current_thread_id();
+   if(detail::equal_thread_id(th_id, m_nOwner)) {  // we own it
       if((unsigned int)(m_nLockCount+1) == 0){
          //Overflow, throw an exception
          throw interprocess_exception();
@@ -66,7 +66,7 @@ inline bool interprocess_recursive_mutex::try_lock()
       return true;
    }
    if(m_mutex.try_lock()){
-      m_nOwner = pNumber;
+      m_nOwner = th_id;
       m_nLockCount = 1;
       return true;
    }
@@ -75,8 +75,8 @@ inline bool interprocess_recursive_mutex::try_lock()
 
 inline bool interprocess_recursive_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
 {
-   unsigned long pNumber = detail::get_current_thread_id();
-   if(pNumber == m_nOwner) {  // we own it
+   detail::OS_thread_id_t th_id = detail::get_current_thread_id();
+   if(detail::equal_thread_id(th_id, m_nOwner)) {  // we own it
       if((unsigned int)(m_nLockCount+1) == 0){
          //Overflow, throw an exception
          throw interprocess_exception();
@@ -85,7 +85,7 @@ inline bool interprocess_recursive_mutex::timed_lock(const boost::posix_time::pt
       return true;
    }
    if(m_mutex.timed_lock(abs_time)){
-      m_nOwner = pNumber;
+      m_nOwner = th_id;
       m_nLockCount = 1;
       return true;
    }
@@ -95,8 +95,8 @@ inline bool interprocess_recursive_mutex::timed_lock(const boost::posix_time::pt
 inline void interprocess_recursive_mutex::unlock()
 {
    #ifndef NDEBUG
-   unsigned long pNumber = detail::get_current_thread_id();
-   assert(pNumber == m_nOwner);
+   detail::OS_thread_id_t th_id = detail::get_current_thread_id();
+   assert(detail::equal_thread_id(th_id, m_nOwner));
    #endif
    --m_nLockCount;
    if(!m_nLockCount){

@@ -34,7 +34,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// This file comes from SGI's stl_slist.h file. Modified by Ion Gazta�ga 2004-2005
+// This file comes from SGI's stl_slist.h file. Modified by Ion Gaztañaga 2004-2005
 // Renaming, isolating and porting to generic algorithms. Pointer typedef 
 // set to allocator::pointer to allow placing it in shared memory.
 //
@@ -56,10 +56,11 @@
 #include <boost/iterator.hpp>
 #include <boost/type_traits/is_integral.hpp>
 #include <boost/detail/allocator_utilities.hpp>
+#include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 
-//#include <new>
+#include <iterator>
 #include <utility>
 #include <memory>
 #include <functional>
@@ -68,14 +69,14 @@
 namespace boost{  namespace interprocess{
 
 template<class Alloc>
-struct shmem_slist_node;
+struct interprocess_slist_node;
 
 
 template<class Alloc>
-struct shmem_slist_node_base
+struct interprocess_slist_node_base
 {
    typedef typename boost::detail::allocator::
-         rebind_to<Alloc, shmem_slist_node<Alloc> >::type   NodeAlloc;
+         rebind_to<Alloc, interprocess_slist_node<Alloc> >::type   NodeAlloc;
    typedef typename  NodeAlloc::pointer                     NodePtr;
    typedef typename  NodeAlloc::const_pointer               NodeCPtr;
 
@@ -151,35 +152,38 @@ struct shmem_slist_node_base
 };
 
 template<class Alloc>
-struct shmem_slist_node
-   : public shmem_slist_node_base<Alloc>
+struct interprocess_slist_node
+   : public interprocess_slist_node_base<Alloc>
 {
-   typedef shmem_slist_node_base<Alloc>                     base_t;
+   typedef interprocess_slist_node_base<Alloc>                     base_t;
    typedef typename boost::detail::allocator::
-         rebind_to<Alloc, shmem_slist_node<Alloc> >::type   NodeAlloc;
+         rebind_to<Alloc, interprocess_slist_node<Alloc> >::type   NodeAlloc;
    typedef typename  NodeAlloc::pointer                     NodePtr;
    typedef typename  NodeAlloc::const_pointer               NodeCPtr;
    typedef typename  Alloc::value_type                      value_t;
 
-   shmem_slist_node(const value_t & value)
+   interprocess_slist_node(const value_t & value)
       : m_data(value){}
+
+   interprocess_slist_node(const detail::moved_object<value_t> &value)
+      : m_data(move(value.get())){}
 
    value_t  m_data;
 };
-
+/*
 template<class T, class A, bool convertible_construct>
-struct shmem_slist_alloc
+struct interprocess_slist_alloc
    :  public boost::detail::allocator::
-               rebind_to<A, shmem_slist_node<A> >::type,
+               rebind_to<A, interprocess_slist_node<A> >::type,
       public boost::detail::allocator::
             rebind_to<A, typename boost::detail::allocator::
-               rebind_to<A, shmem_slist_node<A> >::
+               rebind_to<A, interprocess_slist_node<A> >::
                   type::pointer >::type,
       public A
 {
-   typedef shmem_slist_node<A>                        Node;
+   typedef interprocess_slist_node<A>                        Node;
    typedef typename boost::detail::allocator::
-      rebind_to<A, shmem_slist_node<A> >::type        NodeAlloc;
+      rebind_to<A, interprocess_slist_node<A> >::type        NodeAlloc;
    typedef typename boost::detail::allocator::
       rebind_to<A, typename NodeAlloc::pointer>::type PtrAlloc;
    typedef A                                          ValAlloc;
@@ -193,19 +197,19 @@ struct shmem_slist_alloc
       boost::has_trivial_destructor<T>::value 
    };
 
-   shmem_slist_alloc(const ValAlloc &a) 
+   interprocess_slist_alloc(const ValAlloc &a) 
       : NodeAlloc(a), PtrAlloc(a), ValAlloc(a) 
       {  priv_init();   }
 
-   shmem_slist_alloc(const NodeAlloc &a) 
+   interprocess_slist_alloc(const NodeAlloc &a) 
       : NodeAlloc(a), PtrAlloc(a), ValAlloc(a) 
       {  priv_init();   }
 
-   shmem_slist_alloc(const shmem_slist_alloc &other)
+   interprocess_slist_alloc(const interprocess_slist_alloc &other)
       : NodeAlloc(other), PtrAlloc(other), ValAlloc(other)
       {  priv_init();   }
 
-   ~shmem_slist_alloc()
+   ~interprocess_slist_alloc()
    {
       if(!boost::has_trivial_constructor<NodePtr>::value){
          PtrAlloc::destroy(&m_node->m_next);
@@ -273,7 +277,7 @@ struct shmem_slist_alloc
       NodeAlloc::deallocate(node, 1);
    }
    
-   void swap(shmem_slist_alloc &x)
+   void swap(interprocess_slist_alloc &x)
    {
       if (static_cast<NodeAlloc&>(*this) != 
           static_cast<NodeAlloc&>(x)){
@@ -290,15 +294,15 @@ struct shmem_slist_alloc
  protected:
    typename NodeAlloc::pointer m_node;
 };
-
+*/
 template<class T, class A>
-struct shmem_slist_alloc<T, A, true>
+struct interprocess_slist_alloc/*<T, A, true>*/
    :  public boost::detail::allocator::
-         rebind_to<A, shmem_slist_node<A> >::type
+         rebind_to<A, interprocess_slist_node<A> >::type
 {
-   typedef shmem_slist_node<A>                        Node;
+   typedef interprocess_slist_node<A>                        Node;
    typedef typename boost::detail::allocator::
-      rebind_to<A, shmem_slist_node<A> >::type        NodeAlloc;
+      rebind_to<A, interprocess_slist_node<A> >::type        NodeAlloc;
    typedef typename boost::detail::allocator::
       rebind_to<A, typename NodeAlloc::pointer>::type PtrAlloc;
    typedef A                                          ValAlloc;
@@ -312,25 +316,34 @@ struct shmem_slist_alloc<T, A, true>
       boost::has_trivial_destructor<T>::value 
    };
 
-   shmem_slist_alloc(const ValAlloc &a) 
+   interprocess_slist_alloc(const ValAlloc &a) 
       : NodeAlloc(a)
    {  priv_init();   }
 
-   shmem_slist_alloc(const NodeAlloc &a) 
+   interprocess_slist_alloc(const detail::moved_object<ValAlloc> &a) 
+      : NodeAlloc(move(a))
+   {  this->priv_init();   }
+
+   interprocess_slist_alloc(const NodeAlloc &a) 
       : NodeAlloc(a)
    {  priv_init();   }
 
-   shmem_slist_alloc(const shmem_slist_alloc &other)
+   interprocess_slist_alloc(const interprocess_slist_alloc &other)
       : NodeAlloc(other)
    {  priv_init();   }
 
-  ~shmem_slist_alloc()
-   {
+   interprocess_slist_alloc(const detail::moved_object<interprocess_slist_alloc> &other)
+      : NodeAlloc(other.get())
+   {  this->swap(other.get());  }
+
+   ~interprocess_slist_alloc()
+   {/*
       if(!boost::has_trivial_destructor<NodePtr>::value){
          PtrAlloc ptr_alloc(*this);
          ptr_alloc.destroy(ptr_alloc.address(m_node->m_next));
       }
       NodeAlloc::deallocate(m_node, 1); 
+   */
    }
 
    typename NodeAlloc::size_type max_size() const
@@ -341,9 +354,20 @@ struct shmem_slist_alloc<T, A, true>
    {
       NodePtr p = NodeAlloc::allocate(1);
       scoped_ptr<Node, Deallocator>node_deallocator(p, *this);
-      NodeAlloc::construct(p, x);
+      construct(p, x);
+//      NodeAlloc::construct(p, x);
       node_deallocator.release();
       p->m_next = NodePtr(0);
+      return (p);
+   }
+
+   template<class Convertible>
+   NodePtr create_node(const detail::moved_object<Convertible>& x)
+   {
+      NodePtr p = NodeAlloc::allocate(1);
+      scoped_ptr<Node, Deallocator>node_deallocator(p, *this);
+      construct(p, x);
+      node_deallocator.release();
       return (p);
    }
 
@@ -355,23 +379,59 @@ struct shmem_slist_alloc<T, A, true>
       NodeAlloc::deallocate(node, 1);
    }
 
-   void swap(shmem_slist_alloc &x)
+   void swap(interprocess_slist_alloc &x)
    {
       NodeAlloc& this_alloc  = static_cast<NodeAlloc&>(*this);
       NodeAlloc& other_alloc = static_cast<NodeAlloc&>(x);
       if (this_alloc != other_alloc){
          detail::do_swap(this_alloc, other_alloc);
       }
-      detail::do_swap(this->m_node, x.m_node);     
+
+      NodePtr this_end  = this->end_node();
+      NodePtr x_end     = x.end_node();
+
+      NodePtr prev_this = Node::previous(this_end, this_end);
+      NodePtr prev_x    = Node::previous(x_end,    x_end);
+
+      bool this_empty = is_empty();
+      bool x_empty    = x.is_empty();
+
+      std::swap(this->m_end.m_next, x.m_end.m_next);
+
+      if(this_empty)
+         x.m_end.m_next = x_end;
+      else
+         prev_this->m_next = x_end;
+
+      if(x_empty)
+         this->m_end.m_next   = this_end;
+      else
+         prev_x->m_next = this_end;
    }
 
  protected:
-   typename NodeAlloc::pointer m_node;
+//   typename NodeAlloc::pointer m_node;
+   interprocess_slist_node_base<A> m_end;
+
+   NodePtr end_node() const
+   {  return NodePtr(static_cast<Node*>(const_cast<interprocess_slist_node_base<A> *>(&this->m_end)));  }
+
+   bool is_empty()
+   { return this->m_end.m_next == this->end_node(); }
 
  private:
 
+   template<class Convertible>
+   static void construct(const NodePtr &ptr, const Convertible &value)
+   {  new(detail::get_pointer(ptr)) Node(value);  }
+
+   static void destroy(const NodePtr &ptr)
+   {  detail::get_pointer(ptr)->~Node();  }
+
     void priv_init()
     {
+      this->m_end.m_next = this->end_node();
+      /*
        m_node = NodeAlloc::allocate(1);
        if(!boost::has_trivial_constructor<NodePtr>::value){
          typedef typename PtrAlloc::pointer NodePtrPtr;
@@ -390,17 +450,17 @@ struct shmem_slist_alloc<T, A, true>
       }
       else{
          m_node->m_next = m_node;
-      }
-    }
+      }*/
+   }
 };
 
 template <class T, class Alloc>
 class slist 
-   : protected shmem_slist_alloc<T, Alloc, 
-               has_convertible_construct<Alloc>::value>
+   : protected interprocess_slist_alloc<T, Alloc/*, 
+               has_convertible_construct<Alloc>::value*/>
 {
-   typedef shmem_slist_alloc<T, Alloc, 
-               has_convertible_construct<Alloc>::value>     Base;
+   typedef interprocess_slist_alloc<T, Alloc/*, 
+               has_convertible_construct<Alloc>::value*/>     Base;
 
    typedef typename Base::NodePtr                  NodePtr;
  public:
@@ -505,30 +565,41 @@ class slist
    };
 
  private:
-   typedef shmem_slist_node<Alloc>              Node;
+   typedef interprocess_slist_node<Alloc>       Node;
    typedef typename Base::NodeAlloc             NodeAlloc;
    typedef typename Base::PtrAlloc              PtrAlloc;
    typedef typename Base::ValAlloc              ValAlloc;
    typedef typename  NodeAlloc::const_pointer   NodeCPtr;
 
  public:
-   explicit slist(const allocator_type& a = allocator_type()) : Base(a) {}
+   explicit slist(const allocator_type& a = allocator_type())
+      :  Base(a), m_size(0)
+   {}
 
-   explicit slist(size_type n, const value_type& x = value_type(),
-                  const allocator_type& a =  allocator_type()) : Base(a)
-      { this->insert_after_fill(this->m_node, n, x); }
+   explicit slist(size_type n, const value_type& x,
+                  const allocator_type& a =  allocator_type())
+      :  Base(a), m_size(0)
+   { this->insert_after_fill(this->end_node(), n, x); }
+
+   explicit slist(size_type n)
+      :  Base(move(allocator_type())), m_size(0)
+   { this->resize(n); }
 
    // We don't need any dispatching tricks here, because insert_after_range
    // already does them.
    template <class InpIt>
    slist(InpIt first, InpIt last,
          const allocator_type& a =  allocator_type()) 
-      : Base(a)
-      { insert_after_range(this->m_node, first, last); }
+      : Base(a), m_size(0)
+   { this->insert_after_range(this->end_node(), first, last); }
 
    slist(const slist& x) 
-      : Base(static_cast<const NodeAlloc&>(x))
-      { insert_after_range(this->m_node, x.begin(), x.end()); }
+      : Base(static_cast<const NodeAlloc&>(x)), m_size(0)
+   { this->insert_after_range(this->end_node(), x.begin(), x.end()); }
+
+   slist(const detail::moved_object<slist> &x)
+      : Base(move((Base&)x.get())), m_size(x.get().m_size)
+   {}
 
    slist& operator= (const slist& x)
    {
@@ -538,7 +609,8 @@ class slist
       return *this;
    }
 
-  ~slist() {   this->clear();}
+   ~slist() 
+   {  this->clear(); }
 
 public:
    // assign(), a generalized assignment member function.  Two
@@ -547,13 +619,14 @@ public:
    // or not the type is an integer.
 
    void assign(size_type n, const T& val)
-      { this->fill_assign(n, val); }
+   { this->fill_assign(n, val); }
 
    void fill_assign(size_type n, const T& val)
    {
-      NodePtr prev   = this->m_node;
-      NodePtr node   = this->m_node->m_next;
-      for ( ; node != this->m_node && n > 0 ; --n) {
+      NodePtr end_n = this->end_node();
+      NodePtr prev   = end_n;
+      NodePtr node   = end_n->m_next;
+      for ( ; node != end_n && n > 0 ; --n) {
          node->m_data = val;
          prev = node;
          node = node->m_next;
@@ -561,7 +634,7 @@ public:
       if (n > 0)
          this->insert_after_fill(prev, n, val);
       else
-         this->erase_after(prev, this->m_node);
+         this->erase_after(prev, end_n);
    }
 
    template <class InpIt>
@@ -574,15 +647,16 @@ public:
 
    template <class Int>
    void assign_dispatch(Int n, Int val, boost::mpl::true_)
-      { this->fill_assign((size_type) n, (T) val); }
+   {  this->fill_assign((size_type) n, (T)val); }
 
    template <class InpIt>
    void assign_dispatch(InpIt first, InpIt last,
                            boost::mpl::false_)
    {
-      NodePtr prev = this->m_node;
-      NodePtr node = this->m_node->m_next;
-      while (node != this->m_node && first != last) {
+      NodePtr end_n = this->end_node();
+      NodePtr prev = end_n;
+      NodePtr node = end_n->m_next;
+      while (node != end_n && first != last) {
          node->m_data = *first;
          prev = node;
          node = node->m_next;
@@ -591,88 +665,112 @@ public:
       if (first != last)
          this->insert_after_range(prev, first, last);
       else
-         this->erase_after(prev, this->m_node);
+         this->erase_after(prev, end_n);
    }
 
-public:
+   public:
 
    iterator begin() 
-      { return iterator(this->m_node->m_next); }
+   { return iterator(this->end_node()->m_next); }
 
    const_iterator begin() const 
-      { return const_iterator(this->m_node->m_next);}
+   { return const_iterator(this->end_node()->m_next);}
 
-   iterator end() { return iterator(this->m_node); }
+   iterator end()
+   {  return iterator(this->end_node());  }
 
-   const_iterator end() const { return const_iterator(this->m_node); }
+   const_iterator end() const
+   {  return const_iterator(this->end_node());  }
 
    // Experimental new feature: before_begin() returns a
    // non-dereferenceable iterator that, when incremented, yields
    // begin().  This iterator may be used as the argument to
    // insert_after, erase_after, etc.
    iterator before_begin() 
-      { return iterator(this->m_node); }
+   {  return iterator(this->end_node());  }
 
    const_iterator before_begin() const
-      { return const_iterator(this->m_node); }
+   {  return const_iterator(this->end_node());  }
 
    size_type size() const 
-      { return Node::size(this->m_node->m_next, this->m_node->m_next); }
+   {  return this->m_size; }
 
-   size_type maxsize() const 
-      { return size_type(-1); }
+   size_type max_size() const 
+   {  return Base::max_size();  }
 
    bool empty() const 
-      { return this->m_node->m_next == this->m_node; }
+   {  return !this->m_size;   /*this->m_end.m_next == this->end_node();*/ }
 
    void swap(slist& x)
-      {  Base::swap(x); }
+   {
+      Base::swap(x);
+      std::swap(this->m_size, x.m_size);
+   }
 
- public:
+   public:
 
    reference front() 
-      { return this->m_node->m_next->m_data; }
+   { return this->end_node()->m_next->m_data; }
 
    const_reference front() const 
-      { return this->m_node->m_next->m_data; }
+   { return this->end_node()->m_next->m_data; }
 
-   void push_front(const value_type& x = value_type())   
-      { Node::make_link(this->m_node, this->create_node(x)); }
-
-   void pop_front() 
+   void push_front(const value_type& x)
    {
-      NodePtr node = this->m_node->m_next;
-      this->m_node->m_next = node->m_next;
+      Node::make_link(this->end_node(), this->create_node(x));
+      ++this->m_size;
+   }
+
+   void push_front(const detail::moved_object<T>& x)
+   {
+      Node::make_link(this->end_node(), this->create_node(x));
+      ++this->m_size;
+   }
+
+   void pop_front()
+   {
+      NodePtr node = this->end_node()->m_next;
+      this->end_node()->m_next = node->m_next;
       this->destroy_node(node);
+      --this->m_size;
    }
 
    iterator previous(const_iterator pos) 
-      { return iterator( Node::previous(this->m_node, pos.m_ptr));  }
+   {  return iterator( Node::previous(this->end_node(), pos.m_ptr)); }
 
    const_iterator previous(const_iterator pos) const 
-      {  return const_iterator(Node::previous(this->m_node, pos.m_ptr));   }
+   {  return const_iterator(Node::previous(this->end_node(), pos.m_ptr));  }
 
-   iterator insert_after(iterator prev_pos, const value_type& x = value_type()) 
-      {  return iterator(insert_after(prev_pos.m_ptr, x)); }
+   iterator insert_after(iterator prev_pos, const value_type& x) 
+   {  return iterator(insert_after(prev_pos.m_ptr, x)); }
+
+   iterator insert_after(iterator prev_pos, const detail::moved_object<value_type>& x) 
+   {  return iterator(insert_after(prev_pos.m_ptr, x)); }
 
    void insert_after(iterator prev_pos, size_type n, const value_type& x) 
-      {  this->insert_after_fill(prev_pos.m_ptr, n, x); }
+   {  this->insert_after_fill(prev_pos.m_ptr, n, x); }
 
    // We don't need any dispatching tricks here, because insert_after_range
    // already does them.
    template <class InIter>
    void insert_after(iterator prev_pos, InIter first, InIter last) 
-      {  this->insert_after_range(prev_pos.m_ptr, first, last);  }
+   {  this->insert_after_range(prev_pos.m_ptr, first, last);  }
 
-   iterator insert(iterator prev_pos, const value_type& x = value_type()) 
+   iterator insert(iterator prev_pos, const value_type& x) 
    {
       return iterator(insert_after(
-                        Node::previous(this->m_node, prev_pos.m_ptr), x));
+                        Node::previous(this->end_node(), prev_pos.m_ptr), x));
+   }
+
+   iterator insert(iterator prev_pos, const detail::moved_object<value_type>& x) 
+   {
+      return iterator(insert_after(
+                        Node::previous(this->end_node(), prev_pos.m_ptr), x));
    }
 
    void insert(iterator pos, size_type n, const value_type& x) 
    {
-      this->insert_after_fill(Node::previous(this->m_node, pos.m_ptr), n, x);
+      this->insert_after_fill(Node::previous(this->end_node(), pos.m_ptr), n, x);
    } 
       
    // We don't need any dispatching tricks here, because insert_after_range
@@ -680,42 +778,72 @@ public:
    template <class InIter>
    void insert(iterator pos, InIter first, InIter last) 
    {
-      this->insert_after_range(Node::previous(this->m_node, pos.m_ptr), 
+      this->insert_after_range(Node::previous(this->end_node(), pos.m_ptr), 
                                first, last);
    }
 
    iterator erase_after(iterator prev_pos) 
-      {  return iterator(this->erase_after(prev_pos.m_ptr)); }
+   {  return iterator(this->erase_after(prev_pos.m_ptr)); }
 
    iterator erase_after(iterator before_first, iterator last) 
-      {  return iterator(this->erase_after(before_first.m_ptr, last.m_ptr));  } 
+   {  return iterator(this->erase_after(before_first.m_ptr, last.m_ptr));  }
 
    iterator erase(iterator pos) 
-      {  return iterator(this->erase_after(Node::previous(this->m_node, pos.m_ptr)));   }
+   {  return iterator(this->erase_after(Node::previous(this->end_node(), pos.m_ptr))); }
 
    iterator erase(iterator first, iterator last) 
    {
       return iterator(this->erase_after(
-         Node::previous(this->m_node, first.m_ptr), last.m_ptr));
+         Node::previous(this->end_node(), first.m_ptr), last.m_ptr));
    }
 
-   void resize(size_type newsize, const T& x = T())
+   void resize(size_type newsize, const T& x)
    {
-      NodePtr cur = this->m_node;
-      while (cur->m_next != this->m_node && newsize > 0) {
+      NodePtr end_n  = this->end_node();
+      NodePtr cur    = end_n;
+      while (cur->m_next != end_n && newsize > 0) {
          --newsize;
          cur = cur->m_next;
       }
-      if (cur->m_next != this->m_node) 
-         this->erase_after(cur, this->m_node);
+      if (cur->m_next != end_n) 
+         this->erase_after(cur, end_n);
       else
          this->insert_after_fill(cur, newsize, x);
    }
 
-   void clear() 
-      { this->erase_after(this->m_node, this->m_node); }
+   void resize(size_type newsize)
+   {
+      NodePtr end_n  = this->end_node();
+      NodePtr cur    = end_n;
+      size_type len = this->size();
 
-public:
+      while (cur->m_next != end_n && newsize > 0) {
+         --newsize;
+         cur = cur->m_next;
+      }
+      if (cur->m_next != end_n){
+         this->erase_after(cur, end_n);
+      }
+      else{
+         size_type n = newsize - len;
+         while(n--){
+            T default_constructed;
+            if(boost::is_scalar<T>::value){
+               //Value initialization hack. Fix me!
+               new(&default_constructed)T();
+            }
+            cur = this->insert_after(cur, move(default_constructed));
+         }
+      }
+   }
+
+   void clear() 
+   {
+      this->erase_after(this->end_node(), this->end_node());
+      this->m_size = 0;
+   }
+
+   public:
    // Removes all of the elements from the list x to *this, inserting
    // them immediately after pos.  x must not be *this.  Complexity:
    // linear in x.size().
@@ -723,15 +851,20 @@ public:
    {
       if((NodeAlloc&)*this == (NodeAlloc&)x){
          if (!x.empty()){
-            Node::splice_after(prev_pos.m_ptr, x.m_node, 
-                               Node::previous(x.m_node, x.m_node));
+            size_type x_size = x.size();
+            Node::splice_after(prev_pos.m_ptr, x.end_node(), 
+                               Node::previous(x.end_node(), x.end_node()));
+            this->m_size += x_size;
+            x.m_size = 0;
          }
       }
       else{
-         this->insert_after(prev_pos, x.begin(), x.end());
-         x.clear();
+		   throw std::runtime_error("slist::splice called with unequal allocators");
       }
    }
+
+   void splice_after(iterator prev_pos, const detail::moved_object<slist>& x)
+   {  this->splice_after(prev_pos, x.get()); }
 
    // Moves the element that follows prev to *this, inserting it immediately
    //  after pos.  This is constant time.
@@ -739,12 +872,16 @@ public:
    {
       if((NodeAlloc&)*this == (NodeAlloc&)x){
          Node::splice_after(prev_pos.m_ptr, prev.m_ptr, prev.m_ptr->m_next);
+         ++this->m_size;
+         --x.m_size;
       }
       else{
-         this->insert_after(prev_pos, *prev);
-         x.erase_after(prev);
+		   throw std::runtime_error("slist::splice called with unequal allocators");
       }
    }
+
+   void splice_after(iterator prev_pos, const detail::moved_object<slist>& x, iterator prev)
+   {  return splice_after(prev_pos, x.get(), prev);   }
 
    // Moves the range [before_first + 1, before_last + 1) to *this,
    //  inserting it immediately after pos.  This is constant time.
@@ -753,90 +890,62 @@ public:
    {
       if((NodeAlloc&)*this == (NodeAlloc&)x){
          if (before_first != before_last){
-            Node::splice_after(prev_pos.m_ptr, 
-               before_first.m_ptr, before_last.m_ptr);
+            size_type dist = std::distance(before_first, before_last);
+            Node::splice_after(prev_pos.m_ptr, before_first.m_ptr, before_last.m_ptr);
+            this->m_size += dist;
+            x.m_size     -= dist;
          }
       }
       else{
-         this->insert_after(prev_pos, x.begin(), x.end());
-         x.erase_after(before_first, before_last);
+		   throw std::runtime_error("slist::splice called with unequal allocators");
       }
    }
+
+   void splice_after(iterator prev_pos,      const detail::moved_object<slist>& x, 
+                     iterator before_first,  iterator before_last)
+   {  this->splice_after(prev_pos, x.get(), before_first, before_last); }
 
    // Linear in distance(begin(), pos), and linear in x.size().
    void splice(iterator pos, slist& x) 
-   {
-      if((NodeAlloc&)*this == (NodeAlloc&)x){
-         if (!x.empty()){
-            Node::splice_after
-               (
-                  Node::previous(this->m_node, pos.m_ptr),
-                  x.m_node, 
-                  Node::previous(x.m_node, x.m_node)
-               );
-         }
-      }
-      else{
-         insert(pos, x.begin(), x.end());
-         x.clear();
-      }
-   }
+   {  this->splice_after(this->previous(pos), x);  }
+
+   // Linear in distance(begin(), pos), and linear in x.size().
+   void splice(iterator pos, const detail::moved_object<slist>& x) 
+   {  return this->splice(pos, x.get());  }
 
    // Linear in distance(begin(), pos), and in distance(x.begin(), i).
    void splice(iterator pos, slist& x, iterator i) 
-   {
-      if((NodeAlloc&)*this == (NodeAlloc&)x){
-         iterator j = i;
-         ++j;
-         if (pos == i || pos == j) return;
-         Node::splice_after
-            (
-               Node::previous(this->m_node, pos.m_ptr),
-               Node::previous(x.m_node, i.m_ptr),
-               i.m_ptr
-            );
-      }
-      else{
-         insert(pos, *i);
-         x.erase(i);
-      }
-   }
+   {  this->splice_after(this->previous(pos), x, i);  }
+
+   // Linear in distance(begin(), pos), and in distance(x.begin(), i).
+   void splice(iterator pos, const detail::moved_object<slist>& x, iterator i)
+   {  this->splice(pos, x.get(), i);   }
 
    // Linear in distance(begin(), pos), in distance(x.begin(), first),
    // and in distance(first, last).
    void splice(iterator pos, slist& x, iterator first, iterator last)
-   {
-      if((NodeAlloc&)*this == (NodeAlloc&)x){
-         if (first != last){
-            Node::splice_after
-               (
-                  Node::previous(this->m_node, pos.m_ptr),
-                  Node::previous(x.m_node, first.m_ptr),
-                  Node::previous(first.m_ptr, last.m_ptr)
-               );
-         }
-      }
-      else{
-         insert(pos, x.begin(), x.end());
-         x.erase(first, last);
-      }
-   }
+   {  this->splice_after(this->previous(pos), x, first, last);  }
+
+   void splice(iterator pos, const detail::moved_object<slist>& x, iterator first, iterator last)
+   {  this->splice(pos, x.get(), first, last);  }
 
    void reverse() 
    { 
-      if (this->m_node->m_next != this->m_node)
-         this->m_node->m_next = Node::reverse(this->m_node->m_next, 
-                                              this->m_node->m_next);
+      if (this->end_node()->m_next != this->end_node()){
+         this->end_node()->m_next = Node::reverse(this->end_node()->m_next, 
+                                                  this->end_node()->m_next);
+      }
    }
 
    void remove(const T& value)
-      {  this->remove_if(value_equal_to_this(value));  }
+   {  this->remove_if(value_equal_to_this(value));  }
 
    template <class Pred> 
    void remove_if(Pred pred)
    {
-      NodePtr cur = this->m_node;
-      while (cur->m_next != this->m_node) {
+      NodePtr end_n = this->end_node();
+      NodePtr cur = end_n;
+      while (cur->m_next != end_n) {
          if (pred(cur->m_next->m_data))
             this->erase_after(cur);
          else
@@ -845,14 +954,15 @@ public:
    }
 
    void unique()
-      {  this->unique(value_equal());  }
+   {  this->unique(value_equal());  }
 
    template <class Pred> 
    void unique(Pred pred)
    {
-      NodePtr cur = this->m_node->m_next;
-      if (cur != this->m_node) {
-         while (cur->m_next != this->m_node) {
+      NodePtr end_n = this->end_node();
+      NodePtr cur = end_n->m_next;
+      if (cur != end_n) {
+         while (cur->m_next != end_n) {
             if (pred(cur->m_data, cur->m_next->m_data))
                this->erase_after(cur);
             else
@@ -862,14 +972,18 @@ public:
    }
 
    void merge(slist& x)
-      {  this->merge(x, value_less()); }
+   {  this->merge(x, value_less()); }
+
+   void merge(const detail::moved_object<slist>& x)
+   {  this->merge(x.get(), value_less()); }
 
    template <class StrictWeakOrdering> 
    void merge(slist& x, StrictWeakOrdering comp)
    {
-      NodePtr n1 = this->m_node;
-      while ((n1->m_next != this->m_node) && !x.empty()) {
-         if (comp(x.m_node->m_next->m_data, n1->m_next->m_data)){
+      NodePtr end_n = this->end_node();
+      NodePtr n1 = end_n;
+      while ((n1->m_next != end_n) && !x.empty()) {
+         if (comp(x.end_node()->m_next->m_data, n1->m_next->m_data)){
             this->splice_after(iterator(n1), x, x.before_begin(), x.begin());
          }
          n1 = n1->m_next;
@@ -880,48 +994,82 @@ public:
       }
    }
 
+   template <class StrictWeakOrdering> 
+   void merge(const detail::moved_object<slist>& x, StrictWeakOrdering comp)
+   {  this->merge(x.get(), comp);  }
+
    void sort()
-      {  this->sort(value_less());  }
+   {  this->sort(value_less());  }
 
    template <class StrictWeakOrdering> 
    void sort(StrictWeakOrdering comp)
    {
       //Check if not empty or just 1 element
       if (!this->empty() && 
-         this->m_node->m_next->m_next != this->m_node) {
+          this->end_node()->m_next->m_next != this->end_node()) {
          const allocator_type &alloc = static_cast<NodeAlloc>(*this);
-         slist carry(alloc);
-         vector<slist> counter(64, carry);
-         int fill = 0;
-         while (!empty()) {
-            this->splice_after(iterator(carry.m_node), *this, 
-                               iterator(this->m_node), 
-                               iterator(this->m_node->m_next));
-            int i = 0;
-            while (i < fill && !counter[i].empty()) {
-               counter[i].merge(carry, comp);
-               carry.swap(counter[i]);
-               ++i;
-            }
-            carry.swap(counter[i]);
-            if (i == fill){
-               ++fill;
-            }
-         }
 
-         for (int i = 1; i < fill; ++i){
-            counter[i].merge(counter[i-1], comp);
+         slist carry(alloc);
+         //We can't use a normal stack array we have to support
+         //stateful allocators and lists with non-copyable value_type
+         const int count_size = 64;
+         //Let's construct a raw memory with correct alignment and size
+         //for a slist array, and construct in-place the data
+         typename boost::aligned_storage<sizeof(slist)*count_size
+                               ,boost::alignment_of<slist>::value >::type raw_memory;
+
+         slist *counter = static_cast<slist*>(static_cast<void*>(&raw_memory));
+         int i;
+         try{
+            for(i = 0; i < count_size; ++i){
+               new(&counter[i])slist(alloc);
+            }
          }
+         catch(...){
+            for(int j = 0; j < i; ++j){
+               counter[i].~slist();
+            }
+            throw;
+         }
+         //If anything goes wrong, this object will destroy
+         //all the old objects to fulfill previous vector state
+         typedef std::allocator<slist> StdAllocatorOfThis;
+         StdAllocatorOfThis stdalloc;
+         typedef detail::scoped_destructor_n
+            <StdAllocatorOfThis> CounterDestructor;
+         scoped_ptr<slist, CounterDestructor>
+            counter_destroyer
+               (counter, CounterDestructor(stdalloc, count_size));
+
+         int fill = 0;
+
+         while (!this->empty()) {
+            carry.splice_after(carry.before_begin(), *this, this->before_begin());
+            int i = 0;
+            while(i < fill && !counter[i].empty()) {
+               counter[i].merge(carry, comp);
+               carry.swap(counter[i++]);
+            }
+            carry.swap(counter[i]);         
+            if (i == fill) ++fill;
+         } 
+
+         for (int i = 1; i < fill; ++i) 
+            counter[i].merge(counter[i-1], comp);
          this->swap(counter[fill-1]);
       }
    }
- private:
+
+   private:
+   size_type m_size;
+
    NodePtr erase_after(NodePtr prev_pos)
    {
       NodePtr toerase = prev_pos->m_next;
       NodePtr toerase_next = toerase->m_next;
       prev_pos->m_next = toerase_next;
       this->destroy_node(toerase);
+      --this->m_size;
       return toerase_next;
    }
 
@@ -933,20 +1081,30 @@ public:
          NodePtr tmp = cur;
          cur = cur->m_next;
          this->destroy_node(tmp);
+         --this->m_size;
       }
       before_first->m_next = last_node;
       return last_node;
    }
 
-   NodePtr insert_after(NodePtr prev_pos, const value_type& x = value_type()) 
+   NodePtr insert_after(NodePtr prev_pos, const value_type& x)
    {
       return Node::make_link(prev_pos, this->create_node(x));
+      ++this->m_size;
+   }
+
+   NodePtr insert_after(NodePtr prev_pos, const detail::moved_object<value_type>& x)
+   {  
+      return Node::make_link(prev_pos, this->create_node(x));
+      ++this->m_size;
    }
 
    void insert_after_fill(NodePtr prev_pos, size_type n, const value_type& x) 
    {
-      for (size_type i = 0; i < n; ++i)
+      for (size_type i = 0; i < n; ++i){
          prev_pos = Node::make_link(prev_pos, this->create_node(x));
+         ++this->m_size;
+      }
    }
 
    // Check whether it's an integral type.  If so, it's not an iterator.
@@ -960,13 +1118,14 @@ public:
 
    template <class Int>
    void insert_after_range(NodePtr prev_pos, Int n, Int x, boost::mpl::true_) 
-      {  this->insert_after_fill(prev_pos, n, x);  }
+   {  this->insert_after_fill(prev_pos, n, x);  }
 
    template <class InIter>
    void insert_after_range(NodePtr prev_pos, InIter first, InIter last, boost::mpl::false_) 
    {
       while (first != last) {
          prev_pos = Node::make_link(prev_pos, this->create_node(*first));
+         ++this->m_size;
          ++first;
       }
    }
@@ -1045,6 +1204,35 @@ operator>=(const slist<T,Alloc>& sL1, const slist<T,Alloc>& sL2)
 template <class T, class Alloc>
 inline void swap(slist<T,Alloc>& x, slist<T,Alloc>& y) 
    {  x.swap(y);  }
+
+template <class T, class Alloc>
+inline void swap(const detail::moved_object<slist<T,Alloc> >& x, slist<T,Alloc>& y) 
+   {  x.get().swap(y);  }
+
+template <class T, class Alloc>
+inline void swap(slist<T,Alloc>& x, const detail::moved_object<slist<T,Alloc> >& y) 
+   {  x.swap(y.get());  }
+
+/*!This class is movable*/
+template <class T, class A>
+struct is_movable<slist<T, A> >
+{
+   enum {   value = true };
+};
+
+/*!This class is movable*/
+template <class A>
+struct is_movable<interprocess_slist_node<A> >
+{
+   enum {   value = true };
+};
+
+/*!This class is movable*/
+template <class T, class A>
+struct is_movable<interprocess_slist_alloc<T, A> >
+{
+   enum {   value = true };
+};
 
 }} //namespace boost{  namespace interprocess{
 

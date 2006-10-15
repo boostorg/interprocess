@@ -19,10 +19,10 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/shared_memory.hpp>
+#include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
+#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 /*!\file
    Describes process-shared variables interprocess_condition class
@@ -84,7 +84,7 @@ class named_condition
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time);
 
    /*!The same as:   while (!pred()) { 
-                        if (!timed_wait(lock, abs_time)) return false; 
+                        if (!timed_wait(lock, abs_time)) return pred(); 
                      } return true;*/
    template <typename L, typename Pr>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred);
@@ -96,7 +96,7 @@ class named_condition
    interprocess_condition *condition() const
    {  return static_cast<interprocess_condition*>(m_shmem.get_address()); }
 
-   shared_memory        m_shmem;
+   detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
 
    class construct_func_t;
 };
@@ -110,7 +110,7 @@ class named_condition::construct_func_t
    construct_func_t(CreationType type)
       :  m_creation_type(type){}
 
-   bool operator()(const mapped_region &region, bool created) const
+   bool operator()(void *address, std::size_t size, bool created) const
    {   
       switch(m_creation_type){
          case open_only:
@@ -119,7 +119,7 @@ class named_condition::construct_func_t
          case create_only:
          case open_or_create:
             if(created){
-               new(region.get_address())interprocess_condition;
+               new(address)interprocess_condition;
             }
             return true;
          break;
@@ -140,8 +140,10 @@ inline named_condition::~named_condition()
 inline named_condition::named_condition(detail::create_only_t, const char *name)
    :  m_shmem  (create_only
                ,name
-               ,sizeof(interprocess_condition)
-               ,memory_mappable::read_write
+               ,sizeof(interprocess_condition) +
+                  detail::managed_open_or_create_impl<shared_memory_object>::
+                     ManagedOpenOrCreateUserOffset
+               ,read_write
                ,0
                ,construct_func_t(construct_func_t::create_only))
 {}
@@ -149,8 +151,10 @@ inline named_condition::named_condition(detail::create_only_t, const char *name)
 inline named_condition::named_condition(detail::open_or_create_t, const char *name)
    :  m_shmem  (open_or_create
                ,name
-               ,sizeof(interprocess_condition)
-               ,memory_mappable::read_write
+               ,sizeof(interprocess_condition) +
+                  detail::managed_open_or_create_impl<shared_memory_object>::
+                     ManagedOpenOrCreateUserOffset
+               ,read_write
                ,0
                ,construct_func_t(construct_func_t::open_or_create))
 {}
@@ -158,7 +162,7 @@ inline named_condition::named_condition(detail::open_or_create_t, const char *na
 inline named_condition::named_condition(detail::open_only_t, const char *name)
    :  m_shmem  (open_only
                ,name
-               ,memory_mappable::read_write
+               ,read_write
                ,0
                ,construct_func_t(construct_func_t::open_only))
 {}
@@ -208,7 +212,7 @@ inline bool named_condition::timed_wait
 
    while (!pred()){
          if (!this->condition()->do_timed_wait(abs_time, *lock.mutex()->mutex()))
-            return false;
+            return pred();
    }
 
    return true;

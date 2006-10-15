@@ -23,10 +23,10 @@
 #include <boost/interprocess/exceptions.hpp>   
 
 namespace boost {
-
 namespace interprocess {
-
 namespace detail{
+
+   #if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
 
    /*!Makes pthread_mutexattr_t cleanup easy when using exceptions*/
    struct mutexattr_wrapper 
@@ -70,26 +70,6 @@ namespace detail{
       pthread_condattr_t m_attr;
    };
 
-   /*!Makes pthread_barrierattr_t cleanup easy when using exceptions*/
-   struct barrierattr_wrapper 
-   {
-      /*!Constructor*/
-      barrierattr_wrapper()
-      {
-         if(pthread_barrierattr_init(&m_attr)!=0 ||
-            pthread_barrierattr_setpshared(&m_attr, PTHREAD_PROCESS_SHARED)!= 0)
-            throw boost::interprocess::interprocess_exception();
-      }
-
-      /*!Destructor*/
-     ~barrierattr_wrapper()  {  pthread_barrierattr_destroy(&m_attr);  }
-
-      /*!This allows using mutexattr_wrapper as pthread_barrierattr_t*/
-      operator pthread_barrierattr_t&()  {  return m_attr;  }
-
-      pthread_barrierattr_t m_attr;
-   };
-
    /*!Makes initialized pthread_mutex_t cleanup easy when using exceptions*/
    class mutex_initializer
    {
@@ -129,6 +109,30 @@ namespace detail{
       pthread_cond_t *mp_cond;
    };
 
+   #endif   //   #if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+
+   #if defined BOOST_INTERPROCESS_POSIX_BARRIERS
+
+   /*!Makes pthread_barrierattr_t cleanup easy when using exceptions*/
+   struct barrierattr_wrapper 
+   {
+      /*!Constructor*/
+      barrierattr_wrapper()
+      {
+         if(pthread_barrierattr_init(&m_attr)!=0 ||
+            pthread_barrierattr_setpshared(&m_attr, PTHREAD_PROCESS_SHARED)!= 0)
+            throw boost::interprocess::interprocess_exception();
+      }
+
+      /*!Destructor*/
+     ~barrierattr_wrapper()  {  pthread_barrierattr_destroy(&m_attr);  }
+
+      /*!This allows using mutexattr_wrapper as pthread_barrierattr_t*/
+      operator pthread_barrierattr_t&()  {  return m_attr;  }
+
+      pthread_barrierattr_t m_attr;
+   };
+
    /*!Makes initialized pthread_barrier_t cleanup easy when using exceptions*/
    class barrier_initializer
    {
@@ -150,6 +154,8 @@ namespace detail{
     private:     
       pthread_barrier_t *mp_barrier;
    };
+
+   #endif   //#if defined BOOST_INTERPROCESS_POSIX_BARRIERS
 
 }//namespace detail
 

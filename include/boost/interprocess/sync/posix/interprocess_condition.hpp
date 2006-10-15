@@ -9,7 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/sync/posix/ptime_to_timespec.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 namespace boost {
 
@@ -26,12 +26,12 @@ inline interprocess_condition::interprocess_condition()
    res = pthread_condattr_setpshared(&cond_attr, PTHREAD_PROCESS_SHARED);
    if(res != 0){
       pthread_condattr_destroy(&cond_attr);
-      throw interprocess_exception();
+      throw interprocess_exception(res);
    }
    res = pthread_cond_init(&m_condition, &cond_attr);
    pthread_condattr_destroy(&cond_attr);
    if(res != 0){
-      throw interprocess_exception();
+      throw interprocess_exception(res);
    }
 }
 
