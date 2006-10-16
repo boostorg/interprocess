@@ -110,7 +110,7 @@ enum error_code_t
    sem_error,
    mode_error,
    size_error,
-   corrupted_error,
+   corrupted_error
 };
 
 typedef int    native_error_t;
