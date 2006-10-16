@@ -38,11 +38,11 @@
    #endif
    #endif
 
-   #if defined(_POSIX_BARRIERS) && (defined _POSIX_BARRIERS - 0 > 0)
+   #if defined(_POSIX_BARRIERS) && (_POSIX_BARRIERS - 0 > 0)
       #define BOOST_INTERPROCESS_POSIX_BARRIERS
    #endif   //
 
-   #if defined(_POSIX_SEMAPHORES) && (defined _POSIX_SEMAPHORES - 0 > 0)
+   #if defined(_POSIX_SEMAPHORES) && (_POSIX_SEMAPHORES - 0 > 0)
       #define BOOST_INTERPROCESS_POSIX_SEMAPHORES
    #endif
 
@@ -56,10 +56,12 @@
        ((defined _FILE_OFFSET_BITS) &&(_FILE_OFFSET_BITS  - 0 >= 64))
       #define BOOST_INTERPROCESS_UNIX_64_BIT_OR_BIGGER_OFF_T
    #else
-   #if defined(_POSIX_SHARED_MEMORY_OBJECTS) && (defined _POSIX_SHARED_MEMORY_OBJECTS - 0 > 0)
+   #endif
+
+   #if defined(_POSIX_SHARED_MEMORY_OBJECTS) && (_POSIX_SHARED_MEMORY_OBJECTS - 0 > 0)
       #define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
    #endif
-   #endif
+
 #endif
 
 namespace boost {
