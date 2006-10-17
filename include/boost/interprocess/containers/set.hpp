@@ -120,7 +120,7 @@ class set
       : m_tree(move(x.get().m_tree)) {}
 
    set<T,Pred,Alloc>& operator=(const set<T, Pred, Alloc>& x)
-      {  m_tree = m_tree;   return *this;  }
+      {  m_tree = x.m_tree;   return *this;  }
 
    set<T,Pred,Alloc>& operator=(const detail::moved_object<set<T, Pred, Alloc> >& x)
       {  m_tree.swap(x.get().m_tree);   return *this;  }
