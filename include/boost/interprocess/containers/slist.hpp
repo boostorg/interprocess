@@ -312,7 +312,7 @@ struct interprocess_slist_alloc/*<T, A, true>*/
 
    enum {   
       node_has_trivial_destructor =  
-      boost::has_trivial_destructor<NodePtr>::value |
+      boost::has_trivial_destructor<NodePtr>::value &&
       boost::has_trivial_destructor<T>::value 
    };
 
