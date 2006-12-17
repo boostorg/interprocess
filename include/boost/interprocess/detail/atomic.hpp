@@ -86,15 +86,17 @@ inline void atomic_sub32(volatile boost::uint32_t *mem, boost::uint32_t val)
 inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
 {  return intel_atomic_add32(mem, 1);  }
 
+
 inline boost::uint32_t atomic_dec32(volatile boost::uint32_t *mem)
 {
-   unsigned char prev;
+   boost::uint32_t prev;
 
-   asm volatile ("lock; decl %1;\n\t"
-               "setnz %%al"
-               : "=a" (prev)
-               : "m" (*(mem))
-               : "memory", "cc");
+   // acts like an atomic 'return (*mem)--;'
+   asm volatile ("movl $-1, %0;\n\t"
+                 "lock; xaddl %0, %1"
+                 : "=r" (prev)
+                 : "m" (*(mem))
+                 : "memory", "cc" );
    return prev;
 }
 
