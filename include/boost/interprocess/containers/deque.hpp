@@ -1030,7 +1030,7 @@ class deque : protected deque_base<T, Alloc>
       else {
          difference_type n = last - first;
          difference_type elems_before = first - this->m_start;
-         if (elems_before < difference_type((this->size() - n) / 2)) {
+         if (static_cast<difference_type>(elems_before) < (this->size() - n) - elems_before) {
             std::copy_backward(detail::make_move_iterator(this->m_start), detail::make_move_iterator(first), last);
             iterator new_start = this->m_start + n;
             this->priv_destroy_range(this->m_start, new_start);
