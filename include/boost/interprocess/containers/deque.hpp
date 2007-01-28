@@ -565,7 +565,6 @@ class deque : protected deque_base<T, Alloc>
    bool empty() const 
       { return this->m_finish == this->m_start; }
 
- public:                         // Constructor, destructor.
    explicit deque(const allocator_type& a = allocator_type()) 
       : Base(a, 0) {}
 
@@ -593,26 +592,6 @@ class deque : protected deque_base<T, Alloc>
       typedef boost::mpl::bool_<aux_boolean> Result;
       this->priv_initialize_dispatch(first, last, Result());
    }
-
-   template <class Integer>
-   void priv_initialize_dispatch(Integer n, Integer x, boost::mpl::true_) 
-   {
-      this->priv_initialize_map(n);
-      this->priv_fill_initialize(x);
-   }
-
-   template <class InpIt>
-   void priv_initialize_dispatch(InpIt first, InpIt last, boost::mpl::false_) 
-   {
-      typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
-      this->priv_range_initialize(first, last, ItCat());
-   }
-
-   void priv_destroy_range(iterator p, iterator p2)
-      { for(;p != p2; ++p) this->allocator_type::destroy(&*p); }
-
-   void priv_destroy_range(pointer p, pointer p2)
-      { for(;p != p2; ++p) this->allocator_type::destroy(p); }
 
   ~deque() 
       { priv_destroy_range(this->m_start, this->m_finish); }
@@ -646,22 +625,6 @@ class deque : protected deque_base<T, Alloc>
    void swap(const detail::moved_object<deque> &mx)
    {  this->swap(mx.get());   }
 
- public: 
-  // assign(), a generalized assignment member function.  Two
-  // versions: one that takes a count, and one that takes a range.
-  // The range version is a member template, so we dispatch on whether
-  // or not the type is an integer.
-   void priv_fill_assign(size_type n, const T& val) {
-      if (n > size()) {
-         std::fill(begin(), end(), val);
-         this->insert(end(), n - size(), val);
-      }
-      else {
-         this->erase(begin() + n, end());
-         std::fill(begin(), end(), val);
-      }
-   }
-
    void assign(size_type n, const T& val) {
       this->priv_fill_assign(n, val);
       }
@@ -674,48 +637,6 @@ class deque : protected deque_base<T, Alloc>
       this->priv_assign_dispatch(first, last, Result());
    }
 
- private:                        // helper functions for assign() 
-
-   template <class Integer>
-   void priv_assign_dispatch(Integer n, Integer val, boost::mpl::true_)
-      { this->priv_fill_assign((size_type) n, (T) val); }
-
-   template <class InpIt>
-   void priv_assign_dispatch(InpIt first, InpIt last, boost::mpl::false_) 
-   {
-      typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
-      this->priv_assign_aux(first, last, ItCat());
-   }
-
-   template <class InpIt>
-   void priv_assign_aux(InpIt first, InpIt last, std::input_iterator_tag)
-   {
-      iterator cur = begin();
-      for ( ; first != last && cur != end(); ++cur, ++first)
-         *cur = *first;
-      if (first == last)
-         this->erase(cur, end());
-      else
-         this->insert(end(), first, last);
-   }
-
-   template <class FwdIt>
-   void priv_assign_aux(FwdIt first, FwdIt last,
-                        std::forward_iterator_tag) {
-      size_type len = 0;
-      std::distance(first, last, len);
-      if (len > size()) {
-         FwdIt mid = first;
-         std::advance(mid, size());
-         std::copy(first, mid, begin());
-         this->insert(end(), mid, last);
-      }
-      else
-         this->erase(std::copy(first, last, begin()), end());
-   }
-
- public:                         // push_* and pop_*
-     
    void push_back(const value_type& t) 
    {
       if (this->m_finish.m_cur != this->m_finish.m_last - 1) {
@@ -776,8 +697,6 @@ class deque : protected deque_base<T, Alloc>
          this->priv_pop_front_aux();
    }
 
- public:                         // Insert
-
    iterator insert(iterator position, const value_type& x) 
    {
       if (position.m_cur == this->m_start.m_cur) {
@@ -825,22 +744,6 @@ class deque : protected deque_base<T, Alloc>
       this->priv_insert_dispatch(pos, first, last, Result());
    }
 
-   template <class Integer>
-   void priv_insert_dispatch(iterator pos, Integer n, Integer x,
-                           boost::mpl::true_) 
-   {
-      this->priv_fill_insert(pos, (size_type) n, (value_type) x);
-   }
-
-   template <class InpIt>
-   void priv_insert_dispatch(iterator pos,
-                           InpIt first, InpIt last,
-                           boost::mpl::false_) 
-   {
-      typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
-      this->insert(pos, first, last, ItCat());
-   }
-
    void resize(size_type new_size, const value_type& x) 
    {
       const size_type len = size();
@@ -869,6 +772,71 @@ class deque : protected deque_base<T, Alloc>
          }
       }
    }
+
+   iterator erase(iterator pos) 
+   {
+      iterator next = pos;
+      ++next;
+      difference_type index = pos - this->m_start;
+      if (size_type(index) < (this->size() >> 1)) {
+         std::copy_backward(detail::make_move_iterator(this->m_start), detail::make_move_iterator(pos), next);
+         pop_front();
+      }
+      else {
+         std::copy(detail::make_move_iterator(next), detail::make_move_iterator(this->m_finish), pos);
+         pop_back();
+      }
+      return this->m_start + index;
+   }
+
+   iterator erase(iterator first, iterator last)
+   {
+      if (first == this->m_start && last == this->m_finish) {
+         this->clear();
+         return this->m_finish;
+      }
+      else {
+         difference_type n = last - first;
+         difference_type elems_before = first - this->m_start;
+         if (elems_before < static_cast<difference_type>(this->size() - n) - elems_before) {
+            std::copy_backward(detail::make_move_iterator(this->m_start), detail::make_move_iterator(first), last);
+            iterator new_start = this->m_start + n;
+            this->priv_destroy_range(this->m_start, new_start);
+            this->priv_destroy_nodes(new_start.m_node, this->m_start.m_node);
+            this->m_start = new_start;
+         }
+         else {
+            std::copy(last, this->m_finish, first);
+            iterator new_finish = this->m_finish - n;
+            this->priv_destroy_range(new_finish, this->m_finish);
+            this->priv_destroy_nodes(new_finish.m_node + 1, this->m_finish.m_node + 1);
+            this->m_finish = new_finish;
+         }
+         return this->m_start + elems_before;
+      }
+   }
+
+   void clear()
+   {
+      for (index_pointer node = this->m_start.m_node + 1;
+            node < this->m_finish.m_node;
+            ++node) {
+         this->priv_destroy_range(*node, *node + this->s_buffer_size());
+         this->priv_deallocate_node(*node);
+      }
+
+      if (this->m_start.m_node != this->m_finish.m_node) {
+         this->priv_destroy_range(this->m_start.m_cur, this->m_start.m_last);
+         this->priv_destroy_range(this->m_finish.m_first, this->m_finish.m_cur);
+         this->priv_deallocate_node(this->m_finish.m_first);
+      }
+      else
+         this->priv_destroy_range(this->m_start.m_cur, this->m_finish.m_cur);
+
+      this->m_finish = this->m_start;
+   }
+
+ private:
 
    template <class InpIt>
    void insert(iterator pos, InpIt first, InpIt last, std::input_iterator_tag)
@@ -909,24 +877,94 @@ class deque : protected deque_base<T, Alloc>
          this->priv_insert_aux(pos, first, last, n);
    }
 
- public:                         // Erase
-   iterator erase(iterator pos) 
-   {
-      iterator next = pos;
-      ++next;
-      difference_type index = pos - this->m_start;
-      if (size_type(index) < (this->size() >> 1)) {
-         std::copy_backward(detail::make_move_iterator(this->m_start), detail::make_move_iterator(pos), next);
-         pop_front();
+  // assign(), a generalized assignment member function.  Two
+  // versions: one that takes a count, and one that takes a range.
+  // The range version is a member template, so we dispatch on whether
+  // or not the type is an integer.
+   void priv_fill_assign(size_type n, const T& val) {
+      if (n > size()) {
+         std::fill(begin(), end(), val);
+         this->insert(end(), n - size(), val);
       }
       else {
-         std::copy(detail::make_move_iterator(next), detail::make_move_iterator(this->m_finish), pos);
-         pop_back();
+         this->erase(begin() + n, end());
+         std::fill(begin(), end(), val);
       }
-      return this->m_start + index;
    }
 
- private:                        // Internal insert functions
+   template <class Integer>
+   void priv_initialize_dispatch(Integer n, Integer x, boost::mpl::true_) 
+   {
+      this->priv_initialize_map(n);
+      this->priv_fill_initialize(x);
+   }
+
+   template <class InpIt>
+   void priv_initialize_dispatch(InpIt first, InpIt last, boost::mpl::false_) 
+   {
+      typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
+      this->priv_range_initialize(first, last, ItCat());
+   }
+
+   void priv_destroy_range(iterator p, iterator p2)
+      { for(;p != p2; ++p) this->allocator_type::destroy(&*p); }
+
+   void priv_destroy_range(pointer p, pointer p2)
+      { for(;p != p2; ++p) this->allocator_type::destroy(p); }
+
+   template <class Integer>
+   void priv_assign_dispatch(Integer n, Integer val, boost::mpl::true_)
+      { this->priv_fill_assign((size_type) n, (T) val); }
+
+   template <class InpIt>
+   void priv_assign_dispatch(InpIt first, InpIt last, boost::mpl::false_) 
+   {
+      typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
+      this->priv_assign_aux(first, last, ItCat());
+   }
+
+   template <class InpIt>
+   void priv_assign_aux(InpIt first, InpIt last, std::input_iterator_tag)
+   {
+      iterator cur = begin();
+      for ( ; first != last && cur != end(); ++cur, ++first)
+         *cur = *first;
+      if (first == last)
+         this->erase(cur, end());
+      else
+         this->insert(end(), first, last);
+   }
+
+   template <class FwdIt>
+   void priv_assign_aux(FwdIt first, FwdIt last,
+                        std::forward_iterator_tag) {
+      size_type len = 0;
+      std::distance(first, last, len);
+      if (len > size()) {
+         FwdIt mid = first;
+         std::advance(mid, size());
+         std::copy(first, mid, begin());
+         this->insert(end(), mid, last);
+      }
+      else
+         this->erase(std::copy(first, last, begin()), end());
+   }
+
+   template <class Integer>
+   void priv_insert_dispatch(iterator pos, Integer n, Integer x,
+                           boost::mpl::true_) 
+   {
+      this->priv_fill_insert(pos, (size_type) n, (value_type) x);
+   }
+
+   template <class InpIt>
+   void priv_insert_dispatch(iterator pos,
+                           InpIt first, InpIt last,
+                           boost::mpl::false_) 
+   {
+      typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
+      this->insert(pos, first, last, ItCat());
+   }
 
    iterator priv_insert_aux(iterator pos, const value_type& x)
    {
@@ -1020,55 +1058,6 @@ class deque : protected deque_base<T, Alloc>
       typedef constant_iterator<value_type, difference_type> c_it;
       this->insert(pos, c_it(x, n), c_it());
    }
-
-   iterator erase(iterator first, iterator last)
-   {
-      if (first == this->m_start && last == this->m_finish) {
-         this->clear();
-         return this->m_finish;
-      }
-      else {
-         difference_type n = last - first;
-         difference_type elems_before = first - this->m_start;
-         if (static_cast<difference_type>(elems_before) < (this->size() - n) - elems_before) {
-            std::copy_backward(detail::make_move_iterator(this->m_start), detail::make_move_iterator(first), last);
-            iterator new_start = this->m_start + n;
-            this->priv_destroy_range(this->m_start, new_start);
-            this->priv_destroy_nodes(new_start.m_node, this->m_start.m_node);
-            this->m_start = new_start;
-         }
-         else {
-            std::copy(last, this->m_finish, first);
-            iterator new_finish = this->m_finish - n;
-            this->priv_destroy_range(new_finish, this->m_finish);
-            this->priv_destroy_nodes(new_finish.m_node + 1, this->m_finish.m_node + 1);
-            this->m_finish = new_finish;
-         }
-         return this->m_start + elems_before;
-      }
-   }
-
-   void clear()
-   {
-      for (index_pointer node = this->m_start.m_node + 1;
-            node < this->m_finish.m_node;
-            ++node) {
-         this->priv_destroy_range(*node, *node + this->s_buffer_size());
-         this->priv_deallocate_node(*node);
-      }
-
-      if (this->m_start.m_node != this->m_finish.m_node) {
-         this->priv_destroy_range(this->m_start.m_cur, this->m_start.m_last);
-         this->priv_destroy_range(this->m_finish.m_first, this->m_finish.m_cur);
-         this->priv_deallocate_node(this->m_finish.m_first);
-      }
-      else
-         this->priv_destroy_range(this->m_start.m_cur, this->m_finish.m_cur);
-
-      this->m_finish = this->m_start;
-   }
-
- private:                       // Internal construction/destruction
 
    // Precondition: this->m_start and this->m_finish have already been initialized,
    // but none of the deque's elements have yet been constructed.
@@ -1271,8 +1260,6 @@ class deque : protected deque_base<T, Alloc>
       BOOST_CATCH_END
    }
 
- private:                      // Allocation of this->m_map and nodes
-
    // Makes sure the this->m_map has space for new nodes.  Does not actually
    //  add the nodes.  Can invalidate this->m_map pointers.  (And consequently, 
    //  deque iterators.)
@@ -1320,8 +1307,6 @@ class deque : protected deque_base<T, Alloc>
       this->m_start.priv_set_node(new_nstart);
       this->m_finish.priv_set_node(new_nstart + old_num_nodes - 1);
    }
-
- private:
 
    // this->priv_uninitialized_copy_fill
    // Copies [first1, last1) into [first2, first2 + (last1 - first1)), and
