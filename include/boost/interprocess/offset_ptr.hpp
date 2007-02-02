@@ -51,6 +51,11 @@ class offset_ptr
    void unspecified_bool_type_func() const {}
    typedef void (self_t::*unspecified_bool_type)() const;
 
+   #if (defined _MSC_VER) && (_MSC_VER >= 1400)
+   //a bug in VC8.0 makes having this
+   //inlined in release mode break things.
+   __declspec(noinline)
+   #endif
    void set_offset(const void *ptr)
    {  
       //offset == 1 && ptr != 0 is not legal for this pointer
@@ -70,6 +75,11 @@ class offset_ptr
    void dec_offset(std::ptrdiff_t bytes)
    {  m_offset -= bytes;   }
 
+   #if (defined _MSC_VER) && (_MSC_VER >= 1400)
+   //a bug in VC8.0 makes having this
+   //inlined in release mode break things.
+   __declspec(noinline)
+   #endif
    void* get_pointer(void) const
    {  return m_offset == 1 ? 0 : detail::char_ptr_cast(this) + m_offset; }
 
