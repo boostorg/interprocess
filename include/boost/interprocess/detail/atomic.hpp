@@ -89,15 +89,15 @@ inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
 
 inline boost::uint32_t atomic_dec32(volatile boost::uint32_t *mem)
 {
-   boost::uint32_t prev;
+  boost::uint32_t prev;
 
-   // acts like an atomic 'return (*mem)--;'
-   asm volatile ("movl $-1, %0;\n\t"
-                 "lock; xaddl %0, %1"
-                 : "=r" (prev)
-                 : "m" (*(mem))
-                 : "memory", "cc" );
-   return prev;
+  // acts like an atomic 'return (*mem)--;'
+  asm volatile ("movl $-1, %0;\n\t"
+                "lock; xaddl %0, %1"
+                : "=r" (prev)                //outputs
+                :  "m" (*(mem)),"0" (prev)        //inputs
+                : "memory", "cc" );
+  return prev; 
 }
 
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
