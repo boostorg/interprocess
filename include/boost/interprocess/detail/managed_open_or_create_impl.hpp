@@ -249,7 +249,7 @@ class managed_open_or_create_impl
             dev.truncate(size);
 
             //If the following throws, we will truncate the file to 1
-            mapped_region        region(dev, read_write);
+            mapped_region        region(dev, read_write, 0, 0, addr);
 
             volatile boost::uint32_t *addr =  
                static_cast<boost::uint32_t*>(region.get_address());
@@ -296,7 +296,7 @@ class managed_open_or_create_impl
             throw interprocess_exception(error_info(corrupted_error));
          }
 
-         mapped_region  region(dev, read_write);
+         mapped_region  region(dev, read_write, 0, 0, addr);
 
          volatile boost::uint32_t *addr = 
             static_cast<boost::uint32_t*>(region.get_address());
