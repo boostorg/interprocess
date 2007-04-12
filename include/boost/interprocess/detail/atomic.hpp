@@ -135,20 +135,20 @@ inline boost::uint32_t atomic_add32(volatile boost::uint32_t *mem, boost::uint32
 
    asm volatile ("0:\n\t"                 // retry local label     
                "lwarx  %0,0,%2\n\t"       // load prev and reserve 
-               "add    %1,%0,%3\n\t"      // temp = prev + delta   
+               "add    %1,%0,%3\n\t"      // temp = prev + val   
                "stwcx. %1,0,%2\n\t"       // conditionally store   
                "bne-   0b"                // start over if we lost
                                           // the reservation
                //XXX find a cleaner way to define the temp         
                //it's not an output
                : "=&r" (prev), "=&r" (temp)        // output, temp 
-               : "b" (mem), "r" (delta)            // inputs       
+               : "b" (mem), "r" (val)            // inputs       
                : "memory", "cc");                  // clobbered    
    return prev;
 }
 
 inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
-{  return atomic_inc32(mem, 1);  }
+{  return atomic_add32(mem, 1);  }
 
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
 {  return *mem;   }
@@ -162,25 +162,32 @@ inline boost::uint32_t atomic_cas32
                "lwarx  %0,0,%1\n\t"       // load prev and reserve 
                "cmpw   %0,%3\n\t"         // does it match cmp?    
                "bne-   1f\n\t"            // ...no, bail out       
-               "stwcx. %2,0,%1\n\t"       // ...yes, conditionally
-                                             store swap            
-               "bne-   0b\n\t"            // start over if we lost
-                                             the reservation       
+               "stwcx. %2,0,%1\n\t"       // ...yes, conditionally store the 'with' swapped value            
+               "bne-   0b\n\t"            // start over if we lost the reservation       
                "1:"                       // exit local label      
 
                : "=&r"(prev)                        // output      
-               : "b" (mem), "r" (swap), "r"(cmp)    // inputs      
+               : "b" (mem), "r" (with), "r"(cmp)    // inputs      
                : "memory", "cc");                   // clobbered   
    return prev;
 }
 
-inline void atomic_sub32(volatile boost::uint32_t *mem, boost::uint32_t val)
+inline boost::uint32_t atomic_sub32(volatile boost::uint32_t *mem, boost::uint32_t val)
 {
-   boost::uint32_t old_value, new_value;
-   do {
-      old_value = *mem;
-      new_value = old_value - val;
-   } while (atomic_cas32(mem, new_value, old_value) != old_value);
+   boost::uint32_t prev, temp;
+
+   asm volatile ("0:\n\t"                 // retry local label     
+               "lwarx  %0,0,%2\n\t"       // load prev and reserve 
+               "sub    %1,%0,%3\n\t"      // temp = prev - val   
+               "stwcx. %1,0,%2\n\t"       // conditionally store   
+               "bne-   0b"                // start over if we lost
+                                          // the reservation
+               //XXX find a cleaner way to define the temp         
+               //it's not an output
+               : "=&r" (prev), "=&r" (temp)        // output, temp 
+               : "b" (mem), "r" (val)            // inputs       
+               : "memory", "cc");                  // clobbered    
+   return prev;
 }
 
 inline boost::uint32_t atomic_dec32(volatile boost::uint32_t *mem)
