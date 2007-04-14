@@ -296,33 +296,27 @@ class managed_open_or_create_impl
             throw interprocess_exception(error_info(corrupted_error));
          }
 
-         mapped_region  region(dev, read_write, 0, 0, addr);
+        mapped_region  region(dev, read_write, 0, 0, addr);
 
-         volatile boost::uint32_t *addr = 
-            static_cast<boost::uint32_t*>(region.get_address());
+        volatile boost::uint32_t *addr = static_cast<boost::uint32_t*>(region.get_address());
 
-         boost::uint32_t value;
+        boost::uint32_t value = detail::atomic_read32(addr);
+    
+        // wait if shared segment isn't initialized
+        while(value == InitializingSegment || value == UninitializedSegment){
+           detail::thread_yield();
+           value = detail::atomic_read32(addr);
+        }
 
-         switch(detail::atomic_read32(addr)){
-            case UninitializedSegment:
-            case InitializingSegment:
-               do{
-                  detail::thread_yield();
-                  value = detail::atomic_read32(addr);
-               }
-               while(value == InitializingSegment || value == UninitializedSegment);
-            case CorruptedSegment:
-               throw interprocess_exception(error_info(corrupted_error));
-            break;
-            case InitializedSegment:
-               construct_func((char*)region.get_address() + ManagedOpenOrCreateUserOffset, region.get_size(), false);
-               //All ok, just move resources to the external mapped region
-               mregion.swap(region);
-            break;
-            default:
-               throw interprocess_exception(error_info(corrupted_error));
-            break;
-         }
+        if(value != InitializedSegment){
+           throw interprocess_exception(error_info(corrupted_error));
+        }
+
+        // InitializedSegment
+        construct_func((char*)region.get_address() + ManagedOpenOrCreateUserOffset, region.get_size(), false);
+
+        // All ok, just move resources to the external mapped region
+        mregion.swap(region);
       }
    }
 
