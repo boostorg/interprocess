@@ -7378,4 +7378,4 @@ allocators and containers, I've used to design Interprocess.
 [endsect]
 
 
-[xinclude interprocess_doxygen.boostbook]
+[xinclude interprocess_doxygen.xml]
