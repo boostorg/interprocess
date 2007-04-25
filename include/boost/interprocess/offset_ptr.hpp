@@ -110,7 +110,7 @@ class offset_ptr
       convertible, offset_ptrs will be convertibles. Never throws.*/
    template<class T2>
    offset_ptr(const offset_ptr<T2> &ptr) 
-   {  pointer p(ptr.get());  (void)p; this->set_offset(ptr.get());   }
+   {  pointer p(ptr.get());  (void)p; this->set_offset(p);   }
 
    /*!Emulates static_cast operator. Never throws.  */
    template<class Y>
@@ -155,13 +155,13 @@ class offset_ptr
 
    /*!Assignment from other offset_ptr. Never throws.*/
    offset_ptr& operator= (const offset_ptr & pt)
-   {  pointer p(pt.get());  (void)p; this->set_offset(pt.get());  return *this;  }
+   {  pointer p(pt.get());  (void)p; this->set_offset(p);  return *this;  }
 
    /*!Assignment from related offset_ptr. If pointers of pointee types 
          are assignable, offset_ptrs will be assignable. Never throws.*/
    template <class T2>
    offset_ptr& operator= (const offset_ptr<T2> & pt)
-   {  this->set_offset(pt.get());  return *this;  }
+   {  pointer p(pt.get());  this->set_offset(p);  return *this;  }
  
    /*!offset_ptr + std::ptrdiff_t. Never throws.*/
    offset_ptr operator+ (std::ptrdiff_t offset) const   
