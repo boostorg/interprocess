@@ -63,6 +63,7 @@ struct default_delete<T[N]>
     }
 };
 
+/// @cond
 template <class T, class D> class unique_ptr;
 
 namespace detail {
@@ -76,13 +77,17 @@ struct unique_ptr_error<const unique_ptr<T, D> >
 };
 
 }  //namespace detail {
+/// @endcond
 
 template <class T, class D = default_delete<T> >
 class unique_ptr
 {
+   /// @cond
    struct nat {int for_bool_;};
    typedef typename boost::add_reference<D>::type deleter_reference;
    typedef typename boost::add_reference<const D>::type deleter_const_reference;
+   /// @endcond
+
    public:
    typedef T element_type;
    typedef D deleter_type;
@@ -212,6 +217,7 @@ class unique_ptr
    void swap(detail::moved_object<unique_ptr> mu)
    {  ptr_.swap(mu.get().ptr_);  }
 
+   /// @cond
    private:
    boost::compressed_pair<pointer, D> ptr_;
 
@@ -224,6 +230,7 @@ class unique_ptr
    unique_ptr& operator=(unique_ptr&);
    template <class U, class E> unique_ptr& operator=(unique_ptr<U, E>&);
    template <class U> typename detail::unique_ptr_error<U>::type operator=(U&);
+   /// @endcond
 };
 /*
 template <class T, class D>
@@ -411,13 +418,14 @@ template <class T1, class D1, class T2, class D2> inline
 bool operator>=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y)
 {  return x.get() >= y.get(); }
 
+/// @cond
 /*!This class has move constructor*/
-
 template <class T, class D>
 struct is_movable<unique_ptr<T, D> >
 {
    enum {   value = true };
 };
+/// @endcond
 
 }  //namespace interprocess{
 }  //namespace boost{

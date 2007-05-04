@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -38,8 +38,12 @@ namespace interprocess {
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
-typedef void *    handle_t;
-typedef long long offset_t;
+typedef void *             file_handle_t;
+typedef long long          offset_t;
+typedef struct{
+   void *   handle;
+   bool     is_shm;
+}  mapping_handle_t;
 
 typedef enum { read_only      = winapi::generic_read
              , read_write     = winapi::generic_read | winapi::generic_write
@@ -54,13 +58,24 @@ typedef enum { file_begin     = winapi::file_begin
 
 namespace detail{
 
+inline mapping_handle_t mapping_handle_from_file_handle(file_handle_t hnd)
+{
+   mapping_handle_t ret;
+   ret.handle = hnd;
+   ret.is_shm = false;
+   return ret;
+}
+
+inline file_handle_t file_handle_from_mapping_handle(mapping_handle_t hnd)
+{  return hnd.handle; }
+
 inline bool create_directory(const char *path)
 {  return winapi::create_directory(path, 0); }
 
 inline const char *get_temporary_path()
 {  return std::getenv("TMP"); }
 
-inline handle_t create_new_file
+inline file_handle_t create_new_file
    (const char *name, mode_t mode = read_write, bool temporary = false)
 {  
    unsigned long attr = temporary ? winapi::file_attribute_temporary : 0;
@@ -68,7 +83,7 @@ inline handle_t create_new_file
       (name, (unsigned int)mode, winapi::create_new, attr);  
 }
 
-inline handle_t create_or_open_file
+inline file_handle_t create_or_open_file
    (const char *name, mode_t mode = read_write, bool temporary = false)
 {  
    unsigned long attr = temporary ? winapi::file_attribute_temporary : 0;
@@ -76,7 +91,7 @@ inline handle_t create_or_open_file
       (name, (unsigned int)mode, winapi::open_always, attr);  
 }
 
-inline handle_t open_existing_file
+inline file_handle_t open_existing_file
    (const char *name, mode_t mode = read_write, bool temporary = false)
 {  
    unsigned long attr = temporary ? winapi::file_attribute_temporary : 0;
@@ -87,7 +102,7 @@ inline handle_t open_existing_file
 inline bool delete_file(const char *name)
 {  return winapi::delete_file(name);   }
 
-inline bool truncate_file (handle_t hnd, std::size_t size)
+inline bool truncate_file (file_handle_t hnd, std::size_t size)
 {  
    if(!winapi::set_file_pointer_ex(hnd, size, 0, winapi::file_begin)){
       return false;
@@ -99,28 +114,28 @@ inline bool truncate_file (handle_t hnd, std::size_t size)
    return true;
 }
 
-inline bool get_file_size(handle_t hnd, offset_t &size)
+inline bool get_file_size(file_handle_t hnd, offset_t &size)
 {  return winapi::get_file_size(hnd, size);  }
 
-inline bool set_file_pointer(handle_t hnd, offset_t off, file_pos_t pos)
+inline bool set_file_pointer(file_handle_t hnd, offset_t off, file_pos_t pos)
 {  return winapi::set_file_pointer_ex(hnd, off, 0, (unsigned long) pos); }
 
-inline bool get_file_pointer(handle_t hnd, offset_t &off)
+inline bool get_file_pointer(file_handle_t hnd, offset_t &off)
 {  return winapi::set_file_pointer_ex(hnd, 0, &off, winapi::file_current); }
 
-inline bool write_file(handle_t hnd, const void *data, std::size_t numdata)
+inline bool write_file(file_handle_t hnd, const void *data, std::size_t numdata)
 {  
    unsigned long written;
    return 0 != WriteFile(hnd, data, (unsigned long)numdata, &written, 0);
 }
 
-inline handle_t invalid_file()
+inline file_handle_t invalid_file()
 {  return winapi::invalid_handle_value;  }
 
-inline bool close_file(handle_t hnd)
+inline bool close_file(file_handle_t hnd)
 {  return 0 != winapi::close_handle(hnd);   }
 
-inline bool acquire_file_lock(handle_t hnd)
+inline bool acquire_file_lock(file_handle_t hnd)
 {  
    static winapi::interprocess_overlapped overlapped;
    const unsigned long len = 0xffffffff;
@@ -130,7 +145,7 @@ inline bool acquire_file_lock(handle_t hnd)
       (hnd, winapi::lockfile_exclusive_lock, 0, len, len, &overlapped);
 }
 
-inline bool try_acquire_file_lock(handle_t hnd, bool &acquired)
+inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
 {  
    const unsigned long len = 0xffffffff;
    winapi::interprocess_overlapped overlapped;
@@ -146,7 +161,7 @@ inline bool try_acquire_file_lock(handle_t hnd, bool &acquired)
 }
 
 inline bool timed_acquire_file_lock
-   (handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
+   (file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
 {  
    //Obtain current count and target time
    boost::posix_time::ptime now = 
@@ -174,7 +189,7 @@ inline bool timed_acquire_file_lock
    }while (true);
 }
 
-inline bool release_file_lock(handle_t hnd)
+inline bool release_file_lock(file_handle_t hnd)
 {  
    const unsigned long len = 0xffffffff;
    winapi::interprocess_overlapped overlapped;
@@ -182,7 +197,7 @@ inline bool release_file_lock(handle_t hnd)
    return winapi::unlock_file_ex(hnd, 0, len, len, &overlapped);
 }
 
-inline bool acquire_file_lock_sharable(handle_t hnd)
+inline bool acquire_file_lock_sharable(file_handle_t hnd)
 {  
    const unsigned long len = 0xffffffff;
    winapi::interprocess_overlapped overlapped;
@@ -190,7 +205,7 @@ inline bool acquire_file_lock_sharable(handle_t hnd)
    return winapi::lock_file_ex(hnd, 0, 0, len, len, &overlapped);
 }
 
-inline bool try_acquire_file_lock_sharable(handle_t hnd, bool &acquired)
+inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
 {  
    const unsigned long len = 0xffffffff;
    winapi::interprocess_overlapped overlapped;
@@ -204,7 +219,7 @@ inline bool try_acquire_file_lock_sharable(handle_t hnd, bool &acquired)
 }
 
 inline bool timed_acquire_file_lock_sharable
-   (handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
+   (file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
 {  
    //Obtain current count and target time
    boost::posix_time::ptime now = 
@@ -232,13 +247,15 @@ inline bool timed_acquire_file_lock_sharable
    }while (true);
 }
 
-inline bool release_file_lock_sharable(handle_t hnd)
+inline bool release_file_lock_sharable(file_handle_t hnd)
 {  return release_file_lock(hnd);   }
 
 #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
-typedef int    handle_t;
-typedef off_t  offset_t;
+typedef int       file_handle_t;
+typedef off_t     offset_t;
+typedef file_handle_t  mapping_handle_t;
+
 typedef enum { read_only      = O_RDONLY
              , read_write     = O_RDWR
              , copy_on_write
@@ -252,8 +269,14 @@ typedef enum { file_begin     = SEEK_SET
 
 namespace detail{
 
+inline mapping_handle_t mapping_handle_from_file_handle(file_handle_t hnd)
+{  return hnd; }
+
+inline file_handle_t file_handle_from_mapping_handle(mapping_handle_t hnd)
+{  return hnd; }
+
 inline bool create_directory(const char *path)
-{  return ::mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0; }
+{  return ::mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0; }
 
 inline const char *get_temporary_path()
 {  
@@ -261,27 +284,30 @@ inline const char *get_temporary_path()
    if(!dir){
       dir = std::getenv("TMP");
       if(!dir){
-         return std::getenv("TEMP");
+         dir = std::getenv("TEMP");
+         if(!dir){
+            dir = "/tmp";
+         }
       }
    }
    return dir;
 }
 
-inline handle_t create_new_file
+inline file_handle_t create_new_file
    (const char *name, mode_t mode = read_write, bool temporary = false)
 {  
    (void)temporary;
    return ::open(name, ((int)mode) | O_EXCL | O_CREAT, S_IRWXG | S_IRWXO | S_IRWXU); 
 }
 
-inline handle_t create_or_open_file
+inline file_handle_t create_or_open_file
    (const char *name, mode_t mode = read_write, bool temporary = false)
 {  
    (void)temporary;
    return ::open(name, ((int)mode) | O_CREAT, S_IRWXG | S_IRWXO | S_IRWXU); 
 }
 
-inline handle_t open_existing_file
+inline file_handle_t open_existing_file
    (const char *name, mode_t mode = read_write, bool temporary = false)
 {  
    (void)temporary;
@@ -289,12 +315,12 @@ inline handle_t open_existing_file
 }
 
 inline bool delete_file(const char *name)
-{  return ::unlink(name);   }
+{  return ::unlink(name) == 0;   }
 
-inline bool truncate_file (handle_t hnd, std::size_t size)
+inline bool truncate_file (file_handle_t hnd, std::size_t size)
 {  return 0 == ::ftruncate(hnd, size);   }
 
-inline bool get_file_size(handle_t hnd, offset_t &size)
+inline bool get_file_size(file_handle_t hnd, offset_t &size)
 {  
    struct stat data;
    bool ret = 0 == ::fstat(hnd, &data);
@@ -304,25 +330,25 @@ inline bool get_file_size(handle_t hnd, offset_t &size)
    return ret;
 }
 
-inline bool set_file_pointer(handle_t hnd, offset_t off, file_pos_t pos)
+inline bool set_file_pointer(file_handle_t hnd, offset_t off, file_pos_t pos)
 {  return off == lseek(hnd, off, (int)pos); }
 
-inline bool get_file_pointer(handle_t hnd, offset_t &off)
+inline bool get_file_pointer(file_handle_t hnd, offset_t &off)
 {  
    off = lseek(hnd, 0, SEEK_CUR);
    return off != ((off_t)-1);
 }
 
-inline bool write_file(handle_t hnd, const void *data, std::size_t numdata)
+inline bool write_file(file_handle_t hnd, const void *data, std::size_t numdata)
 {  return (ssize_t(numdata)) == ::write(hnd, data, numdata);  }
 
-inline handle_t invalid_file()
+inline file_handle_t invalid_file()
 {  return -1;  }
 
-inline bool close_file(handle_t hnd)
+inline bool close_file(file_handle_t hnd)
 {  return ::close(hnd) == 0;   }
 
-inline bool acquire_file_lock(handle_t hnd)
+inline bool acquire_file_lock(file_handle_t hnd)
 {
    struct ::flock lock;
    lock.l_type    = F_WRLCK;
@@ -332,7 +358,7 @@ inline bool acquire_file_lock(handle_t hnd)
    return -1 != ::fcntl(hnd, F_SETLKW, &lock);
 }
 
-inline bool try_acquire_file_lock(handle_t hnd, bool &acquired)
+inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
 {
    struct ::flock lock;
    lock.l_type    = F_WRLCK;
@@ -348,7 +374,7 @@ inline bool try_acquire_file_lock(handle_t hnd, bool &acquired)
 }
 
 inline bool timed_acquire_file_lock
-   (handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
+   (file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
 {
    //Obtain current count and target time
    boost::posix_time::ptime now = 
@@ -376,7 +402,7 @@ inline bool timed_acquire_file_lock
    }while (true);
 }
 
-inline bool release_file_lock(handle_t hnd)
+inline bool release_file_lock(file_handle_t hnd)
 {
    struct ::flock lock;
    lock.l_type    = F_UNLCK;
@@ -386,7 +412,7 @@ inline bool release_file_lock(handle_t hnd)
    return -1 != ::fcntl(hnd, F_SETLK, &lock);
 }
 
-inline bool acquire_file_lock_sharable(handle_t hnd)
+inline bool acquire_file_lock_sharable(file_handle_t hnd)
 {  
    struct ::flock lock;
    lock.l_type    = F_RDLCK;
@@ -396,7 +422,7 @@ inline bool acquire_file_lock_sharable(handle_t hnd)
    return -1 != ::fcntl(hnd, F_SETLKW, &lock);
 }
 
-inline bool try_acquire_file_lock_sharable(handle_t hnd, bool &acquired)
+inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
 {  
    struct flock lock;
    lock.l_type    = F_RDLCK;
@@ -412,7 +438,7 @@ inline bool try_acquire_file_lock_sharable(handle_t hnd, bool &acquired)
 }
 
 inline bool timed_acquire_file_lock_sharable
-   (handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
+   (file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
 {  
    //Obtain current count and target time
    boost::posix_time::ptime now = 
@@ -440,7 +466,7 @@ inline bool timed_acquire_file_lock_sharable
    }while (true);
 }
 
-inline bool release_file_lock_sharable(handle_t hnd)
+inline bool release_file_lock_sharable(file_handle_t hnd)
 {  return release_file_lock(hnd);   }
 
 #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)

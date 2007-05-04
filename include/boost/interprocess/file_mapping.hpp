@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -35,8 +35,13 @@ namespace interprocess {
    create mapped regions from the mapped files*/
 class file_mapping
 {
-   public:
+   /// @cond
+   //Non-copyable and non-assignable
+   file_mapping(const file_mapping &);
+   file_mapping &operator=(const file_mapping &);
+   /// @endcond
 
+   public:
    /*!Constructs an empty file mapping. Does not throw*/
    file_mapping();
 
@@ -66,11 +71,11 @@ class file_mapping
    /*!Swaps to file_mappings. Does not throw*/
    void swap(file_mapping &other);
 
-   /*!Return access mode*/
+   /*!Returns access mode*/
    mode_t get_mode() const;
 
    /*!Get mapping handle*/
-   handle_t get_mapping_handle() const;
+   mapping_handle_t get_mapping_handle() const;
 
    /*!Destroys the file mapping. All mapped regions created from this are still
       valid. Does not throw*/
@@ -79,16 +84,18 @@ class file_mapping
    /*!Returns the name of the file.*/
    const char *get_name() const;
 
+   /// @cond
    private:
    /*!Closes a previously opened file mapping. Never throws.*/
    void priv_close();
-   handle_t  m_handle;
+   file_handle_t  m_handle;
    mode_t    m_mode;
    std::string       m_filename;
+   /// @endcond
 };
 
 inline file_mapping::file_mapping() 
-   :  m_handle(handle_t(detail::invalid_file()))
+   :  m_handle(file_handle_t(detail::invalid_file()))
 {}
 
 inline file_mapping::~file_mapping() 
@@ -104,8 +111,8 @@ inline void file_mapping::swap(file_mapping &other)
    m_filename.swap(other.m_filename);   
 }
 
-inline handle_t file_mapping::get_mapping_handle() const
-{  return m_handle;  }
+inline mapping_handle_t file_mapping::get_mapping_handle() const
+{  return detail::mapping_handle_from_file_handle(m_handle);  }
 
 inline mode_t file_mapping::get_mode() const
 {  return m_mode; }
@@ -115,7 +122,7 @@ inline file_mapping::file_mapping
    :  m_filename(filename)
 {
    //Check accesses
-   if (mode != read_write || mode != read_only){
+   if (mode != read_write && mode != read_only){
       error_info err = other_error;
       throw interprocess_exception(err);
    }

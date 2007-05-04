@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -55,7 +55,7 @@ class sharable_lock
 {
    public:
    typedef SharableMutex mutex_type;
-
+   /// @cond
    private:
    typedef sharable_lock<SharableMutex> this_type;
    sharable_lock(sharable_lock const&);
@@ -63,7 +63,7 @@ class sharable_lock
    typedef bool this_type::*unspecified_bool_type;
    sharable_lock& operator=(sharable_lock const&);
    sharable_lock& operator=(scoped_lock<mutex_type> const&);
-
+   /// @endcond
    public:
 
    /*!Effects: Default constructs a sharable_lock.
@@ -289,19 +289,21 @@ class sharable_lock
       std::swap(mp_mutex, other.get().mp_mutex);
       std::swap(m_locked, other.get().m_locked);
    }
-
+   /// @cond
    private:
    mutex_type *mp_mutex;
    bool        m_locked;
+   /// @endcond
 };
 
+/// @cond
 /*!This class is movable*/
 template <class M>
 struct is_movable<sharable_lock<M> >
 {
    enum {   value = true };
 };
-
+/// @endcond
 
 } // namespace interprocess
 } // namespace boost

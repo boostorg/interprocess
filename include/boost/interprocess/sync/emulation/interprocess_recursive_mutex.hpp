@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -94,10 +94,7 @@ inline bool interprocess_recursive_mutex::timed_lock(const boost::posix_time::pt
 
 inline void interprocess_recursive_mutex::unlock()
 {
-   #ifndef NDEBUG
-   detail::OS_thread_id_t th_id = detail::get_current_thread_id();
-   assert(detail::equal_thread_id(th_id, m_nOwner));
-   #endif
+   assert(detail::equal_thread_id(detail::get_current_thread_id(), m_nOwner));
    --m_nLockCount;
    if(!m_nLockCount){
       m_nOwner = detail::get_invalid_thread_id();

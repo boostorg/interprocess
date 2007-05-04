@@ -63,11 +63,13 @@
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/interprocess/detail/move_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
+#include <boost/type_traits/has_trivial_destructor.hpp>
 
 namespace boost {
 
 namespace interprocess {
 
+/// @cond
 template <class T, class Alloc>
 class deque;
 
@@ -107,7 +109,9 @@ class deque_base
    allocator_type get_allocator() const 
       { return *this; }
 
- protected:
+   protected:
+   enum {   trivial_dctr_after_move = boost::has_trivial_destructor<val_alloc_val>::value   };
+
    typedef typename boost::detail::allocator::
          rebind_to<Alloc, typename Alloc::pointer>::type   map_allocator_type;
 
@@ -293,9 +297,9 @@ class deque_base
    };
 
    //Vector iterator
-	class iterator : public const_iterator
-	{
-	   public:
+   class iterator : public const_iterator
+   {
+      public:
       typedef std::random_access_iterator_tag   iterator_category;
       typedef val_alloc_val                     value_type;
       typedef ptr_alloc_ptr                     pointer;
@@ -325,37 +329,37 @@ class deque_base
       reference operator[](difference_type n) const { return *(*this + n); }
 
       //Increment / Decrement
-		iterator& operator++()  
+      iterator& operator++()  
          { this->const_iterator::operator++(); return *this;  }
 
-		iterator operator++(int)
+      iterator operator++(int)
          { iterator tmp = *this; ++*this; return tmp; }
-		
+      
       iterator& operator--()
-   		{  this->const_iterator::operator--(); return *this;  }
+         {  this->const_iterator::operator--(); return *this;  }
 
-		iterator operator--(int)
-	      {  iterator tmp = *this; --*this; return tmp; }
+      iterator operator--(int)
+         {  iterator tmp = *this; --*this; return tmp; }
 
       // Arithmetic
-		iterator& operator+=(difference_type off)
-		   {  this->const_iterator::operator+=(off); return *this;  }
+      iterator& operator+=(difference_type off)
+         {  this->const_iterator::operator+=(off); return *this;  }
 
-		iterator operator+(difference_type off) const
-			{  return iterator(this->const_iterator::operator+(off));  }
+      iterator operator+(difference_type off) const
+         {  return iterator(this->const_iterator::operator+(off));  }
 
-		friend iterator operator+(difference_type off, const iterator& right)
+      friend iterator operator+(difference_type off, const iterator& right)
          {  return iterator(off+static_cast<const const_iterator &>(right)); }
 
-		iterator& operator-=(difference_type off)
-			{  this->const_iterator::operator-=(off); return *this;   }
+      iterator& operator-=(difference_type off)
+         {  this->const_iterator::operator-=(off); return *this;   }
 
-		iterator operator-(difference_type off) const
-			{  return iterator(this->const_iterator::operator-(off));  }
+      iterator operator-(difference_type off) const
+         {  return iterator(this->const_iterator::operator-(off));  }
 
-		difference_type operator-(const const_iterator& right) const
-			{  return static_cast<const const_iterator&>(*this) - right;   }
-	};
+      difference_type operator-(const const_iterator& right) const
+         {  return static_cast<const const_iterator&>(*this) - right;   }
+   };
 
    deque_base(const allocator_type& a, std::size_t num_elements)
       : allocator_type(a), map_allocator_type(a),
@@ -444,13 +448,16 @@ class deque_base
   iterator        m_start;
   iterator        m_finish;
 };
+/// @endcond
 
 template <class T, class Alloc>
 class deque : protected deque_base<T, Alloc>
 {
-
+   /// @cond
   typedef deque_base<T, Alloc> Base;
- public:                         // Basic types
+   /// @endcond
+
+   public:                         // Basic types
    typedef typename Alloc::value_type           val_alloc_val;
    typedef typename Alloc::pointer              val_alloc_ptr;
    typedef typename Alloc::const_pointer        val_alloc_cptr;
@@ -482,12 +489,13 @@ class deque : protected deque_base<T, Alloc>
    typedef reverse_iterator<const_iterator> const_reverse_iterator;
    typedef reverse_iterator<iterator> reverse_iterator;
 
- protected:                      // Internal typedefs
+   /// @cond
+   protected:                      // Internal typedefs
    typedef ptr_alloc_ptr index_pointer;
    static std::size_t s_buffer_size() 
          { return deque_buf_size(sizeof(T)); }
 
- protected:
+   protected:
    using Base::priv_initialize_map;
    using Base::priv_create_nodes;
    using Base::priv_destroy_nodes;
@@ -500,8 +508,9 @@ class deque : protected deque_base<T, Alloc>
    using Base::m_map_size;
    using Base::m_start;
    using Base::m_finish;
+   /// @endcond
 
- public:                         // Basic accessors
+   public:                         // Basic accessors
    iterator begin() 
       { return this->m_start; }
 
@@ -560,7 +569,7 @@ class deque : protected deque_base<T, Alloc>
       { return this->m_finish - this->m_start; }
 
    size_type max_size() const 
-      { return size_type(-1); }
+      { return allocator_type::max_size(); }
 
    bool empty() const 
       { return this->m_finish == this->m_start; }
@@ -593,8 +602,8 @@ class deque : protected deque_base<T, Alloc>
       this->priv_initialize_dispatch(first, last, Result());
    }
 
-  ~deque() 
-      { priv_destroy_range(this->m_start, this->m_finish); }
+   ~deque() 
+   { priv_destroy_range(this->m_start, this->m_finish); }
 
    deque& operator= (const deque& x) 
    {
@@ -612,7 +621,7 @@ class deque : protected deque_base<T, Alloc>
    }        
 
    deque& operator= (const detail::moved_object<deque> &mx) 
-   {  this->swap(mx.get());   return *this;  }
+   {  this->clear(); this->swap(mx.get());   return *this;  }
 
    void swap(deque& x)
    {
@@ -779,11 +788,15 @@ class deque : protected deque_base<T, Alloc>
       ++next;
       difference_type index = pos - this->m_start;
       if (size_type(index) < (this->size() >> 1)) {
-         std::copy_backward(detail::make_move_iterator(this->m_start), detail::make_move_iterator(pos), next);
+         std::copy_backward( detail::make_move_iterator(this->m_start)
+                           , detail::make_move_iterator(pos)
+                           , next);
          pop_front();
       }
       else {
-         std::copy(detail::make_move_iterator(next), detail::make_move_iterator(this->m_finish), pos);
+         std::copy( detail::make_move_iterator(next)
+                  , detail::make_move_iterator(this->m_finish)
+                  , pos);
          pop_back();
       }
       return this->m_start + index;
@@ -799,16 +812,22 @@ class deque : protected deque_base<T, Alloc>
          difference_type n = last - first;
          difference_type elems_before = first - this->m_start;
          if (elems_before < static_cast<difference_type>(this->size() - n) - elems_before) {
-            std::copy_backward(detail::make_move_iterator(this->m_start), detail::make_move_iterator(first), last);
+            std::copy_backward( detail::make_move_iterator(this->m_start)
+                              , detail::make_move_iterator(first)
+                              , last);
             iterator new_start = this->m_start + n;
-            this->priv_destroy_range(this->m_start, new_start);
+            if(!Base::trivial_dctr_after_move)
+               this->priv_destroy_range(this->m_start, new_start);
             this->priv_destroy_nodes(new_start.m_node, this->m_start.m_node);
             this->m_start = new_start;
          }
          else {
-            std::copy(last, this->m_finish, first);
+            std::copy( detail::make_move_iterator(last)
+                     , detail::make_move_iterator(this->m_finish)
+                     , first);
             iterator new_finish = this->m_finish - n;
-            this->priv_destroy_range(new_finish, this->m_finish);
+            if(!Base::trivial_dctr_after_move)
+               this->priv_destroy_range(new_finish, this->m_finish);
             this->priv_destroy_nodes(new_finish.m_node + 1, this->m_finish.m_node + 1);
             this->m_finish = new_finish;
          }
@@ -836,7 +855,8 @@ class deque : protected deque_base<T, Alloc>
       this->m_finish = this->m_start;
    }
 
- private:
+   /// @cond
+   private:
 
    template <class InpIt>
    void insert(iterator pos, InpIt first, InpIt last, std::input_iterator_tag)
@@ -1368,6 +1388,7 @@ class deque : protected deque_base<T, Alloc>
       }
       BOOST_CATCH_END
    }
+   /// @endcond
 };
 
 // Nonmember functions.
@@ -1409,8 +1430,17 @@ template <class T, class Alloc>
 inline void swap(deque<T,Alloc>& x, deque<T,Alloc>& y) 
    {  x.swap(y);  }
 
-}  //namespace interprocess {
+/// @cond
+//!has_trivial_destructor_after_move<> == true_type
+//!specialization for optimizations
+template <class T, class A>
+struct has_trivial_destructor_after_move<deque<T, A> >
+{
+   enum {   value = has_trivial_destructor<A>::value  };
+};
+/// @endcond
 
+}  //namespace interprocess {
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>

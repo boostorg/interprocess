@@ -1,3 +1,9 @@
+#ifndef _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_DEPRECATE
+#endif
+
+#include <boost/config.hpp>
+#include <boost/detail/workaround.hpp>
 
 #ifdef _MSC_VER
    #pragma warning (push)
@@ -27,8 +33,6 @@
    #pragma warning (disable : 4267) //conversion from 'X' to 'Y', possible loss of data
 #endif
 
-#include <boost/config.hpp>
-#include <boost/detail/workaround.hpp>
 
 #if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
 #  pragma warn -8026 // shut up warning "cannot inline function because ..."

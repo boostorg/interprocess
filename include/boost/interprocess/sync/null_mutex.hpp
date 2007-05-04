@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -34,9 +34,10 @@ namespace interprocess {
    simulates a successful operation.*/
 class null_mutex
 {
+   /// @cond
    null_mutex(const null_mutex&);
    null_mutex &operator= (const null_mutex&);
-
+   /// @endcond
    public:
 
    /*!Constructor. Empty.*/
@@ -132,11 +133,12 @@ class null_mutex
       Does not throw.*/
    bool try_unlock_sharable_and_lock_upgradable()
    {  return true;   }
-   
+   /// @cond   
    #if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
    private:
    char dummy; // BCB would by default use 8 B for empty structure
    #endif
+   /// @endcond
 };
 
 }  //namespace interprocess {

@@ -1,37 +1,11 @@
-/*
- *
- * Copyright (c) 1994
- * Hewlett-Packard Company
- *
- * Permission to use, copy, modify, distribute and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear
- * in supporting documentation.  Hewlett-Packard Company makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- *
- *
- * Copyright (c) 1996
- * Silicon Graphics Computer Systems, Inc.
- *
- * Permission to use, copy, modify, distribute and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear
- * in supporting documentation.  Silicon Graphics makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- *
- */
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //
-// Parts of this file come from SGI's stl_tree.h and stl_algo.h files. 
-// Modified by Ion Gaztañaga 2005.
-// Renaming, isolating and porting to generic algorithms. Pointer typedef 
-// set to allocator::pointer to allow placing it in shared memory.
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// Software License, Version 1.0. (See accompanying file
+// LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-///////////////////////////////////////////////////////////////////////////////
+// See http://www.boost.org/libs/interprocess for documentation.
+//
 ////////////////////////////////////////////////////////////////////////////////
 // The Loki Library
 // Copyright (c) 2001 by Andrei Alexandrescu
@@ -50,14 +24,6 @@
 // Parts of this file come from AssocVector.h file from Loki library
 //
 ////////////////////////////////////////////////////////////////////////////////
-//
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
-// Software License, Version 1.0. (See accompanying file
-// LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
-// See http://www.boost.org/libs/interprocess for documentation.
-//
-//////////////////////////////////////////////////////////////////////////////
 
 #ifndef BOOST_INTERPROCESS_FLAT_TREE_HPP
 #define BOOST_INTERPROCESS_FLAT_TREE_HPP
@@ -74,6 +40,7 @@
 #include <boost/detail/allocator_utilities.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
+#include <boost/type_traits/has_trivial_destructor.hpp>
 #include <algorithm>
 #include <functional>
 #include <utility>
@@ -89,9 +56,9 @@ template <class Key, class Value, class KeyOfValue,
 class flat_tree
 {
    typedef boost::interprocess::vector<Value, Alloc>  vector_t;
-   typedef Alloc/*typename vector_t::allocator_type*/          allocator_t;
+   typedef Alloc                                      allocator_t;
 
- public:
+   public:
    class value_compare
       : private Compare
    {
@@ -139,7 +106,7 @@ class flat_tree
 
    Data m_data;
 
- public:
+   public:
 
    typedef typename vector_t::value_type              value_type;
    typedef typename vector_t::pointer                 pointer;
@@ -153,8 +120,8 @@ class flat_tree
    typedef typename allocator_type::difference_type   difference_type;
    typedef typename vector_t::iterator                iterator;
    typedef typename vector_t::const_iterator          const_iterator;
-	typedef boost::reverse_iterator<iterator>          reverse_iterator;
-	typedef boost::reverse_iterator<const_iterator>    const_reverse_iterator;
+   typedef boost::reverse_iterator<iterator>          reverse_iterator;
+   typedef boost::reverse_iterator<const_iterator>    const_reverse_iterator;
    
 
    // allocation/deallocation
@@ -177,46 +144,49 @@ class flat_tree
    flat_tree&  operator=(const flat_tree& x)
    {  flat_tree(x).swap(*this); return *this;  }
 
- public:    
+   flat_tree&  operator=(const detail::moved_object<flat_tree>& mx)
+   {  m_data = move(mx.get().m_data); return *this;  }
+
+   public:    
    // accessors:
    Compare key_comp() const 
-      { return this->m_data.get_comp(); }
+   { return this->m_data.get_comp(); }
 
    allocator_type get_allocator() const 
-      { return this->m_data.m_vect.get_allocator(); }
+   { return this->m_data.m_vect.get_allocator(); }
 
    iterator begin() 
-      { return this->m_data.m_vect.begin(); }
+   { return this->m_data.m_vect.begin(); }
 
    const_iterator begin() const 
-      { return this->m_data.m_vect.begin(); }
+   { return this->m_data.m_vect.begin(); }
 
    iterator end() 
-      { return this->m_data.m_vect.end(); }
+   { return this->m_data.m_vect.end(); }
 
    const_iterator end() const 
-      { return this->m_data.m_vect.end(); }
+   { return this->m_data.m_vect.end(); }
 
    reverse_iterator rbegin() 
-      { return reverse_iterator(this->end()); }
+   { return reverse_iterator(this->end()); }
 
    const_reverse_iterator rbegin() const 
-      {  return const_reverse_iterator(this->end());  }
+   {  return const_reverse_iterator(this->end());  }
 
    reverse_iterator rend() 
-      { return reverse_iterator(this->begin()); }
+   { return reverse_iterator(this->begin()); }
 
    const_reverse_iterator rend() const 
-      { return const_reverse_iterator(this->begin()); } 
+   { return const_reverse_iterator(this->begin()); } 
 
    bool empty() const 
-      { return this->m_data.m_vect.empty(); }
+   { return this->m_data.m_vect.empty(); }
 
    size_type size() const 
-      { return this->m_data.m_vect.size(); }
+   { return this->m_data.m_vect.size(); }
 
    size_type max_size() const 
-      { return this->m_data.m_vect.max_size(); }
+   { return this->m_data.m_vect.max_size(); }
 
    void swap(flat_tree& other) 
    {
@@ -234,10 +204,24 @@ class flat_tree
  public:
    // insert/erase
    std::pair<iterator,bool> insert_unique(const value_type& val)
-   {  return this->priv_insert_unique(this->begin(), this->end(), val); }
+   {
+      insert_commit_data data;
+      std::pair<iterator,bool> ret = priv_insert_unique_prepare(val, data);
+      if(ret.second){
+         ret.first = priv_insert_commit(data, val);
+      }
+      return ret;
+   }
 
    std::pair<iterator,bool> insert_unique(const detail::moved_object<value_type>& mval)
-   {  return this->priv_insert_unique(this->begin(), this->end(), mval); }
+   {
+      insert_commit_data data;
+      std::pair<iterator,bool> ret = priv_insert_unique_prepare(mval.get(), data);
+      if(ret.second){
+         ret.first = priv_insert_commit(data, mval);
+      }
+      return ret;
+   }
 
    iterator insert_equal(const value_type& val)
    {
@@ -253,175 +237,38 @@ class flat_tree
       return i;
    }
 
-   iterator insert_unique(iterator pos, const value_type& val)
+   iterator insert_unique(const_iterator pos, const value_type& val)
    {
-/* old code
-      const value_compare &value_comp = this->m_data;
-
-      if (pos != this->end() && value_comp(*pos, val)){
-         if(++pos == this->end() ||
-               !value_comp(*pos, val)){
-            if(value_comp(val, *pos))
-               return this->m_data.m_vect.insert(pos, val);
-            else
-               return pos;
-         }
+      insert_commit_data data;
+      std::pair<iterator,bool> ret = priv_insert_unique_prepare(pos, val, data);
+      if(ret.second){
+         ret.first = priv_insert_commit(data, val);
       }
-      return insert_unique(val).first;
-*/
-   /* N1780
-      To insert val at pos:
-      if pos == end || val <= *pos
-         if pos == begin || val >= *(pos-1)
-            insert val before pos
-         else
-            insert val before upper_bound(val)
-      else if pos+1 == end || val <= *(pos+1)
-         insert val after pos
-      else
-         insert val before lower_bound(val)
-  */
-
-      const value_compare &value_comp = this->m_data;
-
-      if(pos == this->end() || value_comp(val, *pos)){
-         if(pos != this->begin() && !value_comp(val, pos[-1])){
-            if(value_comp(pos[-1], val)){
-               return this->m_data.m_vect.insert(pos, val);
-            }
-            else{
-               return pos;
-            }
-         }
-         return this->priv_insert_unique(this->begin(), pos, val).first;
-      }
-      /* Works, but increases code complexity
-      //Next check
-      else if (value_comp(*pos, val) && !value_comp(pos[1], val)){
-         if(value_comp(val, pos[1])){
-            return this->m_data.m_vect.insert(pos+1, val);
-         }
-         else{
-            return pos;
-         }
-      }*/
-      else{
-         //[... pos ... val ... ]
-         //The hint is before the insertion position, so insert it
-         //in the remaining range
-         return this->priv_insert_unique(pos, this->end(), val).first;
-      }
+      return ret.first;
    }
 
-   iterator insert_unique(iterator pos, const detail::moved_object<value_type>& mval)
+   iterator insert_unique(const_iterator pos, const detail::moved_object<value_type>& mval)
    {
-      const value_type &val = mval.get();
-      const value_compare &value_comp = this->m_data;
-
-      if(pos == this->end() || value_comp(val, *pos)){
-         if(pos != this->begin() && !value_comp(val, pos[-1])){
-            if(value_comp(pos[-1], val)){
-               return this->m_data.m_vect.insert(pos, mval);
-            }
-            else{
-               return pos;
-            }
-         }
-         return this->priv_insert_unique(this->begin(), pos, mval).first;
+      insert_commit_data data;
+      std::pair<iterator,bool> ret = priv_insert_unique_prepare(pos, mval.get(), data);
+      if(ret.second){
+         ret.first = priv_insert_commit(data, mval);
       }
-      /* Works, but increases code complexity
-      //Next check
-      else if (value_comp(*pos, val) && !value_comp(pos[1], val)){
-         if(value_comp(val, pos[1])){
-            return this->m_data.m_vect.insert(pos+1, mval);
-         }
-         else{
-            return pos;
-         }
-      }*/
-      else{
-         //[... pos ... val ... ]
-         //The hint is before the insertion position, so insert it
-         //in the remaining range
-         return this->priv_insert_unique(pos, this->end(), mval).first;
-      }
+      return ret.first;
    }
 
-   iterator insert_equal(iterator pos, const value_type& val)
+   iterator insert_equal(const_iterator pos, const value_type& val)
    {
-   /* N1780
-      To insert val at pos:
-      if pos == end || val <= *pos
-         if pos == begin || val >= *(pos-1)
-            insert val before pos
-         else
-            insert val before upper_bound(val)
-      else if pos+1 == end || val <= *(pos+1)
-         insert val after pos
-      else
-         insert val before lower_bound(val)
-   */
-      const value_compare &value_comp = this->m_data;
-
-      if(pos == this->end() || !value_comp(*pos, val)){
-         if (pos == this->begin() || !value_comp(val, pos[-1])){
-            return this->m_data.m_vect.insert(pos, val);
-         }
-         else{
-            return this->m_data.m_vect.insert
-//               (this->upper_bound(KeyOfValue()(val)), val);
-               (this->priv_upper_bound(this->begin(), pos, KeyOfValue()(val)), val);
-         }
-      }
-      /*Works, but increases code complexity
-      else if (++pos == this->end() || !value_comp(*pos, val)){
-         return this->m_data.m_vect.insert(pos, val);
-      }
-      */
-      else{
-         return this->m_data.m_vect.insert
-            //(this->lower_bound(KeyOfValue()(val)), val);
-            (this->priv_lower_bound(pos, this->end(), KeyOfValue()(val)), val);
-      }
+      insert_commit_data data;
+      priv_insert_equal_prepare(pos, val, data);
+      return priv_insert_commit(data, val);
    }
 
-   iterator insert_equal(iterator pos, const detail::moved_object<value_type>& mval)
+   iterator insert_equal(const_iterator pos, const detail::moved_object<value_type>& mval)
    {
-   /* N1780
-      To insert val at pos:
-      if pos == end || val <= *pos
-         if pos == begin || val >= *(pos-1)
-            insert val before pos
-         else
-            insert val before upper_bound(val)
-      else if pos+1 == end || val <= *(pos+1)
-         insert val after pos
-      else
-         insert val before lower_bound(val)
-   */
-      const value_type &val = mval.get();
-      const value_compare &value_comp = this->m_data;
-
-      if(pos == this->end() || !value_comp(*pos, val)){
-         if (pos == this->begin() || !value_comp(val, pos[-1])){
-            return this->m_data.m_vect.insert(pos, mval);
-         }
-         else{
-            return this->m_data.m_vect.insert
-//               (this->upper_bound(KeyOfValue()(val)), val);
-               (this->priv_upper_bound(this->begin(), pos, KeyOfValue()(val)), mval);
-         }
-      }
-      /*Works, but increases code complexity
-      else if (++pos == this->end() || !value_comp(*pos, val)){
-         return this->m_data.m_vect.insert(pos, mval);
-      }
-      */
-      else{
-         return this->m_data.m_vect.insert
-            //(this->lower_bound(KeyOfValue()(val)), val);
-            (this->priv_lower_bound(pos, this->end(), KeyOfValue()(val)), mval);
-      }
+      insert_commit_data data;
+      priv_insert_equal_prepare(pos, mval.get(), data);
+      return priv_insert_commit(data, mval);
    }
 
    template <class InIt>
@@ -434,12 +281,15 @@ class flat_tree
    template <class InIt>
    void insert_equal(InIt first, InIt last)
    {
-      for ( ; first != last; ++first)
-         this->insert_equal(*first);
+      typedef typename 
+         std::iterator_traits<InIt>::iterator_category ItCat;
+      priv_insert_equal(first, last, ItCat());
+//      for ( ; first != last; ++first)
+//         this->insert_equal(*first);
    }
 
    iterator erase(const_iterator position)
-      {  return this->m_data.m_vect.erase(position);  }
+   {  return this->m_data.m_vect.erase(position);  }
 
    size_type erase(const key_type& k)
    {
@@ -453,10 +303,10 @@ class flat_tree
    }
 
    iterator erase(const_iterator first, const_iterator last)
-      {  return this->m_data.m_vect.erase(first, last);  }
+   {  return this->m_data.m_vect.erase(first, last);  }
 
    void clear()
-      {  this->m_data.m_vect.clear();  }      
+   {  this->m_data.m_vect.clear();  }
 
    // set operations:
    iterator find(const key_type& k)
@@ -489,71 +339,139 @@ class flat_tree
    }
 
    iterator lower_bound(const key_type& k)
-   {
-      return this->priv_lower_bound(this->begin(), this->end(), k);
-   }
+   {  return this->priv_lower_bound(this->begin(), this->end(), k);  }
 
    const_iterator lower_bound(const key_type& k) const
-   {
-      return this->priv_lower_bound(this->begin(), this->end(), k);
-   }
+   {  return this->priv_lower_bound(this->begin(), this->end(), k);  }
 
    iterator upper_bound(const key_type& k)
-   {
-      return this->priv_upper_bound(this->begin(), this->end(), k);
-   }
+   {  return this->priv_upper_bound(this->begin(), this->end(), k);  }
 
    const_iterator upper_bound(const key_type& k) const
-   {
-      return this->priv_upper_bound(this->begin(), this->end(), k);
-   }
+   {  return this->priv_upper_bound(this->begin(), this->end(), k);  }
 
    std::pair<iterator,iterator> equal_range(const key_type& k)
-   {  
-      return this->priv_equal_range(this->begin(), this->end(), k);
-   }
+   {  return this->priv_equal_range(this->begin(), this->end(), k);  }
 
    std::pair<const_iterator, const_iterator> equal_range(const key_type& k) const
-   {  
-      return this->priv_equal_range(this->begin(), this->end(), k);
-   }
+   {  return this->priv_equal_range(this->begin(), this->end(), k);  }
 
    size_type capacity() const           
-      { return this->m_data.m_vect.capacity(); }
+   { return this->m_data.m_vect.capacity(); }
 
    void reserve(size_type count)       
-      { this->m_data.m_vect.reserve(count);   }
+   { this->m_data.m_vect.reserve(count);   }
 
- private:
+   private:
+   struct insert_commit_data
+   {
+      iterator position;
+   };
 
    // insert/erase
-   std::pair<iterator,bool> priv_insert_unique
-      (iterator beg, iterator end, const value_type& val)
+   void priv_insert_equal_prepare
+      (const_iterator p, const value_type& val, insert_commit_data &data)
    {
-      bool found = true;
-      const value_compare &value_comp  = this->m_data;
-      iterator i = this->priv_lower_bound(beg, end, KeyOfValue()(val));
+      iterator &pos = (iterator &)(const_iterator &)p;
+      // N1780
+      //   To insert val at pos:
+      //   if pos == end || val <= *pos
+      //      if pos == begin || val >= *(pos-1)
+      //         insert val before pos
+      //      else
+      //         insert val before upper_bound(val)
+      //   else if pos+1 == end || val <= *(pos+1)
+      //      insert val after pos
+      //   else
+      //      insert val before lower_bound(val)
+      const value_compare &value_comp = this->m_data;
 
-      if (i == end || value_comp(val, *i)){
-         i = this->m_data.m_vect.insert(i, val);
-         found = false;
+      if(pos == this->end() || !value_comp(*pos, val)){
+         if (pos == this->begin() || !value_comp(val, pos[-1])){
+            data.position = pos;
+         }
+         else{
+            data.position = 
+               this->priv_upper_bound(this->begin(), pos, KeyOfValue()(val));
+         }
       }
-      return std::make_pair(i, !found);
+      //Works, but increases code complexity
+      //else if (++pos == this->end() || !value_comp(*pos, val)){
+      //   return this->m_data.m_vect.insert(pos, val);
+      //}
+      else{
+         data.position = 
+            this->priv_lower_bound(pos, this->end(), KeyOfValue()(val));
+      }
    }
 
-   std::pair<iterator,bool> priv_insert_unique
-      (iterator beg, iterator end, const detail::moved_object<value_type>& mval)
+   std::pair<iterator,bool> priv_insert_unique_prepare
+      (iterator beg, iterator end, const value_type& val, insert_commit_data &commit_data)
    {
-      bool found = true;
       const value_compare &value_comp  = this->m_data;
-      iterator i = this->priv_lower_bound(beg, end, KeyOfValue()(mval.get()));
-
-      if (i == end || value_comp(mval.get(), *i)){
-         i = this->m_data.m_vect.insert(i, mval);
-         found = false;
-      }
-      return std::make_pair(i, !found);
+      commit_data.position = this->priv_lower_bound(beg, end, KeyOfValue()(val));
+      return std::pair<iterator,bool>
+         ( commit_data.position
+         , commit_data.position == end || value_comp(val, *commit_data.position));
    }
+
+   std::pair<iterator,bool> priv_insert_unique_prepare
+      (const value_type& val, insert_commit_data &commit_data)
+   {  return priv_insert_unique_prepare(this->begin(), this->end(), val, commit_data);   }
+
+   std::pair<iterator,bool> priv_insert_unique_prepare
+      (const_iterator p, const value_type& val, insert_commit_data &commit_data)
+   {
+      iterator &pos = (iterator &)(const_iterator &)p;
+      //N1780. Props to Howard Hinnant!
+      //To insert val at pos:
+      //if pos == end || val <= *pos
+      //   if pos == begin || val >= *(pos-1)
+      //      insert val before pos
+      //   else
+      //      insert val before upper_bound(val)
+      //else if pos+1 == end || val <= *(pos+1)
+      //   insert val after pos
+      //else
+      //   insert val before lower_bound(val)
+      const value_compare &value_comp = this->m_data;
+
+      if(pos == this->end() || value_comp(val, *pos)){
+         if(pos != this->begin() && !value_comp(val, pos[-1])){
+            if(value_comp(pos[-1], val)){
+               commit_data.position = iterator(pos);
+               return std::pair<iterator,bool>(pos, true);
+            }
+            else{
+               return std::pair<iterator,bool>(pos, false);
+            }
+         }
+         return this->priv_insert_unique_prepare(this->begin(), pos, val, commit_data);
+      }
+
+      // Works, but increases code complexity
+      //Next check
+      //else if (value_comp(*pos, val) && !value_comp(pos[1], val)){
+      //   if(value_comp(val, pos[1])){
+      //      commit_data.position = pos+1;
+      //      return std::pair<iterator,bool>(pos+1, true);
+      //   }
+      //   else{
+      //      return std::pair<iterator,bool>(pos+1, false);
+      //   }
+      //}
+      else{
+         //[... pos ... val ... ]
+         //The hint is before the insertion position, so insert it
+         //in the remaining range
+         return this->priv_insert_unique_prepare(pos, this->end(), val, commit_data);
+      }
+   }
+
+   template<class Convertible>
+   iterator priv_insert_commit
+      (insert_commit_data &commit_data, const Convertible &convertible)
+   {  return this->m_data.m_vect.insert(commit_data.position, convertible);   }
 
    template <class RanIt>
    RanIt priv_lower_bound(RanIt first, RanIt last,
@@ -635,14 +553,6 @@ class flat_tree
          }
       }
       return std::pair<RanIt, RanIt>(first, first);
-   }        
-
-   template <class FwdIt>
-   void priv_insert_unique(FwdIt first, FwdIt last, std::forward_iterator_tag)
-   {
-      size_type len = static_cast<size_type>(std::distance(first, last));
-      this->reserve(this->size()+len);
-      priv_insert_unique(first, last, std::input_iterator_tag());
    }
 
    template <class FwdIt>
@@ -654,18 +564,28 @@ class flat_tree
    }
 
    template <class InIt>
-   void priv_insert_unique(InIt first, InIt last, std::input_iterator_tag)
-   {
-      for ( ; first != last; ++first)
-         this->insert_unique(*first);
-   }
-
-   template <class InIt>
    void priv_insert_equal(InIt first, InIt last, std::input_iterator_tag)
    {
       for ( ; first != last; ++first)
          this->insert_equal(*first);
    }
+
+/*
+   template <class FwdIt>
+   void priv_insert_unique(FwdIt first, FwdIt last, std::forward_iterator_tag)
+   {
+      size_type len = static_cast<size_type>(std::distance(first, last));
+      this->reserve(this->size()+len);
+      priv_insert_unique(first, last, std::input_iterator_tag());
+   }
+
+   template <class InIt>
+   void priv_insert_unique(InIt first, InIt last, std::input_iterator_tag)
+   {
+      for ( ; first != last; ++first)
+         this->insert_unique(*first);
+   }
+*/
 };
 
 template <class Key, class Value, class KeyOfValue, 
@@ -725,6 +645,17 @@ swap(flat_tree<Key,Value,KeyOfValue,Compare,Alloc>& x,
    {  x.swap(y);  }
 
 }  //namespace detail {
+
+//!has_trivial_destructor_after_move<> == true_type
+//!specialization for optimizations
+template <class K, class V, class KOV, 
+          class C, class A>
+struct has_trivial_destructor_after_move<detail::flat_tree<K, V, KOV, C, A> >
+{
+   enum {   value = 
+               has_trivial_destructor<A>::value &&
+               has_trivial_destructor<C>::value  };
+};
 
 }  //namespace interprocess {
 

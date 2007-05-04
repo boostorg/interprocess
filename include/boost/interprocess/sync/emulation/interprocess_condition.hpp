@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -57,7 +57,7 @@ inline void interprocess_condition::notify(boost::uint32_t command)
       detail::thread_yield();
    }
 /*
-   //Wait until the threads are waked
+   //Wait until the threads are woken
    while(SLEEP != detail::atomic_cas32((boost::uint32_t*)&m_command, 0)){
       detail::thread_yield();
    }
@@ -168,7 +168,7 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
          else{
             //If it is a NOTIFY_ALL command, all threads should return 
             //from do_timed_wait function. Decrement wait count. 
-            unlock_enter_mut = detail::atomic_dec32((boost::uint32_t*)&m_num_waiters) == 1;
+            unlock_enter_mut = !detail::atomic_dec32((boost::uint32_t*)&m_num_waiters);
             //Check if this is the last thread of notify_all waiters
             //Only the last thread will release the interprocess_mutex
             if(unlock_enter_mut){

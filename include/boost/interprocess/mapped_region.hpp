@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -41,16 +41,17 @@
 */
 
 namespace boost {
-
 namespace interprocess {
 
 /*!The mapped_region class represents a portion or region created from a
    memory_mappable object.*/
 class mapped_region
 {
+   /// @cond
    //Non-copyable
    mapped_region(const mapped_region &);
    mapped_region &operator=(const mapped_region &);
+   /// @endcond
 
    public:
 
@@ -79,7 +80,9 @@ class mapped_region
       destroyed and it will take ownership of "other"'s memory mapped region.*/
    mapped_region &operator=(detail::moved_object<mapped_region> other);
 
-   /*!Returns the size of the mapping. Never throws.*/
+   /*!Returns the size of the mapping. Note for windows users: If
+      windows_shared_memory is mapped using 0 as the size, it returns 0
+      because the size is unknown. Never throws.*/
    std::size_t get_size() const;
 
    /*!Returns the base address of the mapping. Never throws.*/
@@ -87,7 +90,7 @@ class mapped_region
 
    /*!Returns the offset of the mapping from the beginning of the
       mapped memory. Never throws.*/
-   offset_t   get_offset() const;
+   offset_t    get_offset() const;
 
    /*!Flushes to the disk a byte range within the mapped memory. 
       Never throws*/
@@ -100,34 +103,44 @@ class mapped_region
       will be used by the system when mapping a memory mappable source.*/
    static std::size_t get_page_size();
 
+   /// @cond
    private:
    /*!Closes a previously opened memory mapping. Never throws.*/
    void priv_close();
 
+   template<int dummy>
+   struct page_size_holder
+   {
+      static const std::size_t PageSize;
+      static std::size_t get_page_size();
+   };
+
    void*             m_base;
    std::size_t       m_size;
    offset_t          m_offset;
-//   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
    offset_t          m_extra_offset;
-//   #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-//   #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+   file_handle_t          m_file_mapping_hnd;
+   #endif
+   /// @endcond
 };
 
 inline void swap(mapped_region &x, mapped_region &y)
 {  x.swap(y);  }
 
 inline mapped_region::mapped_region()
-   :  m_base(0), m_size(0), m_offset(0)
-//   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-      ,  m_extra_offset(0)
-//   #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-      // empty
-//   #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+   :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0)
+   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+      ,  m_file_mapping_hnd(0)
+   #endif
 {}
 
 inline mapped_region::mapped_region(detail::moved_object<mapped_region> other)
    :  m_base(0), m_size(0), m_offset(0)
       ,  m_extra_offset(0)
+   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+      ,  m_file_mapping_hnd(0)
+   #endif
 {  this->swap(other.get());   }
 
 inline mapped_region &mapped_region::operator=(detail::moved_object<mapped_region> other)
@@ -147,6 +160,14 @@ inline void*    mapped_region::get_address()  const
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
+template<int dummy>
+inline std::size_t mapped_region::page_size_holder<dummy>::get_page_size()
+{
+   winapi::system_info info;
+   get_system_info(&info);
+   return std::size_t(info.dwAllocationGranularity);
+}
+
 template<class MemoryMappable>
 inline mapped_region::mapped_region
    (const MemoryMappable &mapping
@@ -154,21 +175,13 @@ inline mapped_region::mapped_region
    ,offset_t offset
    ,std::size_t size
    ,const void *address)
-   :  m_base(0)
+   :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0)
+   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+      ,  m_file_mapping_hnd(0)
+   #endif
 {
-   //Update mapping size if the user does not specify it
-   if(size == 0){
-      __int64 total_size;
-      if(!winapi::get_file_size(mapping.get_mapping_handle(), total_size)){
-         error_info err(winapi::get_last_error());
-         throw interprocess_exception(err);
-      }
-      if(total_size > (__int64)((std::size_t)(-1))){
-         error_info err(size_error);
-         throw interprocess_exception(err);
-      }
-      size = static_cast<std::size_t>(total_size - offset);
-   }
+   mapping_handle_t mhandle = mapping.get_mapping_handle();
+   file_handle_t native_mapping_handle;
 
    //Set accesses
    unsigned long file_map_access = 0;
@@ -186,7 +199,7 @@ inline mapped_region::mapped_region
       break;
       case copy_on_write:
          file_map_access   |= winapi::page_writecopy;
-         file_map_access   |= winapi::file_map_copy;
+         map_access        |= winapi::file_map_copy;
       break;
       default:
          {
@@ -196,16 +209,32 @@ inline mapped_region::mapped_region
       break;
    }
 
-   //Create file mapping
-   handle_t hnd = 
-      winapi::create_file_mapping
-      (mapping.get_mapping_handle(), file_map_access, 0, 0, 0);
+   if(!mhandle.is_shm){
+      //Update mapping size if the user does not specify it
+      if(size == 0){
+         __int64 total_size;
+         if(!winapi::get_file_size(detail::file_handle_from_mapping_handle(mapping.get_mapping_handle()), total_size)){
+            error_info err(winapi::get_last_error());
+            throw interprocess_exception(err);
+         }
+         if(total_size > (__int64)((std::size_t)(-1))){
+            error_info err(size_error);
+            throw interprocess_exception(err);
+         }
+         size = static_cast<std::size_t>(total_size - offset);
+      }
 
-   //Check if all is correct
-   if(!hnd){
-      error_info err = winapi::get_last_error();
-      this->priv_close();
-      throw interprocess_exception(err);
+      //Create file mapping
+      native_mapping_handle = 
+         winapi::create_file_mapping
+         (detail::file_handle_from_mapping_handle(mapping.get_mapping_handle()), file_map_access, 0, 0, 0);
+
+      //Check if all is correct
+      if(!native_mapping_handle){
+         error_info err = winapi::get_last_error();
+         this->priv_close();
+         throw interprocess_exception(err);
+      }
    }
 
    //We can't map any offset so we have to obtain system's 
@@ -234,17 +263,30 @@ inline mapped_region::mapped_region
       address = static_cast<const char*>(address) - m_extra_offset;
    }
 
+   if(mhandle.is_shm){
+      //Windows shared memory needs the duplication of the handle if we want to
+      //make mapped_region independent from the mappable device
+      if(!winapi::duplicate_current_process_handle(mhandle.handle, &m_file_mapping_hnd)){
+         error_info err = winapi::get_last_error();
+         this->priv_close();
+         throw interprocess_exception(err);
+      }
+      native_mapping_handle = m_file_mapping_hnd;
+   }
+
    //Map with new offsets and size
    m_base = winapi::map_view_of_file_ex
-                               (hnd,
+                               (native_mapping_handle,
                                 map_access, 
                                 foffset_high,
                                 foffset_low, 
-                                static_cast<std::size_t>(m_extra_offset + m_size), 
+                                m_size ? static_cast<std::size_t>(m_extra_offset + m_size) : 0, 
                                 (void*)address);
 
-   //We don't need the file mapping anymore
-   winapi::close_handle(hnd);
+   if(!mhandle.is_shm){
+      //For files we don't need the file mapping anymore
+      winapi::close_handle(native_mapping_handle);
+   }
 
    //Check error
    if(!m_base){
@@ -285,16 +327,19 @@ inline void mapped_region::priv_close()
       winapi::unmap_view_of_file(static_cast<char*>(m_base) - m_extra_offset);
       m_base = 0;
    }
-}
-
-inline std::size_t get_page_size()
-{
-   winapi::system_info info;
-   get_system_info(&info);
-   return std::size_t(info.dwAllocationGranularity);
+   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+      if(m_file_mapping_hnd){
+         winapi::close_handle(m_file_mapping_hnd);
+         m_file_mapping_hnd = 0;
+      }
+   #endif
 }
 
 #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+
+template<int dummy>
+inline std::size_t mapped_region::page_size_holder<dummy>::get_page_size()
+{  return std::size_t(sysconf(_SC_PAGESIZE)); }
 
 template<class MemoryMappable>
 inline mapped_region::mapped_region
@@ -376,7 +421,7 @@ inline mapped_region::mapped_region
                     , prot
                     , flags
                     , mapping.get_mapping_handle()
-                    , offset);
+                    , offset - m_extra_offset);
 
    //Check if mapping was successful
    if(m_base == MAP_FAILED){
@@ -421,34 +466,36 @@ inline void mapped_region::priv_close()
    }
 }
 
-inline std::size_t mapped_region::get_page_size()
-{  return std::size_t(sysconf(_SC_PAGESIZE)); }
-
 #endif   //##if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+
+template<int dummy>
+const std::size_t mapped_region::page_size_holder<dummy>::PageSize
+   = mapped_region::page_size_holder<dummy>::get_page_size();
+
+inline std::size_t mapped_region::get_page_size()
+{  return page_size_holder<0>::PageSize; }
 
 inline void mapped_region::swap(mapped_region &other)
 {
    detail::do_swap(this->m_base, other.m_base);
    detail::do_swap(this->m_size, other.m_size);
    detail::do_swap(this->m_offset, other.m_offset);
-//   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
    detail::do_swap(this->m_extra_offset,     other.m_extra_offset);
-//   #else
-//   #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+   detail::do_swap(this->m_file_mapping_hnd, other.m_file_mapping_hnd);
+   #endif
 }
 
-
-
+/// @cond
 /*!No-op functor*/
 struct null_mapped_region_function
 {
    bool operator()(void *addr, std::size_t size, bool) const
       {   return true;   }
 };
-
+/// @endcond
 
 }  //namespace interprocess {
-
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>

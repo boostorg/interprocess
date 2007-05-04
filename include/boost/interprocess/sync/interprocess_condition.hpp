@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -53,11 +53,12 @@ class named_condition;
 
 class interprocess_condition
 {
+   /// @cond
    //Non-copyable
    interprocess_condition(const interprocess_condition &);
    interprocess_condition &operator=(const interprocess_condition &);
    friend class named_condition;
-
+   /// @endcond
    public:
    /*!Constructs a interprocess_condition*/
    interprocess_condition();
@@ -126,7 +127,8 @@ class interprocess_condition
       return true;
    }
 
- private:
+   /// @cond
+   private:
    void do_wait(interprocess_mutex  &mut);
 
    bool do_timed_wait(const boost::posix_time::ptime &abs_time, interprocess_mutex &mut);
@@ -142,6 +144,7 @@ class interprocess_condition
    #elif defined(BOOST_INTERPROCESS_USE_POSIX)
       pthread_cond_t   m_condition;
    #endif
+   /// @endcond
 };
 
 }  //namespace interprocess

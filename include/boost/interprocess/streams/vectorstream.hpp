@@ -1,18 +1,6 @@
-/*
- * Copyright (c) 1998
- * Silicon Graphics Computer Systems, Inc.
- *
- * Permission to use, copy, modify, distribute and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear
- * in supporting documentation.  Silicon Graphics makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- */
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -25,6 +13,18 @@
 // internal buffer get/set/swap functions, so that we can obtain/establish the
 // internal buffer without any reallocation or copy. Kill those temporaries!
 ///////////////////////////////////////////////////////////////////////////////
+/*
+ * Copyright (c) 1998
+ * Silicon Graphics Computer Systems, Inc.
+ *
+ * Permission to use, copy, modify, distribute and sell this software
+ * and its documentation for any purpose is hereby granted without fee,
+ * provided that the above copyright notice appear in all copies and
+ * that both that copyright notice and this permission notice appear
+ * in supporting documentation.  Silicon Graphics makes no
+ * representations about the suitability of this software for any
+ * purpose.  It is provided "as is" without express or implied warranty.
+ */
 
 /*!\file
    This file defines basic_vectorbuf, basic_ivectorstream,
@@ -68,11 +68,13 @@ class basic_vectorbuf
    typedef typename CharTraits::off_type     off_type;
    typedef CharTraits                        traits_type;
 
+   /// @cond
    private:
    typedef std::basic_streambuf<char_type, traits_type> base_t;
 
    basic_vectorbuf(const basic_vectorbuf&);
    basic_vectorbuf & operator =(const basic_vectorbuf&);
+   /// @endcond
 
    public:
    /*!Constructor. Throws if vector_type default constructor throws.*/
@@ -100,13 +102,14 @@ class basic_vectorbuf
    {  
       //Update high water if necessary
       //And resize vector to remove extra size
-	   if (this->m_mode & std::ios_base::out){
-		   if (mp_high_water < base_t::pptr()){
+      if (this->m_mode & std::ios_base::out){
+         if (mp_high_water < base_t::pptr()){
             //Restore the vector's size if necessary
-			   mp_high_water = base_t::pptr();
+            mp_high_water = base_t::pptr();
          }
-         m_vect.resize(mp_high_water - &m_vect[0]);
-	   }
+
+         m_vect.resize(mp_high_water - (m_vect.size() ? &m_vect[0] : 0));
+      }
 
       //Now swap vector
       m_vect.swap(vect);
@@ -115,21 +118,21 @@ class basic_vectorbuf
       typename vector_type::size_type old_size = m_vect.size();
       m_vect.resize(m_vect.capacity());
       this->set_pointers();
-      mp_high_water = &m_vect[0] + old_size;
+      mp_high_water = old_size ? &m_vect[0] + old_size : 0;
    }
 
    /*!Returns a const reference to the internal vector.
       Does not throw.*/
    const vector_type &vector() const 
    {  
-	   if (this->m_mode & std::ios_base::out){
-		   if (mp_high_water < base_t::pptr()){
+      if (this->m_mode & std::ios_base::out){
+         if (mp_high_water < base_t::pptr()){
             //Restore the vector's size if necessary
-			   mp_high_water = base_t::pptr();
+            mp_high_water = base_t::pptr();
          }
-         m_vect.resize(mp_high_water - &m_vect[0]);
+         m_vect.resize(mp_high_water - (m_vect.size() ? &m_vect[0] : 0));
          const_cast<basic_vectorbuf * const>(this)->set_pointers();
-	   }
+      }
       return m_vect; 
    }
 
@@ -143,7 +146,7 @@ class basic_vectorbuf
       typename vector_type::size_type old_size = m_vect.size();
       m_vect.resize(m_vect.capacity());
       this->set_pointers();
-      mp_high_water = &m_vect[0] + old_size;
+      mp_high_water = old_size ? &m_vect[0] + old_size : 0;
    }
 
    /*!Calls clear() method of the internal vector.
@@ -151,34 +154,47 @@ class basic_vectorbuf
    void clear() 
    {  m_vect.clear();   this->set_pointers();   }
 
+   /// @cond
    private:
    void set_pointers()
    {
       // The initial read position is the beginning of the vector.
-      if(m_mode & std::ios_base::in)
-         setg(&m_vect[0], &m_vect[0], &m_vect[m_vect.size()]);
+      if(m_mode & std::ios_base::in){
+         if(m_vect.empty()){
+            this->setg(0, 0, 0);
+         }
+         else{
+            this->setg(&m_vect[0], &m_vect[0], &m_vect[0] + m_vect.size());
+         }
+      }
 
       // The initial write position is the beginning of the vector.
       if(m_mode & std::ios_base::out){
-         this->setp(&m_vect[0], &m_vect[m_vect.size()]);
-		   if (m_mode & (std::ios_base::app | std::ios_base::ate))
-			   base_t::pbump((int)m_vect.size());
+         if(m_vect.empty()){
+            this->setp(0, 0);
+         }
+         else{
+            this->setp(&m_vect[0], &m_vect[0] + m_vect.size());
+         }
+
+         if (m_mode & (std::ios_base::app | std::ios_base::ate))
+            base_t::pbump((int)m_vect.size());
       }
-	   mp_high_water = &m_vect[0] + m_vect.size();
+      mp_high_water = m_vect.empty() ? 0 : (&m_vect[0] + m_vect.size());
    }
 
    protected:
    virtual int_type underflow()
    {
-	   if (base_t::gptr() == 0)
-		   return CharTraits::eof();
-	   if (mp_high_water < base_t::pptr())
-		   mp_high_water = base_t::pptr();
-	   if (base_t::egptr() < mp_high_water)
-		   base_t::setg(base_t::eback(), base_t::gptr(), mp_high_water);
-	   if (base_t::gptr() < base_t::egptr())
-		   return CharTraits::to_int_type(*base_t::gptr());
-	   return CharTraits::eof();
+      if (base_t::gptr() == 0)
+         return CharTraits::eof();
+      if (mp_high_water < base_t::pptr())
+         mp_high_water = base_t::pptr();
+      if (base_t::egptr() < mp_high_water)
+         base_t::setg(base_t::eback(), base_t::gptr(), mp_high_water);
+      if (base_t::gptr() < base_t::egptr())
+         return CharTraits::to_int_type(*base_t::gptr());
+      return CharTraits::eof();
    }
 
    virtual int_type pbackfail(int_type c = CharTraits::eof())
@@ -214,10 +230,10 @@ class basic_vectorbuf
                if(this->pptr() < this->epptr()) {
                   *this->pptr() = CharTraits::to_char_type(c);
                            this->pbump(1);
-		            if (mp_high_water < base_t::pptr())
-			            mp_high_water = base_t::pptr();
-		            if ((m_mode & std::ios_base::in) && base_t::egptr() < mp_high_water)
-			            base_t::setg(base_t::eback(), base_t::gptr(), mp_high_water);
+                  if (mp_high_water < base_t::pptr())
+                     mp_high_water = base_t::pptr();
+                  if ((m_mode & std::ios_base::in) && base_t::egptr() < mp_high_water)
+                     base_t::setg(base_t::eback(), base_t::gptr(), mp_high_water);
                   return c;
                }
                else
@@ -226,20 +242,20 @@ class basic_vectorbuf
             else {
                try{
                   typedef typename vector_type::difference_type dif_t;
-		            dif_t inpos  = base_t::gptr() - base_t::eback();
-		            dif_t outpos = base_t::pptr() - base_t::pbase() + 1;
-		            dif_t hipos = mp_high_water - base_t::pbase();
-		            if (hipos < outpos)
-			            hipos = outpos;
-		            m_vect.push_back(CharTraits::to_char_type(c));
-		            m_vect.resize(m_vect.capacity());
-		            char_type* p = const_cast<char_type*>(&m_vect[0]);
-		            if (m_mode & std::ios_base::in)
-			            base_t::setg(p, p + inpos, p + hipos);
-		            base_t::setp(p, p + (dif_t)m_vect.size());
-		            base_t::pbump((int)outpos);
-		            mp_high_water = base_t::pbase() + hipos;
-		            return c;
+                  dif_t inpos  = base_t::gptr() - base_t::eback();
+                  dif_t outpos = base_t::pptr() - base_t::pbase() + 1;
+                  dif_t hipos = mp_high_water - base_t::pbase();
+                  if (hipos < outpos)
+                     hipos = outpos;
+                  m_vect.push_back(CharTraits::to_char_type(c));
+                  m_vect.resize(m_vect.capacity());
+                  char_type* p = const_cast<char_type*>(&m_vect[0]);
+                  if (m_mode & std::ios_base::in)
+                     base_t::setg(p, p + inpos, p + hipos);
+                  base_t::setp(p, p + (dif_t)m_vect.size());
+                  base_t::pbump((int)outpos);
+                  mp_high_water = base_t::pbase() + hipos;
+                  return c;
                }
                catch(...){
                   return CharTraits::eof();
@@ -279,11 +295,11 @@ class basic_vectorbuf
          return pos_type(off_type(-1));
 
       off_type newoff;
-	   off_type limit = static_cast<off_type>
-	                  (mode & std::ios_base::out ?
+      off_type limit = static_cast<off_type>
+                     (mode & std::ios_base::out ?
                       mp_high_water - base_t::pbase() :
                       mp_high_water - base_t::eback()
-	                  );
+                     );
 
       switch(dir) {
          case std::ios_base::beg:
@@ -302,16 +318,16 @@ class basic_vectorbuf
 
       newoff += off;
 
-	   if (newoff < 0 || newoff > limit)
-		   return pos_type(-1);
-	   if (m_mode & std::ios_base::app && mode & std::ios_base::out && newoff != limit)
-		   return pos_type(-1);
-	   if (in)
-		   base_t::setg(base_t::eback(), base_t::eback() + newoff, base_t::egptr());
-	   if (out){
-		   base_t::setp(base_t::pbase(), base_t::epptr());
-		   base_t::pbump((int)newoff);
-	   }
+      if (newoff < 0 || newoff > limit)
+         return pos_type(-1);
+      if (m_mode & std::ios_base::app && mode & std::ios_base::out && newoff != limit)
+         return pos_type(-1);
+      if (in)
+         base_t::setg(base_t::eback(), base_t::eback() + newoff, base_t::egptr());
+      if (out){
+         base_t::setp(base_t::pbase(), base_t::epptr());
+         base_t::pbump((int)newoff);
+      }
       return pos_type(newoff);
    }
 
@@ -323,6 +339,7 @@ class basic_vectorbuf
    std::ios_base::openmode m_mode;
    mutable vector_type     m_vect;
    mutable char_type*      mp_high_water;
+   /// @endcond
 };
 
 /*!A basic_istream class that holds a character vector specified by CharVector
@@ -342,9 +359,11 @@ class basic_ivectorstream
    typedef typename std::basic_ios<char_type, CharTraits>::off_type     off_type;
    typedef typename std::basic_ios<char_type, CharTraits>::traits_type  traits_type;
 
+   /// @cond
    private:
    typedef std::basic_ios<char_type, CharTraits>                basic_ios_t;
    typedef std::basic_istream<char_type, CharTraits>            base_t;
+   /// @endcond
 
    public:
    /*!Constructor. Throws if vector_type default constructor throws.*/
@@ -389,8 +408,10 @@ class basic_ivectorstream
    void clear() 
    {  m_buf.clear();   }
 
+   /// @cond
    private:
    basic_vectorbuf<CharVector, CharTraits> m_buf;
+   /// @endcond
 };
 
 /*!A basic_ostream class that holds a character vector specified by CharVector
@@ -410,9 +431,11 @@ class basic_ovectorstream
    typedef typename std::basic_ios<char_type, CharTraits>::off_type     off_type;
    typedef typename std::basic_ios<char_type, CharTraits>::traits_type  traits_type;
 
+   /// @cond
    private:
    typedef std::basic_ios<char_type, CharTraits>      basic_ios_t;
    typedef std::basic_ostream<char_type, CharTraits>  base_t;
+   /// @endcond
 
    public:
    /*!Constructor. Throws if vector_type default constructor throws.*/
@@ -451,8 +474,10 @@ class basic_ovectorstream
    void reserve(typename vector_type::size_type size) 
    {  m_buf.reserve(size);   }
 
+   /// @cond
    private:
    basic_vectorbuf<CharVector, CharTraits> m_buf;
+   /// @endcond
 };
 
 
@@ -474,9 +499,11 @@ class basic_vectorstream
    typedef typename std::basic_ios<char_type, CharTraits>::off_type     off_type;
    typedef typename std::basic_ios<char_type, CharTraits>::traits_type  traits_type;
 
+   /// @cond
    private:
    typedef std::basic_ios<char_type, CharTraits>                 basic_ios_t;
    typedef std::basic_iostream<char_type, CharTraits>            base_t;
+   /// @endcond
 
    public:
    /*!Constructor. Throws if vector_type default constructor throws.*/
@@ -521,8 +548,10 @@ class basic_vectorstream
    void clear() 
    {  m_buf.clear();   }
 
+   /// @cond
    private:
    basic_vectorbuf<CharVector, CharTraits> m_buf;
+   /// @endcond
 };
 
 //Some typedefs to simplify usage

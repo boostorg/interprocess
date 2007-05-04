@@ -25,7 +25,7 @@
 
 # include <boost/interprocess/smart_ptr/detail/sp_counted_base_w32.hpp>
 
-#elif defined( BOOST_HAS_PTHREADS )
+#elif defined( BOOST_HAS_PTHREADS ) && defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
 
 //Ordinary pthreads counted base is not enough
 //we need process shared attributte.
@@ -33,8 +33,7 @@
 
 #else
 
-// Use #define BOOST_DISABLE_THREADS to avoid the error
-# error Unrecognized threading platform
+# include <boost/interprocess/smart_ptr/detail/sp_counted_base_atomic.hpp>
 
 #endif
 

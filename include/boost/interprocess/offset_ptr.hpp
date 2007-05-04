@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -25,6 +25,7 @@
 #include <boost/assert.hpp>
 #include <boost/type_traits/has_trivial_constructor.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
+#include <boost/type_traits/alignment_of.hpp>
 
 /*!\file
    Describes a smart pointer that stores the offset between this pointer and
@@ -43,6 +44,7 @@ namespace interprocess {
 template <class PointedType>
 class offset_ptr
 {
+   /// @cond
    typedef boost::interprocess::workaround::random_it<PointedType> random_it_t;
    typedef offset_ptr<PointedType>                          self_t;
    typedef typename random_it_t::const_pointer              const_pointer_t;
@@ -51,23 +53,26 @@ class offset_ptr
    void unspecified_bool_type_func() const {}
    typedef void (self_t::*unspecified_bool_type)() const;
 
-   #if (defined _MSC_VER) && (_MSC_VER >= 1400)
-   //a bug in VC8.0 makes having this
-   //inlined in release mode break things.
+   #if defined(_MSC_VER) && (_MSC_VER >= 1400)
    __declspec(noinline)
    #endif
    void set_offset(const void *ptr)
-   {  
+   {
       //offset == 1 && ptr != 0 is not legal for this pointer
-      if(ptr){
-         m_offset = detail::char_ptr_cast(ptr) - 
-                    detail::char_ptr_cast(this);
-         BOOST_ASSERT(m_offset != 1);
-      }
-      else{
+      if(!ptr){
          m_offset = 1;
       }
+      else{
+         m_offset = detail::char_ptr_cast(ptr) - detail::char_ptr_cast(this);
+         BOOST_ASSERT(m_offset != 1);
+      }
    }
+
+   #if defined(_MSC_VER) && (_MSC_VER >= 1400)
+   __declspec(noinline)
+   #endif
+   void* get_pointer() const
+   {  return (m_offset == 1) ? 0 : (detail::char_ptr_cast(this) + m_offset); }
 
    void inc_offset(std::ptrdiff_t bytes)
    {  m_offset += bytes;   }
@@ -75,15 +80,8 @@ class offset_ptr
    void dec_offset(std::ptrdiff_t bytes)
    {  m_offset -= bytes;   }
 
-   #if (defined _MSC_VER) && (_MSC_VER >= 1400)
-   //a bug in VC8.0 makes having this
-   //inlined in release mode break things.
-   __declspec(noinline)
-   #endif
-   void* get_pointer(void) const
-   {  return m_offset == 1 ? 0 : detail::char_ptr_cast(this) + m_offset; }
-
    std::ptrdiff_t m_offset; //Distance between this object and pointed address
+   /// @endcond
 
    public:
    typedef typename random_it_t::pointer                    pointer;
@@ -100,7 +98,7 @@ class offset_ptr
    /*!Constructor from other pointer. Never throws.*/
    template <class T>
    offset_ptr(T *ptr) 
-   {  pointer p (ptr);  (void)p; this->set_offset(ptr); }
+   {  pointer p (ptr);  (void)p; this->set_offset(p); }
 
    /*!Constructor from other offset_ptr */
    offset_ptr(const offset_ptr& ptr) 
@@ -161,7 +159,7 @@ class offset_ptr
          are assignable, offset_ptrs will be assignable. Never throws.*/
    template <class T2>
    offset_ptr& operator= (const offset_ptr<T2> & pt)
-   {  pointer p(pt.get());  this->set_offset(p);  return *this;  }
+   {  pointer p(pt.get()); this->set_offset(p);  return *this;  }
  
    /*!offset_ptr + std::ptrdiff_t. Never throws.*/
    offset_ptr operator+ (std::ptrdiff_t offset) const   
@@ -325,23 +323,32 @@ inline boost::interprocess::offset_ptr<T>
 
 }  //namespace interprocess {
 
-/*!has_trivial_constructor<> == true_type specialization for optimizations*/
+/// @cond
+//!has_trivial_constructor<> == true_type specialization for optimizations
 template <class T>
 struct has_trivial_constructor
    < boost::interprocess::offset_ptr<T> > 
    : public true_type
 {};
 
-/*!has_trivial_destructor<> == true_type specialization for optimizations*/
+///has_trivial_destructor<> == true_type specialization for optimizations
 template <class T>
 struct has_trivial_destructor
    < boost::interprocess::offset_ptr<T> > 
    : public true_type
 {};
 
+#if defined(_MSC_VER) && (_MSC_VER < 1400)
+/*!get_pointer() enables boost::mem_fn to recognize offset_ptr. 
+   Never throws.*/
+template<class T>
+inline T * get_pointer(boost::interprocess::offset_ptr<T> const & p)
+{  return p.get();   }
+#endif
+/// @endcond
 }  //namespace boost {
 
-
+/// @cond
 namespace boost{
 namespace interprocess{
 
@@ -368,7 +375,47 @@ class cast_to< offset_ptr<T> >
 };
 
 }  //namespace interprocess{
+
+//This is to support embedding a bit in the pointer
+//for intrusive containers, saving space
+namespace intrusive {
+
+//Predeclaration to avoid including header
+template<class Pointer>
+struct has_pointer_plus_bit;
+
+template<class T>
+struct has_pointer_plus_bit<boost::interprocess::offset_ptr<T> >
+{
+   enum  {  value = (boost::alignment_of<T>::value % 4u) == 0  };
+};
+
+//Predeclaration
+template<class Pointer>
+struct pointer_plus_bit;
+
+//Specialization
+template<class T>
+struct pointer_plus_bit<boost::interprocess::offset_ptr<T> >
+{
+   typedef boost::interprocess::offset_ptr<T>         pointer;
+
+   static pointer get_pointer(const pointer &n)
+   {  return (T*)(std::size_t(n.get()) & std::size_t(~2u));  }
+
+   static void set_pointer(pointer &n, pointer p)
+   {  n = (T*)(std::size_t(p.get()) | (std::size_t(n.get()) & std::size_t(2u))); }
+
+   static bool get_bit(const pointer &n)
+   {  return 0 != (std::size_t(n.get()) & std::size_t(2u));  }
+
+   static void set_bit(pointer &n, bool c)
+   {  n = (T*)(std::size_t(get_pointer(n).get()) | (std::size_t(c) << 1u));  }
+};
+
+}  //namespace intrusive
 }  //namespace boost{
+/// @endcond
 
 #include <boost/interprocess/detail/config_end.hpp>
 

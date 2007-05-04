@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -46,22 +46,20 @@ namespace interprocess {
    placing the allocator in shared memory, memory mapped-files, etc...
    This node allocator shares a segregated storage between all instances 
    of node_allocator with equal sizeof(T) placed in the same segment 
-   group. N is the number of nodes allocated at once when the allocator
+   group. NodesPerChunk is the number of nodes allocated at once when the allocator
    needs runs out of nodes*/
-template<class T, std::size_t N, class SegmentManager>
+template<class T, class SegmentManager, std::size_t NodesPerChunk>
 class node_allocator
 {
- public:
+   public:
    typedef typename SegmentManager::void_pointer         void_pointer;
    typedef typename detail::
       pointer_to_other<void_pointer, const void>::type   cvoid_pointer;
    typedef SegmentManager                                segment_manager;
-   typedef typename detail::
-      pointer_to_other<void_pointer, char>::type         char_pointer;
    typedef typename SegmentManager::
-      mutex_family::mutex_type                              mutex_type;
+      mutex_family::mutex_type                           mutex_type;
    typedef node_allocator
-      <T, N, SegmentManager>                             self_t;
+      <T, SegmentManager, NodesPerChunk>                 self_t;
 
    public:
    //-------
@@ -81,20 +79,21 @@ class node_allocator
    template<class T2>
    struct rebind
    {  
-      typedef node_allocator<T2, N, SegmentManager>   other;
+      typedef node_allocator<T2, SegmentManager, NodesPerChunk>   other;
    };
 
- private:
-
+   /// @cond
+   private:
    /*!Not assignable from related node_allocator*/
-   template<class T2, std::size_t N2, class AllocAlgo2>
+   template<class T2, class SegmentManager2, std::size_t N2>
    node_allocator& operator=
-      (const node_allocator<T2, N2, AllocAlgo2>&);
+      (const node_allocator<T2, SegmentManager2, N2>&);
 
    /*!Not assignable from other node_allocator*/
    node_allocator& operator=(const node_allocator&);
+   /// @endcond
 
- public:
+   public:
 
    /*!Constructor from a segment manager. If not present, constructs a node
       pool. Increments the reference count of the associated node pool.
@@ -108,7 +107,7 @@ class node_allocator
       : mp_node_pool(other.get_node_pool()) 
    {  
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_type, sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NodesPerChunk>   node_pool_t;
       node_pool_t *node_pool  = static_cast<node_pool_t*>(other.get_node_pool());
       node_pool->inc_ref_count();   
    }
@@ -118,7 +117,7 @@ class node_allocator
       Can throw boost::interprocess::bad_alloc*/
    template<class T2>
    node_allocator
-      (const node_allocator<T2, N, SegmentManager> &other)
+      (const node_allocator<T2, SegmentManager, NodesPerChunk> &other)
       : mp_node_pool(priv_get_or_create(other.get_segment_manager())) { }
 
    /*!Destructor, removes node_pool_t from memory
@@ -134,7 +133,7 @@ class node_allocator
    segment_manager* get_segment_manager()const
    {  
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_type, sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NodesPerChunk>   node_pool_t;
       node_pool_t *node_pool  = static_cast<node_pool_t*>
          (detail::get_pointer(mp_node_pool));
       return node_pool->get_segment_manager();
@@ -160,14 +159,16 @@ class node_allocator
 
    /*!Returns the number of elements that could be allocated. Never throws*/
    size_type max_size() const
-      {  return this->get_segment_manager()->get_size();  }
+      {  return this->get_segment_manager()->get_size()/sizeof(value_type);  }
 
    /*!Allocate memory for an array of count elements. 
       Throws boost::interprocess::bad_alloc if there is no enough memory*/
    pointer allocate(size_type count, cvoid_pointer = 0)
    {  
+      if(count > ((size_type)-1)/sizeof(value_type))
+         throw bad_alloc();
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_type, sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NodesPerChunk>   node_pool_t;
       node_pool_t *node_pool  = static_cast<node_pool_t*>
          (detail::get_pointer(mp_node_pool));
       return pointer(static_cast<T*>(node_pool->allocate(count)));
@@ -177,7 +178,7 @@ class node_allocator
    void deallocate(const pointer &ptr, size_type count)
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_type, sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NodesPerChunk>   node_pool_t;
       node_pool_t *node_pool  = static_cast<node_pool_t*>
          (detail::get_pointer(mp_node_pool));
       node_pool->deallocate(detail::get_pointer(ptr), count);
@@ -186,18 +187,16 @@ class node_allocator
    /*!Swaps allocators. Does not throw. If each allocator is placed in a
       different memory segment, the result is undefined.*/
    friend void swap(self_t &alloc1, self_t &alloc2)
-   {
-      using namespace std;
-      swap(alloc1.mp_node_pool, alloc2.mp_node_pool);
-   }
+   {  detail::do_swap(alloc1.mp_node_pool, alloc2.mp_node_pool);  }
 
- private:
+   /// @cond
+   private:
    /*!Object function that creates the node allocator if it is not created and
       increments reference count if it is already created*/
    struct get_or_create_func
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_type, sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type, sizeof(T), NodesPerChunk>   node_pool_t;
 
       /*!This connects or constructs the unique instance of node_pool_t
          Can throw boost::interprocess::bad_alloc*/
@@ -233,7 +232,7 @@ class node_allocator
    struct destroy_if_last_link_func
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_type,sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type,sizeof(T), NodesPerChunk>   node_pool_t;
 
       /*!Decrements reference count and destroys the object if there is no 
          more attached allocators. Never throws*/
@@ -260,7 +259,7 @@ class node_allocator
    void priv_destroy_if_last_link()
    {
       typedef detail::shared_node_pool
-               <SegmentManager, mutex_type,sizeof(T), N>   node_pool_t;
+               <SegmentManager, mutex_type,sizeof(T), NodesPerChunk>   node_pool_t;
       //Get segment manager
       segment_manager *named_segment_mngr = this->get_segment_manager();
       //Get node pool pointer
@@ -275,7 +274,7 @@ class node_allocator
  private:
    // We can't instantiate a pointer like this:
    // detail::shared_node_pool<SegmentManager, mutex_type, 
-   //                             sizeof(T), N> *mp_node_pool;
+   //                             sizeof(T), NodesPerChunk> *mp_node_pool;
    // since it can provoke an early instantiation of T, that could be 
    // incomplete at that moment (for example, a node of a node-based container)
    // This provokes errors on some node based container implementations using
@@ -284,36 +283,37 @@ class node_allocator
    // Because of this, we will use a void offset pointer and we'll do some 
    //(ugly )casts when needed.
    void_pointer   mp_node_pool;
+   /// @endcond
 };
 
 /*!Equality test for same type of node_allocator*/
-template<class T, std::size_t N, class A> inline
-bool operator==(const node_allocator<T, N, A> &alloc1, 
-                const node_allocator<T, N, A> &alloc2)
+template<class T, class S, std::size_t NodesPerChunk> inline
+bool operator==(const node_allocator<T, S, NodesPerChunk> &alloc1, 
+                const node_allocator<T, S, NodesPerChunk> &alloc2)
    {  return alloc1.get_node_pool() == alloc2.get_node_pool(); }
 
 /*!Inequality test for same type of node_allocator*/
-template<class T, std::size_t N, class A> inline
-bool operator!=(const node_allocator<T, N, A> &alloc1, 
-                const node_allocator<T, N, A> &alloc2)
+template<class T, class S, std::size_t NodesPerChunk> inline
+bool operator!=(const node_allocator<T, S, NodesPerChunk> &alloc1, 
+                const node_allocator<T, S, NodesPerChunk> &alloc2)
    {  return alloc1.get_node_pool() != alloc2.get_node_pool(); }
 
 
+/// @cond
 /*!This specialization indicates that the construct function allows
    convertible types to construct the value type. This allows
    storing less allocator instances in containers.*/
-template<class T, std::size_t N, class A>
+template<class T, class S, std::size_t NodesPerChunk>
 struct has_convertible_construct
-   <boost::interprocess::node_allocator<T, N, A> >
+   <boost::interprocess::node_allocator<T, S, NodesPerChunk> >
 {
    enum {   value = true };
 };
+/// @endcond
 
 }  //namespace interprocess {
-
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_INTERPROCESS_POOLED_NODE_ALLOCATOR_HPP
-

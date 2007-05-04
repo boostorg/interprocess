@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -133,7 +133,7 @@ struct Ctor0Arg
       typedef T target_t;                                               \
                                                                         \
       void do_increment(boost::mpl::false_)                             \
-         { BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INC, _); }            \
+         { BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INC, _); }     \
                                                                         \
       void do_increment(boost::mpl::true_){}                            \
                                                                         \
@@ -147,14 +147,14 @@ struct Ctor0Arg
       self_t  operator++(int) {  return ++*this;   *this;  }            \
                                                                         \
       BOOST_PP_CAT(BOOST_PP_CAT(Ctor, n), Arg)                          \
-         ( BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_LIST, _) )            \
-         : BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INIT, _) {}           \
+         ( BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_LIST, _) )     \
+         : BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INIT, _) {}    \
                                                                         \
       void operator()(T* mem) const                                     \
          {  new (mem) T(BOOST_PP_ENUM_PARAMS(n, m_p));  }               \
                                                                         \
     private:                                                            \
-         BOOST_PP_REPEAT(n, BOOST_INTERPROCESS_AUX_PARAM_DEFINE, _)            \
+         BOOST_PP_REPEAT(n, BOOST_INTERPROCESS_AUX_PARAM_DEFINE, _)     \
    };                                                                   \
 /**/
 

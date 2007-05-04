@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -38,11 +38,16 @@ namespace detail{
    struct accept_ownership_type{};
 }  //namespace detail{
 
-/*!An object of type defer_lock_type.*/
+//!An object indicating that the locking
+//!must be deferred.
 static const detail::defer_lock_type      defer_lock      = detail::defer_lock_type();
-/*!An object of type try_to_lock_type.*/
+
+//!An object indicating that the a try_lock()
+//!operation must be executed.
 static const detail::try_to_lock_type     try_to_lock    = detail::try_to_lock_type();
-/*!An object of type accept_ownership_ts.*/
+
+//!An object indicating that the ownership of lockable
+//!object must be accepted by the new owner.
 static const detail::accept_ownership_type  accept_ownership = detail::accept_ownership_type();
 
 } // namespace interprocess {

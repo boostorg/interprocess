@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -33,11 +33,12 @@ namespace interprocess {
    can be used with scoped_lock and sharable_lock classes.*/
 class file_lock
 {
+   /// @cond
    //Non-copyable
    file_lock();
    file_lock(const file_lock &);
    file_lock &operator=(const file_lock &);
-
+   /// @endcond
    public:
    /*!Opens a file lock. Throws interprocess_exception if the file does not
       exist or there are no operating system resources.*/
@@ -101,9 +102,10 @@ class file_lock
       Effects: The calling thread releases the sharable ownership of the mutex. 
       Throws: An exception derived from interprocess_exception on error.*/
    void unlock_sharable();
-
+   /// @cond
    private:
-   handle_t m_file_hnd;
+   file_handle_t m_file_hnd;
+   /// @endcond
 };
 
 inline file_lock::file_lock(const char *name)

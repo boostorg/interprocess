@@ -1,6 +1,3 @@
-#include <boost/config.hpp>
-#include <boost/detail/workaround.hpp>
-
 #if defined _MSC_VER
    #pragma warning (pop)
 #endif

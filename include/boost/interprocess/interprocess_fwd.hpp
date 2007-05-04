@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -17,13 +17,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-
-#if BOOST_WORKAROUND(BOOST_DINKUMWARE_STDLIB, == 1)
-// old Dinkumware
-#  include <boost/compatibility/cpp_c_headers/cstddef>
-#else
-#  include <cstddef>
-#endif
+#include <cstddef>
 
 //////////////////////////////////////////////////////////////////////////////
 //                        Standard predeclarations
@@ -51,7 +45,11 @@ namespace boost { namespace interprocess {
 //                            shared_memory
 //////////////////////////////////////////////////////////////////////////////
 
-class shared_memory;
+class shared_memory_object;
+
+#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+class windows_shared_memory;
+#endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
 //////////////////////////////////////////////////////////////////////////////
 //              mapped file/mapped region/mapped_file
@@ -108,14 +106,24 @@ class sharable_lock;
 template<class T, class SegmentManager>
 class allocator;
 
-template<class T, std::size_t N, class SegmentManager>
+template<class T, class SegmentManager, std::size_t NodesPerChunk = 64>
 class node_allocator;
 
-template<class T, std::size_t N, class SegmentManager>
+template<class T, class SegmentManager, std::size_t NodesPerChunk = 64>
 class private_node_allocator;
 
-template<class T, class SegmentManager>
+template<class T, class SegmentManager, std::size_t NodesPerChunk = 64>
 class cached_node_allocator;
+
+template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeNodes = 2>
+class adaptive_pool;
+
+template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeNodes = 2>
+class private_adaptive_pool;
+
+template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeNodes = 2>
+class cached_adaptive_pool;
+
 
 //////////////////////////////////////////////////////////////////////////////
 //                            offset_ptr
@@ -145,6 +153,9 @@ class seq_fit;
 template<class MutexFamily, class VoidMutex = offset_ptr<void> >
 class simple_seq_fit;
 
+template<class MutexFamily, class VoidMutex = offset_ptr<void> >
+class rbtree_best_fit;
+
 //Single segment memory allocation algorithms
 template<class MutexFamily, class VoidMutex = intersegment_ptr<void> >
 class multi_seq_fit;
@@ -158,6 +169,7 @@ class multi_simple_seq_fit;
 
 template<class IndexConfig> class flat_map_index;
 template<class IndexConfig> class map_index;
+template<class IndexConfig> class iset_index;
 template<class IndexConfig> class null_index;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -180,14 +192,14 @@ class basic_managed_external_buffer;
 
 typedef basic_managed_external_buffer
    <char
-   ,simple_seq_fit<null_mutex_family>
-   ,flat_map_index>
+   ,rbtree_best_fit<null_mutex_family>
+   ,iset_index>
 managed_external_buffer;
 
 typedef basic_managed_external_buffer
    <wchar_t
-   ,simple_seq_fit<null_mutex_family>
-   ,flat_map_index>
+   ,rbtree_best_fit<null_mutex_family>
+   ,iset_index>
 wmanaged_external_buffer;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -201,15 +213,41 @@ class basic_managed_shared_memory;
 
 typedef basic_managed_shared_memory 
    <char
-   ,simple_seq_fit<mutex_family>
-   ,flat_map_index>
+   ,rbtree_best_fit<mutex_family>
+   ,iset_index>
 managed_shared_memory;
 
 typedef basic_managed_shared_memory
    <wchar_t
-   ,simple_seq_fit<mutex_family>
-   ,flat_map_index>
+   ,rbtree_best_fit<mutex_family>
+   ,iset_index>
 wmanaged_shared_memory;
+
+
+//////////////////////////////////////////////////////////////////////////////
+//                      Windows shared memory managed memory classes
+//////////////////////////////////////////////////////////////////////////////
+
+#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+
+template <class CharType
+         ,class MemoryAlgorithm
+         ,template<class IndexConfig> class IndexType>
+class basic_managed_windows_shared_memory;
+
+typedef basic_managed_windows_shared_memory 
+   <char
+   ,rbtree_best_fit<mutex_family>
+   ,iset_index>
+managed_windows_shared_memory;
+
+typedef basic_managed_windows_shared_memory
+   <wchar_t
+   ,rbtree_best_fit<mutex_family>
+   ,iset_index>
+wmanaged_windows_shared_memory;
+
+#endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
 //////////////////////////////////////////////////////////////////////////////
 //                      Fixed address shared memory
@@ -217,14 +255,14 @@ wmanaged_shared_memory;
 
 typedef basic_managed_shared_memory
    <char
-   ,simple_seq_fit<mutex_family, void *>
-   ,flat_map_index>
+   ,rbtree_best_fit<mutex_family, void*>
+   ,iset_index>
 fixed_managed_shared_memory;
 
 typedef basic_managed_shared_memory
    <wchar_t
-   ,simple_seq_fit<mutex_family, void *>
-   ,flat_map_index>
+   ,rbtree_best_fit<mutex_family, void*>
+   ,iset_index>
 wfixed_managed_shared_memory;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -239,14 +277,14 @@ class basic_managed_heap_memory;
 
 typedef basic_managed_heap_memory
    <char
-   ,simple_seq_fit<null_mutex_family>
-   ,flat_map_index>
+   ,rbtree_best_fit<null_mutex_family>
+   ,iset_index>
 managed_heap_memory;
 
 typedef basic_managed_heap_memory
    <wchar_t
-   ,simple_seq_fit<null_mutex_family>
-   ,flat_map_index>
+   ,rbtree_best_fit<null_mutex_family>
+   ,iset_index>
 wmanaged_heap_memory;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -261,14 +299,14 @@ class basic_managed_mapped_file;
 
 typedef basic_managed_mapped_file
    <char
-   ,simple_seq_fit<mutex_family>
-   ,flat_map_index>
+   ,rbtree_best_fit<mutex_family>
+   ,iset_index>
 managed_mapped_file;
 
 typedef basic_managed_mapped_file
    <wchar_t
-   ,simple_seq_fit<mutex_family>
-   ,flat_map_index>
+   ,rbtree_best_fit<mutex_family>
+   ,iset_index>
 wmanaged_mapped_file;
 
 //////////////////////////////////////////////////////////////////////////////

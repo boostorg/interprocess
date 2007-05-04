@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -26,12 +26,11 @@
 */
 
 namespace boost {
-
 namespace interprocess {
 
-/*!A basic user memory named object creation class. Inherits all 
-   basic functionality from 
-   basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>*/
+//!A basic user memory named object creation class. Inherits all 
+//!basic functionality from 
+//!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>*/
 template
       <
          class CharType, 
@@ -41,19 +40,22 @@ template
 class basic_managed_external_buffer 
    : public detail::basic_managed_memory_impl <CharType, AllocationAlgorithm, IndexType>
 {
+   /// @cond
    typedef detail::basic_managed_memory_impl 
       <CharType, AllocationAlgorithm, IndexType>    base_t;
- public:
-   /*!Creates and places the segment manager. This can throw*/
+   /// @endcond
+
+   public:
+   //!Creates and places the segment manager. This can throw
    basic_managed_external_buffer
       (detail::create_only_t, void *addr, std::size_t size)
    {
       if(!base_t::create_impl(addr, size)){
-         throw interprocess_exception();//return false;
+         throw interprocess_exception();
       }
    }
 
-   /*!Creates and places the segment manager. This can throw*/
+   //!Creates and places the segment manager. This can throw
    basic_managed_external_buffer
       (detail::open_only_t, void *addr, std::size_t size)
    {
@@ -62,12 +64,12 @@ class basic_managed_external_buffer
       }
    }
 
-   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
    basic_managed_external_buffer
       (detail::moved_object<basic_managed_external_buffer> &moved)
    {  this->swap(moved.get());   }
 
-   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
    basic_managed_external_buffer &operator=
       (detail::moved_object<basic_managed_external_buffer> &moved)
    {  this->swap(moved.get());   return *this;  }
@@ -75,26 +77,14 @@ class basic_managed_external_buffer
    void grow(std::size_t extra_bytes)
    {  base_t::grow(extra_bytes);   }
 
-   /*!Swaps the ownership of the managed heap memories managed by *this and other.
-      Never throws.*/
+   //!Swaps the ownership of the managed heap memories managed by *this and other.
+   //!Never throws.
    void swap(basic_managed_external_buffer &other)
    {  base_t::swap(other); }
-/*
-   bool  create   (void *addr, std::size_t size)
-      {  return base_t::create_impl(addr, size);  }
- 
 
-   bool  open     (void *addr, std::size_t size)
-      {  return base_t::open_impl(addr, size);  }
-
-
-   void close()
-      {  base_t::close_impl();   }
-*/
 };
 
 }  //namespace interprocess {
-
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>

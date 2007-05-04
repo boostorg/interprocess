@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -72,6 +72,9 @@ static const unsigned long wait_object_0        = 0;
 static const unsigned long wait_abandoned       = 0x00000080L;
 static const unsigned long wait_timeout         = 258L;
 static const unsigned long wait_failed          = (unsigned long)0xFFFFFFFF;
+
+static const unsigned long duplicate_close_source  = (unsigned long)0x00000001;
+static const unsigned long duplicate_same_access   = (unsigned long)0x00000002;
 
 static const unsigned long format_message_allocate_buffer
    = (unsigned long)0x00000100;
@@ -164,11 +167,28 @@ struct system_info {
     unsigned short wProcessorRevision;
 };
 
+struct interprocess_memory_basic_information
+{
+   void *         BaseAddress;  
+   void *         AllocationBase;
+   unsigned long  AllocationProtect;
+   unsigned long  RegionSize;
+   unsigned long  State;
+   unsigned long  Protect;
+   unsigned long  Type;
+};
+
 //Some windows API declarations
 extern "C" __declspec(dllimport) unsigned long __stdcall GetCurrentThreadId();
 extern "C" __declspec(dllimport) void __stdcall Sleep(unsigned long);
 extern "C" __declspec(dllimport) unsigned long __stdcall GetLastError();
+extern "C" __declspec(dllimport) void * __stdcall GetCurrentProcess();
 extern "C" __declspec(dllimport) int __stdcall CloseHandle(void*);
+extern "C" __declspec(dllimport) int __stdcall DuplicateHandle
+   ( void *hSourceProcessHandle,    void *hSourceHandle
+   , void *hTargetProcessHandle,    void **lpTargetHandle
+   , unsigned long dwDesiredAccess, int bInheritHandle
+   , unsigned long dwOptions);
 extern "C" __declspec(dllimport) void __stdcall GetSystemTimeAsFileTime(interprocess_filetime*);
 extern "C" __declspec(dllimport) void * __stdcall CreateMutexA(interprocess_security_attributes*, int, const char *);
 extern "C" __declspec(dllimport) void * __stdcall OpenMutexA(unsigned long, int, const char *);
@@ -243,6 +263,15 @@ static inline unsigned long get_current_thread_id()
 
 static inline unsigned int close_handle(void* handle)
 {  return CloseHandle(handle);   }
+
+static inline bool duplicate_current_process_handle
+   (void *hSourceHandle, void **lpTargetHandle)
+{
+   return 0 != DuplicateHandle
+      ( GetCurrentProcess(),  hSourceHandle,    GetCurrentProcess()
+      , lpTargetHandle,       0,                0
+      , duplicate_same_access);
+}
 
 static inline unsigned long get_last_error()
 {  return GetLastError();  }

@@ -23,66 +23,66 @@ template <class It>
 class move_iterator
 {
    public:
-	typedef typename boost::remove_reference<It>::type                      iterator_type;
-	typedef typename std::iterator_traits<iterator_type>::value_type        value_type;
+   typedef typename boost::remove_reference<It>::type                      iterator_type;
+   typedef typename std::iterator_traits<iterator_type>::value_type        value_type;
    typedef typename move_type<value_type>::type                            reference;
-	typedef typename std::iterator_traits<iterator_type>::pointer           pointer;
-	typedef typename std::iterator_traits<iterator_type>::difference_type   difference_type;
-	typedef typename std::iterator_traits<iterator_type>::iterator_category iterator_category;
+   typedef typename std::iterator_traits<iterator_type>::pointer           pointer;
+   typedef typename std::iterator_traits<iterator_type>::difference_type   difference_type;
+   typedef typename std::iterator_traits<iterator_type>::iterator_category iterator_category;
 
-	move_iterator()
+   move_iterator()
    {}
 
-	explicit move_iterator(It i)
+   explicit move_iterator(It i)
       :  m_it(i)
    {}
 
-	template <class U>
+   template <class U>
    move_iterator(const move_iterator<U>& u)
       :  m_it(u.base())
    {}
 
-	const iterator_type &base() const
+   const iterator_type &base() const
    {  return m_it;   }
 
-	iterator_type &base()
+   iterator_type &base()
    {  return m_it;   }
 
-	reference operator*() const
+   reference operator*() const
    {  return move(*m_it);  }
 
-	pointer   operator->() const
+   pointer   operator->() const
    {  return m_it;   }
 
-	move_iterator& operator++()
+   move_iterator& operator++()
    {  ++m_it; return *this;   }
 
-	move_iterator<iterator_type>  operator++(int)
+   move_iterator<iterator_type>  operator++(int)
    {  move_iterator<iterator_type> tmp(*this); ++(*this); return tmp;   }
 
-	move_iterator& operator--()
+   move_iterator& operator--()
    {  --m_it; return *this;   }
 
-	move_iterator<iterator_type>  operator--(int)
+   move_iterator<iterator_type>  operator--(int)
    {  move_iterator<iterator_type> tmp(*this); --(*this); return tmp;   }
 
-	move_iterator<iterator_type>  operator+ (difference_type n) const
+   move_iterator<iterator_type>  operator+ (difference_type n) const
    {  return move_iterator<iterator_type>(m_it + n);  }
 
-	move_iterator& operator+=(difference_type n)
+   move_iterator& operator+=(difference_type n)
    {  m_it += n; return *this;   }
 
-	move_iterator<iterator_type>  operator- (difference_type n) const
+   move_iterator<iterator_type>  operator- (difference_type n) const
    {  return move_iterator<iterator_type>(m_it - n);  }
 
-	move_iterator& operator-=(difference_type n)
+   move_iterator& operator-=(difference_type n)
    {  m_it -= n; return *this;   }
 
-	reference operator[](difference_type n) const
+   reference operator[](difference_type n) const
    {  return move(m_it[n]);   }
 
    private:
-	It m_it;
+   It m_it;
 };
 
 template <class It> inline

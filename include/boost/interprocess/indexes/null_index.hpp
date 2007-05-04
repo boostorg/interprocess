@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -26,13 +26,29 @@ namespace boost { namespace interprocess {
 template <class MapConfig>
 class null_index
 {
-   typedef typename MapConfig::segment_manager segment_manager;
+   /// @cond
+   typedef typename MapConfig::
+      restricted_segment_manager    restricted_segment_manager;
+   /// @endcond
 
- public:
-   
+   public:
+   typedef void * iterator;
+   typedef const void * const_iterator;
+
+   const_iterator begin() const
+   {  return const_iterator(0);  }
+
+   iterator begin()
+   {  return iterator(0);  }
+
+   const_iterator end() const
+   {  return const_iterator(0);  }
+
+   iterator end()
+   {  return iterator(0);  }
+
    /*!Dummy function*/
-   null_index(segment_manager *segment_mngr_hdr){}
-
+   null_index(restricted_segment_manager *segment_mngr_hdr){}
 };
 
 }}   //namespace boost { namespace interprocess {

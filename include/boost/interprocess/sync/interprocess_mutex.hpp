@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -62,11 +62,12 @@ class interprocess_condition;
    shared between processes. Allows timed lock tries*/
 class interprocess_mutex
 {
+   /// @cond
    //Non-copyable
    interprocess_mutex(const interprocess_mutex &);
    interprocess_mutex &operator=(const interprocess_mutex &);
-
    friend class interprocess_condition;
+   /// @endcond
    public:
 
    /*!Constructor. Throws interprocess_exception on error.*/
@@ -102,7 +103,7 @@ class interprocess_mutex
    /*!Effects: The calling thread releases the exclusive ownership of the mutex.
       Throws: interprocess_exception on error.*/
    void unlock();
-
+   /// @cond
    private:
 
    #if   defined(BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
@@ -116,6 +117,7 @@ class interprocess_mutex
          bool              m_locked;
       #endif
    #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+   /// @endcond
 };
 
 }  //namespace interprocess {

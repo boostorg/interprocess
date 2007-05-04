@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -17,29 +17,32 @@
 #include <functional>
 #include <utility>
 #include <boost/interprocess/containers/map.hpp>
-#include <boost/interprocess/allocators/private_node_allocator.hpp>
+#include <boost/interprocess/allocators/private_adaptive_pool.hpp>
+//#include <boost/interprocess/allocators/allocator.hpp>
 
 /*!\file
    Describes index adaptor of boost::map container, to use it
    as name/shared memory index
 */
-
 namespace boost { namespace interprocess {
 
 /*!Helper class to define typedefs from IndexTraits*/
 template <class MapConfig>
 struct map_index_aux
 {
-   typedef typename MapConfig::key_type                  key_type;
-   typedef typename MapConfig::mapped_type               mapped_type;
-   typedef std::less<key_type>                           key_less;
-   typedef std::pair<const key_type, mapped_type>        value_type;
-   typedef private_node_allocator
+   typedef typename MapConfig::key_type            key_type;
+   typedef typename MapConfig::mapped_type         mapped_type;
+   typedef std::less<key_type>                     key_less;
+   typedef std::pair<const key_type, mapped_type>  value_type;
+
+   typedef private_adaptive_pool
             <value_type,
-               64,
-               typename MapConfig::segment_manager>     allocator_type;
-   typedef boost::interprocess::map<key_type,  mapped_type,
-                             key_less, allocator_type>   index_t;
+               typename MapConfig::
+         restricted_segment_manager>               allocator_type;
+
+   typedef boost::interprocess::map
+      <key_type,  mapped_type,
+       key_less, allocator_type>                   index_t;
 };
 
 /*!Index type based in boost::interprocess::map. Just derives from boost::interprocess::map 
@@ -49,14 +52,17 @@ class map_index
    //Derive class from map specialization
    : public map_index_aux<MapConfig>::index_t
 {
-   typedef map_index_aux<MapConfig>             index_aux;
-   typedef typename index_aux::index_t          base_type;
-   typedef typename MapConfig::segment_manager  segment_manager;
+   /// @cond
+   typedef map_index_aux<MapConfig>       index_aux;
+   typedef typename index_aux::index_t    base_type;
+   typedef typename MapConfig::
+      restricted_segment_manager          restricted_segment_manager;
+   /// @endcond
 
- public:
+   public:
    /*!Constructor. Takes a pointer to the
       segment manager. Can throw*/
-   map_index(segment_manager *segment_mngr)
+   map_index(restricted_segment_manager *segment_mngr)
       : base_type(typename index_aux::key_less(),
                   segment_mngr){}
 
@@ -66,6 +72,7 @@ class map_index
       {  /*Does nothing, map has not reserve or rehash*/  }
 };
 
+/// @cond
 /*!Trait class to detect if an index is a node
    index. This allows more efficient operations
    when deallocating named objects.*/
@@ -75,6 +82,7 @@ struct is_node_index
 {
    enum {   value = true };
 };
+/// @endcond
 
 }}   //namespace boost { namespace interprocess {
 

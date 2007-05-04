@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -18,7 +18,7 @@
 #include <utility>
 #include <boost/unordered_map.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/allocators/private_node_allocator.hpp>
+#include <boost/interprocess/allocators/private_adaptive_pool.hpp>
 
 /*!\file
    Describes index adaptor of boost::unordered_map container, to use it
@@ -31,14 +31,14 @@ namespace boost { namespace interprocess {
 template <class MapConfig>
 struct unordered_map_index_aux
 {
-   typedef typename MapConfig::key_type                  key_type;
-   typedef typename MapConfig::mapped_type               mapped_type;
-   typedef std::equal_to<key_type>                       key_equal;
-   typedef std::pair<const key_type, mapped_type>        value_type;
-   typedef private_node_allocator
+   typedef typename MapConfig::key_type            key_type;
+   typedef typename MapConfig::mapped_type         mapped_type;
+   typedef std::equal_to<key_type>                 key_equal;
+   typedef std::pair<const key_type, mapped_type>  value_type;
+   typedef private_adaptive_pool
             <value_type,
-               64,
-               typename MapConfig::segment_manager>     allocator_type;
+               typename MapConfig::
+                  restricted_segment_manager>      allocator_type;
     struct hasher
       : std::unary_function<key_type, std::size_t>
     {
@@ -61,14 +61,17 @@ class unordered_map_index
    //Derive class from unordered_map specialization
    : public unordered_map_index_aux<MapConfig>::index_t
 {
+   /// @cond
    typedef unordered_map_index_aux<MapConfig>   index_aux;
    typedef typename index_aux::index_t          base_type;
-   typedef typename MapConfig::segment_manager segment_manager;
+   typedef typename 
+      MapConfig::restricted_segment_manager     restricted_segment_manager;
+   /// @endcond
 
- public:
+   public:
    /*!Constructor. Takes a pointer to the
       segment manager. Can throw*/
-   unordered_map_index(segment_manager *segment_mngr)
+   unordered_map_index(restricted_segment_manager *segment_mngr)
       : base_type(0,
                   typename index_aux::hasher(),
                   typename index_aux::key_equal(),
@@ -80,6 +83,7 @@ class unordered_map_index
       {  base_type::rehash(n);  }
 };
 
+/// @cond
 /*!Trait class to detect if an index is a node
    index. This allows more efficient operations
    when deallocating named objects.*/
@@ -89,6 +93,7 @@ struct is_node_index
 {
    enum {   value = true };
 };
+/// @endcond
 
 }}   //namespace boost { namespace interprocess {
 

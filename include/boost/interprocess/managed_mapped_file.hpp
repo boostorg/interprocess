@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -45,44 +45,24 @@ class basic_managed_mapped_file
    : public detail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType>
 {
- private:
+   /// @cond
+   private:
 
    typedef detail::basic_managed_memory_impl 
-      <CharType, AllocationAlgorithm, IndexType>             base_t;
-
-   struct create_open_func
-   {
-      enum type_t {   DoCreate, DoOpen, DoCreateOrOpen  };
-
-      create_open_func(basic_managed_mapped_file * const frontend, type_t type)
-         : m_frontend(frontend), m_type(type){}
-
-      bool operator()(void *addr, std::size_t size, bool created) const
-      {  
-         if(((m_type == DoOpen)   &&  created) || 
-            ((m_type == DoCreate) && !created))
-            return false;
-
-         if(created)
-            return m_frontend->create_impl(addr, size);
-         else
-            return m_frontend->open_impl  (addr, size);
-      }
-      basic_managed_mapped_file *m_frontend;
-      type_t                     m_type;
-   };
+      <CharType, AllocationAlgorithm, IndexType>   base_t;
+   typedef detail::create_open_func<base_t>        create_open_func_t;   
 
    basic_managed_mapped_file *get_this_pointer()
    {  return this;   }
+   /// @endcond
 
    public: //functions
-
    /*!Creates shared memory and creates and places the segment manager. 
       This can throw.*/
    basic_managed_mapped_file(detail::create_only_t create_only, const char *name,
                              std::size_t size, const void *addr = 0)
       : m_mfile(create_only, name, size, read_write, addr, 
-                create_open_func(get_this_pointer(), create_open_func::DoCreate))
+                create_open_func_t(get_this_pointer(), DoCreate))
    {}
 
    /*!Creates shared memory and creates and places the segment manager if
@@ -93,8 +73,8 @@ class basic_managed_mapped_file
                               const char *name, std::size_t size, 
                               const void *addr = 0)
       : m_mfile(open_or_create, name, size, read_write, addr, 
-                create_open_func(get_this_pointer(), 
-                create_open_func::DoCreateOrOpen))
+                create_open_func_t(get_this_pointer(), 
+                DoCreateOrOpen))
    {}
 
    /*!Connects to a created shared memory and it's the segment manager.
@@ -102,8 +82,8 @@ class basic_managed_mapped_file
    basic_managed_mapped_file (detail::open_only_t open_only, const char* name, 
                               const void *addr = 0)
       : m_mfile(open_only, name, read_write, addr, 
-                create_open_func(get_this_pointer(), 
-                create_open_func::DoOpen))
+                create_open_func_t(get_this_pointer(), 
+                DoOpen))
    {}
 
    /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
@@ -175,8 +155,10 @@ class basic_managed_mapped_file
       return true;
    }
 */
+   /// @cond
    private:
    detail::managed_open_or_create_impl<detail::file_wrapper> m_mfile;
+   /// @endcond
 };
 
 }  //namespace interprocess {

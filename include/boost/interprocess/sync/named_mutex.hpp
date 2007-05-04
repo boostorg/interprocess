@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -39,12 +39,13 @@ class named_condition;
    each process should have it's own named_mutex.*/
 class named_mutex
 {
+   /// @cond
    //Non-copyable
    named_mutex();
    named_mutex(const named_mutex &);
    named_mutex &operator=(const named_mutex &);
-
    friend class named_condition;
+   /// @endcond
    public:
    /*!Creates a global interprocess_mutex with a name.*/
    named_mutex(detail::create_only_t create_only, const char *name);
@@ -83,16 +84,18 @@ class named_mutex
    /*! Erases a named mutex from the system*/
    static bool remove(const char *name);
 
+   /// @cond
    private:
-
    interprocess_mutex *mutex() const
    {  return static_cast<interprocess_mutex*>(m_shmem.get_address()); }
 
    detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
 
    class construct_func_t;
+   /// @endcond
 };
 
+/// @cond
 class named_mutex::construct_func_t
 {
    public:
@@ -124,6 +127,7 @@ class named_mutex::construct_func_t
    private:
    CreationType       m_creation_type;
 };
+/// @endcond
 
 inline named_mutex::~named_mutex()
 {}

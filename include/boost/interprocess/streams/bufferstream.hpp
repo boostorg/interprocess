@@ -1,18 +1,6 @@
-/*
- * Copyright (c) 1998
- * Silicon Graphics Computer Systems, Inc.
- *
- * Permission to use, copy, modify, distribute and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear
- * in supporting documentation.  Silicon Graphics makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- */
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -25,6 +13,18 @@
 // internal buffer get/set/swap functions, so that we can obtain/establish the
 // internal buffer without any reallocation or copy. Kill those temporaries!
 ///////////////////////////////////////////////////////////////////////////////
+/*
+ * Copyright (c) 1998
+ * Silicon Graphics Computer Systems, Inc.
+ *
+ * Permission to use, copy, modify, distribute and sell this software
+ * and its documentation for any purpose is hereby granted without fee,
+ * provided that the above copyright notice appear in all copies and
+ * that both that copyright notice and this permission notice appear
+ * in supporting documentation.  Silicon Graphics makes no
+ * representations about the suitability of this software for any
+ * purpose.  It is provided "as is" without express or implied warranty.
+ */
 
 /*!\file
    This file defines basic_bufferbuf, basic_ibufferstream,
@@ -58,12 +58,12 @@ class basic_bufferbuf
    : public std::basic_streambuf<CharT, CharTraits>
 {
    public:
-   typedef CharT                             char_type;
-   typedef typename CharTraits::int_type     int_type;
-   typedef typename CharTraits::pos_type     pos_type;
-   typedef typename CharTraits::off_type     off_type;
-   typedef CharTraits                        traits_type;
-   typedef std::basic_streambuf<char_type, traits_type> base_t;
+   typedef CharT                                         char_type;
+   typedef typename CharTraits::int_type                 int_type;
+   typedef typename CharTraits::pos_type                 pos_type;
+   typedef typename CharTraits::off_type                 off_type;
+   typedef CharTraits                                    traits_type;
+   typedef std::basic_streambuf<char_type, traits_type>  base_t;
 
    public:
    /*!Constructor. Does not throw.*/
@@ -90,7 +90,8 @@ class basic_bufferbuf
    /*!Sets the underlying buffer to a new value. Does not throw.*/
    void buffer(CharT *buffer, std::size_t length)
       {  m_buffer = buffer;   m_length = length;   this->set_pointers();   }
-   
+
+   /// @cond
    private:
    void set_pointers()
    {
@@ -242,6 +243,7 @@ class basic_bufferbuf
    std::ios_base::openmode m_mode;
    CharT *                 m_buffer;
    std::size_t             m_length;
+   /// @endcond
 };
 
 /*!A basic_istream class that uses a fixed size character buffer
@@ -292,8 +294,10 @@ class basic_ibufferstream
    void buffer(const CharT *buffer, std::size_t length)
       {  m_buf.buffer(const_cast<CharT*>(buffer), length);  }
 
+   /// @cond
    private:
    basic_bufferbuf<CharT, CharTraits> m_buf;
+   /// @endcond
 };
 
 /*!A basic_ostream class that uses a fixed size character buffer
@@ -310,10 +314,11 @@ class basic_obufferstream
    typedef typename std::basic_ios<char_type, CharTraits>::off_type     off_type;
    typedef typename std::basic_ios<char_type, CharTraits>::traits_type  traits_type;
 
+   /// @cond
    private:
    typedef std::basic_ios<char_type, CharTraits>      basic_ios_t;
    typedef std::basic_ostream<char_type, CharTraits>  base_t;
-
+   /// @endcond
    public:
    /*!Constructor. Does not throw.*/
    basic_obufferstream(std::ios_base::openmode mode = std::ios_base::out)
@@ -344,8 +349,10 @@ class basic_obufferstream
    void buffer(CharT *buffer, std::size_t length)
       {  m_buf.buffer(buffer, length);  }
 
+   /// @cond
    private:
    basic_bufferbuf<CharT, CharTraits> m_buf;
+   /// @endcond
 };
 
 
@@ -363,10 +370,12 @@ class basic_bufferstream
    typedef typename std::basic_ios<char_type, CharTraits>::pos_type     pos_type;
    typedef typename std::basic_ios<char_type, CharTraits>::off_type     off_type;
    typedef typename std::basic_ios<char_type, CharTraits>::traits_type  traits_type;
-   
+
+   /// @cond
    private:
    typedef std::basic_ios<char_type, CharTraits>                 basic_ios_t;
    typedef std::basic_iostream<char_type, CharTraits>            base_t;
+   /// @endcond
 
    public:
    /*!Constructor. Does not throw.*/
@@ -399,8 +408,10 @@ class basic_bufferstream
    void buffer(CharT *buffer, std::size_t length)
       {  m_buf.buffer(buffer, length);  }
 
+   /// @cond
    private:
    basic_bufferbuf<CharT, CharTraits> m_buf;
+   /// @endcond
 };
 
 //Some typedefs to simplify usage

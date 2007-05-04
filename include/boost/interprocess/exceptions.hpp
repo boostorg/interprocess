@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -72,9 +72,11 @@ class interprocess_exception : public std::exception
    // Note: a value of other_error implies a library (rather than system) error
    error_code_t   get_error_code()  const { return m_err.get_error_code(); }
 
+   /// @cond
    private:
    error_info        m_err;
    std::string       m_str;
+   /// @endcond
 };
 
 /*!This is the exception thrown by shared interprocess_mutex family when a deadlock situation

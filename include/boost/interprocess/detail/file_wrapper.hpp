@@ -79,11 +79,11 @@ class file_wrapper
    /*!Returns the name of the file.*/
    const char *get_name() const;
 
-   /*!Return access mode*/
+   /*!Returns access mode*/
    mode_t get_mode() const;
 
    /*!Get mapping handle*/
-   handle_t get_mapping_handle() const;
+   mapping_handle_t get_mapping_handle() const;
 
    private:
    /*!Closes a previously opened file mapping. Never throws.*/
@@ -91,13 +91,13 @@ class file_wrapper
    /*!Closes a previously opened file mapping. Never throws.*/
    bool priv_open_or_create(create_enum_t type, const char *filename, mode_t mode);
 
-   handle_t  m_handle;
+   file_handle_t  m_handle;
    mode_t      m_mode;
    std::string       m_filename;
 };
 
 inline file_wrapper::file_wrapper() 
-   :  m_handle(handle_t(detail::invalid_file()))
+   :  m_handle(file_handle_t(detail::invalid_file()))
 {}
 
 inline file_wrapper::~file_wrapper() 
@@ -114,8 +114,8 @@ inline void file_wrapper::swap(file_wrapper &other)
    m_filename.swap(other.m_filename);   
 }
 
-inline handle_t file_wrapper::get_mapping_handle() const
-{  return m_handle;  }
+inline mapping_handle_t file_wrapper::get_mapping_handle() const
+{  return mapping_handle_from_file_handle(m_handle);  }
 
 inline mode_t file_wrapper::get_mode() const
 {  return m_mode; }

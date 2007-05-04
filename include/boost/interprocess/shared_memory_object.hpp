@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -8,8 +8,8 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef BOOST_INTERPROCESS_MEMORY_HPP
-#define BOOST_INTERPROCESS_MEMORY_HPP
+#ifndef BOOST_INTERPROCESS_SHARED_MEMORY_OBJECT_HPP
+#define BOOST_INTERPROCESS_SHARED_MEMORY_OBJECT_HPP
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
@@ -45,37 +45,43 @@ namespace interprocess {
    create mapped regions from the mapped files*/
 class shared_memory_object
 {
+   /// @cond
+   //Non-copyable and non-assignable
+   shared_memory_object(const shared_memory_object &);
+   shared_memory_object &operator=(const shared_memory_object &);
+   /// @endcond
+
    public:
 
-   /*!Default constructor. Represents an empty shared_memory_object.*/
+   //!Default constructor. Represents an empty shared_memory_object.
    shared_memory_object();
 
-   /*!Creates a shared memory object with name "name" and mode "mode", with the access mode "mode"
-      If the file previously exists, throws an error.*/
+   //!Creates a shared memory object with name "name" and mode "mode", with the access mode "mode"
+   //!If the file previously exists, throws an error.*/
    shared_memory_object(detail::create_only_t, const char *name, mode_t mode)
    {  this->priv_open_or_create(DoCreate, name, mode);  }
 
-   /*!Tries to create a shared memory object with name "name" and mode "mode", with the
-      access mode "mode". If the file previously exists, it tries to open it with mode "mode".
-      Otherwise throws an error.*/
+   //!Tries to create a shared memory object with name "name" and mode "mode", with the
+   //!access mode "mode". If the file previously exists, it tries to open it with mode "mode".
+   //!Otherwise throws an error.
    shared_memory_object(detail::open_or_create_t, const char *name, mode_t mode)
    {  this->priv_open_or_create(DoCreateOrOpen, name, mode);  }
 
-   /*!Tries to open a shared memory object with name "name", with the access mode "mode". 
-      If the file does not previously exist, it throws an error.*/
+   //!Tries to open a shared memory object with name "name", with the access mode "mode". 
+   //!If the file does not previously exist, it throws an error.
    shared_memory_object(detail::open_only_t, const char *name, mode_t mode)
    {  this->priv_open_or_create(DoOpen, name, mode);  }
 
-   /*!Moves the ownership of "moved"'s shared memory object to *this. 
-      After the call, "moved" does not represent any shared memory object. 
-      Does not throw*/
+   //!Moves the ownership of "moved"'s shared memory object to *this. 
+   //!After the call, "moved" does not represent any shared memory object. 
+   //!Does not throw
    shared_memory_object
       (detail::moved_object<shared_memory_object> &moved)
    {  this->swap(moved.get());   }
 
-   /*!Moves the ownership of "moved"'s shared memory to *this.
-      After the call, "moved" does not represent any shared memory. 
-      Does not throw*/
+   //!Moves the ownership of "moved"'s shared memory to *this.
+   //!After the call, "moved" does not represent any shared memory. 
+   //!Does not throw
    shared_memory_object &operator=
       (detail::moved_object<shared_memory_object> &moved)
    {  
@@ -84,48 +90,51 @@ class shared_memory_object
       return *this;  
    }
 
-   /*!Swaps to shared_memory_objects. Does not throw*/
+   //!Swaps the shared_memory_objects. Does not throw
    void swap(shared_memory_object &other);
 
-   /*!Erases a shared memory object from the system.*/
+   //!Erases a shared memory object from the system. Never throws
    static bool remove(const char *name);
    
-   /*!Sets the size of the shared memory mapping*/
+   //!Sets the size of the shared memory mapping
    void truncate(offset_t length);
 
-   /*!Closes the shared memory mapping. All mapped regions are still
-      valid after destruction. The shared memory object still exists and
-      can be newly opened.*/
+   //!Closes the shared memory mapping. All mapped regions are still
+   //!valid after destruction. The shared memory object still exists and
+   //!can be newly opened.
    ~shared_memory_object();
 
-   /*!Returns the name of the file.*/
+   //!Returns the name of the file.
    const char *get_name() const;
 
-   /*!Return access mode*/
+   //!Returns access mode
    mode_t get_mode() const;
 
-   /*!Get mapping handle*/
-   handle_t get_mapping_handle() const;
+   //!Returns mapping handle. Never throws.
+   mapping_handle_t get_mapping_handle() const;
 
+   /// @cond
    private:
-   /*!Closes a previously opened file mapping. Never throws.*/
+   //!Closes a previously opened file mapping. Never throws.
    void priv_close();
-   /*!Closes a previously opened file mapping. Never throws.*/
+
+   //!Closes a previously opened file mapping. Never throws.
    bool priv_open_or_create(create_enum_t type, const char *filename, mode_t mode);
 
-   handle_t  m_handle;
+   file_handle_t  m_handle;
    mode_t      m_mode;
    std::string       m_filename;
+   /// @endcond
 };
 
 inline shared_memory_object::shared_memory_object() 
-   :  m_handle(handle_t(detail::invalid_file()))
+   :  m_handle(file_handle_t(detail::invalid_file()))
 {}
 
 inline shared_memory_object::~shared_memory_object() 
 {  this->priv_close(); }
 
-/*!Returns the name of the file.*/
+
 inline const char *shared_memory_object::get_name() const
 {  return m_filename.c_str(); }
 
@@ -136,8 +145,8 @@ inline void shared_memory_object::swap(shared_memory_object &other)
    m_filename.swap(other.m_filename);   
 }
 
-inline handle_t shared_memory_object::get_mapping_handle() const
-{  return m_handle;  }
+inline mapping_handle_t shared_memory_object::get_mapping_handle() const
+{  return detail::mapping_handle_from_file_handle(m_handle);  }
 
 inline mode_t shared_memory_object::get_mode() const
 {  return m_mode; }
@@ -157,7 +166,6 @@ inline bool shared_memory_object::priv_open_or_create
 
    std::string shmfile = tmp_path;
 
-//   shmfile += "boost_interprocess\\";
    shmfile += "/boost_interprocess";
 
    //Create the temporary directory.
@@ -328,4 +336,4 @@ inline void shared_memory_object::priv_close()
 
 #include <boost/interprocess/detail/config_end.hpp>
 
-#endif   //BOOST_INTERPROCESS_MEMORY_HPP
+#endif   //BOOST_INTERPROCESS_SHARED_MEMORY_OBJECT_HPP

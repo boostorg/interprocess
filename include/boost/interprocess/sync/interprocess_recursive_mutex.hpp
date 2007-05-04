@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -62,10 +62,11 @@ namespace interprocess {
    process. Allows timed lock tries*/
 class interprocess_recursive_mutex
 {
+   /// @cond
    //Non-copyable
    interprocess_recursive_mutex(const interprocess_recursive_mutex &);
    interprocess_recursive_mutex &operator=(const interprocess_recursive_mutex &);
-
+   /// @endcond
    public:
    /*!Constructor. Throws interprocess_exception on error.*/
    interprocess_recursive_mutex();
@@ -99,7 +100,7 @@ class interprocess_recursive_mutex
          same number of times it is locked.
       Throws: interprocess_exception on error.*/
    void unlock(void);
-
+   /// @cond
    private:
    #if defined (BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
    interprocess_mutex      m_mutex;
@@ -116,6 +117,7 @@ class interprocess_recursive_mutex
          unsigned int      m_count;
       #endif   //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
    #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+   /// @endcond
 };
 
 }  //namespace interprocess {

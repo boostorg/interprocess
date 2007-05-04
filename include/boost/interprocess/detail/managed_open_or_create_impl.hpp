@@ -20,12 +20,13 @@
 #include <boost/interprocess/detail/atomic.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
 #include <boost/cstdint.hpp>
+#include <boost/mpl/bool.hpp>
 
 namespace boost {
 namespace interprocess {
 namespace detail {
 
-template<class DeviceAbstraction>
+template<class DeviceAbstraction, bool FileBased = true>
 class managed_open_or_create_impl
 {
    //Non-copyable
@@ -59,7 +60,13 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         (DoCreate, m_mapped_region, name, size, mode, addr, null_mapped_region_function());
+         ( DoCreate
+         , m_mapped_region
+         , name
+         , size
+         , mode
+         , addr
+         , null_mapped_region_function());
    }
 
    managed_open_or_create_impl(detail::open_only_t, 
@@ -69,7 +76,13 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         (DoOpen, m_mapped_region, name, 0, mode, addr, null_mapped_region_function());
+         ( DoOpen
+         , m_mapped_region
+         , name
+         , 0
+         , mode
+         , addr
+         , null_mapped_region_function());
    }
 
 
@@ -81,7 +94,13 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         (DoCreateOrOpen, m_mapped_region, name, size, mode, addr, null_mapped_region_function());
+         ( DoCreateOrOpen
+         , m_mapped_region
+         , name
+         , size
+         , mode
+         , addr
+         , null_mapped_region_function());
    }
 
    template <class ConstructFunc>
@@ -94,7 +113,13 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         (DoCreate, m_mapped_region, name, size, mode, addr, construct_func);
+         (DoCreate
+         , m_mapped_region
+         , name
+         , size
+         , mode
+         , addr
+         , construct_func);
    }
 
    template <class ConstructFunc>
@@ -106,7 +131,13 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         (DoOpen, m_mapped_region, name, 0, mode, addr, construct_func);
+         ( DoOpen
+         , m_mapped_region
+         , name
+         , 0
+         , mode
+         , addr
+         , construct_func);
    }
 
    template <class ConstructFunc>
@@ -119,7 +150,13 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         (DoCreateOrOpen, m_mapped_region, name, size, mode, addr, construct_func);
+         ( DoCreateOrOpen
+         , m_mapped_region
+         , name
+         , size
+         , mode
+         , addr
+         , construct_func);
    }
 
    managed_open_or_create_impl
@@ -157,8 +194,16 @@ class managed_open_or_create_impl
 
    private:
 
-   static void write_whole_device(handle_t hnd, std::size_t size)
+   //These are templatized to allow explicit instantiations
+   template<bool dummy>
+   static void write_whole_device(DeviceAbstraction &dev, std::size_t size, boost::mpl::false_)
+   {} //Empty
+
+   template<bool dummy>
+   static void write_whole_device(DeviceAbstraction &dev, std::size_t size, boost::mpl::true_)
    {
+      file_handle_t hnd = detail::file_handle_from_mapping_handle(dev.get_mapping_handle());
+
       if(size <= ManagedOpenOrCreateUserOffset){
          throw interprocess_exception(error_info(system_error_code()));
       }
@@ -183,6 +228,30 @@ class managed_open_or_create_impl
       }
    }
 
+   //These are templatized to allow explicit instantiations
+   template<bool dummy>
+   static void truncate_device(DeviceAbstraction &, std::size_t, boost::mpl::false_)
+   {} //Empty
+
+   template<bool dummy>
+   static void truncate_device(DeviceAbstraction &dev, std::size_t size, boost::mpl::true_)
+   {  dev.truncate(size);  }
+
+   //These are templatized to allow explicit instantiations
+   template<bool dummy>
+   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t size, boost::mpl::false_)
+   {
+      DeviceAbstraction tmp(create_only, name, read_write, size);
+      tmp.swap(dev);
+   }
+
+   template<bool dummy>
+   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t size, boost::mpl::true_)
+   {
+      DeviceAbstraction tmp(create_only, name, read_write);
+      tmp.swap(dev);
+   }
+
    template <class ConstructFunc> inline 
    static void priv_open_or_create
       (create_enum_t type,  mapped_region &mregion,
@@ -190,6 +259,8 @@ class managed_open_or_create_impl
        mode_t mode, const void *addr,
        ConstructFunc construct_func)
    {
+      typedef boost::mpl::bool_<FileBased> file_like_t;
+
       error_info err;
       bool created = false;
       DeviceAbstraction dev;
@@ -204,8 +275,7 @@ class managed_open_or_create_impl
          created = false;
       }
       else if(type == DoCreate){
-         DeviceAbstraction tmp(create_only, name, read_write);
-         tmp.swap(dev);
+         create_device<FileBased>(dev, name, size, file_like_t());
          created = true;
       }
       else if(type == DoCreateOrOpen){
@@ -216,8 +286,7 @@ class managed_open_or_create_impl
          bool completed = false;
          while(!completed){
             try{
-               DeviceAbstraction tmp(create_only, name, read_write);
-               tmp.swap(dev);
+               create_device<FileBased>(dev, name, size, file_like_t());
                created     = true;
                completed   = true;
             }
@@ -246,27 +315,25 @@ class managed_open_or_create_impl
       if(created){
          try{
             //If this throws, we are lost
-            dev.truncate(size);
+            truncate_device<FileBased>(dev, size, file_like_t());
 
             //If the following throws, we will truncate the file to 1
             mapped_region        region(dev, read_write, 0, 0, addr);
+            boost::uint32_t *patomic_word = static_cast<boost::uint32_t*>(region.get_address());
+            boost::uint32_t previous = detail::atomic_cas32(patomic_word, InitializingSegment, UninitializedSegment);
 
-            volatile boost::uint32_t *addr =  
-               static_cast<boost::uint32_t*>(region.get_address());
-            boost::uint32_t previous = 
-               detail::atomic_cas32(addr, InitializingSegment, UninitializedSegment);
             if(previous == UninitializedSegment){
                try{
-                  write_whole_device(dev.get_mapping_handle(), size);
-                  construct_func((char*)region.get_address() + ManagedOpenOrCreateUserOffset, region.get_size() - ManagedOpenOrCreateUserOffset, true);
+                  write_whole_device<FileBased>(dev, size, file_like_t());
+                  construct_func((char*)region.get_address() + ManagedOpenOrCreateUserOffset, size - ManagedOpenOrCreateUserOffset, true);
                   //All ok, just move resources to the external mapped region
                   mregion.swap(region);
                }
                catch(...){
-                  detail::atomic_write32(addr, CorruptedSegment);
+                  detail::atomic_write32(patomic_word, CorruptedSegment);
                   throw;
                }
-               detail::atomic_write32(addr, InitializedSegment);
+               detail::atomic_write32(patomic_word, InitializedSegment);
             }
             else if(previous == InitializingSegment || previous == InitializedSegment){
                throw interprocess_exception(error_info(already_exists_error));
@@ -277,7 +344,7 @@ class managed_open_or_create_impl
          }
          catch(...){
             try{
-               dev.truncate(1);
+               truncate_device<FileBased>(dev, 1u, file_like_t());
             }
             catch(...){
             }
@@ -285,43 +352,39 @@ class managed_open_or_create_impl
          }
       }
       else{
-         offset_t filesize = 0;
-         while(filesize == 0){
-            if(!detail::get_file_size(dev.get_mapping_handle(), filesize)){
-               throw interprocess_exception(error_info(system_error_code()));
+         if(FileBased){
+            offset_t filesize = 0;
+            while(filesize == 0){
+               if(!detail::get_file_size(detail::file_handle_from_mapping_handle(dev.get_mapping_handle()), filesize)){
+                  throw interprocess_exception(error_info(system_error_code()));
+               }
+               detail::thread_yield();
             }
+            if(filesize == 1){
+               throw interprocess_exception(error_info(corrupted_error));
+            }
+         }
+
+         mapped_region  region(dev, read_write, 0, 0, addr);
+
+         boost::uint32_t *patomic_word = static_cast<boost::uint32_t*>(region.get_address());
+         boost::uint32_t value = detail::atomic_read32(patomic_word);
+
+         while(value == InitializingSegment || value == UninitializedSegment){
             detail::thread_yield();
+            value = detail::atomic_read32(patomic_word);
          }
-         if(filesize == 1){
+
+         if(value != InitializedSegment)
             throw interprocess_exception(error_info(corrupted_error));
-         }
 
-        mapped_region  region(dev, read_write, 0, 0, addr);
-
-        volatile boost::uint32_t *addr = static_cast<boost::uint32_t*>(region.get_address());
-
-        boost::uint32_t value = detail::atomic_read32(addr);
-    
-        // wait if shared segment isn't initialized
-        while(value == InitializingSegment || value == UninitializedSegment){
-           detail::thread_yield();
-           value = detail::atomic_read32(addr);
-        }
-
-        if(value != InitializedSegment){
-           throw interprocess_exception(error_info(corrupted_error));
-        }
-
-        // InitializedSegment
-        construct_func((char*)region.get_address() + ManagedOpenOrCreateUserOffset, region.get_size(), false);
-
-        // All ok, just move resources to the external mapped region
-        mregion.swap(region);
+         construct_func((char*)region.get_address() + ManagedOpenOrCreateUserOffset, region.get_size(), false);
+         //All ok, just move resources to the external mapped region
+         mregion.swap(region);
       }
    }
 
    private:
-
    mapped_region     m_mapped_region;
    std::string       m_name;
 };

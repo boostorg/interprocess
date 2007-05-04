@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -34,11 +34,12 @@ namespace interprocess {
 
 class named_condition
 {
+   /// @cond
    //Non-copyable
    named_condition();
    named_condition(const named_condition &);
    named_condition &operator=(const named_condition &);
-
+   /// @endcond
    public:
    /*!Creates a global condition with a name.*/
    named_condition(detail::create_only_t create_only, const char *name);
@@ -91,7 +92,8 @@ class named_condition
 
    static bool remove(const char *name);
 
- private:
+   /// @cond
+   private:
 
    interprocess_condition *condition() const
    {  return static_cast<interprocess_condition*>(m_shmem.get_address()); }
@@ -99,9 +101,10 @@ class named_condition
    detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
 
    class construct_func_t;
+   /// @endcond
 };
 
-
+/// @cond
 class named_condition::construct_func_t
 {
    public:
@@ -133,6 +136,7 @@ class named_condition::construct_func_t
    private:
    CreationType       m_creation_type;
 };
+/// @endcond
 
 inline named_condition::~named_condition()
 {}
@@ -218,31 +222,6 @@ inline bool named_condition::timed_wait
    return true;
 }
 
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
-
-/*
-template <typename L>
-inline void named_condition::wait(L& lock)
-{  this->condition()->wait(lock);  }
-
-template <typename L, typename Pr>
-inline void named_condition::wait(L& lock, Pr pred)
-{  this->condition()->wait(lock, pred);  }
-
-template <typename L>
-inline bool named_condition::timed_wait
-   (L& lock, const boost::posix_time::ptime &abs_time)
-{  this->condition()->timed_wait(lock, abs_time);  }
-
-template <typename L, typename Pr>
-inline bool named_condition::timed_wait
-   (L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
-{  this->condition()->timed_wait(lock, abs_time, pred);  }
-*/
 inline bool named_condition::remove(const char *name)
 {  return shared_memory_object::remove(name); }
 

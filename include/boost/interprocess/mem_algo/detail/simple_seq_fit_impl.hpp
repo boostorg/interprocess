@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -24,12 +24,12 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/multi_segment_services.hpp>
 #include <boost/type_traits/alignment_of.hpp>
 #include <boost/type_traits/type_with_alignment.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <algorithm>
 #include <utility>
+#include <cstring>
 
 #include <assert.h>
 #include <new>
@@ -143,20 +143,21 @@ class simple_seq_fit_impl
    /*!Makes an internal sanity check and returns true if success*/
    bool check_sanity();
 
+   //!Initializes to zero all the memory that's not in use.
+   //!This function is normally used for security reasons.
+   void clear_free_memory();
+
    std::pair<void *, bool>
       allocation_command  (allocation_type command,   std::size_t limit_size,
                            std::size_t preferred_size,std::size_t &received_size, 
-                           void *reuse_ptr = 0);
+                           void *reuse_ptr = 0, std::size_t backwards_multiple = 1);
 
    /*!Returns the size of the buffer previously allocated pointed by ptr*/
    std::size_t size(void *ptr) const;
 
-   /*!Allocates bytes, if there is no more memory, it executes functor
-      f(std::size_t) to allocate a new segment to manage. The functor returns 
-      std::pair<void*, std::size_t> indicating the base address and size of 
-      the new segment. If the new segment can't be allocated, allocate
-      it will return 0.*/
-   void* multi_allocate(std::size_t nbytes);
+   /*!Allocates aligned bytes, returns 0 if there is not more memory.
+      Alignment must be power of 2*/
+   void* allocate_aligned     (std::size_t nbytes, std::size_t alignment);
 
    private:
    /*!Real allocation algorithm with min allocation option*/
@@ -191,6 +192,9 @@ class simple_seq_fit_impl
                    ,std::size_t max_size, std::size_t preferred_size
                    ,std::size_t &received_size);
 
+   //!Real private aligned allocation function
+   void* priv_allocate_aligned     (std::size_t nbytes, std::size_t alignment);
+
    /*!Checks if block has enough memory and splits/unlinks the block
       returning the address to the users*/
    void* priv_check_and_allocate(std::size_t units
@@ -207,6 +211,9 @@ class simple_seq_fit_impl
    enum { BlockCtrlBytes = detail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value  };
    enum { BlockCtrlSize  = BlockCtrlBytes/Alignment   };
    enum { MinBlockSize   = BlockCtrlSize + Alignment  };
+
+   public:
+   enum {   PayloadPerAllocation = BlockCtrlBytes  };
 };
 
 template<class MutexFamily, class VoidPointer>
@@ -299,6 +306,25 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
 }
 
 template<class MutexFamily, class VoidPointer>
+inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::clear_free_memory()
+{
+   //-----------------------
+   boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
+   //-----------------------
+   block_ctrl *block = detail::get_pointer(m_header.m_root.m_next);
+
+   //Iterate through all free portions
+   do{
+      //Just clear user the memory part reserved for the user      
+      std::memset( detail::char_ptr_cast(block) + BlockCtrlBytes
+                 , 0
+                 , block->m_size*Alignment - BlockCtrlBytes);
+      block = detail::get_pointer(block->m_next);
+   }
+   while(block != &m_header.m_root);
+}
+
+template<class MutexFamily, class VoidPointer>
 inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
     check_sanity()
 {
@@ -345,14 +371,28 @@ inline void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
 }
 
 template<class MutexFamily, class VoidPointer>
+inline void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
+   allocate_aligned(std::size_t nbytes, std::size_t alignment)
+{  
+   //-----------------------
+   boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
+   //-----------------------
+   return priv_allocate_aligned(nbytes, alignment);
+}
+
+template<class MutexFamily, class VoidPointer>
 inline std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
    allocation_command  (allocation_type command,   std::size_t min_size,
                         std::size_t preferred_size,std::size_t &received_size, 
-                        void *reuse_ptr)
+                        void *reuse_ptr, std::size_t backwards_multiple)
 {
    //-----------------------
    boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
    //-----------------------
+   (void)backwards_multiple;
+   command &= ~expand_bwd;
+   if(!command)
+      return std::pair<void *, bool>(0, false);
    return priv_allocate(command, min_size, preferred_size, received_size, reuse_ptr);
 }
 
@@ -366,43 +406,6 @@ inline std::size_t simple_seq_fit_impl<MutexFamily, VoidPointer>::
    block_ctrl *block = reinterpret_cast<block_ctrl*>
                         (detail::char_ptr_cast(ptr) - BlockCtrlBytes);
    return block->m_size*Alignment - BlockCtrlBytes;
-}
-
-template<class MutexFamily, class VoidPointer>
-inline void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
-   multi_allocate(std::size_t nbytes)
-{
-   //-----------------------
-   boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
-   //-----------------------
-   //Multisegment pointer. Let's try first the normal allocation
-   //since it's faster.
-   std::size_t ignore;
-   void *addr = this->priv_allocate(allocate_new, nbytes, nbytes, ignore).first;
-   if(!addr){
-      //If this fails we will try the allocation through the segment
-      //creator.
-      std::size_t group, id;
-      //Obtain the segment group of this segment
-      void_pointer::get_group_and_id(this, group, id);
-      if(group == 0){
-         //Ooops, group 0 is not valid.
-         return 0;
-      }
-      //Now obtain the polymorphic functor that creates
-      //new segments and try to allocate again.
-      boost::interprocess::multi_segment_services *p_services = 
-         static_cast<boost::interprocess::multi_segment_services*>
-                     (void_pointer::find_group_data(group));
-      assert(p_services);
-      std::pair<void *, std::size_t> ret = 
-         p_services->create_new_segment(MinBlockSize > nbytes ? MinBlockSize : nbytes);
-      if(ret.first){
-         priv_add_segment(ret.first, ret.second);
-         addr = this->priv_allocate(allocate_new, nbytes, nbytes, ignore).first;
-      }
-   }
-   return addr;
 }
 
 template<class MutexFamily, class VoidPointer>
@@ -746,6 +749,56 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
    //Now deallocate the new block to insert it in the free list
    this->priv_deallocate(detail::char_ptr_cast(block)+BlockCtrlBytes);
    return true;   
+}
+
+template<class MutexFamily, class VoidPointer>
+inline void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
+   priv_allocate_aligned(std::size_t nbytes, std::size_t alignment)
+{  
+   //Ensure power of 2
+   if ((alignment & (alignment - std::size_t(1u))) != 0){
+      //Alignment is not power of two
+      assert((alignment & (alignment - std::size_t(1u))) != 0);
+      return 0;
+   }
+
+   std::size_t ignore;
+   if(alignment <= Alignment){
+      return priv_allocate(allocate_new, nbytes, nbytes, ignore).first;
+   }
+   
+   std::size_t request = 
+      nbytes + alignment + MinBlockSize*Alignment - BlockCtrlBytes;
+   void *buffer = priv_allocate(allocate_new, request, request, ignore).first;
+   if(!buffer)
+      return 0;
+   else if ((((std::size_t)(buffer)) % alignment) == 0)
+      return buffer;
+
+   char *aligned_portion = (char*)
+      ((std::size_t)((char*)buffer + alignment - 1) & -alignment);
+
+   char *pos = ((aligned_portion - (char*)buffer) >= (MinBlockSize*Alignment)) ? 
+      aligned_portion : (aligned_portion + alignment);
+
+
+   block_ctrl *first = reinterpret_cast<block_ctrl*>
+                           (detail::char_ptr_cast(buffer) - BlockCtrlBytes);
+
+   block_ctrl *second = reinterpret_cast<block_ctrl*>
+                           (detail::char_ptr_cast(pos) - BlockCtrlBytes);
+
+   std::size_t old_size = first->m_size;
+
+   first->m_size  = ((char*)second - (char*)first)/Alignment;
+   second->m_size = old_size - first->m_size;
+
+   //Write control data to simulate this new block was previously allocated
+   second->m_next = 0;
+
+   //Now deallocate the new block to insert it in the free list
+   this->priv_deallocate(detail::char_ptr_cast(first) + BlockCtrlBytes);
+   return detail::char_ptr_cast(second) + BlockCtrlBytes;
 }
 
 template<class MutexFamily, class VoidPointer> inline

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -56,7 +56,7 @@ class upgradable_lock
 {
    public:
    typedef UpgradableMutex mutex_type;
-
+   /// @cond
    private:
    typedef upgradable_lock<UpgradableMutex> this_type;
    upgradable_lock(upgradable_lock const&);
@@ -64,7 +64,7 @@ class upgradable_lock
    typedef bool this_type::*unspecified_bool_type;
    upgradable_lock& operator=(upgradable_lock const&);
    upgradable_lock& operator=(scoped_lock<mutex_type> const&);
-
+   /// @endcond
    public:
 
    /*!Effects: Default constructs a upgradable_lock.
@@ -294,18 +294,21 @@ class upgradable_lock
       std::swap(mp_mutex, other.get().mp_mutex);
       std::swap(m_locked, other.get().m_locked);
    }
-
+   /// @cond
    private:
    mutex_type *mp_mutex;
    bool        m_locked;
+   /// @endcond
 };
 
+/// @cond
 /*!This class is movable*/
 template <class M>
 struct is_movable<upgradable_lock<M> >
 {
    enum {   value = true };
 };
+/// @endcond
 
 } // namespace interprocess
 } // namespace boost

@@ -55,11 +55,13 @@ class intrusive_ptr
    /*!Provides the type of the stored pointer.*/
    typedef T element_type;
 
+   /// @cond
    private:
    typedef VoidPointer VP;
    typedef intrusive_ptr this_type;
    typedef pointer this_type::*unspecified_bool_type;
-   
+   /// @endcond
+
    public:
    /*!Constructor. Initializes internal pointer to 0. Does not throw*/
    intrusive_ptr(): m_ptr(0)
@@ -154,8 +156,10 @@ class intrusive_ptr
    void swap(intrusive_ptr & rhs)
    {  detail::do_swap(m_ptr, rhs.m_ptr);  }
 
+   /// @cond
    private:
    pointer m_ptr;
+   /// @endcond
 };
 
 /*Returns a.get() == b.get(). Does not throw*/
@@ -253,8 +257,19 @@ inline boost::interprocess::intrusive_ptr<T, VP>reinterpret_pointer_cast
 */
 
 } // namespace interprocess
+
+/// @cond
+#if defined(_MSC_VER) && (_MSC_VER < 1400)
+/*Returns p.get(). Does not throw*/
+template<class T, class VP>
+inline T *get_pointer(boost::interprocess::intrusive_ptr<T, VP> p)
+{  return p.get();   }
+#endif
+/// @endcond
+
 } // namespace boost
 
+/// @cond
 namespace boost{
 namespace interprocess{
 
@@ -279,6 +294,7 @@ class cast_to< intrusive_ptr<T, VP> >
    static intrusive_ptr<T, VP> using_dynamic_cast(const intrusive_ptr<S, VP> &s)
    {  return intrusive_ptr<T, VP>(s, detail::dynamic_cast_tag());   }
 };
+/// @endcond
 
 }  //namespace interprocess{
 }  //namespace boost{

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -25,6 +25,8 @@
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/assert.hpp>
+#include <boost/type_traits/alignment_of.hpp>
+#include <boost/type_traits/has_trivial_destructor.hpp>
 #include <memory>
 #include <algorithm>
 #include <cstddef>
@@ -46,7 +48,8 @@ namespace interprocess {
 template<class T, class SegmentManager>
 class allocator 
 {
- private:
+   /// @cond
+   private:
    /*!Self type*/
    typedef allocator<T, SegmentManager>   self_t;
 
@@ -66,16 +69,17 @@ class allocator
       <cvoid_ptr, segment_manager>::type     alloc_ptr_t;
 
    /*!Not assignable from related allocator*/
-   template<class T2, class AllocAlgo2>
-   allocator& operator=(const allocator<T2, AllocAlgo2>&);
+   template<class T2, class SegmentManager2>
+   allocator& operator=(const allocator<T2, SegmentManager2>&);
 
    /*!Not assignable from other allocator*/
    allocator& operator=(const allocator&);
 
    /*!Pointer to the allocator*/
    alloc_ptr_t mp_mngr;
+   /// @endcond
 
- public:
+   public:
    typedef T                                    value_type;
    typedef typename detail::pointer_to_other
       <cvoid_ptr, T>::type                      pointer;
@@ -89,7 +93,6 @@ class allocator
    typedef std::ptrdiff_t                       difference_type;
 
    typedef detail::version_type<allocator, 2>   version;
-
 
    /*!Obtains an allocator of other type*/
    template<class T2>
@@ -126,7 +129,11 @@ class allocator
    /*!Allocates memory for an array of count elements. 
       Throws boost::interprocess::bad_alloc if there is no enough memory*/
    pointer allocate(size_type count, cvoid_ptr hint = 0)
-   {  return pointer((value_type*)mp_mngr->allocate(count*sizeof(value_type)));  }
+   {
+      if(count > ((size_type)-1)/sizeof(value_type))
+         throw bad_alloc();
+      return pointer((value_type*)mp_mngr->allocate(count*sizeof(value_type)));
+   }
 
    /*!Deallocates memory previously allocated. Never throws*/
    void deallocate(const pointer &ptr, size_type)
@@ -149,7 +156,7 @@ class allocator
 
    /*!Returns the number of elements that could be allocated. Never throws*/
    size_type max_size() const
-   {  return mp_mngr->get_size();   }
+   {  return mp_mngr->get_size()/sizeof(value_type);   }
 
    /*!Swap segment manager. Does not throw. If each allocator is placed in
       different memory segments, the result is undefined.*/
@@ -164,13 +171,26 @@ class allocator
                          size_type preferred_size,
                          size_type &received_size, const pointer &reuse = 0)
    {
+      std::pair<pointer, bool> ret;
+      size_type max_count = ((size_type)-1)/sizeof(value_type);
+      if(limit_size > max_count || preferred_size > max_count){
+         if(command & nothrow_allocation){
+            throw bad_alloc();
+         }
+         else{
+            ret.first = 0;
+            return ret;
+         }
+      }
+
       std::size_t l_size = limit_size*sizeof(value_type);
       std::size_t p_size = preferred_size*sizeof(value_type);
       std::size_t r_size;
       std::pair<void *, bool> result =
          mp_mngr->allocation_command
-            (command, l_size, p_size, r_size, detail::get_pointer(reuse));
+            (command, l_size, p_size, r_size, detail::get_pointer(reuse), sizeof(value_type));
       received_size = r_size/sizeof(value_type);
+      BOOST_ASSERT(0 == ((std::size_t)result.first % boost::alignment_of<value_type>::value));
       return std::pair<pointer, bool> 
          (static_cast<value_type*>(result.first), result.second);
    }
@@ -208,6 +228,7 @@ bool operator!=(const allocator<T, SegmentManager>  &alloc1,
                 const allocator<T, SegmentManager>  &alloc2)
    {  return alloc1.get_segment_manager() != alloc2.get_segment_manager(); }
 
+/// @cond
 /*!This specialization indicates that the construct function allows
    convertible types to construct the value type. This allows
    storing less allocator instances in containers.*/
@@ -217,9 +238,17 @@ struct has_convertible_construct
 {
    enum {   value = true };
 };
-
+/// @endcond
 
 }  //namespace interprocess {
+
+/// @cond
+template<class T, class SegmentManager>
+struct has_trivial_destructor
+   <boost::interprocess::allocator <T, SegmentManager> >
+   :  public ::boost::true_type
+{};
+/// @endcond
 
 }  //namespace boost {
 

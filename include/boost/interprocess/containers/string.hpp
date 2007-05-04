@@ -1,18 +1,6 @@
-/*
- * Copyright (c) 1997-1999
- * Silicon Graphics Computer Systems, Inc.
- *
- * Permission to use, copy, modify, distribute and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear
- * in supporting documentation.  Silicon Graphics makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- */ 
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -20,11 +8,21 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// This file comes from SGI's string file. Modified by Ion Gaztañaga 2004-2006
+// This file comes from SGI's string file. Modified by Ion Gaztañaga 2004-2007
 // Renaming, isolating and porting to generic algorithms. Pointer typedef 
 // set to allocator::pointer to allow placing it in shared memory.
 //
 ///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 1994
+// Hewlett-Packard Company
+// 
+// Permission to use, copy, modify, distribute and sell this software
+// and its documentation for any purpose is hereby granted without fee,
+// provided that the above copyright notice appear in all copies and
+// that both that copyright notice and this permission notice appear
+// in supporting documentation.  Hewlett-Packard Company makes no
+// representations about the suitability of this software for any
+// purpose.  It is provided "as is" without express or implied warranty.
 
 #ifndef BOOST_INTERPROCESS_STRING_HPP
 #define BOOST_INTERPROCESS_STRING_HPP
@@ -56,24 +54,13 @@
 #include <boost/type_traits/type_with_alignment.hpp>
 #include <boost/type_traits/alignment_of.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
+#include <boost/type_traits/has_trivial_destructor.hpp>
 
-// Standard C++ string class.  This class has performance
-// characteristics very much like vector<>, meaning, for example, that
-// it does not perform reference-count or copy-on-write, and that
-// concatenation of two strings is an O(N) operation. 
+namespace boost {
+namespace interprocess {
+namespace detail {
 
-// There are three reasons why basic_string is not identical to
-// vector.  First, basic_string always stores a null character at the
-// end; this makes it possible for c_str to be a fast operation.
-// Second, the C++ standard requires basic_string to copy elements
-// using char_traits<>::assign, char_traits<>::copy, and
-// char_traits<>::move.  This means that all of vector<>'s low-level
-// operations must be rewritten.  Third, basic_string<> has a lot of
-// extra functions in its interface that are convenient but, strictly
-// speaking, redundant.
-
-namespace boost { namespace interprocess {
-
+/// @cond
 // ------------------------------------------------------------
 // Class basic_string_base.  
 
@@ -85,7 +72,8 @@ namespace boost { namespace interprocess {
 // or else points to a block of memory that was allocated using _String_base's 
 // allocator and whose size is this->m_storage.
 template <class A>
-class basic_string_base : private A
+class basic_string_base
+   : private A
 {
    basic_string_base();
  public:
@@ -128,8 +116,8 @@ class basic_string_base : private A
    struct long_t
    {
       size_type      is_short  : 1;
-	   size_type      length    : (sizeof(size_type)*CHAR_BIT - 1);
-	   size_type      storage;
+      size_type      length    : (sizeof(size_type)*CHAR_BIT - 1);
+      size_type      storage;
       pointer        start;
 
       long_t()
@@ -391,29 +379,46 @@ class basic_string_base : private A
       }
    }
 };
+/// @endcond
 
-// ------------------------------------------------------------
-// Class basic_string.  
-
-// Class invariants:
-// (1) [start, finish) is a valid range.
-// (2) Each iterator in [start, finish) points to a valid object
-//     of type value_type.
-// (3) *finish is a valid object of type value_type; in particular,
-//     it is value_type().
-// (4) [finish + 1, end_of_storage) is a valid range.
-// (5) Each iterator in [finish + 1, end_of_storage) points to 
-//     uninitialized memory.
-
-// Note one important consequence: a string of length n must manage
-// a block of memory whose size is at least n + 1.  
+}  //namespace detail {
 
 
+//! The basic_string class represents a Sequence of characters. It contains all the 
+//! usual operations of a Sequence, and, additionally, it contains standard string 
+//! operations such as search and concatenation.
+//!
+//! The basic_string class is parameterized by character type, and by that type's 
+//! Character Traits.
+//! 
+//! This class has performance characteristics very much like vector<>, meaning, 
+//! for example, that it does not perform reference-count or copy-on-write, and that
+//! concatenation of two strings is an O(N) operation. 
+//! 
+//! Some of basic_string's member functions use an unusual method of specifying positions 
+//! and ranges. In addition to the conventional method using iterators, many of 
+//! basic_string's member functions use a single value pos of type size_type to represent a 
+//! position (in which case the position is begin() + pos, and many of basic_string's 
+//! member functions use two values, pos and n, to represent a range. In that case pos is 
+//! the beginning of the range and n is its size. That is, the range is 
+//! [begin() + pos, begin() + pos + n). 
+//! 
+//! Note that the C++ standard does not specify the complexity of basic_string operations. 
+//! In this implementation, basic_string has performance characteristics very similar to 
+//! those of vector: access to a single character is O(1), while copy and concatenation 
+//! are O(N).
+//! 
+//! In this implementation, begin(), 
+//! end(), rbegin(), rend(), operator[], c_str(), and data() do not invalidate iterators.
+//! In this implementation, iterators are only invalidated by member functions that
+//! explicitly change the string's contents. 
 template <class CharT, class Traits, class A> 
-class basic_string : private basic_string_base<A> 
+class basic_string
+   :  private detail::basic_string_base<A> 
 {
+   /// @cond
    private:
-   typedef basic_string_base<A> base_t;
+   typedef detail::basic_string_base<A> base_t;
    enum {   InternalBufferChars = base_t::InternalBufferChars   };
 
    protected:
@@ -447,33 +452,44 @@ class basic_string : private basic_string_base<A>
                         std::bind1st(Eq_traits<Tr>(), x)) == m_last;
       }
    };
+   /// @endcond
 
- public:
-   typedef A                                   allocator_type;
+   public:
+   //! The allocator type
+   typedef A                                       allocator_type;
+   //! The type of object, CharT, stored in the string
    typedef CharT                                   value_type;
+   //! The second template parameter Traits
    typedef Traits                                  traits_type;
-   typedef typename A::pointer                 pointer;
-   typedef typename A::const_pointer           const_pointer;
-   typedef typename A::reference               reference;
-   typedef typename A::const_reference         const_reference;
-   typedef typename A::size_type               size_type;
-   typedef typename A::difference_type         difference_type;
-   typedef const_pointer                           const_iterator;
+   //! Pointer to CharT
+   typedef typename A::pointer                     pointer;
+   //! Const pointer to CharT 
+   typedef typename A::const_pointer               const_pointer;
+   //! Reference to CharT 
+   typedef typename A::reference                   reference;
+   //! Const reference to CharT 
+   typedef typename A::const_reference             const_reference;
+   //! An unsigned integral type
+   typedef typename A::size_type                   size_type;
+   //! A signed integral type
+   typedef typename A::difference_type             difference_type;
+   //! Iterator used to iterate through a string. It's a Random Access Iterator
    typedef pointer                                 iterator;
-	typedef boost::reverse_iterator<iterator>       reverse_iterator;
-	typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
+   //! Const iterator used to iterate through a string. It's a Random Access Iterator
+   typedef const_pointer                           const_iterator;
+   //! Iterator used to iterate backwards through a string
+   typedef boost::reverse_iterator<iterator>       reverse_iterator;
+   //! Const iterator used to iterate backwards through a string
+   typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
+   //! The largest possible value of type size_type. That is, size_type(-1). 
    static const size_type npos;
 
+   /// @cond
    private:
    typedef constant_iterator<CharT, difference_type> cvalue_iterator;
+   /// @endcond
 
    public:                         // Constructor, destructor, assignment.
-   allocator_type get_allocator() const 
-      { return base_t::get_allocator(); }
-
-   explicit basic_string(const allocator_type& a = allocator_type())
-      : base_t(a, InternalBufferChars)
-   { this->priv_terminate_string(); }
 
    struct reserve_t {};
 
@@ -482,14 +498,33 @@ class basic_string : private basic_string_base<A>
       : base_t(a, n + 1)
    { this->priv_terminate_string(); }
 
+   //! <b>Effects</b>: Constructs a basic_string taking the allocator as parameter.
+   //! 
+   //! <b>Throws</b>: If allocator_type's copy constructor throws.
+   explicit basic_string(const allocator_type& a = allocator_type())
+      : base_t(a, InternalBufferChars)
+   { this->priv_terminate_string(); }
+
+   //! <b>Effects</b>: Copy constructs a basic_string.
+   //!
+   //! <b>Postcondition</b>: x == *this.
+   //! 
+   //! <b>Throws</b>: If allocator_type's default constructor or copy constructor throws.
    basic_string(const basic_string& s) 
       : base_t(s.get_allocator()) 
    { this->priv_range_initialize(s.begin(), s.end()); }
 
+   //! <b>Effects</b>: Move constructor. Moves mx's resources to *this.
+   //!
+   //! <b>Throws</b>: If allocator_type's copy constructor throws.
+   //! 
+   //! <b>Complexity</b>: Constant.
    basic_string(const detail::moved_object<basic_string>& s) 
       : base_t(move((base_t&)s.get()))
    {}
 
+   //! <b>Effects</b>: Constructs a basic_string taking the allocator as parameter,
+   //!   and is initialized by a specific number of characters of the s string. 
    basic_string(const basic_string& s, size_type pos, size_type n = npos,
                const allocator_type& a = allocator_type()) 
       : base_t(a) 
@@ -501,16 +536,22 @@ class basic_string : private basic_string_base<A>
             (s.begin() + pos, s.begin() + pos + min_value(n, s.size() - pos));
    }
 
+   //! <b>Effects</b>: Constructs a basic_string taking the allocator as parameter,
+   //!   and is initialized by a specific number of characters of the s c-string.
    basic_string(const CharT* s, size_type n,
                const allocator_type& a = allocator_type()) 
       : base_t(a) 
    { this->priv_range_initialize(s, s + n); }
 
+   //! <b>Effects</b>: Constructs a basic_string taking the allocator as parameter,
+   //!   and is initialized by the null-terminated s c-string.
    basic_string(const CharT* s,
                 const allocator_type& a = allocator_type())
       : base_t(a) 
    { this->priv_range_initialize(s, s + Traits::length(s)); }
 
+   //! <b>Effects</b>: Constructs a basic_string taking the allocator as parameter,
+   //!   and is initialized by n copies of c.
    basic_string(size_type n, CharT c,
                 const allocator_type& a = allocator_type())
       : base_t(a)
@@ -519,8 +560,8 @@ class basic_string : private basic_string_base<A>
                                   cvalue_iterator());
    }
 
-   // Check to see if InputIterator is an integer type.  If so, then
-   // it can't be an iterator.
+   //! <b>Effects</b>: Constructs a basic_string taking the allocator as parameter,
+   //!   and a range of iterators.
    template <class InputIterator>
    basic_string(InputIterator f, InputIterator l,
                const allocator_type& a = allocator_type())
@@ -532,9 +573,19 @@ class basic_string : private basic_string_base<A>
       this->priv_initialize_dispatch(f, l, Result());
    }
 
+   //! <b>Effects</b>: Destroys the basic_string. All used memory is deallocated.
+   //!
+   //! <b>Throws</b>: Nothing.
+   //!
+   //! <b>Complexity</b>: Constant.
    ~basic_string() 
    {}
       
+   //! <b>Effects</b>: Copy constructs a string.
+   //!
+   //! <b>Postcondition</b>: x == *this.
+   //! 
+   //! <b>Complexity</b>: Linear to the elements x contains.
    basic_string& operator=(const basic_string& s)
    {
       if (&s != this) 
@@ -542,6 +593,11 @@ class basic_string : private basic_string_base<A>
       return *this;
    }
 
+   //! <b>Effects</b>: Move constructor. Moves mx's resources to *this.
+   //!
+   //! <b>Throws</b>: If allocator_type's copy constructor throws.
+   //! 
+   //! <b>Complexity</b>: Constant.
    basic_string& operator=(const detail::moved_object<basic_string>& ms)
    {
       basic_string &s = ms.get();
@@ -551,21 +607,941 @@ class basic_string : private basic_string_base<A>
       return *this;
    }
 
+   //! <b>Effects</b>: Assignment from a null-terminated c-string.
    basic_string& operator=(const CharT* s) 
    { return this->assign(s, s + Traits::length(s)); }
 
+   //! <b>Effects</b>: Assignment from character.
    basic_string& operator=(CharT c)
    { return this->assign(static_cast<size_type>(1), c); }
 
- private:                         // Helper functions used by constructors
-                                 // and elsewhere.
+   //! <b>Effects</b>: Returns an iterator to the first element contained in the vector.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   iterator begin()
+   { return this->priv_addr(); }
+
+   //! <b>Effects</b>: Returns a const_iterator to the first element contained in the vector.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_iterator begin() const
+   { return this->priv_addr(); }
+
+   //! <b>Effects</b>: Returns an iterator to the end of the vector.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   iterator end()
+   { return this->priv_addr() + this->priv_size(); }
+
+   //! <b>Effects</b>: Returns a const_iterator to the end of the vector.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_iterator end() const 
+   { return this->priv_addr() + this->priv_size(); }  
+
+   //! <b>Effects</b>: Returns a reverse_iterator pointing to the beginning 
+   //! of the reversed vector. 
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   reverse_iterator rbegin()             
+   { return reverse_iterator(this->priv_addr() + this->priv_size()); }
+
+   //! <b>Effects</b>: Returns a const_reverse_iterator pointing to the beginning 
+   //! of the reversed vector. 
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_reverse_iterator rbegin() const 
+   { return const_reverse_iterator(this->priv_addr() + this->priv_size()); }
+
+   //! <b>Effects</b>: Returns a reverse_iterator pointing to the end
+   //! of the reversed vector. 
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   reverse_iterator rend()               
+   { return reverse_iterator(this->priv_addr()); }
+
+   //! <b>Effects</b>: Returns a const_reverse_iterator pointing to the end
+   //! of the reversed vector. 
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_reverse_iterator rend()   const 
+   { return const_reverse_iterator(this->priv_addr()); }
+
+   //! <b>Effects</b>: Returns a copy of the internal allocator.
+   //! 
+   //! <b>Throws</b>: If allocator's copy constructor throws.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   allocator_type get_allocator() const 
+   { return base_t::get_allocator(); }
+
+   //! <b>Effects</b>: Returns the number of the elements contained in the vector.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   size_type size() const    
+   { return this->priv_size(); }
+
+   //! <b>Effects</b>: Returns the number of the elements contained in the vector.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   size_type length() const
+   { return this->size(); }
+
+   //! <b>Effects</b>: Returns the largest possible size of the vector.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   size_type max_size() const
+   { return base_t::max_size(); }
+
+   //! <b>Effects</b>: Inserts or erases elements at the end such that
+   //!   the size becomes n. New elements are copy constructed from x.
+   //!
+   //! <b>Throws</b>: If memory allocation throws, or T's copy constructor throws.
+   //!
+   //! <b>Complexity</b>: Linear to the difference between size() and new_size.
+   void resize(size_type n, CharT c)
+   {
+      if (n <= size())
+         this->erase(this->begin() + n, this->end());
+      else
+         this->append(n - this->size(), c);
+   }
+
+   //! <b>Effects</b>: Inserts or erases elements at the end such that
+   //!   the size becomes n. New elements are default constructed.
+   //!
+   //! <b>Throws</b>: If memory allocation throws, or T's copy constructor throws.
+   //!
+   //! <b>Complexity</b>: Linear to the difference between size() and new_size.
+   void resize(size_type n)
+   { resize(n, this->priv_null()); }
+
+   //! <b>Effects</b>: If n is less than or equal to capacity(), this call has no
+   //!   effect. Otherwise, it is a request for allocation of additional memory.
+   //!   If the request is successful, then capacity() is greater than or equal to
+   //!   n; otherwise, capacity() is unchanged. In either case, size() is unchanged.
+   //! 
+   //! <b>Throws</b>: If memory allocation allocation throws or T's copy constructor throws.
+   void reserve(size_type res_arg)
+   {
+      if (res_arg > this->max_size())
+         this->throw_length_error();
+
+      if (this->capacity() < res_arg){
+         size_type n = max_value(res_arg, this->size()) + 1;
+         size_type new_cap = this->next_capacity(n);
+         pointer new_start = this->allocation_command
+            (allocate_new, n, new_cap, new_cap).first;
+         size_type new_length = 0;
+
+         new_length += priv_uninitialized_copy
+            (this->priv_addr(), this->priv_addr() + this->priv_size(), new_start, this->get_alloc());
+         this->priv_construct_null(new_start + new_length);
+         this->deallocate_block();
+         this->is_short(false);
+         this->priv_addr(new_start);
+         this->priv_size(new_length);
+         this->priv_storage(new_cap);
+      }
+   }
+
+   //! <b>Effects</b>: Number of elements for which memory has been allocated.
+   //!   capacity() is always greater than or equal to size().
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   size_type capacity() const
+   { return this->priv_capacity(); }
+
+   //! <b>Effects</b>: Erases all the elements of the vector.
+   //!
+   //! <b>Throws</b>: Nothing.
+   //!
+   //! <b>Complexity</b>: Linear to the number of elements in the vector.
+   void clear()
+   {
+      if (!empty()) {
+         Traits::assign(*this->priv_addr(), this->priv_null());
+         this->priv_size(0);
+      }
+   } 
+
+   //! <b>Effects</b>: Returns true if the vector contains no elements.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   bool empty() const
+   { return !this->priv_size(); }
+
+   //! <b>Requires</b>: size() < n.
+   //!
+   //! <b>Effects</b>: Returns a reference to the nth element 
+   //!   from the beginning of the container.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   reference operator[](size_type n)
+      { return *(this->priv_addr() + n); }
+
+   //! <b>Requires</b>: size() < n.
+   //!
+   //! <b>Effects</b>: Returns a const reference to the nth element 
+   //!   from the beginning of the container.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_reference operator[](size_type n) const
+      { return *(this->priv_addr() + n); }
+
+   //! <b>Requires</b>: size() < n.
+   //!
+   //! <b>Effects</b>: Returns a reference to the nth element 
+   //!   from the beginning of the container.
+   //! 
+   //! <b>Throws</b>: std::range_error if n >= size()
+   //! 
+   //! <b>Complexity</b>: Constant.
+   reference at(size_type n) {
+      if (n >= size())
+      this->throw_out_of_range();
+      return *(this->priv_addr() + n);
+   }
+
+   //! <b>Requires</b>: size() < n.
+   //!
+   //! <b>Effects</b>: Returns a const reference to the nth element 
+   //!   from the beginning of the container.
+   //! 
+   //! <b>Throws</b>: std::range_error if n >= size()
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_reference at(size_type n) const {
+      if (n >= size())
+         this->throw_out_of_range();
+      return *(this->priv_addr() + n);
+   }
+
+   //! <b>Effects</b>: Appends string s to *this.
+   basic_string& operator+=(const basic_string& s)
+   {  return this->append(s); }
+
+   //! <b>Effects</b>: Appends c-string s to *this.
+   basic_string& operator+=(const CharT* s)
+   {  return this->append(s); }
+
+   //! <b>Effects</b>: Appends character c to *this.
+   basic_string& operator+=(CharT c)
+   {  this->push_back(c); return *this;   }
+
+   //! <b>Effects</b>: Appends string s to *this.
+   basic_string& append(const basic_string& s) 
+   {  return this->append(s.begin(), s.end());  }
+
+   //! <b>Effects</b>: Appends the range [pos, pos + n) from string s to *this.
+   basic_string& append(const basic_string& s, size_type pos, size_type n)
+   {
+      if (pos > s.size())
+      this->throw_out_of_range();
+      return this->append(s.begin() + pos,
+                          s.begin() + pos + min_value(n, s.size() - pos));
+   }
+
+   //! <b>Effects</b>: Appends the range [s, s + n) from c-string s to *this.
+   basic_string& append(const CharT* s, size_type n) 
+   {  return this->append(s, s + n);  }
+
+   //! <b>Effects</b>: Appends the c-string s to *this.
+   basic_string& append(const CharT* s) 
+   {  return this->append(s, s + Traits::length(s));  }
+
+   //! <b>Effects</b>: Appends the n times the character c to *this.
+   basic_string& append(size_type n, CharT c)
+   {  return this->append(cvalue_iterator(c, n), cvalue_iterator()); }
+
+   //! <b>Effects</b>: Appends the range [first, last) *this.
+   template <class InputIter>
+   basic_string& append(InputIter first, InputIter last)
+   {  this->insert(this->end(), first, last);   return *this;  }
+
+   //! <b>Effects</b>: Inserts a copy of c at the end of the vector.
+   void push_back(CharT c)
+   {
+      if (this->priv_size() < this->capacity()){
+         this->priv_construct_null(this->priv_addr() + (this->priv_size() + 1));
+         Traits::assign(this->priv_addr()[this->priv_size()], c);
+         this->priv_size(this->priv_size()+1);
+      }
+      else{
+         //No enough memory, insert a new object at the end
+         this->append((size_type)1, c);
+      }
+   }
+
+   //! <b>Effects</b>: Removes the last element from the vector.
+   void pop_back()
+   {
+      Traits::assign(this->priv_addr()[this->priv_size()-1], this->priv_null());
+      this->priv_size(this->priv_size()-1);;
+   }
+
+   //! <b>Effects</b>: Assigns the value s to *this.
+   basic_string& assign(const basic_string& s) 
+   {  return this->operator=(s); }
+
+   //! <b>Effects</b>: Moves the resources from ms *this.
+   basic_string& assign(const detail::moved_object<basic_string>& ms) 
+   {  return this->operator=(ms);}
+
+   //! <b>Effects</b>: Assigns the range [pos, pos + n) from s to *this.
+   basic_string& assign(const basic_string& s, 
+                        size_type pos, size_type n) {
+      if (pos > s.size())
+      this->throw_out_of_range();
+      return this->assign(s.begin() + pos, 
+                          s.begin() + pos + min_value(n, s.size() - pos));
+   }
+
+   //! <b>Effects</b>: Assigns the range [s, s + n) from s to *this.
+   basic_string& assign(const CharT* s, size_type n)
+   {  return this->assign(s, s + n);   }
+
+   //! <b>Effects</b>: Assigns the c-string s to *this.
+   basic_string& assign(const CharT* s)
+   { return this->assign(s, s + Traits::length(s)); }
+
+   //! <b>Effects</b>: Assigns the character c n-times to *this.
+   basic_string& assign(size_type n, CharT c)
+   {  return this->assign(cvalue_iterator(c, n), cvalue_iterator()); }
+
+   //! <b>Effects</b>: Assigns the range [first, last) to *this.
+   template <class InputIter>
+   basic_string& assign(InputIter first, InputIter last) 
+   {
+      //Dispatch depending on integer/iterator
+      const bool aux_boolean = boost::is_integral<InputIter>::value;
+      typedef boost::mpl::bool_<aux_boolean> Result;
+      return this->priv_assign_dispatch(first, last, Result());
+   }
+
+   //! <b>Effects</b>: Assigns the range [f, l) to *this.
+   basic_string& assign(const CharT* f, const CharT* l)
+   {
+      const std::ptrdiff_t n = l - f;
+      if (static_cast<size_type>(n) <= size()) {
+         Traits::copy(detail::get_pointer(this->priv_addr()), f, n);
+         this->erase(this->priv_addr() + n, this->priv_addr() + this->priv_size());
+      }
+      else {
+         Traits::copy(detail::get_pointer(this->priv_addr()), f, this->priv_size());
+         this->append(f + this->priv_size(), l);
+      }
+      return *this;
+   }
+
+   //! <b>Effects</b>: Inserts the string s before pos.
+   basic_string& insert(size_type pos, const basic_string& s) 
+   {
+      if (pos > size())
+         this->throw_out_of_range();
+      if (this->size() > this->max_size() - s.size())
+         this->throw_length_error();
+      this->insert(this->priv_addr() + pos, s.begin(), s.end());
+      return *this;
+   }
+
+   //! <b>Effects</b>: Inserts the range [pos, pos + n) from string s before pos.
+   basic_string& insert(size_type pos, const basic_string& s,
+                        size_type beg, size_type n) 
+   {
+      if (pos > this->size() || beg > s.size())
+         this->throw_out_of_range();
+      size_type len = min_value(n, s.size() - beg);
+      if (this->size() > this->max_size() - len)
+         this->throw_length_error();
+      const CharT *beg_ptr = detail::get_pointer(s.begin()) + beg;
+      const CharT *end_ptr = beg_ptr + len;
+      this->insert(this->priv_addr() + pos, beg_ptr, end_ptr);
+      return *this;
+   }
+
+   //! <b>Effects</b>: Inserts the range [s, s + n) before pos.
+   basic_string& insert(size_type pos, const CharT* s, size_type n) 
+   {
+      if (pos > this->size())
+         this->throw_out_of_range();
+      if (this->size() > this->max_size() - n)
+         this->throw_length_error();
+      this->insert(this->priv_addr() + pos, s, s + n);
+      return *this;
+   }
+
+   //! <b>Effects</b>: Inserts the c-string s before pos.
+   basic_string& insert(size_type pos, const CharT* s) 
+   {
+      if (pos > size())
+         this->throw_out_of_range();
+      size_type len = Traits::length(s);
+      if (this->size() > this->max_size() - len)
+         this->throw_length_error();
+      this->insert(this->priv_addr() + pos, s, s + len);
+      return *this;
+   }
+
+   //! <b>Effects</b>: Inserts the character c n-times before pos.
+   basic_string& insert(size_type pos, size_type n, CharT c) 
+   {
+      if (pos > this->size())
+         this->throw_out_of_range();
+      if (this->size() > this->max_size() - n)
+         this->throw_length_error();
+      this->insert(this->priv_addr() + pos, n, c);
+      return *this;
+   }
+
+   //! <b>Effects</b>: Inserts the character c before position.
+   iterator insert(iterator position, CharT c) 
+   {
+      size_type new_offset = position - this->priv_addr() + 1;
+      this->insert(position, cvalue_iterator(c, 1),
+                             cvalue_iterator());
+      return this->priv_addr() + new_offset;
+   }
+
+   //! <b>Effects</b>: Inserts the character c n-times before position.
+   void insert(iterator position, std::size_t n, CharT c)
+   {
+      this->insert(position, cvalue_iterator(c, n),
+                             cvalue_iterator());
+   }
+
+   //! <b>Effects</b>: Inserts the range [first, last) before position.
+   template <class InputIter>
+   void insert(iterator p, InputIter first, InputIter last) 
+   {
+      //Dispatch depending on integer/iterator
+      const bool aux_boolean = boost::is_integral<InputIter>::value;
+      typedef boost::mpl::bool_<aux_boolean> Result;
+      this->priv_insert_dispatch(p, first, last, Result());
+   }
+
+   //! <b>Effects</b>: Inserts the range [pos, pos + n).
+   basic_string& erase(size_type pos = 0, size_type n = npos) 
+   {
+      if (pos > size())
+         this->throw_out_of_range();
+      erase(this->priv_addr() + pos, this->priv_addr() + pos + min_value(n, size() - pos));
+      return *this;
+   }  
+
+   //! <b>Effects</b>: Erases the character pointed by position.
+   iterator erase(iterator position) 
+   {
+      // The move includes the terminating null.
+      Traits::move(detail::get_pointer(position), 
+                   detail::get_pointer(position + 1), 
+                   this->priv_size() - (position - this->priv_addr()));
+      this->priv_size(this->priv_size()-1);
+      return position;
+   }
+
+   //! <b>Effects</b>: Erases the range [first, last).
+   iterator erase(iterator first, iterator last)
+   {
+      if (first != last) { // The move includes the terminating null.
+         size_type num_erased = last - first;
+         Traits::move(detail::get_pointer(first), 
+                      detail::get_pointer(last), 
+                      (this->priv_size() + 1)-(last - this->priv_addr()));
+         size_type new_length = this->priv_size() - num_erased;
+         this->priv_size(new_length);
+      }
+      return first;
+   }
+
+   //! <b>Effects</b>: Replaces a substring of *this with the string s.
+   basic_string& replace(size_type pos, size_type n, 
+                         const basic_string& s) 
+   {
+      if (pos > size())
+         this->throw_out_of_range();
+      const size_type len = min_value(n, size() - pos);
+      if (this->size() - len >= this->max_size() - s.size())
+         this->throw_length_error();
+      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len, 
+                           s.begin(), s.end());
+   }
+
+   //! <b>Effects</b>: Replaces a substring of *this with a substring of s.
+   basic_string& replace(size_type pos1, size_type n1,
+                         const basic_string& s,
+                         size_type pos2, size_type n2) 
+   {
+      if (pos1 > size() || pos2 > s.size())
+         this->throw_out_of_range();
+      const size_type len1 = min_value(n1, size() - pos1);
+      const size_type len2 = min_value(n2, s.size() - pos2);
+      if (this->size() - len1 >= this->max_size() - len2)
+         this->throw_length_error();
+      return this->replace(this->priv_addr() + pos1, this->priv_addr() + pos1 + len1,
+                     s.priv_addr() + pos2, s.priv_addr() + pos2 + len2);
+   }
+
+   //! <b>Effects</b>: Replaces a substring of *this with the first n1 characters of s.
+   basic_string& replace(size_type pos, size_type n1,
+                        const CharT* s, size_type n2) 
+   {
+      if (pos > size())
+         this->throw_out_of_range();
+      const size_type len = min_value(n1, size() - pos);
+      if (n2 > this->max_size() || size() - len >= this->max_size() - n2)
+         this->throw_length_error();
+      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len,
+                     s, s + n2);
+   }
+
+   //! <b>Effects</b>: Replaces a substring of *this with a null-terminated character array.
+   basic_string& replace(size_type pos, size_type n1,
+                        const CharT* s) 
+   {
+      if (pos > size())
+         this->throw_out_of_range();
+      const size_type len = min_value(n1, size() - pos);
+      const size_type n2 = Traits::length(s);
+      if (n2 > this->max_size() || size() - len >= this->max_size() - n2)
+         this->throw_length_error();
+      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len,
+                     s, s + Traits::length(s));
+   }
+
+   //! <b>Effects</b>: Replaces a substring of *this with n1 copies of c.
+   basic_string& replace(size_type pos, size_type n1,
+                        size_type n2, CharT c) 
+   {
+      if (pos > size())
+         this->throw_out_of_range();
+      const size_type len = min_value(n1, size() - pos);
+      if (n2 > this->max_size() || size() - len >= this->max_size() - n2)
+         this->throw_length_error();
+      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len, n2, c);
+   }
+
+   //! <b>Effects</b>: Replaces a substring of *this with the string s. 
+   basic_string& replace(iterator first, iterator last, 
+                        const basic_string& s) 
+   { return this->replace(first, last, s.begin(), s.end()); }
+
+   //! <b>Effects</b>: Replaces a substring of *this with the first n characters of s.
+   basic_string& replace(iterator first, iterator last,
+                        const CharT* s, size_type n) 
+   { return this->replace(first, last, s, s + n); }
+
+   //! <b>Effects</b>: Replaces a substring of *this with a null-terminated character array.
+   basic_string& replace(iterator first, iterator last,
+                        const CharT* s) 
+   {  return this->replace(first, last, s, s + Traits::length(s));   }
+
+   //! <b>Effects</b>: Replaces a substring of *this with n copies of c. 
+   basic_string& replace(iterator first, iterator last, 
+                         size_type n, CharT c)
+   {
+      const size_type len = static_cast<size_type>(last - first);
+      if (len >= n) {
+         Traits::assign(detail::get_pointer(first), n, c);
+         erase(first + n, last);
+      }
+      else {
+         Traits::assign(detail::get_pointer(first), len, c);
+         insert(last, n - len, c);
+      }
+      return *this;
+   }
+
+   //! <b>Effects</b>: Replaces a substring of *this with the range [f, l)
+   template <class InputIter>
+   basic_string& replace(iterator first, iterator last,
+                        InputIter f, InputIter l) 
+   {
+      //Dispatch depending on integer/iterator
+      const bool aux_boolean = boost::is_integral<iterator>::value;
+      typedef boost::mpl::bool_<aux_boolean> Result;
+      return this->priv_replace_dispatch(first, last, f, l,  Result());
+   }
+
+   //! <b>Effects</b>: Copies a substring of *this to a buffer.
+   size_type copy(CharT* s, size_type n, size_type pos = 0) const 
+   {
+      if (pos > size())
+         this->throw_out_of_range();
+      const size_type len = min_value(n, size() - pos);
+      Traits::copy(s, detail::get_pointer(this->priv_addr() + pos), len);
+      return len;
+   }
+
+   //! <b>Effects</b>: Swaps the contents of two strings. 
+   void swap(basic_string& s) 
+   {  base_t::swap(s);  }
+
+   //! <b>Effects</b>: Swaps the contents of two strings. 
+   void swap(const detail::moved_object<basic_string>& ms) 
+   {  this->swap(ms.get());  }
+
+   //! <b>Returns</b>: Returns a pointer to a null-terminated array of characters 
+   //!   representing the string's contents. For any string s it is guaranteed 
+   //!   that the first s.size() characters in the array pointed to by s.c_str() 
+   //!   are equal to the character in s, and that s.c_str()[s.size()] is a null 
+   //!   character. Note, however, that it not necessarily the first null character. 
+   //!   Characters within a string are permitted to be null. 
+   const CharT* c_str() const 
+   {  return detail::get_pointer(this->priv_addr()); }
+
+   //! <b>Returns</b>: Returns a pointer to an array of characters, not necessarily
+   //!   null-terminated, representing the string's contents. data() is permitted,
+   //!   but not required, to be identical to c_str(). The first size() characters
+   //!   of that array are guaranteed to be identical to the characters in *this.
+   //!   The return value of data() is never a null pointer, even if size() is zero.
+   const CharT* data()  const 
+   {  return detail::get_pointer(this->priv_addr()); }
+
+   //! <b>Effects</b>: Searches for s as a substring of *this, beginning at 
+   //!   character pos of *this.
+   size_type find(const basic_string& s, size_type pos = 0) const 
+   { return find(s.c_str(), pos, s.size()); }
+
+   //! <b>Effects</b>: Searches for a null-terminated character array as a
+   //!   substring of *this, beginning at character pos of *this.
+   size_type find(const CharT* s, size_type pos = 0) const 
+   { return find(s, pos, Traits::length(s)); }
+
+   //! <b>Effects</b>: Searches for the first n characters of s as a substring
+   //!   of *this, beginning at character pos of *this.
+   size_type find(const CharT* s, size_type pos, size_type n) const
+   {
+      if (pos + n > size())
+         return npos;
+      else {
+         pointer finish = this->priv_addr() + this->priv_size();
+         const const_iterator result =
+            std::search(detail::get_pointer(this->priv_addr() + pos), 
+                   detail::get_pointer(finish),
+                   s, s + n, Eq_traits<Traits>());
+         return result != finish ? result - begin() : npos;
+      }
+   }
+
+   //! <b>Effects</b>: Searches for the character c, beginning at character
+   //!   position pos. 
+   size_type find(CharT c, size_type pos = 0) const
+   {
+      if (pos >= size())
+         return npos;
+      else {
+         pointer finish = this->priv_addr() + this->priv_size();
+         const const_iterator result =
+            std::find_if(this->priv_addr() + pos, finish,
+                  std::bind2nd(Eq_traits<Traits>(), c));
+         return result != finish ? result - begin() : npos;
+      }
+   }
+
+   //! <b>Effects</b>: Searches backward for s as a substring of *this,
+   //!   beginning at character position min(pos, size())
+   size_type rfind(const basic_string& s, size_type pos = npos) const 
+      { return rfind(s.c_str(), pos, s.size()); }
+
+   //! <b>Effects</b>: Searches backward for a null-terminated character array
+   //!   as a substring of *this, beginning at character min(pos, size())
+   size_type rfind(const CharT* s, size_type pos = npos) const 
+      { return rfind(s, pos, Traits::length(s)); }
+
+   //! <b>Effects</b>: Searches backward for the first n characters of s as a
+   //!   substring of *this, beginning at character position min(pos, size()).
+   size_type rfind(const CharT* s, size_type pos, size_type n) const
+   {
+      const std::size_t len = size();
+
+      if (n > len)
+         return npos;
+      else if (n == 0)
+         return min_value(len, pos);
+      else {
+         const const_iterator last = begin() + min_value(len - n, pos) + n;
+         const const_iterator result = find_end(begin(), last,
+                                                s, s + n,
+                                                Eq_traits<Traits>());
+         return result != last ? result - begin() : npos;
+      }
+   }
+
+   //! <b>Effects</b>: Searches backward for a null-terminated character array
+   //!   as a substring of *this, beginning at character min(pos, size()).
+   size_type rfind(CharT c, size_type pos = npos) const
+   {
+      const size_type len = size();
+
+      if (len < 1)
+         return npos;
+      else {
+         const const_iterator last = begin() + min_value(len - 1, pos) + 1;
+         const_reverse_iterator rresult =
+            std::find_if(const_reverse_iterator(last), rend(),
+                  std::bind2nd(Eq_traits<Traits>(), c));
+         return rresult != rend() ? (rresult.base() - 1) - begin() : npos;
+      }
+   }
+
+   //! <b>Effects</b>: Searches within *this, beginning at pos, for the first
+   //!   character that is equal to any character within s. 
+   size_type find_first_of(const basic_string& s, size_type pos = 0) const 
+      { return find_first_of(s.c_str(), pos, s.size()); }
+
+   //! <b>Effects</b>: Searches within *this, beginning at pos, for the first
+   //!   character that is equal to any character within s. 
+   size_type find_first_of(const CharT* s, size_type pos = 0) const 
+      { return find_first_of(s, pos, Traits::length(s)); }
+
+   //! <b>Effects</b>: Searches within *this, beginning at pos, for the first
+   //!   character that is equal to any character within the first n characters of s. 
+   size_type find_first_of(const CharT* s, size_type pos, 
+                           size_type n) const
+   {
+      if (pos >= size())
+         return npos;
+      else {
+         pointer finish = this->priv_addr() + this->priv_size();
+         const_iterator result = std::find_first_of(this->priv_addr() + pos, finish,
+                                                    s, s + n,
+                                                    Eq_traits<Traits>());
+         return result != finish ? result - begin() : npos;
+      }
+   }
+
+   //! <b>Effects</b>: Searches within *this, beginning at pos, for the first
+   //!   character that is equal to c. 
+  size_type find_first_of(CharT c, size_type pos = 0) const 
+    { return find(c, pos); }
+
+   //! <b>Effects</b>: Searches backward within *this, beginning at min(pos, size()),
+   //!   for the first character that is equal to any character within s.
+   size_type find_last_of(const basic_string& s,
+                           size_type pos = npos) const
+      { return find_last_of(s.c_str(), pos, s.size()); }
+
+   //! <b>Effects</b>: Searches backward *this, beginning at min(pos, size()), for
+   //!   the first character that is equal to any character within s. 
+   size_type find_last_of(const CharT* s, size_type pos = npos) const 
+      { return find_last_of(s, pos, Traits::length(s)); }
+
+   //! <b>Effects</b>: Searches backward within *this, beginning at min(pos, size()),
+   //!   for the first character that is equal to any character within the first n
+   //!   characters of s. 
+   size_type find_last_of(const CharT* s, size_type pos, size_type n) const
+   {
+      const size_type len = size();
+
+      if (len < 1)
+         return npos;
+      else {
+         const const_iterator last = this->priv_addr() + min_value(len - 1, pos) + 1;
+         const const_reverse_iterator rresult =
+            std::find_first_of(const_reverse_iterator(last), rend(),
+                               s, s + n,
+                               Eq_traits<Traits>());
+         return rresult != rend() ? (rresult.base() - 1) - this->priv_addr() : npos;
+      }
+   }
+
+   //! <b>Effects</b>: Searches backward *this, beginning at min(pos, size()), for
+   //!   the first character that is equal to c. 
+   size_type find_last_of(CharT c, size_type pos = npos) const 
+      {  return rfind(c, pos);   }
+
+   //! <b>Effects</b>: Searches within *this, beginning at pos, for the first
+   //!   character that is not equal to any character within s. 
+   size_type find_first_not_of(const basic_string& s, 
+                              size_type pos = 0) const 
+      { return find_first_not_of(s.c_str(), pos, s.size()); }
+
+   //! <b>Effects</b>: Searches within *this, beginning at pos, for the first
+   //!   character that is not equal to any character within s. 
+   size_type find_first_not_of(const CharT* s, size_type pos = 0) const 
+      { return find_first_not_of(s, pos, Traits::length(s)); }
+
+   //! <b>Effects</b>: Searches within *this, beginning at pos, for the first
+   //!   character that is not equal to any character within the first n
+   //!   characters of s. 
+   size_type find_first_not_of(const CharT* s, size_type pos,
+                              size_type n) const
+   {
+      if (pos > size())
+         return npos;
+      else {
+         pointer finish = this->priv_addr() + this->priv_size();
+         const_iterator result = std::find_if(this->priv_addr() + pos, finish,
+                                    Not_within_traits<Traits>(s, s + n));
+         return result != finish ? result - this->priv_addr() : npos;
+      }
+   }
+
+   //! <b>Effects</b>: Searches within *this, beginning at pos, for the first
+   //!   character that is not equal to c.
+   size_type find_first_not_of(CharT c, size_type pos = 0) const
+   {
+      if (pos > size())
+         return npos;
+      else {
+         pointer finish = this->priv_addr() + this->priv_size();
+         const_iterator result
+            = std::find_if(this->priv_addr() + pos, finish,
+                     std::not1(std::bind2nd(Eq_traits<Traits>(), c)));
+         return result != finish ? result - begin() : npos;
+      }
+   }
+
+   //! <b>Effects</b>: Searches backward within *this, beginning at min(pos, size()),
+   //!   for the first character that is not equal to any character within s. 
+   size_type find_last_not_of(const basic_string& s, 
+                              size_type pos = npos) const
+      { return find_last_not_of(s.c_str(), pos, s.size()); }
+
+   //! <b>Effects</b>: Searches backward *this, beginning at min(pos, size()),
+   //!   for the first character that is not equal to any character within s. 
+   size_type find_last_not_of(const CharT* s, size_type pos = npos) const
+      { return find_last_not_of(s, pos, Traits::length(s)); }
+
+   //! <b>Effects</b>: Searches backward within *this, beginning at min(pos, size()),
+   //!   for the first character that is not equal to any character within the first
+   //!   n characters of s. 
+   size_type find_last_not_of(const CharT* s, size_type pos, size_type n) const
+   {
+      const size_type len = size();
+
+      if (len < 1)
+         return npos;
+      else {
+         const const_iterator last = begin() + min_value(len - 1, pos) + 1;
+         const const_reverse_iterator rresult =
+            std::find_if(const_reverse_iterator(last), rend(),
+                    Not_within_traits<Traits>(s, s + n));
+         return rresult != rend() ? (rresult.base() - 1) - begin() : npos;
+      }
+   }
+
+   //! <b>Effects</b>: Searches backward *this, beginning at min(pos, size()),
+   //!   for the first character that is not equal to c. 
+   size_type find_last_not_of(CharT c, size_type pos = npos) const
+   {
+      const size_type len = size();
+
+      if (len < 1)
+         return npos;
+      else {
+         const const_iterator last = begin() + min_value(len - 1, pos) + 1;
+         const_reverse_iterator rresult =
+            std::find_if(const_reverse_iterator(last), rend(),
+                  std::not1(std::bind2nd(Eq_traits<Traits>(), c)));
+         return rresult != rend() ? (rresult.base() - 1) - begin() : npos;
+      }
+   }
+
+   //! <b>Effects</b>: Returns a substring of *this.
+   basic_string substr(size_type pos = 0, size_type n = npos) const 
+   {
+      if (pos > size())
+         this->throw_out_of_range();
+      return basic_string(this->priv_addr() + pos, 
+                          this->priv_addr() + pos + min_value(n, size() - pos), this->get_alloc());
+   }
+
+   //! <b>Effects</b>: Three-way lexicographical comparison of s and *this.
+   int compare(const basic_string& s) const 
+   { return s_compare(this->priv_addr(), this->priv_addr() + this->priv_size(), s.priv_addr(), s.priv_addr() + s.priv_size()); }
+
+   //! <b>Effects</b>: Three-way lexicographical comparison of s and a substring
+   //!   of *this. 
+   int compare(size_type pos1, size_type n1, const basic_string& s) const 
+   {
+      if (pos1 > size())
+         this->throw_out_of_range();
+      return s_compare(this->priv_addr() + pos1, 
+                        this->priv_addr() + pos1 + min_value(n1, size() - pos1),
+                        s.priv_addr(), s.priv_addr() + s.priv_size());
+   }
+
+   //! <b>Effects</b>: Three-way lexicographical comparison of a substring of s
+   //!   and a substring of *this. 
+   int compare(size_type pos1, size_type n1,
+               const basic_string& s,
+               size_type pos2, size_type n2) const {
+      if (pos1 > size() || pos2 > s.size())
+      this->throw_out_of_range();
+      return s_compare(this->priv_addr() + pos1, 
+                        this->priv_addr() + pos1 + min_value(n1, size() - pos1),
+                        s.priv_addr() + pos2, 
+                        s.priv_addr() + pos2 + min_value(n2, size() - pos2));
+   }
+
+   //! <b>Effects</b>: Three-way lexicographical comparison of s and *this.
+   int compare(const CharT* s) const 
+   {  return s_compare(this->priv_addr(), this->priv_addr() + this->priv_size(), s, s + Traits::length(s));   }
+
+
+   //! <b>Effects</b>: Three-way lexicographical comparison of the first
+   //!   min(len, traits::length(s) characters of s and a substring of *this.
+   int compare(size_type pos1, size_type n1, const CharT* s,
+               size_type n2 = npos) const 
+   {
+      if (pos1 > size())
+         this->throw_out_of_range();
+      return s_compare(this->priv_addr() + pos1, 
+                        this->priv_addr() + pos1 + min_value(n1, size() - pos1),
+                        s, s + n2);
+   }
+
+   /// @cond
+   private:
+   static int s_compare(const_pointer f1, const_pointer l1,
+                        const_pointer f2, const_pointer l2) 
+   {
+      const std::ptrdiff_t n1 = l1 - f1;
+      const std::ptrdiff_t n2 = l2 - f2;
+      const int cmp = Traits::compare(detail::get_pointer(f1), 
+                                      detail::get_pointer(f2), 
+                                      min_value(n1, n2));
+      return cmp != 0 ? cmp : (n1 < n2 ? -1 : (n1 > n2 ? 1 : 0));
+   }
+
    void priv_construct_null(pointer p)
    {  this->construct(p, 0);  }
 
    static CharT priv_null()
    {  return (CharT) 0; }
 
- private:                        
    // Helper functions used by constructors.  It is a severe error for
    // any of them to be called anywhere except from within constructors.
    void priv_terminate_string() 
@@ -610,171 +1586,27 @@ class basic_string : private basic_string_base<A>
    template <class InputIter>
    void priv_initialize_dispatch(InputIter f, InputIter l, boost::mpl::false_)
    {  this->priv_range_initialize(f, l);  }
-    
-   public:                         // Iterators.
-   iterator begin()             { return this->priv_addr(); }
-   iterator end()               { return this->priv_addr() + this->priv_size(); }
-   const_iterator begin() const { return this->priv_addr(); }
-   const_iterator end()   const { return this->priv_addr() + this->priv_size(); }  
-
-   reverse_iterator rbegin()             
-      { return reverse_iterator(this->priv_addr() + this->priv_size()); }
-   reverse_iterator rend()               
-      { return reverse_iterator(this->priv_addr()); }
-   const_reverse_iterator rbegin() const 
-      { return const_reverse_iterator(this->priv_addr() + this->priv_size()); }
-   const_reverse_iterator rend()   const 
-      { return const_reverse_iterator(this->priv_addr()); }
-
- public:                         // Size, capacity, etc.
-   size_type size() const     { return this->priv_size(); }
-   size_type length() const   { return this->size(); }
-
-   size_type max_size() const { return base_t::max_size(); }
-
-   void resize(size_type n, CharT c)
-   {
-      if (n <= size())
-         this->erase(this->begin() + n, this->end());
-      else
-         this->append(n - this->size(), c);
-   }
-
-   void resize(size_type n) { resize(n, this->priv_null()); }
-
-   // Change the string's capacity so that it is large enough to hold
-   //  at least priv_res_arg elements, plus the terminating null.
-   void reserve(size_type res_arg)
-   {
-      if (res_arg > this->max_size())
-         this->throw_length_error();
-
-      if (this->capacity() < res_arg){
-         size_type n = max_value(res_arg, this->size()) + 1;
-         size_type new_cap = this->next_capacity(n);
-         pointer new_start = this->allocation_command
-            (allocate_new, n, new_cap, new_cap).first;
-         size_type new_length = 0;
-
-         new_length += priv_uninitialized_copy
-            (this->priv_addr(), this->priv_addr() + this->priv_size(), new_start, this->get_alloc());
-         this->priv_construct_null(new_start + new_length);
-         this->deallocate_block();
-         this->is_short(false);
-         this->priv_addr(new_start);
-         this->priv_size(new_length);
-         this->priv_storage(new_cap);
-      }
-   }
-
-   size_type capacity() const
-   { return this->priv_capacity(); }
-
-   void clear()
-   {
-      if (!empty()) {
-         Traits::assign(*this->priv_addr(), this->priv_null());
-         this->priv_size(0);
-      }
-   } 
-
-   bool empty() const { return !this->priv_size(); }
-
-   public:                         // Element access.
-
-   const_reference operator[](size_type n) const
-      { return *(this->priv_addr() + n); }
-   reference operator[](size_type n)
-      { return *(this->priv_addr() + n); }
-
-   const_reference at(size_type n) const {
-      if (n >= size())
-         this->throw_out_of_range();
-      return *(this->priv_addr() + n);
-   }
-
-   reference at(size_type n) {
-      if (n >= size())
-      this->throw_out_of_range();
-      return *(this->priv_addr() + n);
-   }
-
-   public:                         // Append, operator+=, push_back.
-
-   basic_string& operator+=(const basic_string& s)
-   {  return this->append(s); }
-
-   basic_string& operator+=(const CharT* s)
-   {  return this->append(s); }
-
-   basic_string& operator+=(CharT c)
-   {  this->push_back(c); return *this;   }
-
-   basic_string& append(const basic_string& s) 
-   {  return this->append(s.begin(), s.end());  }
-
-   basic_string& append(const basic_string& s, size_type pos, size_type n)
-   {
-      if (pos > s.size())
-      this->throw_out_of_range();
-      return this->append(s.begin() + pos,
-                          s.begin() + pos + min_value(n, s.size() - pos));
-   }
-
-   basic_string& append(const CharT* s, size_type n) 
-   {  return this->append(s, s + n);  }
-
-   basic_string& append(const CharT* s) 
-   {  return this->append(s, s + Traits::length(s));  }
-
-   basic_string& append(size_type n, CharT c)
-   {  return this->append(cvalue_iterator(c, n), cvalue_iterator()); }
-
-   template <class InputIter>
-   basic_string& append(InputIter first, InputIter last)
-   {  this->insert(this->end(), first, last);   return *this;  }
-
-   void push_back(CharT c)
-   {
-      if (this->priv_size() < this->capacity()){
-         this->priv_construct_null(this->priv_addr() + (this->priv_size() + 1));
-         Traits::assign(this->priv_addr()[this->priv_size()], c);
-         this->priv_size(this->priv_size()+1);
-      }
-      else{
-         //No enough memory, insert a new object at the end
-         this->append((size_type)1, c);
-      }
-   }
-
-   void pop_back()
-   {
-      Traits::assign(this->priv_addr()[this->priv_size()-1], this->priv_null());
-      this->priv_size(this->priv_size()-1);;
-   }
-
-   private: // Helper functions for append.
  
    template<class FwdIt, class Count, class Alloc> inline
    void priv_uninitialized_fill_n(FwdIt first,  Count count, 
                                   const CharT val, Alloc& al)
    {
       //Save initial position
-	   FwdIt init = first;
+      FwdIt init = first;
 
-	   BOOST_TRY{
+      BOOST_TRY{
          //Construct objects
-	      for (; count--; ++first){
-		      al.construct(first, val);
+         for (; count--; ++first){
+            al.construct(first, val);
          }
       }
-	   BOOST_CATCH(...){
+      BOOST_CATCH(...){
          //Call destructors
-	      for (; init != first; ++init){
-		      al.destroy(init);
+         for (; init != first; ++init){
+            al.destroy(init);
          }
-	      BOOST_RETHROW
-	   }
+         BOOST_RETHROW
+      }
       BOOST_CATCH_END
    }
 
@@ -783,77 +1615,25 @@ class basic_string : private basic_string_base<A>
                                      FwdIt dest,    Alloc& al)
    {
       //Save initial destination position
-	   FwdIt dest_init = dest;
+      FwdIt dest_init = dest;
       size_type constructed = 0;
 
-	   BOOST_TRY{
+      BOOST_TRY{
          //Try to build objects
-	      for (; first != last; ++dest, ++first, ++constructed){
-		      al.construct(dest, *first);
+         for (; first != last; ++dest, ++first, ++constructed){
+            al.construct(dest, *first);
          }
       }
-	   BOOST_CATCH(...){
+      BOOST_CATCH(...){
          //Call destructors
-	      for (; constructed--; ++dest_init){
-		      al.destroy(dest_init);
+         for (; constructed--; ++dest_init){
+            al.destroy(dest_init);
          }
-	      BOOST_RETHROW;
-	   }
+         BOOST_RETHROW;
+      }
       BOOST_CATCH_END
-	   return (constructed);
+      return (constructed);
    }
-
-   public:                         // Assign
-
-   basic_string& assign(const basic_string& s) 
-   {  return this->operator=(s); }
-
-   basic_string& assign(const detail::moved_object<basic_string>& ms) 
-   {  return this->operator=(ms);}
-
-   basic_string& assign(const basic_string& s, 
-                        size_type pos, size_type n) {
-      if (pos > s.size())
-      this->throw_out_of_range();
-      return this->assign(s.begin() + pos, 
-                          s.begin() + pos + min_value(n, s.size() - pos));
-   }
-
-   basic_string& assign(const CharT* s, size_type n)
-   {  return this->assign(s, s + n);   }
-
-   basic_string& assign(const CharT* s)
-   { return this->assign(s, s + Traits::length(s)); }
-
-   basic_string& assign(size_type n, CharT c)
-   {  return this->assign(cvalue_iterator(c, n), cvalue_iterator()); }
-
-   // Check to see if InputIterator is an integer type.  If so, then
-   // it can't be an iterator.
-   template <class InputIter>
-   basic_string& assign(InputIter first, InputIter last) 
-   {
-      //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<InputIter>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
-      return this->priv_assign_dispatch(first, last, Result());
-   }
-
-   basic_string& assign(const CharT* f, const CharT* l)
-   {
-      const std::ptrdiff_t n = l - f;
-      if (static_cast<size_type>(n) <= size()) {
-         Traits::copy(detail::get_pointer(this->priv_addr()), f, n);
-         this->erase(this->priv_addr() + n, this->priv_addr() + this->priv_size());
-      }
-      else {
-         Traits::copy(detail::get_pointer(this->priv_addr()), f, this->priv_size());
-         this->append(f + this->priv_size(), l);
-      }
-      return *this;
-   }
-
-   private:                        // Helper functions for assign.
 
    template <class Integer>
    basic_string& priv_assign_dispatch(Integer n, Integer x, boost::mpl::true_) 
@@ -877,90 +1657,6 @@ class basic_string : private basic_string_base<A>
          this->append(f, l);
       return *this;
    }
-
-   public:                      // Insert
-
-   basic_string& insert(size_type pos, const basic_string& s) 
-   {
-      if (pos > size())
-         this->throw_out_of_range();
-      if (this->size() > this->max_size() - s.size())
-         this->throw_length_error();
-      this->insert(this->priv_addr() + pos, s.begin(), s.end());
-      return *this;
-   }
-
-   basic_string& insert(size_type pos, const basic_string& s,
-                        size_type beg, size_type n) 
-   {
-      if (pos > this->size() || beg > s.size())
-         this->throw_out_of_range();
-      size_type len = min_value(n, s.size() - beg);
-      if (this->size() > this->max_size() - len)
-         this->throw_length_error();
-      const CharT *beg_ptr = detail::get_pointer(s.begin()) + beg;
-      const CharT *end_ptr = beg_ptr + len;
-      this->insert(this->priv_addr() + pos, beg_ptr, end_ptr);
-      return *this;
-   }
-
-   basic_string& insert(size_type pos, const CharT* s, size_type n) 
-   {
-      if (pos > this->size())
-         this->throw_out_of_range();
-      if (this->size() > this->max_size() - n)
-         this->throw_length_error();
-      this->insert(this->priv_addr() + pos, s, s + n);
-      return *this;
-   }
-
-   basic_string& insert(size_type pos, const CharT* s) 
-   {
-      if (pos > size())
-         this->throw_out_of_range();
-      size_type len = Traits::length(s);
-      if (this->size() > this->max_size() - len)
-         this->throw_length_error();
-      this->insert(this->priv_addr() + pos, s, s + len);
-      return *this;
-   }
-      
-   basic_string& insert(size_type pos, size_type n, CharT c) 
-   {
-      if (pos > this->size())
-         this->throw_out_of_range();
-      if (this->size() > this->max_size() - n)
-         this->throw_length_error();
-      this->insert(this->priv_addr() + pos, n, c);
-      return *this;
-   }
-
-   iterator insert(iterator position, CharT c) 
-   {
-      size_type new_offset = position - this->priv_addr() + 1;
-      this->insert(position, cvalue_iterator(c, 1),
-                             cvalue_iterator());
-      return this->priv_addr() + new_offset;
-   }
-
-   void insert(iterator position, std::size_t n, CharT c)
-   {
-      this->insert(position, cvalue_iterator(c, n),
-                             cvalue_iterator());
-   }
-
-   // Check to see if InputIterator is an integer type.  If so, then
-   // it can't be an iterator.
-   template <class InputIter>
-   void insert(iterator p, InputIter first, InputIter last) 
-   {
-      //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<InputIter>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
-      this->priv_insert_dispatch(p, first, last, Result());
-   }
-
-   private:                        // Helper functions for insert.
 
    template <class InputIter>
    void priv_insert(iterator p, InputIter first, InputIter last, std::input_iterator_tag)
@@ -1098,144 +1794,6 @@ class basic_string : private basic_string_base<A>
    void priv_copy(const CharT* first, const CharT* last, CharT* result) 
    {  Traits::copy(result, first, last - first);  }
 
-   public:                         // Erase.
-
-   basic_string& erase(size_type pos = 0, size_type n = npos) 
-   {
-      if (pos > size())
-         this->throw_out_of_range();
-      erase(this->priv_addr() + pos, this->priv_addr() + pos + min_value(n, size() - pos));
-      return *this;
-   }  
-
-   iterator erase(iterator position) 
-   {
-      // The move includes the terminating null.
-      Traits::move(detail::get_pointer(position), 
-                   detail::get_pointer(position + 1), 
-                   this->priv_size() - (position - this->priv_addr()));
-      this->priv_size(this->priv_size()-1);
-      return position;
-   }
-
-   iterator erase(iterator first, iterator last)
-   {
-      if (first != last) { // The move includes the terminating null.
-         size_type num_erased = last - first;
-         Traits::move(detail::get_pointer(first), 
-                      detail::get_pointer(last), 
-                      (this->priv_size() + 1)-(last - this->priv_addr()));
-         size_type new_length = this->priv_size() - num_erased;
-         this->priv_size(new_length);
-      }
-      return first;
-   }
-
-   public:                      // Replace.  (Conceptually equivalent
-                                // to erase followed by insert.)
-   basic_string& replace(size_type pos, size_type n, 
-                         const basic_string& s) 
-   {
-      if (pos > size())
-         this->throw_out_of_range();
-      const size_type len = min_value(n, size() - pos);
-      if (this->size() - len >= this->max_size() - s.size())
-         this->throw_length_error();
-      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len, 
-                           s.begin(), s.end());
-   }
-
-   basic_string& replace(size_type pos1, size_type n1,
-                         const basic_string& s,
-                         size_type pos2, size_type n2) 
-   {
-      if (pos1 > size() || pos2 > s.size())
-         this->throw_out_of_range();
-      const size_type len1 = min_value(n1, size() - pos1);
-      const size_type len2 = min_value(n2, s.size() - pos2);
-      if (this->size() - len1 >= this->max_size() - len2)
-         this->throw_length_error();
-      return this->replace(this->priv_addr() + pos1, this->priv_addr() + pos1 + len1,
-                     s.priv_addr() + pos2, s.priv_addr() + pos2 + len2);
-   }
-
-   basic_string& replace(size_type pos, size_type n1,
-                        const CharT* s, size_type n2) 
-   {
-      if (pos > size())
-         this->throw_out_of_range();
-      const size_type len = min_value(n1, size() - pos);
-      if (n2 > this->max_size() || size() - len >= this->max_size() - n2)
-         this->throw_length_error();
-      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len,
-                     s, s + n2);
-   }
-
-   basic_string& replace(size_type pos, size_type n1,
-                        const CharT* s) 
-   {
-      if (pos > size())
-         this->throw_out_of_range();
-      const size_type len = min_value(n1, size() - pos);
-      const size_type n2 = Traits::length(s);
-      if (n2 > this->max_size() || size() - len >= this->max_size() - n2)
-         this->throw_length_error();
-      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len,
-                     s, s + Traits::length(s));
-   }
-
-   basic_string& replace(size_type pos, size_type n1,
-                        size_type n2, CharT c) 
-   {
-      if (pos > size())
-         this->throw_out_of_range();
-      const size_type len = min_value(n1, size() - pos);
-      if (n2 > this->max_size() || size() - len >= this->max_size() - n2)
-         this->throw_length_error();
-      return this->replace(this->priv_addr() + pos, this->priv_addr() + pos + len, n2, c);
-   }
-
-   basic_string& replace(iterator first, iterator last, 
-                        const basic_string& s) 
-   { return this->replace(first, last, s.begin(), s.end()); }
-
-   basic_string& replace(iterator first, iterator last,
-                        const CharT* s, size_type n) 
-   { return this->replace(first, last, s, s + n); }
-
-   basic_string& replace(iterator first, iterator last,
-                        const CharT* s) 
-   {  return this->replace(first, last, s, s + Traits::length(s));   }
-
-   basic_string& replace(iterator first, iterator last, 
-                         size_type n, CharT c)
-   {
-      const size_type len = static_cast<size_type>(last - first);
-      if (len >= n) {
-         Traits::assign(detail::get_pointer(first), n, c);
-         erase(first + n, last);
-      }
-      else {
-         Traits::assign(detail::get_pointer(first), len, c);
-         insert(last, n - len, c);
-      }
-      return *this;
-   }
-
-   // Check to see if InputIterator is an integer type.  If so, then
-   // it can't be an iterator.
-   template <class InputIter>
-   basic_string& replace(iterator first, iterator last,
-                        InputIter f, InputIter l) 
-   {
-      //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<iterator>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
-      return this->priv_replace_dispatch(first, last, f, l,  Result());
-   }
-
- private:                        // Helper functions for replace.
-
    template <class Integer>
    basic_string& priv_replace_dispatch(iterator first, iterator last,
                                        Integer n, Integer x,
@@ -1285,302 +1843,7 @@ class basic_string : private basic_string_base<A>
       }
       return *this;
    }
-
-   public:                         // Other modifier member functions.
-
-   size_type copy(CharT* s, size_type n, size_type pos = 0) const 
-   {
-      if (pos > size())
-         this->throw_out_of_range();
-      const size_type len = min_value(n, size() - pos);
-      Traits::copy(s, detail::get_pointer(this->priv_addr() + pos), len);
-      return len;
-   }
-
-   void swap(basic_string& s) 
-   {  base_t::swap(s);  }
-
-   void swap(const detail::moved_object<basic_string>& ms) 
-   {  this->swap(ms.get());  }
-
- public:                         // Conversion to C string.
-
-   const CharT* c_str() const 
-   {  return detail::get_pointer(this->priv_addr()); }
-
-   const CharT* data()  const 
-   {  return detail::get_pointer(this->priv_addr()); }
-
- public:                         // find.
-
-   size_type find(const basic_string& s, size_type pos = 0) const 
-   { return find(s.c_str(), pos, s.size()); }
-
-   size_type find(const CharT* s, size_type pos = 0) const 
-   { return find(s, pos, Traits::length(s)); }
-
-   size_type find(const CharT* s, size_type pos, size_type n) const
-   {
-      if (pos + n > size())
-         return npos;
-      else {
-         pointer finish = this->priv_addr() + this->priv_size();
-         const const_iterator result =
-            std::search(detail::get_pointer(this->priv_addr() + pos), 
-                   detail::get_pointer(finish),
-                   s, s + n, Eq_traits<Traits>());
-         return result != finish ? result - begin() : npos;
-      }
-   }
-
-   size_type find(CharT c, size_type pos = 0) const
-   {
-      if (pos >= size())
-         return npos;
-      else {
-         pointer finish = this->priv_addr() + this->priv_size();
-         const const_iterator result =
-            std::find_if(this->priv_addr() + pos, finish,
-                  std::bind2nd(Eq_traits<Traits>(), c));
-         return result != finish ? result - begin() : npos;
-      }
-   }
-
- public:                         // rfind.
-
-   size_type rfind(const basic_string& s, size_type pos = npos) const 
-      { return rfind(s.c_str(), pos, s.size()); }
-
-   size_type rfind(const CharT* s, size_type pos = npos) const 
-      { return rfind(s, pos, Traits::length(s)); }
-
-   size_type rfind(const CharT* s, size_type pos, size_type n) const
-   {
-      const std::size_t len = size();
-
-      if (n > len)
-         return npos;
-      else if (n == 0)
-         return min_value(len, pos);
-      else {
-         const const_iterator last = begin() + min_value(len - n, pos) + n;
-         const const_iterator result = find_end(begin(), last,
-                                                s, s + n,
-                                                Eq_traits<Traits>());
-         return result != last ? result - begin() : npos;
-      }
-   }
-
-   size_type rfind(CharT c, size_type pos = npos) const
-   {
-      const size_type len = size();
-
-      if (len < 1)
-         return npos;
-      else {
-         const const_iterator last = begin() + min_value(len - 1, pos) + 1;
-         const_reverse_iterator rresult =
-            std::find_if(const_reverse_iterator(last), rend(),
-                  std::bind2nd(Eq_traits<Traits>(), c));
-         return rresult != rend() ? (rresult.base() - 1) - begin() : npos;
-      }
-   }
-
- public:                         // find_first_of
-
-   size_type find_first_of(const basic_string& s, size_type pos = 0) const 
-      { return find_first_of(s.c_str(), pos, s.size()); }
-
-   size_type find_first_of(const CharT* s, size_type pos = 0) const 
-      { return find_first_of(s, pos, Traits::length(s)); }
-
-   size_type find_first_of(const CharT* s, size_type pos, 
-                           size_type n) const
-   {
-      if (pos >= size())
-         return npos;
-      else {
-         pointer finish = this->priv_addr() + this->priv_size();
-         const_iterator result = std::find_first_of(this->priv_addr() + pos, finish,
-                                                    s, s + n,
-                                                    Eq_traits<Traits>());
-         return result != finish ? result - begin() : npos;
-      }
-   }
-
-  size_type find_first_of(CharT c, size_type pos = 0) const 
-    { return find(c, pos); }
-
- public:                         // find_last_of
-
-   size_type find_last_of(const basic_string& s,
-                           size_type pos = npos) const
-      { return find_last_of(s.c_str(), pos, s.size()); }
-
-   size_type find_last_of(const CharT* s, size_type pos = npos) const 
-      { return find_last_of(s, pos, Traits::length(s)); }
-
-   size_type find_last_of(const CharT* s, size_type pos, size_type n) const
-   {
-      const size_type len = size();
-
-      if (len < 1)
-         return npos;
-      else {
-         const const_iterator last = this->priv_addr() + min_value(len - 1, pos) + 1;
-         const const_reverse_iterator rresult =
-            std::find_first_of(const_reverse_iterator(last), rend(),
-                               s, s + n,
-                               Eq_traits<Traits>());
-         return rresult != rend() ? (rresult.base() - 1) - this->priv_addr() : npos;
-      }
-   }
-
-   size_type find_last_of(CharT c, size_type pos = npos) const 
-      {  return rfind(c, pos);   }
-
- public:                         // find_first_not_of
-
-   size_type find_first_not_of(const basic_string& s, 
-                              size_type pos = 0) const 
-      { return find_first_not_of(s.c_str(), pos, s.size()); }
-
-   size_type find_first_not_of(const CharT* s, size_type pos = 0) const 
-      { return find_first_not_of(s, pos, Traits::length(s)); }
-
-   size_type find_first_not_of(const CharT* s, size_type pos,
-                              size_type n) const
-   {
-      if (pos > size())
-         return npos;
-      else {
-         pointer finish = this->priv_addr() + this->priv_size();
-         const_iterator result = std::find_if(this->priv_addr() + pos, finish,
-                                    Not_within_traits<Traits>(s, s + n));
-         return result != finish ? result - this->priv_addr() : npos;
-      }
-   }
-
-   size_type find_first_not_of(CharT c, size_type pos = 0) const
-   {
-      if (pos > size())
-         return npos;
-      else {
-         pointer finish = this->priv_addr() + this->priv_size();
-         const_iterator result
-            = std::find_if(this->priv_addr() + pos, finish,
-                     std::not1(std::bind2nd(Eq_traits<Traits>(), c)));
-         return result != finish ? result - begin() : npos;
-      }
-   }
-
- public:                         // find_last_not_of
-
-   size_type find_last_not_of(const basic_string& s, 
-                              size_type pos = npos) const
-      { return find_last_not_of(s.c_str(), pos, s.size()); }
-
-   size_type find_last_not_of(const CharT* s, size_type pos = npos) const
-      { return find_last_not_of(s, pos, Traits::length(s)); }
-
-   size_type find_last_not_of(const CharT* s, size_type pos, size_type n) const
-   {
-      const size_type len = size();
-
-      if (len < 1)
-         return npos;
-      else {
-         const const_iterator last = begin() + min_value(len - 1, pos) + 1;
-         const const_reverse_iterator rresult =
-            std::find_if(const_reverse_iterator(last), rend(),
-                    Not_within_traits<Traits>(s, s + n));
-         return rresult != rend() ? (rresult.base() - 1) - begin() : npos;
-      }
-   }
-
-   size_type find_last_not_of(CharT c, size_type pos = npos) const
-   {
-      const size_type len = size();
-
-      if (len < 1)
-         return npos;
-      else {
-         const const_iterator last = begin() + min_value(len - 1, pos) + 1;
-         const_reverse_iterator rresult =
-            std::find_if(const_reverse_iterator(last), rend(),
-                  std::not1(std::bind2nd(Eq_traits<Traits>(), c)));
-         return rresult != rend() ? (rresult.base() - 1) - begin() : npos;
-      }
-   }
-
- public:                         // Substring.
-
-   basic_string substr(size_type pos = 0, size_type n = npos) const 
-   {
-      if (pos > size())
-         this->throw_out_of_range();
-      return basic_string(this->priv_addr() + pos, 
-                          this->priv_addr() + pos + min_value(n, size() - pos), this->get_alloc());
-   }
-
- public:                         // Compare
-
-   int compare(const basic_string& s) const 
-   { return this->s_compare(this->priv_addr(), this->priv_addr() + this->priv_size(), s.priv_addr(), s.priv_addr() + s.priv_size()); }
-
-   int compare(size_type pos1, size_type n1, const basic_string& s) const 
-   {
-      if (pos1 > size())
-         this->throw_out_of_range();
-      return this->s_compare(this->priv_addr() + pos1, 
-                        this->priv_addr() + pos1 + min_value(n1, size() - pos1),
-                        s.priv_addr(), s.priv_addr() + s.priv_size());
-   }
-      
-   int compare(size_type pos1, size_type n1,
-               const basic_string& s,
-               size_type pos2, size_type n2) const {
-      if (pos1 > size() || pos2 > s.size())
-      this->throw_out_of_range();
-      return this->s_compare(this->priv_addr() + pos1, 
-                        this->priv_addr() + pos1 + min_value(n1, size() - pos1),
-                        s.priv_addr() + pos2, 
-                        s.priv_addr() + pos2 + min_value(n2, size() - pos2));
-   }
-
-   int compare(const CharT* s) const 
-   {  return this->s_compare(this->priv_addr(), this->priv_addr() + this->priv_size(), s, s + Traits::length(s));   }
-
-   int compare(size_type pos1, size_type n1, const CharT* s) const 
-   {
-      if (pos1 > size())
-         this->throw_out_of_range();
-      return this->s_compare(this->priv_addr() + pos1, 
-                        this->priv_addr() + pos1 + min_value(n1, size() - pos1),
-                        s, s + Traits::length(s));
-   }
-
-  int compare(size_type pos1, size_type n1, const CharT* s,
-              size_type n2) const 
-   {
-      if (pos1 > size())
-         this->throw_out_of_range();
-      return this->s_compare(this->priv_addr() + pos1, 
-                        this->priv_addr() + pos1 + min_value(n1, size() - pos1),
-                        s, s + n2);
-   }
-
-public:                        // Helper function for compare.
-   static int s_compare(const_pointer f1, const_pointer l1,
-                        const_pointer f2, const_pointer l2) 
-   {
-      const std::ptrdiff_t n1 = l1 - f1;
-      const std::ptrdiff_t n2 = l2 - f2;
-      const int cmp = Traits::compare(detail::get_pointer(f1), 
-                                      detail::get_pointer(f2), 
-                                      min_value(n1, n2));
-      return cmp != 0 ? cmp : (n1 < n2 ? -1 : (n1 > n2 ? 1 : 0));
-   }
+   /// @endcond
 };
 
 template <class CharT, class Traits, class A> 
@@ -1730,17 +1993,19 @@ inline bool
 operator<(const basic_string<CharT,Traits,A>& x,
           const basic_string<CharT,Traits,A>& y) 
 {
-   return basic_string<CharT,Traits,A>
-      ::s_compare(x.begin(), x.end(), y.begin(), y.end()) < 0;
+   return x.compare(y) < 0;
+//   return basic_string<CharT,Traits,A>
+//      ::s_compare(x.begin(), x.end(), y.begin(), y.end()) < 0;
 }
 
 template <class CharT, class Traits, class A>
 inline bool
 operator<(const CharT* s, const basic_string<CharT,Traits,A>& y) 
 {
-   std::size_t n = Traits::length(s);
-   return basic_string<CharT,Traits,A>
-          ::s_compare(s, s + n, y.begin(), y.end()) < 0;
+   return y.compare(s) > 0;
+//   std::size_t n = Traits::length(s);
+//   return basic_string<CharT,Traits,A>
+//          ::s_compare(s, s + n, y.begin(), y.end()) < 0;
 }
 
 template <class CharT, class Traits, class A>
@@ -1748,9 +2013,10 @@ inline bool
 operator<(const basic_string<CharT,Traits,A>& x,
           const CharT* s) 
 {
-   std::size_t n = Traits::length(s);
-   return basic_string<CharT,Traits,A>
-      ::s_compare(x.begin(), x.end(), s, s + n) < 0;
+   return x.compare(s) < 0;
+//   std::size_t n = Traits::length(s);
+//   return basic_string<CharT,Traits,A>
+//      ::s_compare(x.begin(), x.end(), s, s + n) < 0;
 }
 
 template <class CharT, class Traits, class A>
@@ -1825,11 +2091,13 @@ inline void swap(basic_string<CharT,Traits,A>& x,
 {  x.swap(my.get());  }
 
 
+/// @cond
 // I/O.  
+namespace detail {
 
 template <class CharT, class Traits>
 inline bool
-sgi_string_fill(std::basic_ostream<CharT, Traits>& os,
+interprocess_string_fill(std::basic_ostream<CharT, Traits>& os,
                   std::basic_streambuf<CharT, Traits>* buf,
                   std::size_t n)
 {
@@ -1841,6 +2109,9 @@ sgi_string_fill(std::basic_ostream<CharT, Traits>& os,
       ok = ok && !Traits::eq_int_type(buf->sputc(f), Traits::eof());
    return ok;
 }
+
+}  //namespace detail {
+/// @endcond
 
 template <class CharT, class Traits, class A>
 std::basic_ostream<CharT, Traits>&
@@ -1862,13 +2133,13 @@ operator<<(std::basic_ostream<CharT, Traits>& os,
          pad_len = w - n;
        
       if (!left)
-         ok = sgi_string_fill(os, buf, pad_len);    
+         ok = detail::interprocess_string_fill(os, buf, pad_len);    
 
       ok = ok && 
             buf->sputn(s.data(), std::streamsize(n)) == std::streamsize(n);
 
       if (left)
-         ok = ok && sgi_string_fill(os, buf, pad_len);
+         ok = ok && detail::interprocess_string_fill(os, buf, pad_len);
    }
 
    if (!ok)
@@ -1999,6 +2270,7 @@ inline std::size_t hash_value(basic_string<Ch, std::char_traits<Ch>, A> const& v
    return hash_range(v.begin(), v.end());
 }
 
+/// @cond
 /*!This class is movable*/
 template <class C, class T, class A>
 struct is_movable<basic_string<C, T, A> >
@@ -2008,12 +2280,19 @@ struct is_movable<basic_string<C, T, A> >
 
 /*!This class is movable*/
 template <class A>
-struct is_movable<basic_string_base<A> >
+struct is_movable<detail::basic_string_base<A> >
 {
    enum {   value = true };
 };
 
-typedef basic_string<char, std::char_traits<char>, std::allocator<char> > string;
+//!has_trivial_destructor_after_move<> == true_type
+//!specialization for optimizations
+template <class C, class T, class A>
+struct has_trivial_destructor_after_move<basic_string<C, T, A> >
+{
+   enum {   value = has_trivial_destructor<A>::value  };
+};
+/// @endcond
 
 }} //namespace boost {  namespace interprocess
 

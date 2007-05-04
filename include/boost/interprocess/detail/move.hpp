@@ -49,7 +49,7 @@ struct moved_object
    T *m_obj; 
 };
 
-// Metafunction that, given moveable T, provides move_source<T>, else T&.
+// Metafunction that, given movable T, provides move_source<T>, else T&.
 template <typename T>
 struct move_type
 {
@@ -100,10 +100,10 @@ struct return_type
    it can match a function taking a detail::moved_object object.*/
 template<class Object>
 typename detail::move_type<Object>::type move
-   (const Object &lock)
+   (const Object &object)
 {  
    typedef typename detail::move_type<Object>::type type;
-   return type(lock);   
+   return type(object);   
 }
 
 }  //namespace interprocess {

@@ -35,11 +35,13 @@ template<class T, class Deleter>
 class scoped_ptr
    : private Deleter
 {
+   /// @cond
    scoped_ptr(scoped_ptr const &);
    scoped_ptr & operator=(scoped_ptr const &);
 
    typedef scoped_ptr<T, Deleter> this_type;
    typedef typename workaround::random_it<T>::reference reference;
+   /// @endcond
 
    public:
 
@@ -117,8 +119,10 @@ class scoped_ptr
    void swap(scoped_ptr & b) // never throws
    {  detail::do_swap<Deleter>(*this, b); detail::do_swap(m_ptr, b.m_ptr); }
 
+   /// @cond
    private:
    pointer m_ptr;
+   /// @endcond
 };
 
 /*!Exchanges the internal pointer and deleter with other scoped_ptr
@@ -133,6 +137,16 @@ typename scoped_ptr<T, D>::pointer get_pointer(scoped_ptr<T, D> const & p)
 {  return p.get();   }
 
 } // namespace interprocess
+
+/// @cond
+#if defined(_MSC_VER) && (_MSC_VER < 1400)
+/*!Returns a copy of the stored pointer*/
+template<class T, class D> inline
+T *get_pointer(boost::interprocess::scoped_ptr<T, D> const & p)
+{  return p.get();   }
+#endif
+/// @endcond
+
 } // namespace boost
 
 #include <boost/interprocess/detail/config_end.hpp>

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -40,11 +40,14 @@ namespace boost{  namespace interprocess{
 /*!A class that allows sending messages between processes.*/
 class message_queue
 {
+   /// @cond
    //Blocking modes
    enum block_t   {  blocking,   timed,   non_blocking   };
 
    message_queue();
- public:
+   /// @endcond
+
+   public:
 
    /*!Creates a process shared message queue with name "name". For this message queue,
       the maximum number of messages will be "max_num_msg" and the maximum message size
@@ -135,7 +138,8 @@ class message_queue
 
    /*!Removes the message queue from the system. Never throws*/
    static bool remove(const char *name);
-   
+
+   /// @cond   
    private:
    typedef boost::posix_time::ptime ptime;
    bool do_receive(block_t block,
@@ -167,8 +171,10 @@ class message_queue
    friend class initialization_func_t;
 
    detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
+   /// @endcond
 };
 
+/// @cond
 /*!This header is the prefix of each message in the queue*/
 class message_queue::msg_hdr_t 
 {
@@ -223,18 +229,18 @@ class message_queue::priority_functor
 */
 class message_queue::mq_hdr_t
    : public priority_functor
-{	
+{   
    typedef offset_ptr<msg_hdr_t> msg_hdr_ptr_t;
 public:
    /*!Constructor. This object must be constructed in the beginning of the 
       shared memory of the size returned by the function "get_mem_size".
       This constructor initializes the needed resources and creates
       the internal structures like the priority index. This can throw.*/
-	mq_hdr_t(std::size_t max_num_msg, std::size_t max_msg_size)
+   mq_hdr_t(std::size_t max_num_msg, std::size_t max_msg_size)
       : m_max_num_msg(max_num_msg), 
          m_max_msg_size(max_msg_size),
          m_cur_num_msg(0)
-   	{  this->initialize_memory();  }
+      {  this->initialize_memory();  }
 
    /*!Returns the inserted message with top priority*/
    msg_hdr_t * top_msg()
@@ -365,6 +371,7 @@ class message_queue::initialization_func_t
    const std::size_t m_maxmsg;
    const std::size_t m_maxmsgsize;
 };
+/// @endcond
 
 inline message_queue::~message_queue()
 {}

@@ -71,9 +71,10 @@ inline void sp_enable_shared_from_this(shared_count<T, VA, D> const &, ...)
 template<class T, class VA, class D>
 class shared_ptr
 {
+   /// @cond
    private:
-
    typedef shared_ptr<T, VA, D> this_type;
+   /// @endcond
 
    public:
    /*!Provides the type of the stored pointer.*/
@@ -218,12 +219,14 @@ class shared_ptr
    const_allocator_pointer get_allocator() const
    {  return m_pn.get_allocator(); }
 
+   /// @cond
    private:
 
    template<class T2, class A2, class D2> friend class shared_ptr;
    template<class T2, class A2, class D2> friend class weak_ptr;
 
    detail::shared_count<T, VA, D>   m_pn;    // reference counter
+   /// @endcond
 };  // shared_ptr
 
 template<class T, class VA, class D, class U, class VA2, class D2> inline 
@@ -272,8 +275,19 @@ typename detail::pointer_to_other<shared_ptr<T, VA, D>, D>::type
 {  return static_cast<D *>(p._internal_get_deleter(typeid(D)));   }
 */
 } // namespace interprocess
+
+/// @cond
+#if defined(_MSC_VER) && (_MSC_VER < 1400)
+// get_pointer() enables boost::mem_fn to recognize shared_ptr
+template<class T, class VA, class D> inline
+T * get_pointer(boost::interprocess::shared_ptr<T, VA, D> const & p)
+{  return p.get();   }
+#endif
+/// @endcond
+
 } // namespace boost
 
+/// @cond
 namespace boost{
 namespace interprocess{
 
@@ -298,6 +312,7 @@ class cast_to< shared_ptr<T, VA, D> >
    static shared_ptr<T, VA, D> using_dynamic_cast(const shared_ptr<S, VA, D> &s)
    {  return shared_ptr<T, VA, D>(s, detail::dynamic_cast_tag());   }
 };
+/// @endcond
 
 }  //namespace interprocess{
 }  //namespace boost{

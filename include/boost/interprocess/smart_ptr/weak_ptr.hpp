@@ -25,17 +25,17 @@ namespace interprocess{
 template<class T, class A, class D>
 class weak_ptr
 {
+   /// @cond
    private:
-
    // Borland 5.5.1 specific workarounds
    typedef weak_ptr<T, A, D> this_type;
    typedef typename detail::pointer_to_other
       <typename A::pointer, T>::type      pointer;
    typedef typename workaround::random_it<T>::reference       reference;
    typedef typename workaround::random_it<T>::const_reference const_reference;
+   /// @endcond
 
    public:
-
    typedef T element_type;
    typedef T value_type;
 
@@ -125,12 +125,14 @@ class weak_ptr
    void _internal_assign(const detail::shared_count<Y, A, D> & pn2)
    {  m_pn = pn2;   }
 
+   /// @cond
    private:
 
    template<class T2, class A2, class D2> friend class shared_ptr;
    template<class T2, class A2, class D2> friend class weak_ptr;
 
    detail::weak_count<T, A, D> m_pn;      // reference counter
+   /// @endcond
 };  // weak_ptr
 
 template<class T, class A, class D, class U, class A2, class D2> inline 

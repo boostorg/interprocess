@@ -27,8 +27,8 @@ namespace interprocess{
 template<class T, class A, class D>
 class enable_shared_from_this
 {
+   /// @cond
    protected:
-
    enable_shared_from_this()
    {}
 
@@ -40,9 +40,9 @@ class enable_shared_from_this
 
    ~enable_shared_from_this()
    {}
+   /// @endcond
 
    public:
-
    shared_ptr<T, A, D> shared_from_this()
    {
       shared_ptr<T, A, D> p(_internal_weak_this);
@@ -57,8 +57,11 @@ class enable_shared_from_this
       return p;
    }
 
+   private:
+   /// @cond
    typedef T element_type;
    mutable weak_ptr<element_type, A, D> _internal_weak_this;
+   /// @endcond
 };
 
 } // namespace interprocess
