@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -9,7 +9,6 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/exceptions.hpp>
@@ -77,8 +76,10 @@ int main ()
       }
    }
    catch(std::exception &ex){
+      shared_memory_object::remove(ShmName);
       std::cout << ex.what() << std::endl;
    }
+   shared_memory_object::remove(ShmName);
    return 0;
 }
 

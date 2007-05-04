@@ -1,15 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <set>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/flat_set.hpp>
@@ -60,23 +59,24 @@ template class boost::interprocess::flat_multimap
 //Customize managed_shared_memory class
 typedef basic_managed_shared_memory
    <char,
-    simple_seq_fit<mutex_family>,
+    //simple_seq_fit<mutex_family>,
+    rbtree_best_fit<mutex_family>,
     flat_map_index
    > my_managed_shared_memory;
 
 //Alias allocator type
-typedef allocator<int, managed_shared_memory::segment_manager> 
+typedef allocator<int, my_managed_shared_memory::segment_manager> 
    shmem_allocator_t;
-typedef allocator<test::movable_int, managed_shared_memory::segment_manager> 
+typedef allocator<test::movable_int, my_managed_shared_memory::segment_manager> 
    shmem_movable_allocator_t;
-typedef allocator<std::pair<int, int>, managed_shared_memory::segment_manager> 
+typedef allocator<std::pair<int, int>, my_managed_shared_memory::segment_manager> 
    shmem_pair_allocator_t;
-typedef allocator<std::pair<test::movable_int, test::movable_int>, managed_shared_memory::segment_manager> 
+typedef allocator<std::pair<test::movable_int, test::movable_int>, my_managed_shared_memory::segment_manager> 
    shmem_movable_pair_allocator_t;
 
-typedef allocator<test::movable_and_copyable_int, managed_shared_memory::segment_manager> 
+typedef allocator<test::movable_and_copyable_int, my_managed_shared_memory::segment_manager> 
    shmem_move_copy_allocator_t;
-typedef allocator<std::pair<test::movable_and_copyable_int, test::movable_and_copyable_int>, managed_shared_memory::segment_manager> 
+typedef allocator<std::pair<test::movable_and_copyable_int, test::movable_and_copyable_int>, my_managed_shared_memory::segment_manager> 
    shmem_move_copy_pair_allocator_t;
 
 //Alias set types

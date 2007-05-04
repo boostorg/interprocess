@@ -59,9 +59,21 @@ class movable_int
    bool operator >(const movable_int &mi) const
    {  return this->m_int > mi.m_int;   }
 
+   int get_int() const
+   {  return m_int;  }
+
    private:
    int m_int;
 };
+
+template<class E, class T> 
+std::basic_ostream<E, T> & operator<< 
+   (std::basic_ostream<E, T> & os, movable_int const & p)
+
+{
+    os << p.get_int();
+    return os;
+}
 
 class movable_and_copyable_int
 {
@@ -107,10 +119,21 @@ class movable_and_copyable_int
    bool operator >(const movable_and_copyable_int &mi) const
    {  return this->m_int > mi.m_int;   }
 
+   int get_int() const
+   {  return m_int;  }
+
    private:
    int m_int;
 };
 
+template<class E, class T> 
+std::basic_ostream<E, T> & operator<< 
+   (std::basic_ostream<E, T> & os, movable_and_copyable_int const & p)
+
+{
+    os << p.get_int();
+    return os;
+}
 
 }  //namespace test {
 }  //namespace interprocess {

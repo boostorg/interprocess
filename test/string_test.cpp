@@ -1,15 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/containers/string.hpp>
@@ -80,185 +79,187 @@ int string_test()
 
    //Create shared memory
    shared_memory_object::remove("MySharedMemory");
-   managed_shared_memory segment
-         (create_only,
-         "MySharedMemory",//segment name
-         65536);           //segment size in bytes
-   
-   ShmemAllocatorChar shmallocator (segment.get_segment_manager());
+   {
+      managed_shared_memory segment
+            (create_only,
+            "MySharedMemory",//segment name
+            65536);           //segment size in bytes
+      
+      ShmemAllocatorChar shmallocator (segment.get_segment_manager());
 
-   //Initialize vector with a range or iterators and allocator
-   ShmStringVector *shmStringVect = 
-      segment.construct<ShmStringVector>
-                                (anonymous_instance, std::nothrow)  //object name 
-                                (shmallocator);
+      //Initialize vector with a range or iterators and allocator
+      ShmStringVector *shmStringVect = 
+         segment.construct<ShmStringVector>
+                                 (anonymous_instance, std::nothrow)  //object name 
+                                 (shmallocator);
 
-   StdStringVector *stdStringVect = new StdStringVector;
+      StdStringVector *stdStringVect = new StdStringVector;
 
-   ShmString auxShmString (segment.get_segment_manager());
-   StdString auxStdString(StdString(auxShmString.begin(), auxShmString.end() ));
+      ShmString auxShmString (segment.get_segment_manager());
+      StdString auxStdString(StdString(auxShmString.begin(), auxShmString.end() ));
 
-   CharType buffer [20];
+      CharType buffer [20];
 
-   //First, push back
-   for(int i = 0; i < MaxSize; ++i){
+      //First, push back
+      for(int i = 0; i < MaxSize; ++i){
+         auxShmString = "String";
+         auxStdString = "String";
+         std::sprintf(buffer, "%i", i);
+         auxShmString += buffer;
+         auxStdString += buffer;
+         shmStringVect->push_back(auxShmString);
+         stdStringVect->push_back(auxStdString);
+      }
+
+      if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
+         return 1;
+      }
+
+      //Now push back moving 
+      for(int i = 0; i < MaxSize; ++i){
+         auxShmString = "String";
+         auxStdString = "String";
+         std::sprintf(buffer, "%i", i);
+         auxShmString += buffer;
+         auxStdString += buffer;
+         shmStringVect->push_back(move(auxShmString));
+         stdStringVect->push_back(auxStdString);
+      }
+
+      if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
+         return 1;
+      }
+
+      //push front
+      for(int i = 0; i < MaxSize; ++i){
+         auxShmString = "String";
+         auxStdString = "String";
+         std::sprintf(buffer, "%i", i);
+         auxShmString += buffer;
+         auxStdString += buffer;
+         shmStringVect->insert(shmStringVect->begin(), auxShmString);
+         stdStringVect->insert(stdStringVect->begin(), auxStdString);
+      }
+
+      if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
+         return 1;
+      }
+
+      //Now push front moving 
+      for(int i = 0; i < MaxSize; ++i){
+         auxShmString = "String";
+         auxStdString = "String";
+         std::sprintf(buffer, "%i", i);
+         auxShmString += buffer;
+         auxStdString += buffer;
+         shmStringVect->insert(shmStringVect->begin(), move(auxShmString));
+         stdStringVect->insert(stdStringVect->begin(), auxStdString);
+      }
+
+      if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
+         return 1;
+      }
+
+      //Now test long and short representation swapping
       auxShmString = "String";
       auxStdString = "String";
-      std::sprintf(buffer, "%i", i);
-      auxShmString += buffer;
-      auxStdString += buffer;
-      shmStringVect->push_back(auxShmString);
-      stdStringVect->push_back(auxStdString);
-   }
+      ShmString shm_swapper(segment.get_segment_manager());
+      StdString std_swapper;
+      shm_swapper.swap(auxShmString);
+      std_swapper.swap(auxStdString);
+      if(!StringEqual()(auxShmString, auxStdString))
+         return 1;   
+      if(!StringEqual()(shm_swapper, std_swapper))
+         return 1;   
 
-   if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
-      return 1;
-   }
+      shm_swapper.swap(auxShmString);
+      std_swapper.swap(auxStdString);
+      if(!StringEqual()(auxShmString, auxStdString))
+         return 1;   
+      if(!StringEqual()(shm_swapper, std_swapper))
+         return 1;   
 
-   //Now push back moving 
-   for(int i = 0; i < MaxSize; ++i){
-      auxShmString = "String";
-      auxStdString = "String";
-      std::sprintf(buffer, "%i", i);
-      auxShmString += buffer;
-      auxStdString += buffer;
-      shmStringVect->push_back(move(auxShmString));
-      stdStringVect->push_back(auxStdString);
-   }
+      auxShmString = "LongLongLongLongLongLongLongLongLongLongLongLongLongString";
+      auxStdString = "LongLongLongLongLongLongLongLongLongLongLongLongLongString";
+      shm_swapper = ShmString (segment.get_segment_manager());
+      std_swapper = StdString ();
+      shm_swapper.swap(auxShmString);
+      std_swapper.swap(auxStdString);
+      if(!StringEqual()(auxShmString, auxStdString))
+         return 1;   
+      if(!StringEqual()(shm_swapper, std_swapper))
+         return 1;   
 
-   if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
-      return 1;
-   }
+      shm_swapper.swap(auxShmString);
+      std_swapper.swap(auxStdString);
+      if(!StringEqual()(auxShmString, auxStdString))
+         return 1;   
+      if(!StringEqual()(shm_swapper, std_swapper))
+         return 1;   
 
-   //push front
-   for(int i = 0; i < MaxSize; ++i){
-      auxShmString = "String";
-      auxStdString = "String";
-      std::sprintf(buffer, "%i", i);
-      auxShmString += buffer;
-      auxStdString += buffer;
-      shmStringVect->insert(shmStringVect->begin(), auxShmString);
-      stdStringVect->insert(stdStringVect->begin(), auxStdString);
-   }
-
-   if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
-      return 1;
-   }
-
-   //Now push front moving 
-   for(int i = 0; i < MaxSize; ++i){
-      auxShmString = "String";
-      auxStdString = "String";
-      std::sprintf(buffer, "%i", i);
-      auxShmString += buffer;
-      auxStdString += buffer;
-      shmStringVect->insert(shmStringVect->begin(), move(auxShmString));
-      stdStringVect->insert(stdStringVect->begin(), auxStdString);
-   }
-
-   if(!CheckEqualStringVector(shmStringVect, stdStringVect)){
-      return 1;
-   }
-
-   //Now test long and short representation swapping
-   auxShmString = "String";
-   auxStdString = "String";
-   ShmString shm_swapper(segment.get_segment_manager());
-   StdString std_swapper;
-   shm_swapper.swap(auxShmString);
-   std_swapper.swap(auxStdString);
-   if(!StringEqual()(auxShmString, auxStdString))
-      return 1;   
-   if(!StringEqual()(shm_swapper, std_swapper))
-      return 1;   
-
-   shm_swapper.swap(auxShmString);
-   std_swapper.swap(auxStdString);
-   if(!StringEqual()(auxShmString, auxStdString))
-      return 1;   
-   if(!StringEqual()(shm_swapper, std_swapper))
-      return 1;   
-
-   auxShmString = "LongLongLongLongLongLongLongLongLongLongLongLongLongString";
-   auxStdString = "LongLongLongLongLongLongLongLongLongLongLongLongLongString";
-   shm_swapper = ShmString (segment.get_segment_manager());
-   std_swapper = StdString ();
-   shm_swapper.swap(auxShmString);
-   std_swapper.swap(auxStdString);
-   if(!StringEqual()(auxShmString, auxStdString))
-      return 1;   
-   if(!StringEqual()(shm_swapper, std_swapper))
-      return 1;   
-
-   shm_swapper.swap(auxShmString);
-   std_swapper.swap(auxStdString);
-   if(!StringEqual()(auxShmString, auxStdString))
-      return 1;   
-   if(!StringEqual()(shm_swapper, std_swapper))
-      return 1;   
-
-   //No sort
-   std::sort(shmStringVect->begin(), shmStringVect->end());
-   std::sort(stdStringVect->begin(), stdStringVect->end());
-   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
-
-   const CharType prefix []    = "Prefix";
-   const int  prefix_size  = sizeof(prefix)/sizeof(prefix[0])-1;
-   const CharType sufix []     = "Suffix";
-
-   for(int i = 0; i < MaxSize; ++i){
-      (*shmStringVect)[i].append(sufix);
-      (*stdStringVect)[i].append(sufix);
-      (*shmStringVect)[i].insert((*shmStringVect)[i].begin(), 
-                                 prefix, prefix + prefix_size);
-      (*stdStringVect)[i].insert((*stdStringVect)[i].begin(), 
-                                 prefix, prefix + prefix_size);
-   }
-
-   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
-
-   for(int i = 0; i < MaxSize; ++i){
-      std::reverse((*shmStringVect)[i].begin(), (*shmStringVect)[i].end());
-      std::reverse((*stdStringVect)[i].begin(), (*stdStringVect)[i].end());
-   }
-
-   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
-
-   for(int i = 0; i < MaxSize; ++i){
-      std::reverse((*shmStringVect)[i].begin(), (*shmStringVect)[i].end());
-      std::reverse((*stdStringVect)[i].begin(), (*stdStringVect)[i].end());
-   }
-
-   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
-
-   for(int i = 0; i < MaxSize; ++i){
+      //No sort
       std::sort(shmStringVect->begin(), shmStringVect->end());
       std::sort(stdStringVect->begin(), stdStringVect->end());
+      if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
+
+      const CharType prefix []    = "Prefix";
+      const int  prefix_size  = sizeof(prefix)/sizeof(prefix[0])-1;
+      const CharType sufix []     = "Suffix";
+
+      for(int i = 0; i < MaxSize; ++i){
+         (*shmStringVect)[i].append(sufix);
+         (*stdStringVect)[i].append(sufix);
+         (*shmStringVect)[i].insert((*shmStringVect)[i].begin(), 
+                                    prefix, prefix + prefix_size);
+         (*stdStringVect)[i].insert((*stdStringVect)[i].begin(), 
+                                    prefix, prefix + prefix_size);
+      }
+
+      if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
+
+      for(int i = 0; i < MaxSize; ++i){
+         std::reverse((*shmStringVect)[i].begin(), (*shmStringVect)[i].end());
+         std::reverse((*stdStringVect)[i].begin(), (*stdStringVect)[i].end());
+      }
+
+      if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
+
+      for(int i = 0; i < MaxSize; ++i){
+         std::reverse((*shmStringVect)[i].begin(), (*shmStringVect)[i].end());
+         std::reverse((*stdStringVect)[i].begin(), (*stdStringVect)[i].end());
+      }
+
+      if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
+
+      for(int i = 0; i < MaxSize; ++i){
+         std::sort(shmStringVect->begin(), shmStringVect->end());
+         std::sort(stdStringVect->begin(), stdStringVect->end());
+      }
+
+      if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
+
+      for(int i = 0; i < MaxSize; ++i){
+         (*shmStringVect)[i].replace((*shmStringVect)[i].begin(), 
+                                    (*shmStringVect)[i].end(),
+                                    "String");
+         (*stdStringVect)[i].replace((*stdStringVect)[i].begin(), 
+                                    (*stdStringVect)[i].end(),
+                                    "String");
+      }
+
+      if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
+
+      shmStringVect->erase(std::unique(shmStringVect->begin(), shmStringVect->end()),
+                           shmStringVect->end());
+      stdStringVect->erase(std::unique(stdStringVect->begin(), stdStringVect->end()),
+                           stdStringVect->end());
+      if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
+
+      //When done, delete vector
+      segment.destroy_ptr(shmStringVect);
+      delete stdStringVect;
    }
-
-   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
-
-   for(int i = 0; i < MaxSize; ++i){
-      (*shmStringVect)[i].replace((*shmStringVect)[i].begin(), 
-                                  (*shmStringVect)[i].end(),
-                                  "String");
-      (*stdStringVect)[i].replace((*stdStringVect)[i].begin(), 
-                                  (*stdStringVect)[i].end(),
-                                  "String");
-   }
-
-   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
-
-   shmStringVect->erase(std::unique(shmStringVect->begin(), shmStringVect->end()),
-                        shmStringVect->end());
-   stdStringVect->erase(std::unique(stdStringVect->begin(), stdStringVect->end()),
-                        stdStringVect->end());
-   if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
-
-   //When done, delete vector
-   segment.destroy_ptr(shmStringVect);
-   delete stdStringVect;
-
+   shared_memory_object::remove("MySharedMemory");
    return 0;
 }
 

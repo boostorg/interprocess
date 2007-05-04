@@ -1,6 +1,6 @@
 #  Boost.Interprocess library documentation Jamfile  ---------------------------------
 #
-#  Copyright Ion Gaztañaga 2005-2006. Use, modification and
+#  Copyright Ion Gaztañaga 2005-2007. Use, modification and
 #  distribution is subject to the Boost Software License, Version
 #  1.0. (See accompanying file LICENSE_1_0.txt or copy at
 #  http://www.boost.org/LICENSE_1_0.txt)
@@ -27,19 +27,11 @@ doxygen interprocess_doxygen
         <doxygen:param>EXTRACT_ALL=NO
         <doxygen:param>HIDE_UNDOC_MEMBERS=YES
         <doxygen:param>EXTRACT_PRIVATE=NO
-        <doxygen:param>ENABLE_PREPROCESSING=NO
-        <doxygen:param>MACRO_EXPANSION=YES
+#        <doxygen:param>ENABLE_PREPROCESSING=NO
+#        <doxygen:param>MACRO_EXPANSION=YES
         <doxygen:param>EXPAND_ONLY_PREDEF=YES
-        <doxygen:param>SEARCH_INCLUDES=YES
-        <doxygen:param>INCLUDE_PATH=$(BOOST_ROOT)
-#    <doxygen:param>EXTRACT_ALL=NO
-#    <doxygen:param>HIDE_SCOPE_NAMES=YES
-#    <doxygen:param>HIDE_UNDOC_MEMBERS=YES
-#    <doxygen:param>EXTRACT_PRIVATE=NO
-#    <doxygen:param>ENABLE_PREPROCESSING=YES
-#    <doxygen:param>MACRO_EXPANSION=YES
-#    <doxygen:param>EXPAND_ONLY_PREDEF=YES
-#    <doxygen:param>SEARCH_INCLUDES=YES
+#        <doxygen:param>SEARCH_INCLUDES=YES
+#        <doxygen:param>INCLUDE_PATH=$(BOOST_ROOT)
    ;
 
 xml interprocess_xml : interprocess.qbk ;

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -9,8 +9,6 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
-
 #include <algorithm>
 #include <vector>
 #include <list>
@@ -32,11 +30,11 @@
 using namespace boost::interprocess;
 
 //We will work with wide characters for user memory objects
-//Alias <integer, 64 element per chunk> node allocator type
+//Alias <integer> node allocator type
 typedef node_allocator
-   <int, 64, wmanaged_external_buffer::segment_manager> user_node_allocator_t;
+   <int, wmanaged_external_buffer::segment_manager> user_node_allocator_t;
 typedef node_allocator
-   <int, 64, wmanaged_heap_memory::segment_manager> heap_node_allocator_t;
+   <int, wmanaged_heap_memory::segment_manager> heap_node_allocator_t;
 
 //Alias list types
 typedef list<int, user_node_allocator_t>    MyUserList;
@@ -160,6 +158,13 @@ int main ()
    otheruserlist = *userlist;
    otherheaplist = *heaplist;
    otherstdlist = *stdlist;
+
+   userlist->sort(std::greater<int>());
+   heaplist->sort(std::greater<int>());
+   stdlist->sort(std::greater<int>());
+   otheruserlist.sort(std::greater<int>());
+   otherheaplist.sort(std::greater<int>());
+   otherstdlist.sort(std::greater<int>());
    userlist->merge(otheruserlist, std::greater<int>());
    heaplist->merge(otherheaplist, std::greater<int>());
    stdlist->merge(otherstdlist, std::greater<int>());
@@ -219,4 +224,3 @@ int main ()
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
-

@@ -1,15 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/vector.hpp>
@@ -26,6 +25,7 @@ int main ()
    const int memsize = 65536;
    const char *const shMemName = "MySharedMemory";
 
+   try{
    shared_memory_object::remove(shMemName);
 
    //Create shared memory
@@ -44,7 +44,6 @@ int main ()
 
    typedef boost::interprocess::vector<int, shmem_allocator_int_t > MyVect;
    typedef boost::interprocess::list<int, shmem_allocator_int_t >   MyList;
-
 
    //----   ALLOC, NAMED_ALLOC, NAMED_NEW TEST   ----//
    {
@@ -92,7 +91,15 @@ int main ()
       if(!res)
          return 1;
 */
+      std::remove("shmem_file");
    }
+   }
+   catch(...){
+      std::remove("shmem_file");
+      shared_memory_object::remove(shMemName);
+      throw;
+   }
+   shared_memory_object::remove(shMemName);
    return 0;
 }
 

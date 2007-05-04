@@ -35,12 +35,12 @@
     /* Code on paragraphs */
     p tt.computeroutput
     {
-        font-size: 9pt;
+        font-size: 10pt;
     }
 
     pre.synopsis
     {
-        font-size: 90%;
+        font-size: 10pt;
         margin: 1pc 4% 0pc 4%;
         padding: 0.5pc 0.5pc 0.5pc 0.5pc;
     }
@@ -48,18 +48,10 @@
     .programlisting, 
     .screen
     {
-        font-size: 9pt;
+        font-size: 10pt;
         display: block;
         margin: 1pc 4% 0pc 4%;
         padding: 0.5pc 0.5pc 0.5pc 0.5pc;
-    }
-
-    /* Program listings in tables don't get borders */
-    td .programlisting, 
-    td .screen
-    {
-        margin: 0pc 0pc 0pc 0pc;
-        padding:  0pc 0pc 0pc 0pc;
     }
 
 /*=============================================================================
@@ -68,7 +60,7 @@
 
     h1, h2, h3, h4, h5, h6 
     { 
-        text-align: left; 
+        text-align: left;
         margin: 1em 0em 0.5em 0em;
         font-weight: bold;
     }
@@ -139,13 +131,13 @@
         font-size: 10pt;
         line-height: 1.3;
     }
-    
+
     /* Unordered lists */
     ul 
     {
         text-align: left;
     }
-    
+
     /* Ordered lists */
     ol 
     {
@@ -160,7 +152,7 @@
     {
         text-decoration: none; /* no underline */
     }
-    
+
     a:hover
     {
         text-decoration: underline;
@@ -174,13 +166,13 @@
     {
         text-align: right;
     }
-    
+
     .spirit-nav a
     {
         color: white;
         padding-left: 0.5em;
     }
-    
+
     .spirit-nav img
     {
         border-width: 0px;
@@ -194,10 +186,19 @@
     {
        margin: 1pc 4% 0pc 4%;
        padding: 0.1pc 1pc 0.1pc 1pc;
-       font-size: 80%; 
+       font-size: 10pt;
        line-height: 1.15;
     }
-    
+
+    .toc-main
+    {
+     width: 600;
+    text-align: center;
+       margin: 1pc 1pc 1pc 10%;
+       padding: 2pc 1pc 3pc 1pc;
+    line-height: 0.1;
+    }
+
     .boost-toc
     {
        float: right;
@@ -215,7 +216,7 @@
         padding-right: 0.5em; 
         padding-left: 0.5em;
     }
-    
+
     .informaltable table, 
     .table table
     {
@@ -223,20 +224,19 @@
         margin-left: 4%;
         margin-right: 4%;
     }
-    
+
     div.informaltable table, 
     div.table table
     {
         padding: 4px;
     }
-    
+
     /* Table Cells */
     div.informaltable table tr td, 
     div.table table tr td
     {
         padding: 0.5em;
         text-align: left;
-        font-size: 9pt;
     }
 
     div.informaltable table tr th, 
@@ -244,7 +244,7 @@
     {
         padding: 0.5em 0.5em 0.5em 0.5em;
         border: 1pt solid white;
-        font-size: 80%;
+        font-size: 120%;
     }
 
 /*=============================================================================
@@ -258,13 +258,13 @@
     div.warning,
     p.blurb
     {
-        font-size: 9pt; /* A little bit smaller than the main text */
+        font-size: 10pt;
         line-height: 1.2;
         display: block;
         margin: 1pc 4% 0pc 4%;
         padding: 0.5pc 0.5pc 0.5pc 0.5pc;
     }
-    
+
     p.blurb img
     {
         padding: 1pt;
@@ -274,8 +274,6 @@
     Variable Lists
 =============================================================================*/
 
-    /* Make the terms in definition lists bold */
-    div.variablelist dl dt,
     span.term
     {
         font-weight: bold;
@@ -288,26 +286,24 @@
         vertical-align: top;
         padding: 0em 2em 0em 0em;
         font-size: 10pt;
-        margin: 0em 0em 0.5em 0em;
-        line-height: 1;
     }
 
+    div.variablelist table tbody tr td p
+    {
+        margin: 0em 0em 0.5em 0em;
+    }
+
+    /* Make the terms in definition lists bold */
     div.variablelist dl dt
     {
-        margin-bottom: 0.2em;
+        font-weight: bold;
+        font-size: 10pt;
     }
 
     div.variablelist dl dd
     {
-        margin: 0em 0em 0.5em 2em;
+        margin: 1em 0em 1em 2em;
         font-size: 10pt;
-    }
-
-    div.variablelist table tbody tr td p,
-    div.variablelist dl dd p
-    {
-        margin: 0em 0em 0.5em 0em;
-        line-height: 1;
     }
 
 /*=============================================================================
@@ -333,6 +329,7 @@
     /* Copyright, Legal Notice */
     div div.legalnotice p
     {
+        font-size: 8pt;
         text-align: left
     }
 
@@ -342,15 +339,15 @@
 
     @media screen
     {
-    /* Links */
+        /* Links */
         a
         {
-            color: #005a9c;
+            color: #0C7445;
         }
-    
+
         a:visited
         {
-            color: #9c5a9c;
+            color: #663974;
         }
 
         h1 a, h2 a, h3 a, h4 a, h5 a, h6 a,
@@ -360,8 +357,8 @@
             text-decoration: none; /* no underline */
             color: #000000;
         }
-    
-    /* Syntax Highlighting */
+
+        /* Syntax Highlighting */
         .keyword        { color: #0000AA; }
         .identifier     { color: #000000; }
         .special        { color: #707070; }
@@ -370,40 +367,40 @@
         .comment        { color: #800000; }
         .string         { color: teal; }
         .number         { color: teal; }
-        .white_bkd      { background-color: #FFFFFF; }
-        .dk_grey_bkd    { background-color: #999999; }
-    
-    /* Copyright, Legal Notice */
-        .copyright      
+        .white_bkd      { background-color: #E8FBE9; }
+        .dk_grey_bkd    { background-color: #A0DAAC; }
+
+        /* Copyright, Legal Notice */
+        .copyright
         { 
             color: #666666; 
             font-size: small; 
         }
-    
+
         div div.legalnotice p
         {
             color: #666666;
         }
-    
-    /* Program listing */
+
+        /* Program listing */
         pre.synopsis
         {
             border: 1px solid #DCDCDC;
+            border-bottom: 3px solid #9D9D9D;
+            border-right: 3px solid #9D9D9D;
+            background-color: #FAFFFB;
         }
-    
+
         .programlisting, 
         .screen
         {
             border: 1px solid #DCDCDC;
+            border-bottom: 3px solid #9D9D9D;
+            border-right: 3px solid #9D9D9D;
+            background-color: #FAFFFB;
         }
-    
-        td .programlisting, 
-        td .screen
-        {
-            border: 0px solid #DCDCDC;
-        }
-    
-    /* Blurbs */
+
+        /* Blurbs */
         div.note,
         div.tip,
         div.important,
@@ -412,98 +409,128 @@
         p.blurb
         {
             border: 1px solid #DCDCDC;
+            border-bottom: 3px solid #9D9D9D;
+            border-right: 3px solid #9D9D9D;
+            background-color: #FAFFFB;
         }
-    
-    /* Table of contents */
+
+        /* Table of contents */
         .toc
         {
             border: 1px solid #DCDCDC;
+            border-bottom: 3px solid #9D9D9D;
+            border-right: 3px solid #9D9D9D;
+            background-color: #FAFFFB;
         }
-    
-    /* Tables */
+
+        /* Table of contents */
+        .toc-main
+        {
+            border: 1px solid #DCDCDC;
+            border-bottom: 3px solid #9D9D9D;
+            border-right: 3px solid #9D9D9D;
+            background-color: #FAFFFB;
+        }
+
+
+        /* Tables */
         div.informaltable table tr td, 
         div.table table tr td
         {
             border: 1px solid #DCDCDC;
+            background-color: #FAFFFB;
         }
-    
+
         div.informaltable table tr th, 
         div.table table tr th
         {
-            background-color: #F0F0F0;
+            background-color: #E3F9E4;
             border: 1px solid #DCDCDC;
         }
-    
-    /* Misc */
+
+        /* Misc */
         span.highlight
         {
             color: #00A000;
         }
     }
-    
+
     @media print
     {
-    /* Links */
+        /* Links */
         a
         {
             color: black;
         }
-    
+
         a:visited
         {
             color: black;
         }
-    
+
         .spirit-nav
         {
             display: none;
         }
-    
-    /* Program listing */
+
+        /* Program listing */
         pre.synopsis
         {
             border: 1px solid gray;
+            background-color: #FAFFFB;
         }
-    
+
         .programlisting, 
         .screen
         {
             border: 1px solid gray;
+            background-color: #FAFFFB;
         }
-    
-        td .programlisting, 
-        td .screen
-        {
-            border: 0px solid #DCDCDC;
-        }
-    
-    /* Table of contents */
+
+        /* Table of contents */
         .toc
         {
-            border: 1px solid gray;
+            border: 1px solid #DCDCDC;
+            border-bottom: 3px solid #9D9D9D;
+            border-right: 3px solid #9D9D9D;
+            background-color: #FAFFFB;
         }
-    
+
+        /* Table of contents */
+        .toc-main
+        {
+            border: 1px solid #DCDCDC;
+            border-bottom: 3px solid #9D9D9D;
+            border-right: 3px solid #9D9D9D;
+            background-color: #FAFFFB;
+        }
+
         .informaltable table, 
         .table table
         {
-            border: 1px solid gray;
+            border: 1px solid #DCDCDC;
+            border-bottom: 3px solid #9D9D9D;
+            border-right: 3px solid #9D9D9D;
             border-collapse: collapse;
+            background-color: #FAFFFB;
         }
-    
-    /* Tables */
+
+        /* Tables */
         div.informaltable table tr td, 
         div.table table tr td
         {
-            border: 1px solid gray;
+            border: 1px solid #DCDCDC;
+            background-color: #FAFFFB;
         }
-    
+
         div.informaltable table tr th, 
         div.table table tr th
         {
-            border: 1px solid gray;
+            border: 1px solid #DCDCDC;
+            background-color: #FAFFFB;
         }
-    
-    /* Misc */
+
+        /* Misc */
         span.highlight
         {
             font-weight: bold;

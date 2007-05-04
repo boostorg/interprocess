@@ -1,14 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include "mutex_test_template.hpp"
@@ -56,20 +56,19 @@ class named_mutex_creation_test_wrapper
 
 int main ()
 {
+   using namespace boost::interprocess;
    try{
-      using namespace boost::interprocess;
-
       named_mutex::remove("named_mutex");
-
       test::test_named_creation<named_mutex_creation_test_wrapper>();
       test::test_all_lock<named_mutex_lock_test_wrapper>();
       test::test_all_mutex<false, named_mutex_lock_test_wrapper>();
    }
    catch(std::exception &ex){
+      named_mutex::remove("named_mutex");
       std::cout << ex.what() << std::endl;
       return 1;
    }
-
+   named_mutex::remove("named_mutex");
    return 0;
 }
 

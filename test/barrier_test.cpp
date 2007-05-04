@@ -10,16 +10,15 @@
 // It is provided "as is" without express or implied warranty.
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/thread/detail/config.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/interprocess/sync/interprocess_barrier.hpp>
@@ -52,16 +51,14 @@ void barrier_thread()
 
 int main ()
 {
-
    try{
-
    boost::thread_group g;
    global_parameter = 0;
 
    for (int i = 0; i < N_THREADS; ++i)
       g.create_thread(&barrier_thread);
 
-   g.join_all();
+      g.join_all();
    }
    catch(std::exception &e){
       std::cout << "Exception cached: " << e.what() << std::endl;
@@ -71,7 +68,6 @@ int main ()
       std::cout << "unkwnown exception catched" << std::endl;
       return 1;
    }
-
    return 0;
 }
 

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -21,6 +21,7 @@
 #ifndef BOOST_INTERPROCESS_TEST_MUTEX_TEST_TEMPLATE_HEADER
 #define BOOST_INTERPROCESS_TEST_MUTEX_TEST_TEMPLATE_HEADER
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include "boost_interprocess_check.hpp"
 #include "util.hpp"
@@ -345,5 +346,7 @@ void test_all_mutex()
 }
 
 }}}   //namespace boost { namespace interprocess { namespace test {
+
+#include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //BOOST_INTERPROCESS_TEST_MUTEX_TEST_TEMPLATE_HEADER

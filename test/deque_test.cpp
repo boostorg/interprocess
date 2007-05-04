@@ -1,15 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <algorithm>
 #include <memory>
 #include <deque>
@@ -80,8 +79,10 @@ bool do_test()
    //Customize managed_shared_memory class
    typedef basic_managed_shared_memory
       <char,
-      simple_seq_fit<mutex_family>,
-      flat_map_index
+      //simple_seq_fit<mutex_family>,
+      rbtree_best_fit<mutex_family>,
+      //flat_map_index
+      iset_index
       > my_managed_shared_memory;
 
    //Alias AllocatorType type
@@ -95,112 +96,117 @@ bool do_test()
    const char *const shMemName = "MySharedMemory";
    const int max = 100;
 
-   shared_memory_object::remove(shMemName);
-
-   //Create shared memory
-   my_managed_shared_memory segment(create_only, shMemName, Memsize);
-
-   segment.reserve_named_objects(100);
-
-   //Shared memory allocator must be always be initialized
-   //since it has no default constructor
-   MyShmDeque *shmdeque = segment.template construct<MyShmDeque>("MyShmDeque")
-                           (segment.get_segment_manager());
-
-   MyStdDeque *stddeque = new MyStdDeque;
-
    try{
-      //Compare several shared memory deque operations with std::deque
-      int i;
-      for(i = 0; i < max; ++i){
-         IntType move_me(i);
-         shmdeque->insert(shmdeque->end(), move(move_me));
-         stddeque->insert(stddeque->end(), i);
+      shared_memory_object::remove(shMemName);
+
+      //Create shared memory
+      my_managed_shared_memory segment(create_only, shMemName, Memsize);
+
+      segment.reserve_named_objects(100);
+
+      //Shared memory allocator must be always be initialized
+      //since it has no default constructor
+      MyShmDeque *shmdeque = segment.template construct<MyShmDeque>("MyShmDeque")
+                              (segment.get_segment_manager());
+
+      MyStdDeque *stddeque = new MyStdDeque;
+
+      try{
+         //Compare several shared memory deque operations with std::deque
+         int i;
+         for(i = 0; i < max; ++i){
+            IntType move_me(i);
+            shmdeque->insert(shmdeque->end(), move(move_me));
+            stddeque->insert(stddeque->end(), i);
+         }
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+
+         typename MyShmDeque::iterator it;
+         typename MyShmDeque::const_iterator cit = it;
+
+         shmdeque->erase(shmdeque->begin()++);
+         stddeque->erase(stddeque->begin()++);
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+
+         shmdeque->erase(shmdeque->begin());
+         stddeque->erase(stddeque->begin());
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+
+         {
+            //Initialize values
+            IntType aux_vect[50];
+            for(int i = 0; i < 50; ++i){
+               IntType move_me (-1);
+               aux_vect[i] = move(move_me);
+            }
+            int aux_vect2[50];
+            for(int i = 0; i < 50; ++i){
+               aux_vect2[i] = -1;
+            }
+
+            shmdeque->insert(shmdeque->end()
+                              ,detail::make_move_iterator(&aux_vect[0])
+                              ,detail::make_move_iterator(aux_vect + 50));
+            stddeque->insert(stddeque->end(), aux_vect2, aux_vect2 + 50);
+            if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+
+            for(int i = 0, j = static_cast<int>(shmdeque->size()); i < j; ++i){
+               shmdeque->erase(shmdeque->begin());
+               stddeque->erase(stddeque->begin());
+            }
+            if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+         }
+         {
+            IntType aux_vect[50];
+            for(int i = 0; i < 50; ++i){
+               IntType move_me(-1);
+               aux_vect[i] = move(move_me);
+            }
+            int aux_vect2[50];
+            for(int i = 0; i < 50; ++i){
+               aux_vect2[i] = -1;
+            }
+            shmdeque->insert(shmdeque->begin()
+                              ,detail::make_move_iterator(&aux_vect[0])
+                              ,detail::make_move_iterator(aux_vect + 50));
+            stddeque->insert(stddeque->begin(), aux_vect2, aux_vect2 + 50);
+            if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+         }
+
+         if(!copyable_only(shmdeque, stddeque
+                        ,boost::integral_constant
+                        <bool, !is_movable<IntType>::value>())){
+            return false;
+         }
+
+         shmdeque->erase(shmdeque->begin());
+         stddeque->erase(stddeque->begin());
+
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+
+         for(i = 0; i < max; ++i){
+            IntType move_me(i);
+            shmdeque->insert(shmdeque->begin(), move(move_me));
+            stddeque->insert(stddeque->begin(), i);
+         }
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+
+         segment.template destroy<MyShmDeque>("MyShmDeque");
+         delete stddeque;
       }
-      if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
-
-      typename MyShmDeque::iterator it;
-      typename MyShmDeque::const_iterator cit = it;
-
-      shmdeque->erase(shmdeque->begin()++);
-      stddeque->erase(stddeque->begin()++);
-      if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
-
-      shmdeque->erase(shmdeque->begin());
-      stddeque->erase(stddeque->begin());
-      if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
-
-      {
-         //Initialize values
-         IntType aux_vect[50];
-         for(int i = 0; i < 50; ++i){
-            IntType move_me (-1);
-            aux_vect[i] = move(move_me);
-         }
-         int aux_vect2[50];
-         for(int i = 0; i < 50; ++i){
-            aux_vect2[i] = -1;
-         }
-
-         shmdeque->insert(shmdeque->end()
-                           ,detail::make_move_iterator(&aux_vect[0])
-                           ,detail::make_move_iterator(aux_vect + 50));
-         stddeque->insert(stddeque->end(), aux_vect2, aux_vect2 + 50);
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
-
-         for(int i = 0, j = static_cast<int>(shmdeque->size()); i < j; ++i){
-            shmdeque->erase(shmdeque->begin());
-            stddeque->erase(stddeque->begin());
-         }
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
-      }
-      {
-         IntType aux_vect[50];
-         for(int i = 0; i < 50; ++i){
-            IntType move_me(-1);
-            aux_vect[i] = move(move_me);
-         }
-         int aux_vect2[50];
-         for(int i = 0; i < 50; ++i){
-            aux_vect2[i] = -1;
-         }
-         shmdeque->insert(shmdeque->begin()
-                           ,detail::make_move_iterator(&aux_vect[0])
-                           ,detail::make_move_iterator(aux_vect + 50));
-         stddeque->insert(stddeque->begin(), aux_vect2, aux_vect2 + 50);
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
-      }
-
-      if(!copyable_only(shmdeque, stddeque
-                     ,boost::integral_constant
-                     <bool, !is_movable<IntType>::value>())){
+      catch(std::exception &ex){
+         std::cout << ex.what() << std::endl;
          return false;
       }
-
-      shmdeque->erase(shmdeque->begin());
-      stddeque->erase(stddeque->begin());
-
-      if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
-
-      for(i = 0; i < max; ++i){
-         IntType move_me(i);
-         shmdeque->insert(shmdeque->begin(), move(move_me));
-         stddeque->insert(stddeque->begin(), i);
-      }
-      if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
-
-      segment.template destroy<MyShmDeque>("MyShmDeque");
-      delete stddeque;
+      
+      std::cout << std::endl << "Test OK!" << std::endl;
    }
-   catch(std::exception &ex){
-      std::cout << ex.what() << std::endl;
-      return false;
+   catch(...){
+      shared_memory_object::remove(shMemName);
+      throw;
    }
-   
-   std::cout << std::endl << "Test OK!" << std::endl;
+   shared_memory_object::remove(shMemName);
    return true;
-
-   return 0;
 }
 
 int main ()
@@ -216,6 +222,5 @@ int main ()
 
    return 0;
 }
-
 
 #include <boost/interprocess/detail/config_end.hpp>

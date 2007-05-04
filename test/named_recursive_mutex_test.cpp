@@ -1,14 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/named_recursive_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -66,10 +66,13 @@ int main ()
       test::test_all_recursive_lock<named_recursive_mutex_lock_test_wrapper>();
    }
    catch(std::exception &ex){
+      named_recursive_mutex::remove("named_recursive_mutex");
       std::cout << ex.what() << std::endl;
       return 1;
    }
+   named_recursive_mutex::remove("named_recursive_mutex");
    return 0;
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
+

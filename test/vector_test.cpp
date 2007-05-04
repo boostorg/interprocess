@@ -1,15 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <algorithm>
 #include <memory>
 #include <vector>
@@ -89,7 +88,8 @@ bool do_test()
    //Customize managed_shared_memory class
    typedef basic_managed_shared_memory
       <char,
-      simple_seq_fit<mutex_family>,
+      //simple_seq_fit<mutex_family>,
+      rbtree_best_fit<mutex_family>,
       flat_map_index
       > my_managed_shared_memory;
 
@@ -104,125 +104,128 @@ bool do_test()
    const char *const shMemName = "MySharedMemory";
    const int max = 100;
 
-   try{
+   {
       //Compare several shared memory vector operations with std::vector
       //Create shared memory
       shared_memory_object::remove(shMemName);
-      my_managed_shared_memory segment(create_only, shMemName, Memsize);
+      try{
+         my_managed_shared_memory segment(create_only, shMemName, Memsize);
 
-      segment.reserve_named_objects(100);
+         segment.reserve_named_objects(100);
 
-      //Shared memory allocator must be always be initialized
-      //since it has no default constructor
-      MyShmVector *shmvector = segment.template construct<MyShmVector>("MyShmVector")
-                              (segment.get_segment_manager());
-      MyStdVector *stdvector = new MyStdVector;
+         //Shared memory allocator must be always be initialized
+         //since it has no default constructor
+         MyShmVector *shmvector = segment.template construct<MyShmVector>("MyShmVector")
+                                 (segment.get_segment_manager());
+         MyStdVector *stdvector = new MyStdVector;
 
-      shmvector->resize(100);
-      stdvector->resize(100);
-      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;         
+         shmvector->resize(100);
+         stdvector->resize(100);
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return false;         
 
-      shmvector->resize(200);
-      stdvector->resize(200);
-      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;         
+         shmvector->resize(200);
+         stdvector->resize(200);
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return false;         
 
-      shmvector->resize(0);
-      stdvector->resize(0);
-      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;         
+         shmvector->resize(0);
+         stdvector->resize(0);
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return false;         
 
-      for(int i = 0; i < max; ++i){
-         IntType new_int(i);
-         shmvector->insert(shmvector->end(), move(new_int));
-         stdvector->insert(stdvector->end(), i);
-      }
-      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
-
-      typename MyShmVector::iterator it;
-      typename MyShmVector::const_iterator cit = it;
-
-      shmvector->erase(shmvector->begin()++);
-      stdvector->erase(stdvector->begin()++);
-      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
-
-      shmvector->erase(shmvector->begin());
-      stdvector->erase(stdvector->begin());
-      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
-
-      {
-         //Initialize values
-         IntType aux_vect[50];
-         for(int i = 0; i < 50; ++i){
-            IntType new_int(-1);
-            aux_vect[i] = move(new_int);
-         }
-         int aux_vect2[50];
-         for(int i = 0; i < 50; ++i){
-            aux_vect2[i] = -1;
-         }
-
-         shmvector->insert(shmvector->end()
-                           ,detail::make_move_iterator(&aux_vect[0])
-                           ,detail::make_move_iterator(aux_vect + 50));
-         stdvector->insert(stdvector->end(), aux_vect2, aux_vect2 + 50);
-         if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
-
-         for(int i = 0, j = static_cast<int>(shmvector->size()); i < j; ++i){
-            shmvector->erase(shmvector->begin());
-            stdvector->erase(stdvector->begin());
+         for(int i = 0; i < max; ++i){
+            IntType new_int(i);
+            shmvector->insert(shmvector->end(), move(new_int));
+            stdvector->insert(stdvector->end(), i);
          }
          if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
-      }
-      {
-         IntType aux_vect[50];
-         for(int i = 0; i < 50; ++i){
-            IntType new_int(-1);
-            aux_vect[i] = move(new_int);
-         }
-         int aux_vect2[50];
-         for(int i = 0; i < 50; ++i){
-            aux_vect2[i] = -1;
-         }
-         shmvector->insert(shmvector->begin()
-                           ,detail::make_move_iterator(&aux_vect[0])
-                           ,detail::make_move_iterator(aux_vect + 50));
-         stdvector->insert(stdvector->begin(), aux_vect2, aux_vect2 + 50);
+
+         typename MyShmVector::iterator it;
+         typename MyShmVector::const_iterator cit = it;
+
+         shmvector->erase(shmvector->begin()++);
+         stdvector->erase(stdvector->begin()++);
          if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+
+         shmvector->erase(shmvector->begin());
+         stdvector->erase(stdvector->begin());
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+
+         {
+            //Initialize values
+            IntType aux_vect[50];
+            for(int i = 0; i < 50; ++i){
+               IntType new_int(-1);
+               aux_vect[i] = move(new_int);
+            }
+            int aux_vect2[50];
+            for(int i = 0; i < 50; ++i){
+               aux_vect2[i] = -1;
+            }
+
+            shmvector->insert(shmvector->end()
+                              ,detail::make_move_iterator(&aux_vect[0])
+                              ,detail::make_move_iterator(aux_vect + 50));
+            stdvector->insert(stdvector->end(), aux_vect2, aux_vect2 + 50);
+            if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+
+            for(int i = 0, j = static_cast<int>(shmvector->size()); i < j; ++i){
+               shmvector->erase(shmvector->begin());
+               stdvector->erase(stdvector->begin());
+            }
+            if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+         }
+         {
+            IntType aux_vect[50];
+            for(int i = 0; i < 50; ++i){
+               IntType new_int(-1);
+               aux_vect[i] = move(new_int);
+            }
+            int aux_vect2[50];
+            for(int i = 0; i < 50; ++i){
+               aux_vect2[i] = -1;
+            }
+            shmvector->insert(shmvector->begin()
+                              ,detail::make_move_iterator(&aux_vect[0])
+                              ,detail::make_move_iterator(aux_vect + 50));
+            stdvector->insert(stdvector->begin(), aux_vect2, aux_vect2 + 50);
+            if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+         }
+
+         shmvector->reserve(shmvector->size()*2);
+         stdvector->reserve(stdvector->size()*2);
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+
+         IntType push_back_this(1);
+         shmvector->push_back(move(push_back_this));
+         stdvector->push_back(int(1));
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+
+         if(!copyable_only(shmvector, stdvector
+                        ,boost::integral_constant
+                        <bool, !is_movable<IntType>::value>())){
+            return false;
+         }
+
+         shmvector->erase(shmvector->begin());
+         stdvector->erase(stdvector->begin());
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+
+         for(int i = 0; i < max; ++i){
+            IntType insert_this(i);
+            shmvector->insert(shmvector->begin(), move(insert_this));
+            stdvector->insert(stdvector->begin(), i);
+         }
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+
+         delete stdvector;
+         segment.template destroy<MyShmVector>("MyShmVector");
       }
-
-      shmvector->reserve(shmvector->size()*2);
-      stdvector->reserve(stdvector->size()*2);
-      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
-
-      IntType push_back_this(1);
-      shmvector->push_back(move(push_back_this));
-      stdvector->push_back(int(1));
-      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
-
-      if(!copyable_only(shmvector, stdvector
-                     ,boost::integral_constant
-                     <bool, !is_movable<IntType>::value>())){
+      catch(std::exception &ex){
+         shared_memory_object::remove(shMemName);
+         std::cout << ex.what() << std::endl;
          return false;
       }
-
-      shmvector->erase(shmvector->begin());
-      stdvector->erase(stdvector->begin());
-      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
-
-      for(int i = 0; i < max; ++i){
-         IntType insert_this(i);
-         shmvector->insert(shmvector->begin(), move(insert_this));
-         stdvector->insert(stdvector->begin(), i);
-      }
-      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
-
-      delete stdvector;
-      segment.template destroy<MyShmVector>("MyShmVector");
    }
-   catch(std::exception &ex){
-      std::cout << ex.what() << std::endl;
-      return false;
-   }
-   
+   shared_memory_object::remove(shMemName);
    std::cout << std::endl << "Test OK!" << std::endl;
    return true;
 }
@@ -231,10 +234,23 @@ bool test_expand_bwd()
 {
    //Now test all back insertion possibilities
    typedef test::expand_bwd_test_allocator<test::int_holder>
-      allocator_type;
-   typedef vector<test::int_holder, allocator_type>
-      vector_type;
-   return  test::test_all_expand_bwd<vector_type>();
+      int_allocator_type;
+   typedef vector<test::int_holder, int_allocator_type>
+      int_vector;
+
+   if(!test::test_all_expand_bwd<int_vector>())
+      return false;
+
+   typedef test::expand_bwd_test_allocator<test::triple_int_holder>
+      triple_allocator_type;
+
+   typedef vector<test::triple_int_holder, triple_allocator_type>
+      triple_int_vector;
+
+   if(!test::test_all_expand_bwd<triple_int_vector>())
+      return false;
+
+   return true;
 }
 
 int main()

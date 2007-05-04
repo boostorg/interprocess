@@ -11,6 +11,7 @@
 #ifndef BOOST_INTERPROCESS_TEST_LIST_TEST_HEADER
 #define BOOST_INTERPROCESS_TEST_LIST_TEST_HEADER
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include "check_equal_containers.hpp"
 #include <memory>
 #include <list>
@@ -96,6 +97,7 @@ int list_test (bool copied_allocators_equal = true)
    const int max = 100;
    typedef push_data_function<DoublyLinked> push_data_t;
 
+   try{
    //Named new capable shared mem allocator
    //Create shared memory
    shared_memory_object::remove(shMemName);
@@ -148,6 +150,14 @@ int list_test (bool copied_allocators_equal = true)
       if(!CheckEqualContainers(shmlist, stdlist)) return 1;
    }
 
+   shmlist->reverse();
+   stdlist->reverse();
+   if(!CheckEqualContainers(shmlist, stdlist)) return 1;
+
+   shmlist->reverse();
+   stdlist->reverse();
+   if(!CheckEqualContainers(shmlist, stdlist)) return 1;
+
    {
       IntType aux_vect[50];
       for(int i = 0; i < 50; ++i){
@@ -178,12 +188,6 @@ int list_test (bool copied_allocators_equal = true)
    stdlist->resize(stdlist->size()/2);
    if(!CheckEqualContainers(shmlist, stdlist)) return 1;
 
-   const IntType &value1 = *shmlist->begin();
-   shmlist->remove(value1);
-   const int     &value2 = *stdlist->begin();
-   stdlist->remove(value2);
-   if(!CheckEqualContainers(shmlist, stdlist)) return 1;
-
    if(push_data_t()(max, shmlist, stdlist)){
       return 1;
    }
@@ -209,7 +213,19 @@ int list_test (bool copied_allocators_equal = true)
       return 1;
    }
 
+   if(push_data_t()(listsize, &othershmlist, &otherstdlist)){
+      return 1;
+   }
+
    if(copied_allocators_equal){
+      shmlist->sort(std::greater<IntType>());
+      stdlist->sort(std::greater<int>());
+      if(!CheckEqualContainers(shmlist, stdlist)) return 1;
+
+      othershmlist.sort(std::greater<IntType>());
+      otherstdlist.sort(std::greater<int>());
+      if(!CheckEqualContainers(&othershmlist, &otherstdlist)) return 1;
+
       shmlist->merge(othershmlist, std::greater<IntType>());
       stdlist->merge(otherstdlist, std::greater<int>());
       if(!CheckEqualContainers(shmlist, stdlist)) return 1;   
@@ -217,11 +233,19 @@ int list_test (bool copied_allocators_equal = true)
 
    segment.template destroy<MyShmList>("MyList");
    delete stdlist;
+   }
+   catch(...){
+      shared_memory_object::remove(shMemName);
+      throw;
+   }
+   shared_memory_object::remove(shMemName);
    return 0;
 }
 
 }  //namespace test{
 }  //namespace interprocess{
 }  //namespace boost{
+
+#include <boost/interprocess/detail/config_end.hpp>
 
 #endif

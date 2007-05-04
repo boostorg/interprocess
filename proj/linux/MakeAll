@@ -13,12 +13,9 @@ INTERPROCESS_OUT := $(patsubst ../../test/%.cpp, ../../bin/linux/test_%.out, $(I
 INTERPROCESSEXAMPLE_CPP := $(wildcard ../../example/*.cpp)
 INTERPROCESSEXAMPLE_OUT := $(patsubst ../../example/%.cpp, ../../bin/linux/ex_%.out, $(INTERPROCESSEXAMPLE_CPP))
 
-INTERPROCESSDOC_CPP := $(wildcard ../../doc/code/*.cpp)
-INTERPROCESSDOC_OUT := $(patsubst ../../doc/code/%.cpp, ../../bin/linux/doc_%.out, $(INTERPROCESSDOC_CPP))
-
 .PHONY: createdir clean
  
-all: createdir $(INTERPROCESSEXAMPLE_OUT) $(INTERPROCESS_OUT) $(INTERPROCESSDOC_OUT)
+all: createdir $(INTERPROCESS_OUT) $(INTERPROCESSEXAMPLE_OUT)
 	@cd .
 
 createdir:
@@ -28,9 +25,6 @@ createdir:
 	$(CC) $< -Wall -pedantic -g -pthread -DBOOST_DATE_TIME_NO_LIB -lstdc++ -lrt -lboost_thread-gcc-mt -I$(BOOST_ROOT) -L$(BOOST_LIBS) -o $@
 
 ../../bin/linux/ex_%.out: ../../example/%.cpp 
-	$(CC) $< -Wall -pedantic -g -pthread -DBOOST_DATE_TIME_NO_LIB -lstdc++ -lrt -lboost_thread-gcc-mt -I$(BOOST_ROOT) -L$(BOOST_LIBS) -o $@
-
-../../bin/linux/doc_%.out: ../../doc/code/%.cpp 
 	$(CC) $< -Wall -pedantic -g -pthread -DBOOST_DATE_TIME_NO_LIB -lstdc++ -lrt -lboost_thread-gcc-mt -I$(BOOST_ROOT) -L$(BOOST_LIBS) -o $@
 
 clean:

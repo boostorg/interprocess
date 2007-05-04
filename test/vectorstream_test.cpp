@@ -1,11 +1,18 @@
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+//////////////////////////////////////////////////////////////////////////////
+//
+// (C) Copyright Ion Gaztañaga 2006. Distributed under the Boost
+// Software License, Version 1.0. (See accompanying file
+// LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// See http://www.boost.org/libs/interprocess for documentation.
+//
+//////////////////////////////////////////////////////////////////////////////
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/streams/vectorstream.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <sstream>
-//#include <strstream>
 #include <cstring>
 #include <vector>
 #include <iostream>
@@ -109,174 +116,13 @@ static int vectorstream_test()
    }
    return 0;
 }
-/*
-static int vectorstream_performance_test()
-{
-   const int NumStrings = 1000000;
-   std::string empty_string;
-   
-   #define TEST_AVOID_SSO
 
-   std::string prefix
-      #ifdef TEST_AVOID_SSO
-         = "this_is_quite_a_long_prefix_to_avoid_small_string_optimization";
-      #else
-         = "short";
-      #endif
-
-
-   boost::posix_time::ptime  tini, tend;
-
-   double sprintf_time;
-
-   {
-      std::vector<std::string>   str_vector;
-      str_vector.resize(NumStrings);
-      char buffer[512];
-
-      tini = boost::posix_time::microsec_clock::universal_time();
-
-      //Try with sprintf
-      for(int i = 0; i < NumStrings; ++i){
-         sprintf(buffer, "%s%d", prefix.c_str(), i);
-         str_vector[i] = buffer;
-      }
-
-      tend = boost::posix_time::microsec_clock::universal_time();
-
-      std::cout << "sprintf time: " << (tend - tini).total_microseconds() << std::endl;
-   }
-
-   sprintf_time = (tend - tini).total_microseconds();
-
-   {
-      std::stringstream          sstream;
-      std::vector<std::string>   str_vector;
-      str_vector.resize(NumStrings);
-
-      tini = boost::posix_time::microsec_clock::universal_time();
-
-      //Try with stringstream
-      for(int i = 0; i < NumStrings; ++i){
-         sstream << prefix << i << std::ends;
-         str_vector[i] = sstream.str();
-         sstream.seekp(0);
-      }
-
-      tend = boost::posix_time::microsec_clock::universal_time();
-
-      std::cout << "stringstream with seekp time: " << ((tend - tini).total_microseconds()/sprintf_time) << std::endl;
-   }
-
-   {
-      std::stringstream          sstream;
-      std::vector<std::string>   str_vector;
-      str_vector.resize(NumStrings);
-
-      tini = boost::posix_time::microsec_clock::universal_time();
-
-      //Try with stringstream
-      for(int i = 0; i < NumStrings; ++i){
-         sstream.str("");
-         sstream << prefix << i << std::ends;
-         str_vector[i] = sstream.str();
-      }
-
-      tend = boost::posix_time::microsec_clock::universal_time();
-
-      std::cout << "stringstream with str time: " << ((tend - tini).total_microseconds()/sprintf_time) << std::endl;
-   }
-
-   {
-      std::strstream             stream;
-      std::vector<std::string>   str_vector;
-      str_vector.resize(NumStrings);
-
-      tini = boost::posix_time::microsec_clock::universal_time();
-
-      //Try with strstream
-      for(int i = 0; i < NumStrings; ++i){
-         stream << prefix << i << std::ends;
-         str_vector[i] = stream.str();
-         stream.freeze(false);
-         stream.seekp(0);
-      }
-
-      tend = boost::posix_time::microsec_clock::universal_time();
-
-      std::cout << "strstream time: " << ((tend - tini).total_microseconds()/sprintf_time) << std::endl;
-   }
-
-   {
-      std::stringstream          sstream;
-      std::vector<std::string>   str_vector;
-      str_vector.resize(NumStrings);
-
-      tini = boost::posix_time::microsec_clock::universal_time();
-
-      //Try with lexical cast
-      for(int i = 0; i < NumStrings; ++i){
-         str_vector[i] += prefix;
-         str_vector[i] += boost::lexical_cast<std::string>(i);
-      }
-
-      tend = boost::posix_time::microsec_clock::universal_time();
-
-      std::cout << "lexical_cast time: " << ((tend - tini).total_microseconds()/sprintf_time) << std::endl;
-   }
-
-   {
-      basic_vectorstream<std::vector<char> > vvstream;
-      std::vector<std::vector<char> >        vector_vector;
-      vector_vector.resize(NumStrings);
-
-      tini = boost::posix_time::microsec_clock::universal_time();
-
-      //Now with vectorstream
-      for(int i = 0; i < NumStrings; ++i){
-         vvstream.reserve(prefix.size() + 10);
-         vvstream << prefix << i << std::ends;
-         vvstream.swap_vector(vector_vector[i]);
-      }
-
-      tend = boost::posix_time::microsec_clock::universal_time();
-
-      std::cout << "vectorstream time: " << ((tend - tini).total_microseconds()/sprintf_time) << std::endl;
-
-   }
-
-   {
-      char formatting_buffer[256];
-      bufferstream               bstream(formatting_buffer, 256);
-      std::vector<std::string>   string_vector;
-      string_vector.resize(NumStrings);
-
-      tini = boost::posix_time::microsec_clock::universal_time();
-
-      //Now with bufferstream
-      for(int i = 0; i < NumStrings; ++i){
-         bstream << prefix << i << std::ends;
-         string_vector[i].assign(formatting_buffer, bstream.tellp());
-         bstream.seekp(0);
-      }
-
-      tend = boost::posix_time::microsec_clock::universal_time();
-
-      std::cout << "bufferstream time: " << ((tend - tini).total_microseconds()/sprintf_time) << std::endl;
-   }
-
-   return 0;
-}
-*/
 int main ()
 {
    if(vectorstream_test()==-1){
       return 1;
    }
-/*
-   if(vectorstream_performance_test()==-1){
-      return 1;
-   }*/
+
    return 0;
 }
 

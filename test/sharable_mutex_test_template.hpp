@@ -10,7 +10,7 @@
 // It is provided "as is" without express or implied warranty.
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -310,5 +310,7 @@ void test_all_sharable_mutex()
 
 
 }}}   //namespace boost { namespace interprocess { namespace test {
+
+#include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_INTERPROCESS_TEST_SHARABLE_MUTEX_TEST_TEMPLATE_HEADER

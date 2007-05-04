@@ -10,13 +10,16 @@
 // It is provided "as is" without express or implied warranty.
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#ifndef BOOST_INTERPROCESS_CONDITION_TEST_TEMPLATE_HPP
+#define BOOST_INTERPROCESS_CONDITION_TEST_TEMPLATE_HPP
+
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
@@ -274,20 +277,22 @@ const int NumThreads    = thread_factor*queue_size;
 
 //Function that removes items from queue
 template <class Condition, class Mutex>
-static void condition_func(void)
+struct condition_func
 {
-   boost::interprocess::scoped_lock<Mutex>
-      lock(mutex<Mutex>());
-   while(count == 0){
-      ++waiting_readers;
-      cond_empty<Condition>().wait(lock);
-      --waiting_readers;
+   static void execute()
+   {
+      boost::interprocess::scoped_lock<Mutex>
+         lock(mutex<Mutex>());
+      while(count == 0){
+         ++waiting_readers;
+         cond_empty<Condition>().wait(lock);
+         --waiting_readers;
+      }
+      --count;
+      if(waiting_writer)
+         cond_full<Condition>().notify_one();
    }
-   --count;
-   if(waiting_writer)
-      cond_full<Condition>().notify_one();
-   
-}
+};
 
 //Queue functions
 template <class Condition, class Mutex>
@@ -308,7 +313,9 @@ void do_test_condition_queue_notify_one(void)
       boost::thread_group thgroup;
       int i;
       for(i = 0; i< NumThreads; ++i){
-         thgroup.create_thread(condition_func<Condition, Mutex>);
+//         thgroup.create_thread(&condition_func<Condition, Mutex>);
+//         thgroup.create_thread(&condition_func_bis);
+         thgroup.create_thread(&condition_func<Condition, Mutex>::execute);
       }
 
       //Add 20 elements one by one in the queue simulation
@@ -352,7 +359,9 @@ void do_test_condition_queue_notify_all(void)
       boost::thread_group thgroup;
       int i;
       for(i = 0; i< NumThreads; ++i){
-         thgroup.create_thread(condition_func<Condition, Mutex>);
+//         thgroup.create_thread(&condition_func<Condition, Mutex>);
+//         thgroup.create_thread(&condition_func_bis);
+         thgroup.create_thread(&condition_func<Condition, Mutex>::execute);
       }
 
       //Fill queue to the max size and notify all several times
@@ -397,3 +406,5 @@ bool do_test_condition()
 }  //namespace boost{
 
 #include <boost/interprocess/detail/config_end.hpp>
+
+#endif   //#ifndef BOOST_INTERPROCESS_CONDITION_TEST_TEMPLATE_HPP

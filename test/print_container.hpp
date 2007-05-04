@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -11,10 +11,10 @@
 #ifndef BOOST_PRINTCONTAINER_HPP
 #define BOOST_PRINTCONTAINER_HPP
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <functional>
 #include <iostream>
 #include <algorithm>
-#include <boost/interprocess/detail/config_begin.hpp>
 
 namespace boost{
 namespace interprocess{
@@ -48,7 +48,7 @@ void PrintContainers(MyShmCont *shmcont, MyStdCont *stdcont)
    for(; itshm != itshmend; ++itshm){
       std::cout << *itshm << std::endl;
    }
-   std::cout << "MyStdCont" << *itstd << std::endl; 
+   std::cout << "MyStdCont" << std::endl; 
   
    for(; itstd != itstdend; ++itstd){
       std::cout << *itstd << std::endl;

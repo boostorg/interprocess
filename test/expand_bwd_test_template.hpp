@@ -11,6 +11,7 @@
 #ifndef BOOST_INTERPROCESS_TEST_ALLOCATION_TEST_TEMPLATE_HEADER
 #define BOOST_INTERPROCESS_TEST_ALLOCATION_TEST_TEMPLATE_HEADER
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <vector>
 #include "expand_bwd_test_allocator.hpp"
 #include <algorithm>
@@ -20,7 +21,7 @@ namespace boost { namespace interprocess { namespace test {
 template<class T>
 struct value_holder
 {
-   value_holder(T val): m_value(val){}
+   value_holder(T val)  :  m_value(val){}
    value_holder(): m_value(0){}
    ~value_holder(){ m_value = 0; }
    bool operator == (const value_holder &other) const
@@ -31,7 +32,47 @@ struct value_holder
    T m_value;
 };
 
+template<class T>
+struct triple_value_holder
+{
+   triple_value_holder(T val)
+      :  m_value1(val)
+      ,  m_value2(val)
+      ,  m_value3(val)
+   {}
+
+   triple_value_holder()
+      :  m_value1(0)
+      ,  m_value2(0)
+      ,  m_value3(0)
+   {}
+
+   ~triple_value_holder()
+   {  m_value1 = m_value2 = m_value3 = 0; }
+
+   bool operator == (const triple_value_holder &other) const
+   {
+      return   m_value1 == other.m_value1
+         &&    m_value2 == other.m_value2
+         &&    m_value3 == other.m_value3;
+   }
+
+   bool operator != (const triple_value_holder &other) const
+   {
+      return   m_value1 != other.m_value1
+         ||    m_value2 != other.m_value2
+         ||    m_value3 != other.m_value3;
+   }
+
+   T m_value1;
+   T m_value2;
+   T m_value3;
+};
+
 typedef value_holder<int> int_holder;
+typedef triple_value_holder<int> triple_int_holder;
+
+
 
 //Function to check if both sets are equal
 template <class Vector1, class Vector2>
@@ -208,6 +249,8 @@ bool test_all_expand_bwd()
 }
 
 }}}   //namespace boost { namespace interprocess { namespace test {
+
+#include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //BOOST_INTERPROCESS_TEST_ALLOCATION_TEST_TEMPLATE_HEADER
 

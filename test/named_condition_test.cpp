@@ -1,14 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/named_condition.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
@@ -116,14 +116,12 @@ int named_mutex_test_wrapper::count = 0;
 
 int main ()
 {
+   using namespace boost::interprocess;
    try{
-      using namespace boost::interprocess;
-
       //Remove previous mutexes and conditions
       named_mutex::remove("test_mutex0");
       named_condition::remove("test_cond0");
       named_condition::remove("test_cond1");
-
       named_condition::remove("named_condition");
       named_mutex::remove("named_mutex");
 
@@ -135,7 +133,11 @@ int main ()
       std::cout << ex.what() << std::endl;
       return 1;
    }
-
+   named_mutex::remove("test_mutex0");
+   named_condition::remove("test_cond0");
+   named_condition::remove("test_cond1");
+   named_condition::remove("named_condition");
+   named_mutex::remove("named_mutex");
    return 0;
 }
 

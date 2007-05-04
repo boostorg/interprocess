@@ -25,7 +25,7 @@ rule test_all
       :  # additional args
       :  # test-files
       :  # requirements
-		] ;
+      ] ;
    }
 
    return $(all_rules) ;

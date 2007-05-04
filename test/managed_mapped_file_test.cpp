@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -8,6 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
@@ -90,36 +91,8 @@ int main ()
       if(0 != mfile.find<MyVect>("MyVector").first)
          return -1;
    }
-
+   std::remove(FileName);
    return 0;
 }
-/*
-#include <boost/interprocess/managed_mapped_file.hpp>
-#include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/interprocess/containers/vector.hpp>
 
-using boost::interprocess::managed_mapped_file;
-using boost::interprocess::allocator;
-using boost::interprocess::vector;
-using boost::interprocess::create_only;
-
-typedef allocator<int, managed_mapped_file::segment_manager> int_alloc;
-typedef vector<int, int_alloc> shvi;
-typedef allocator<shvi, managed_mapped_file::segment_manager> vec_alloc;
-typedef vector<shvi, vec_alloc> shvvi;
-
-int main()
-{
-   std::remove("./file_mapping");
-   managed_mapped_file file_mapping(create_only, "./file_mapping", 1000);
-
-   shvvi * svvi = file_mapping.construct<shvvi>("Vector") (file_mapping.get_segment_manager());
-   shvi * svi = file_mapping.construct<shvi>("SubVector") (file_mapping.get_segment_manager());
-
-   svvi->push_back(*svi);
-
-   return 0;
-}
-*/
-
-
+#include <boost/interprocess/detail/config_end.hpp>

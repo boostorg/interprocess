@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -21,6 +21,7 @@
 #ifndef BOOST_INTERPROCESS_TEST_UTIL_HEADER
 #define BOOST_INTERPROCESS_TEST_UTIL_HEADER
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
@@ -103,5 +104,7 @@ static const int BaseSeconds = 1;
 }  //namespace test {
 }  //namespace interprocess {
 }  //namespace boost {
+
+#include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_INTERPROCESS_TEST_UTIL_HEADER

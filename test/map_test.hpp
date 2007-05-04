@@ -11,6 +11,7 @@
 #ifndef BOOST_INTERPROCESS_TEST_MAP_TEST_HEADER
 #define BOOST_INTERPROCESS_TEST_MAP_TEST_HEADER
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include "check_equal_containers.hpp"
 #include <map>
 #include <functional>
@@ -43,6 +44,7 @@ int map_test ()
    const char *const shMemName = "/MySharedMemory";
    const int max = 100;
 
+   try{
    //Create shared memory
    shared_memory_object::remove(shMemName);
    ManagedSharedMemory segment(create_only, shMemName, memsize);
@@ -62,6 +64,50 @@ int map_test ()
          (std::less<IntType>(), segment.get_segment_manager());
 
    MyStdMultiMap *stdmultimap = new MyStdMultiMap;
+
+   //Test construction from a range   
+   {
+      //This is really nasty, but we have no other simple choice
+      IntPairType aux_vect[50];
+      for(int i = 0; i < 50; ++i){
+         new(&aux_vect[i])IntPairType(IntType(i/2), IntType(i/2));
+      }
+
+      typedef typename MyStdMap::value_type StdValueType;
+      typedef typename MyStdMap::key_type StdKeyType;
+      typedef typename MyStdMap::mapped_type StdMappedType;
+      StdValueType aux_vect2[50];
+      for(int i = 0; i < 50; ++i){
+         new(&aux_vect2[i])StdValueType(StdKeyType(i/2), StdMappedType(i/2));
+      }
+
+      IntPairType aux_vect3[50];
+      for(int i = 0; i < 50; ++i){
+         new(&aux_vect3[i])IntPairType(IntType(i/2), IntType(i/2));
+      }
+
+      MyShmMap *shmset2 = 
+         segment.template construct<MyShmMap>("MyShmMap2")
+            (detail::make_move_iterator(&aux_vect[0])
+            , detail::make_move_iterator(aux_vect + 50)
+            , std::less<IntType>(), segment.get_segment_manager());
+
+      MyStdMap *stdset2 = new MyStdMap(aux_vect2, aux_vect2 + 50);
+
+      MyShmMultiMap *shmmultiset2 = 
+         segment.template construct<MyShmMultiMap>("MyShmMultiMap2")
+            (detail::make_move_iterator(&aux_vect3[0])
+            , detail::make_move_iterator(aux_vect3 + 50)
+            , std::less<IntType>(), segment.get_segment_manager());
+
+      MyStdMultiMap *stdmultiset2 = new MyStdMultiMap(aux_vect2, aux_vect2 + 50);
+      if(!CheckEqualContainers(shmset2, stdset2)) return 1;
+      if(!CheckEqualContainers(shmmultiset2, stdmultiset2)) return 1;
+      segment.destroy_ptr(shmset2);
+      segment.destroy_ptr(shmmultiset2);
+      delete stdset2;
+      delete stdmultiset2;
+   }
 
    int i, j;
    for(i = 0; i < max; ++i){
@@ -263,12 +309,97 @@ int map_test ()
    delete stdmap;
    segment.destroy_ptr(shmmultimap);
    delete stdmultimap;
+   }
+   catch(...){
+      shared_memory_object::remove(shMemName);
+      throw;
+   }
+   shared_memory_object::remove(shMemName);
+   return 0;
+}
 
+template<class ManagedSharedMemory
+        ,class MyShmMap
+        ,class MyStdMap
+        ,class MyShmMultiMap
+        ,class MyStdMultiMap>
+int map_test_copyable ()
+{
+   typedef typename MyShmMap::key_type    IntType;
+   typedef std::pair<IntType, IntType>    IntPairType;
+   typedef typename MyStdMap::value_type  StdPairType;
+
+   const int memsize = 65536;
+   const char *const shMemName = "/MySharedMemory";
+   const int max = 100;
+
+   try{
+   //Create shared memory
+   shared_memory_object::remove(shMemName);
+   ManagedSharedMemory segment(create_only, shMemName, memsize);
+
+   segment.reserve_named_objects(100);
+
+   //Shared memory allocator must be always be initialized
+   //since it has no default constructor
+   MyShmMap *shmmap = 
+      segment.template construct<MyShmMap>("MyShmMap")
+         (std::less<IntType>(), segment.get_segment_manager());
+
+   MyStdMap *stdmap = new MyStdMap;
+
+   MyShmMultiMap *shmmultimap = 
+      segment.template construct<MyShmMultiMap>("MyShmMultiMap")
+         (std::less<IntType>(), segment.get_segment_manager());
+
+   MyStdMultiMap *stdmultimap = new MyStdMultiMap;
+
+   int i;
+   for(i = 0; i < max; ++i){
+      shmmap->insert(move(IntPairType(move(IntType(i)), move(IntType(i)))));
+      stdmap->insert(StdPairType(i, i));
+      shmmultimap->insert(move(IntPairType(move(IntType(i)), move(IntType(i)))));
+      stdmultimap->insert(StdPairType(i, i));
+   }
+   if(!CheckEqualContainers(shmmap, stdmap)) return 1;
+   if(!CheckEqualContainers(shmmultimap, stdmultimap)) return 1;
+
+   {
+      //Now, test copy constructor
+      MyShmMap shmmapcopy(*shmmap);
+      MyStdMap stdmapcopy(*stdmap);
+      MyShmMultiMap shmmmapcopy(*shmmultimap);
+      MyStdMultiMap stdmmapcopy(*stdmultimap);
+
+      if(!CheckEqualContainers(&shmmapcopy, &stdmapcopy))
+         return 1;
+      if(!CheckEqualContainers(&shmmmapcopy, &stdmmapcopy))
+         return 1;
+
+      //And now assignment
+      shmmapcopy  = *shmmap;
+      stdmapcopy  = *stdmap;
+      shmmmapcopy = *shmmultimap;
+      stdmmapcopy = *stdmultimap;
+      
+      if(!CheckEqualContainers(&shmmapcopy, &stdmapcopy))
+         return 1;
+      if(!CheckEqualContainers(&shmmmapcopy, &stdmmapcopy))
+         return 1;
+   }
+   }
+   catch(...){
+      shared_memory_object::remove(shMemName);
+      throw;
+   }
+   shared_memory_object::remove(shMemName);
    return 0;
 }
 
 }  //namespace test{
 }  //namespace interprocess{
 }  //namespace boost{
+
+#include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_INTERPROCESS_TEST_MAP_TEST_HEADER

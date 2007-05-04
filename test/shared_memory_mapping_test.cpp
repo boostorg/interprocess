@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2005. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -9,8 +9,6 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
-
 #include <fstream>
 #include <iostream>
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -115,9 +113,10 @@ int main ()
       }
    }
    catch(std::exception &exc){
+      shared_memory_object::remove("my_file");
       std::cout << "Unhandled exception: " << exc.what() << std::endl;
    }
-
+   shared_memory_object::remove("my_file");
    return 0;
 }
 

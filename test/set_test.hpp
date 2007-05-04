@@ -1,6 +1,6 @@
 ////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -11,6 +11,7 @@
 #ifndef BOOST_INTERPROCESS_TEST_SET_TEST_HEADER
 #define BOOST_INTERPROCESS_TEST_SET_TEST_HEADER
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include "check_equal_containers.hpp"
 #include <memory>
 #include <set>
@@ -34,6 +35,7 @@ int set_test ()
    const char *const shMemName = "/MySharedMemory";
    const int max = 100;
 
+   try{
    //Create shared memory
    shared_memory_object::remove(shMemName);
    ManagedSharedMemory segment(create_only, shMemName, memsize);
@@ -54,16 +56,58 @@ int set_test ()
 
    MyStdMultiSet *stdmultiset = new MyStdMultiSet;
 
+   //Test construction from a range   
+   {
+      IntType aux_vect[50];
+      for(int i = 0; i < 50; ++i){
+         IntType move_me(i/2);
+         aux_vect[i] = move(move_me);
+      }
+      int aux_vect2[50];
+      for(int i = 0; i < 50; ++i){
+         aux_vect2[i] = i/2;
+      }
+      IntType aux_vect3[50];
+      for(int i = 0; i < 50; ++i){
+         IntType move_me(i/2);
+         aux_vect3[i] = move(move_me);
+      }
+
+      MyShmSet *shmset2 = 
+         segment.template construct<MyShmSet>("MyShmSet2")
+            (detail::make_move_iterator(&aux_vect[0])
+            , detail::make_move_iterator(aux_vect + 50)
+            , std::less<IntType>(), segment.get_segment_manager());
+
+      MyStdSet *stdset2 = new MyStdSet(aux_vect2, aux_vect2 + 50);
+
+      MyShmMultiSet *shmmultiset2 = 
+         segment.template construct<MyShmMultiSet>("MyShmMultiSet2")
+            (detail::make_move_iterator(&aux_vect3[0])
+            , detail::make_move_iterator(aux_vect3 + 50)
+            , std::less<IntType>(), segment.get_segment_manager());
+
+      MyStdMultiSet *stdmultiset2 = new MyStdMultiSet(aux_vect2, aux_vect2 + 50);
+      if(!CheckEqualContainers(shmset2, stdset2)) return 1;
+      if(!CheckEqualContainers(shmmultiset2, stdmultiset2)) return 1;
+      segment.destroy_ptr(shmset2);
+      segment.destroy_ptr(shmmultiset2);
+      delete stdset2;
+      delete stdmultiset2;
+   }
+
    int i, j;
    for(i = 0; i < max; ++i){
       IntType move_me(i);
       shmset->insert(move(move_me));
       stdset->insert(i);
       IntType move_me2(i);
+      if(i == 9)
+         i = i;
       shmmultiset->insert(move(move_me2));
       stdmultiset->insert(i);
    }
-   if(!CheckEqualContainers(shmset, stdset)) return 1;
+
    if(!CheckEqualContainers(shmmultiset, stdmultiset)) return 1;
 
    typename MyShmSet::iterator it;
@@ -281,12 +325,96 @@ int set_test ()
    delete stdset;
    segment.destroy_ptr(shmmultiset);
    delete stdmultiset;
+   }
+   catch(...){
+      shared_memory_object::remove(shMemName);
+      throw;
+   }
+   shared_memory_object::remove(shMemName);
+   return 0;
+}
 
+template<class ManagedSharedMemory
+        ,class MyShmSet
+        ,class MyStdSet
+        ,class MyShmMultiSet
+        ,class MyStdMultiSet>
+int set_test_copyable ()
+{
+   typedef typename MyShmSet::value_type IntType;
+   const int memsize = 65536;
+   const char *const shMemName = "/MySharedMemory";
+   const int max = 100;
+
+   try{
+   //Create shared memory
+   shared_memory_object::remove(shMemName);
+   ManagedSharedMemory segment(create_only, shMemName, memsize);
+
+   segment.reserve_named_objects(100);
+
+   //Shared memory allocator must be always be initialized
+   //since it has no default constructor
+   MyShmSet *shmset = 
+      segment.template construct<MyShmSet>("MyShmSet")
+         (std::less<IntType>(), segment.get_segment_manager());
+
+   MyStdSet *stdset = new MyStdSet;
+
+   MyShmMultiSet *shmmultiset = 
+      segment.template construct<MyShmMultiSet>("MyShmMultiSet")
+         (std::less<IntType>(), segment.get_segment_manager());
+
+   MyStdMultiSet *stdmultiset = new MyStdMultiSet;
+
+   int i;
+   for(i = 0; i < max; ++i){
+      IntType move_me(i);
+      shmset->insert(move(move_me));
+      stdset->insert(i);
+      IntType move_me2(i);
+      shmmultiset->insert(move(move_me2));
+      stdmultiset->insert(i);
+   }
+   if(!CheckEqualContainers(shmset, stdset)) return 1;
+   if(!CheckEqualContainers(shmmultiset, stdmultiset)) return 1;
+
+   {
+      //Now, test copy constructor
+      MyShmSet shmsetcopy(*shmset);
+      MyStdSet stdsetcopy(*stdset);
+      MyShmMultiSet shmmsetcopy(*shmmultiset);
+      MyStdMultiSet stdmsetcopy(*stdmultiset);
+
+      if(!CheckEqualContainers(&shmsetcopy, &stdsetcopy))
+         return 1;
+      if(!CheckEqualContainers(&shmmsetcopy, &stdmsetcopy))
+         return 1;
+
+      //And now assignment
+      shmsetcopy  = *shmset;
+      stdsetcopy  = *stdset;
+      shmmsetcopy = *shmmultiset;
+      stdmsetcopy = *stdmultiset;
+      
+      if(!CheckEqualContainers(&shmsetcopy, &stdsetcopy))
+         return 1;
+      if(!CheckEqualContainers(&shmmsetcopy, &stdmsetcopy))
+         return 1;
+   }
+   }
+   catch(...){
+      shared_memory_object::remove(shMemName);
+      throw;
+   }
+   shared_memory_object::remove(shMemName);
    return 0;
 }
 
 }  //namespace test{
 }  //namespace interprocess{
 }  //namespace boost{
+
+#include <boost/interprocess/detail/config_end.hpp>
 
 #endif

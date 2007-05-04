@@ -11,10 +11,10 @@
 #ifndef BOOST_INTERPROCESS_TEST_CHECK_EQUAL_CONTAINERS_HPP
 #define BOOST_INTERPROCESS_TEST_CHECK_EQUAL_CONTAINERS_HPP
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <functional>
 #include <iostream>
 #include <algorithm>
-#include <boost/interprocess/detail/config_begin.hpp>
 
 namespace boost{
 namespace interprocess{

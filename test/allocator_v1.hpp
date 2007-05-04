@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -65,8 +65,8 @@ class allocator_v1
       <cvoid_ptr, segment_manager>::type     alloc_ptr_t;
 
    /*!Not assignable from related allocator_v1*/
-   template<class T2, class AllocAlgo2>
-   allocator_v1& operator=(const allocator_v1<T2, AllocAlgo2>&);
+   template<class T2, class SegmentManager2>
+   allocator_v1& operator=(const allocator_v1<T2, SegmentManager2>&);
 
    /*!Not assignable from other allocator_v1*/
    allocator_v1& operator=(const allocator_v1&);
