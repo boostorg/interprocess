@@ -15,7 +15,7 @@
 //! limitations under the License.
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2006. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -260,17 +260,6 @@ inline boost::uint32_t atomic_xchg32(volatile boost::uint32_t *mem, boost::uint3
 inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
 {  *mem = val; }
 
-/*
-//! Compare the pointer's value with "cmp".
-//! If they are the same swap the value with "with"
-//! "mem": pointer to the pointer
-//! "with": what to swap it with
-//! "cmp": the value to compare it to
-//! Returns the old value of the pointer
-inline void *atomic_casptr(volatile void **mem, void *with, const void *cmp);
-{
-}
-*/
 #elif (defined(__PPC__) || defined(__ppc__))
 
 //! Atomically add 'val' to an boost::uint32_t
@@ -283,14 +272,14 @@ inline boost::uint32_t atomic_add32(volatile boost::uint32_t *mem, boost::uint32
 
    asm volatile ("0:\n\t"                 // retry local label     
                "lwarx  %0,0,%2\n\t"       // load prev and reserve 
-               "add    %1,%0,%3\n\t"      // temp = prev + delta   
+               "add    %1,%0,%3\n\t"      // temp = prev + val   
                "stwcx. %1,0,%2\n\t"       // conditionally store   
                "bne-   0b"                // start over if we lost
                                           // the reservation
                //XXX find a cleaner way to define the temp         
                //it's not an output
                : "=&r" (prev), "=&r" (temp)        // output, temp 
-               : "b" (mem), "r" (delta)            // inputs       
+               : "b" (mem), "r" (val)              // inputs       
                : "memory", "cc");                  // clobbered    
    return prev;
 }
@@ -326,14 +315,7 @@ inline boost::uint32_t atomic_cas32
 //! "mem": pointer to the object
 //! "val": amount to subtract
 inline void atomic_sub32(volatile boost::uint32_t *mem, boost::uint32_t val)
-{
-   boost::uint32_t old_value, new_value;
-   
-   do {
-      old_value = *mem;
-      new_value = old_value - val;
-   } while (atomic_cas32(mem, new_value, old_value) != old_value);
-}
+{  atomic_add32(mem, boost::uint32_t(-val));  }
 
 //! Atomically increment an apr_uint32_t by 1
 //! "mem": pointer to the object
@@ -345,15 +327,7 @@ inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
 //! "mem": pointer to the atomic value
 //! Returns false if the value becomes zero on decrement, otherwise true
 inline bool atomic_dec32(volatile boost::uint32_t *mem)
-{
-    boost::uint32_t old_value, new_value;
-    
-    do {
-        old_value = *mem;
-        new_value = old_value - 1;
-    } while (atomic_cas32(mem, new_value, old_value) != old_value);
-    return old_value != 1;
-}
+{  return !(atomic_add32(mem, boost::uint32_t(-1u)) - 1u);  }
 
 //! Atomically read an boost::uint32_t from memory
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
@@ -378,17 +352,6 @@ inline boost::uint32_t atomic_xchg32(volatile boost::uint32_t *mem, boost::uint3
 inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
 {  atomic_xchg32(mem, val); }
 
-/*
-//! Compare the pointer's value with "cmp".
-//! If they are the same swap the value with "with"
-//! "mem": pointer to the pointer
-//! "with": what to swap it with
-//! "cmp": the value to compare it to
-//! Returns the old value of the pointer
-inline void *atomic_casptr(volatile void **mem, void *with, const void *cmp);
-{
-}
-*/
 #else
 
 #error No atomic operations implemented for this platform, sorry!

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -154,29 +154,16 @@ class message_queue
    /*!Returns the needed memory size for the shared message queue. Never throws*/
    static std::size_t get_mem_size(std::size_t max_msg_size, std::size_t max_num_msg);
 
-   /*!This header is the prefix of each message in the queue*/
-   class msg_hdr_t; 
-   friend class msg_hdr_t;
-
-   /*!This functor is the predicate to order stored messages by priority*/
-   class priority_functor;
-   friend class priority_functor;
-
-   class mq_hdr_t;
-   friend class mq_hdr_t;
-
-   /*!This is the atomic functor to be executed when creating or opening 
-      shared memory. Never throws*/
-   class initialization_func_t;
-   friend class initialization_func_t;
-
    detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
    /// @endcond
 };
 
 /// @cond
+
+namespace detail {
+
 /*!This header is the prefix of each message in the queue*/
-class message_queue::msg_hdr_t 
+class msg_hdr_t 
 {
    public:
    std::size_t             len;     // Message length
@@ -186,7 +173,7 @@ class message_queue::msg_hdr_t
 };
 
 /*!This functor is the predicate to order stored messages by priority*/
-class message_queue::priority_functor
+class priority_functor
 {
    public:
    bool operator()(const offset_ptr<msg_hdr_t> &msg1, 
@@ -227,11 +214,11 @@ class message_queue::priority_functor
       msg_hdr_t structure. Each of this message is pointed by one pointer of
       the index structure.
 */
-class message_queue::mq_hdr_t
-   : public priority_functor
+class mq_hdr_t
+   : public detail::priority_functor
 {   
    typedef offset_ptr<msg_hdr_t> msg_hdr_ptr_t;
-public:
+   public:
    /*!Constructor. This object must be constructed in the beginning of the 
       shared memory of the size returned by the function "get_mem_size".
       This constructor initializes the needed resources and creates
@@ -285,11 +272,11 @@ public:
       (std::size_t max_msg_size, std::size_t max_num_msg)
    {
       const std::size_t 
-         msg_hdr_align  = boost::alignment_of<msg_hdr_t>::value,
+         msg_hdr_align  = boost::alignment_of<detail::msg_hdr_t>::value,
          index_align    = boost::alignment_of<msg_hdr_ptr_t>::value,
          r_hdr_size     = detail::ct_rounded_size<sizeof(mq_hdr_t), index_align>::value,
          r_index_size   = detail::get_rounded_size(sizeof(msg_hdr_ptr_t)*max_num_msg, msg_hdr_align),
-         r_max_msg_size = detail::get_rounded_size(max_msg_size, msg_hdr_align) + sizeof(msg_hdr_t);
+         r_max_msg_size = detail::get_rounded_size(max_msg_size, msg_hdr_align) + sizeof(detail::msg_hdr_t);
       return r_hdr_size + r_index_size + (max_num_msg*r_max_msg_size) + 
          detail::managed_open_or_create_impl<shared_memory_object>::ManagedOpenOrCreateUserOffset;
    }
@@ -299,18 +286,18 @@ public:
    void initialize_memory()
    {
       const std::size_t 
-         msg_hdr_align  = boost::alignment_of<msg_hdr_t>::value,
+         msg_hdr_align  = boost::alignment_of<detail::msg_hdr_t>::value,
          index_align    = boost::alignment_of<msg_hdr_ptr_t>::value,
          r_hdr_size     = detail::ct_rounded_size<sizeof(mq_hdr_t), index_align>::value,
          r_index_size   = detail::get_rounded_size(sizeof(msg_hdr_ptr_t)*m_max_num_msg, msg_hdr_align),
-         r_max_msg_size = detail::get_rounded_size(m_max_msg_size, msg_hdr_align) + sizeof(msg_hdr_t);
+         r_max_msg_size = detail::get_rounded_size(m_max_msg_size, msg_hdr_align) + sizeof(detail::msg_hdr_t);
 
       //Pointer to the index
       msg_hdr_ptr_t *index =  reinterpret_cast<msg_hdr_ptr_t*>
                                  (detail::char_ptr_cast(this)+r_hdr_size);
 
       //Pointer to the first message header
-      msg_hdr_t *msg_hdr   =  reinterpret_cast<msg_hdr_t*>
+      detail::msg_hdr_t *msg_hdr   =  reinterpret_cast<detail::msg_hdr_t*>
                                  (detail::char_ptr_cast(this)+r_hdr_size+r_index_size);  
 
       //Initialize the pointer to the index
@@ -319,7 +306,7 @@ public:
       //Initialize the index so each slot points to a preallocated message
       for(std::size_t i = 0; i < m_max_num_msg; ++i){
          index[i] = msg_hdr;
-         msg_hdr  = reinterpret_cast<msg_hdr_t*>
+         msg_hdr  = reinterpret_cast<detail::msg_hdr_t*>
                         (detail::char_ptr_cast(msg_hdr)+r_max_msg_size);
       }
    }
@@ -344,14 +331,14 @@ public:
 
 /*!This is the atomic functor to be executed when creating or opening 
    shared memory. Never throws*/
-class message_queue::initialization_func_t
+class initialization_func_t
 {
    public:
    initialization_func_t(std::size_t maxmsg = 0, 
                          std::size_t maxmsgsize = 0)
       : m_maxmsg (maxmsg), m_maxmsgsize(maxmsgsize) {}
 
-   bool operator()(void *address, std::size_t size, bool created)
+   bool operator()(void *address, std::size_t, bool created)
    {
       char      *mptr;
 
@@ -371,6 +358,8 @@ class message_queue::initialization_func_t
    const std::size_t m_maxmsg;
    const std::size_t m_maxmsgsize;
 };
+
+}  //namespace detail {
 /// @endcond
 
 inline message_queue::~message_queue()
@@ -378,7 +367,7 @@ inline message_queue::~message_queue()
 
 inline std::size_t message_queue::get_mem_size
    (std::size_t max_msg_size, std::size_t max_num_msg)
-{  return mq_hdr_t::get_mem_size(max_msg_size, max_num_msg);   }
+{  return detail::mq_hdr_t::get_mem_size(max_msg_size, max_num_msg);   }
 
 inline message_queue::message_queue(detail::create_only_t create_only,
                                     const char *name, 
@@ -391,7 +380,7 @@ inline message_queue::message_queue(detail::create_only_t create_only,
               read_write,
               (void*)0,
               //Prepare initialization functor
-              initialization_func_t (max_num_msg, max_msg_size))
+              detail::initialization_func_t (max_num_msg, max_msg_size))
 {}
 
    /*!Opens or creates a process shared message queue with name "name". 
@@ -410,7 +399,7 @@ inline message_queue::message_queue(detail::open_or_create_t open_or_create,
               read_write,
               (void*)0,
               //Prepare initialization functor
-              initialization_func_t (max_num_msg, max_msg_size))
+              detail::initialization_func_t (max_num_msg, max_msg_size))
 {}
 
    /*!Opens a previously created process shared message queue with name "name". 
@@ -424,7 +413,7 @@ inline message_queue::message_queue(detail::open_only_t open_only,
               read_write,
               (void*)0,
               //Prepare initialization functor
-              initialization_func_t ())
+              detail::initialization_func_t ())
 {}
 
 inline void message_queue::send
@@ -444,7 +433,7 @@ inline bool message_queue::do_send(block_t block,
                                 const void *buffer,      std::size_t buffer_size, 
                                 unsigned int priority,   const boost::posix_time::ptime &abs_time)
 {
-   mq_hdr_t *p_hdr = static_cast<mq_hdr_t*>(m_shmem.get_address());
+   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_address());
    //Check if buffer is smaller than maximum allowed
    if (buffer_size > p_hdr->m_max_msg_size) {
       throw interprocess_exception(size_error);
@@ -482,7 +471,7 @@ inline bool message_queue::do_send(block_t block,
       }
       
       //Get the first free message from free message queue
-      msg_hdr_t *free_msg = p_hdr->free_msg();
+      detail::msg_hdr_t *free_msg = p_hdr->free_msg();
       if (free_msg == 0) {
          throw interprocess_exception();
       }
@@ -528,7 +517,7 @@ inline bool
                           std::size_t &recvd_size,   unsigned int &priority,
                           const boost::posix_time::ptime &abs_time)
 {
-   mq_hdr_t *p_hdr = static_cast<mq_hdr_t*>(m_shmem.get_address());
+   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_address());
    //Check if buffer is big enough for any message
    if (buffer_size < p_hdr->m_max_msg_size) {
       throw interprocess_exception(size_error);
@@ -567,7 +556,7 @@ inline bool
       }
 
       //Thre is at least message ready to pick, get the top one
-      msg_hdr_t *top_msg = p_hdr->top_msg();
+      detail::msg_hdr_t *top_msg = p_hdr->top_msg();
 
       //Paranoia check
       if (top_msg == 0) {
@@ -597,18 +586,18 @@ inline bool
 
 inline std::size_t message_queue::get_max_msg() const
 {  
-   mq_hdr_t *p_hdr = static_cast<mq_hdr_t*>(m_shmem.get_address());
+   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_address());
    return p_hdr ? p_hdr->m_max_num_msg : 0;  }
 
 inline std::size_t message_queue::get_max_msg_size() const
 {  
-   mq_hdr_t *p_hdr = static_cast<mq_hdr_t*>(m_shmem.get_address());
+   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_address());
    return p_hdr ? p_hdr->m_max_msg_size : 0;  
 }
 
 inline std::size_t message_queue::get_num_msg()
 {  
-   mq_hdr_t *p_hdr = static_cast<mq_hdr_t*>(m_shmem.get_address());
+   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_address());
    if(p_hdr){
       //---------------------------------------------
       scoped_lock<interprocess_mutex> lock(p_hdr->m_mutex);

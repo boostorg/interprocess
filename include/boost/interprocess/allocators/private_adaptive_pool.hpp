@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -168,7 +168,8 @@ class private_adaptive_pool
    //!Allocate memory for an array of count elements. 
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate(size_type count, cvoid_pointer hint = 0)
-   {  
+   {
+      (void)hint;
       if(count > ((size_type)-1)/sizeof(value_type))
          throw bad_alloc();
       //----------------------------------------------------------

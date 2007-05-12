@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -65,13 +65,17 @@ class simple_seq_fit_impl
    typedef VoidPointer        void_pointer;
 
    private:
-   struct block_ctrl;
+   class block_ctrl;
    typedef typename detail::
       pointer_to_other<void_pointer, block_ctrl>::type block_ctrl_ptr;
 
+   class block_ctrl;
+   friend class block_ctrl;
+
    /*!Block control structure*/
-   struct block_ctrl
+   class block_ctrl
    {
+      public:
       /*!Offset pointer to the next block.*/
       block_ctrl_ptr m_next;
       /*!This block's memory size (including block_ctrl 
@@ -95,7 +99,6 @@ class simple_seq_fit_impl
          return reinterpret_cast<block_ctrl*>
                      (detail::char_ptr_cast(this) + BlockCtrlBytes);
       }
-
    };
 
    /*!Shared interprocess_mutex to protect memory allocate/deallocate*/

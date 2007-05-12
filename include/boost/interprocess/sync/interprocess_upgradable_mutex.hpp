@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -391,6 +391,7 @@ inline bool interprocess_upgradable_mutex::try_lock_upgradable()
    //And add upgradable to the sharable count
    this->m_ctrl.upgradable_in = 1;
    ++this->m_ctrl.num_upr_shar;
+   return true;
 }
 
 inline bool interprocess_upgradable_mutex::timed_lock_upgradable

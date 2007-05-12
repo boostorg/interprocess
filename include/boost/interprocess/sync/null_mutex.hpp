@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -54,7 +54,7 @@ class null_mutex
    {  return true;   }
 
    /*!Simulates a mutex timed_lock() operation. Returns always true. Does not throw.*/
-   bool timed_lock(const boost::posix_time::ptime &abs_time)
+   bool timed_lock(const boost::posix_time::ptime &)
    {  return true;   }
 
    /*!Simulates a mutex unlock() operation. Empty function. Does not throw.*/
@@ -71,7 +71,7 @@ class null_mutex
 
    /*!Simulates a mutex timed_lock_sharable() operation. Returns always true.
       Does not throw.*/
-   bool timed_lock_sharable(const boost::posix_time::ptime &abs_time)
+   bool timed_lock_sharable(const boost::posix_time::ptime &)
    {  return true;   }
 
    /*!Simulates a mutex unlock_sharable() operation. Empty function.
@@ -89,7 +89,7 @@ class null_mutex
 
    /*!Simulates a mutex timed_lock_upgradable() operation. Returns always true.
       Does not throw.*/
-   bool timed_lock_upgradable(const boost::posix_time::ptime &abs_time)
+   bool timed_lock_upgradable(const boost::posix_time::ptime &)
    {  return true;   }
 
    /*!Simulates a mutex unlock_upgradable() operation. Empty function.
@@ -121,7 +121,7 @@ class null_mutex
 
    /*!Simulates timed_unlock_upgradable_and_lock(). Returns always true.
       Does not throw.*/
-   bool timed_unlock_upgradable_and_lock(const boost::posix_time::ptime &abs_time)
+   bool timed_unlock_upgradable_and_lock(const boost::posix_time::ptime &)
    {  return true;   }
 
    /*!Simulates try_unlock_sharable_and_lock(). Returns always true.

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -81,7 +81,7 @@ struct has_version
    private:
    struct two {char _[2];};
    template <class U> static two test(...);
-   template <class U> static char test(typename U::version*);
+   template <class U> static char test(const typename U::version*);
    public:
    static const bool value = sizeof(test<T>(0)) == 1;
    void dummy(){}

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007.
+// (C) Copyright Ion Gaztanaga 2005-2007.
 // (C) Copyright Gennaro Prota 2003 - 2004.
 //
 // Distributed under the Boost Software License, Version 1.0.
@@ -265,16 +265,16 @@ class value_eraser
 {
    public:
    value_eraser(Cont & cont, typename Cont::iterator it) 
-      : m_map(cont), m_index_it(it), m_erase(true){}
+      : m_cont(cont), m_index_it(it), m_erase(true){}
    ~value_eraser()  
    {
       if(boost::has_nothrow_destructor<typename Cont::value_type>::value){
-         if(m_erase) m_map.erase(m_index_it);
+         if(m_erase) m_cont.erase(m_index_it);
       }
       else{
          //value_eraser is used in exceptions, so we
          //disable double-exception danger
-         BOOST_TRY{  if(m_erase) m_map.erase(m_index_it);  }
+         BOOST_TRY{  if(m_erase) m_cont.erase(m_index_it);  }
          BOOST_CATCH(...){}
          BOOST_CATCH_END
       }
@@ -282,7 +282,7 @@ class value_eraser
    void release() {  m_erase = false;  }
 
    private:
-   Cont                    &m_map;
+   Cont                    &m_cont;
    typename Cont::iterator  m_index_it;
    bool                    m_erase;
 };

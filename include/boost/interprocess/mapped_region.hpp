@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -490,7 +490,7 @@ inline void mapped_region::swap(mapped_region &other)
 /*!No-op functor*/
 struct null_mapped_region_function
 {
-   bool operator()(void *addr, std::size_t size, bool) const
+   bool operator()(void *, std::size_t , bool) const
       {   return true;   }
 };
 /// @endcond

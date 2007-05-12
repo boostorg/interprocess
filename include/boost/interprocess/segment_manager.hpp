@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -244,14 +244,14 @@ struct get_construct_name<OutPtr, OutPtr>
 template <class OutPtr>
 struct get_construct_name<anonymous_instance_t, OutPtr>
 {
-   static const OutPtr *get(const anonymous_instance_t *name) 
+   static const OutPtr *get(const anonymous_instance_t *) 
    {  return reinterpret_cast<const OutPtr *>(0);   }
 };
 
 template <class OutPtr>
 struct get_construct_name<unique_instance_t, OutPtr>
 {
-   static const OutPtr *get(const unique_instance_t *name)
+   static const OutPtr *get(const unique_instance_t *)
    {  return reinterpret_cast<const OutPtr *>(-1);   }
 };
 
@@ -553,13 +553,13 @@ class segment_manager
    /*!Returns no throwing "construct" proxy object*/
    template <class T>
    typename construct_proxy<T, false>::type     
-      construct(char_ptr_holder_t name, std::nothrow_t nothrow)
+      construct(char_ptr_holder_t name, std::nothrow_t)
    {  return typename construct_proxy<T, false>::type (name, this);  }
 
    /*!Returns no throwing "search or construct" proxy object*/
    template <class T>
    typename find_construct_proxy<T, false>::type   
-      find_or_construct(char_ptr_holder_t name, std::nothrow_t nothrow)
+      find_or_construct(char_ptr_holder_t name, std::nothrow_t)
    {  return typename find_construct_proxy<T, false>::type  (name, this);  }
 
    /*!Returns throwing "construct from iterators" proxy object*/
@@ -577,13 +577,13 @@ class segment_manager
    /*!Returns no throwing "construct from iterators" proxy object*/
    template <class T>
    typename construct_iter_proxy<T, false>::type   
-      construct_it(char_ptr_holder_t name, std::nothrow_t nothrow)
+      construct_it(char_ptr_holder_t name, std::nothrow_t)
    {  return typename construct_iter_proxy<T, false>::type (name, this);  }
 
    /*!Returns no throwing "search or construct from iterators" proxy object*/
    template <class T>
    typename find_construct_iter_proxy<T, false>::type 
-      find_or_construct_it(char_ptr_holder_t name, std::nothrow_t nothrow)
+      find_or_construct_it(char_ptr_holder_t name, std::nothrow_t)
    {  return typename find_construct_iter_proxy<T, false>::type  (name, this);  }
 
    /*!Calls object function blocking recursive interprocess_mutex and guarantees that 

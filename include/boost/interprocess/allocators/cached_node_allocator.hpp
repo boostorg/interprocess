@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -186,7 +186,8 @@ class cached_node_allocator
    /*!Allocate memory for an array of count elements. 
       Throws boost::interprocess::bad_alloc if there is no enough memory*/
    pointer allocate(size_type count, cvoid_pointer hint = 0)
-   {  
+   {
+      (void)hint;
       if(count > ((size_type)-1)/sizeof(value_type))
          throw bad_alloc();
       typedef detail::shared_node_pool
@@ -239,8 +240,7 @@ class cached_node_allocator
    friend void swap(self_t &alloc1, self_t &alloc2)
    {
       detail::do_swap(alloc1.mp_node_pool,       alloc2.mp_node_pool);
-      detail::do_swap(alloc1.mp_cached,          alloc2.mp_cached);
-      detail::do_swap(alloc1.m_cached_nodes,     alloc2.m_cached_nodes);
+      alloc1.m_cached_nodes.swap(alloc2.m_cached_nodes);
       detail::do_swap(alloc1.m_max_cached_nodes, alloc2.m_max_cached_nodes);
    }
 

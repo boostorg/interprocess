@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -50,6 +50,15 @@ namespace detail {
 template<class BasicManagedMemoryImpl>
 class create_open_func;
 
+template<
+         class CharType, 
+         class MemoryAlgorithm,
+         template<class IndexConfig> class IndexType
+        >
+struct segment_manager_type
+{
+   typedef segment_manager<CharType, MemoryAlgorithm, IndexType> type;
+};
 
 //!This class is designed to be a base class to classes that manage 
 //!creation of objects in a fixed size memory buffer. Apart 
@@ -73,8 +82,8 @@ class basic_managed_memory_impl
    friend class create_open_func;
 
    public:
-   typedef segment_manager
-               <CharType, MemoryAlgorithm, IndexType> segment_manager;
+   typedef typename segment_manager_type
+      <CharType, MemoryAlgorithm, IndexType>::type    segment_manager;
    typedef typename MemoryAlgorithm::void_pointer     void_pointer;
    typedef typename MemoryAlgorithm::mutex_family     mutex_family;
    typedef CharType                                   char_t;
@@ -120,7 +129,7 @@ class basic_managed_memory_impl
    }
  
    //!Connects to a segment manager in the reserved buffer. Never throws.
-   bool  open_impl     (void *addr, std::size_t size)
+   bool  open_impl     (void *addr, std::size_t)
    {
       if(mp_header)  return false;
       mp_header = static_cast<segment_manager*>(addr);
@@ -229,13 +238,13 @@ class basic_managed_memory_impl
    //!memory as used and return the pointer to the memory. If no memory 
    //!is available returns 0. Never throws.
    void* allocate             (std::size_t nbytes, std::nothrow_t nothrow)
-   {   return mp_header->allocate(nbytes, std::nothrow);  }
+   {   return mp_header->allocate(nbytes, nothrow);  }
 
    //!Allocates nbytes bytes aligned to "alignment" bytes. "alignment"
    //!must be power of two. If no memory 
    //!is available returns 0. Never throws.
-   void * allocate_aligned (std::size_t nbytes, std::size_t alignment, std::nothrow_t)
-   {   return mp_header->allocate_aligned(nbytes, alignment, std::nothrow);  }
+   void * allocate_aligned (std::size_t nbytes, std::size_t alignment, std::nothrow_t nothrow)
+   {   return mp_header->allocate_aligned(nbytes, alignment, nothrow);  }
 
    //!Allocates nbytes bytes aligned to "alignment" bytes. "alignment"
    //!must be power of two. If no 

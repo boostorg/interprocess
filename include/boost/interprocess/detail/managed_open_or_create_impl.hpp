@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2006. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -196,7 +196,7 @@ class managed_open_or_create_impl
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
-   static void write_whole_device(DeviceAbstraction &dev, std::size_t size, boost::mpl::false_)
+   static void write_whole_device(DeviceAbstraction &, std::size_t, boost::mpl::false_)
    {} //Empty
 
    template<bool dummy>
@@ -246,7 +246,7 @@ class managed_open_or_create_impl
    }
 
    template<bool dummy>
-   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t size, boost::mpl::true_)
+   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t, boost::mpl::true_)
    {
       DeviceAbstraction tmp(create_only, name, read_write);
       tmp.swap(dev);
@@ -260,7 +260,7 @@ class managed_open_or_create_impl
        ConstructFunc construct_func)
    {
       typedef boost::mpl::bool_<FileBased> file_like_t;
-
+      (void)mode;
       error_info err;
       bool created = false;
       DeviceAbstraction dev;

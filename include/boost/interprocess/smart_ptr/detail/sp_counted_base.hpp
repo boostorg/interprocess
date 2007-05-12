@@ -11,7 +11,7 @@
 //  files of boost/detail/sp_counted_base.hpp
 //
 //  Copyright 2005 Peter Dimov
-//  Copyright 2006 Ion Gaztañaga
+//  Copyright 2006 Ion Gaztanaga
 //
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at

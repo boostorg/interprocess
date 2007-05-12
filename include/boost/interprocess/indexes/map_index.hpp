@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -68,7 +68,7 @@ class map_index
 
    /*!This reserves memory to optimize the insertion of n
       elements in the index*/
-   void reserve(std::size_t n)
+   void reserve(std::size_t)
       {  /*Does nothing, map has not reserve or rehash*/  }
 };
 

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -191,8 +191,12 @@ class private_adaptive_node_pool
       }
    }
 
-   struct chunk_destroyer
+   class chunk_destroyer;
+   friend class chunk_destroyer;
+
+   class chunk_destroyer
    {
+      public:
       chunk_destroyer(segment_manager *mngr)
          :  mngr_(mngr)
       {}

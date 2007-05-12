@@ -13,7 +13,7 @@
 //
 //  Copyright (c) 2001, 2002, 2003 Peter Dimov and Multi Media Ltd.
 //  Copyright 2004-2005 Peter Dimov
-//  Copyright 2006      Ion Gaztañaga
+//  Copyright 2006      Ion Gaztanaga
 //
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at
@@ -43,6 +43,8 @@ class sp_counted_impl_pd
    typedef sp_counted_impl_pd<A, D>          this_type;
    typedef typename A::template rebind
       <this_type>::other                     this_allocator;
+   typedef typename A::template rebind
+      <const this_type>::other               const_this_allocator;
    typedef typename this_allocator::pointer  this_pointer;
 
    sp_counted_impl_pd( sp_counted_impl_pd const & );

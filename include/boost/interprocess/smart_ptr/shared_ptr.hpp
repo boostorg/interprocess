@@ -4,7 +4,7 @@
 //
 // (C) Copyright Greg Colvin and Beman Dawes 1998, 1999.
 // (C) Copyright Peter Dimov 2001, 2002, 2003
-// (C) Copyright Ion Gaztañaga 2006. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -216,8 +216,8 @@ class shared_ptr
    const_deleter_pointer get_deleter() const
    {  return m_pn.get_deleter(); }
 
-   const_allocator_pointer get_allocator() const
-   {  return m_pn.get_allocator(); }
+//   const_allocator_pointer get_allocator() const
+//   {  return m_pn.get_allocator(); }
 
    /// @cond
    private:

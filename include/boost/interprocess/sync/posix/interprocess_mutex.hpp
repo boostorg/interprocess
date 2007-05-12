@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -31,73 +31,6 @@
 namespace boost {
 
 namespace interprocess {
-/*
-inline interprocess_mutex::interprocess_mutex()
-{
-   detail::mutexattr_wrapper mut_attr;
-   detail::mutex_initializer mut(m_mut, mut_attr);
-   mut.release();
-}
-
-inline interprocess_mutex::~interprocess_mutex() 
-{
-   int res = pthread_mutex_destroy(&m_mut);
-   assert(res  == 0);(void)res;
-}    
-
-inline void interprocess_mutex::lock()
-{
-   int res = pthread_mutex_lock(&m_mut);
-   if ( res == EDEADLK) 
-      throw lock_exception();
-   assert(res == 0);
-}
-
-inline void interprocess_mutex::do_unlock()
-{
-   int res = pthread_mutex_unlock(&m_mut);
-   if (res == EPERM) 
-      throw lock_exception();
-   assert(res == 0);
-}
-
-inline interprocess_mutex::interprocess_mutex()
-{
-   detail::mutexattr_wrapper mut_attr;
-   detail::mutex_initializer mut(m_mut, mut_attr);
-   mut.release();
-}
-
-inline interprocess_mutex::~interprocess_mutex() 
-{
-   int res = pthread_mutex_destroy(&m_mut);
-   assert(res  == 0);(void)res;
-}
-
-inline void interprocess_mutex::lock()
-{
-   if (pthread_mutex_lock(&m_mut) == EDEADLK) 
-      throw lock_exception();
-}
-
-inline bool interprocess_mutex::try_lock()
-{
-    int res = 0;
-    res = pthread_mutex_trylock(&m_mut);
-    if (res == EDEADLK) throw lock_exception();
-    assert(res == 0 || res == EBUSY);
-    return res == 0;
-}
-
-inline void interprocess_mutex::do_unlock()
-{
-    int res = 0;
-    res = pthread_mutex_unlock(&m_mut);
-    if (res == EPERM) throw lock_exception();
-    assert(res == 0);
-}
-*/
-//---
 
 #ifdef _POSIX_TIMEOUTS
 

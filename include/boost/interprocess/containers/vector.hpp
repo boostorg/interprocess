@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -8,7 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// This file comes from SGI's stl_vector.h file. Modified by Ion Gaztañaga.
+// This file comes from SGI's stl_vector.h file. Modified by Ion Gaztanaga.
 // Renaming, isolating and porting to generic algorithms. Pointer typedef 
 // set to allocator::pointer to allow placing it in shared memory.
 //
@@ -125,6 +125,8 @@ struct vector_alloc_holder
                          const pointer &reuse,
                          allocator_v1)
    {
+      (void)limit_size;
+      (void)reuse;
       if(!(command & allocate_new))
          return std::pair<pointer, bool>(0, 0);
       received_size = preferred_size;
@@ -364,10 +366,10 @@ class vector : private detail::vector_alloc_holder<A>
    };
 
    //! Iterator used to iterate backwards through a vector. 
-   typedef typename boost::reverse_iterator<iterator>   
+   typedef boost::reverse_iterator<iterator>   
       reverse_iterator;
    //! Const iterator used to iterate backwards through a vector. 
-   typedef typename boost::reverse_iterator<const_iterator>                 
+   typedef boost::reverse_iterator<const_iterator>                 
       const_reverse_iterator;
 
    public:

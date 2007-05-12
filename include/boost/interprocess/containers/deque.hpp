@@ -26,7 +26,7 @@
  */
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2006. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -35,7 +35,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // This file comes from SGI's stl_deque.h and stl_uninitialized.h files. 
-// Modified by Ion Gaztañaga 2005.
+// Modified by Ion Gaztanaga 2005.
 // Renaming, isolating and porting to generic algorithms. Pointer typedef 
 // set to allocator::pointer to allow placing it in shared memory.
 //
@@ -486,8 +486,8 @@ class deque : protected deque_base<T, Alloc>
    typedef typename Base::iterator       iterator;
    typedef typename Base::const_iterator const_iterator;
 
-   typedef reverse_iterator<const_iterator> const_reverse_iterator;
-   typedef reverse_iterator<iterator> reverse_iterator;
+   typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
+   typedef boost::reverse_iterator<iterator> reverse_iterator;
 
    /// @cond
    protected:                      // Internal typedefs
@@ -690,7 +690,7 @@ class deque : protected deque_base<T, Alloc>
    {
       if (this->m_finish.m_cur != this->m_finish.m_first) {
          --this->m_finish.m_cur;
-         this->allocator_type::destroy(this->m_finish.m_cur);
+         static_cast<allocator_type*>(this)->destroy(this->m_finish.m_cur);
       }
       else
          this->priv_pop_back_aux();
@@ -699,7 +699,7 @@ class deque : protected deque_base<T, Alloc>
    void pop_front() 
    {
       if (this->m_start.m_cur != this->m_start.m_last - 1) {
-         this->allocator_type::destroy(this->m_start.m_cur);
+         static_cast<allocator_type*>(this)->destroy(this->m_start.m_cur);
          ++this->m_start.m_cur;
       }
       else 
@@ -927,10 +927,10 @@ class deque : protected deque_base<T, Alloc>
    }
 
    void priv_destroy_range(iterator p, iterator p2)
-      { for(;p != p2; ++p) this->allocator_type::destroy(&*p); }
+      { for(;p != p2; ++p) static_cast<allocator_type*>(this)->destroy(&*p); }
 
    void priv_destroy_range(pointer p, pointer p2)
-      { for(;p != p2; ++p) this->allocator_type::destroy(p); }
+      { for(;p != p2; ++p) static_cast<allocator_type*>(this)->destroy(p); }
 
    template <class Integer>
    void priv_assign_dispatch(Integer n, Integer val, boost::mpl::true_)
@@ -1213,7 +1213,7 @@ class deque : protected deque_base<T, Alloc>
       this->priv_deallocate_node(this->m_finish.m_first);
       this->m_finish.priv_set_node(this->m_finish.m_node - 1);
       this->m_finish.m_cur = this->m_finish.m_last - 1;
-      this->allocator_type::destroy(this->m_finish.m_cur);
+      static_cast<allocator_type*>(this)->destroy(this->m_finish.m_cur);
    }
 
    // Called only if this->m_start.m_cur == this->m_start.m_last - 1.  Note that 
@@ -1222,7 +1222,7 @@ class deque : protected deque_base<T, Alloc>
    // must have at least two nodes.
    void priv_pop_front_aux()
    {
-      this->allocator_type::destroy(this->m_start.m_cur);
+      static_cast<allocator_type*>(this)->destroy(this->m_start.m_cur);
       this->priv_deallocate_node(this->m_start.m_first);
       this->m_start.priv_set_node(this->m_start.m_node + 1);
       this->m_start.m_cur = this->m_start.m_first;
@@ -1341,7 +1341,7 @@ class deque : protected deque_base<T, Alloc>
       }
       BOOST_CATCH(...){
          for(;first2 != mid2; ++first2){
-            this->allocator_type::destroy(&*first2); 
+            static_cast<allocator_type*>(this)->destroy(&*first2); 
          }
       }
       BOOST_CATCH_END
@@ -1360,7 +1360,7 @@ class deque : protected deque_base<T, Alloc>
       }
       BOOST_CATCH(...){
          for(;result != mid; ++result){
-            this->allocator_type::destroy(&*result); 
+            static_cast<allocator_type*>(this)->destroy(&*result); 
          }
          BOOST_RETHROW
       }
@@ -1382,7 +1382,7 @@ class deque : protected deque_base<T, Alloc>
       }
       BOOST_CATCH(...){
          for(;result != mid; ++result){
-            this->allocator_type::destroy(&*result); 
+            static_cast<allocator_type*>(this)->destroy(&*result); 
          }
          BOOST_RETHROW
       }

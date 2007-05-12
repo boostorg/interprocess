@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -95,6 +95,8 @@ class rbtree_best_fit
 
       friend bool operator<(const block_ctrl &a, const block_ctrl &b)
       {  return a.m_size < b.m_size;  }
+      friend bool operator==(const block_ctrl &a, const block_ctrl &b)
+      {  return a.m_size == b.m_size;  }
    };
 
    struct size_block_ctrl_compare
@@ -581,9 +583,6 @@ void* rbtree_best_fit<MutexFamily, VoidPointer>::
       //biggest of all possibilities
       if(!only_preferred_backwards){
          needs_backwards = min_size - detail::get_truncated_size(received_size, backwards_multiple);
-/*         needs_backwards = 
-            max_value(min_size - detail::get_truncated_size(received_size, backwards_multiple)
-                     ,min_value(prev_block->m_size*Alignment/backwards_multiple*backwards_multiple, needs_backwards));*/
       }
 
       assert((needs_backwards % backwards_multiple) == 0);
@@ -591,11 +590,8 @@ void* rbtree_best_fit<MutexFamily, VoidPointer>::
       const std::size_t needs_backwards_aligned = 
          detail::get_rounded_size(needs_backwards, lcm);
 
-//      const std::size_t needs_backwards_remaining =
-//         needs_backwards_aligned - detail::get_truncated_size(needs_backwards_aligned, backwards_multiple);
-
       //Check if previous block has enough size
-      if(prev_block->m_size*Alignment >= needs_backwards_aligned){
+      if(std::size_t(prev_block->m_size*Alignment) >= needs_backwards_aligned){
          //Now take all next space. This will succeed
          if(command & expand_fwd){
             if(!priv_expand(reuse_ptr, received_size, received_size, received_size)){
@@ -634,14 +630,7 @@ void* rbtree_best_fit<MutexFamily, VoidPointer>::
             //If the backwards expansion has remaining bytes in the
             //first bytes, fill them with a pattern
             void *p = priv_get_user_buffer(new_block);
-/*
-            if(needs_backwards_remaining){
-               for(std::size_t i = 0; i < needs_backwards_remaining; ++i){
-                  detail::char_ptr_cast(p)[i] = (char)i;
-               }
-            }
-*/
-            void *user_ptr = detail::char_ptr_cast(p)/* + needs_backwards_remaining*/;
+            void *user_ptr = detail::char_ptr_cast(p);
             assert(((char*)reuse_ptr - (char*)user_ptr) % backwards_multiple == 0);
             return user_ptr;
          }
@@ -655,8 +644,6 @@ void* rbtree_best_fit<MutexFamily, VoidPointer>::
             //Just merge the whole previous block
             const std::size_t needs_backwards_aligned = prev_block->m_size*Alignment;
             const std::size_t needs_backwards = detail::get_truncated_size(needs_backwards_aligned, backwards_multiple);
-//            const std::size_t needs_backwards_remaining = needs_backwards_aligned - needs_backwards;
-
             received_size = received_size/backwards_multiple*backwards_multiple + needs_backwards;
 
             m_header.m_allocated += prev_block->m_size*Alignment;
@@ -670,21 +657,7 @@ void* rbtree_best_fit<MutexFamily, VoidPointer>::
             //If the backwards expansion has remaining bytes in the
             //first bytes, fill them with a pattern
             void *p = priv_get_user_buffer(prev_block);
-/*
-            if(needs_backwards_remaining){
-               if(needs_backwards_remaining >= Alignment){
-                  detail::char_ptr_cast(p)[0] = needs_backwards_remaining/Alignment;
-               }
-               else{
-                  detail::char_ptr_cast(p)[0] = 0;
-               }
-
-               for(std::size_t i = 1; i < needs_backwards_remaining; ++i){
-                  detail::char_ptr_cast(p)[i] = (char)i;
-               }
-            }
-*/
-            void *user_ptr = detail::char_ptr_cast(p)/* + needs_backwards_remaining*/;
+            void *user_ptr = detail::char_ptr_cast(p);
             assert(((char*)reuse_ptr - (char*)user_ptr) % backwards_multiple == 0);
             return user_ptr;
          }
@@ -694,151 +667,6 @@ void* rbtree_best_fit<MutexFamily, VoidPointer>::
       }
    }
    return 0;
-/*
-   if(reuse_ptr == (void*)0x00393db1)
-      reuse_ptr = reuse_ptr;
-   if(command & expand_fwd){
-      if(priv_expand(reuse_ptr, min_size, preferred_size, received_size))
-         return reuse_ptr;
-   }
-   else{
-      received_size = this->size(reuse_ptr);
-      if(received_size >= preferred_size)
-         return reuse_ptr;
-   }
-
-   BOOST_ASSERT(0 == (min_size       % backwards_multiple));
-   BOOST_ASSERT(0 == (preferred_size % backwards_multiple));
-
-   if(command & expand_bwd){
-      //Obtain the real size of the block
-      block_ctrl *reuse = priv_get_block(reuse_ptr);
-
-      //Sanity check 
-      assert(reuse->m_size == priv_tail_size(reuse));
-      priv_check_alignment(reuse);
-
-      block_ctrl *prev_block;
-
-      //If the previous block is not free, there is nothing to do
-      if(priv_is_allocated_block(prev_block = priv_prev_block(reuse))){
-         return 0;
-      }
-
-      //Some sanity checks
-      assert(prev_block->m_size == priv_tail_size(prev_block));
-      priv_check_alignment(prev_block);
-
-      //Let's calculate the number of extra bytes of data before the current
-      //block's begin. The value is a multiple of backwards_multiple
-      std::size_t needs_backwards = preferred_size - 
-         detail::get_truncated_size(received_size, backwards_multiple);
-
-      //If we want to use min_size data to get a buffer between preferred_size
-      //and min_size if preferred_size can't be achieved, calculate the 
-      //biggest of all possibilities
-      if(!only_preferred_backwards){
-         needs_backwards = 
-            max_value(min_size - detail::get_truncated_size(received_size, backwards_multiple)
-                     ,min_value(prev_block->m_size*Alignment/backwards_multiple*backwards_multiple, needs_backwards));
-      }
-
-      assert((needs_backwards % backwards_multiple) == 0);
-
-      const std::size_t needs_backwards_aligned =
-         priv_multiple_of_units(needs_backwards);
-
-      const std::size_t needs_backwards_remaining =
-         needs_backwards_aligned - detail::get_truncated_size(needs_backwards_aligned, backwards_multiple);
-
-      //Check if previous block has enough size
-      if(prev_block->m_size*Alignment >= needs_backwards_aligned){
-         //Now take all next space. This will succeed
-         if(command & expand_fwd){
-            if(!priv_expand(reuse_ptr, received_size, received_size, received_size)){
-               assert(0);
-            }
-         }
-         //Erase old previous block, since we will change it
-         m_header.m_imultiset.erase(Imultiset::iterator_to(*prev_block));
-
-         //We need a minimum size to split the previous one
-         if(prev_block->m_size >= (needs_backwards_aligned/Alignment + BlockCtrlUnits)){
-            block_ctrl *new_block = reinterpret_cast<block_ctrl *>
-               (detail::char_ptr_cast(reuse) - needs_backwards_aligned);
-
-            //Free old previous buffer
-            new_block->m_size = 
-               AllocatedCtrlUnits + (needs_backwards_aligned + received_size)/Alignment;
-            assert(new_block->m_size >= BlockCtrlUnits);
-            priv_tail_size(new_block, new_block->m_size);
-            priv_mark_as_allocated_block(new_block);
-
-            prev_block->m_size = (detail::char_ptr_cast(new_block) - 
-                                  detail::char_ptr_cast(prev_block))/Alignment;
-            assert(prev_block->m_size >= BlockCtrlUnits);
-            priv_tail_size(prev_block, prev_block->m_size);
-            priv_mark_as_free_block(prev_block);
-
-            //Insert the remaining previous block in the free tree
-            m_header.m_imultiset.insert( m_header.m_imultiset.begin(), *prev_block);
-            received_size = needs_backwards_aligned + received_size;
-            m_header.m_allocated += needs_backwards_aligned;
-         
-            //Check alignment
-            priv_check_alignment(new_block);
-
-            //If the backwards expansion has remaining bytes in the
-            //first bytes, fill them with a pattern
-            void *p = priv_get_user_buffer(new_block);
-            if(needs_backwards_remaining){
-               for(std::size_t i = 0; i < needs_backwards_remaining; ++i){
-                  detail::char_ptr_cast(p)[i] = (char)i;
-               }
-            }
-            void *user_ptr = detail::char_ptr_cast(p) + needs_backwards_remaining;
-            assert(((char*)reuse_ptr - (char*)user_ptr) % backwards_multiple == 0);
-            return user_ptr;
-         }
-         else if(prev_block->m_size >= needs_backwards_aligned/Alignment){
-            //Just merge the whole previous block
-            const std::size_t needs_backwards_aligned = prev_block->m_size*Alignment;
-            const std::size_t needs_backwards = detail::get_truncated_size(needs_backwards_aligned, backwards_multiple);
-            const std::size_t needs_backwards_remaining = needs_backwards_aligned - needs_backwards;
-
-            received_size = received_size/backwards_multiple*backwards_multiple + needs_backwards;
-
-            m_header.m_allocated += prev_block->m_size*Alignment;
-            //Now update sizes
-            prev_block->m_size = prev_block->m_size + reuse->m_size;
-            assert(prev_block->m_size >= BlockCtrlUnits);
-            priv_tail_size(prev_block, prev_block->m_size);
-            priv_mark_as_allocated_block(prev_block);
-            priv_check_alignment(prev_block);
-
-            //If the backwards expansion has remaining bytes in the
-            //first bytes, fill them with a pattern
-            void *p = priv_get_user_buffer(prev_block);
-            if(needs_backwards_remaining){
-               if(needs_backwards_remaining >= Alignment){
-                  detail::char_ptr_cast(p)[0] = needs_backwards_remaining/Alignment;
-               }
-               else{
-                  detail::char_ptr_cast(p)[0] = 0;
-               }
-
-               for(std::size_t i = 1; i < needs_backwards_remaining; ++i){
-                  detail::char_ptr_cast(p)[i] = (char)i;
-               }
-            }
-            void *user_ptr = detail::char_ptr_cast(p) + needs_backwards_remaining;
-            assert(((char*)reuse_ptr - (char*)user_ptr) % backwards_multiple == 0);
-            return user_ptr;
-         }
-      }
-   }
-   return 0;
-*/
 }
 
 template<class MutexFamily, class VoidPointer>

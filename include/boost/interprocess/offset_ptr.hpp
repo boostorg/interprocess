@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -279,12 +279,6 @@ inline void swap (boost::interprocess::offset_ptr<T> &pt,
    pt2 = ptr;
 }
 
-/*!get_pointer() enables boost::mem_fn to recognize offset_ptr. 
-   Never throws.*/
-template<class T>
-inline T * get_pointer(boost::interprocess::offset_ptr<T> const & p)
-{  return p.get();   }
-
 /*!Simulation of static_cast between pointers. Never throws.*/
 template<class T, class U> 
 inline boost::interprocess::offset_ptr<T> 
@@ -338,13 +332,18 @@ struct has_trivial_destructor
    : public true_type
 {};
 
-#if defined(_MSC_VER) && (_MSC_VER < 1400)
+//#if !defined(_MSC_VER) || (_MSC_VER >= 1400)
+namespace interprocess {
+//#endif
 /*!get_pointer() enables boost::mem_fn to recognize offset_ptr. 
    Never throws.*/
 template<class T>
 inline T * get_pointer(boost::interprocess::offset_ptr<T> const & p)
 {  return p.get();   }
-#endif
+//#if !defined(_MSC_VER) || (_MSC_VER >= 1400)
+}  //namespace interprocess
+//#endif
+
 /// @endcond
 }  //namespace boost {
 

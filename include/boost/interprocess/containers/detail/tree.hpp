@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -8,7 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// This file comes from SGI's stl_tree file. Modified by Ion Gaztañaga 2005.
+// This file comes from SGI's stl_tree file. Modified by Ion Gaztanaga 2005.
 // Renaming, isolating and porting to generic algorithms. Pointer typedef 
 // set to allocator::pointer to allow placing it in shared memory.
 //
@@ -64,7 +64,7 @@
 namespace boost { namespace interprocess { namespace detail {
 
 template<class Key, class Value, class KeyCompare, class KeyOfValue>
-struct value_compare
+struct value_compare_impl
    :  public KeyCompare
 {
    typedef Value        value_type;
@@ -75,7 +75,7 @@ struct value_compare
    typedef typename boost::mpl::if_c
       <is_same<Key, Value>::value, dummy, Key>::type  key_type;   
 
-   value_compare(key_compare kcomp)
+   value_compare_impl(key_compare kcomp)
       :  key_compare(kcomp)
    {}
 
@@ -328,10 +328,10 @@ template <class Key, class Value, class KeyOfValue,
           class KeyCompare, class A>
 class rbtree
    : protected detail::rbtree_alloc
-      <A, value_compare<Key, Value, KeyCompare, KeyOfValue> >
+      <A, value_compare_impl<Key, Value, KeyCompare, KeyOfValue> >
 {
    typedef detail::rbtree_alloc
-      < A, value_compare<Key, Value
+      < A, value_compare_impl<Key, Value
       , KeyCompare, KeyOfValue> >                        AllocHolder;
    typedef typename AllocHolder::NodePtr                 NodePtr;
    typedef rbtree < Key, Value, KeyOfValue
@@ -350,7 +350,7 @@ class rbtree
    typedef Value                                      value_type;
    typedef A                                          allocator_type;
    typedef KeyCompare                                 key_compare;
-   typedef value_compare< Key, Value
+   typedef value_compare_impl< Key, Value
                         , KeyCompare, KeyOfValue>     value_compare;
    typedef typename A::pointer                        pointer;
    typedef typename A::const_pointer                  const_pointer;
@@ -394,6 +394,7 @@ class rbtree
          , rbtree_const_pointer  , rbtree_const_reference>
    {
       protected:
+      typedef typename Irbtree::iterator  iiterator;
       iiterator m_it;
       explicit const_iterator(iiterator it)  : m_it(it){}
       void prot_incr() { ++m_it; }

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -225,7 +225,7 @@ class named_upgradable_mutex::construct_func_t
    construct_func_t(CreationType type)
       :  m_creation_type(type){}
 
-   bool operator()(void *address, std::size_t size, bool created) const
+   bool operator()(void *address, std::size_t, bool created) const
    {   
       switch(m_creation_type){
          case open_only:
