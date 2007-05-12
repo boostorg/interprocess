@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -46,7 +46,7 @@ template class boost::interprocess::vector<test::movable_and_copyable_int,
    test::dummy_test_allocator<test::movable_and_copyable_int> >;
 
 template<class V1, class V2>
-bool copyable_only(V1 *shmvector, V2 *stdvector, boost::false_type)
+bool copyable_only(V1 *, V2 *, boost::false_type)
 {
    return true;
 }

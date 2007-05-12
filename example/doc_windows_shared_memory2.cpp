@@ -1,12 +1,16 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2006-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/interprocess/detail/config_begin.hpp>
+#include <boost/interprocess/detail/workaround.hpp>
+
+#ifdef BOOST_WINDOWS
 //[doc_windows_shared_memory2
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/mapped_region.hpp>
@@ -42,3 +46,10 @@ int main ()
    return 0;
 }
 //]
+#else //#ifdef BOOST_WINDOWS
+int main()
+{  return 0;   }
+#endif//#ifdef BOOST_WINDOWS
+
+#include <boost/interprocess/detail/config_end.hpp>
+

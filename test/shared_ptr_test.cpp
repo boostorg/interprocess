@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Peter Dimov 2002-2005.
-// (C) Copyright Ion Gaztañaga 2006. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -73,18 +73,18 @@ int simple_test()
          if(s_ptr3.get_deleter()   == 0){
             return 1;
          }
-         if(s_ptr3.get_allocator() == 0){
-            return 1;
-         }
+         //if(s_ptr3.get_allocator() == 0){
+            //return 1;
+         //}
 
          base_shared_ptr s_ptr_empty;
 
          if(s_ptr_empty.get_deleter()   != 0){
             return 1;
          }
-         if(s_ptr_empty.get_allocator() != 0){
-            return 1;
-         }
+         //if(s_ptr_empty.get_allocator() != 0){
+            //return 1;
+         //}
       }
    }
    shared_memory_object::remove("shm_name");
@@ -257,7 +257,7 @@ int string_shared_ptr_vector_insertion_test()
 //  This part is taken from shared_ptr_basic_test.cpp
 //
 //  Copyright (c) 2001, 2002 Peter Dimov and Multi Media Ltd.
-//  Copyright (c) 2006 Ion Gaztañaga
+//  Copyright (c) 2006 Ion Gaztanaga
 //
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at

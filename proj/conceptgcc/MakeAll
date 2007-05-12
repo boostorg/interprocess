@@ -1,7 +1,7 @@
 
-ifndef CC
-CC=i686-pc-cygwin-gcc.exe
-endif
+#ifndef CC
+CC=i686-pc-cygwin-conceptg++.exe
+#endif
 
 BOOST_ROOT=../../../..
 

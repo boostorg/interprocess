@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -96,11 +96,11 @@ class expand_bwd_test_allocator
    const_pointer address(const_reference value) const
    {  return const_pointer(boost::addressof(value));  }
 
-   pointer allocate(size_type count, cvoid_ptr hint = 0)
-   {  return 0; }
+   pointer allocate(size_type , cvoid_ptr hint = 0)
+   {  (void)hint; return 0; }
 
-   void deallocate(const pointer &ptr, size_type)
-   { }
+   void deallocate(const pointer &, size_type)
+   {}
 
    template<class Convertible>
    void construct(pointer ptr, const Convertible &value)
@@ -127,6 +127,7 @@ class expand_bwd_test_allocator
                          size_type preferred_size,
                          size_type &received_size, const pointer &reuse = 0)
    {
+      (void)preferred_size;   (void)reuse;
       //This allocator only expands backwards!
       assert(m_allocations == 0 || (command & expand_bwd));
       
@@ -156,7 +157,7 @@ class expand_bwd_test_allocator
    /*!Returns maximum the number of objects the previously allocated memory
       pointed by p can hold.*/
    size_type size(const pointer &p) const
-   {  return m_size; }
+   {  (void)p; return m_size; }
 
    /*!Allocates just one object. Memory allocated with this function
       must be deallocated only with deallocate_one().

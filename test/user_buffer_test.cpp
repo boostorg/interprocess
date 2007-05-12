@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -17,6 +17,7 @@
 #include <boost/interprocess/managed_external_buffer.hpp>
 #include <boost/interprocess/managed_heap_memory.hpp>
 #include <boost/interprocess/containers/list.hpp>
+#include <boost/type_traits/type_with_alignment.hpp>
 #include <boost/interprocess/allocators/node_allocator.hpp>
 #include "print_container.hpp"
 
@@ -51,8 +52,9 @@ bool CheckEqual(MyUserList *userlist, MyStdList *stdlist, MyHeapList *heaplist)
 int main ()
 {
    //Create the user memory who will store all objects
-   const int memsize = 65536;
-   static char static_buffer[memsize];
+   const int size_aligner  = sizeof(boost::detail::max_align);
+   const int memsize       = 65536/size_aligner*size_aligner;
+   static boost::detail::max_align static_buffer[memsize/size_aligner];
 
    //Named new capable user mem allocator
    wmanaged_external_buffer user_buffer(create_only, static_buffer, memsize);

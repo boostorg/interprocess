@@ -10,7 +10,7 @@
 // It is provided "as is" without express or implied warranty.
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -38,7 +38,7 @@ namespace test {
 boost::posix_time::ptime ptime_delay(int secs)
 {
    return   boost::posix_time::microsec_clock::universal_time() + 
-            boost::posix_time::time_duration(0, 0, 10);
+            boost::posix_time::time_duration(0, 0, secs);
 }
 
 inline boost::xtime delay(int secs, int msecs=0, int nsecs=0)
@@ -244,7 +244,7 @@ void do_test_condition_waits()
    thread.join();
    assert(data.awoken == 4);
 }
-
+/*
 //Message queue simulation test
 template <class Condition>
 inline Condition &cond_empty()
@@ -267,7 +267,7 @@ inline Mutex &mutex()
    static Mutex mut;
    return mut;
 }
-
+*/
 static volatile int count = 0;
 static volatile int waiting_readers = 0;
 static volatile int waiting_writer  = 0;
@@ -279,19 +279,25 @@ const int NumThreads    = thread_factor*queue_size;
 template <class Condition, class Mutex>
 struct condition_func
 {
-   static void execute()
+   condition_func(Condition &cond_full, Condition &cond_empty, Mutex &mutex)
+      :  cond_full_(cond_full), cond_empty_(cond_empty), mutex_(mutex)
+   {}
+
+   void operator()()
    {
-      boost::interprocess::scoped_lock<Mutex>
-         lock(mutex<Mutex>());
+      boost::interprocess::scoped_lock<Mutex>lock(mutex_);
       while(count == 0){
          ++waiting_readers;
-         cond_empty<Condition>().wait(lock);
+         cond_empty_.wait(lock);
          --waiting_readers;
       }
       --count;
       if(waiting_writer)
-         cond_full<Condition>().notify_one();
+         cond_full_.notify_one();
    }
+   Condition &cond_full_;
+   Condition &cond_empty_;
+   Mutex     &mutex_;
 };
 
 //Queue functions
@@ -299,9 +305,9 @@ template <class Condition, class Mutex>
 void do_test_condition_queue_notify_one(void)
 {
    //Force mutex and condition creation
-   cond_empty<Condition>();
-   cond_full<Condition>();
-   mutex<Mutex>();
+   Condition cond_empty;
+   Condition cond_full;
+   Mutex mutex;
 
    //Create threads that will decrease count
    {
@@ -313,25 +319,23 @@ void do_test_condition_queue_notify_one(void)
       boost::thread_group thgroup;
       int i;
       for(i = 0; i< NumThreads; ++i){
-//         thgroup.create_thread(&condition_func<Condition, Mutex>);
-//         thgroup.create_thread(&condition_func_bis);
-         thgroup.create_thread(&condition_func<Condition, Mutex>::execute);
+         condition_func<Condition, Mutex> func(cond_full, cond_empty, mutex);
+         thgroup.create_thread(func);
       }
 
       //Add 20 elements one by one in the queue simulation
       //The sender will block if it fills the queue
       for(i = 0; i < NumThreads; ++i){
-         boost::interprocess::scoped_lock<Mutex> 
-            lock(mutex<Mutex>());
+         boost::interprocess::scoped_lock<Mutex> lock(mutex);
          while(count == queue_size){
             ++waiting_writer;
-            cond_full<Condition>().wait(lock);
+            cond_full.wait(lock);
             --waiting_writer;
          }
          count++;
 
          if(waiting_readers)
-            cond_empty<Condition>().notify_one();
+            cond_empty.notify_one();
       }
       thgroup.join_all();
       assert(count == 0);
@@ -345,9 +349,9 @@ template <class Condition, class Mutex>
 void do_test_condition_queue_notify_all(void)
 {
    //Force mutex and condition creation
-   cond_empty<Condition>();
-   cond_full<Condition>();
-   mutex<Mutex>();
+   Condition cond_empty;
+   Condition cond_full;
+   Mutex mutex;
 
    //Create threads that will decrease count
    {
@@ -359,24 +363,22 @@ void do_test_condition_queue_notify_all(void)
       boost::thread_group thgroup;
       int i;
       for(i = 0; i< NumThreads; ++i){
-//         thgroup.create_thread(&condition_func<Condition, Mutex>);
-//         thgroup.create_thread(&condition_func_bis);
-         thgroup.create_thread(&condition_func<Condition, Mutex>::execute);
+         condition_func<Condition, Mutex> func(cond_full, cond_empty, mutex);
+         thgroup.create_thread(func);
       }
 
       //Fill queue to the max size and notify all several times
       for(i = 0; i < NumThreads; ++i){
-         boost::interprocess::scoped_lock<Mutex> 
-            lock(mutex<Mutex>());
+         boost::interprocess::scoped_lock<Mutex>lock(mutex);
          while(count == queue_size){
             ++waiting_writer;
-            cond_full<Condition>().wait(lock);
+            cond_full.wait(lock);
             --waiting_writer;
          }
          count++;
 
          if(waiting_readers)
-            cond_empty<Condition>().notify_all();
+            cond_empty.notify_all();
       }
       thgroup.join_all();
       assert(count == 0);

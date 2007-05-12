@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztañaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -51,9 +51,12 @@ inline void sleep(const boost::posix_time::ptime &xt)
 
 inline boost::posix_time::ptime delay(int secs, int msecs=0, int nsecs = 0)
 {
+   (void)msecs;
    using namespace boost::posix_time;
    int count = static_cast<int>(double(nsecs)*
                (double(time_duration::ticks_per_second())/double(1000000000.0)));
+   count += static_cast<int>(double(msecs)*
+               (double(time_duration::ticks_per_second())/double(1000.0)));
    boost::posix_time::ptime cur = microsec_clock::universal_time();
    return cur +=  boost::posix_time::time_duration(0, 0, secs, count);
 }
