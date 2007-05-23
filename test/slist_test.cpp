@@ -40,9 +40,6 @@ int main ()
    if(test::list_test<managed_shared_memory, MyMoveList, false>())
       return 1;
 
-   if(test::list_test<managed_shared_memory, MyCopyMoveList, false>())
-      return 1;
-
    return 0;
 }
 

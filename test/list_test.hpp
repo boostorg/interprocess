@@ -29,7 +29,7 @@ template<bool DoublyLinked>
 struct push_data_function
 {
    template<class MyShmList, class MyStdList>
-   int operator()(int max, MyShmList *shmlist, MyStdList *stdlist) const
+   static int execute(int max, MyShmList *shmlist, MyStdList *stdlist)
    {
       typedef typename MyShmList::value_type IntType;
       for(int i = 0; i < max; ++i){
@@ -46,7 +46,7 @@ template<>
 struct push_data_function<false>
 {
    template<class MyShmList, class MyStdList>
-   int operator()(int max, MyShmList *shmlist, MyStdList *stdlist) const
+   static int execute(int max, MyShmList *shmlist, MyStdList *stdlist)
    {
       typedef typename MyShmList::value_type IntType;
       for(int i = 0; i < max; ++i){
@@ -63,7 +63,7 @@ template<bool DoublyLinked>
 struct pop_back_function
 {
    template<class MyStdList, class MyShmList>
-   int operator()(MyShmList *shmlist, MyStdList *stdlist) const
+   static int execute(MyShmList *shmlist, MyStdList *stdlist)
    {
       shmlist->pop_back();
       stdlist->pop_back();
@@ -76,13 +76,12 @@ template<>
 struct pop_back_function<false>
 {
    template<class MyStdList, class MyShmList>
-   int operator()(MyShmList *shmlist, MyStdList *stdlist) const
+   static int execute(MyShmList *shmlist, MyStdList *stdlist)
    {
       (void)shmlist; (void)stdlist;
       return 0;
    }
 };
-
 
 
 template<class ManagedSharedMemory
@@ -112,7 +111,19 @@ int list_test (bool copied_allocators_equal = true)
 
    MyStdList *stdlist = new MyStdList;
 
-   if(push_data_t()(max, shmlist, stdlist)){
+/*
+   {
+      typedef typename MyShmList::value_type IntType;
+      for(int i = 0; i < max; ++i){
+         IntType move_me(i);
+         shmlist->push_front(move(move_me));
+         stdlist->push_front(i);
+      }
+      if(!CheckEqualContainers(shmlist, stdlist)) return 1;
+      return 0;
+   }*/
+
+   if(push_data_t::execute(max, shmlist, stdlist)){
       return 1;
    }
 
@@ -120,7 +131,7 @@ int list_test (bool copied_allocators_equal = true)
    stdlist->erase(stdlist->begin()++);
    if(!CheckEqualContainers(shmlist, stdlist)) return 1;
 
-   if(pop_back_function<DoublyLinked>()(shmlist, stdlist)){
+   if(pop_back_function<DoublyLinked>::execute(shmlist, stdlist)){
       return 1;
    }
 
@@ -188,7 +199,7 @@ int list_test (bool copied_allocators_equal = true)
    stdlist->resize(stdlist->size()/2);
    if(!CheckEqualContainers(shmlist, stdlist)) return 1;
 
-   if(push_data_t()(max, shmlist, stdlist)){
+   if(push_data_t::execute(max, shmlist, stdlist)){
       return 1;
    }
 
@@ -197,7 +208,7 @@ int list_test (bool copied_allocators_equal = true)
 
    int listsize = (int)shmlist->size();
 
-   if(push_data_t()(listsize, shmlist, stdlist)){
+   if(push_data_t::execute(listsize, shmlist, stdlist)){
       return 1;
    }
 
@@ -209,11 +220,11 @@ int list_test (bool copied_allocators_equal = true)
 
    listsize = (int)shmlist->size();
 
-   if(push_data_t()(listsize, shmlist, stdlist)){
+   if(push_data_t::execute(listsize, shmlist, stdlist)){
       return 1;
    }
 
-   if(push_data_t()(listsize, &othershmlist, &otherstdlist)){
+   if(push_data_t::execute(listsize, &othershmlist, &otherstdlist)){
       return 1;
    }
 

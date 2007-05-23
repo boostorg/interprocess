@@ -15,7 +15,6 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 
 #include <boost/detail/lightweight_test.hpp>
-#include <boost/detail/atomic_count.hpp>
 #include <boost/config.hpp>
 #include <algorithm>
 #include <functional>
@@ -45,7 +44,7 @@ class base
 {
    private:
 
-   boost::detail::atomic_count use_count_;
+   int use_count_;
 
    base(base const &);
    base & operator=(base const &);
@@ -67,22 +66,6 @@ class base
       return use_count_;
    }
 
-#if !defined(BOOST_NO_ARGUMENT_DEPENDENT_LOOKUP)
-
-   inline friend void intrusive_ptr_add_ref
-      (base * p)
-   {
-      ++p->use_count_;
-   }
-
-   inline friend void intrusive_ptr_release
-      (base * p)
-   {
-      if(--p->use_count_ == 0) delete p;
-   }
-
-#else
-
    void add_ref()
    {
       ++use_count_;
@@ -92,16 +75,9 @@ class base
    {
       if(--use_count_ == 0) delete this;
    }
-
-#endif
 };
 
 } // namespace N
-
-#if defined(BOOST_NO_ARGUMENT_DEPENDENT_LOOKUP)
-
-namespace boost
-{
 
 inline void intrusive_ptr_add_ref
    (const boost::interprocess::offset_ptr<N::base> &p)
@@ -114,12 +90,6 @@ inline void intrusive_ptr_release
 {
    p->release();
 }
-
-} // namespace boost
-
-#endif
-
-//
 
 struct X: public virtual N::base
 {
@@ -181,9 +151,6 @@ void pointer_constructor()
       boost::interprocess::offset_ptr<X> p = new X;
       BOOST_TEST(p->use_count() == 0);
 
-#if defined(BOOST_NO_ARGUMENT_DEPENDENT_LOOKUP)
-      using boost::intrusive_ptr_add_ref;
-#endif
       intrusive_ptr_add_ref(get_pointer(p));
       BOOST_TEST(p->use_count() == 1);
 

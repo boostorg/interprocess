@@ -133,12 +133,6 @@
 					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\sp_counted_base_atomic.hpp">
 				</File>
 				<File
-					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\sp_counted_base_pt.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\sp_counted_base_w32.hpp">
-				</File>
-				<File
 					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\sp_counted_impl.hpp">
 				</File>
 			</Filter>
