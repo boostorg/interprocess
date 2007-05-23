@@ -42,10 +42,13 @@ template
       >
 class basic_managed_shared_memory 
    : public detail::basic_managed_memory_impl <CharType, AllocationAlgorithm, IndexType>
+   , private detail::managed_open_or_create_impl<shared_memory_object>
 {
    /// @cond
    typedef detail::basic_managed_memory_impl 
       <CharType, AllocationAlgorithm, IndexType>   base_t;
+   typedef detail::managed_open_or_create_impl
+      <shared_memory_object>                       base2_t;
 
    typedef detail::create_open_func<base_t>        create_open_func_t;
 
@@ -64,7 +67,8 @@ class basic_managed_shared_memory
    //!This can throw.
    basic_managed_shared_memory(detail::create_only_t create_only, const char *name,
                              std::size_t size, const void *addr = 0)
-      : m_shmem(create_only, name, size, read_write, addr, 
+      : base_t()
+      , base2_t(create_only, name, size, read_write, addr, 
                 create_open_func_t(get_this_pointer(), DoCreate))
    {}
 
@@ -75,7 +79,8 @@ class basic_managed_shared_memory
    basic_managed_shared_memory (detail::open_or_create_t open_or_create,
                               const char *name, std::size_t size, 
                               const void *addr = 0)
-      : m_shmem(open_or_create, name, size, read_write, addr, 
+      : base_t()
+      , base2_t(open_or_create, name, size, read_write, addr, 
                 create_open_func_t(get_this_pointer(), 
                 DoCreateOrOpen))
    {}
@@ -84,7 +89,8 @@ class basic_managed_shared_memory
    //!Never throws.
    basic_managed_shared_memory (detail::open_only_t open_only, const char* name, 
                               const void *addr = 0)
-      : m_shmem(open_only, name, read_write, addr, 
+      : base_t()
+      , base2_t(open_only, name, read_write, addr, 
                 create_open_func_t(get_this_pointer(), 
                 DoOpen))
    {}
@@ -104,13 +110,8 @@ class basic_managed_shared_memory
    void swap(basic_managed_shared_memory &other)
    {
       base_t::swap(other);
-      m_shmem.swap(other.m_shmem);
+      base2_t::swap(other);
    }
-
-   /// @cond
-   private:
-   detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
-   /// @endcond
 };
 
 }  //namespace interprocess {

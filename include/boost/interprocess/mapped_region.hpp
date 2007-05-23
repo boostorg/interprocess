@@ -128,21 +128,6 @@ class mapped_region
 inline void swap(mapped_region &x, mapped_region &y)
 {  x.swap(y);  }
 
-inline mapped_region::mapped_region()
-   :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0)
-   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-      ,  m_file_mapping_hnd(0)
-   #endif
-{}
-
-inline mapped_region::mapped_region(detail::moved_object<mapped_region> other)
-   :  m_base(0), m_size(0), m_offset(0)
-      ,  m_extra_offset(0)
-   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-      ,  m_file_mapping_hnd(0)
-   #endif
-{  this->swap(other.get());   }
-
 inline mapped_region &mapped_region::operator=(detail::moved_object<mapped_region> other)
 {  this->swap(other.get());   return *this;  }
 
@@ -160,6 +145,17 @@ inline void*    mapped_region::get_address()  const
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
+inline mapped_region::mapped_region()
+   :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0)
+      ,  m_file_mapping_hnd(0)
+{}
+
+inline mapped_region::mapped_region(detail::moved_object<mapped_region> other)
+   :  m_base(0), m_size(0), m_offset(0)
+      ,  m_extra_offset(0)
+      ,  m_file_mapping_hnd(0)
+{  this->swap(other.get());   }
+
 template<int dummy>
 inline std::size_t mapped_region::page_size_holder<dummy>::get_page_size()
 {
@@ -176,9 +172,7 @@ inline mapped_region::mapped_region
    ,std::size_t size
    ,const void *address)
    :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0)
-   #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
       ,  m_file_mapping_hnd(0)
-   #endif
 {
    mapping_handle_t mhandle = mapping.get_mapping_handle();
    file_handle_t native_mapping_handle;
@@ -336,6 +330,15 @@ inline void mapped_region::priv_close()
 }
 
 #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+
+inline mapped_region::mapped_region()
+   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0)
+{}
+
+inline mapped_region::mapped_region(detail::moved_object<mapped_region> other)
+   :  m_base(MAP_FAILED), m_size(0), m_offset(0)
+      ,  m_extra_offset(0)
+{  this->swap(other.get());   }
 
 template<int dummy>
 inline std::size_t mapped_region::page_size_holder<dummy>::get_page_size()

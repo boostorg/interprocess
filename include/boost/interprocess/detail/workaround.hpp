@@ -62,6 +62,10 @@
       #define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
    #endif
 
+   #if defined(_POSIX_TIMEOUTS) && (_POSIX_TIMEOUTS - 0 > 0)
+      #define BOOST_INTERPROCESS_POSIX_TIMEOUTS
+   #endif
+
 #endif
 
 namespace boost {

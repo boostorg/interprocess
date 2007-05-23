@@ -107,15 +107,15 @@ class interprocess_recursive_mutex
    unsigned int            m_nLockCount;
    detail::OS_thread_id_t  m_nOwner;
    #else    //#if defined (BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
-      #if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
+      #if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined BOOST_INTERPROCESS_POSIX_TIMEOUTS
          pthread_mutex_t m_mut;   
-      #else //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
+      #else //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined BOOST_INTERPROCESS_POSIX_TIMEOUTS
          pthread_mutex_t   m_mut;
          pthread_cond_t    m_unlocked;
          pthread_t         m_thread_id;
          bool              m_valid_id;
          unsigned int      m_count;
-      #endif   //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
+      #endif   //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined BOOST_INTERPROCESS_POSIX_TIMEOUTS
    #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
    /// @endcond
 };

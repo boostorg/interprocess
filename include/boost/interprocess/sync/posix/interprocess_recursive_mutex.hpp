@@ -31,7 +31,7 @@ namespace boost {
 
 namespace interprocess {
 
-#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
+#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined BOOST_INTERPROCESS_POSIX_TIMEOUTS
 inline interprocess_recursive_mutex::interprocess_recursive_mutex()
 {
    detail::mutexattr_wrapper mut_attr(true);
@@ -79,7 +79,7 @@ inline void interprocess_recursive_mutex::unlock()
    assert(res == 0);
 }
 
-#else //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined _POSIX_TIMEOUTS
+#else //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined BOOST_INTERPROCESS_POSIX_TIMEOUTS
 
 inline interprocess_recursive_mutex::interprocess_recursive_mutex()
     : m_valid_id(false), m_count(0)
@@ -219,8 +219,7 @@ inline void interprocess_recursive_mutex::unlock()
    assert(res == 0);
 }
 
-#endif   //_POSIX_VERSION >= 200112L
+#endif   //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined BOOST_INTERPROCESS_POSIX_TIMEOUTS
 
 }  //namespace interprocess {
-
 }  //namespace boost {

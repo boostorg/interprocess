@@ -64,6 +64,7 @@
 #include <boost/interprocess/detail/move_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
+#include <boost/detail/allocator_utilities.hpp>
 
 namespace boost {
 

@@ -61,8 +61,6 @@ class managed_open_or_create_impl
       m_name = name;
       priv_open_or_create
          ( DoCreate
-         , m_mapped_region
-         , name
          , size
          , mode
          , addr
@@ -77,8 +75,6 @@ class managed_open_or_create_impl
       m_name = name;
       priv_open_or_create
          ( DoOpen
-         , m_mapped_region
-         , name
          , 0
          , mode
          , addr
@@ -95,8 +91,6 @@ class managed_open_or_create_impl
       m_name = name;
       priv_open_or_create
          ( DoCreateOrOpen
-         , m_mapped_region
-         , name
          , size
          , mode
          , addr
@@ -114,8 +108,6 @@ class managed_open_or_create_impl
       m_name = name;
       priv_open_or_create
          (DoCreate
-         , m_mapped_region
-         , name
          , size
          , mode
          , addr
@@ -132,8 +124,6 @@ class managed_open_or_create_impl
       m_name = name;
       priv_open_or_create
          ( DoOpen
-         , m_mapped_region
-         , name
          , 0
          , mode
          , addr
@@ -151,8 +141,6 @@ class managed_open_or_create_impl
       m_name = name;
       priv_open_or_create
          ( DoCreateOrOpen
-         , m_mapped_region
-         , name
          , size
          , mode
          , addr
@@ -253,9 +241,8 @@ class managed_open_or_create_impl
    }
 
    template <class ConstructFunc> inline 
-   static void priv_open_or_create
-      (create_enum_t type,  mapped_region &mregion,
-       const char *name, std::size_t size,
+   void priv_open_or_create
+      (create_enum_t type, std::size_t size,
        mode_t mode, const void *addr,
        ConstructFunc construct_func)
    {
@@ -270,12 +257,12 @@ class managed_open_or_create_impl
       }
 
       if(type == DoOpen){
-         DeviceAbstraction tmp(open_only, name, read_write);
+         DeviceAbstraction tmp(open_only, m_name.c_str(), read_write);
          tmp.swap(dev);
          created = false;
       }
       else if(type == DoCreate){
-         create_device<FileBased>(dev, name, size, file_like_t());
+         create_device<FileBased>(dev, m_name.c_str(), size, file_like_t());
          created = true;
       }
       else if(type == DoCreateOrOpen){
@@ -286,7 +273,7 @@ class managed_open_or_create_impl
          bool completed = false;
          while(!completed){
             try{
-               create_device<FileBased>(dev, name, size, file_like_t());
+               create_device<FileBased>(dev, m_name.c_str(), size, file_like_t());
                created     = true;
                completed   = true;
             }
@@ -296,7 +283,7 @@ class managed_open_or_create_impl
                }
                else{
                   try{
-                     DeviceAbstraction tmp(open_only, name, read_write);
+                     DeviceAbstraction tmp(open_only, m_name.c_str(), read_write);
                      dev.swap(tmp);
                      created     = false;
                      completed   = true;
@@ -327,7 +314,7 @@ class managed_open_or_create_impl
                   write_whole_device<FileBased>(dev, size, file_like_t());
                   construct_func((char*)region.get_address() + ManagedOpenOrCreateUserOffset, size - ManagedOpenOrCreateUserOffset, true);
                   //All ok, just move resources to the external mapped region
-                  mregion.swap(region);
+                  m_mapped_region.swap(region);
                }
                catch(...){
                   detail::atomic_write32(patomic_word, CorruptedSegment);
@@ -380,7 +367,7 @@ class managed_open_or_create_impl
 
          construct_func((char*)region.get_address() + ManagedOpenOrCreateUserOffset, region.get_size(), false);
          //All ok, just move resources to the external mapped region
-         mregion.swap(region);
+         m_mapped_region.swap(region);
       }
    }
 

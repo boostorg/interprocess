@@ -81,24 +81,28 @@ class iset_index
 
    /// @cond
    private:
+
    struct intrusive_key_value_less
    {
       bool operator()(const intrusive_compare_key_type &i, const value_type &b) const
       {  
-         return (i.m_len < b.m_num_char) || 
-                  (i.m_len == b.m_num_char && 
+         std::size_t blen = b.length();
+         return (i.m_len < blen) || 
+                  (i.m_len == blen && 
                   std::char_traits<char_type>::compare 
                      (i.mp_str, b.name(), i.m_len) < 0);
       }
 
       bool operator()(const value_type &b, const intrusive_compare_key_type &i) const
       {  
-         return (b.m_num_char < i.m_len) || 
-                  (b.m_num_char == i.m_len &&
+         std::size_t blen = b.length();
+         return (blen < i.m_len) || 
+                  (blen == i.m_len &&
                   std::char_traits<char_type>::compare 
                      (b.name(), i.mp_str, i.m_len) < 0);
       }
    };
+
    /// @endcond
 
    public:

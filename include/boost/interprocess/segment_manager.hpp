@@ -18,7 +18,6 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/config.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
@@ -30,7 +29,6 @@
 #include <boost/interprocess/detail/named_proxy.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
-#include <boost/interprocess/indexes/flat_map_index.hpp>
 #include <boost/interprocess/indexes/iset_index.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
@@ -74,6 +72,8 @@ struct intrusive_compare_key
 
 namespace detail{
 
+struct empty{};
+
 /*!
    This struct indicates an anonymous object creation allocation
 */
@@ -114,10 +114,12 @@ struct index_key
       pointer_to_other<VoidPointer, const CharT>::type   const_char_ptr_t;
    typedef CharT                                         char_type;
 
+   private:
    //Offset pointer to the object's name
    const_char_ptr_t  mp_str;
    //Length of the name buffer (null NOT included)
    std::size_t       m_len;
+   public:
 
    /*!Constructor of the key*/
    index_key (const char_type *name, std::size_t length)
@@ -141,6 +143,18 @@ struct index_key
                   (detail::get_pointer(mp_str),
                    detail::get_pointer(right.mp_str), m_len) == 0;
    }
+
+   void name(const CharT *name)
+   {  mp_str = name; }
+
+   void length(std::size_t len)
+   {  m_len = len; }
+
+   const CharT *name() const
+   {  return detail::get_pointer(mp_str); }
+
+   std::size_t length() const
+   {  return m_len; }
 };
 
 /*!The index_data stores a pointer to a buffer and the element count needed
@@ -153,15 +167,12 @@ struct index_data
    index_data(void *ptr) : m_ptr(ptr){}
 };
 
-template<class Base, class CharType>
 struct block_header
-   :  public Base
 {
-   std::size_t m_value_bytes;
-   std::size_t m_value_alignment :  8;
-   std::size_t m_allocation_type :  3;
-   std::size_t m_sizeof_char     :  5;
-   std::size_t m_num_char        :  16;
+   std::size_t    m_value_bytes;
+   unsigned short m_num_char;
+   unsigned char  m_value_alignment;
+   unsigned char  m_alloc_type_sizeof_char;
 
    block_header(std::size_t value_bytes
                ,std::size_t value_alignment
@@ -170,66 +181,148 @@ struct block_header
                ,std::size_t num_char
                )
       :  m_value_bytes(value_bytes)
-      ,  m_value_alignment(value_alignment)
-      ,  m_allocation_type(allocation_type)
-      ,  m_sizeof_char(sizeof_char)
       ,  m_num_char(num_char)
+      ,  m_value_alignment(value_alignment)
+      ,  m_alloc_type_sizeof_char
+         ( ((unsigned char)allocation_type << 5u) | 
+           ((unsigned char)sizeof_char & 0x1F)   )
    {};
 
-   block_header &operator= (const Base &b)
-   {  Base::operator=(b);  return *this;  }
 
    template<class T>
    block_header &operator= (const T& )
    {  return *this;  }
 
    std::size_t total_size() const
+   {
+      if(allocation_type() != anonymous_type){
+         return name_offset() + (m_num_char+1)*sizeof_char();
+      }
+      else{
+         return value_offset() + m_value_bytes;
+      }
+   }
+
+   template<class Header>
+   std::size_t total_size_with_header() const
+   {
+      return get_rounded_size
+               (  sizeof(Header)
+               ,  boost::alignment_of<block_header>::value)
+           + total_size();
+   }
+
+   std::size_t allocation_type() const
+   {  return (m_alloc_type_sizeof_char >> 5u)&(unsigned char)0x7;  }
+
+   std::size_t sizeof_char() const
+   {  return m_alloc_type_sizeof_char & (unsigned char)0x1F;  }
+
+   template<class CharType>
+   CharType *name() const
    {  
-      return detail::char_ptr_cast(this->name()) + (m_num_char+1)*m_sizeof_char
-           - detail::char_ptr_cast(this);
+      return reinterpret_cast<CharType*>
+      (detail::char_ptr_cast(this) + name_offset());
+   }
+
+   std::size_t length() const
+   {  return m_num_char;   }
+
+   std::size_t name_offset() const
+   {  
+      return value_offset() + get_rounded_size(m_value_bytes, sizeof_char());
    }
 
    void *value() const
    {  
-      return detail::char_ptr_cast(this) + 
-         get_rounded_size(sizeof(block_header), m_value_alignment);
+      return detail::char_ptr_cast(this) + value_offset();
    }
 
-   CharType *name() const
+   std::size_t value_offset() const
    {  
-      return reinterpret_cast<CharType*>(detail::char_ptr_cast(this->value()) + 
-         get_rounded_size(m_value_bytes, m_sizeof_char));
+      return get_rounded_size(sizeof(block_header), m_value_alignment);
    }
 
-   bool operator <(const block_header &b) const
+   template<class CharType>
+   bool less(const block_header &b) const
    {
       return m_num_char < b.m_num_char ||
              (m_num_char < b.m_num_char && 
-               std::char_traits<CharType>::compare(name(), b.name(), m_num_char) < 0);
+               std::char_traits<CharType>::compare
+                  (name<CharType>(), b.name<CharType>(), m_num_char) < 0);
    }
 
-   bool operator ==(const block_header &b) const
+   template<class CharType>
+   bool equal(const block_header &b) const
    {
       return m_num_char == b.m_num_char &&
              std::char_traits<CharType>::compare
-               (name(), b.name(), m_num_char) == 0;
+               (name<CharType>(), b.name<CharType>(), m_num_char) == 0;
    }
 
    template<class T>
    static block_header *block_header_from_value(T *value)
    {  
-      
       block_header * hdr = 
          reinterpret_cast<block_header*>(detail::char_ptr_cast(value) - 
          get_rounded_size(sizeof(block_header), boost::alignment_of<T>::value));
-
       //Some sanity checks
       assert(hdr->m_value_alignment == boost::alignment_of<T>::value);
       assert(hdr->m_value_bytes % sizeof(T) == 0);
       return hdr;
    }
+
+   template<class Header>
+   static block_header *from_first_header(Header *header)
+   {  
+      block_header * hdr = 
+         reinterpret_cast<block_header*>(detail::char_ptr_cast(header) + 
+         get_rounded_size(sizeof(Header), boost::alignment_of<block_header>::value));
+      //Some sanity checks
+      return hdr;
+   }
+
+   template<class Header>
+   static Header *to_first_header(block_header *bheader)
+   {  
+      Header * hdr = 
+         reinterpret_cast<Header*>(detail::char_ptr_cast(bheader) - 
+         get_rounded_size(sizeof(Header), boost::alignment_of<block_header>::value));
+      //Some sanity checks
+      return hdr;
+   }
 };
 
+template<class Hook, class CharType>
+struct intrusive_value_type_impl
+   :  public Hook
+{
+   enum  {  BlockHdrAlignment = boost::alignment_of<block_header>::value  };
+
+   block_header *get_block_header() const
+   {
+      return (block_header *)(detail::char_ptr_cast(this) +
+         get_rounded_size(sizeof(*this), BlockHdrAlignment));
+   }
+
+   bool operator <(const intrusive_value_type_impl<Hook, CharType> & other) const
+   {  return this->get_block_header()->template less<CharType>(*other.get_block_header());  }
+
+   bool operator ==(const intrusive_value_type_impl<Hook, CharType> & other) const
+   {  return this->get_block_header()->template equal<CharType>(*other.get_block_header());  }
+
+   static intrusive_value_type_impl *get_intrusive_value_type(block_header *hdr)
+   {
+      return (intrusive_value_type_impl *)(detail::char_ptr_cast(hdr) -
+         get_rounded_size(sizeof(intrusive_value_type_impl), BlockHdrAlignment));
+   }
+
+   CharType *name() const
+   {  return get_block_header()->template name<CharType>(); }
+
+   std::size_t length() const
+   {  return get_block_header()->length(); }
+};
 
 template <class InpPtr, class OutPtr>
 struct get_construct_name;
@@ -255,12 +348,53 @@ struct get_construct_name<unique_instance_t, OutPtr>
    {  return reinterpret_cast<const OutPtr *>(-1);   }
 };
 
+template<class CharType>
+class char_ptr_holder
+{
+   public:
+   char_ptr_holder(const CharType *name) 
+      : m_name(detail::get_construct_name<CharType, CharType>::get(name))
+   {}
+
+   char_ptr_holder(const detail::anonymous_instance_t *name) 
+      : m_name(detail::get_construct_name<detail::anonymous_instance_t, CharType>::get(name))
+   {}
+
+   char_ptr_holder(const detail::unique_instance_t *name) 
+      : m_name(detail::get_construct_name<detail::unique_instance_t, CharType>::get(name))
+   {}
+
+   operator const CharType *()
+   {  return m_name;  }
+
+   private:
+   const CharType *m_name;
+};
+
 }  //namespace detail {
+
 
 template<class MemoryAlgorithm>
 class restricted_segment_manager
    :  private MemoryAlgorithm
 {
+   //typedef typename MemoryAlgorithm::mutex_family::recursive_mutex_type   rmutex;
+   public:
+   struct raw_deleter_t
+   {
+      typedef void * pointer;
+
+      raw_deleter_t(restricted_segment_manager &mngr)
+         : m_mngr(mngr)
+      {}
+
+      void operator()(pointer p)
+      {  m_mngr.deallocate(p);      }
+
+      private:
+      restricted_segment_manager &m_mngr;
+   };
+
    public:
    typedef typename MemoryAlgorithm::void_pointer  void_pointer;
    typedef typename MemoryAlgorithm::mutex_family  mutex_family;
@@ -347,8 +481,173 @@ class restricted_segment_manager
    //!Writes to zero free memory (memory not yet allocated) of the memory algorithm
    void clear_free_memory()
    {   MemoryAlgorithm::clear_free_memory(); }
+
+   /// @cond
+   /*!Generic anonymous "new" function.*/
+   template<class T, class CtorFunc>
+   T * anonymous_construct(std::size_t num, 
+                                        bool dothrow,
+                                        CtorFunc &ctor)
+   {
+      typedef detail::block_header block_header_t;
+      block_header_t block_info ( sizeof(T)*num
+                                 , boost::alignment_of<T>::value
+                                 , anonymous_type
+                                 , 1
+                                 , 0);
+
+      //-------------------------------
+      //boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      //-------------------------------
+
+      //Allocate memory
+      void *ptr_struct = this->allocate(block_info.total_size(), std::nothrow_t());
+
+      //Check if there is enough memory
+      if(!ptr_struct){
+         if(dothrow){
+            throw bad_alloc();
+         }
+         else{
+            return 0; 
+         }
+      }
+
+      //Build scoped ptr to avoid leaks with constructor exception
+      boost::interprocess::scoped_ptr<void, raw_deleter_t> mem(ptr_struct, *this);
+
+      //Now construct the header
+      block_header_t * hdr = new(ptr_struct) block_header_t(block_info);
+      T *ptr = static_cast<T*>(hdr->value());
+
+      if(!CtorFunc::is_trivial){
+         //Construct array, this can throw
+         this->template array_construct<CtorFunc>(ptr, num, ctor);
+      }
+
+      //All constructors successful, we don't want erase memory
+      mem.release();
+      return ptr;
+   }
+
+   /*!Calls the destructor and makes an anonymous deallocate*/
+   template <class T>
+   bool anonymous_destroy(const T *object)
+   {
+      if(!object)
+         return false;
+
+      //Get control data from associated with this object    
+      typedef detail::block_header block_header_t;
+      block_header_t *ctrl_data = block_header_t::block_header_from_value(object);
+
+      //-------------------------------
+      //boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      //-------------------------------
+
+      if(ctrl_data->allocation_type() != anonymous_type){
+         //This is not an anonymous object, the pointer is wrong!
+         assert(0);
+         return false;
+      }
+
+      //Call destructors and free memory
+      this->array_destroy
+            (ctrl_data, object, ctrl_data->m_value_bytes/sizeof(T));
+      return true;
+   }
+
+   template <class T>
+   void array_destroy(const void * memory, T *objects, std::size_t count)
+   {
+      //Build scoped ptr to avoid leaks with destructor exception
+      boost::interprocess::scoped_ptr<void, raw_deleter_t> mem((void*)memory, *this);
+
+      if(boost::has_trivial_destructor<T>::value)
+         return;
+
+      //Call destructors in reverse order, if one throws catch it and
+      //continue destroying ignoring further exceptions. 
+      if(!boost::has_nothrow_destructor<T>::value){
+         while(count--){
+            objects[count].~T();
+         }
+      }
+      else{
+         BOOST_TRY {
+            while(count--){
+               objects[count].~T();
+            }
+         }
+         BOOST_CATCH(...){
+            //Destroy the rest of objects ignoring exceptions
+            while(count--){
+               BOOST_TRY         { objects[count].~T(); }
+               //Ignore exceptions
+               BOOST_CATCH(...)  { }
+               BOOST_CATCH_END
+            }
+            //throws first exception
+            BOOST_RETHROW
+         }
+         BOOST_CATCH_END
+      }
+   }
+
+   template<class Ctor>
+   void array_construct(typename Ctor::target_t *ptr, 
+                               std::size_t num, Ctor &ctor)
+   {
+      typedef typename Ctor::target_t target_t;
+      //Try constructors
+      std::size_t counter = 0;
+      BOOST_TRY{
+         for(; counter < num; ++counter, ++ctor){
+            ctor(&ptr[counter]);
+         }
+      }
+      //If there is an exception call destructors and erase index node
+      BOOST_CATCH(...){
+         if(!boost::has_trivial_destructor<target_t>::value){
+            for(; counter; --counter){
+               BOOST_TRY         { ptr[counter].~target_t(); }
+               //Ignore exceptions, we will throw the original 
+               //exception to free acquired locks
+               BOOST_CATCH(...)  {}
+               BOOST_CATCH_END
+            }
+         }
+         BOOST_RETHROW;
+      }
+      BOOST_CATCH_END
+   }
 };
 /// @endcond
+
+namespace detail{
+
+template<class MemoryAlgorithm>
+struct restricted_segment_manager_type
+{  typedef restricted_segment_manager<MemoryAlgorithm> type;   };
+
+template<class CharT, class MemoryAlgorithm>
+struct index_config
+{
+   typedef typename MemoryAlgorithm::void_pointer        void_pointer;
+   typedef CharT                                         char_type;
+   typedef detail::index_key<CharT, void_pointer>        key_type;
+   typedef detail::index_data<void_pointer>              mapped_type;
+   typedef typename restricted_segment_manager_type
+      <MemoryAlgorithm>::type                            restricted_segment_manager;
+
+   template<class HeaderBase>
+   struct intrusive_value_type
+   {  typedef detail::intrusive_value_type_impl<HeaderBase, CharT>  type; };
+
+   typedef intrusive_compare_key<CharT>            intrusive_compare_key_type;
+};
+
+}  //namespace detail{
 
 /*!
    This object is placed in the beginning of memory segment and
@@ -375,109 +674,26 @@ class segment_manager
    segment_manager(const segment_manager &);
    segment_manager &operator=(const segment_manager &);
    typedef restricted_segment_manager<MemoryAlgorithm> Base;
+   typedef typename Base::raw_deleter_t   raw_deleter_t;
    /// @endcond
 
    public:
-   typedef typename Base::void_pointer void_pointer;
+   typedef typename Base::void_pointer    void_pointer;
 
    enum {   PayloadPerAllocation = Base::PayloadPerAllocation };
 
    /// @cond
    private:
-   template<class CharT>
-   struct index_config
-   {
-      typedef CharT                                   char_type;
-      typedef detail::index_key<CharT, void_pointer>  key_type;
-      typedef detail::index_data<void_pointer>        mapped_type;
-      typedef Base                                    restricted_segment_manager;
-
-      template<class BlockBase>
-      struct intrusive_value_type
-      {  typedef detail::block_header<BlockBase, CharT>  type; };
-
-      typedef intrusive_compare_key<CharT> intrusive_compare_key_type;
-   };
-
-   template<class Index, class CharT>
-   struct intrusive_header
-   {
-      typedef typename Index::value_type type;
-   };
-
-   template<class Index, class CharT>
-   struct node_header
-   {
-      typedef detail::block_header<typename Index::iterator, CharT>  type;
-   };
-
-   template<class Index, class CharT>
-   struct normal_header
-   {
-      struct empty{};
-      typedef detail::block_header<empty, CharT>  type;
-   };
-
-   template<class CharT>
-   struct select_block_header
-   {
-      typedef IndexType<index_config<CharT> > index;
-
-      typedef typename boost::mpl::if_c
-         < is_intrusive_index<index>::value
-         , intrusive_header  <index, CharT>
-         , typename boost::mpl::if_c
-            < is_node_index<index>::value
-            , node_header  <index, CharT>
-            , normal_header<index, CharT> 
-            >::type
-         >::type  header_type;
-
-      typedef typename header_type::type type;
-   };
-
-   struct raw_deleter_t
-   {
-      typedef void * pointer;
-
-      raw_deleter_t(segment_manager &mngr)
-         : m_mngr(mngr)
-      {}
-
-      void operator()(pointer p)
-      {  m_mngr.deallocate(p);      }
-
-      private:
-      segment_manager &m_mngr;
-   };
-   /// @endcond
+   typedef detail::index_config<CharType, MemoryAlgorithm>  index_config_named;
+   typedef detail::index_config<char, MemoryAlgorithm>      index_config_unique;
+   typedef IndexType<index_config_named>                    index_type;
+   typedef boost::mpl::bool_<is_intrusive_index<index_type>::value > is_intrusive_t;
+   typedef boost::mpl::bool_<is_node_index<index_type>::value>       is_node_index_t;
 
    public:
-   /// @cond
-   typedef IndexType<index_config<CharType> >         named_index_t;
-   typedef IndexType<index_config<char> >             unique_index_t;
-
-   class char_ptr_holder_t
-   {
-      public:
-      char_ptr_holder_t(const CharType *name) 
-         : m_name(detail::get_construct_name<CharType, CharType>::get(name))
-      {}
-
-      char_ptr_holder_t(const detail::anonymous_instance_t *name) 
-         : m_name(detail::get_construct_name<detail::anonymous_instance_t, CharType>::get(name))
-      {}
-
-      char_ptr_holder_t(const detail::unique_instance_t *name) 
-         : m_name(detail::get_construct_name<detail::unique_instance_t, CharType>::get(name))
-      {}
-
-      operator const CharType *()
-      {  return m_name;  }
-
-      private:
-      const CharType *m_name;
-   };
+   typedef IndexType<index_config_named>                    named_index_t;
+   typedef IndexType<index_config_unique>                   unique_index_t;
+   typedef detail::char_ptr_holder<CharType>                char_ptr_holder_t;
    /// @endcond
 
    typedef typename Base::mutex_family        mutex_family;
@@ -528,16 +744,16 @@ class segment_manager
       //The name can't be null, no anonymous object can be found by name
       assert(name != 0);
       if(name == reinterpret_cast<const CharType*>(-1)){
-         return priv_generic_find<T, char> (typeid(T).name(), m_header.m_unique_index);   
+         return priv_generic_find<T, char> (typeid(T).name(), m_header.m_unique_index, is_intrusive_t());
       }
       else{
-         return priv_generic_find<T, CharType> (name, m_header.m_named_index);
+         return priv_generic_find<T, CharType> (name, m_header.m_named_index, is_intrusive_t());
       }
    }
 
    template <class T>
    std::pair<T*, std::size_t> find (const detail::unique_instance_t* name)
-   {  return priv_generic_find<T, char> (name, m_header.m_unique_index); }
+   {  return priv_generic_find<T, char> (name, m_header.m_unique_index, is_intrusive_t());   }
 
    /*!Returns throwing "construct" proxy object*/
    template <class T>
@@ -598,55 +814,51 @@ class segment_manager
    bool destroy(const detail::unique_instance_t *)
    {
       return this->priv_generic_named_destroy<T, char>
-               (typeid(T).name(), m_header.m_unique_index);
+         (typeid(T).name(), m_header.m_unique_index, is_intrusive_t());
    }
 
    template <class T>
    bool destroy(const CharType *name)
    {
       return this->priv_generic_named_destroy<T, CharType>
-               (name, m_header.m_named_index);
+               (name, m_header.m_named_index, is_intrusive_t());
    }
 
    template <class T>
-   bool destroy_ptr(const T *ptr)
+   bool destroy_ptr(const T *p)
    {
       //Allow void pointer deletion instantiation to be able to
       //construct void shared_ptrs
       //If we call the destroy_ptr(const void *), the function will return 0
       typedef typename boost::mpl::if_c<boost::is_same<T, void>::value,
                                        char, T>::type data_t;
-      return priv_destroy_ptr((const data_t*)ptr);
-   }
+      const data_t *ptr = (const data_t*)p;
 
-   /*!Generic named/anonymous new function. Offers all the possibilities, 
-      such as throwing, search before creating, and the constructor is 
-      encapsulated in an object function.*/
-   template<class T, class CtorFunc>
-   T * generic_construct(const CharType *name, 
-                         std::size_t num, 
-                         bool try2find, 
-                         bool dothrow,
-                         CtorFunc &ctor)
-   {
-      //Security overflow check
-      if(num > ((std::size_t)-1)/sizeof(T)){
-         if(dothrow)
-            throw bad_alloc();
-         else
-            return 0;
+      //TO-DO: Although we now that the block_header_temp is equal for both indexes
+      //we should find a cleaner way to do this.
+      detail::block_header *ctrl_data = detail::block_header::block_header_from_value(ptr);
+      switch(ctrl_data->allocation_type()){
+         case anonymous_type:
+            return this->template anonymous_destroy<T>(ptr);
+         break;
+
+         case named_type:
+            return this->priv_generic_named_destroy<T, CharType>
+               (ctrl_data, m_header.m_named_index, is_node_index_t());
+         break;
+
+         case unique_type:
+            return this->priv_generic_named_destroy<T, char>
+               (ctrl_data, m_header.m_unique_index, is_node_index_t());
+         break;
+
+         default:
+            //This type is unknown, bad pointer passed to this function!
+            assert(0);
+            return false;
+         break;
       }
-      if(name == 0){
-         return this->priv_generic_anonymous_construct<T, CtorFunc>(num, dothrow, ctor);
-      }
-      else if(name == reinterpret_cast<const CharType*>(-1)){
-         return this->priv_generic_named_construct<char, T, CtorFunc>
-                  (unique_type, typeid(T).name(), num, try2find, dothrow, ctor, m_header.m_unique_index);
-      }
-      else{
-         return this->priv_generic_named_construct<CharType, T, CtorFunc>
-                  (named_type, name, num, try2find, dothrow, ctor, m_header.m_named_index);
-      }
+      return false;
    }
 
    /*!Returns the name of an object created with construct/find_or_construct
@@ -655,12 +867,11 @@ class segment_manager
    const CharType *get_name(const T *ptr)
    {
       //Get header
-      typedef typename select_block_header<CharType>::type block_header_t;
-      block_header_t *ctrl_data = block_header_t::block_header_from_value(ptr);
-      CharType *name = static_cast<CharType*>(ctrl_data->name());
+      detail::block_header *ctrl_data = detail::block_header::block_header_from_value(ptr);
+      CharType *name = static_cast<CharType*>(ctrl_data->template name<CharType>());
    
       //Sanity checks
-      assert(ctrl_data->m_sizeof_char == sizeof(CharType));
+      assert(ctrl_data->sizeof_char() == sizeof(CharType));
       assert(ctrl_data->m_num_char == std::char_traits<CharType>::length(name));
 
       return name;
@@ -672,10 +883,9 @@ class segment_manager
    InstanceType get_type(const T *ptr)
    {
       //Get header
-      typedef typename select_block_header<CharType>::type block_header_t;
-      block_header_t *ctrl_data = block_header_t::block_header_from_value(ptr);
-      assert((InstanceType)ctrl_data->m_allocation_type < max_allocation_type);
-      return (InstanceType)ctrl_data->m_allocation_type;
+      detail::block_header *ctrl_data = detail::block_header::block_header_from_value(ptr);
+      assert((InstanceType)ctrl_data->allocation_type() < max_allocation_type);
+      return (InstanceType)ctrl_data->allocation_type();
    }
 
    /*!Preallocates needed index resources to optimize the 
@@ -735,7 +945,6 @@ class segment_manager
       single-segment management. Never throws*/
    void * allocate (std::size_t nbytes, std::nothrow_t nothrow)
    {  return Base::allocate(nbytes, nothrow);   }
-
 
    /*!Allocates aligned bytes, returns 0 if there is not more memory.
       Alignment must be power of 2*/
@@ -805,73 +1014,55 @@ class segment_manager
    {  return m_header.m_unique_index.end(); }
 
    /// @cond
+   /*!Generic named/annoymous new function. Offers all the possibilities, 
+      such as throwing, search before creating, and the constructor is 
+      encapsulated in an object function.*/
+   template<class T, class CtorFunc>
+   T * generic_construct(const CharType *name, 
+                         std::size_t num, 
+                         bool try2find, 
+                         bool dothrow,
+                         CtorFunc &ctor)
+   {
+      //Security overflow check
+      if(num > ((std::size_t)-1)/sizeof(T)){
+         if(dothrow)
+            throw bad_alloc();
+         else
+            return 0;
+      }
+      if(name == 0){
+         return this->template anonymous_construct<T, CtorFunc>(num, dothrow, ctor);
+      }
+      else if(name == reinterpret_cast<const CharType*>(-1)){
+         return this->priv_generic_named_construct<char, T, CtorFunc>
+            (unique_type, typeid(T).name(), num, try2find, dothrow, ctor, m_header.m_unique_index, is_intrusive_t());
+      }
+      else{
+         return this->priv_generic_named_construct<CharType, T, CtorFunc>
+            (named_type, name, num, try2find, dothrow, ctor, m_header.m_named_index, is_intrusive_t());
+      }
+   }
+
    private:
    static std::size_t priv_get_reserved_bytes()
    {
-      
       //Get the number of bytes until the end of (*this)
       //beginning in the end of the Base base.
       return   (detail::char_ptr_cast((segment_manager*)0) + sizeof(segment_manager))   -
                (detail::char_ptr_cast(static_cast<Base*>((segment_manager*)0)) + sizeof(Base));
    }
 
-   template <class T>
-   bool priv_destroy_ptr(const T *ptr)
-   {
-      //TO-DO: Although we now that the block_header is equal for both indexes
-      //we should find a cleaner way to do this.
-      typedef typename select_block_header<CharType>::type block_header_t;
-      block_header_t *ctrl_data = block_header_t::block_header_from_value(ptr);
-      switch(ctrl_data->m_allocation_type){
-         case anonymous_type:
-            return this->priv_generic_anonymous_destroy<T>(ptr);
-         break;
-
-         case named_type:
-            {
-               return this->priv_generic_named_destroy<T, CharType>
-                  (ctrl_data, m_header.m_named_index);
-            }
-         break;
-
-         case unique_type:
-            {
-               typedef typename select_block_header<char>::type block_header_unique_t;
-               return this->priv_generic_named_destroy<T, char>
-                  (block_header_unique_t::block_header_from_value(ptr), m_header.m_unique_index);
-            }
-         break;
-
-         default:
-            //This type is unknown, bad pointer passed to this function!
-            assert(0);
-            return false;
-         break;
-      }
-      return false;
-   }
-
    template <class T, class CharT>
    std::pair<T*, std::size_t> priv_generic_find
       (const CharT* name, 
-       IndexType<index_config<CharT> > &index)
+       IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
+       boost::mpl::true_ is_intrusive)
    {
-      const bool is_intrusive = 
-         is_intrusive_index<IndexType<index_config<CharT> > >::value;
-      return priv_generic_find<T, CharT>
-               (name, index, boost::mpl::bool_<is_intrusive>());
-   }
-
-   template <class T, class CharT>
-   std::pair<T*, std::size_t> priv_generic_find
-      (const CharT* name, 
-       IndexType<index_config<CharT> > &index,
-       boost::mpl::true_)
-   {
-      typedef typename select_block_header<CharT>::type  block_header_t;
-      typedef IndexType<index_config<CharT> >         index_type;
+      (void)is_intrusive;
+      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >         index_type;
       typedef detail::index_key<CharT, void_pointer>  index_key_t;
-      typedef typename index_type::iterator        index_it;
+      typedef typename index_type::iterator           index_it;
 
       //-------------------------------
       boost::interprocess::scoped_lock<rmutex> guard(m_header);
@@ -888,11 +1079,11 @@ class segment_manager
       //If found, assign values
       if(it != index.end()){
          //Get header
-         block_header_t *ctrl_data = &*it;
+         detail::block_header *ctrl_data = it->get_block_header();
 
          //Sanity check
          assert((ctrl_data->m_value_bytes % sizeof(T)) == 0);
-         assert(ctrl_data->m_sizeof_char == sizeof(CharT));
+         assert(ctrl_data->sizeof_char() == sizeof(CharT));
          ret_ptr  = static_cast<T*>(ctrl_data->value());
          ret_num  = ctrl_data->m_value_bytes/sizeof(T);
       }
@@ -902,13 +1093,14 @@ class segment_manager
    template <class T, class CharT>
    std::pair<T*, std::size_t> priv_generic_find
       (const CharT* name, 
-       IndexType<index_config<CharT> > &index,
-       boost::mpl::false_)
+       IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
+       boost::mpl::false_ is_intrusive)
    {
-      typedef IndexType<index_config<CharT> >      index_type;
+      (void)is_intrusive;
+      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >      index_type;
       typedef typename index_type::key_type        key_type;
       typedef typename index_type::iterator        index_it;
-      typedef typename select_block_header<CharT>::type  block_header_t;
+      typedef detail::block_header                 block_header_t;
 
       //-------------------------------
       boost::interprocess::scoped_lock<rmutex> guard(m_header);
@@ -928,85 +1120,49 @@ class segment_manager
 
          //Sanity check
          assert((ctrl_data->m_value_bytes % sizeof(T)) == 0);
-         assert(ctrl_data->m_sizeof_char == sizeof(CharT));
+         assert(ctrl_data->sizeof_char() == sizeof(CharT));
          ret_ptr  = static_cast<T*>(ctrl_data->value());
          ret_num  = ctrl_data->m_value_bytes/sizeof(T);
       }
       return std::make_pair(ret_ptr, ret_num);
    }
 
-   /*!Calls the destructor and makes an anonymous deallocate*/
-   template <class T>
-   bool priv_generic_anonymous_destroy(const T *object)
+   template <class T, class CharT>
+   bool priv_generic_named_destroy
+     (detail::block_header *block_header,
+      IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
+      boost::mpl::true_ is_node_index)
    {
-      if(!object)
-         return false;
+      (void)is_node_index;
+      typedef typename IndexType<detail::index_config<CharT, MemoryAlgorithm> >::iterator index_it;
+      typedef detail::block_header  block_header_t;
 
-      //Get control data from associated with this object    
-      typedef typename select_block_header<CharType>::type block_header_t;
-      block_header_t *ctrl_data = block_header_t::block_header_from_value(object);
-
-      //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
-      //-------------------------------
-
-      if(ctrl_data->m_allocation_type != anonymous_type){
-         //This is not an anonymous object, the pointer is wrong!
-         assert(0);
-         return false;
-      }
-
-      //Call destructors and free memory
-      this->priv_array_destroy
-            (ctrl_data, object, ctrl_data->m_value_bytes/sizeof(T));
-      return true;
+      index_it *ihdr = block_header_t::to_first_header<index_it>(block_header);
+      return this->priv_generic_named_destroy_impl<T, CharT>(*ihdr, index);
    }
 
    template <class T, class CharT>
-   bool priv_generic_named_destroy(typename select_block_header<CharT>::type *ctrl_data, 
-                                   IndexType<index_config<CharT> > &index)
+   bool priv_generic_named_destroy
+     (detail::block_header *block_header,
+      IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
+      boost::mpl::false_ is_node_index)
    {
-      typedef IndexType<index_config<CharT> >            index_type;
-      return this->priv_generic_named_destroy<T, CharT>
-         (ctrl_data, index, boost::mpl::bool_<is_node_index<index_type>::value>());
-   }
-
-   template <class T, class CharT>
-   bool priv_generic_named_destroy(typename select_block_header<CharT>::type *ctrl_data, 
-                                   IndexType<index_config<CharT> > &index,
-                                   boost::mpl::true_)
-   {
-      return this->priv_generic_named_destroy_impl<T, CharT>(*ctrl_data, index);
-   }
-
-   template <class T, class CharT>
-   bool priv_generic_named_destroy(typename select_block_header<CharT>::type *ctrl_data, 
-                                   IndexType<index_config<CharT> > &index,
-                                   boost::mpl::false_)
-   {
-      CharT *name = static_cast<CharT*>(ctrl_data->name());
-      return this->priv_generic_named_destroy<T, CharT>(name, index);
+      (void)is_node_index;
+      CharT *name = static_cast<CharT*>(block_header->template name<CharT>());
+      return this->priv_generic_named_destroy<T, CharT>(name, index, is_intrusive_t());
    }
 
    template <class T, class CharT>
    bool priv_generic_named_destroy(const CharT *name, 
-                                   IndexType<index_config<CharT> > &index)
+                                   IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
+                                   boost::mpl::true_ is_intrusive_index)
    {
-      const bool is_intrusive = 
-         is_intrusive_index<IndexType<index_config<CharT> > >::value;
-      return priv_generic_named_destroy<T, CharT>
-               (name, index,boost::mpl::bool_<is_intrusive>());
-   }
-
-   template <class T, class CharT>
-   bool priv_generic_named_destroy(const CharT *name, 
-                                   IndexType<index_config<CharT> > &index,
-                                   boost::mpl::true_)
-   {
-      typedef typename select_block_header<CharT>::type  block_header_t;
-      typedef IndexType<index_config<CharT> >         index_type;
+      (void)is_intrusive_index;
+      typedef detail::block_header  block_header_t;
+      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >         index_type;
       typedef detail::index_key<CharT, void_pointer>  index_key_t;
-      typedef typename index_type::iterator        index_it;
+      typedef typename index_type::iterator           index_it;
+      typedef typename index_type::value_type         intrusive_value_type;
       
       //-------------------------------
       boost::interprocess::scoped_lock<rmutex> guard(m_header);
@@ -1023,32 +1179,35 @@ class segment_manager
          return false;
       }
 
-      block_header_t *ctrl_data = &*it;
-      void *memory = ctrl_data;
+      block_header_t *ctrl_data = it->get_block_header();
+      intrusive_value_type *iv = intrusive_value_type::get_intrusive_value_type(ctrl_data);
+      void *memory = iv;
       T *values = static_cast<T*>(ctrl_data->value());
       std::size_t num = ctrl_data->m_value_bytes/sizeof(T);
       
       //Sanity check
       assert((ctrl_data->m_value_bytes % sizeof(T)) == 0);
-      assert(sizeof(CharT) == ctrl_data->m_sizeof_char);
+      assert(sizeof(CharT) == ctrl_data->sizeof_char());
 
       //Erase node from index
       index.erase(it);
 
-      //Destroy the header
+      //Destroy the headers
       ctrl_data->~block_header_t();
+      iv->~intrusive_value_type();
 
       //Call destructors and free memory
-      priv_array_destroy(memory, values, num);
+      array_destroy(memory, values, num);
       return true;
    }
 
    template <class T, class CharT>
    bool priv_generic_named_destroy(const CharT *name, 
-                                   IndexType<index_config<CharT> > &index,
-                                   boost::mpl::false_)
+                                   IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
+                                   boost::mpl::false_ is_intrusive_index)
    {
-      typedef IndexType<index_config<CharT> >            index_type;
+      (void)is_intrusive_index;
+      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >            index_type;
       typedef typename index_type::iterator              index_it;
       typedef typename index_type::key_type              key_type;
 
@@ -1069,40 +1228,29 @@ class segment_manager
    }
 
    template <class T, class CharT>
-   bool priv_generic_named_destroy
-      (const typename IndexType<index_config<CharT> >::iterator &it,
-       IndexType<index_config<CharT> > &index)
-   {
-      //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
-      //-------------------------------
-      return this->priv_generic_named_destroy_impl<T, CharT>(it, index);
-   }
-
-   template <class T, class CharT>
    bool priv_generic_named_destroy_impl
-      (const typename IndexType<index_config<CharT> >::iterator &it,
-      IndexType<index_config<CharT> > &index)
+      (const typename IndexType<detail::index_config<CharT, MemoryAlgorithm> >::iterator &it,
+      IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index)
    {
-      typedef IndexType<index_config<CharT> >      index_type;
+      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >      index_type;
       typedef typename index_type::iterator        index_it;
-      typedef typename select_block_header<CharT>::type     block_header_t;
+      typedef detail::block_header                 block_header_t;
 
       //Get allocation parameters
-      void *memory            = detail::get_pointer(it->second.m_ptr);
-      char *stored_name       = detail::char_ptr_cast
-                                 (detail::get_pointer(it->first.mp_str));
+      block_header_t *ctrl_data = reinterpret_cast<block_header_t*>
+                                 (detail::get_pointer(it->second.m_ptr));
+      char *stored_name       = detail::char_ptr_cast(it->first.name());
       (void)stored_name;
+
       //Check if the distance between the name pointer and the memory pointer 
       //is correct (this can detect incorrect T type in destruction)
-      block_header_t *ctrl_data = reinterpret_cast<block_header_t*>(memory);
       std::size_t num = ctrl_data->m_value_bytes/sizeof(T);
       T *values = static_cast<T*>(ctrl_data->value());
-      
+
       //Sanity check
       assert((ctrl_data->m_value_bytes % sizeof(T)) == 0);
-      assert((void*)stored_name == ctrl_data->name());
-      assert(sizeof(CharT) == ctrl_data->m_sizeof_char);
+      assert((void*)stored_name == ctrl_data->template name<CharT>());
+      assert(sizeof(CharT) == ctrl_data->sizeof_char());
 
       //Erase node from index
       index.erase(it);
@@ -1110,77 +1258,22 @@ class segment_manager
       //Destroy the header
       ctrl_data->~block_header_t();
 
+      void *memory;
+      if(is_node_index_t::value){
+         index_it *ihdr = block_header_t::
+            to_first_header<index_it>(ctrl_data);
+         ihdr->~index_it();
+         memory = ihdr;
+      }
+      else{
+         memory = ctrl_data;
+      }
+
       //Call destructors and free memory
-      priv_array_destroy(memory, values, num);
+      array_destroy(memory, values, num);
       return true;
    }
 
-   template <class T>
-   void priv_array_destroy(const void * memory, T *objects, std::size_t count)
-   {
-      //Build scoped ptr to avoid leaks with destructor exception
-      boost::interprocess::scoped_ptr<void, raw_deleter_t> mem((void*)memory, *this);
-
-      if(boost::has_trivial_destructor<T>::value)
-         return;
-
-      //Call destructors in reverse order, if one throws catch it and
-      //continue destroying ignoring further exceptions. 
-      if(!boost::has_nothrow_destructor<T>::value){
-         while(count--){
-            objects[count].~T();
-         }
-      }
-      else{
-         BOOST_TRY {
-            while(count--){
-               objects[count].~T();
-            }
-         }
-         BOOST_CATCH(...){
-            //Destroy the rest of objects ignoring exceptions
-            while(count--){
-               BOOST_TRY         { objects[count].~T(); }
-               //Ignore exceptions
-               BOOST_CATCH(...)  { }
-               BOOST_CATCH_END
-            }
-            //throws first exception
-            BOOST_RETHROW
-         }
-         BOOST_CATCH_END
-      }
-   }
-
-   template<class Ctor>
-   void priv_array_construct(typename Ctor::target_t *ptr, 
-                               std::size_t num, Ctor &ctor)
-   {
-      typedef typename Ctor::target_t target_t;
-      //Try constructors
-      std::size_t counter = 0;
-      BOOST_TRY{
-         for(; counter < num; ++counter, ++ctor){
-            ctor(&ptr[counter]);
-         }
-      }
-      //If there is an exception call destructors and erase index node
-      BOOST_CATCH(...){
-         if(!boost::has_trivial_destructor<target_t>::value){
-            for(; counter; --counter){
-               BOOST_TRY         { ptr[counter].~target_t(); }
-               //Ignore exceptions, we will throw the original 
-               //exception to free acquired locks
-               BOOST_CATCH(...)  {}
-               BOOST_CATCH_END
-            }
-         }
-         BOOST_RETHROW;
-      }
-      BOOST_CATCH_END
-   }
-
-   /*!Generic named new function for named functions*/
    template<class CharT, class T, class CtorFunc>
    T * priv_generic_named_construct(std::size_t type,  
                                const CharT *name,
@@ -1188,36 +1281,20 @@ class segment_manager
                                bool try2find, 
                                bool dothrow,
                                CtorFunc &ctor,
-                               IndexType<index_config<CharT> > &index)
+                               IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
+                               boost::mpl::true_ is_intrusive)
    {
-      const bool is_intrusive = 
-         is_intrusive_index<IndexType<index_config<CharT> > >::value;
-      return priv_generic_named_construct<CharT, T, CtorFunc>
-               (type, name, num, try2find, dothrow, ctor
-               ,index, boost::mpl::bool_<is_intrusive>());
-
-   }
-
-   template<class CharT, class T, class CtorFunc>
-   T * priv_generic_named_construct(std::size_t type,  
-                               const CharT *name,
-                               std::size_t num, 
-                               bool try2find, 
-                               bool dothrow,
-                               CtorFunc &ctor,
-                               IndexType<index_config<CharT> > &index,
-                               boost::mpl::true_)
-   {
+      (void)is_intrusive;
       std::size_t namelen  = std::char_traits<CharT>::length(name);
 
-      typedef typename select_block_header<CharT>::type block_header_t;
+      typedef typename detail::block_header  block_header_t;
       block_header_t block_info ( sizeof(T)*num
                                  , boost::alignment_of<T>::value
                                  , type
                                  , sizeof(CharT)
                                  , namelen);
 
-      typedef IndexType<index_config<CharT> >            index_type;
+      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >            index_type;
       typedef typename index_type::iterator              index_it;
       typedef std::pair<index_it, bool>                  index_ib;
 
@@ -1237,7 +1314,9 @@ class segment_manager
       //the key (which is a smart pointer) to an equivalent one
       index_ib insert_ret;
 
-      typename index_type::insert_commit_data commit_data;
+      typename index_type::insert_commit_data   commit_data;
+      typedef typename index_type::value_type   intrusive_value_type;
+      typedef detail::block_header              block_header_t;
 
       BOOST_TRY{
          intrusive_compare_key<CharT> key(name, namelen);
@@ -1257,7 +1336,7 @@ class segment_manager
       //else return null
       if(!insert_ret.second){
          if(try2find){
-            return static_cast<T*>(it->value());
+            return static_cast<T*>(it->get_block_header()->value());
          }
          return 0;
       }
@@ -1267,25 +1346,28 @@ class segment_manager
 
       //Check if there is enough memory
       if(dothrow){
-         buffer_ptr = this->allocate(block_info.total_size());
+         buffer_ptr = this->allocate
+            (block_info.total_size_with_header<intrusive_value_type>());
       }
       else{
-         buffer_ptr = this->allocate(block_info.total_size(), std::nothrow_t());
+         buffer_ptr = this->allocate
+            (block_info.total_size_with_header<intrusive_value_type>(), std::nothrow_t());
          if(!buffer_ptr)
             return 0; 
       }
 
-      //Now construct the header
-      block_header_t * hdr = new(buffer_ptr) block_header_t(block_info);
+      //Now construct the intrusive hook plus the header
+      intrusive_value_type * intrusive_hdr = new(buffer_ptr) intrusive_value_type();
+      block_header_t * hdr = new(intrusive_hdr->get_block_header())block_header_t(block_info);
       T *ptr = static_cast<T*>(hdr->value());
 
       //Copy name to memory segment and insert data
-      CharT *name_ptr = static_cast<CharT *>(hdr->name());
+      CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
       std::char_traits<CharT>::copy(name_ptr, name, namelen+1);
 
       BOOST_TRY{
          //Now commit the insertion using previous context data
-         it = index.insert_commit(*hdr, commit_data);
+         it = index.insert_commit(*intrusive_hdr, commit_data);
       }
       //Ignore exceptions
       BOOST_CATCH(...){
@@ -1305,7 +1387,7 @@ class segment_manager
          boost::interprocess::scoped_ptr<void, raw_deleter_t> mem(buffer_ptr, *this);
 
          //Construct array, this can throw
-         this->priv_array_construct<CtorFunc>(ptr, num, ctor);
+         this->template array_construct<CtorFunc>(ptr, num, ctor);
 
          //All constructors successful, we don't want to release memory
          mem.release();
@@ -1323,19 +1405,20 @@ class segment_manager
                                bool try2find, 
                                bool dothrow,
                                CtorFunc &ctor,
-                               IndexType<index_config<CharT> > &index,
-                               boost::mpl::false_)
+                               IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
+                               boost::mpl::false_ is_intrusive)
    {
+      (void)is_intrusive;
       std::size_t namelen  = std::char_traits<CharT>::length(name);
 
-      typedef typename select_block_header<CharT>::type block_header_t;
+      typedef detail::block_header  block_header_t;
       block_header_t block_info ( sizeof(T)*num
                                  , boost::alignment_of<T>::value
                                  , type
                                  , sizeof(CharT)
                                  , namelen);
 
-      typedef IndexType<index_config<CharT> >            index_type;
+      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >            index_type;
       typedef typename index_type::key_type              key_type;
       typedef typename index_type::mapped_type           mapped_type;
       typedef typename index_type::value_type            value_type;
@@ -1384,39 +1467,48 @@ class segment_manager
       //Initialize the node value_eraser to erase inserted node
       //if something goes wrong
       detail::value_eraser<index_type> value_eraser(index, it);
-      const bool NodeIndex = is_node_index<index_type>::value;   //change this
 
       //Allocates buffer for name + data, this can throw (it hurts)
       void *buffer_ptr; 
+      block_header_t * hdr;
 
-      //Check if there is enough memory
-      if(dothrow){
-         buffer_ptr = this->allocate(block_info.total_size());
+      //Allocate and construct the headers
+      if(is_node_index_t::value){
+         if(dothrow){
+            buffer_ptr = this->allocate(block_info.total_size_with_header<index_it>());
+         }
+         else{
+            buffer_ptr = this->allocate(block_info.total_size_with_header<index_it>(), std::nothrow_t());
+            if(!buffer_ptr)
+               return 0; 
+         }
+         index_it *idr = new(buffer_ptr) index_it(it);
+         hdr = block_header_t::from_first_header<index_it>(idr);
       }
       else{
-         buffer_ptr = this->allocate(block_info.total_size(), std::nothrow_t());
-         if(!buffer_ptr)
-            return 0; 
+         if(dothrow){
+            buffer_ptr = this->allocate(block_info.total_size());
+         }
+         else{
+            buffer_ptr = this->allocate(block_info.total_size(), std::nothrow_t());
+            if(!buffer_ptr)
+               return 0; 
+         }
+         hdr = static_cast<block_header_t*>(buffer_ptr);
       }
 
-      //Now construct the header
-      block_header_t * hdr = new(buffer_ptr) block_header_t(block_info);
+      hdr = new(hdr)block_header_t(block_info);
       T *ptr = static_cast<T*>(hdr->value());
 
       //Copy name to memory segment and insert data
-      CharT *name_ptr = static_cast<CharT *>(hdr->name());
+      CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
       std::char_traits<CharT>::copy(name_ptr, name, namelen+1);
-
-      //If this is a node container, store also the iterator
-      if(NodeIndex){
-         *hdr = it;
-      }
 
       //Do the ugly cast, please mama, forgive me!
       //This new key points to an identical string, so it must have the 
       //same position than the overwritten key according to the predicate
-      const_cast<key_type &>(it->first).mp_str  = name_ptr;
-      it->second.m_ptr                          = buffer_ptr;
+      const_cast<key_type &>(it->first).name(name_ptr);
+      it->second.m_ptr  = hdr;
 
       //Avoid constructions if constructor is trivial
       if(!CtorFunc::is_trivial){
@@ -1424,60 +1516,13 @@ class segment_manager
          boost::interprocess::scoped_ptr<void, raw_deleter_t> mem(buffer_ptr, *this);
 
          //Construct array, this can throw
-         this->priv_array_construct<CtorFunc>(ptr, num, ctor);
+         this->template array_construct<CtorFunc>(ptr, num, ctor);
 
          //All constructors successful, we don't want to release memory
          mem.release();
       }
       //Release node value_eraser since construction was successful
       value_eraser.release();
-      return ptr;
-   }
-
-   /*!Generic anonymous "new" function.*/
-   template<class T, class CtorFunc>
-   T * priv_generic_anonymous_construct(std::size_t num, 
-                                        bool dothrow,
-                                        CtorFunc &ctor)
-   {
-      typedef typename select_block_header<CharType>::type block_header_t;
-      block_header_t block_info ( sizeof(T)*num
-                                 , boost::alignment_of<T>::value
-                                 , anonymous_type
-                                 , sizeof(CharType)
-                                 , 0);
-
-      //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
-      //-------------------------------
-
-      //Allocate memory
-      void *ptr_struct = this->allocate(block_info.total_size(), std::nothrow_t());
-
-      //Check if there is enough memory
-      if(!ptr_struct){
-         if(dothrow){
-            throw bad_alloc();
-         }
-         else{
-            return 0; 
-         }
-      }
-
-      //Build scoped ptr to avoid leaks with constructor exception
-      boost::interprocess::scoped_ptr<void, raw_deleter_t> mem(ptr_struct, *this);
-
-      //Now construct the header
-      block_header_t * hdr = new(ptr_struct) block_header_t(block_info);
-      T *ptr = static_cast<T*>(hdr->value());
-
-      if(!CtorFunc::is_trivial){
-         //Construct array, this can throw
-         priv_array_construct<CtorFunc>(ptr, num, ctor);
-      }
-
-      //All constructors successful, we don't want erase memory
-      mem.release();
       return ptr;
    }
 

@@ -15,6 +15,8 @@
 //! limitations under the License.
 //////////////////////////////////////////////////////////////////////////////
 //
+// This is a modified file (apr_atomic.c) of Apache APR project
+//
 // (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -29,6 +31,10 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/cstdint.hpp>
+
+namespace boost{
+namespace interprocess{
+namespace detail{
 
 //! Atomically add 'val' to an boost::uint32_t
 //! "mem": pointer to the object
@@ -83,6 +89,10 @@ inline boost::uint32_t atomic_xchg32(volatile boost::uint32_t *mem, boost::uint3
 //! Returns the old value of the pointer
 inline void *atomic_casptr(volatile void **mem, void *with, const void *cmp);
 */
+
+}  //namespace detail{
+}  //namespace interprocess{
+}  //namespace boost{
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
@@ -157,15 +167,13 @@ inline void *atomic_casptr(volatile void **mem, void *with, const void *cmp);
 }  //namespace interprocess{
 }  //namespace boost{
 
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
-#include <stdlib.h>
+//#include <stdlib.h>
 
 namespace boost {
 namespace interprocess {
 namespace detail{
-
-#if (defined(__i386__) || defined(__x86_64__))
 
 static boost::uint32_t inline intel_atomic_add32
    (volatile boost::uint32_t *mem, boost::uint32_t val)
@@ -260,7 +268,15 @@ inline boost::uint32_t atomic_xchg32(volatile boost::uint32_t *mem, boost::uint3
 inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
 {  *mem = val; }
 
-#elif (defined(__PPC__) || defined(__ppc__))
+}  //namespace detail{
+}  //namespace interprocess{
+}  //namespace boost{
+
+#elif defined(__GNUC__) && (defined(__PPC__) || defined(__ppc__))
+
+namespace boost {
+namespace interprocess {
+namespace detail{
 
 //! Atomically add 'val' to an boost::uint32_t
 //! "mem": pointer to the object
@@ -300,13 +316,13 @@ inline boost::uint32_t atomic_cas32
                "cmpw   %0,%3\n\t"         // does it match cmp?    
                "bne-   1f\n\t"            // ...no, bail out       
                "stwcx. %2,0,%1\n\t"       // ...yes, conditionally
-                                          //   store swap            
+                                          //   store with            
                "bne-   0b\n\t"            // start over if we lost
                                           //   the reservation       
                "1:"                       // exit local label      
 
                : "=&r"(prev)                        // output      
-               : "b" (mem), "r" (swap), "r"(cmp)    // inputs      
+               : "b" (mem), "r" (with), "r"(cmp)    // inputs      
                : "memory", "cc");                   // clobbered   
    return prev;
 }
@@ -352,11 +368,61 @@ inline boost::uint32_t atomic_xchg32(volatile boost::uint32_t *mem, boost::uint3
 inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
 {  atomic_xchg32(mem, val); }
 
-#else
+#elif (defined(SOLARIS2) && SOLARIS2 >= 10)
 
-#error No atomic operations implemented for this platform, sorry!
+#include <atomic.h>
 
-#endif
+//! Atomically add 'val' to an boost::uint32_t
+//! "mem": pointer to the object
+//! "val": amount to add
+//! Returns the old value pointed to by mem
+inline boost::uint32_t atomic_add32(volatile boost::uint32_t *mem, boost::uint32_t val)
+{  return atomic_add_32_nv(mem, val) - val;  }
+
+//! Compare an boost::uint32_t's value with "cmp".
+//! If they are the same swap the value with "with"
+//! "mem": pointer to the value
+//! "with" what to swap it with
+//! "cmp": the value to compare it to
+//! Returns the old value of *mem
+inline boost::uint32_t atomic_cas32
+   (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
+{  return atomic_cas_32(mem, cmp, with);  }
+
+//! Atomically subtract 'val' from an apr_uint32_t
+//! "mem": pointer to the object
+//! "val": amount to subtract
+inline void atomic_sub32(volatile boost::uint32_t *mem, boost::uint32_t val)
+{  return atomic_add_32(mem, (-val));  }
+
+//! Atomically increment an apr_uint32_t by 1
+//! "mem": pointer to the object
+//! Returns the old value pointed to by mem
+inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
+{  return atomic_add_32_nv(mem, 1) - 1; }
+
+//! Atomically decrement an boost::uint32_t by 1
+//! "mem": pointer to the atomic value
+//! Returns false if the value becomes zero on decrement, otherwise true
+inline bool atomic_dec32(volatile boost::uint32_t *mem)
+{  return atomic_add_32_nv(mem, -1) != 0; }
+
+//! Atomically read an boost::uint32_t from memory
+inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
+{  return *mem;   }
+
+//! Exchange an boost::uint32_t's value with "val".
+//! "mem": pointer to the value
+//! "val": what to swap it with
+//! Returns the old value of *mem
+inline boost::uint32_t atomic_xchg32(volatile boost::uint32_t *mem, boost::uint32_t val)
+{  return atomic_swap_32(mem, val); }
+
+//! Atomically set an boost::uint32_t in memory
+//! "mem": pointer to the object
+//! "param": val value that the object will assume
+inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
+{  *mem = val; }
 
 }  //namespace detail{
 }  //namespace interprocess{

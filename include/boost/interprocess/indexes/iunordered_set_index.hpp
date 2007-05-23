@@ -59,23 +59,23 @@ struct iunordered_set_index_aux
    {
       bool operator()(const intrusive_compare_key_type &i, const value_type &b) const
       {  
-         return (i.m_len == b.m_num_char) &&
+         return (i.m_len == b.length()) &&
                   (std::char_traits<char_type>::compare 
                      (i.mp_str, b.name(), i.m_len) == 0);
       }
 
       bool operator()(const value_type &b, const intrusive_compare_key_type &i) const
       {  
-         return (i.m_len == b.m_num_char) &&
+         return (i.m_len == b.length()) &&
                   (std::char_traits<char_type>::compare 
                      (i.mp_str, b.name(), i.m_len) == 0);
       }
 
       bool operator()(const value_type &b1, const value_type &b2) const
       {  
-         return (b1.m_num_char == b2.m_num_char) &&
+         return (b1.length() == b2.length()) &&
                   (std::char_traits<char_type>::compare 
-                     (b1.name(), b2.name(), b1.m_num_char) == 0);
+                     (b1.name(), b2.name(), b1.length()) == 0);
       }
    };
 
@@ -85,7 +85,7 @@ struct iunordered_set_index_aux
         std::size_t operator()(const value_type &val) const
         {
             const char_type *beg = detail::get_pointer(val.name()),
-                            *end = beg + val.m_num_char;
+                            *end = beg + val.length();
             return boost::hash_range(beg, end);
         }
 

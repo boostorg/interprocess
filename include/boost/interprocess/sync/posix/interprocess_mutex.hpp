@@ -32,7 +32,7 @@ namespace boost {
 
 namespace interprocess {
 
-#ifdef _POSIX_TIMEOUTS
+#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
 
 inline interprocess_mutex::interprocess_mutex()
 {
@@ -78,7 +78,7 @@ inline void interprocess_mutex::unlock()
    assert(res == 0);
 }
 
-#else //#ifdef _POSIX_TIMEOUTS
+#else //#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
 
 inline interprocess_mutex::interprocess_mutex()
     : m_locked(false)
@@ -187,7 +187,7 @@ inline void interprocess_mutex::unlock()
     assert(res == 0);
 }
 
-#endif   //#ifdef _POSIX_TIMEOUTS
+#endif   //#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
 
 }  //namespace interprocess {
 

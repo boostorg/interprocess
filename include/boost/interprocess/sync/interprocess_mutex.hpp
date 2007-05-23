@@ -109,7 +109,7 @@ class interprocess_mutex
    #if   defined(BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
       volatile boost::uint32_t m_s;
    #elif defined(BOOST_INTERPROCESS_USE_POSIX)
-      #ifdef _POSIX_TIMEOUTS
+      #ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
          pthread_mutex_t   m_mut;
       #else
          pthread_mutex_t   m_mut;
