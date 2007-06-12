@@ -221,11 +221,13 @@ extern "C" __declspec(dllimport) int __stdcall LockFile  (void *hnd, unsigned lo
 extern "C" __declspec(dllimport) int __stdcall UnlockFile(void *hnd, unsigned long offset_low, unsigned long offset_high, unsigned long size_low, unsigned long size_high);
 extern "C" __declspec(dllimport) int __stdcall LockFileEx(void *hnd, unsigned long flags, unsigned long reserved, unsigned long size_low, unsigned long size_high, interprocess_overlapped* overlapped);
 extern "C" __declspec(dllimport) int __stdcall UnlockFileEx(void *hnd, unsigned long reserved, unsigned long size_low, unsigned long size_high, interprocess_overlapped* overlapped);
+/*
 extern "C" __declspec(dllimport) long __stdcall InterlockedIncrement( long volatile * );
 extern "C" __declspec(dllimport) long __stdcall InterlockedDecrement( long volatile * );
 extern "C" __declspec(dllimport) long __stdcall InterlockedCompareExchange( long volatile *, long, long );
 extern "C" __declspec(dllimport) long __stdcall InterlockedExchangeAdd(long volatile *, long);
 extern "C" __declspec(dllimport) long __stdcall InterlockedExchange(long volatile *, long);
+*/
 
 }  //namespace winapi {
 }  //namespace interprocess  {
@@ -346,19 +348,19 @@ static inline bool unlock_file_ex(void *hnd, unsigned long reserved, unsigned lo
 {  return 0 != UnlockFileEx(hnd, reserved, size_low, size_high, overlapped);  }
 
 static inline long interlocked_increment(long volatile *addr)
-{  return InterlockedIncrement(addr);  }
+{  return BOOST_INTERLOCKED_INCREMENT(addr);  }
 
 static inline long interlocked_decrement(long volatile *addr)
-{  return InterlockedDecrement(addr);  }
+{  return BOOST_INTERLOCKED_DECREMENT(addr);  }
 
 static inline long interlocked_compare_exchange(long volatile *addr, long val1, long val2)
-{  return InterlockedCompareExchange(addr, val1, val2);  }
+{  return BOOST_INTERLOCKED_COMPARE_EXCHANGE(addr, val1, val2);  }
 
 static inline long interlocked_exchange_add(long volatile* addend, long value)
-{  return InterlockedExchangeAdd((long*)addend, value);  }
+{  return BOOST_INTERLOCKED_EXCHANGE_ADD((long*)addend, value);  }
 
 static inline long interlocked_exchange(long volatile* addend, long value)
-{  return InterlockedExchange((long*)addend, value);  }
+{  return BOOST_INTERLOCKED_EXCHANGE((long*)addend, value);  }
 
 }  //namespace winapi 
 }  //namespace interprocess

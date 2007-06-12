@@ -22,6 +22,7 @@
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
+#include <boost/detail/no_exceptions_support.hpp>
 #include <boost/type_traits/alignment_of.hpp>
 
 #include <algorithm> //std::lower_bound

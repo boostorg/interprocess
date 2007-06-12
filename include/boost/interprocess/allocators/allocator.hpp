@@ -26,7 +26,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/assert.hpp>
 #include <boost/type_traits/alignment_of.hpp>
-#include <boost/type_traits/has_trivial_destructor.hpp>
+
 #include <memory>
 #include <algorithm>
 #include <cstddef>
@@ -140,21 +140,6 @@ class allocator
    void deallocate(const pointer &ptr, size_type)
    {  mp_mngr->deallocate(detail::get_pointer(ptr));  }
 
-   /*!Construct object, calling constructor. 
-      Throws if T(const Convertible &) throws*/
-   template<class Convertible>
-   void construct(const pointer &ptr, const Convertible &value)
-   {  new(detail::get_pointer(ptr)) value_type(value);  }
-
-   /*!Default construct an object. 
-      Throws if T's default constructor throws*/
-   void construct(const pointer &ptr)
-   {  new(detail::get_pointer(ptr)) value_type;  }
-
-   /*!Destroys object. Throws if object's destructor throws*/
-   void destroy(const pointer &ptr)
-   {  BOOST_ASSERT(ptr != 0); (*ptr).~value_type();  }
-
    /*!Returns the number of elements that could be allocated. Never throws*/
    size_type max_size() const
    {  return mp_mngr->get_size()/sizeof(value_type);   }
@@ -229,21 +214,13 @@ bool operator!=(const allocator<T, SegmentManager>  &alloc1,
                 const allocator<T, SegmentManager>  &alloc2)
    {  return alloc1.get_segment_manager() != alloc2.get_segment_manager(); }
 
-/// @cond
-/*!This specialization indicates that the construct function allows
-   convertible types to construct the value type. This allows
-   storing less allocator instances in containers.*/
-template<class T, class SegmentManager>
-struct has_convertible_construct
-   <boost::interprocess::allocator<T, SegmentManager> >
-{
-   enum {   value = true };
-};
-/// @endcond
-
 }  //namespace interprocess {
 
 /// @cond
+
+template<class T>
+struct has_trivial_destructor;
+
 template<class T, class SegmentManager>
 struct has_trivial_destructor
    <boost::interprocess::allocator <T, SegmentManager> >

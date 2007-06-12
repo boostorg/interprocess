@@ -125,9 +125,15 @@ class upgradable_lock
          signature. An non-moved upgradable_lock can be moved with the
          expression: "move(lock);". This constructor does not alter the
          state of the mutex, only potentially who owns it.*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    explicit upgradable_lock(detail::moved_object<upgradable_lock<mutex_type> > upgr)
       : mp_mutex(0), m_locked(upgr.get().owns())
    {  mp_mutex = upgr.get().release(); }
+   #else
+   explicit upgradable_lock(upgradable_lock<mutex_type> &&upgr)
+      : mp_mutex(0), m_locked(upgr.owns())
+   {  mp_mutex = upgr.release(); }
+   #endif
 
    /*!Effects: If scop.owns(), m_.unlock_and_lock_upgradable(). 
       Postconditions: mutex() == the value scop.mutex() had before the construction.
@@ -138,6 +144,7 @@ class upgradable_lock
          Only a moved sharable_lock's will match this
          signature. An non-moved sharable_lock can be moved with the
          expression: "move(lock);".*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    explicit upgradable_lock(detail::moved_object<scoped_lock<mutex_type> > scop)
       : mp_mutex(0), m_locked(false)
    {
@@ -148,6 +155,18 @@ class upgradable_lock
       }
       mp_mutex = u_lock.release();
    }
+   #else
+   explicit upgradable_lock(scoped_lock<mutex_type> &&scop)
+      : mp_mutex(0), m_locked(false)
+   {
+      scoped_lock<mutex_type> &u_lock = scop;
+      if(u_lock.owns()){
+         u_lock.mutex()->unlock_and_lock_upgradable();
+         m_locked = true;
+      }
+      mp_mutex = u_lock.release();
+   }
+   #endif
 
    /*!Effects: If shar.owns() then calls try_unlock_sharable_and_lock_upgradable()
          on the referenced mutex. 
@@ -164,6 +183,7 @@ class upgradable_lock
          in the first place, the mutex merely changes type to an unlocked
          "upgradable lock". If the "read lock" is held, then mutex transfer
          occurs only if it can do so in a non-blocking manner.*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    upgradable_lock( detail::moved_object<sharable_lock<mutex_type> > shar
                   , detail::try_to_lock_type)
       : mp_mutex(0), m_locked(false)
@@ -178,6 +198,22 @@ class upgradable_lock
          s_lock.release();
       }
    }
+   #else
+   upgradable_lock( sharable_lock<mutex_type> &&shar
+                  , detail::try_to_lock_type)
+      : mp_mutex(0), m_locked(false)
+   {
+      sharable_lock<mutex_type> &s_lock = shar;
+      if(s_lock.owns()){
+         if((m_locked = s_lock.mutex()->try_unlock_sharable_and_lock_upgradable()) == true){
+            mp_mutex = s_lock.release();
+         }
+      }
+      else{
+         s_lock.release();
+      }
+   }
+   #endif
 
    /*!Effects: if (owns()) m_->unlock_upgradable().
       Notes: The destructor behavior ensures that the mutex lock is not leaked.*/
@@ -195,6 +231,7 @@ class upgradable_lock
          mutex before the assignment. In this case, this will own the mutex
          after the assignment (and upgr will not), but the mutex's upgradable lock
          count will be decremented by one.*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    upgradable_lock &operator=(detail::moved_object<upgradable_lock<mutex_type> > upgr)
    {
       if(this->owns())
@@ -203,6 +240,16 @@ class upgradable_lock
       mp_mutex = upgr.get().release();
       return *this;
    }
+   #else
+   upgradable_lock &operator=(upgradable_lock<mutex_type> &&upgr)
+   {
+      if(this->owns())
+         this->unlock();
+      m_locked = upgr.owns();
+      mp_mutex = upgr.release();
+      return *this;
+   }
+   #endif
 
    /*!Effects: If mutex() == 0 or if already locked, throws a lock_exception()
          exception. Calls lock_upgradable() on the referenced mutex.
@@ -289,11 +336,20 @@ class upgradable_lock
 
    /*!Effects: Swaps state with moved lock. 
       Throws: Nothing.*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(detail::moved_object<upgradable_lock<mutex_type> > other)
    {
       std::swap(mp_mutex, other.get().mp_mutex);
       std::swap(m_locked, other.get().m_locked);
    }
+   #else
+   void swap(upgradable_lock<mutex_type> &&other)
+   {
+      std::swap(mp_mutex, other.mp_mutex);
+      std::swap(m_locked, other.m_locked);
+   }
+   #endif
+
    /// @cond
    private:
    mutex_type *mp_mutex;

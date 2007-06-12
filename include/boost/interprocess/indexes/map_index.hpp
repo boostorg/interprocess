@@ -38,7 +38,7 @@ struct map_index_aux
    typedef private_adaptive_pool
             <value_type,
                typename MapConfig::
-         restricted_segment_manager>               allocator_type;
+         basic_segment_manager>               allocator_type;
 
    typedef boost::interprocess::map
       <key_type,  mapped_type,
@@ -56,13 +56,13 @@ class map_index
    typedef map_index_aux<MapConfig>       index_aux;
    typedef typename index_aux::index_t    base_type;
    typedef typename MapConfig::
-      restricted_segment_manager          restricted_segment_manager;
+      basic_segment_manager          basic_segment_manager;
    /// @endcond
 
    public:
    /*!Constructor. Takes a pointer to the
       segment manager. Can throw*/
-   map_index(restricted_segment_manager *segment_mngr)
+   map_index(basic_segment_manager *segment_mngr)
       : base_type(typename index_aux::key_less(),
                   segment_mngr){}
 

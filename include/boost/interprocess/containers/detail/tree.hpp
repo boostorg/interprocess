@@ -47,16 +47,11 @@
 
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
-#include <boost/detail/allocator_utilities.hpp>
 #include <boost/interprocess/detail/generic_cast.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
-#include <boost/mpl/if.hpp>
-#include <boost/type_traits/is_same.hpp>
 #include <boost/intrusive/rbtree.hpp>
-#include <boost/intrusive/list.hpp>
 
 #include <iterator>
 #include <algorithm>
@@ -70,10 +65,7 @@ struct value_compare_impl
    typedef Value        value_type;
    typedef KeyCompare   key_compare; 
    typedef KeyOfValue   key_of_value;
-   class dummy;   
-
-   typedef typename boost::mpl::if_c
-      <is_same<Key, Value>::value, dummy, Key>::type  key_type;   
+   typedef Key          key_type;
 
    value_compare_impl(key_compare kcomp)
       :  key_compare(kcomp)
@@ -85,14 +77,9 @@ struct value_compare_impl
    key_compare &key_comp()
    {  return static_cast<key_compare &>(*this);  }
 
-   bool operator()(const value_type &a, const value_type &b) const
+   template<class A, class B>
+   bool operator()(const A &a, const B &b) const
    {  return key_compare::operator()(KeyOfValue()(a), KeyOfValue()(b)); }
-
-   bool operator()(const key_type &a, const value_type &b) const
-   {  return key_compare::operator()(a, KeyOfValue()(b)); }
-
-   bool operator()(const value_type &a, const key_type &b) const
-   {  return key_compare::operator()(KeyOfValue()(a), b); }
 };
 
 template <class T, class VoidPointer>
@@ -109,9 +96,15 @@ struct rbtree_node
 
    typedef T value_type;
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
    rbtree_node(const Convertible &conv)
       : m_data(conv){}
+   #else
+   template<class Convertible>
+   rbtree_node(Convertible &&conv)
+      : m_data(forward<Convertible>(conv)){}
+   #endif
 
    rbtree_node &operator=(const rbtree_node &other)
    {  do_assign(other.m_data);   return *this;  }
@@ -133,21 +126,20 @@ struct rbtree_node
 
 template<class A, class ValueCompare>
 struct rbtree_alloc
-   :  public boost::detail::allocator::
-         rebind_to<A, rbtree_node
-            <typename A::value_type, typename boost::detail::allocator::
-               rebind_to<A, void>::type::pointer>
-            >::type
+   :  public A::template rebind<rbtree_node
+            < typename A::value_type
+            , typename detail::pointer_to_other<typename A::pointer, void>::type>
+            >::other
 {
    typedef rbtree_alloc<A, ValueCompare> self_t;
    typedef typename A::value_type                     value_type;
    typedef rbtree_node
-      <value_type, typename boost::detail::allocator::
-         rebind_to<A, void>::type::pointer>           Node;
-   typedef typename boost::detail::allocator::
-               rebind_to<A, void>::type::pointer      VoidPointer;
-   typedef typename boost::detail::allocator::
-      rebind_to<A, Node>::type                        NodeAlloc;
+      <typename A::value_type
+      ,typename detail::pointer_to_other
+         <typename A::pointer, void>::type>           Node;
+   typedef typename A::template rebind<Node>::other   NodeAlloc;
+   typedef typename detail::pointer_to_other
+         <typename A::pointer, void>::type            VoidPointer;
    typedef A                                          ValAlloc;
    typedef typename NodeAlloc::pointer                NodePtr;
    typedef detail::scoped_deallocator<NodeAlloc>      Deallocator;
@@ -180,28 +172,34 @@ struct rbtree_alloc
       ,boost::intrusive::safe_link
       ,typename A::size_type> Irbtree;
 
-   enum {   
-      node_has_trivial_destructor =  
-         boost::has_trivial_destructor<NodePtr>::value &&
-         boost::has_trivial_destructor<value_type>::value 
-   };
-
    rbtree_alloc(const ValAlloc &a, const ValueCompare &c) 
       : NodeAlloc(a), m_irbtree(node_compare(c))
    {}
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    rbtree_alloc(const detail::moved_object<ValAlloc> &a, const ValueCompare &c) 
       : NodeAlloc(a.get()), m_irbtree(node_compare(c))
    {}
+   #else
+   rbtree_alloc(ValAlloc &&a, const ValueCompare &c) 
+      : NodeAlloc(a), m_irbtree(node_compare(c))
+   {}
+   #endif
 
    rbtree_alloc(const rbtree_alloc &other, const ValueCompare &c)
       : NodeAlloc(other), m_irbtree(node_compare(c))
    {}
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    rbtree_alloc
       (const detail::moved_object<rbtree_alloc> &other, const ValueCompare &c)
       : NodeAlloc(move((NodeAlloc&)other.get())), m_irbtree(node_compare(c))
    {  this->swap(other.get());  }
+   #else
+   rbtree_alloc(rbtree_alloc &&other, const ValueCompare &c)
+      : NodeAlloc(move((NodeAlloc&)other)), m_irbtree(node_compare(c))
+   {  this->swap(other);  }
+   #endif
 
    ~rbtree_alloc()
    {}
@@ -209,10 +207,17 @@ struct rbtree_alloc
    typename NodeAlloc::size_type max_size() const
    {  return NodeAlloc::max_size();  }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
    static void construct(const NodePtr &ptr, const Convertible &value)
    {  new(detail::get_pointer(ptr)) Node(value);  }
+   #else
+   template<class Convertible>
+   static void construct(const NodePtr &ptr, Convertible &&value)
+   {  new(detail::get_pointer(ptr)) Node(forward<Convertible>(value));  }
+   #endif
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible1, class Convertible2>
    static void construct(const NodePtr &ptr, 
                          const detail::moved_object<std::pair<Convertible1, Convertible2> > &value)
@@ -225,25 +230,49 @@ struct rbtree_alloc
 
       new((void*)detail::get_pointer(ptr)) hack_node_t(value);  
    }
+   #else
+   template<class Convertible1, class Convertible2>
+   static void construct(const NodePtr &ptr, 
+                         std::pair<Convertible1, Convertible2> &&value)
+   {  
+      //std::pair is not movable so we define our own type and overwrite it
+      typedef detail::pair<typename Node::value_type::first_type
+                          ,typename Node::value_type::second_type> hack_pair_t;
+
+      typedef rbtree_node<hack_pair_t, VoidPointer>  hack_node_t;
+
+      new((void*)detail::get_pointer(ptr)) hack_node_t(value);  
+   }
+   #endif
 
    static void destroy(const NodePtr &ptr)
    {  detail::get_pointer(ptr)->~Node();  }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
    NodePtr create_node(const Convertible& x)
    {
       NodePtr p = NodeAlloc::allocate(1);
-      scoped_ptr<Node, Deallocator>node_deallocator(p, *this);
+      Deallocator node_deallocator(p, *this);
       self_t::construct(p, x);
       node_deallocator.release();
       return (p);
    }
+   #else
+   template<class Convertible>
+   NodePtr create_node(Convertible &&x)
+   {
+      NodePtr p = NodeAlloc::allocate(1);
+      Deallocator node_deallocator(p, *this);
+      self_t::construct(p, forward<Convertible>(x));
+      node_deallocator.release();
+      return (p);
+   }
+   #endif
 
    void destroy_node(NodePtr node)
    {
-      if(!node_has_trivial_destructor){
-         self_t::destroy(node);
-      }
+      self_t::destroy(node);
       NodeAlloc::deallocate(node, 1);
    }
 
@@ -511,9 +540,15 @@ class rbtree
          (x.m_irbtree, typename AllocHolder::cloner(*this), Destroyer(*this));
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    rbtree(const detail::moved_object<rbtree>& x) 
       :  AllocHolder(x.get(), x.get().key_comp())
    {  this->swap(x.get());  }
+   #else
+   rbtree(rbtree &&x) 
+      :  AllocHolder(x, x.key_comp())
+   {  this->swap(x);  }
+   #endif
 
    ~rbtree()
    {  this->clear(); }
@@ -540,8 +575,13 @@ class rbtree
       return *this;
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    rbtree& operator=(const detail::moved_object<rbtree>& mx)
    {  this->clear(); this->swap(mx.get());   return *this;  }
+   #else
+   rbtree& operator=(rbtree &&mx)
+   {  this->clear(); this->swap(mx);   return *this;  }
+   #endif
 
    public:    
    // accessors:
@@ -590,8 +630,13 @@ class rbtree
    void swap(ThisType& x)
    {  AllocHolder::swap(x);   }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object<rbtree>& mt) 
    {  this->swap(mt.get());   }
+   #else
+   void swap(rbtree &&mt) 
+   {  this->swap(mt);   }
+   #endif
 
    public:
 
@@ -621,6 +666,7 @@ class rbtree
       return iterator(it);
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class MovableConvertible>
    iterator insert_unique_commit
       (const detail::moved_object<MovableConvertible>& mv, insert_commit_data &data)
@@ -629,6 +675,16 @@ class rbtree
       iiterator it(this->m_irbtree.insert_unique_commit(*tmp, data));
       return iterator(it);
    }
+   #else
+   template<class MovableConvertible>
+   iterator insert_unique_commit
+      (MovableConvertible && mv, insert_commit_data &data)
+   {
+      NodePtr tmp = AllocHolder::create_node(forward<MovableConvertible>(mv));
+      iiterator it(this->m_irbtree.insert_unique_commit(*tmp, data));
+      return iterator(it);
+   }
+   #endif
 
    std::pair<iterator,bool> insert_unique(const value_type& v)
    {
@@ -641,6 +697,7 @@ class rbtree
          (this->insert_unique_commit(v, data), true);
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class MovableConvertible>
    std::pair<iterator,bool> insert_unique
       (const detail::moved_object<MovableConvertible>& mv)
@@ -653,6 +710,19 @@ class rbtree
       return std::pair<iterator,bool>
          (this->insert_unique_commit(mv, data), true);
    }
+   #else
+   template<class MovableConvertible>
+   std::pair<iterator,bool> insert_unique(MovableConvertible &&mv)
+   {
+      insert_commit_data data;
+      std::pair<iterator,bool> ret =
+         this->insert_unique_check(KeyOfValue()(mv), data);
+      if(!ret.second)
+         return ret;
+      return std::pair<iterator,bool>
+         (this->insert_unique_commit(forward<MovableConvertible>(mv), data), true);
+   }
+   #endif
 
    iterator insert_unique(const_iterator hint, const value_type& v)
    {
@@ -664,6 +734,7 @@ class rbtree
       return this->insert_unique_commit(v, data);
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class MovableConvertible>
    iterator insert_unique
       (const_iterator hint, const detail::moved_object<MovableConvertible> &mv)
@@ -675,6 +746,19 @@ class rbtree
          return ret.first;
       return this->insert_unique_commit(mv, data);
    }
+   #else
+   template<class MovableConvertible>
+   iterator insert_unique
+      (const_iterator hint, MovableConvertible &&mv)
+   {
+      insert_commit_data data;
+      std::pair<iterator,bool> ret =
+         this->insert_unique_check(hint, KeyOfValue()(mv), data);
+      if(!ret.second)
+         return ret.first;
+      return this->insert_unique_commit(forward<MovableConvertible>(mv), data);
+   }
+   #endif
 
    template <class InputIterator>
    void insert_unique(InputIterator first, InputIterator last)
@@ -698,12 +782,21 @@ class rbtree
       return iterator(this->m_irbtree.insert_equal_upper_bound(*p));
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class MovableConvertible>
    iterator insert_equal(const detail::moved_object<MovableConvertible> &mv)
    {
       NodePtr p(AllocHolder::create_node(mv));
       return iterator(this->m_irbtree.insert_equal_upper_bound(*p));
    }
+   #else
+   template<class MovableConvertible>
+   iterator insert_equal(MovableConvertible &&mv)
+   {
+      NodePtr p(AllocHolder::create_node(forward<MovableConvertible>(mv)));
+      return iterator(this->m_irbtree.insert_equal_upper_bound(*p));
+   }
+   #endif
 
    iterator insert_equal(const_iterator hint, const value_type& v)
    {
@@ -711,12 +804,21 @@ class rbtree
       return iterator(this->m_irbtree.insert_equal(hint.get(), *p));
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class MovableConvertible>
    iterator insert_equal(const_iterator hint, const detail::moved_object<MovableConvertible> &mv)
    {
       NodePtr p(AllocHolder::create_node(mv));
       return iterator(this->m_irbtree.insert_equal(hint.get(), *p));
    }
+   #else
+   template<class MovableConvertible>
+   iterator insert_equal(const_iterator hint, MovableConvertible &&mv)
+   {
+      NodePtr p(AllocHolder::create_node(move(mv)));
+      return iterator(this->m_irbtree.insert_equal(hint.get(), *p));
+   }
+   #endif
 
    template <class InputIterator>
    void insert_equal(InputIterator first, InputIterator last)

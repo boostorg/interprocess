@@ -28,8 +28,7 @@
 #include <boost/interprocess/smart_ptr/detail/bad_weak_ptr.hpp>
 #include <boost/interprocess/smart_ptr/detail/sp_counted_impl.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <functional>
-
+#include <boost/detail/no_exceptions_support.hpp>
 #include <functional>       // std::less
 
 namespace boost {
@@ -84,7 +83,7 @@ class shared_count
             m_pi = alloc.allocate(1);
             //Anti-exception deallocator
             scoped_ptr<counted_impl, 
-                     scoped_deallocator<counted_impl_allocator> >
+                     scoped_ptr_deallocator<counted_impl_allocator> >
                         deallocator(m_pi, alloc);
             //It's more correct to use A::construct but
             //this needs copy constructor and we don't like it

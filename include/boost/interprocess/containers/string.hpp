@@ -30,15 +30,18 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/detail/workaround.hpp>
-#include <boost/config.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/algorithms.hpp>
+#include <boost/interprocess/detail/min_max.hpp>
+#include <boost/interprocess/detail/iterators.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/allocators/allocation_type.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/type_traits/is_integral.hpp>
+
 #include <functional>
 #include <string>
 #include <stdexcept>      
@@ -95,12 +98,21 @@ class basic_string_base
       this->allocate_initial_block(n);
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_string_base(const detail::moved_object<basic_string_base<A> >& b)
       :  allocator_type(static_cast<allocator_type&>(b.get()))
    {  
       init();
       this->swap(b.get()); 
    }
+   #else
+   basic_string_base(basic_string_base<A> && b)
+      :  allocator_type(static_cast<allocator_type&>(b))
+   {  
+      init();
+      this->swap(b); 
+   }
+   #endif
 
    ~basic_string_base() 
    {  
@@ -279,13 +291,16 @@ class basic_string_base
    }
 
    void construct(pointer p, const value_type &value = value_type())
-   {  allocator_type::construct(p, value);   }
+   {  new(detail::get_pointer(p)) value_type(value);   }
 
    void destroy(pointer p, size_type n)
-   {  for(; n--; ++p) allocator_type::destroy(p);  }
+   {
+      for(; n--; ++p)
+         detail::get_pointer(p)->~value_type();
+   }
 
    void destroy(pointer p)
-   { allocator_type::destroy(p); }
+   {  detail::get_pointer(p)->~value_type(); }
 
    void allocate_initial_block(std::size_t n)
    {
@@ -521,9 +536,15 @@ class basic_string
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //! 
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_string(const detail::moved_object<basic_string>& s) 
       : base_t(move((base_t&)s.get()))
    {}
+   #else
+   basic_string(basic_string && s) 
+      : base_t(move((base_t&)s))
+   {}
+   #endif
 
    //! <b>Effects</b>: Constructs a basic_string taking the allocator as parameter,
    //!   and is initialized by a specific number of characters of the s string. 
@@ -571,7 +592,7 @@ class basic_string
    {
       //Dispatch depending on integer/iterator
       const bool aux_boolean = boost::is_integral<InputIterator>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
+      typedef bool_<aux_boolean> Result;
       this->priv_initialize_dispatch(f, l, Result());
    }
 
@@ -600,6 +621,7 @@ class basic_string
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //! 
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_string& operator=(const detail::moved_object<basic_string>& ms)
    {
       basic_string &s = ms.get();
@@ -608,6 +630,16 @@ class basic_string
       }
       return *this;
    }
+   #else
+   basic_string& operator=(basic_string && ms)
+   {
+      basic_string &s = ms;
+      if (&s != this){
+         this->swap(s);
+      }
+      return *this;
+   }
+   #endif
 
    //! <b>Effects</b>: Assignment from a null-terminated c-string.
    basic_string& operator=(const CharT* s) 
@@ -759,7 +791,7 @@ class basic_string
          size_type new_length = 0;
 
          new_length += priv_uninitialized_copy
-            (this->priv_addr(), this->priv_addr() + this->priv_size(), new_start, this->get_alloc());
+            (this->priv_addr(), this->priv_addr() + this->priv_size(), new_start);
          this->priv_construct_null(new_start + new_length);
          this->deallocate_block();
          this->is_short(false);
@@ -917,8 +949,13 @@ class basic_string
    {  return this->operator=(s); }
 
    //! <b>Effects</b>: Moves the resources from ms *this.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_string& assign(const detail::moved_object<basic_string>& ms) 
    {  return this->operator=(ms);}
+   #else
+   basic_string& assign(basic_string && ms) 
+   {  return this->operator=(ms);}
+   #endif
 
    //! <b>Effects</b>: Assigns the range [pos, pos + n) from s to *this.
    basic_string& assign(const basic_string& s, 
@@ -947,7 +984,7 @@ class basic_string
    {
       //Dispatch depending on integer/iterator
       const bool aux_boolean = boost::is_integral<InputIter>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
+      typedef bool_<aux_boolean> Result;
       return this->priv_assign_dispatch(first, last, Result());
    }
 
@@ -1048,7 +1085,7 @@ class basic_string
    {
       //Dispatch depending on integer/iterator
       const bool aux_boolean = boost::is_integral<InputIter>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
+      typedef bool_<aux_boolean> Result;
       this->priv_insert_dispatch(p, first, last, Result());
    }
 
@@ -1191,7 +1228,7 @@ class basic_string
    {
       //Dispatch depending on integer/iterator
       const bool aux_boolean = boost::is_integral<iterator>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
+      typedef bool_<aux_boolean> Result;
       return this->priv_replace_dispatch(first, last, f, l,  Result());
    }
 
@@ -1210,8 +1247,13 @@ class basic_string
    {  base_t::swap(s);  }
 
    //! <b>Effects</b>: Swaps the contents of two strings. 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object<basic_string>& ms) 
    {  this->swap(ms.get());  }
+   #else
+   void swap(basic_string && ms) 
+   {  this->swap(ms);  }
+   #endif
 
    //! <b>Returns</b>: Returns a pointer to a null-terminated array of characters 
    //!   representing the string's contents. For any string s it is guaranteed 
@@ -1564,7 +1606,7 @@ class basic_string
    {
       difference_type n = std::distance(f, l);
       this->allocate_initial_block(max_value<difference_type>(n+1, InternalBufferChars));
-      priv_uninitialized_copy(f, l, this->priv_addr(), this->get_alloc());
+      priv_uninitialized_copy(f, l, this->priv_addr());
       this->priv_size(n);
       this->priv_terminate_string();
    }
@@ -1577,21 +1619,20 @@ class basic_string
    }
 
    template <class Integer>
-   void priv_initialize_dispatch(Integer n, Integer x, boost::mpl::true_)
+   void priv_initialize_dispatch(Integer n, Integer x, true_)
    {
       this->allocate_initial_block(max_value<difference_type>(n+1, InternalBufferChars));
-      priv_uninitialized_fill_n(this->priv_addr(), n, x, this->get_alloc());
+      priv_uninitialized_fill_n(this->priv_addr(), n, x);
       this->priv_size(n);
       this->priv_terminate_string();
    }
 
    template <class InputIter>
-   void priv_initialize_dispatch(InputIter f, InputIter l, boost::mpl::false_)
+   void priv_initialize_dispatch(InputIter f, InputIter l, false_)
    {  this->priv_range_initialize(f, l);  }
  
-   template<class FwdIt, class Count, class Alloc> inline
-   void priv_uninitialized_fill_n(FwdIt first,  Count count, 
-                                  const CharT val, Alloc& al)
+   template<class FwdIt, class Count> inline
+   void priv_uninitialized_fill_n(FwdIt first, Count count, const CharT val)
    {
       //Save initial position
       FwdIt init = first;
@@ -1599,22 +1640,21 @@ class basic_string
       BOOST_TRY{
          //Construct objects
          for (; count--; ++first){
-            al.construct(first, val);
+            this->construct(first, val);
          }
       }
       BOOST_CATCH(...){
          //Call destructors
          for (; init != first; ++init){
-            al.destroy(init);
+            this->destroy(init);
          }
          BOOST_RETHROW
       }
       BOOST_CATCH_END
    }
 
-   template<class InpIt, class FwdIt, class Alloc> inline
-   size_type priv_uninitialized_copy(InpIt first,   InpIt last, 
-                                     FwdIt dest,    Alloc& al)
+   template<class InpIt, class FwdIt> inline
+   size_type priv_uninitialized_copy(InpIt first, InpIt last, FwdIt dest)
    {
       //Save initial destination position
       FwdIt dest_init = dest;
@@ -1623,13 +1663,13 @@ class basic_string
       BOOST_TRY{
          //Try to build objects
          for (; first != last; ++dest, ++first, ++constructed){
-            al.construct(dest, *first);
+            this->construct(dest, *first);
          }
       }
       BOOST_CATCH(...){
          //Call destructors
          for (; constructed--; ++dest_init){
-            al.destroy(dest_init);
+            this->destroy(dest_init);
          }
          BOOST_RETHROW;
       }
@@ -1638,12 +1678,12 @@ class basic_string
    }
 
    template <class Integer>
-   basic_string& priv_assign_dispatch(Integer n, Integer x, boost::mpl::true_) 
+   basic_string& priv_assign_dispatch(Integer n, Integer x, true_) 
    {  return this->assign((size_type) n, (CharT) x);   }
 
    template <class InputIter>
    basic_string& priv_assign_dispatch(InputIter f, InputIter l,
-                                      boost::mpl::false_)
+                                      false_)
    {
       size_type cur = 0;
       CharT *ptr = detail::get_pointer(this->priv_addr());
@@ -1707,8 +1747,7 @@ class basic_string
             if (elems_after >= n) {
                pointer pointer_past_last = this->priv_addr() + this->priv_size() + 1;
                priv_uninitialized_copy(this->priv_addr() + (this->priv_size() - n + 1),
-                                       pointer_past_last,
-                                       pointer_past_last, *this);
+                                       pointer_past_last, pointer_past_last);
 
                this->priv_size(this->priv_size()+n);
                Traits::move(detail::get_pointer(position + n),
@@ -1720,11 +1759,11 @@ class basic_string
                ForwardIter mid = first;
                std::advance(mid, elems_after + 1);
 
-               priv_uninitialized_copy(mid, last, this->priv_addr() + this->priv_size() + 1, *this);
+               priv_uninitialized_copy(mid, last, this->priv_addr() + this->priv_size() + 1);
                this->priv_size(this->priv_size() + (n - elems_after));
                priv_uninitialized_copy
                   (position, this->priv_addr() + old_length + 1, 
-                  this->priv_addr() + this->priv_size(), *this);
+                  this->priv_addr() + this->priv_size());
                this->priv_size(this->priv_size() + elems_after);
                this->priv_copy(first, mid, position);
             }
@@ -1736,12 +1775,12 @@ class basic_string
                size_type new_length = 0;
                //This can't throw, since characters are POD
                new_length += priv_uninitialized_copy
-                              (this->priv_addr(), position, new_start, *this);
+                              (this->priv_addr(), position, new_start);
                new_length += priv_uninitialized_copy
-                              (first, last, new_start + new_length, *this);
+                              (first, last, new_start + new_length);
                new_length += priv_uninitialized_copy
                               (position, this->priv_addr() + this->priv_size(), 
-                              new_start + new_length, *this);
+                              new_start + new_length);
                this->priv_construct_null(new_start + new_length);
 
                this->deallocate_block();
@@ -1762,7 +1801,7 @@ class basic_string
                Traits::move(newbuf, oldbuf, before);
                Traits::move(newbuf + before + n, pos, old_size - before);
                //Now initialize the new data
-               priv_uninitialized_copy(first, last, new_start + before, *this);
+               priv_uninitialized_copy(first, last, new_start + before);
                this->priv_construct_null(new_start + (old_size + n));
                this->is_short(false);
                this->priv_addr(new_start);
@@ -1775,12 +1814,12 @@ class basic_string
 
    template <class Integer>
    void priv_insert_dispatch(iterator p, Integer n, Integer x,
-                           boost::mpl::true_) 
+                           true_) 
    {  insert(p, (size_type) n, (CharT) x);   }
 
    template <class InputIter>
    void priv_insert_dispatch(iterator p, InputIter first, InputIter last,
-                           boost::mpl::false_) 
+                           false_) 
    {
       typedef typename std::iterator_traits<InputIter>::iterator_category Category;
       priv_insert(p, first, last, Category());
@@ -1799,13 +1838,13 @@ class basic_string
    template <class Integer>
    basic_string& priv_replace_dispatch(iterator first, iterator last,
                                        Integer n, Integer x,
-                                       boost::mpl::true_) 
+                                       true_) 
    {  return this->replace(first, last, (size_type) n, (CharT) x);   }
 
    template <class InputIter>
    basic_string& priv_replace_dispatch(iterator first, iterator last,
                                        InputIter f, InputIter l,
-                                       boost::mpl::false_) 
+                                       false_) 
    {
       typedef typename std::iterator_traits<InputIter>::iterator_category Category;
       return this->priv_replace(first, last, f, l, Category());
@@ -1872,6 +1911,7 @@ operator+(const basic_string<CharT,Traits,A>& x,
    return result;
 }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class CharT, class Traits, class A>
 inline detail::moved_object<basic_string<CharT,Traits,A> >
 operator+(const detail::moved_object<basic_string<CharT,Traits,A> >& mx,
@@ -1880,15 +1920,36 @@ operator+(const detail::moved_object<basic_string<CharT,Traits,A> >& mx,
    mx.get() += y;
    return mx;
 }
+#else
+template <class CharT, class Traits, class A>
+basic_string<CharT,Traits,A> &&
+operator+(basic_string<CharT,Traits,A> && mx,
+          const basic_string<CharT,Traits,A>& y)
+{
+   mx += y;
+   return move(mx);
+}
+#endif
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class CharT, class Traits, class A>
 inline detail::moved_object<basic_string<CharT,Traits,A> >
 operator+(const basic_string<CharT,Traits,A>& x,
           const detail::moved_object<basic_string<CharT,Traits,A> >& my)
 {
-   my.get() += x;
-   return my;
+   typedef typename basic_string<CharT,Traits,A>::size_type size_type;
+	return my.get().replace(size_type(0), size_type(0), x);
 }
+#else
+template <class CharT, class Traits, class A>
+inline basic_string<CharT,Traits,A> &&
+operator+(const basic_string<CharT,Traits,A>& x,
+          basic_string<CharT,Traits,A> && my)
+{
+   typedef typename basic_string<CharT,Traits,A>::size_type size_type;
+	return my.replace(size_type(0), size_type(0), x);
+}
+#endif
 
 template <class CharT, class Traits, class A>
 inline basic_string<CharT,Traits,A>
@@ -1904,6 +1965,26 @@ operator+(const CharT* s, const basic_string<CharT,Traits,A>& y)
    return result;
 }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+template <class CharT, class Traits, class A>
+inline detail::moved_object<basic_string<CharT,Traits,A> >
+operator+(const CharT* s,
+          const detail::moved_object<basic_string<CharT,Traits,A> >& my)
+{
+   typedef typename basic_string<CharT,Traits,A>::size_type size_type;
+	return my.get().replace(size_type(0), size_type(0), s);
+}
+#else
+template <class CharT, class Traits, class A>
+inline basic_string<CharT,Traits,A> &&
+operator+(const CharT* s,
+          basic_string<CharT,Traits,A> && my)
+{
+   typedef typename basic_string<CharT,Traits,A>::size_type size_type;
+	return move(my.get().replace(size_type(0), size_type(0), s));
+}
+#endif
+
 template <class CharT, class Traits, class A>
 inline basic_string<CharT,Traits,A>
 operator+(CharT c, const basic_string<CharT,Traits,A>& y) 
@@ -1916,6 +1997,26 @@ operator+(CharT c, const basic_string<CharT,Traits,A>& y)
    result.append(y);
    return result;
 }
+
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+template <class CharT, class Traits, class A>
+inline detail::moved_object<basic_string<CharT,Traits,A> >
+operator+(CharT c,
+          const detail::moved_object<basic_string<CharT,Traits,A> >& my)
+{
+   typedef typename basic_string<CharT,Traits,A>::size_type size_type;
+	return my.get().replace(size_type(0), size_type(0), &c, &c + 1);
+}
+#else
+template <class CharT, class Traits, class A>
+inline basic_string<CharT,Traits,A> &&
+operator+(CharT c,
+          basic_string<CharT,Traits,A> && my)
+{
+   typedef typename basic_string<CharT,Traits,A>::size_type size_type;
+	return my.replace(size_type(0), size_type(0), &c, &c + 1);
+}
+#endif
 
 template <class CharT, class Traits, class A>
 inline basic_string<CharT,Traits,A>
@@ -1931,6 +2032,26 @@ operator+(const basic_string<CharT,Traits,A>& x, const CharT* s)
    return result;
 }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+template <class CharT, class Traits, class A>
+inline detail::moved_object<basic_string<CharT,Traits,A> >
+operator+(const detail::moved_object<basic_string<CharT,Traits,A> >& mx,
+          const CharT* s)
+{
+   mx.get() += s;
+   return mx;
+}
+#else
+template <class CharT, class Traits, class A>
+basic_string<CharT,Traits,A> &&
+operator+(basic_string<CharT,Traits,A> && mx,
+          const CharT* s)
+{
+   mx += s;
+   return move(mx);
+}
+#endif
+
 template <class CharT, class Traits, class A>
 inline basic_string<CharT,Traits,A>
 operator+(const basic_string<CharT,Traits,A>& x, const CharT c) 
@@ -1943,6 +2064,25 @@ operator+(const basic_string<CharT,Traits,A>& x, const CharT c)
    result.push_back(c);
    return result;
 }
+
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+template <class CharT, class Traits, class A>
+inline detail::moved_object<basic_string<CharT,Traits,A> >
+operator+(const detail::moved_object<basic_string<CharT,Traits,A> >& mx,
+          const CharT c)
+{
+   mx.get() += c;
+   return mx;
+}
+#else
+template <class CharT, class Traits, class A>
+basic_string<CharT,Traits,A> &&
+operator+(basic_string<CharT,Traits,A> && mx, const CharT c)
+{
+   mx += c;
+   return move(mx);
+}
+#endif
 
 // Operator== and operator!=
 
@@ -2076,7 +2216,7 @@ operator>=(const basic_string<CharT,Traits,A>& x, const CharT* s)
    {  return !(x < s);  }
 
 // Swap.
-
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class CharT, class Traits, class A>
 inline void swap(basic_string<CharT,Traits,A>& x,
                  basic_string<CharT,Traits,A>& y) 
@@ -2091,7 +2231,12 @@ template <class CharT, class Traits, class A>
 inline void swap(basic_string<CharT,Traits,A>& x,
                  const detail::moved_object<basic_string<CharT,Traits,A> >& my) 
 {  x.swap(my.get());  }
-
+#else
+template <class CharT, class Traits, class A>
+inline void swap(basic_string<CharT,Traits,A> && x,
+                 basic_string<CharT,Traits,A> &&y) 
+{  x.swap(y);  }
+#endif
 
 /// @cond
 // I/O.  
@@ -2118,7 +2263,11 @@ interprocess_string_fill(std::basic_ostream<CharT, Traits>& os,
 template <class CharT, class Traits, class A>
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, 
+            #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
            const basic_string<CharT,Traits,A>& s)
+            #else
+           const basic_string<CharT,Traits,A>&&s)
+           #endif
 {
    typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
    bool ok = false;
@@ -2150,16 +2299,23 @@ operator<<(std::basic_ostream<CharT, Traits>& os,
    return os;
 }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class CharT, class Traits, class A>
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, 
            const detail::moved_object<basic_string<CharT,Traits,A> >& ms)
 {  return os << ms.get();  }
+#endif
+
 
 template <class CharT, class Traits, class A>
 std::basic_istream<CharT, Traits>& 
 operator>>(std::basic_istream<CharT, Traits>& is,
+            #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
            basic_string<CharT,Traits,A>& s)
+            #else
+           basic_string<CharT,Traits,A>&&s)
+            #endif
 {
    typename std::basic_istream<CharT, Traits>::sentry sentry(is);
 
@@ -2204,16 +2360,22 @@ operator>>(std::basic_istream<CharT, Traits>& is,
    return is;
 }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class CharT, class Traits, class A>
 std::basic_istream<CharT, Traits>& 
 operator>>(std::basic_istream<CharT, Traits>& is,
            const detail::moved_object<basic_string<CharT,Traits,A> >& ms)
 {  return is >> ms.get();  }
+#endif
 
 template <class CharT, class Traits, class A>    
 std::basic_istream<CharT, Traits>& 
 getline(std::istream& is,
+         #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
         basic_string<CharT,Traits,A>& s,
+         #else
+        basic_string<CharT,Traits,A>&&s,
+         #endif
         CharT delim)
 {
    std::size_t nread = 0;
@@ -2245,6 +2407,16 @@ getline(std::istream& is,
    return is;
 }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+template <class CharT, class Traits, class A>    
+std::basic_istream<CharT, Traits>& 
+getline(std::istream& is,
+        const detail::moved_object<basic_string<CharT,Traits,A> >& ms,
+        CharT delim)
+{  return getline(is, ms.get(), delim);   }
+#endif
+
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class CharT, class Traits, class A>    
 inline std::basic_istream<CharT, Traits>& 
 getline(std::basic_istream<CharT, Traits>& is,
@@ -2256,15 +2428,15 @@ getline(std::basic_istream<CharT, Traits>& is,
 template <class CharT, class Traits, class A>    
 std::basic_istream<CharT, Traits>& 
 getline(std::istream& is,
-        const detail::moved_object<basic_string<CharT,Traits,A> >& ms,
-        CharT delim)
-{  return getline(is, ms.get(), delim);   }
-
+        const detail::moved_object<basic_string<CharT,Traits,A> >& ms)
+{  return getline(is, ms.get());   }
+#else
 template <class CharT, class Traits, class A>    
 std::basic_istream<CharT, Traits>& 
 getline(std::istream& is,
-        const detail::moved_object<basic_string<CharT,Traits,A> >& ms)
-{  return getline(is, ms.get());   }
+        basic_string<CharT,Traits,A> && ms)
+{  return getline(is, ms);   }
+#endif
 
 template <class Ch, class A>
 inline std::size_t hash_value(basic_string<Ch, std::char_traits<Ch>, A> const& v)

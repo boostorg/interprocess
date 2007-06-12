@@ -77,13 +77,19 @@ class windows_shared_memory
    //!Moves the ownership of "moved"'s shared memory object to *this. 
    //!After the call, "moved" does not represent any shared memory object. 
    //!Does not throw
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    windows_shared_memory
       (detail::moved_object<windows_shared_memory> &moved)
    {  this->swap(moved.get());   }
+   #else
+   windows_shared_memory(windows_shared_memory &&moved)
+   {  this->swap(moved);   }
+   #endif
 
    //!Moves the ownership of "moved"'s shared memory to *this.
    //!After the call, "moved" does not represent any shared memory. 
    //!Does not throw
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    windows_shared_memory &operator=
       (detail::moved_object<windows_shared_memory> &moved)
    {  
@@ -91,6 +97,14 @@ class windows_shared_memory
       this->swap(tmp);
       return *this;  
    }
+   #else
+   windows_shared_memory &operator=(windows_shared_memory &&moved)
+   {  
+      windows_shared_memory tmp(move(moved));
+      this->swap(tmp);
+      return *this;  
+   }
+   #endif
 
    //!Swaps to shared_memory_objects. Does not throw
    void swap(windows_shared_memory &other);

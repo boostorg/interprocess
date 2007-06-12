@@ -35,10 +35,10 @@ template <class MapConfig>
 struct iunordered_set_index_aux
 {
    typedef typename 
-      MapConfig::restricted_segment_manager                 restricted_segment_manager;
+      MapConfig::basic_segment_manager                 basic_segment_manager;
 
    typedef typename 
-      restricted_segment_manager::void_pointer              void_pointer;
+      basic_segment_manager::void_pointer              void_pointer;
 
    typedef boost::intrusive::unordered_set_base_hook
       < boost::intrusive::tag
@@ -59,23 +59,23 @@ struct iunordered_set_index_aux
    {
       bool operator()(const intrusive_compare_key_type &i, const value_type &b) const
       {  
-         return (i.m_len == b.length()) &&
+         return (i.m_len == b.name_length()) &&
                   (std::char_traits<char_type>::compare 
                      (i.mp_str, b.name(), i.m_len) == 0);
       }
 
       bool operator()(const value_type &b, const intrusive_compare_key_type &i) const
       {  
-         return (i.m_len == b.length()) &&
+         return (i.m_len == b.name_length()) &&
                   (std::char_traits<char_type>::compare 
                      (i.mp_str, b.name(), i.m_len) == 0);
       }
 
       bool operator()(const value_type &b1, const value_type &b2) const
       {  
-         return (b1.length() == b2.length()) &&
+         return (b1.name_length() == b2.name_length()) &&
                   (std::char_traits<char_type>::compare 
-                     (b1.name(), b2.name(), b1.length()) == 0);
+                     (b1.name(), b2.name(), b1.name_length()) == 0);
       }
    };
 
@@ -85,7 +85,7 @@ struct iunordered_set_index_aux
         std::size_t operator()(const value_type &val) const
         {
             const char_type *beg = detail::get_pointer(val.name()),
-                            *end = beg + val.length();
+                            *end = beg + val.name_length();
             return boost::hash_range(beg, end);
         }
 
@@ -104,11 +104,11 @@ struct iunordered_set_index_aux
    typedef typename index_t::bucket_type                 bucket_type;
 
    typedef allocator
-      <bucket_type, restricted_segment_manager>          allocator_type;
+      <bucket_type, basic_segment_manager>          allocator_type;
 
    struct allocator_holder
    {
-      allocator_holder(restricted_segment_manager *mngr)
+      allocator_holder(basic_segment_manager *mngr)
          :  alloc(mngr)
       {}
       allocator_type alloc;
@@ -131,7 +131,6 @@ class iunordered_set_index
       intrusive_compare_key_type                         intrusive_compare_key_type;
    typedef typename index_aux::equal_function            equal_function;
    typedef typename index_aux::hash_function             hash_function;
-   typedef typename index_aux::bucket_type               bucket_type;
    typedef typename MapConfig::char_type                 char_type;
    typedef typename 
       iunordered_set_index_aux<MapConfig>::allocator_type      allocator_type;
@@ -145,12 +144,13 @@ class iunordered_set_index
    typedef typename index_type::insert_commit_data       insert_commit_data;
    typedef typename index_type::value_type               value_type;
    typedef typename index_type::bucket_ptr               bucket_ptr;
+   typedef typename index_type::bucket_type              bucket_type;
    typedef typename index_type::size_type                size_type;
 
    /// @cond
    private:
    typedef typename index_aux::
-      restricted_segment_manager             restricted_segment_manager;
+      basic_segment_manager             basic_segment_manager;
 
    enum {   InitBufferSize = 64};
 
@@ -160,7 +160,7 @@ class iunordered_set_index
       bucket_ptr buckets = alloc.allocate(num);
       bucket_ptr buckets_init = buckets;
       for(std::size_t i = 0; i < num; ++i){
-         alloc.construct(buckets_init++);
+         new(get_pointer(buckets_init++))bucket_type();
       }
       return buckets;
    }
@@ -170,7 +170,7 @@ class iunordered_set_index
    {
       bucket_ptr buckets_destroy = buckets;
       for(std::size_t i = 0; i < num; ++i){
-         alloc.destroy(buckets_destroy++);
+         get_pointer(buckets_destroy++)->~bucket_type();
       }
       alloc.deallocate(buckets, num);
    }
@@ -179,7 +179,7 @@ class iunordered_set_index
    public:
    /*!Constructor. Takes a pointer to the
       segment manager. Can throw*/
-   iunordered_set_index(restricted_segment_manager *mngr)
+   iunordered_set_index(basic_segment_manager *mngr)
       :  allocator_holder(mngr)
       ,  index_type
             (create_buckets( allocator_holder::alloc

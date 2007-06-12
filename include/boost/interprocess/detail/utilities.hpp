@@ -22,37 +22,42 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
-#include <boost/get_pointer.hpp>
-#include <boost/detail/no_exceptions_support.hpp>
 #include <boost/interprocess/detail/move.hpp>
-#include <boost/type_traits/has_nothrow_destructor.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
-#include <boost/call_traits.hpp>
-#include <algorithm>
-#include <functional>
+#include <boost/interprocess/detail/min_max.hpp>
+//#include <functional>
 #include <utility>
 #include <stdexcept>
-#include <boost/iterator/iterator_facade.hpp>
-#include <boost/intrusive/slist.hpp>
 
-namespace boost { namespace interprocess { 
-
-template<class T>
-class offset_ptr;
-
+namespace boost {
+namespace interprocess { 
 namespace detail {
 
-/*!Overload for smart pointers to avoid ADL problems with get_pointer*/
-template<class Ptr>
-inline typename Ptr::value_type *get_pointer(const Ptr &ptr)
-{  using boost::get_pointer;  return get_pointer(ptr);   }
+template<class SmartPtr>
+struct smart_ptr_type
+{
+   typedef typename SmartPtr::value_type value_type;
+   typedef value_type *pointer;
+   static pointer get (const SmartPtr &smartptr)
+   {  return smartptr.get();}
+};
 
-/*!Overload for raw pointers to avoid ADL problems with get_pointer*/
 template<class T>
-inline T *get_pointer(T *ptr)
-{  return ptr; }
+struct smart_ptr_type<T*>
+{
+   typedef T value_type;
+   typedef value_type *pointer;
+   static pointer get (pointer ptr)
+   {  return ptr;}
+};
 
-/*!To avoid ADL problems with swap*/
+//!Overload for smart pointers to avoid ADL problems with get_pointer
+template<class Ptr>
+inline typename smart_ptr_type<Ptr>::pointer
+get_pointer(const Ptr &ptr)
+{  return smart_ptr_type<Ptr>::get(ptr);   }
+
+//!To avoid ADL problems with swap
 template <class T>
 inline void do_swap(T& x, T& y)
 {
@@ -60,31 +65,30 @@ inline void do_swap(T& x, T& y)
    swap(x, y);
 }
 
-/*!A deleter for scoped_ptr that deallocates the memory
-   allocated for an object using a STL allocator.*/
+//!A deleter for scoped_ptr that deallocates the memory
+//!allocated for an object using a STL allocator.
 template <class Allocator>
-struct scoped_deallocator
+struct scoped_ptr_deallocator
 {
    typedef typename Allocator::pointer pointer;
 
    Allocator& m_alloc;
 
-   scoped_deallocator(Allocator& a)
+   scoped_ptr_deallocator(Allocator& a)
          : m_alloc(a) {}
 
    void operator()(pointer ptr)
       {  if (ptr) m_alloc.deallocate(ptr, 1);  }
-
 };
 
-/*!A deleter for scoped_ptr that deallocates the memory
-   allocated for an array of objects using a STL allocator.*/
+//!A deleter for scoped_ptr that deallocates the memory
+//!allocated for an array of objects using a STL allocator.
 template <class Allocator>
-struct scoped_array_deallocator
+struct scoped_ptr_array_deallocator
 {
    typedef typename Allocator::pointer pointer;
 
-   scoped_array_deallocator(Allocator& a, std::size_t length)
+   scoped_ptr_array_deallocator(Allocator& a, std::size_t length)
          : m_alloc(a), m_length(length) {}
 
    void operator()(pointer &ptr)
@@ -95,46 +99,78 @@ struct scoped_array_deallocator
    std::size_t m_length;
 };
 
-/*!A deleter for scoped_ptr that destroys
-   an object using a STL allocator.*/
+//!A deleter for scoped_ptr that deallocates the memory
+//!allocated for an object using a STL allocator.
 template <class Allocator>
-struct scoped_destructor
+struct scoped_deallocator
 {
    typedef typename Allocator::pointer pointer;
 
-   Allocator& m_alloc;
+   pointer     m_ptr;
+   Allocator&  m_alloc;
 
-   scoped_destructor(Allocator& a)
-         : m_alloc(a){}
+   scoped_deallocator(pointer p, Allocator& a)
+      : m_ptr(p), m_alloc(a) {}
 
-   void operator()(pointer &ptr)
-      {  m_alloc.destroy(ptr);  }
+   ~scoped_deallocator()
+   {  if (m_ptr) m_alloc.deallocate(m_ptr, 1);  }
+
+   void release()
+   {  m_ptr = 0; }
 };
 
-/*!A deleter for scoped_ptr that destroys
-   an object using a STL allocator.*/
+//!A deleter for scoped_ptr that deallocates the memory
+//!allocated for an array of objects using a STL allocator.
 template <class Allocator>
-struct scoped_destructor_n
+struct scoped_array_deallocator
 {
    typedef typename Allocator::pointer pointer;
-   typedef typename Allocator::size_type size_type;
 
-   Allocator& m_alloc;
-   size_type  m_n;
+   scoped_array_deallocator(pointer p, Allocator& a, std::size_t length)
+      : m_ptr(p), m_alloc(a), m_length(length) {}
 
-   scoped_destructor_n(Allocator& a, size_type n)
-         : m_alloc(a), m_n(n){}
+   ~scoped_array_deallocator()
+   {  if (m_ptr) m_alloc.deallocate(m_ptr, m_length);  }
 
-   void operator()(pointer ptr)
+   void release()
+   {  m_ptr = 0; }
+
+   private:
+   pointer     m_ptr;
+   Allocator&  m_alloc;
+   std::size_t m_length;
+};
+
+//!A deleter for scoped_ptr that destroys
+//!an object using a STL allocator.
+template <class Pointer>
+struct scoped_destructor_n
+{
+   typedef Pointer pointer;
+
+   pointer     m_p;
+   std::size_t m_n;
+
+   scoped_destructor_n(pointer p, std::size_t n)
+         : m_p(p), m_n(n){}
+
+   void release()
+   {  m_p = 0; }
+   
+   ~scoped_destructor_n()
    {
-      for(size_type i = 0; i < m_n; ++i, ++ptr)
-         m_alloc.destroy(ptr);
+      if(!m_p) return;
+      typedef typename std::iterator_traits<Pointer>::value_type value_type;
+      value_type *raw_ptr = detail::get_pointer(m_p);
+      for(std::size_t i = 0; i < m_n; ++i, ++raw_ptr)
+         raw_ptr->~value_type();
    }
 };
 
 template <class A>
 class allocator_destroyer
 {
+   typedef typename A::value_type value_type;
    private:
    A & a_;
 
@@ -143,9 +179,9 @@ class allocator_destroyer
       :  a_(a)
    {}
 
-   void operator()(typename A::pointer p)
+   void operator()(const typename A::pointer &p)
    {  
-      a_.destroy(p);
+      detail::get_pointer(p)->~value_type();
       a_.deallocate(p, 1);
    }
 };
@@ -164,23 +200,6 @@ inline char* char_ptr_cast()
    return (char*)(0);
 }
 
-template <class Pair>
-struct select1st 
-   : public std::unary_function<Pair, typename Pair::first_type> 
-{
-   const typename Pair::first_type& operator()(const Pair& x) const 
-   {  return x.first;   }
-};
-
-// identity is an extension: it is not part of the standard.
-template <class T>
-struct identity 
-   : public std::unary_function<T,T> 
-{
-   const T& operator()(const T& x) const 
-   { return x; }
-};
-
 //Rounds "orig_size" by excess to round_to bytes
 inline std::size_t get_rounded_size(std::size_t orig_size, std::size_t round_to)
 {
@@ -191,7 +210,6 @@ inline std::size_t get_truncated_size(std::size_t orig_size, std::size_t multipl
 {
    return orig_size/multiple*multiple;
 }
-
  
 template <std::size_t OrigSize, std::size_t RoundTo>
 struct ct_rounded_size
@@ -259,45 +277,7 @@ struct pointer_to_other< T*, U >
    typedef U* type;
 };
 
-//Anti-exception node eraser
-template<class Cont>
-class value_eraser
-{
-   public:
-   value_eraser(Cont & cont, typename Cont::iterator it) 
-      : m_cont(cont), m_index_it(it), m_erase(true){}
-   ~value_eraser()  
-   {
-      if(boost::has_nothrow_destructor<typename Cont::value_type>::value){
-         if(m_erase) m_cont.erase(m_index_it);
-      }
-      else{
-         //value_eraser is used in exceptions, so we
-         //disable double-exception danger
-         BOOST_TRY{  if(m_erase) m_cont.erase(m_index_it);  }
-         BOOST_CATCH(...){}
-         BOOST_CATCH_END
-      }
-   }
-   void release() {  m_erase = false;  }
-
-   private:
-   Cont                    &m_cont;
-   typename Cont::iterator  m_index_it;
-   bool                    m_erase;
-};
-
 }  //namespace detail {
-
-/*!Trait class to detect if an allocator has
-   a templatized construct function. If this is the case
-   in node containers we only need just one allocator
-   instead of three*/
-template <class Allocator>
-struct has_convertible_construct
-{
-   enum {   value = false };
-};
 
 /*!Trait class to detect if an index is a node
    index. This allows more efficient operations
@@ -351,295 +331,15 @@ class deleter
    {  mp_deleter->destroy_ptr(detail::get_pointer(p));   }
 };
 
-template <class T, class Difference = std::ptrdiff_t>
-class constant_iterator
-   :  public boost::iterator_facade
-         < constant_iterator<T, Difference>
-         , T
-         , boost::random_access_traversal_tag
-         , const T &
-         , Difference>
-{
-   typedef boost::iterator_facade
-         < constant_iterator<T, Difference>
-         , T
-         , boost::random_access_traversal_tag
-         , const T &
-         , Difference>  super_t;
-
-   typedef  constant_iterator<T, Difference> this_type;
-   //Give access to private core functions
-   friend class boost::iterator_core_access;
-
-   public:
-   explicit constant_iterator(const T &ref, Difference range_size)
-      :  m_ptr(&ref), m_num(range_size){}
-
-   //Constructors
-   constant_iterator()
-      :  m_ptr(0), m_num(0){}
-
-   private:
-   const T *         m_ptr;
-   Difference  m_num;
-
-   void increment()
-   { --m_num; }
-
-   void decrement()
-   { ++m_num; }
-
-   bool equal(const this_type &other) const
-   {  return m_num == other.m_num;   }
-
-   const T & dereference() const
-   { return *m_ptr; }
-
-   void advance(Difference n)
-   {  m_num -= n; }
-
-   Difference distance_to(const this_type &other)const
-   {  return m_num - other.m_num;   }
-};
-
-template <class T, class Difference = std::ptrdiff_t>
-class repeat_iterator
-   :  public boost::iterator_facade
-         < repeat_iterator<T, Difference>
-         , T
-         , boost::random_access_traversal_tag
-         , T &
-         , Difference>
-{
-   typedef boost::iterator_facade
-         < repeat_iterator<T, Difference>
-         , T
-         , boost::random_access_traversal_tag
-         , T &
-         , Difference>  super_t;
-
-   typedef  repeat_iterator<T, Difference> this_type;
-   //Give access to private core functions
-   friend class boost::iterator_core_access;
-
-   public:
-   explicit repeat_iterator(T &ref, Difference range_size)
-      :  m_ptr(&ref), m_num(range_size){}
-
-   //Constructors
-   repeat_iterator()
-      :  m_ptr(0), m_num(0){}
-
-   private:
-   T *         m_ptr;
-   Difference  m_num;
-
-   void increment()
-   { --m_num; }
-
-   void decrement()
-   { ++m_num; }
-
-   bool equal(const this_type &other) const
-   {  return m_num == other.m_num;   }
-
-   T & dereference() const
-   { return *m_ptr; }
-
-   void advance(Difference n)
-   {  m_num -= n; }
-
-   Difference distance_to(const this_type &other)const
-   {  return m_num - other.m_num;   }
-};
-
-template<class FwdIt, class Count, class T, class Alloc> inline
-void uninitialized_fill_n(FwdIt first,  Count count, 
-                          const T& val, Alloc& al)
-{
-   //Save initial position
-   FwdIt init = first;
-
-   BOOST_TRY{
-      //Construct objects
-      for (; count--; ++first){
-         al.construct(first, val);
-      }
-   }
-   BOOST_CATCH(...){
-      //Call destructors
-      for (; init != first; ++init){
-         al.destroy(init);
-      }
-      BOOST_RETHROW;
-   }
-   BOOST_CATCH_END
-}
-
-template<class InIt, class OutIt>
-InIt copy_n(InIt first, typename std::iterator_traits<InIt>::difference_type length, OutIt dest)
-{   
-   for (; length--; ++dest, ++first)
-      *dest = *first;
-   return first;
-}
-
-
-template<class InIt, class FwdIt, class Alloc> inline
-typename std::iterator_traits<InIt>::difference_type
-   n_uninitialized_copy(InIt first,   InIt last, 
-                        FwdIt dest,    Alloc& al)
-{
-   //Save initial destination position
-   FwdIt dest_init = dest;
-   typename std::iterator_traits<InIt>::difference_type constructed = 0;
-   BOOST_TRY{
-      //Try to build objects
-      for (; first != last; ++dest, ++first, ++constructed){
-         al.construct(dest, *first);
-      }
-   }
-   BOOST_CATCH(...){
-      //Call destructors
-      for (; dest_init != dest; ++dest_init){
-         al.destroy(dest_init);
-      }
-      BOOST_RETHROW;
-   }
-   BOOST_CATCH_END
-   return (constructed);
-}
-
-template<class InIt, class FwdIt, class Alloc> inline
-FwdIt uninitialized_copy(InIt first,   InIt last, 
-                         FwdIt dest,    Alloc& al)
-{
-   //Save initial destination position
-   FwdIt dest_init = dest;
-   typename std::iterator_traits<InIt>::difference_type constructed = 0;
-   BOOST_TRY{
-      //Try to build objects
-      for (; first != last; ++dest, ++first, ++constructed){
-         al.construct(dest, *first);
-      }
-   }
-   BOOST_CATCH(...){
-      //Call destructors
-      for (; dest_init != dest; ++dest_init){
-         al.destroy(dest_init);
-      }
-      BOOST_RETHROW;
-   }
-   BOOST_CATCH_END
-   return (dest);
-}
-
-template<class InIt, class FwdIt, class Alloc> inline
-InIt n_uninitialized_copy_n
-   (InIt first, 
-    typename std::iterator_traits<InIt>::difference_type count,
-    FwdIt dest,    Alloc& al)
-{
-   //Save initial destination position
-   FwdIt dest_init = dest;
-   typename std::iterator_traits<InIt>::difference_type new_count = count+1;
-
-   BOOST_TRY{
-      //Try to build objects
-      for (; --new_count; ++dest, ++first){
-         al.construct(dest, *first);
-      }
-   }
-   BOOST_CATCH(...){
-      //Call destructors
-      new_count = count - new_count;
-      for (; new_count--; ++dest_init){
-         al.destroy(dest_init);
-      }
-      BOOST_RETHROW;
-   }
-   BOOST_CATCH_END
-   return first;
-}
-
-// uninitialized_copy_copy
-// Copies [first1, last1) into [result, result + (last1 - first1)), and
-// copies [first2, last2) into
-// [result + (last1 - first1), result + (last1 - first1) + (last2 - first2)).
-template <class InpIt1, class InpIt2, class FwdIt, class Alloc>
-FwdIt uninitialized_copy_copy(InpIt1 first1, InpIt1 last1,
-                                 InpIt2 first2, InpIt2 last2,
-                                 FwdIt result, Alloc &alloc)
-{
-   FwdIt mid = uninitialized_copy(first1, last1, result, alloc);
-   BOOST_TRY {
-      return uninitialized_copy(first2, last2, mid, alloc);
-   }
-   BOOST_CATCH(...){
-      for(;result != mid; ++result){
-         alloc.destroy(&*result); 
-      }
-      BOOST_RETHROW
-   }
-   BOOST_CATCH_END
-}
-
-// uninitialized_copy_n_copy_n
-// Copies [first1, first1 + n1) into [result, result + n1), and
-// copies [first2, first2 + n2) into
-// [result + n1, result + n1 + n2).
-template <class InpIt1, class InpIt2, class FwdIt, class Alloc>
-InpIt2 uninitialized_copy_n_copy_n
-  (InpIt1 first1,
-   typename std::iterator_traits<InpIt1>::difference_type n1,
-   InpIt2 first2, 
-   typename std::iterator_traits<InpIt2>::difference_type n2,
-   FwdIt result,
-   Alloc &alloc)
-{
-   typename std::iterator_traits<InpIt1>::difference_type c1 = n1+1;
-   typename std::iterator_traits<InpIt2>::difference_type c2 = n2+1;
-   FwdIt dest_init = result;
-
-   BOOST_TRY{
-      //Try to build objects
-      for (; --c1; ++result, ++first1){
-         alloc.construct(result, *first1);
-      }
-      for (; --c2; ++result, ++first2){
-         alloc.construct(result, *first2);
-      }
-   }
-   BOOST_CATCH(...){
-      //Call destructors
-   typename std::iterator_traits<FwdIt>::
-      difference_type c = (n1 - c1) + (n2 - c2);
-      for (; c--; ++dest_init){
-         alloc.destroy(dest_init);
-      }
-      BOOST_RETHROW;
-   }
-   BOOST_CATCH_END
-   return first2;
-}
-
-template<class T>
-const T &max_value(const T &a, const T &b)
-{  return a > b ? a : b;   }
-
-template<class T>
-const T &min_value(const T &a, const T &b)
-{  return a < b ? a : b;   }
-
 template <class SizeType>
 SizeType
    get_next_capacity(const SizeType max_size
                     ,const SizeType capacity
                     ,const SizeType n)
-{/*
-   if (n > max_size - capacity)
-      throw std::length_error("get_next_capacity");
-*/
+{
+//   if (n > max_size - capacity)
+//      throw std::length_error("get_next_capacity");
+
    const SizeType m3 = max_size/3;
 
    if (capacity < m3)
@@ -652,44 +352,6 @@ SizeType
 }
 
 namespace detail {
-
-struct two {char _[2];};
-
-namespace pointer_type_imp {
-
-template <class U> static two  test(...);
-template <class U> static char test(typename U::pointer* = 0);
-
-}  //namespace pointer_type_imp {
-
-template <class T>
-struct has_pointer_type
-{
-    static const bool value = sizeof(pointer_type_imp::test<T>(0)) == 1;
-};
-
-namespace pointer_type_imp {
-
-template <class T, class D, bool = has_pointer_type<D>::value>
-struct pointer_type
-{
-    typedef typename D::pointer type;
-};
-
-template <class T, class D>
-struct pointer_type<T, D, false>
-{
-    typedef T* type;
-};
-
-}  //namespace pointer_type_imp {
-
-template <class T, class D>
-struct pointer_type
-{
-    typedef typename pointer_type_imp::pointer_type<T,
-        typename boost::remove_reference<D>::type>::type type;
-};
 
 template <class T1, class T2>
 struct pair
@@ -713,31 +375,67 @@ struct pair
       : first(p.first), second(p.second)
    {}
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class D, class S>
    pair(const detail::moved_object<std::pair<D, S> >& p)
       : first(move(p.get().first)), second(move(p.get().second))
    {}
+   #else
+   template <class D, class S>
+   pair(std::pair<D, S> && p)
+      : first(move(p.first)), second(move(p.second))
+   {}
+   #endif
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class D, class S>
    pair(const detail::moved_object<pair<D, S> >& p)
       : first(move(p.get().first)), second(move(p.get().second))
    {}
+   #else
+   template <class D, class S>
+   pair(pair<D, S> && p)
+      : first(move(p.first)), second(move(p.second))
+   {}
+   #endif
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class U, class V>
    pair(const detail::moved_object<U> &x, const detail::moved_object<V> &y)
       : first(move(x.get())), second(move(y.get()))
    {}
+   #else
+   template <class U, class V>
+   pair(U &&x, V &&y)
+      : first(move(x)), second(move(y))
+   {}
+   #endif
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    pair(const detail::moved_object<pair> &p)
       : first(move(p.get().first)), second(move(p.get().second))
    {}
+   #else
+   pair(pair &&p)
+      : first(move(p.first)), second(move(p.second))
+   {}
+   #endif
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    pair& operator=(const detail::moved_object<pair> &p)
    {
       first  = move(p.get().first);
       second = move(p.get().second);
       return *this;
    }
+   #else
+   pair& operator=(pair &&p)
+   {
+      first  = move(p.first);
+      second = move(p.second);
+      return *this;
+   }
+   #endif
 
    pair& operator=(const pair &p)
    {
@@ -746,6 +444,7 @@ struct pair
       return *this;
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class D, class S>
    pair& operator=(const detail::moved_object<std::pair<D, S> > &p)
    {
@@ -753,12 +452,27 @@ struct pair
       second = move(p.get().second);
       return *this;
    }
+   #else
+   template <class D, class S>
+   pair& operator=(std::pair<D, S> &&p)
+   {
+      first  = move(p.first);
+      second = move(p.second);
+      return *this;
+   }
+   #endif
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object<pair> &p)
    {  std::swap(*this, p.get()); }
 
    void swap(pair& p)
    {  std::swap(*this, p); }
+
+   #else
+   void swap(pair &&p)
+   {  std::swap(*this, p); }
+   #endif
 };
 
 template <class T1, class T2>
@@ -790,6 +504,7 @@ template <class T1, class T2>
 inline pair<T1, T2> make_pair(T1 x, T2 y)
 {  return pair<T1, T2>(x, y); }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class T1, class T2>
 inline void swap(const detail::moved_object<pair<T1, T2> > &x, pair<T1, T2>& y)
 {
@@ -810,6 +525,15 @@ inline void swap(pair<T1, T2>& x, pair<T1, T2>& y)
    swap(x.first, y.first);
    swap(x.second, y.second);
 }
+
+#else
+template <class T1, class T2>
+inline void swap(pair<T1, T2>&&x, pair<T1, T2>&&y)
+{
+   swap(x.first, y.first);
+   swap(x.second, y.second);
+}
+#endif
 
 }  //namespace detail {
 
@@ -832,9 +556,7 @@ struct is_movable<std::pair<T1, T2> >
 template <class T>
 struct has_trivial_destructor_after_move
    : public boost::has_trivial_destructor<T>
-{
-   enum{ value = false  };
-};
+{};
 
 enum create_enum_t
 {  DoCreate, DoOpen, DoCreateOrOpen   };

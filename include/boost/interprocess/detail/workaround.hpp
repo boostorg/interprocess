@@ -18,19 +18,6 @@
 #include <boost/iterator.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 
-#ifndef BOOST_INTERPROCESS_NO_DEPENDENT_TYPES_IN_TEMPLATE_VALUE_PARAMETERS
-#if defined (BOOST_NO_DEPENDENT_TYPES_IN_TEMPLATE_VALUE_PARAMETERS) || BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
-#define BOOST_INTERPROCESS_NO_DEPENDENT_TYPES_IN_TEMPLATE_VALUE_PARAMETERS
-#endif
-#endif
-
-#if BOOST_WORKAROUND(BOOST_DINKUMWARE_STDLIB, == 1)
-// old Dinkumware
-#  include <boost/compatibility/cpp_c_headers/cstddef>
-#else
-#  include <cstddef>
-#endif
-
 #if !(defined BOOST_WINDOWS) || (defined BOOST_DISABLE_WIN32)
    #if defined(_POSIX_THREAD_PROCESS_SHARED) && (_POSIX_THREAD_PROCESS_SHARED - 0 > 0)
    #if !defined(__CYGWIN__)
@@ -68,12 +55,26 @@
 
 #endif
 
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)
+// C++0x features are only enabled when -std=c++0x or -std=gnu++0x are
+// passed on the command line, which in turn defines
+// __GXX_EXPERIMENTAL_CXX0X__. Note: __GXX_EXPERIMENTAL_CPP0X__ is
+// defined by some very early development versions of GCC 4.3; we will
+// remove this part of the check in the near future.
+#  if defined(__GXX_EXPERIMENTAL_CPP0X__) || defined(__GXX_EXPERIMENTAL_CXX0X__)
+#    define BOOST_INTERPROCESS_RVALUE_REFERENCE
+#    define BOOST_INTERPROCESS_VARIADIC_TEMPLATES
+#  endif
+#endif
+
+#if defined(BOOST_INTERPROCESS_RVALUE_REFERENCE) || defined(BOOST_INTERPROCESS_VARIADIC_TEMPLATES)
+#define BOOST_INTERPROCESS_PERFECT_FORWARDING
+#endif
+
 namespace boost {
-
 namespace interprocess {
+namespace workaround{
 
-namespace workaround
-{
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*//
 //                                              //
 //    We want generally const_shm_ptr to inherit//

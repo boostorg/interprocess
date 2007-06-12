@@ -15,11 +15,15 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>
 #include <boost/interprocess/sync/mutex_family.hpp>
+#include <boost/interprocess/streams/bufferstream.hpp>
 #include <vector>
 #include <iostream>
 #include <cstdio>
 #include <new>
 #include <utility>
+#include <iterator>
+#include <set>
+#include <string>
 
 namespace boost { namespace interprocess { namespace test {
 
@@ -28,23 +32,36 @@ namespace boost { namespace interprocess { namespace test {
 template<class ManagedMemory>
 bool test_names_and_types(ManagedMemory &m)
 {
+   typedef typename ManagedMemory::char_type char_type;
+   typedef std::char_traits<char_type> char_traits_type;
    std::vector<char*> buffers;
    const int BufferLen = 100;
-   char name[BufferLen];
+   char_type name[BufferLen];
+
+   basic_bufferstream<char_type> formatter(name, BufferLen);
 
    for(int i = 0; true; ++i){
-      std::sprintf(name, "%s%010d", "prefix_name_", i);
+      formatter.seekp(0);
+      formatter << "prefix_name_" << i << std::ends;
+
       char *ptr = m.template construct<char>(name, std::nothrow)(i);
 
       if(!ptr)
          break;
-      if(std::strcmp(m.get_name(ptr), name) != 0)
-         return false;
+
+      std::size_t namelen = char_traits_type::length(m.get_name(ptr));
+      if(namelen != char_traits_type::length(name)){
+         return 1;
+      }
+
+      if(char_traits_type::compare(m.get_name(ptr), name, namelen) != 0){
+         return 1;
+      }
 
       if(m.template find<char>(name).first == 0)
          return false;
 
-      if(m.get_type(ptr) != named_type)
+      if(m.get_type(ptr) != detail::named_type)
          return false;
 
       buffers.push_back(ptr);
@@ -64,17 +81,92 @@ bool test_names_and_types(ManagedMemory &m)
    return true;
 }
 
+
+//This test allocates until there is no more memory
+//and after that deallocates all in the same order
+template<class ManagedMemory>
+bool test_named_iterators(ManagedMemory &m)
+{
+   typedef typename ManagedMemory::char_type char_type;
+   typedef std::char_traits<char_type> char_traits_type;
+   std::vector<char*> buffers;
+   const int BufferLen = 100;
+   char_type name[BufferLen];
+   typedef std::basic_string<char_type> string_type;
+   std::set<string_type> names;
+
+   basic_bufferstream<char_type> formatter(name, BufferLen);
+
+   string_type aux_str;
+
+   for(int i = 0; true; ++i){
+      formatter.seekp(0);
+      formatter << "prefix_name_" << i << std::ends;
+      char *ptr = m.template construct<char>(name, std::nothrow)(i);
+      if(!ptr)
+         break;
+      aux_str = name;
+      names.insert(aux_str);
+      buffers.push_back(ptr);
+   }
+
+   if(m.get_num_named_objects() != buffers.size() || !m.check_sanity())
+      return false;
+
+   typedef typename ManagedMemory::const_named_iterator const_named_iterator;
+   const_named_iterator named_beg = m.named_begin();
+   const_named_iterator named_end = m.named_end();
+
+   if(std::distance(named_beg, named_end) != (int)buffers.size()){
+      return 1;
+   }
+
+   for(; named_beg != named_end; ++named_beg){
+      const char_type *name = named_beg->name();
+      aux_str = name;
+      if(names.find(aux_str) == names.end()){
+         return 1;
+      }
+
+      if(aux_str.size() != named_beg->name_length()){
+         return 1;
+      }
+
+      const void *found_value = m.template find<char>(name).first;
+
+      if(found_value == 0)
+         return false;
+      if(found_value != named_beg->value())
+         return false;
+   }
+
+   for(int j = 0, max = (int)buffers.size()
+      ;j < max
+      ;++j){
+      m.destroy_ptr(buffers[j]);
+   }
+
+   if(m.get_num_named_objects() != 0 || !m.check_sanity())
+      return false;
+   return true;
+}
+
 //This test allocates until there is no more memory
 //and after that deallocates all in the same order
 template<class ManagedMemory>
 bool test_direct_named_allocation_destruction(ManagedMemory &m)
 {
+   typedef typename ManagedMemory::char_type char_type;
+   typedef std::char_traits<char_type> char_traits_type;
    std::vector<char*> buffers;
    const int BufferLen = 100;
-   char name[BufferLen];
+   char_type name[BufferLen];
+
+   basic_bufferstream<char_type> formatter(name, BufferLen);
 
    for(int i = 0; true; ++i){
-      std::sprintf(name, "%s%010d", "prefix_name_", i);
+      formatter.seekp(0);
+      formatter << "prefix_name_" << i << std::ends;
       char *ptr = m.template construct<char>(name, std::nothrow)(i);
       if(!ptr)
          break;
@@ -102,12 +194,18 @@ bool test_direct_named_allocation_destruction(ManagedMemory &m)
 template<class ManagedMemory>
 bool test_named_allocation_inverse_destruction(ManagedMemory &m)
 {
+   typedef typename ManagedMemory::char_type char_type;
+   typedef std::char_traits<char_type> char_traits_type;
+
    std::vector<char*> buffers;
    const int BufferLen = 100;
-   char name[BufferLen];
+   char_type name[BufferLen];
+
+   basic_bufferstream<char_type> formatter(name, BufferLen);
 
    for(int i = 0; true; ++i){
-      std::sprintf(name, "%s%010d", "prefix_name_", i);
+      formatter.seekp(0);
+      formatter << "prefix_name_" << i << std::ends;
       char *ptr = m.template construct<char>(name, std::nothrow)(i);
       if(!ptr)
          break;
@@ -133,12 +231,18 @@ bool test_named_allocation_inverse_destruction(ManagedMemory &m)
 template<class ManagedMemory>
 bool test_named_allocation_mixed_destruction(ManagedMemory &m)
 {
+   typedef typename ManagedMemory::char_type char_type;
+   typedef std::char_traits<char_type> char_traits_type;
+
    std::vector<char*> buffers;
    const int BufferLen = 100;
-   char name[BufferLen];
+   char_type name[BufferLen];
+
+   basic_bufferstream<char_type> formatter(name, BufferLen);
 
    for(int i = 0; true; ++i){
-      std::sprintf(name, "%s%010d", "prefix_name_", i);
+      formatter.seekp(0);
+      formatter << "prefix_name_" << i << std::ends;
       char *ptr = m.template construct<char>(name, std::nothrow)(i);
       if(!ptr)
          break;
@@ -166,13 +270,18 @@ bool test_named_allocation_mixed_destruction(ManagedMemory &m)
 template<class ManagedMemory>
 bool test_inverse_named_allocation_destruction(ManagedMemory &m)
 {
+   typedef typename ManagedMemory::char_type char_type;
+   typedef std::char_traits<char_type> char_traits_type;
+
    std::vector<char*> buffers;
    const int BufferLen = 100;
-   char name[BufferLen];
-   const unsigned int FirstNumber = (unsigned int)-1;
+   char_type name[BufferLen];
+
+   basic_bufferstream<char_type> formatter(name, BufferLen);
 
    for(unsigned int i = 0; true; ++i){
-      std::sprintf(name, "%s%010u", "prefix_name_", FirstNumber - i);
+      formatter.seekp(0);
+      formatter << "prefix_name_" << i << std::ends;
       char *ptr = m.template construct<char>(name, std::nothrow)(i);
       if(!ptr)
          break;
@@ -242,6 +351,12 @@ bool test_all_named_allocation(ManagedMemory &m)
       return false;
    }
 
+   if(!test_named_iterators(m)){
+      std::cout << "test_named_iterators failed. Class: "
+                << typeid(m).name() << std::endl;
+      return false;
+   }
+
    return true;
 }
 
@@ -275,7 +390,7 @@ bool test_named_allocation()
       throw;
    }
    shared_memory_object::remove(shMemName);
-/*
+
    //Now test it with wchar_t
    try
    {
@@ -300,7 +415,7 @@ bool test_named_allocation()
       throw;
    }
    shared_memory_object::remove(shMemName);
-*/
+
    return true;
 }
 

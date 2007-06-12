@@ -235,16 +235,6 @@ bool operator!=(const private_adaptive_pool<T, S, NodesPerChunk, F> &alloc1,
    return &alloc1 != &alloc2;
 }
 
-/// @cond
-//!This specialization indicates that the construct function allows
-//!convertible types to construct the value type. This allows
-//!storing less allocator instances in containers.
-template<class T, class S, std::size_t NodesPerChunk, std::size_t F>
-struct has_convertible_construct
-   <boost::interprocess::private_adaptive_pool<T, S, NodesPerChunk, F> >
-{  enum {   value = true };   };
-/// @endcond
-
 }  //namespace interprocess {
 }  //namespace boost {
 

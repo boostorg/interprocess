@@ -19,50 +19,43 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <new>
-#include <boost/config.hpp>
+#include <boost/interprocess/detail/in_place_interface.hpp>
 #include <boost/preprocessor/iteration/local.hpp> 
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/repetition/enum.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
-#include <boost/mpl/bool.hpp>
-#include <boost/mpl/if.hpp>
-#include <boost/type_traits/has_trivial_constructor.hpp>
-#include <boost/bind.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 
 /*!\file
    Describes a proxy class that implements named allocation syntax.
 */
 
-namespace boost { namespace interprocess { 
-
+namespace boost {
+namespace interprocess { 
 namespace detail {
 
 /*!Function object that makes placement new without arguments*/
 template<class T>
-struct Ctor0Arg
+struct Ctor0Arg   :  public placement_destroy<T>
 {
    typedef Ctor0Arg self_t;
    typedef T target_t;
-   enum { is_trivial = boost::has_trivial_constructor<T>::value };
 
    Ctor0Arg(){}
 
    self_t& operator++()       {  return *this;  }
    self_t  operator++(int)    {  return *this;  }
-   static inline void construct(T *mem, boost::mpl::false_)
-   { new(mem)T;  }
-   static inline void construct(T *mem, boost::mpl::true_)
-   {}
-   void operator()(T *mem) const 
+
+   virtual void construct(void *mem)
+   {  new(mem)T;  }
+
+   virtual void construct_n(void *mem, std::size_t num, std::size_t &constructed)
    {
-      typedef boost::mpl::bool_<is_trivial> Result;
-      Ctor0Arg<T>::construct(mem, Result());
+      T* memory = static_cast<T*>(mem);
+      for(constructed = 0; constructed < num; ++constructed)
+         new(memory++)T;
    }
-   #if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
-   private:
-   char dummy_; // BCB would by default use 8 B for empty structure
-   #endif
 };
 
 #ifndef BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS
@@ -75,17 +68,16 @@ struct Ctor0Arg
 //    template<class T, bool param_or_it, class P1, class P2>
 //    struct Ctor2Arg
 //    {
-//       enum { is_trivial = false };
 //       typedef Ctor2Arg self_t;
 //
-//       void do_increment(boost::mpl::false_)
+//       void do_increment(false_)
 //       { ++m_p1; ++m_p2;  }
 //
-//       void do_increment(boost::mpl::true_){}
+//       void do_increment(true_){}
 //
 //       self_t& operator++()
 //       {
-//          typedef boost::mpl::bool_<param_or_it> Result;
+//          typedef bool_<param_or_it> Result;
 //          this->do_increment(Result());
 //          return *this;
 //       }
@@ -95,8 +87,21 @@ struct Ctor0Arg
 //       Ctor2Arg(const P1 &p1, const P2 &p2)
 //          : p1((P1 &)p_1), p2((P2 &)p_2) {}
 //
-//       void operator()(T* mem) const 
-//       {  new (mem) T(m_p1, m_p2); }
+//       virtual void construct(void *mem)
+//       {  new(object)T(m_p1, m_p2); }
+//
+//       virtual void construct_n(void *mem
+//                                , std::size_t num
+//                                , std::size_t &constructed)
+//       {
+//          T* memory      = static_cast<T*>(mem);
+//          for(constructed = 0; constructed < num; ++constructed){
+//             new(memory++)T(m_p1, m_p2);
+//             typedef bool_<param_or_it> Result;
+//             this->do_increment(Result());
+//          }
+//       }
+//
 //    private:
 //       P1 &m_p1; P2 &m_p2;
 //    };
@@ -122,24 +127,27 @@ struct Ctor0Arg
 
 #define BOOST_INTERPROCESS_AUX_PARAM_DEFINE(z, n, data)   \
   BOOST_PP_CAT(P, n) & BOOST_PP_CAT(m_p, n);       \
+
+#define BOOST_INTERPROCESS_AUX_PARAM_DEREFERENCE(z, n, data)   \
+   BOOST_PP_CAT(P, n) & BOOST_PP_CAT(m_p, n);       \
 /**/
 
 #define BOOST_PP_LOCAL_MACRO(n)                                         \
    template<class T, bool param_or_it, BOOST_PP_ENUM_PARAMS(n, class P) >\
    struct BOOST_PP_CAT(BOOST_PP_CAT(Ctor, n), Arg)                      \
+      :  public placement_destroy<T>                                                 \
    {                                                                    \
-      enum { is_trivial = false };                                      \
       typedef BOOST_PP_CAT(BOOST_PP_CAT(Ctor, n), Arg) self_t;          \
       typedef T target_t;                                               \
                                                                         \
-      void do_increment(boost::mpl::false_)                             \
+      void do_increment(false_)                             \
          { BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INC, _); }     \
                                                                         \
-      void do_increment(boost::mpl::true_){}                            \
+      void do_increment(true_){}                            \
                                                                         \
       self_t& operator++()                                              \
       {                                                                 \
-         typedef boost::mpl::bool_<param_or_it> Result;                 \
+         typedef bool_<param_or_it> Result;                 \
          this->do_increment(Result());                                  \
          return *this;                                                  \
       }                                                                 \
@@ -150,13 +158,26 @@ struct Ctor0Arg
          ( BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_LIST, _) )     \
          : BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INIT, _) {}    \
                                                                         \
-      void operator()(T* mem) const                                     \
-         {  new (mem) T(BOOST_PP_ENUM_PARAMS(n, m_p));  }               \
+      virtual void construct(void *mem)                                 \
+      {  new(mem)T(BOOST_PP_ENUM_PARAMS(n, m_p)); }                     \
                                                                         \
-    private:                                                            \
+      virtual void construct_n(void *mem                                \
+                        , std::size_t num                               \
+                        , std::size_t &constructed)                     \
+      {                                                                 \
+         T* memory      = static_cast<T*>(mem);                         \
+         for(constructed = 0; constructed < num; ++constructed){        \
+            new(memory++)T(BOOST_PP_ENUM_PARAMS(n, m_p));               \
+            typedef bool_<param_or_it> Result;              \
+            this->do_increment(Result());                               \
+         }                                                              \
+      }                                                                 \
+                                                                        \
+      private:                                                          \
          BOOST_PP_REPEAT(n, BOOST_INTERPROCESS_AUX_PARAM_DEFINE, _)     \
    };                                                                   \
 /**/
+
 
 #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
 #include BOOST_PP_LOCAL_ITERATE()
@@ -166,32 +187,34 @@ struct Ctor0Arg
 #undef BOOST_INTERPROCESS_AUX_PARAM_DEFINE
 #undef BOOST_INTERPROCESS_AUX_PARAM_INC
 
-/*!Describes a proxy class that implements named allocation syntax.
-*/
+//!Describes a proxy class that implements named
+//!allocation syntax.
 template 
-   < class CharType        //char type for the name (char, wchar_t...)
+   < class SegmentManager  //segment manager to construct the object
    , class T               //type of object to build
-   , class NamedAlloc      //class to allocate and construct the object
-   , bool find             //if true, we try to find the object before creating
-   , bool dothrow          //if true, we throw an exception, otherwise, return 0
    , bool param_or_it      //passing parameters are normal object or iterators?
    >
 class named_proxy
 {
-   const CharType *     mp_name;
-   NamedAlloc     *     mp_alloc;
+   typedef typename SegmentManager::char_type char_type;
+   const char_type *     mp_name;
+   SegmentManager *     mp_mngr;
    mutable std::size_t  m_num;
+   const bool           m_find;
+   const bool           m_dothrow;
 
- public:
-   named_proxy(const CharType *name, NamedAlloc *alloc) 
-      : mp_name(name), mp_alloc(alloc), m_num(1){}
+   public:
+   named_proxy(SegmentManager *mngr, const char_type *name, bool find, bool dothrow)
+      :  mp_name(name), mp_mngr(mngr), m_num(1)
+      ,  m_find(find),  m_dothrow(dothrow)
+   {}
 
    /*!makes a named allocation and calls the default constructor*/
    T *operator()() const
    {  
       Ctor0Arg<T> ctor_obj;
-      return mp_alloc->template 
-         generic_construct<T>(mp_name, m_num, find, dothrow, ctor_obj);
+      return mp_mngr->template 
+         generic_construct<T>(mp_name, m_num, m_find, m_dothrow, ctor_obj);
    }
    /**/
 
@@ -212,8 +235,8 @@ class named_proxy
             <T, param_or_it, BOOST_PP_ENUM (n, BOOST_INTERPROCESS_AUX_TYPE_LIST, _)> \
             ctor_obj_t;                                                       \
          ctor_obj_t ctor_obj (BOOST_PP_ENUM_PARAMS(n, p));                    \
-         return mp_alloc->template generic_construct<T>                       \
-            (mp_name, m_num, find, dothrow, ctor_obj);                        \
+         return mp_mngr->template generic_construct<T>                       \
+            (mp_name, m_num, m_find, m_dothrow, ctor_obj);                    \
       }                                                                       \
    /**/
 
@@ -234,8 +257,8 @@ class named_proxy
    //       ctor_obj_t;
    //    ctor_obj_t ctor_obj(p1, p2);
    //
-   //    return mp_alloc->template generic_construct<T>
-   //       (mp_name, m_num, find, dothrow, ctor_obj);
+   //    return mp_mngr->template generic_construct<T>
+   //       (mp_name, m_num, m_find, m_dothrow, ctor_obj);
    // }
    //
    //////////////////////////////////////////////////////////////////////////

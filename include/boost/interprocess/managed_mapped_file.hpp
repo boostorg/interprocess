@@ -87,14 +87,24 @@ class basic_managed_mapped_file
    {}
 
    /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_mapped_file
       (detail::moved_object<basic_managed_mapped_file> &moved)
    {  this->swap(moved.get());   }
+   #else
+   basic_managed_mapped_file(basic_managed_mapped_file &&moved)
+   {  this->swap(moved);   }
+   #endif
 
    /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_mapped_file &operator=
       (detail::moved_object<basic_managed_mapped_file> &moved)
    {  this->swap(moved.get());   return *this;  }
+   #else
+   basic_managed_mapped_file &operator=(basic_managed_mapped_file &&moved)
+   {  this->swap(moved);   return *this;  }
+   #endif
 
    /*!Destructor. Never throws.*/
    ~basic_managed_mapped_file()

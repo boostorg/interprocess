@@ -55,17 +55,10 @@
 #include <boost/iterator.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/type_traits/is_integral.hpp>
-#include <boost/detail/allocator_utilities.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/type_traits/has_trivial_constructor.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
-#include <boost/mpl/if.hpp>
-#include <boost/aligned_storage.hpp>
-#include <boost/type_traits/alignment_of.hpp>
-#include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 #include <boost/intrusive/list.hpp>
-#include <boost/type_traits/has_trivial_destructor.hpp>
-
 
 #include <iterator>
 #include <utility>
@@ -91,54 +84,66 @@ struct list_node
          , boost::intrusive::safe_link
          , VoidPointer>   IlistData;
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
    list_node(const Convertible &conv)
       : m_data(conv)
    {}
+   #else
+   template<class Convertible>
+   list_node(Convertible &&conv)
+      : m_data(forward<Convertible>(conv))
+   {}
+   #endif
 
    T m_data;
 };
 
 template<class A>
 struct list_alloc
-   :  public boost::detail::allocator::
-         rebind_to<A, list_node
-            <typename A::value_type, typename boost::detail::allocator::
-               rebind_to<A, void>::type::pointer>
-            >::type
+   :  public A::template rebind<list_node
+            < typename A::value_type
+            , typename detail::pointer_to_other<typename A::pointer, void>::type>
+            >::other
 {
    typedef list_alloc<A>                 self_t;
    typedef typename A::value_type                     value_type;
    typedef list_node
-      <value_type, typename boost::detail::allocator::
-         rebind_to<A, void>::type::pointer>           Node;
-   typedef typename boost::detail::allocator::
-      rebind_to<A, Node>::type                        NodeAlloc;
+      <typename A::value_type
+      ,typename detail::pointer_to_other
+         <typename A::pointer, void>::type>           Node;
+   typedef typename A::template rebind<Node>::other   NodeAlloc;
    typedef A                                          ValAlloc;
    typedef typename NodeAlloc::pointer                NodePtr;
    typedef detail::scoped_deallocator<NodeAlloc>      Deallocator;
-
-   enum {   
-      node_has_trivial_destructor =  
-         boost::has_trivial_destructor<NodePtr>::value &&
-         boost::has_trivial_destructor<value_type>::value 
-   };
 
    list_alloc(const ValAlloc &a) 
       : NodeAlloc(a)
    {}
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    list_alloc(const detail::moved_object<ValAlloc> &a) 
       : NodeAlloc(a.get())
    {}
+   #else
+   list_alloc(ValAlloc &&a) 
+      : NodeAlloc(a)
+   {}
+   #endif
 
    list_alloc(const list_alloc &other)
       : NodeAlloc(other)
    {}
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    list_alloc(const detail::moved_object<list_alloc> &other)
       : NodeAlloc(move((NodeAlloc&)other.get()))
    {  this->swap(other.get());  }
+   #else
+   list_alloc(list_alloc &&other)
+      : NodeAlloc(move((NodeAlloc&)other))
+   {  this->swap(other);  }
+   #endif
 
    ~list_alloc()
    {}
@@ -146,28 +151,44 @@ struct list_alloc
    typename NodeAlloc::size_type max_size() const
    {  return NodeAlloc::max_size();  }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
    static void construct(const NodePtr &ptr, const Convertible &value)
    {  new(detail::get_pointer(ptr)) Node(value);  }
+   #else
+   template<class Convertible>
+   static void construct(const NodePtr &ptr, Convertible &&value)
+   {  new(detail::get_pointer(ptr)) Node(forward<Convertible>(value));  }
+   #endif
 
    static void destroy(const NodePtr &ptr)
    {  detail::get_pointer(ptr)->~Node();  }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
    NodePtr create_node(const Convertible& x)
    {
       NodePtr p = NodeAlloc::allocate(1);
-      scoped_ptr<Node, Deallocator>node_deallocator(p, *this);
+      Deallocator node_deallocator(p, *this);
       self_t::construct(p, x);
       node_deallocator.release();
       return (p);
    }
+   #else
+   template<class Convertible>
+   NodePtr create_node(Convertible &&x)
+   {
+      NodePtr p = NodeAlloc::allocate(1);
+      Deallocator node_deallocator(p, *this);
+      self_t::construct(p, forward<Convertible>(x));
+      node_deallocator.release();
+      return (p);
+   }
+   #endif
 
    void destroy_node(NodePtr node)
    {
-      if(!node_has_trivial_destructor){
-         self_t::destroy(node);
-      }
+      self_t::destroy(node);
       NodeAlloc::deallocate(node, 1);
    }
 
@@ -433,9 +454,15 @@ class list
    //! <b>Throws</b>: If allocator_type's default constructor throws.
    //! 
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    list(const detail::moved_object<list> &x)
       : AllocHolder(move((AllocHolder&)x.get()))
    {}
+   #else
+   list(list &&x)
+      : AllocHolder(move((AllocHolder&)x))
+   {}
+   #endif
 
    //! <b>Effects</b>: Constructs a list that will use a copy of allocator a
    //!   and inserts a copy of the range [first, last) in the list.
@@ -581,8 +608,13 @@ class list
    //! <b>Throws</b>: If memory allocation throws.
    //!
    //! <b>Complexity</b>: Amortized constant time.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void push_front(const detail::moved_object<T>& x)   
    {  this->insert(this->begin(), x);  }
+   #else
+   void push_front(T &&x)   
+   {  this->insert(this->begin(), move(x));  }
+   #endif
 
    //! <b>Effects</b>: Removes the last element from the list.
    //!
@@ -597,8 +629,13 @@ class list
    //! <b>Throws</b>: Nothing.
    //!
    //! <b>Complexity</b>: Amortized constant time.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void push_back (const detail::moved_object<T>& x)   
    {  this->insert(this->end(), x);    }
+   #else
+   void push_back (T &&x)   
+   {  this->insert(this->end(), move(x));    }
+   #endif
 
    //! <b>Effects</b>: Removes the first element from the list.
    //!
@@ -758,12 +795,21 @@ class list
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //!
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    ThisType& operator=(const detail::moved_object<ThisType>& mx)
    {
       this->clear();
       this->swap(mx.get());
       return *this;
    }
+   #else
+   ThisType& operator=(ThisType &&mx)
+   {
+      this->clear();
+      this->swap(mx);
+      return *this;
+   }
+   #endif
 
    //! <b>Requires</b>: p must be a valid iterator of *this.
    //!
@@ -787,7 +833,7 @@ class list
    void insert(iterator p, InpIt first, InpIt last) 
    {
       const bool aux_boolean = boost::is_integral<InpIt>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
+      typedef bool_<aux_boolean> Result;
       this->priv_insert_dispatch(p, first, last, Result());
    }
 
@@ -811,11 +857,19 @@ class list
    //! <b>Throws</b>: If memory allocation throws.
    //!
    //! <b>Complexity</b>: Amortized constant time.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(iterator p, const detail::moved_object<T>& x) 
    {
       NodePtr tmp = AllocHolder::create_node(x);
       return iterator(this->m_ilist.insert(p.get(), *tmp));
    }
+   #else
+   iterator insert(iterator p, T &&x) 
+   {
+      NodePtr tmp = AllocHolder::create_node(move(x));
+      return iterator(this->m_ilist.insert(p.get(), *tmp));
+   }
+   #endif
 
    //! <b>Requires</b>: p must be a valid iterator of *this.
    //!
@@ -855,7 +909,7 @@ class list
    void assign(InpIt first, InpIt last) 
    {
       const bool aux_boolean = boost::is_integral<InpIt>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
+      typedef bool_<aux_boolean> Result;
       this->priv_assign_dispatch(first, last, Result());
    }
 
@@ -1143,7 +1197,7 @@ class list
    template <class InputIter>
    void priv_insert_dispatch(iterator p,
                              InputIter first, InputIter last,
-                             boost::mpl::false_)
+                             false_)
    {
       for ( ; first != last; ++first){
          this->insert(p, *first);
@@ -1151,7 +1205,7 @@ class list
    }
 
    template<class Integer>
-   void priv_insert_dispatch(iterator p, Integer n, Integer x, boost::mpl::true_) 
+   void priv_insert_dispatch(iterator p, Integer n, Integer x, true_) 
    {  this->priv_fill_insert(p, n, x);  }
 
    void priv_fill_assign(size_type n, const T& val) 
@@ -1167,12 +1221,12 @@ class list
    }
 
    template <class Integer>
-   void priv_assign_dispatch(Integer n, Integer val, boost::mpl::true_)
+   void priv_assign_dispatch(Integer n, Integer val, true_)
    {  this->priv_fill_assign((size_type) n, (T) val); }
 
    template <class InputIter>
    void priv_assign_dispatch(InputIter first2, InputIter last2,
-                                       boost::mpl::false_)
+                                       false_)
    {
       iterator first1   = this->begin();
       iterator last1    = this->end();
@@ -1248,6 +1302,7 @@ inline bool operator>=(const list<T,A>& x, const list<T,A>& y)
   return !(x < y);
 }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class T, class A>
 inline void swap(list<T, A>& x, list<T, A>& y)
 {
@@ -1265,6 +1320,14 @@ inline void swap(list<T, A>& x, const detail::moved_object<list<T, A> >& y)
 {
   x.swap(y.get());
 }
+#else
+template <class T, class A>
+inline void swap(list<T, A> &&x, list<T, A> &&y)
+{
+  x.swap(y);
+}
+
+#endif
 
 /// @cond
 /*!This class is movable*/

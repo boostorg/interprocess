@@ -20,10 +20,11 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/assert.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/pointer_type.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/compressed_pair.hpp>
 #include <boost/static_assert.hpp>
-#include <boost/mpl/if.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <cstddef>
@@ -103,7 +104,7 @@ class unique_ptr
    {}
 
    unique_ptr(pointer p
-             ,typename boost::mpl::if_<boost::is_reference<D>
+             ,typename if_<boost::is_reference<D>
                   ,D
                   ,typename boost::add_reference<const D>::type>::type d)
       : ptr_(p, d)
@@ -113,9 +114,15 @@ class unique_ptr
       : ptr_(const_cast<unique_ptr&>(u).release(), u.get_deleter())
    {}
 */
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    unique_ptr(detail::moved_object<unique_ptr> u)
       : ptr_(u.get().release(), u.get().get_deleter())
    {}
+   #else
+   unique_ptr(unique_ptr &&u)
+      : ptr_(u.release(), u.get_deleter())
+   {}
+   #endif
 /*
    template <class U, class E>
    unique_ptr(const unique_ptr<U, E>& u,
@@ -132,6 +139,7 @@ class unique_ptr
       : ptr_(const_cast<unique_ptr<U,E>&>(u).release(), u.get_deleter())
    {}
 */
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class U, class E>
    unique_ptr(const detail::moved_object<unique_ptr<U, E> >& u,
       typename boost::enable_if_c<
@@ -146,6 +154,22 @@ class unique_ptr
             >::type = nat())
       : ptr_(const_cast<unique_ptr<U,E>&>(u.get()).release(), u.get().get_deleter())
    {}
+   #else
+   template <class U, class E>
+   unique_ptr(unique_ptr<U, E> && u,
+      typename boost::enable_if_c<
+            boost::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
+            boost::is_convertible<E, D>::value &&
+            (
+               !boost::is_reference<D>::value ||
+               boost::is_same<D, E>::value
+            )
+            ,
+            nat
+            >::type = nat())
+      : ptr_(const_cast<unique_ptr<U,E>&>(u).release(), u.get_deleter())
+   {}
+   #endif
 
    // destructor
    ~unique_ptr()
@@ -211,11 +235,16 @@ class unique_ptr
       }
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(unique_ptr& u)
    {  ptr_.swap(u.ptr_);   }
-   
+
    void swap(detail::moved_object<unique_ptr> mu)
    {  ptr_.swap(mu.get().ptr_);  }
+   #else
+   void swap(unique_ptr&&u)
+   {  ptr_.swap(u.ptr_);   }
+   #endif
 
    /// @cond
    private:
@@ -247,7 +276,7 @@ public:
     // constructors
     unique_ptr() : ptr_(pointer()) {}
     explicit unique_ptr(pointer p) : ptr_(p) {}
-    unique_ptr(pointer p, typename boost::mpl::if_<
+    unique_ptr(pointer p, typename if_<
                           boost::is_reference<D>,
                           D,
                           typename boost::add_reference<const D>::type>::type d)
@@ -326,7 +355,7 @@ public:
     // constructors
     unique_ptr() : ptr_(pointer()) {}
     explicit unique_ptr(pointer p) : ptr_(p) {}
-    unique_ptr(pointer p, typename boost::mpl::if_<
+    unique_ptr(pointer p, typename if_<
                          boost::is_reference<D>,
                          D,
                          typename boost::add_reference<const D>::type>::type d)

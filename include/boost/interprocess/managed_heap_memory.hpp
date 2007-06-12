@@ -101,15 +101,26 @@ class basic_managed_heap_memory
    }
 
    //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_heap_memory
       (detail::moved_object<basic_managed_heap_memory> &moved)
    {  this->swap(moved.get());   }
+   #else
+   basic_managed_heap_memory(basic_managed_heap_memory &&moved)
+   {  this->swap(moved);   }
+   #endif
 
    //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_heap_memory &operator=
       (detail::moved_object<basic_managed_heap_memory> &moved)
    {  this->swap(moved.get());   return *this;  }
- 
+   #else
+   basic_managed_heap_memory &operator=
+      (basic_managed_heap_memory &&moved)
+   {  this->swap(moved);   return *this;  }
+   #endif
+
    //!Tries to resize internal heap memory so that
    //!we have room for more objects. 
    //!WARNING: If memory is reallocated, all the objects will 

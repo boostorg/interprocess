@@ -273,7 +273,6 @@ class private_node_pool
       //If there are no free nodes we allocate a new block
       if (m_freelist.empty())
          priv_alloc_chunk();
-
       //We take the first free node
       node_t *n = (node_t*)&m_freelist.front();
       m_freelist.pop_front();
@@ -303,9 +302,8 @@ class private_node_pool
 
       //We initialize all Nodes in Node Block to insert 
       //them in the free Node list
-      for(std::size_t i = 0; i < NumAlloc; ++i){
-         m_freelist.push_front(*(node_t*)pNode );
-         pNode   += RealNodeSize;
+      for(std::size_t i = 0; i < NumAlloc; ++i, pNode += RealNodeSize){
+         m_freelist.push_front(*new (pNode) node_t);
       }
    }
 

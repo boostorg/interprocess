@@ -19,6 +19,7 @@
 #include "print_container.hpp"
 #include <boost/interprocess/detail/move_iterator.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/iterators.hpp>
 
 template<class T1, class T2, class T3, class T4>
 bool operator ==(std::pair<T1, T2> &p1, std::pair<T1, T2> &p2)

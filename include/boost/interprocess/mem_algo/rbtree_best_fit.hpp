@@ -24,6 +24,7 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/min_max.hpp>
 #include <boost/interprocess/detail/gcd_lcm.hpp>
 #include <boost/type_traits/alignment_of.hpp>
 #include <boost/type_traits/type_with_alignment.hpp>
@@ -80,10 +81,10 @@ class rbtree_best_fit
    {
       //!This block's memory size (including block_ctrl 
       //!header) in Alignment units
-      unsigned m_prev_size :  sizeof(std::size_t)*CHAR_BIT - 1;
-      unsigned m_end       :  1;
-      unsigned m_size      :  sizeof(std::size_t)*CHAR_BIT - 1;
-      unsigned m_allocated :  1;
+      std::size_t m_prev_size :  sizeof(std::size_t)*CHAR_BIT - 1;
+      std::size_t m_end       :  1;
+      std::size_t m_size      :  sizeof(std::size_t)*CHAR_BIT - 1;
+      std::size_t m_allocated :  1;
    };
 
    //!Block control structure
@@ -153,9 +154,12 @@ class rbtree_best_fit
    //!Returns the size of the memory segment
    std::size_t get_size()  const;
 
+   //!Returns the number of free bytes of the segment
+   std::size_t get_free_memory()  const;
+
    //!Initializes to zero all the memory that's not in use.
    //!This function is normally used for security reasons.
-   void clear_free_memory();
+   void zero_free_memory();
 
    //!Increases managed memory in extra_size bytes more
    void grow(std::size_t extra_size);
@@ -411,6 +415,13 @@ inline std::size_t rbtree_best_fit<MutexFamily, VoidPointer>::get_size()  const
 {  return m_header.m_size;  }
 
 template<class MutexFamily, class VoidPointer>
+inline std::size_t rbtree_best_fit<MutexFamily, VoidPointer>::get_free_memory()  const
+{
+   return m_header.m_size - m_header.m_allocated - 
+      priv_multiple_of_units(sizeof(*this) + m_header.m_extra_hdr_bytes);
+}
+
+template<class MutexFamily, class VoidPointer>
 inline std::size_t rbtree_best_fit<MutexFamily, VoidPointer>::
    get_min_size (std::size_t extra_hdr_bytes)
 {
@@ -510,7 +521,7 @@ inline std::size_t rbtree_best_fit<MutexFamily, VoidPointer>::
 }
 
 template<class MutexFamily, class VoidPointer>
-inline void rbtree_best_fit<MutexFamily, VoidPointer>::clear_free_memory()
+inline void rbtree_best_fit<MutexFamily, VoidPointer>::zero_free_memory()
 {
    //-----------------------
    boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
@@ -1182,7 +1193,7 @@ void* rbtree_best_fit<MutexFamily, VoidPointer>::priv_check_and_allocate
    priv_check_alignment(block);
 
    //Clear the memory occupied by the tree hook, since this won't be
-   //cleared with clear_free_memory
+   //cleared with zero_free_memory
    TreeHook *t = static_cast<TreeHook*>(block);
    std::memset(t, 0, sizeof(*t));
    return priv_get_user_buffer(block);

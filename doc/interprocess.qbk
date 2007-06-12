@@ -29,7 +29,7 @@ and synchronization mechanisms and offers a wide range of them:
 [*Boost.Interprocess] also offers higher-level interprocess mechanisms to allocate
 dynamically portions of a shared memory or a memory mapped file (in general,
 to allocate portions of a fixed size memory segment). Using these mechanisms,
-[*Boost.Interprocess] offers the tools to construct C++ objects, including 
+[*Boost.Interprocess] offers useful tools to construct C++ objects, including 
 STL-like containers, in shared memory and memory mapped files:
 
 * Dynamic creation of anonymous and named objects in a shared memory or memory
@@ -37,6 +37,29 @@ STL-like containers, in shared memory and memory mapped files:
 * STL-like containers compatible with shared memory/memory-mapped files.
 * STL-like allocators ready for shared memory/memory-mapped files implementing
   several memory allocation patterns (like pooling).
+
+[section:introduction_building_interprocess Building Boost.Interprocess]
+
+There is no need to compile anything to use [*Boost.Interprocess], since it's
+a header only library. Just include your Boost header directory in your
+compiler include path.
+
+[endsect]
+
+[section:tested_compilers Tested compilers]
+
+[*Boost.Interprocess] has been tested in the following compilers/platforms:
+
+*  Visual 7.1/WinXP
+*  Visual 8.0/WinXP
+*  GCC 4.1.1/MinGW
+*  GCC 3.4.4/Cygwin
+*  Intel 9.1/WinXP
+*  GCC 4.1.2/Linux
+*  Codewarrior 9.4/WinXP
+*  GCC 3.4.3 Solaris 11
+
+[endsect]
 
 [endsect]
 
@@ -117,14 +140,10 @@ STL algorithms:
 
 [section:qg_interprocess_map Creating maps in shared memory]
 
-Just like a vector, [*Boost.Interprocess] allows creating maps in shared memory and memory
-mapped files. [*Boost.Interprocess]'s map is 
-The construction of map is a bit tricky, because
-
-For example, we can construct STL-like containers in shared memory.
-To do this, we just need to create a an special (managed) shared memory segment,
-declare a [*Boost.Interprocess] allocator and construct the vector in shared memory
-just if it was any other object. Just execute this first process:
+Just like a vector, [*Boost.Interprocess] allows creating maps in
+shared memory and memory mapped files. The only difference is that
+like standard associative containers, [*Boost.Interprocess]'s map needs
+also the comparison functor when an allocator is passed in the constructor:
 
 [import ../example/doc_map.cpp]
 [doc_map]
@@ -962,11 +981,11 @@ opening or opening or creation of the underlying resource:
   NamedUtility(create_only, ...)
 
   //Open the synchronization utility. If it does not previously
-  //exist, throws an error.
+  //exist, it's created.
   NamedUtility(open_or_create, ...)
 
   //Open the synchronization utility. If it does not previously
-  //exist, create it.
+  //exist, throws an error.
   NamedUtility(open_only, ...)
 
 On the other hand the anonymous synchronization utility can only
@@ -1083,7 +1102,7 @@ Boost.Interprocess offers the following mutex types:
 
    #include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
 
-* [classref boost::interprocess::interprocess_mutex]: A recursive,
+* [classref boost::interprocess::interprocess_recursive_mutex]: A recursive,
   anonymous mutex that can be placed in shared memory or memory mapped files.
 
 [c++]
@@ -3422,6 +3441,95 @@ memory segment using `get_segment_manager` member:
 
 [endsect]
 
+[section:managed_memory_segment_additional_features Additional functions]
+
+Managed memory segments offer additional functions:
+
+Obtain the size of the memory segment:
+
+[c++]
+
+   managed_shm.get_size();
+
+Obtain the number of free bytes of the segment:
+
+[c++]
+
+   managed_shm.get_free_memory();
+
+Clear to zero the free memory:
+
+[c++]
+
+   managed_shm.zero_free_memory();
+
+Returns true if all memory has been deallocated, false otherwise:
+
+[c++]
+
+   managed_shm.all_memory_deallocated();
+
+Tests internal structures of the managed segment and returns true
+if no errors are detected:
+
+[c++]
+
+   managed_shm.check_sanity();
+
+Reserves memory to make the subsequent allocation of named or unique objects more
+efficient. This function is only useful for pseudo-intrusive or non-node indexes (like
+`flat_map_index`, `iunordered_set_index`). This function has no effect with the
+default index (`iset_index`) or other indexes (`map_index`):
+
+[c++]
+
+   managed_shm.reserve_named_objects(1000);
+   managed_shm.reserve_unique_objects(1000);
+
+Returns the number of named and unique objects allocated in the segment:
+
+[c++]
+
+   managed_shm.get_num_named_objects();
+   managed_shm.get_num_unique_objects();
+
+Returns constant iterators to the range of named and unique objects stored in the
+managed segment. [*Caution:] These functions are for debugging purposes
+and they are [*not] thread-safe. If any other process creates or destroys
+named/unique objects while a process iterates the named/unique objects the
+results are undefined. Iterators are invalidated after each named/unique object
+creation/erasure:
+
+[c++]
+
+   typedef managed_shared_memory::const_named_iterator const_named_it;
+   const_named_it named_beg = managed_shm.named_begin();
+   const_named_it named_end = managed_shm.named_end();
+
+   typedef managed_shared_memory::const_unique_iterator const_unique_it;
+   const_unique_it unique_beg = managed_shm.unique_begin();
+   const_unique_it unique_end = managed_shm.unique_end();
+
+   for(; named_beg != named_end; ++named_beg){
+      //A pointer to the name of the named object
+      const managed_shared_memory::char_type *name = named_beg->name();
+      //The length of the name
+      std::size_t name_len = named_beg->name_length();
+      //A constant void pointer to the named object
+      const void *value = named_beg->value();
+   }
+
+   for(; unique_beg != unique_end; ++unique_beg){
+      //The typeid(T).name() of the unique object
+      const char *typeid_name = unique_beg->name();
+      //The length of the name
+      std::size_t name_len = unique_beg->name_length();
+      //A constant void pointer to the unique object
+      const void *value = unique_beg->value();
+   }
+
+[endsect]
+
 [endsect]
 
 [section:allocator_introduction Introduction to Interprocess allocators]
@@ -5462,40 +5570,6 @@ pointer family as `segment_manager::void_pointer` typedef. This means that if `s
 reason for this is that allocators are members of containers, and if we want to put
 the container in a managed memory segment, the allocator should be ready for that.
 
-If the user wants to optimize further allocator usage in [*Boost.Interprocess] node
-containers, he can change the common allocator::construct function from:
-
-[c++]
-
-   void construct(pointer ptr, const value_type &value);
-
-to this one:
-
-[c++]
-
-   template<class Convertible>
-   void construct(pointer ptr, const Convertible &value)
-
-and define a specialization of `boost::interprocess::has_convertible_construct<...>` 
-defined in `<boost/interprocess/detail/utilities.hpp>` file:
-
-[c++]
-
-   namespace boost{ namespace interprocess{ 
-
-   template<class T, class SegmentManager>
-   struct has_convertible_construct
-      <my_allocator<T, SegmentManager> >
-   {
-      enum {   value = true };
-   };
-
-   }} //namespace boost{ namespace interprocess{ 
-
-Using this optimization, [*Boost.Interprocess] node containers will just store one allocator instance
-instead of 2, because nodes could be constructed from the value type directly.
-[*Boost.Interprocess] STL-like allocators implement this optimization.
-
 [endsect]
 
 [section:custom_indexes Building custom indexes]
@@ -5863,7 +5937,7 @@ thank them:
 *  Thanks to [*Francis Andre] and [*Anders Hybertz] for their ideas and suggestions. 
    Many of them are not implemented yet but I hope to include them when library gets some stability.
 
-*  Thanks to [*Steve LoBasso], [*Glenn Schrader], [*Hiang Swee Chiang],
+*  Thanks to [*Matt Doyle], [*Steve LoBasso], [*Glenn Schrader], [*Hiang Swee Chiang],
    [*Phil Endecott], [*Rene Rivera],
    [*Harold Pirtle], [*Paul Ryan],
    [*Shumin Wu], [*Michal Wozniak], [*Peter Johnson],
@@ -5934,6 +6008,20 @@ limitations under the License.
 [endsect]
 
 [section:changes Changes...]
+
+[section:changes_interprocess_2007_06_11 Changes in Interprocess 2007-06-11...]
+
+*  Added iteration of named and unique objects in a segment manager.
+*  Fixed leak in [classref boost::interprocess::vector vector].
+*  Added support for Solaris.
+*  Optimized [classref boost::interprocess::segment_manager] to avoid
+   code bloat associated with templated instantiations.
+*  Removed the use of allocator::construct/destroy from containers.
+*  Correction of typos and documentation errors.
+*  Fixed bug for UNIX: No slash ('/') was being added as the first character
+   for shared memory names, leading to errors in some UNIX systems.
+
+[endsect]
 
 [section:changes_interprocess_2007_05_03 Changes in Interprocess 2007-05-03...]
 

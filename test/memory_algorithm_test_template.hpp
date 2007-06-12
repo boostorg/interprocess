@@ -49,6 +49,7 @@ template<class Allocator>
 bool test_allocation_direct_deallocation(Allocator &a)
 {
    std::vector<void*> buffers;
+   std::size_t free_memory = a.get_free_memory();
 
    for(int i = 0; true; ++i){
       void *ptr = a.allocate(i, std::nothrow);
@@ -63,7 +64,8 @@ bool test_allocation_direct_deallocation(Allocator &a)
       a.deallocate(buffers[j]);
    }
 
-   return a.all_memory_deallocated() && a.check_sanity();
+   return free_memory == a.get_free_memory() && 
+          a.all_memory_deallocated() && a.check_sanity();
 }
 
 //This test allocates until there is no more memory
@@ -453,7 +455,7 @@ bool test_continuous_aligned_allocation(Allocator &a)
 }
 
 //This test allocates memory, writes it with a non-zero value and
-//tests clear_free_memory initializes to zero for the next allocation
+//tests zero_free_memory initializes to zero for the next allocation
 template<class Allocator>
 bool test_clear_free_memory(Allocator &a)
 {
@@ -484,7 +486,7 @@ bool test_clear_free_memory(Allocator &a)
       return false;
 
    //Now clear all free memory
-   a.clear_free_memory();
+   a.zero_free_memory();
 
    if(!a.all_memory_deallocated() && a.check_sanity())
       return false;

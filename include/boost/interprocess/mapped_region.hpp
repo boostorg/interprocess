@@ -71,14 +71,22 @@ class mapped_region
 
    /*!Move constructor. *this will be constructed taking ownership of "other"'s 
       region and "other" will be left in default constructor state.*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    mapped_region(detail::moved_object<mapped_region> other);
+   #else
+   mapped_region(mapped_region &&other);
+   #endif
 
    /*!Destroys the mapped region. Does not throw*/
    ~mapped_region();
 
    /*!Move assignment. If *this owns a memory mapped region, it will be
       destroyed and it will take ownership of "other"'s memory mapped region.*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    mapped_region &operator=(detail::moved_object<mapped_region> other);
+   #else
+   mapped_region &operator=(mapped_region &&other);
+   #endif
 
    /*!Returns the size of the mapping. Note for windows users: If
       windows_shared_memory is mapped using 0 as the size, it returns 0
@@ -128,8 +136,13 @@ class mapped_region
 inline void swap(mapped_region &x, mapped_region &y)
 {  x.swap(y);  }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 inline mapped_region &mapped_region::operator=(detail::moved_object<mapped_region> other)
 {  this->swap(other.get());   return *this;  }
+#else
+inline mapped_region &mapped_region::operator=(mapped_region &&other)
+{  this->swap(other);   return *this;  }
+#endif
 
 inline mapped_region::~mapped_region() 
 {  this->priv_close(); }
@@ -150,11 +163,19 @@ inline mapped_region::mapped_region()
       ,  m_file_mapping_hnd(0)
 {}
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 inline mapped_region::mapped_region(detail::moved_object<mapped_region> other)
    :  m_base(0), m_size(0), m_offset(0)
       ,  m_extra_offset(0)
       ,  m_file_mapping_hnd(0)
 {  this->swap(other.get());   }
+#else
+inline mapped_region::mapped_region(mapped_region &&other)
+   :  m_base(0), m_size(0), m_offset(0)
+      ,  m_extra_offset(0)
+      ,  m_file_mapping_hnd(0)
+{  this->swap(other);   }
+#endif
 
 template<int dummy>
 inline std::size_t mapped_region::page_size_holder<dummy>::get_page_size()
@@ -335,10 +356,17 @@ inline mapped_region::mapped_region()
    :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0)
 {}
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 inline mapped_region::mapped_region(detail::moved_object<mapped_region> other)
    :  m_base(MAP_FAILED), m_size(0), m_offset(0)
       ,  m_extra_offset(0)
 {  this->swap(other.get());   }
+#else
+inline mapped_region::mapped_region(mapped_region &&other)
+   :  m_base(MAP_FAILED), m_size(0), m_offset(0)
+      ,  m_extra_offset(0)
+{  this->swap(other);   }
+#endif
 
 template<int dummy>
 inline std::size_t mapped_region::page_size_holder<dummy>::get_page_size()

@@ -37,7 +37,6 @@
 
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/detail/allocator_utilities.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
@@ -134,9 +133,15 @@ class flat_tree
       :  m_data(x.m_data, x.m_data.m_vect)
    { }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_tree(const detail::moved_object<flat_tree> &x)
       :  m_data(move(x.get().m_data))
    { }
+   #else
+   flat_tree(flat_tree &&x)
+      :  m_data(move(x.m_data))
+   { }
+   #endif
 
    ~flat_tree()
    { }
@@ -144,8 +149,13 @@ class flat_tree
    flat_tree&  operator=(const flat_tree& x)
    {  flat_tree(x).swap(*this); return *this;  }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_tree&  operator=(const detail::moved_object<flat_tree>& mx)
    {  m_data = move(mx.get().m_data); return *this;  }
+   #else
+   flat_tree&  operator=(flat_tree &&mx)
+   {  m_data = move(mx.m_data); return *this;  }
+   #endif
 
    public:    
    // accessors:
@@ -198,10 +208,15 @@ class flat_tree
       myvect.swap(othervect);
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object<flat_tree>& other) 
    {  this->swap(other.get());   }
+   #else
+   void swap(flat_tree &&other) 
+   {  this->swap(other);   }
+   #endif
 
- public:
+   public:
    // insert/erase
    std::pair<iterator,bool> insert_unique(const value_type& val)
    {
@@ -213,6 +228,7 @@ class flat_tree
       return ret;
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    std::pair<iterator,bool> insert_unique(const detail::moved_object<value_type>& mval)
    {
       insert_commit_data data;
@@ -222,6 +238,18 @@ class flat_tree
       }
       return ret;
    }
+   #else
+   std::pair<iterator,bool> insert_unique(value_type && mval)
+   {
+      insert_commit_data data;
+      std::pair<iterator,bool> ret = priv_insert_unique_prepare(mval, data);
+      if(ret.second){
+         ret.first = priv_insert_commit(data, move(mval));
+      }
+      return ret;
+   }
+   #endif
+
 
    iterator insert_equal(const value_type& val)
    {
@@ -230,12 +258,21 @@ class flat_tree
       return i;
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert_equal(const detail::moved_object<value_type>& mval)
    {
       iterator i = this->upper_bound(KeyOfValue()(mval.get()));
       i = this->m_data.m_vect.insert(i, mval);
       return i;
    }
+   #else
+   iterator insert_equal(value_type && mval)
+   {
+      iterator i = this->upper_bound(KeyOfValue()(mval));
+      i = this->m_data.m_vect.insert(i, move(mval));
+      return i;
+   }
+   #endif
 
    iterator insert_unique(const_iterator pos, const value_type& val)
    {
@@ -247,6 +284,7 @@ class flat_tree
       return ret.first;
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert_unique(const_iterator pos, const detail::moved_object<value_type>& mval)
    {
       insert_commit_data data;
@@ -256,6 +294,17 @@ class flat_tree
       }
       return ret.first;
    }
+   #else
+   iterator insert_unique(const_iterator pos, value_type&&mval)
+   {
+      insert_commit_data data;
+      std::pair<iterator,bool> ret = priv_insert_unique_prepare(pos, mval, data);
+      if(ret.second){
+         ret.first = priv_insert_commit(data, move(mval));
+      }
+      return ret.first;
+   }
+   #endif
 
    iterator insert_equal(const_iterator pos, const value_type& val)
    {
@@ -264,12 +313,21 @@ class flat_tree
       return priv_insert_commit(data, val);
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert_equal(const_iterator pos, const detail::moved_object<value_type>& mval)
    {
       insert_commit_data data;
       priv_insert_equal_prepare(pos, mval.get(), data);
       return priv_insert_commit(data, mval);
    }
+   #else
+   iterator insert_equal(const_iterator pos, value_type && mval)
+   {
+      insert_commit_data data;
+      priv_insert_equal_prepare(pos, mval, data);
+      return priv_insert_commit(data, move(mval));
+   }
+   #endif
 
    template <class InIt>
    void insert_unique(InIt first, InIt last)
@@ -468,10 +526,17 @@ class flat_tree
       }
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
    iterator priv_insert_commit
       (insert_commit_data &commit_data, const Convertible &convertible)
    {  return this->m_data.m_vect.insert(commit_data.position, convertible);   }
+   #else
+   template<class Convertible>
+   iterator priv_insert_commit
+      (insert_commit_data &commit_data, Convertible &&convertible)
+   {  return this->m_data.m_vect.insert(commit_data.position, forward<Convertible>(convertible));   }
+   #endif
 
    template <class RanIt>
    RanIt priv_lower_bound(RanIt first, RanIt last,

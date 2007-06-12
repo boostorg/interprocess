@@ -45,27 +45,31 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/interprocess_fwd.hpp>
-#include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
-#include <boost/iterator.hpp>
-#include <boost/iterator/reverse_iterator.hpp>
-#include <boost/interprocess/detail/move_iterator.hpp>
-#include <boost/interprocess/detail/move.hpp>
+
 #include <cstddef>
 #include <memory>
 #include <algorithm>
 #include <stdexcept>
 #include <iterator>
 #include <utility>
+
 #include <boost/detail/no_exceptions_support.hpp>
-#include <boost/type_traits/integral_constant.hpp>
-#include <boost/interprocess/detail/version_type.hpp>
-#include <boost/interprocess/allocators/allocation_type.hpp>
-#include <boost/mpl/if.hpp>
-#include <boost/type_traits/is_same.hpp>
+#include <boost/iterator.hpp>
+#include <boost/iterator/reverse_iterator.hpp>
 #include <boost/type_traits/is_scalar.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
+#include <boost/type_traits/integral_constant.hpp>
+
+#include <boost/interprocess/detail/version_type.hpp>
+#include <boost/interprocess/allocators/allocation_type.hpp>
+#include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/iterators.hpp>
+#include <boost/interprocess/detail/algorithms.hpp>
+#include <boost/interprocess/detail/min_max.hpp>
+#include <boost/interprocess/interprocess_fwd.hpp>
+#include <boost/interprocess/detail/move_iterator.hpp>
+#include <boost/interprocess/detail/move.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -81,7 +85,9 @@ struct vector_alloc_holder
    typedef typename A::size_type    size_type;
    typedef typename A::value_type   value_type;
 
-   enum {   trivial_dctr_after_move = has_trivial_destructor_after_move<value_type>::value   };
+   enum {   trivial_dctr_after_move = 
+               has_trivial_destructor_after_move<value_type>::value ||
+               boost::has_trivial_destructor<value_type>::value     };
 
    //Constructor, does not throw
    vector_alloc_holder(const A &a)
@@ -94,9 +100,15 @@ struct vector_alloc_holder
    {}
 
    //Constructor, does not throw
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    vector_alloc_holder(const detail::moved_object<vector_alloc_holder<A> > &h)
       : A(move((A&)h.get())), m_start(0), m_size(0), m_capacity(0)
    {}
+   #else
+   vector_alloc_holder(vector_alloc_holder<A> &&h)
+      : A(move((A&)h)), m_start(0), m_size(0), m_capacity(0)
+   {}
+   #endif
 
    //Destructor
    ~vector_alloc_holder()
@@ -165,13 +177,13 @@ struct vector_alloc_holder
    void destroy(pointer p)
    {
       if(!has_trivial_destructor<value_type>::value)
-         A::destroy(p);
+         detail::get_pointer(p)->~value_type();
    }
 
    void destroy_n(pointer p, size_type n)
    {
       if(!has_trivial_destructor<value_type>::value)
-         for(; n--; ++p) this->destroy(p);
+         for(; n--; ++p)   detail::get_pointer(p)->~value_type();
    }
 };
 
@@ -409,6 +421,7 @@ class vector : private detail::vector_alloc_holder<A>
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //! 
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    vector(const detail::moved_object<vector<T, A> >& mx) 
       :  base_t(move((base_t&)mx.get()))
    {
@@ -420,6 +433,19 @@ class vector : private detail::vector_alloc_holder<A>
       x.m_size          = 0;
       x.m_capacity      = 0;
    }
+   #else
+   vector(vector<T, A> && mx) 
+      :  base_t(move((base_t&)mx))
+   {
+      vector<T, A> &x = mx;
+      this->m_start     = x.m_start;
+      this->m_size      = x.m_size;
+      this->m_capacity  = x.m_capacity;
+      x.m_start         = 0;
+      x.m_size          = 0;
+      x.m_capacity      = 0;
+   }
+   #endif
 
    //! <b>Effects</b>: Constructs a vector that will use a copy of allocator a
    //!   and inserts a copy of the range [first, last) in the vector.
@@ -651,15 +677,16 @@ class vector : private detail::vector_alloc_holder<A>
          //There is not enough memory, allocate a new
          //buffer or expand the old one.
          bool same_buffer_start;
+         size_type real_cap;
          std::pair<pointer, bool> ret =
             this->allocation_command
                (allocate_new | expand_fwd | expand_bwd,
-                  new_cap, new_cap, new_cap, this->m_start);
+                  new_cap, new_cap, real_cap, this->m_start);
 
          //Check for forward expansion
          same_buffer_start = ret.second && this->m_start == ret.first;
          if(same_buffer_start){
-            this->m_capacity  = new_cap;
+            this->m_capacity  = real_cap;
          }
 
          //If there is no forward expansion, move objects
@@ -669,12 +696,12 @@ class vector : private detail::vector_alloc_holder<A>
             //Backwards (and possibly forward) expansion
             if(ret.second){
                this->priv_range_insert_expand_backwards
-                  (ret.first, new_cap, this->m_start, dummy_it, dummy_it, 0);
+                  (ret.first, real_cap, this->m_start, dummy_it, dummy_it, 0);
             }
             //New buffer
             else{
                this->priv_range_insert_new_allocation
-                  (ret.first, new_cap, this->m_start, dummy_it, dummy_it);
+                  (ret.first, real_cap, this->m_start, dummy_it, dummy_it);
             }
          }
       }
@@ -704,6 +731,7 @@ class vector : private detail::vector_alloc_holder<A>
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //!
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    vector<T, A>& operator=(const detail::moved_object<vector<T, A> >& mx)
    {
       vector<T, A> &x = mx.get();
@@ -715,6 +743,19 @@ class vector : private detail::vector_alloc_holder<A>
       }
       return *this;
    }
+   #else
+   vector<T, A>& operator=(vector<T, A> && mx)
+   {
+      vector<T, A> &x = mx;
+
+      if (&x != this){
+         this->swap(x);
+         x.clear();
+//?         base_t::prot_deallocate();
+      }
+      return *this;
+   }
+   #endif
 
    //! <b>Effects</b>: Assigns the n copies of val to *this.
    //!
@@ -735,7 +776,7 @@ class vector : private detail::vector_alloc_holder<A>
    {
       //Dispatch depending on integer/iterator
       const bool aux_boolean = boost::is_integral<InIt>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
+      typedef bool_<aux_boolean> Result;
       this->priv_assign_dispatch(first, last, Result());
    }
 
@@ -749,7 +790,7 @@ class vector : private detail::vector_alloc_holder<A>
    {
       if (this->m_size < this->m_capacity){
          //There is more memory, just construct a new object at the end
-         this->construct(this->m_start + this->m_size, x);
+         new(detail::get_pointer(this->m_start) + this->m_size)value_type(x);
          ++this->m_size;
       }
       else{
@@ -763,18 +804,32 @@ class vector : private detail::vector_alloc_holder<A>
    //! <b>Throws</b>: If memory allocation throws.
    //!
    //! <b>Complexity</b>: Amortized constant time.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void push_back(const detail::moved_object<T> & mx) 
    {
       if (this->m_size < this->m_capacity){
          //There is more memory, just construct a new object at the end
-         this->construct(this->m_start + this->m_size, mx);
+         new(detail::get_pointer(this->m_start + this->m_size))value_type(mx);
          ++this->m_size;
       }
       else{
          this->insert(this->end(), mx);
       }
    }
-   
+   #else
+   void push_back(T && mx) 
+   {
+      if (this->m_size < this->m_capacity){
+         //There is more memory, just construct a new object at the end
+         new(detail::get_pointer(this->m_start + this->m_size))value_type(move(mx));
+         ++this->m_size;
+      }
+      else{
+         this->insert(this->end(), move(mx));
+      }
+   }
+   #endif
+  
    //! <b>Effects</b>: Swaps the contents of *this and x.
    //!   If this->allocator_type() != x.allocator_type()
    //!   allocators are also swapped.
@@ -802,11 +857,19 @@ class vector : private detail::vector_alloc_holder<A>
    //! <b>Throws</b>: Nothing.
    //!
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object<vector<T, A> >& mx) 
    {
       vector<T, A> &x = mx.get();
       this->swap(x);
    }
+   #else
+   void swap(vector<T, A> && mx) 
+   {
+      vector<T, A> &x = mx;
+      this->swap(x);
+   }
+   #endif
 
    //! <b>Requires</b>: position must be a valid iterator of *this.
    //!
@@ -832,6 +895,7 @@ class vector : private detail::vector_alloc_holder<A>
    //!
    //! <b>Complexity</b>: If position is begin() or end(), amortized constant time
    //!   Linear time otherwise.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(iterator position, const detail::moved_object<T> &mx) 
    {
       typedef repeat_iterator<T, difference_type> r_iterator;
@@ -843,6 +907,19 @@ class vector : private detail::vector_alloc_holder<A>
                   ,move_it(r_iterator()));
       return iterator(this->m_start + n);
    }
+   #else
+   iterator insert(iterator position, T &&mx) 
+   {
+      typedef repeat_iterator<T, difference_type> r_iterator;
+      typedef detail::move_iterator<r_iterator> move_it;
+      //Just call more general insert(pos, size, value) and return iterator
+      size_type n = position - begin();
+      this->insert(position
+                  ,move_it(r_iterator(mx, 1))
+                  ,move_it(r_iterator()));
+      return iterator(this->m_start + n);
+   }
+   #endif
 
    //! <b>Requires</b>: pos must be a valid iterator of *this.
    //!
@@ -857,7 +934,7 @@ class vector : private detail::vector_alloc_holder<A>
    {
       //Dispatch depending on integer/iterator
       const bool aux_boolean = boost::is_integral<InIt>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
+      typedef bool_<aux_boolean> Result;
       this->priv_insert_dispatch(pos, first, last, Result());
    }
 
@@ -999,7 +1076,7 @@ class vector : private detail::vector_alloc_holder<A>
          size_type remaining = this->m_capacity - this->m_size;
          bool same_buffer_start;
          std::pair<pointer, bool> ret;
-         size_type new_cap;
+         size_type real_cap = this->m_capacity;
 
          //Check if we already have room
          if (n <= remaining){
@@ -1008,15 +1085,15 @@ class vector : private detail::vector_alloc_holder<A>
          else{
             //There is not enough memory, allocate a new
             //buffer or expand the old one.
-            new_cap = this->next_capacity(n);
+            size_type new_cap = this->next_capacity(n);
             ret = this->allocation_command
                   (allocate_new | expand_fwd | expand_bwd,
-                   this->m_size + n, new_cap, new_cap, this->m_start);
+                   this->m_size + n, new_cap, real_cap, this->m_start);
 
             //Check for forward expansion
             same_buffer_start = ret.second && this->m_start == ret.first;
             if(same_buffer_start){
-               this->m_capacity  = new_cap;
+               this->m_capacity  = real_cap;
             }
          }
          
@@ -1028,12 +1105,12 @@ class vector : private detail::vector_alloc_holder<A>
          //Backwards (and possibly forward) expansion
          else if(ret.second){
             this->priv_range_insert_expand_backwards
-               (ret.first, new_cap, pos, first, last, n);
+               (ret.first, real_cap, pos, first, last, n);
          }
          //New buffer
          else{
             this->priv_range_insert_new_allocation
-               (ret.first, new_cap, pos, first, last);
+               (ret.first, real_cap, pos, first, last);
          }
       }
    }
@@ -1050,8 +1127,8 @@ class vector : private detail::vector_alloc_holder<A>
       if (elems_after > n){
          //New elements can be just copied.
          //Move to uninitialized memory last objects
-         n_uninitialized_copy(move_it(old_finish - n),  move_it(old_finish), 
-                              old_finish,      static_cast<A&>(*this));
+         boost::interprocess::n_uninitialized_copy
+            (move_it(old_finish - n),  move_it(old_finish), old_finish);
          this->m_size += n;
          //Copy previous to last objects to the initialized end
          std::copy_backward(move_it(pos), move_it(old_finish - n), old_finish);
@@ -1063,11 +1140,11 @@ class vector : private detail::vector_alloc_holder<A>
          //to the beginning of the unallocated zone the last new elements.
          FwdIt mid = first;
          std::advance(mid, elems_after);
-         n_uninitialized_copy(mid, last, old_finish, static_cast<A&>(*this));
+         boost::interprocess::n_uninitialized_copy(mid, last, old_finish);
          this->m_size += n - elems_after;
          //Copy old [pos, end()) elements to the uninitialized memory
-         n_uninitialized_copy(move_it(pos),  move_it(old_finish), 
-                              this->m_start + this->m_size, static_cast<A&>(*this));
+         boost::interprocess::n_uninitialized_copy
+            (move_it(pos),  move_it(old_finish), this->m_start + this->m_size);
          this->m_size += elems_after;
          //Copy first new elements in pos
          std::copy(first, mid, pos);
@@ -1080,20 +1157,20 @@ class vector : private detail::vector_alloc_holder<A>
    {
       typedef detail::move_iterator<pointer> move_it;
       //Anti-exception rollback
-      scoped_ptr<T, dealloc_t> scoped_alloc(new_start, dealloc_t(*this, new_cap));
+      dealloc_t scoped_alloc(new_start, *this, new_cap);
       pointer new_finish = new_start;
       BOOST_TRY{
          //Initialize with [begin(), pos) old buffer 
          //the start of the new buffer
-         new_finish += n_uninitialized_copy
-                        (move_it(this->m_start), move_it(pos), new_start, static_cast<A&>(*this));
+         new_finish += boost::interprocess::n_uninitialized_copy
+                        (move_it(this->m_start), move_it(pos), new_start);
          //Initialize new objects, starting from previous point
-         new_finish += n_uninitialized_copy
-                        (first, last, new_finish, static_cast<A&>(*this));
+         new_finish += boost::interprocess::n_uninitialized_copy
+                        (first, last, new_finish);
          //Initialize from the rest of the old buffer, 
          //starting from previous point
-         new_finish += n_uninitialized_copy
-            (move_it(pos), move_it(this->m_start + this->m_size), new_finish, static_cast<A&>(*this));
+         new_finish += boost::interprocess::n_uninitialized_copy
+            (move_it(pos), move_it(this->m_start + this->m_size), new_finish);
       }
       BOOST_CATCH(...){
          this->destroy_n(new_start, new_finish - new_start);
@@ -1101,10 +1178,13 @@ class vector : private detail::vector_alloc_holder<A>
       }
       BOOST_CATCH_END
       scoped_alloc.release();
-      //Destroy and deallocate old elements except if we have
-      //moved them and they have has_trivial_destructor_after_move
-      if(!base_t::trivial_dctr_after_move)
-         this->priv_destroy_and_deallocate();
+      //Destroy and deallocate old elements
+      //If there is allocated memory, destroy and deallocate
+      if(this->m_start != 0){
+		   if(!base_t::trivial_dctr_after_move)
+			   this->destroy_n(this->m_start, this->m_size); 
+         this->deallocate(this->m_start, this->m_capacity);
+      }
       this->m_start     = new_start;
       this->m_size      = new_finish - new_start;
       this->m_capacity  = new_cap;
@@ -1115,8 +1195,7 @@ class vector : private detail::vector_alloc_holder<A>
          (pointer new_start, size_type new_capacity,
           pointer pos, FwdIt first, FwdIt last, size_type n)
    {
-      typedef detail::scoped_destructor_n
-         <allocator_type> ValueArrayDestructor;
+      typedef detail::scoped_destructor_n<pointer> ValueArrayDestructor;
       typedef detail::move_iterator<pointer> move_it;
       //Backup old data
       pointer old_start  = this->m_start;
@@ -1134,9 +1213,7 @@ class vector : private detail::vector_alloc_holder<A>
 
       //If anything goes wrong, this object will destroy
       //all the old objects to fulfill previous vector state
-      scoped_ptr<value_type, ValueArrayDestructor>
-         old_values_destroyer
-            (old_start, ValueArrayDestructor(static_cast<A&>(*this),old_size));
+      ValueArrayDestructor old_values_destroyer(old_start, old_size);
 
       //Check if s_before is so big that even copying the old data + new data
       //there is a gap between the new data and the old data
@@ -1153,15 +1230,12 @@ class vector : private detail::vector_alloc_holder<A>
          //
          //Copy first old values before pos, after that the 
          //new objects
-         uninitialized_copy_copy
-            (move_it(old_start), move_it(pos), first, last, new_start, static_cast<A&>(*this));
-         scoped_ptr<value_type, ValueArrayDestructor>
-            new_values_destroyer(new_start
-                                ,ValueArrayDestructor(static_cast<A&>(*this)
-                                                     ,elemsbefore));
+         boost::interprocess::uninitialized_copy_copy
+            (move_it(old_start), move_it(pos), first, last, new_start);
+         ValueArrayDestructor new_values_destroyer(new_start, elemsbefore);
          //Now initialize the rest of memory with the last old values
-         uninitialized_copy(move_it(pos), move_it(old_finish)
-                           ,new_start + elemsbefore + n, static_cast<A&>(*this));
+         boost::interprocess::uninitialized_copy(move_it(pos), move_it(old_finish)
+                           ,new_start + elemsbefore + n);
          //All new elements correctly constructed, avoid new element destruction
          new_values_destroyer.release();
          this->m_size = old_size + n;
@@ -1185,17 +1259,14 @@ class vector : private detail::vector_alloc_holder<A>
          //
          //Copy first old values before pos, after that the 
          //new objects
-         uninitialized_copy_copy
-            (move_it(old_start), move_it(pos), first, last, new_start, static_cast<A&>(*this));
-         scoped_ptr<value_type, ValueArrayDestructor>
-            new_values_destroyer(new_start
-                              ,ValueArrayDestructor(static_cast<A&>(*this)
-                                                   ,elemsbefore));
+         boost::interprocess::uninitialized_copy_copy
+            (move_it(old_start), move_it(pos), first, last, new_start);
+         ValueArrayDestructor new_values_destroyer(new_start, elemsbefore);
          size_type raw_gap = s_before - (elemsbefore + n);
          //Now initialize the rest of s_before memory with the
          //first of elements after new values
-         uninitialized_copy(move_it(pos), move_it(pos + raw_gap)
-                           ,new_start + elemsbefore + n, static_cast<A&>(*this));
+         boost::interprocess::uninitialized_copy
+            (move_it(pos), move_it(pos + raw_gap), new_start + elemsbefore + n);
          //All new elements correctly constructed, avoid new element destruction
          new_values_destroyer.release();
          //All new elements correctly constructed, avoid old element destruction
@@ -1269,7 +1340,8 @@ class vector : private detail::vector_alloc_holder<A>
             //
             //Copy the first part of old_begin to raw_mem
             pointer start_n = old_start + difference_type(s_before); 
-            uninitialized_copy(move_it(old_start), move_it(start_n), new_start, static_cast<A&>(*this));
+            boost::interprocess::uninitialized_copy
+               (move_it(old_start), move_it(start_n), new_start);
             //The buffer is all constructed until old_end,
             //release destroyer and update size
             old_values_destroyer.release();
@@ -1319,8 +1391,8 @@ class vector : private detail::vector_alloc_holder<A>
             FwdIt mid = first;
             size_type n_new_init = difference_type(s_before) - elemsbefore;
             std::advance(mid, n_new_init);
-            uninitialized_copy_copy
-               (move_it(old_start), move_it(pos), first, mid, new_start, static_cast<A&>(*this));
+            boost::interprocess::uninitialized_copy_copy
+               (move_it(old_start), move_it(pos), first, mid, new_start);
             //The buffer is all constructed until old_end,
             //release destroyer and update size
             old_values_destroyer.release();
@@ -1388,8 +1460,8 @@ class vector : private detail::vector_alloc_holder<A>
                //
                //First copy the part of old_end raw_mem
                pointer finish_n = old_finish - difference_type(n_after);
-               uninitialized_copy(move_it(finish_n), move_it(old_finish)
-                                 ,old_finish, static_cast<A&>(*this));
+               boost::interprocess::uninitialized_copy
+                  (move_it(finish_n), move_it(old_finish), old_finish);
                this->m_size += n_after;
                //Displace the rest of old_end to the new position
                std::copy_backward(move_it(pos), move_it(finish_n), old_finish);
@@ -1412,9 +1484,8 @@ class vector : private detail::vector_alloc_holder<A>
                FwdIt mid = first;
                std::advance(mid, elemsafter);
                //First initialize data in raw memory
-               uninitialized_copy_copy
-                  (mid, last, move_it(pos), move_it(old_finish),
-                   old_finish, static_cast<A&>(*this));
+               boost::interprocess::uninitialized_copy_copy
+                  (mid, last, move_it(pos), move_it(old_finish), old_finish);
                this->m_size += n_after;
                //Now copy the part of new_end over constructed elements
                std::copy(first, mid, pos);
@@ -1461,20 +1532,20 @@ class vector : private detail::vector_alloc_holder<A>
       size_type remaining = this->m_capacity - this->m_size;
       bool same_buffer_start;
       std::pair<pointer, bool> ret;
-      size_type new_cap;
+      size_type real_cap = this->m_capacity;
 
       if (n <= remaining){
          same_buffer_start = true;
       }
       else{
          //There is not enough memory, allocate a new buffer
-         new_cap = this->next_capacity(n);
+         size_type new_cap = this->next_capacity(n);
          ret = this->allocation_command
                (allocate_new | expand_fwd | expand_bwd,
-                  this->size() + n, new_cap, new_cap, this->m_start);
+                  this->size() + n, new_cap, real_cap, this->m_start);
          same_buffer_start = ret.second && this->m_start == ret.first;
          if(same_buffer_start){
-            this->m_capacity  = new_cap;
+            this->m_capacity  = real_cap;
          }
       }
       
@@ -1494,43 +1565,42 @@ class vector : private detail::vector_alloc_holder<A>
             std::advance(mid, this->size());
             std::copy(first, mid, this->m_start);
             //Initialize the remaining new elements in the uninitialized memory
-            n_uninitialized_copy(mid, last, this->m_start + this->m_size, static_cast<A&>(*this));
+            boost::interprocess::n_uninitialized_copy
+               (mid, last, this->m_start + this->m_size);
             this->m_size = n;
          }
       }
       else if(!ret.second){
-         scoped_ptr<T, dealloc_t> scoped_alloc(ret.first, dealloc_t(*this, new_cap));
-         n_uninitialized_copy(first, last, ret.first, static_cast<A&>(*this));
+         dealloc_t scoped_alloc(ret.first, *this, real_cap);
+         boost::interprocess::n_uninitialized_copy(first, last, ret.first);
          scoped_alloc.release();
          //Destroy and deallocate old buffer
-         this->priv_destroy_and_deallocate();
+         if(this->m_start != 0){
+			   this->destroy_n(this->m_start, this->m_size); 
+            this->deallocate(this->m_start, this->m_capacity);
+         }
          this->m_start     = ret.first;
          this->m_size      = n;
-         this->m_capacity  = new_cap;
+         this->m_capacity  = real_cap;
       }
       else{
          //Backwards expansion
          //If anything goes wrong, this object will destroy
          //all old objects
-         typedef detail::scoped_destructor_n
-            <allocator_type> ValueArrayDestructor;
+         typedef detail::scoped_destructor_n<pointer> ValueArrayDestructor;
          pointer old_start    = this->m_start;
          size_type old_size   = this->m_size;
-         scoped_ptr<value_type, ValueArrayDestructor>
-            old_values_destroyer(old_start
-                                 ,ValueArrayDestructor(static_cast<A&>(*this)
-                                                       ,old_size));
+         ValueArrayDestructor old_values_destroyer(old_start, old_size);
          //If something goes wrong size will be 0
          //but holding the whole buffer
          this->m_size  = 0;
          this->m_start = ret.first;
-         this->m_capacity = new_cap;
+         this->m_capacity = real_cap;
          
          //Backup old buffer data
          size_type old_offset    = old_start - ret.first;
          size_type first_count   = min_value(n, old_offset);
-         FwdIt mid = n_uninitialized_copy_n
-            (first, first_count, ret.first, static_cast<A&>(*this));
+         FwdIt mid = boost::interprocess::n_uninitialized_copy_n(first, first_count, ret.first);
 
          if(old_offset > n){
             //All old elements will be destroyed by "old_values_destroyer" 
@@ -1549,8 +1619,8 @@ class vector : private detail::vector_alloc_holder<A>
             //Check if we still have to append elements in the
             //uninitialized end
             if(second_count == old_size){
-               n_uninitialized_copy_n(mid, n - first_count - second_count
-                                     , old_start + old_size, static_cast<A&>(*this)); 
+               boost::interprocess::n_uninitialized_copy_n
+                  (mid, n - first_count - second_count, old_start + old_size); 
             }
             else{
                //We have to destroy some old values
@@ -1564,12 +1634,12 @@ class vector : private detail::vector_alloc_holder<A>
    }
 
    template <class Integer>
-   void priv_assign_dispatch(Integer n, Integer val, boost::mpl::true_)
+   void priv_assign_dispatch(Integer n, Integer val, true_)
    { this->assign((size_type) n, (T) val); }
 
    template <class InIt>
    void priv_assign_dispatch(InIt first, InIt last, 
-                             boost::mpl::false_)
+                             false_)
    { 
       //Dispatch depending on integer/iterator
       typedef typename 
@@ -1579,12 +1649,12 @@ class vector : private detail::vector_alloc_holder<A>
 
    template <class Integer>
    void priv_insert_dispatch( iterator pos, Integer n, 
-                              Integer val, boost::mpl::true_) 
+                              Integer val, true_) 
    {  this->insert(pos, (size_type)n, (T)val);  }
 
    template <class InIt>
    void priv_insert_dispatch(iterator pos,   InIt first, 
-                             InIt last,      boost::mpl::false_)
+                             InIt last,      false_)
    {
       //Dispatch depending on integer/iterator
       typedef typename 
@@ -1593,7 +1663,7 @@ class vector : private detail::vector_alloc_holder<A>
    }
 
    template <class Integer>
-   void priv_initialize_aux(Integer n, Integer value, boost::mpl::true_) 
+   void priv_initialize_aux(Integer n, Integer value, true_) 
    {
       this->priv_range_initialize(cvalue_iterator(value, n),
                                   cvalue_iterator(),
@@ -1602,21 +1672,12 @@ class vector : private detail::vector_alloc_holder<A>
 
    template <class InIt>
    void priv_initialize_aux(InIt first, InIt last,
-                            boost::mpl::false_) 
+                            false_) 
    {
       //Dispatch depending on integer/iterator
       typedef typename 
          std::iterator_traits<InIt>::iterator_category ItCat;
       this->priv_range_initialize(first, last, ItCat());
-   }
-
-   void priv_destroy_and_deallocate()
-   {
-      //If there is allocated memory, destroy and deallocate
-      if(this->m_start != 0){
-         this->destroy_n(this->m_start, this->m_size); 
-         this->deallocate(this->m_start, this->m_capacity);
-      }
    }
 
    template <class FwdIt>
@@ -1625,8 +1686,8 @@ class vector : private detail::vector_alloc_holder<A>
    {
       //Allocate n element buffer and initialize from range
       pointer result = this->allocation_command(allocate_new, n, n, cap).first;
-      scoped_ptr<T, dealloc_t> scoped_alloc(result, dealloc_t(*this, cap));
-      n_uninitialized_copy(first, last, result, static_cast<A&>(*this));
+      dealloc_t scoped_alloc(result, *this, cap);
+      boost::interprocess::n_uninitialized_copy(first, last, result);
       scoped_alloc.release();
       return result;
    }
@@ -1666,6 +1727,7 @@ operator<(const vector<T, A>& x, const vector<T, A>& y)
                                        y.begin(), y.end());
 }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class T, class A>
 inline void swap(vector<T, A>& x, vector<T, A>& y)
 {  x.swap(y);  }
@@ -1677,6 +1739,11 @@ inline void swap(const detail::moved_object<vector<T, A> >& x, vector<T, A>& y)
 template <class T, class A>
 inline void swap(vector<T, A> &x, const detail::moved_object<vector<T, A> >& y)
 {  x.swap(y.get());  }
+#else
+template <class T, class A>
+inline void swap(vector<T, A>&&x, vector<T, A>&&y)
+{  x.swap(y);  }
+#endif
 
 /// @cond
 /*!This class is movable*/

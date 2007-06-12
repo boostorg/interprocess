@@ -84,10 +84,15 @@ class basic_managed_memory_impl
    public:
    typedef typename segment_manager_type
       <CharType, MemoryAlgorithm, IndexType>::type    segment_manager;
-   typedef typename MemoryAlgorithm::void_pointer     void_pointer;
+   typedef CharType                                   char_type;
+   typedef MemoryAlgorithm                            memory_algorithm;
    typedef typename MemoryAlgorithm::mutex_family     mutex_family;
    typedef CharType                                   char_t;
    typedef std::ptrdiff_t                             handle_t;
+   typedef typename segment_manager::
+      named_index_t::const_iterator                   const_named_iterator;
+   typedef typename segment_manager::
+      unique_index_t::const_iterator                  const_unique_iterator;
 
    enum {   PayloadPerAllocation = segment_manager::PayloadPerAllocation   };
 
@@ -208,6 +213,26 @@ class basic_managed_memory_impl
    std::size_t   get_size   () const
    {   return mp_header->get_size();  }
 
+   //!Returns the number of free bytes of the memory
+   //!segment
+   std::size_t get_free_memory() const
+   {  return mp_header->get_free_memory();  }
+
+   //!Returns the result of "all_memory_deallocated()" function
+   //!of the used memory algorithm
+   bool all_memory_deallocated()
+   {   return mp_header->all_memory_deallocated(); }
+
+   //!Returns the result of "check_sanity()" function
+   //!of the used memory algorithm
+   bool check_sanity()
+   {   return mp_header->check_sanity(); }
+
+   //!Writes to zero free memory (memory not yet allocated) of
+   //!the memory algorithm
+   void zero_free_memory()
+   {   mp_header->zero_free_memory(); }
+
    //!Transforms an absolute address into an offset from base address. 
    //!The address must belong to the memory segment. Never throws.
    handle_t get_handle_from_address   (const void *ptr) const
@@ -280,7 +305,7 @@ class basic_managed_memory_impl
    //!array was being constructed, destructors of created objects are called
    //!before freeing the memory.
    template <class T>
-   typename segment_manager::template construct_proxy<T, true>::type
+   typename segment_manager::template construct_proxy<T>::type
       construct(char_ptr_holder_t name)
    {   return mp_header->construct<T>(name);  }
 
@@ -301,7 +326,7 @@ class basic_managed_memory_impl
    //!array was being constructed, destructors of created objects are called
    //!before freeing the memory.
    template <class T>
-   typename segment_manager::template find_construct_proxy<T, true>::type
+   typename segment_manager::template construct_proxy<T>::type
       find_or_construct(char_ptr_holder_t name)
    {   return mp_header->find_or_construct<T>(name);  }
 
@@ -322,7 +347,7 @@ class basic_managed_memory_impl
    //!array was being constructed, destructors of created objects are called
    //!before freeing the memory.
    template <class T>
-   typename segment_manager::template construct_proxy<T, false>::type
+   typename segment_manager::template construct_proxy<T>::type
       construct(char_ptr_holder_t name, std::nothrow_t nothrow)
    {   return mp_header->construct<T>(name, nothrow);  }
 
@@ -343,7 +368,7 @@ class basic_managed_memory_impl
    //!array was being constructed, destructors of created objects are called
    //!before freeing the memory.
    template <class T>
-   typename segment_manager::template find_construct_proxy<T, false>::type
+   typename segment_manager::template construct_proxy<T>::type
       find_or_construct(char_ptr_holder_t name, std::nothrow_t nothrow)
    {   return mp_header->find_or_construct<T>(name, nothrow);  }
 
@@ -364,7 +389,7 @@ class basic_managed_memory_impl
    //!Memory is freed automatically if T's constructor throws and 
    //!destructors of created objects are called before freeing the memory.
    template <class T>
-   typename segment_manager::template construct_iter_proxy<T, true>::type
+   typename segment_manager::template construct_iter_proxy<T>::type
       construct_it(char_ptr_holder_t name)
    {   return mp_header->construct_it<T>(name);  }
 
@@ -387,7 +412,7 @@ class basic_managed_memory_impl
    //!Memory is freed automatically if T's constructor throws and 
    //!destructors of created objects are called before freeing the memory.
    template <class T>
-   typename segment_manager::template find_construct_iter_proxy<T, true>::type
+   typename segment_manager::template construct_iter_proxy<T>::type
       find_or_construct_it(char_ptr_holder_t name)
    {   return mp_header->find_or_construct_it<T>(name);  }
 
@@ -408,7 +433,7 @@ class basic_managed_memory_impl
    //!Memory is freed automatically if T's constructor throws and 
    //!destructors of created objects are called before freeing the memory.*/
    template <class T>
-   typename segment_manager::template construct_iter_proxy<T, false>::type
+   typename segment_manager::template construct_iter_proxy<T>::type
       construct_it(char_ptr_holder_t name, std::nothrow_t nothrow)
    {   return mp_header->construct_it<T>(name, nothrow);  }
 
@@ -431,7 +456,7 @@ class basic_managed_memory_impl
    //!Memory is freed automatically if T's constructor throws and 
    //!destructors of created objects are called before freeing the memory.*/
    template <class T>
-   typename segment_manager::template find_construct_iter_proxy<T, false>::type
+   typename segment_manager::template construct_iter_proxy<T>::type
       find_or_construct_it(char_ptr_holder_t name, std::nothrow_t nothrow)
    {   return mp_header->find_or_construct_it<T>(name, nothrow);  }
 
@@ -525,7 +550,7 @@ class basic_managed_memory_impl
    //!Returns is the the name of an object created with construct/find_or_construct
    //!functions. Does not throw
    template<class T>
-   InstanceType get_type(const T *ptr)
+   detail::instance_type get_type(const T *ptr)
    {  return mp_header->get_type(ptr); }
 
    //!Preallocates needed index resources to optimize the 
@@ -566,28 +591,16 @@ class basic_managed_memory_impl
                              (std::streamsize)get_size()).good();
    }
 
-   typename segment_manager::named_index_t::iterator named_begin()
+   const_named_iterator named_begin() const
    {  return mp_header->named_begin(); }
 
-   typename segment_manager::named_index_t::iterator named_begin() const
-   {  return mp_header->named_begin(); }
-
-   typename segment_manager::named_index_t::iterator named_end()
+   const_named_iterator named_end() const
    {  return mp_header->named_end(); }
 
-   typename segment_manager::named_index_t::iterator named_end() const
-   {  return mp_header->named_end(); }
-
-   typename segment_manager::unique_index_t::iterator unique_begin()
+   const_unique_iterator unique_begin() const
    {  return mp_header->unique_begin(); }
 
-   typename segment_manager::unique_index_t::iterator unique_begin() const
-   {  return mp_header->unique_begin(); }
-
-   typename segment_manager::unique_index_t::iterator unique_end()
-   {  return mp_header->unique_end(); }
-
-   typename segment_manager::unique_index_t::iterator unique_end() const
+   const_unique_iterator unique_end() const
    {  return mp_header->unique_end(); }
 
    protected:

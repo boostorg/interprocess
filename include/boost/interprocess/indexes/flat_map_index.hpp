@@ -33,11 +33,11 @@ struct flat_map_index_aux
    typedef typename MapConfig::key_type            key_type;
    typedef typename MapConfig::mapped_type         mapped_type;
    typedef typename MapConfig::
-      restricted_segment_manager                   restricted_segment_manager;
+      basic_segment_manager                   basic_segment_manager;
    typedef std::less<key_type>                     key_less;
    typedef std::pair<key_type, mapped_type>        value_type;
    typedef allocator<value_type
-                    ,restricted_segment_manager>   allocator_type;
+                    ,basic_segment_manager>   allocator_type;
    typedef flat_map<key_type,  mapped_type,
                     key_less, allocator_type>      index_t;
 };
@@ -53,12 +53,12 @@ class flat_map_index
    typedef flat_map_index_aux<MapConfig>  index_aux;
    typedef typename index_aux::index_t    base_type;
    typedef typename index_aux::
-      restricted_segment_manager          restricted_segment_manager;
+      basic_segment_manager          basic_segment_manager;
    /// @endcond
 
    public:
    //!Constructor. Takes a pointer to the segment manager. Can throw
-   flat_map_index(restricted_segment_manager *segment_mngr)
+   flat_map_index(basic_segment_manager *segment_mngr)
       : base_type(typename index_aux::key_less(),
                   typename index_aux::allocator_type(segment_mngr))
    {}

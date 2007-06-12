@@ -23,6 +23,7 @@
 #include <functional>
 #include <memory>
 #include <boost/interprocess/containers/detail/flat_tree.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/move.hpp>
 
 
@@ -60,7 +61,7 @@ class flat_set
    /// @cond
    private:
    typedef detail::flat_tree<T, T, 
-                     detail::identity<T>, Pred, Alloc> tree_t;
+                     identity<T>, Pred, Alloc> tree_t;
    tree_t m_flat_tree;  // flat tree representing flat_set
    /// @endcond
 
@@ -114,8 +115,13 @@ class flat_set
    //! <b>Complexity</b>: Construct.
    //! 
    //! <b>Postcondition</b>: x is emptied.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_set(const detail::moved_object<flat_set<T,Pred,Alloc> >& mx) 
       : m_flat_tree(move(mx.get().m_flat_tree)) {}
+   #else
+   flat_set(flat_set<T,Pred,Alloc> && mx) 
+      : m_flat_tree(move(mx.m_flat_tree)) {}
+   #endif
 
    //! <b>Effects</b>: Makes *this a copy of x.
    //! 
@@ -126,8 +132,15 @@ class flat_set
    //! <b>Effects</b>: Makes *this a copy of x.
    //! 
    //! <b>Complexity</b>: Linear in x.size().
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_set<T,Pred,Alloc>& operator=(const detail::moved_object<flat_set<T, Pred, Alloc> > &mx)
       {  m_flat_tree = move(mx.get().m_flat_tree);   return *this;  }
+
+   #else
+   flat_set<T,Pred,Alloc>& operator=(flat_set<T, Pred, Alloc> &&mx)
+      {  m_flat_tree = move(mx.m_flat_tree);   return *this;  }
+
+   #endif
 
    //! <b>Effects</b>: Returns the comparison object out
    //!   of which a was constructed.
@@ -257,8 +270,13 @@ class flat_set
    //! <b>Throws</b>: Nothing.
    //!
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object <flat_set<T,Pred,Alloc> >& mx) 
       { this->swap(mx.get()); }
+   #else
+   void swap(flat_set<T,Pred,Alloc> && mx) 
+      { this->swap(mx); }
+   #endif
 
    //! <b>Effects</b>: Inserts x if and only if there is no element in the container 
    //!   with key equivalent to the key of x.
@@ -285,8 +303,13 @@ class flat_set
    //!   to the elements with bigger keys than x.
    //!
    //! <b>Note</b>: If an element it's inserted it might invalidate elements.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    std::pair<iterator,bool> insert(const detail::moved_object<value_type>& x) 
       {  return m_flat_tree.insert_unique(x);  }
+   #else
+   std::pair<iterator,bool> insert(value_type && x) 
+      {  return m_flat_tree.insert_unique(move(x));  }
+   #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container if and only if there is 
    //!   no element in the container with key equivalent to the key of x.
@@ -311,8 +334,13 @@ class flat_set
    //!   right before p) plus insertion linear to the elements with bigger keys than x.
    //!
    //! <b>Note</b>: If an element it's inserted it might invalidate elements.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(iterator position, const detail::moved_object<value_type>& x) 
       {  return m_flat_tree.insert_unique(position, x); }
+   #else
+   iterator insert(iterator position, value_type && x) 
+      {  return m_flat_tree.insert_unique(position, move(x)); }
+   #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.
    //!
@@ -490,6 +518,7 @@ inline bool operator>=(const flat_set<T,Pred,Alloc>& x,
                        const flat_set<T,Pred,Alloc>& y) 
    {  return !(x < y);  }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class T, class Pred, class Alloc>
 inline void swap(flat_set<T,Pred,Alloc>& x, 
                  flat_set<T,Pred,Alloc>& y) 
@@ -504,6 +533,12 @@ template <class T, class Pred, class Alloc>
 inline void swap(flat_set<T,Pred,Alloc>& x, 
                  const detail::moved_object<flat_set<T,Pred,Alloc> >& y) 
    {  x.swap(y.get());  }
+#else
+template <class T, class Pred, class Alloc>
+inline void swap(flat_set<T,Pred,Alloc>&&x, 
+                 flat_set<T,Pred,Alloc>&&y) 
+   {  x.swap(y);  }
+#endif
 
 /// @cond
 /*!This class is movable*/
@@ -543,7 +578,7 @@ class flat_multiset
    /// @cond
    private:
    typedef detail::flat_tree<T, T, 
-                     detail::identity<T>, Pred, Alloc> tree_t;
+                     identity<T>, Pred, Alloc> tree_t;
    tree_t m_flat_tree;  // flat tree representing flat_multiset
    /// @endcond
 
@@ -580,14 +615,24 @@ class flat_multiset
    flat_multiset(const flat_multiset<T,Pred,Alloc>& x) 
       : m_flat_tree(x.m_flat_tree) {}
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_multiset(const detail::moved_object<flat_multiset<T,Pred,Alloc> >& x) 
       : m_flat_tree(move(x.get().m_flat_tree)) {}
+   #else
+   flat_multiset(flat_multiset<T,Pred,Alloc> && x) 
+      : m_flat_tree(move(x.m_flat_tree)) {}
+   #endif
 
    flat_multiset<T,Pred,Alloc>& operator=(const flat_multiset<T,Pred,Alloc>& x) 
       {  m_flat_tree = x.m_flat_tree;   return *this;  }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_multiset<T,Pred,Alloc>& operator=(const detail::moved_object<flat_multiset<T,Pred,Alloc> >& mx) 
       {  m_flat_tree = move(mx.get().m_flat_tree);   return *this;  }
+   #else
+   flat_multiset<T,Pred,Alloc>& operator=(flat_multiset<T,Pred,Alloc> && mx) 
+      {  m_flat_tree = move(mx.m_flat_tree);   return *this;  }
+   #endif
 
    //! <b>Effects</b>: Returns the comparison object out
    //!   of which a was constructed.
@@ -717,8 +762,13 @@ class flat_multiset
    //! <b>Throws</b>: Nothing.
    //!
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object<flat_multiset<T,Pred,Alloc> >& mx) 
       { this->swap(mx.get()); }
+   #else
+   void swap(flat_multiset<T,Pred,Alloc> && mx) 
+      { this->swap(mx); }
+   #endif
 
    //! <b>Effects</b>: Inserts x and returns the iterator pointing to the
    //!   newly inserted element. 
@@ -737,8 +787,13 @@ class flat_multiset
    //!   to the elements with bigger keys than x.
    //!
    //! <b>Note</b>: If an element it's inserted it might invalidate elements.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(const detail::moved_object<value_type>& x) 
       {  return m_flat_tree.insert_equal(x);   }
+   #else
+   iterator insert(value_type && x) 
+      {  return m_flat_tree.insert_equal(move(x));   }
+   #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container.
    //!   p is a hint pointing to where the insert should start to search.
@@ -763,8 +818,13 @@ class flat_multiset
    //!   right before p) plus insertion linear to the elements with bigger keys than x.
    //!
    //! <b>Note</b>: If an element it's inserted it might invalidate elements.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(iterator position, const detail::moved_object<value_type>& x) 
       {  return m_flat_tree.insert_equal(position, x);  }
+   #else
+   iterator insert(iterator position, value_type && x) 
+      {  return m_flat_tree.insert_equal(position, move(x));  }
+   #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.
    //!
@@ -942,6 +1002,7 @@ inline bool operator>=(const flat_multiset<T,Pred,Alloc>& x,
                        const flat_multiset<T,Pred,Alloc>& y) 
 {  return !(x < y);  }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class T, class Pred, class Alloc>
 inline void swap(flat_multiset<T,Pred,Alloc>& x, 
                  flat_multiset<T,Pred,Alloc>& y) 
@@ -956,6 +1017,12 @@ template <class T, class Pred, class Alloc>
 inline void swap(flat_multiset<T,Pred,Alloc>& x, 
                  const detail::moved_object<flat_multiset<T,Pred,Alloc> >& y) 
    {  x.swap(y.get());  }
+#else
+template <class T, class Pred, class Alloc>
+inline void swap(flat_multiset<T,Pred,Alloc>&&x, 
+                 flat_multiset<T,Pred,Alloc>&&y) 
+   {  x.swap(y);  }
+#endif
 
 /// @cond
 /*!This class is movable*/

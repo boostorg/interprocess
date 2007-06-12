@@ -179,8 +179,8 @@ static boost::uint32_t inline intel_atomic_add32
    (volatile boost::uint32_t *mem, boost::uint32_t val)
 {
    asm volatile ("lock; xaddl %0,%1"
-               : "=r"(val), "=m"(*mem) /* outputs */
-               : "0"(val), "m"(*mem)   /* inputs */
+               : "=r"(val), "=m"(*mem) // outputs 
+               : "0"(val), "m"(*mem)   // inputs 
                : "memory", "cc");
    return val;
 }
@@ -368,16 +368,24 @@ inline boost::uint32_t atomic_xchg32(volatile boost::uint32_t *mem, boost::uint3
 inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
 {  atomic_xchg32(mem, val); }
 
-#elif (defined(SOLARIS2) && SOLARIS2 >= 10)
+}  //namespace detail{
+}  //namespace interprocess{
+}  //namespace boost{
+
+#elif (defined(sun) || defined(__sun))
 
 #include <atomic.h>
+
+namespace boost{
+namespace interprocess{
+namespace detail{
 
 //! Atomically add 'val' to an boost::uint32_t
 //! "mem": pointer to the object
 //! "val": amount to add
 //! Returns the old value pointed to by mem
 inline boost::uint32_t atomic_add32(volatile boost::uint32_t *mem, boost::uint32_t val)
-{  return atomic_add_32_nv(mem, val) - val;  }
+{   return atomic_add_32_nv(reinterpret_cast<volatile ::uint32_t*>(mem), (int32_t)val) - val;   }
 
 //! Compare an boost::uint32_t's value with "cmp".
 //! If they are the same swap the value with "with"
@@ -387,25 +395,25 @@ inline boost::uint32_t atomic_add32(volatile boost::uint32_t *mem, boost::uint32
 //! Returns the old value of *mem
 inline boost::uint32_t atomic_cas32
    (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
-{  return atomic_cas_32(mem, cmp, with);  }
+{  return atomic_cas_32(reinterpret_cast<volatile ::uint32_t*>(mem), cmp, with);  }
 
 //! Atomically subtract 'val' from an apr_uint32_t
 //! "mem": pointer to the object
 //! "val": amount to subtract
 inline void atomic_sub32(volatile boost::uint32_t *mem, boost::uint32_t val)
-{  return atomic_add_32(mem, (-val));  }
+{  return atomic_add_32(reinterpret_cast<volatile ::uint32_t*>(mem), -val);  }
 
 //! Atomically increment an apr_uint32_t by 1
 //! "mem": pointer to the object
 //! Returns the old value pointed to by mem
 inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
-{  return atomic_add_32_nv(mem, 1) - 1; }
+{  return atomic_add_32_nv(reinterpret_cast<volatile ::uint32_t*>(mem), 1) - 1; }
 
 //! Atomically decrement an boost::uint32_t by 1
 //! "mem": pointer to the atomic value
 //! Returns false if the value becomes zero on decrement, otherwise true
 inline bool atomic_dec32(volatile boost::uint32_t *mem)
-{  return atomic_add_32_nv(mem, -1) != 0; }
+{  return atomic_add_32_nv(reinterpret_cast<volatile ::uint32_t*>(mem), -1) != 0; }
 
 //! Atomically read an boost::uint32_t from memory
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
@@ -416,7 +424,7 @@ inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
 //! "val": what to swap it with
 //! Returns the old value of *mem
 inline boost::uint32_t atomic_xchg32(volatile boost::uint32_t *mem, boost::uint32_t val)
-{  return atomic_swap_32(mem, val); }
+{  return atomic_swap_32(reinterpret_cast<volatile ::uint32_t*>(mem), val); }
 
 //! Atomically set an boost::uint32_t in memory
 //! "mem": pointer to the object

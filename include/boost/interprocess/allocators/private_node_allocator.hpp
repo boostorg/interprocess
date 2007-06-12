@@ -236,18 +236,6 @@ bool operator!=(const private_node_allocator<T, S, NodesPerChunk> &alloc1,
    return &alloc1 != &alloc2;
 }
 
-/// @cond
-//!This specialization indicates that the construct function allows
-//!convertible types to construct the value type. This allows
-//!storing less allocator instances in containers.
-template<class T, class S, std::size_t NodesPerChunk>
-struct has_convertible_construct
-   <boost::interprocess::private_node_allocator<T, S, NodesPerChunk> >
-{
-   enum {   value = true };
-};
-/// @endcond
-
 }  //namespace interprocess {
 }  //namespace boost {
 

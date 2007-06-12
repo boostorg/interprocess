@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gazta�ga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -55,6 +55,7 @@
 #include <functional>
 #include <memory>
 #include <boost/interprocess/containers/detail/tree.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/move.hpp>
 
 namespace boost { namespace interprocess {
@@ -89,7 +90,7 @@ class map
    private:
    typedef detail::rbtree<Key, 
                            std::pair<const Key, T>, 
-                           detail::select1st< std::pair<const Key, T> >, 
+                           select1st< std::pair<const Key, T> >, 
                            Pred, 
                            Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing map
@@ -161,9 +162,15 @@ class map
    //! <b>Complexity</b>: Construct.
    //! 
    //! <b>Postcondition</b>: x is emptied.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    map(const detail::moved_object<map<Key,T,Pred,Alloc> >& x) 
       : m_tree(move(x.get().m_tree))
    {}
+   #else
+   map(map<Key,T,Pred,Alloc> &&x) 
+      : m_tree(move(x.m_tree))
+   {}
+   #endif
 
    //! <b>Effects</b>: Makes *this a copy of x.
    //! 
@@ -174,8 +181,13 @@ class map
    //! <b>Effects</b>: this->swap(x.get()).
    //! 
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    map<Key,T,Pred,Alloc>& operator=(const detail::moved_object<map<Key,T,Pred,Alloc> >& x)
    {  m_tree = move(x.get().m_tree);   return *this;  }
+   #else
+   map<Key,T,Pred,Alloc>& operator=(map<Key,T,Pred,Alloc> &&x)
+   {  m_tree = move(x.m_tree);   return *this;  }
+   #endif
 
    //! <b>Effects</b>: Returns the comparison object out
    //!   of which a was constructed.
@@ -314,6 +326,7 @@ class map
    //! Returns: A reference to the mapped_type corresponding to x in *this.
    //! 
    //! Complexity: Logarithmic.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    T& operator[](const detail::moved_object<key_type>& mk) 
    {
       key_type &k = mk.get();
@@ -326,6 +339,21 @@ class map
       }
       return (*i).second;
    }
+   #else
+   T& operator[](key_type &&mk) 
+   {
+      key_type &k = mk;
+      //we can optimize this
+      iterator i = lower_bound(k);
+      // i->first is greater than or equivalent to k.
+      if (i == end() || key_comp()(k, (*i).first)){
+         value_type val(move(k), move(T()));
+         i = insert(i, move(val));
+      }
+      return (*i).second;
+   }
+   #endif
+
 /*
    //! Effects: If there is no key equivalent to x in the map, inserts 
    //! value_type(move(x), T()) into the map (the key is move-constructed)
@@ -370,8 +398,13 @@ class map
    //! <b>Throws</b>: Nothing.
    //!
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object<map<Key,T,Pred,Alloc> >& x) 
    { m_tree.swap(x.get().m_tree); }
+   #else
+   void swap(map<Key,T,Pred,Alloc> &&x) 
+   { m_tree.swap(x.m_tree); }
+   #endif
 
    //! <b>Effects</b>: Inserts x if and only if there is no element in the container 
    //!   with key equivalent to the key of x.
@@ -403,8 +436,13 @@ class map
    //!   points to the element with key equivalent to the key of x.
    //!
    //! <b>Complexity</b>: Logarithmic.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    std::pair<iterator,bool> insert(const detail::moved_object<std::pair<key_type, mapped_type> > &x) 
    { return m_tree.insert_unique(x); }
+   #else
+   std::pair<iterator,bool> insert(std::pair<key_type, mapped_type> &&x) 
+   { return m_tree.insert_unique(move(x)); }
+   #endif
 
    //! <b>Effects</b>: Move constructs a new value from x if and only if there is 
    //!   no element in the container with key equivalent to the key of x.
@@ -414,8 +452,13 @@ class map
    //!   points to the element with key equivalent to the key of x.
    //!
    //! <b>Complexity</b>: Logarithmic.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    std::pair<iterator,bool> insert(const detail::moved_object<value_type>& x) 
    { return m_tree.insert_unique(x); }
+   #else
+   std::pair<iterator,bool> insert(value_type &&x) 
+   { return m_tree.insert_unique(move(x)); }
+   #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container if and only if there is 
    //!   no element in the container with key equivalent to the key of x.
@@ -438,8 +481,13 @@ class map
    //!
    //! <b>Complexity</b>: Logarithmic in general, but amortized constant if t
    //!   is inserted right before p.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(iterator position, const detail::moved_object<std::pair<key_type, mapped_type> > &x)
    { return m_tree.insert_unique(position, x); }
+   #else
+   iterator insert(iterator position, std::pair<key_type, mapped_type> &&x)
+   { return m_tree.insert_unique(position, move(x)); }
+   #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container.
    //!   p is a hint pointing to where the insert should start to search.
@@ -456,8 +504,13 @@ class map
    //! <b>Returns</b>: An iterator pointing to the element with key equivalent to the key of x.
    //!
    //! <b>Complexity</b>: Logarithmic.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(iterator position, const detail::moved_object<value_type>& x)
    { return m_tree.insert_unique(position, x); }
+   #else
+   iterator insert(iterator position, value_type &&x)
+   { return m_tree.insert_unique(position, move(x)); }
+   #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.
    //!
@@ -603,6 +656,7 @@ inline bool operator>=(const map<Key,T,Pred,Alloc>& x,
                        const map<Key,T,Pred,Alloc>& y) 
    {  return !(x < y);  }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class Key, class T, class Pred, class Alloc>
 inline void swap(map<Key,T,Pred,Alloc>& x, 
                  map<Key,T,Pred,Alloc>& y) 
@@ -617,6 +671,15 @@ template <class Key, class T, class Pred, class Alloc>
 inline void swap(map<Key,T,Pred,Alloc>& x, 
                  const detail::moved_object<map<Key,T,Pred,Alloc> >& y) 
    {  x.swap(y.get());  }
+#else
+template <class Key, class T, class Pred, class Alloc>
+inline void swap(map<Key,T,Pred,Alloc>&&x, 
+                 map<Key,T,Pred,Alloc>&&y) 
+   {  x.swap(y);  }
+#endif
+
+
+
 
 /// @cond
 /*!This class is movable*/
@@ -667,7 +730,7 @@ class multimap
    private:
    typedef detail::rbtree<Key, 
                            std::pair<const Key, T>, 
-                           detail::select1st< std::pair<const Key, T> >, 
+                           select1st< std::pair<const Key, T> >, 
                            Pred, 
                            Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing map
@@ -740,9 +803,15 @@ class multimap
    //! <b>Complexity</b>: Construct.
    //! 
    //! <b>Postcondition</b>: x is emptied.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    multimap(const detail::moved_object<multimap<Key,T,Pred,Alloc> >& x) 
       : m_tree(move(x.get().m_tree))
    {}
+   #else
+   multimap(multimap<Key,T,Pred,Alloc> && x) 
+      : m_tree(move(x.m_tree))
+   {}
+   #endif
 
    //! <b>Effects</b>: Makes *this a copy of x.
    //! 
@@ -754,9 +823,15 @@ class multimap
    //! <b>Effects</b>: this->swap(x.get()).
    //! 
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    multimap<Key,T,Pred,Alloc>&
    operator=(const detail::moved_object<multimap<Key,T,Pred,Alloc> >& x) 
    {  m_tree = move(x.get().m_tree);   return *this;  }
+   #else
+   multimap<Key,T,Pred,Alloc>&
+   operator=(multimap<Key,T,Pred,Alloc> && x) 
+   {  m_tree = move(x.m_tree);   return *this;  }
+   #endif
 
    //! <b>Effects</b>: Returns the comparison object out
    //!   of which a was constructed.
@@ -886,8 +961,13 @@ class multimap
    //! <b>Throws</b>: Nothing.
    //!
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object<multimap<Key,T,Pred,Alloc> >& x) 
    { m_tree.swap(x.get().m_tree); }
+   #else
+   void swap(multimap<Key,T,Pred,Alloc> && x) 
+   { m_tree.swap(x.m_tree); }
+   #endif
 
    //! <b>Effects</b>: Inserts x and returns the iterator pointing to the
    //!   newly inserted element. 
@@ -907,8 +987,13 @@ class multimap
    //!   the iterator pointing to the newly inserted element. 
    //!
    //! <b>Complexity</b>: Logarithmic.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(const detail::moved_object<std::pair<key_type, mapped_type> >& x) 
    { return m_tree.insert_equal(x); }
+   #else
+   iterator insert(std::pair<key_type, mapped_type> && x) 
+   { return m_tree.insert_equal(move(x)); }
+   #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container.
    //!   p is a hint pointing to where the insert should start to search.
@@ -940,8 +1025,13 @@ class multimap
    //!
    //! <b>Complexity</b>: Logarithmic in general, but amortized constant if t
    //!   is inserted right before p.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(iterator position, const detail::moved_object<std::pair<key_type, mapped_type> >& x)
    { return m_tree.insert_equal(position, x); }
+   #else
+   iterator insert(iterator position, std::pair<key_type, mapped_type> && x)
+   { return m_tree.insert_equal(position, move(x)); }
+   #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.
    //!
@@ -1088,6 +1178,8 @@ inline bool operator>=(const multimap<Key,T,Pred,Alloc>& x,
                        const multimap<Key,T,Pred,Alloc>& y) 
 {  return !(x < y);  }
 
+
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class Key, class T, class Pred, class Alloc>
 inline void swap(multimap<Key,T,Pred,Alloc>& x, 
                  multimap<Key,T,Pred,Alloc>& y) 
@@ -1102,6 +1194,12 @@ template <class Key, class T, class Pred, class Alloc>
 inline void swap(multimap<Key,T,Pred,Alloc>& x, 
                  const detail::moved_object<multimap<Key,T,Pred,Alloc> >& y) 
 {  x.swap(y.get());  }
+#else
+template <class Key, class T, class Pred, class Alloc>
+inline void swap(multimap<Key,T,Pred,Alloc>&&x, 
+                 multimap<Key,T,Pred,Alloc>&&y) 
+{  x.swap(y);  }
+#endif
 
 /// @cond
 template <class T, class P, class A>

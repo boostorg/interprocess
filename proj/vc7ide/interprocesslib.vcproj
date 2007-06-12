@@ -332,9 +332,6 @@
 			Name="Memory algorithms"
 			Filter="">
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\mem_algo\multi_simple_seq_fit.hpp">
-			</File>
-			<File
 				RelativePath="..\..\..\..\boost\interprocess\mem_algo\rbtree_best_fit.hpp">
 			</File>
 			<File
@@ -396,7 +393,13 @@
 			Name="Detail"
 			Filter="">
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\algorithms.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\atomic.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\basic_segment_manager.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\cast_tags.hpp">
@@ -408,19 +411,34 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\config_end.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\construction_table.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\creation_tags.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\file_wrapper.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\gcd_lcm.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\generic_cast.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\in_place_interface.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\iterators.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\managed_memory_impl.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\managed_open_or_create_impl.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\min_max.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\move.hpp">
@@ -430,6 +448,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\moved_default_iterator.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\mpl.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\named_proxy.hpp">
@@ -442,6 +463,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\os_thread_functions.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\pointer_type.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\posix_time_types_wrk.hpp">
@@ -461,13 +485,6 @@
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\workaround.hpp">
 			</File>
-			<Filter
-				Name="IPC"
-				Filter="">
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\ipc\message_queue.hpp">
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Documentation"
@@ -631,6 +648,13 @@
 			</File>
 			<File
 				RelativePath="..\..\example\Jamfile.v2">
+			</File>
+		</Filter>
+		<Filter
+			Name="IPC"
+			Filter="">
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\ipc\message_queue.hpp">
 			</File>
 		</Filter>
 		<File

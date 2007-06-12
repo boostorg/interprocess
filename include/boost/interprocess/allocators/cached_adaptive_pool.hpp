@@ -390,18 +390,6 @@ bool operator!=(const cached_adaptive_pool<T, S, NodesPerChunk, M> &alloc1,
                 const cached_adaptive_pool<T, S, NodesPerChunk, M> &alloc2)
    {  return alloc1.get_node_pool() != alloc2.get_node_pool(); }
 
-/// @cond
-/*!This specialization indicates that the construct function allows
-   convertible types to construct the value type. This allows
-   storing less allocator instances in containers.*/
-template<class T, class SegmentManager, std::size_t NodesPerChunk, std::size_t M>
-struct has_convertible_construct
-   <boost::interprocess::cached_adaptive_pool<T, SegmentManager, NodesPerChunk, M> >
-{
-   enum {   value = true };
-};
-/// @endcond
-
 }  //namespace interprocess {
 
 }  //namespace boost {

@@ -34,10 +34,10 @@ template <class MapConfig>
 struct iset_index_aux
 {
    typedef typename 
-      MapConfig::restricted_segment_manager                 restricted_segment_manager;
+      MapConfig::basic_segment_manager                 basic_segment_manager;
 
    typedef typename 
-      restricted_segment_manager::void_pointer              void_pointer;
+      basic_segment_manager::void_pointer              void_pointer;
 
    typedef boost::intrusive::set_base_hook
       < boost::intrusive::tag
@@ -86,7 +86,7 @@ class iset_index
    {
       bool operator()(const intrusive_compare_key_type &i, const value_type &b) const
       {  
-         std::size_t blen = b.length();
+         std::size_t blen = b.name_length();
          return (i.m_len < blen) || 
                   (i.m_len == blen && 
                   std::char_traits<char_type>::compare 
@@ -95,7 +95,7 @@ class iset_index
 
       bool operator()(const value_type &b, const intrusive_compare_key_type &i) const
       {  
-         std::size_t blen = b.length();
+         std::size_t blen = b.name_length();
          return (blen < i.m_len) || 
                   (blen == i.m_len &&
                   std::char_traits<char_type>::compare 
@@ -109,7 +109,7 @@ class iset_index
 
    /*!Constructor. Takes a pointer to the
       segment manager. Can throw*/
-   iset_index(typename MapConfig::restricted_segment_manager *)
+   iset_index(typename MapConfig::basic_segment_manager *)
       : index_type(/*typename index_aux::value_compare()*/)
    {}
 

@@ -11,6 +11,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 //[doc_cont
 #include <boost/interprocess/containers/vector.hpp>
+#include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 
 int main ()

@@ -23,15 +23,19 @@
 #include <boost/interprocess/detail/cast_tags.hpp>
 #include <boost/interprocess/detail/generic_cast.hpp>
 #include <boost/assert.hpp>
-#include <boost/type_traits/has_trivial_constructor.hpp>
-#include <boost/type_traits/has_trivial_destructor.hpp>
-#include <boost/type_traits/alignment_of.hpp>
 
 /*!\file
    Describes a smart pointer that stores the offset between this pointer and
    target pointee, called offset_ptr.
 */
 namespace boost {
+
+//Predeclarations
+template <class T>
+struct has_trivial_constructor;
+
+template <class T>
+struct has_trivial_destructor;
 
 namespace interprocess {
 
@@ -320,15 +324,13 @@ inline boost::interprocess::offset_ptr<T>
 /// @cond
 //!has_trivial_constructor<> == true_type specialization for optimizations
 template <class T>
-struct has_trivial_constructor
-   < boost::interprocess::offset_ptr<T> > 
+struct has_trivial_constructor< boost::interprocess::offset_ptr<T> > 
    : public true_type
 {};
 
 ///has_trivial_destructor<> == true_type specialization for optimizations
 template <class T>
-struct has_trivial_destructor
-   < boost::interprocess::offset_ptr<T> > 
+struct has_trivial_destructor< boost::interprocess::offset_ptr<T> > 
    : public true_type
 {};
 
@@ -380,13 +382,13 @@ class cast_to< offset_ptr<T> >
 namespace intrusive {
 
 //Predeclaration to avoid including header
-template<class Pointer>
+template<class VoidPointer, std::size_t N>
 struct has_pointer_plus_bit;
 
-template<class T>
-struct has_pointer_plus_bit<boost::interprocess::offset_ptr<T> >
+template<std::size_t N>
+struct has_pointer_plus_bit<boost::interprocess::offset_ptr<void>, N>
 {
-   enum  {  value = (boost::alignment_of<T>::value % 4u) == 0  };
+   enum  {  value = (N % 4u) == 0  };
 };
 
 //Predeclaration

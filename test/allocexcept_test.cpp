@@ -77,6 +77,10 @@ int main ()
       if(InstanceCounter::counter != 0)
          return 1;
    }
+   catch(std::length_error &){
+      if(InstanceCounter::counter != 0)
+         return 1;
+   }
    }
    catch(...){
       shared_memory_object::remove(shMemName);

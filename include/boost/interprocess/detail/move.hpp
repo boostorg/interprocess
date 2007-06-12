@@ -17,7 +17,6 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/mpl/if.hpp>
 
 /*!\file
    Describes a function and a type to emulate move semantics.
@@ -32,6 +31,15 @@ struct is_movable
    enum {  value = false };
 };
 
+}  //namespace interprocess {
+}  //namespace boost {
+
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+
+#include <boost/interprocess/detail/mpl.hpp>
+
+namespace boost {
+namespace interprocess {
 namespace detail {
 
 /*!An object that represents a moved object.*/
@@ -54,11 +62,7 @@ template <typename T>
 struct move_type
 {
    public: // metafunction result
-   typedef typename mpl::if_<
-      is_movable<T>
-      , moved_object<T>
-      , T&
-      >::type type;
+   typedef typename if_<is_movable<T>, moved_object<T>, T&>::type type;
 };
 
 template <typename T> 
@@ -87,14 +91,15 @@ struct return_type
 {
    public: // metafunction result
 
-   typedef typename boost::mpl::if_
-      <is_movable<T>
-      , move_return<T>
-      , T
-      >::type type;
+   typedef typename if_<is_movable<T>, move_return<T>, T>::type type;
 };
 
 }  //namespace detail {
+}  //namespace interprocess {
+}  //namespace boost {
+
+namespace boost {
+namespace interprocess {
 
 /*!A function that converts an object to a moved object so that 
    it can match a function taking a detail::moved_object object.*/
@@ -108,6 +113,29 @@ typename detail::move_type<Object>::type move
 
 }  //namespace interprocess {
 }  //namespace boost {
+
+#else //#ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
+
+#include <boost/type_traits/remove_reference.hpp>
+
+namespace boost {
+namespace interprocess {
+
+template <class T>
+inline typename boost::remove_reference<T>::type&&
+move(T&& t)
+{  return t;   }
+
+template <class T>
+inline 
+T&&
+forward(typename identity<T>::type&& t)
+{  return t;   }
+
+}  //namespace interprocess {
+}  //namespace boost {
+
+#endif   //#ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
 
 #include <boost/interprocess/detail/config_end.hpp>
 

@@ -32,9 +32,3 @@
    #pragma warning (disable : 4146)
    #pragma warning (disable : 4267) //conversion from 'X' to 'Y', possible loss of data
 #endif
-
-
-#if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
-#  pragma warn -8026 // shut up warning "cannot inline function because ..."
-#  pragma warn -8027 // shut up warning "cannot inline function because ..."
-#endif

@@ -36,7 +36,7 @@ doxygen interprocess_doxygen
 
 xml interprocess_xml : interprocess.qbk ;
 
-boostbook standalone
+boostbook interprocess
    :
       interprocess_xml
       interprocess_doxygen

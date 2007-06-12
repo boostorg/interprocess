@@ -130,9 +130,15 @@ class sharable_lock
          signature. An non-moved sharable_lock can be moved with the expression:
          "move(lock);". This constructor does not alter the state of the mutex,
          only potentially who owns it.*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    explicit sharable_lock(detail::moved_object<sharable_lock<mutex_type> > upgr)
       : mp_mutex(0), m_locked(upgr.get().owns())
    {  mp_mutex = upgr.get().release(); }
+   #else
+   explicit sharable_lock(sharable_lock<mutex_type> &&upgr)
+      : mp_mutex(0), m_locked(upgr.owns())
+   {  mp_mutex = upgr.release(); }
+   #endif
 
    /*!Effects: If upgr.owns() then calls unlock_upgradable_and_lock_sharable() on the
          referenced mutex.
@@ -143,6 +149,7 @@ class sharable_lock
          unlocking upgr. Only a moved sharable_lock's will match this
          signature. An non-moved upgradable_lock can be moved with the expression:
          "move(lock);".*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    explicit sharable_lock(detail::moved_object<upgradable_lock<mutex_type> > upgr)
       : mp_mutex(0), m_locked(false)
    {
@@ -153,6 +160,18 @@ class sharable_lock
       }
       mp_mutex = u_lock.release();
    }
+   #else
+   explicit sharable_lock(upgradable_lock<mutex_type> &&upgr)
+      : mp_mutex(0), m_locked(false)
+   {
+      upgradable_lock<mutex_type> &u_lock = upgr;
+      if(u_lock.owns()){
+         u_lock.mutex()->unlock_upgradable_and_lock_sharable();
+         m_locked = true;
+      }
+      mp_mutex = u_lock.release();
+   }
+   #endif
 
    /*!Effects: If scop.owns() then calls unlock_and_lock_sharable() on the
          referenced mutex.
@@ -164,6 +183,7 @@ class sharable_lock
          Only a moved scoped_lock's will match this
          signature. An non-moved scoped_lock can be moved with the expression:
          "move(lock);".*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    explicit sharable_lock(detail::moved_object<scoped_lock<mutex_type> > scop)
       : mp_mutex(0), m_locked(false)
    {
@@ -174,6 +194,18 @@ class sharable_lock
       }
       mp_mutex = e_lock.release();
    }
+   #else
+   explicit sharable_lock(scoped_lock<mutex_type> &&scop)
+      : mp_mutex(0), m_locked(false)
+   {
+      scoped_lock<mutex_type> &e_lock = scop;
+      if(e_lock.owns()){
+         e_lock.mutex()->unlock_and_lock_sharable();
+         m_locked = true;
+      }
+      mp_mutex = e_lock.release();
+   }
+   #endif
 
    /*!Effects: if (owns()) mp_mutex->unlock_sharable().
       Notes: The destructor behavior ensures that the mutex lock is not leaked.*/
@@ -190,6 +222,7 @@ class sharable_lock
       Notes: With a recursive mutex it is possible that both this and upgr own the mutex
          before the assignment. In this case, this will own the mutex after the assignment
          (and upgr will not), but the mutex's lock count will be decremented by one.*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    sharable_lock &operator=(detail::moved_object<sharable_lock<mutex_type> > upgr)
    {  
       if(this->owns())
@@ -198,6 +231,16 @@ class sharable_lock
       mp_mutex = upgr.get().release();
       return *this;
    }
+   #else
+   sharable_lock &operator=(sharable_lock<mutex_type> &&upgr)
+   {  
+      if(this->owns())
+         this->unlock();
+      m_locked = upgr.owns();
+      mp_mutex = upgr.release();
+      return *this;
+   }
+   #endif
 
    /*!Effects: If mutex() == 0 or already locked, throws a lock_exception()
          exception. Calls lock_sharable() on the referenced mutex.
@@ -284,11 +327,20 @@ class sharable_lock
 
    /*!Effects: Swaps state with moved lock. 
       Throws: Nothing.*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(detail::moved_object<sharable_lock<mutex_type> > other)
    {
       std::swap(mp_mutex, other.get().mp_mutex);
       std::swap(m_locked, other.get().m_locked);
    }
+   #else
+   void swap(sharable_lock<mutex_type> &&other)
+   {
+      std::swap(mp_mutex, other.mp_mutex);
+      std::swap(m_locked, other.m_locked);
+   }
+   #endif
+
    /// @cond
    private:
    mutex_type *mp_mutex;

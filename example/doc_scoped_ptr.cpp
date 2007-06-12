@@ -56,6 +56,8 @@ int main ()
       for(int i = 0; i < 2; ++i){
          //Create an object in shared memory
          my_class * my_object = shmem.construct<my_class>("my_object")();
+         my_class * my_object2 = shmem.construct<my_class>(anonymous_instance)();
+         shmem.destroy_ptr(my_object2);
          
          //Since the next shared memory allocation can throw
          //assign it to a scoped_ptr so that if an exception occurs

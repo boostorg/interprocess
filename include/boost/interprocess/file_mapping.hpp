@@ -54,12 +54,18 @@ class file_mapping
    /*!Moves the ownership of "moved"'s shared memory object to *this. 
       After the call, "moved" does not represent any shared memory object. 
       Does not throw*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    file_mapping(detail::moved_object<file_mapping> &moved)
    {  this->swap(moved.get());   }
+   #else
+   file_mapping(file_mapping &&moved)
+   {  this->swap(moved);   }
+   #endif
 
    /*!Moves the ownership of "moved"'s shared memory to *this.
       After the call, "moved" does not represent any shared memory. 
       Does not throw*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    file_mapping &operator=
       (detail::moved_object<file_mapping> &moved)
    {  
@@ -67,6 +73,14 @@ class file_mapping
       this->swap(tmp);
       return *this;  
    }
+   #else
+   file_mapping &operator=(file_mapping &&moved)
+   {  
+      file_mapping tmp(move(moved));
+      this->swap(tmp);
+      return *this;  
+   }
+   #endif
 
    /*!Swaps to file_mappings. Does not throw*/
    void swap(file_mapping &other);

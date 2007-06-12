@@ -38,7 +38,7 @@ struct unordered_map_index_aux
    typedef private_adaptive_pool
             <value_type,
                typename MapConfig::
-                  restricted_segment_manager>      allocator_type;
+                  basic_segment_manager>      allocator_type;
     struct hasher
       : std::unary_function<key_type, std::size_t>
     {
@@ -65,13 +65,13 @@ class unordered_map_index
    typedef unordered_map_index_aux<MapConfig>   index_aux;
    typedef typename index_aux::index_t          base_type;
    typedef typename 
-      MapConfig::restricted_segment_manager     restricted_segment_manager;
+      MapConfig::basic_segment_manager     basic_segment_manager;
    /// @endcond
 
    public:
    /*!Constructor. Takes a pointer to the
       segment manager. Can throw*/
-   unordered_map_index(restricted_segment_manager *segment_mngr)
+   unordered_map_index(basic_segment_manager *segment_mngr)
       : base_type(0,
                   typename index_aux::hasher(),
                   typename index_aux::key_equal(),

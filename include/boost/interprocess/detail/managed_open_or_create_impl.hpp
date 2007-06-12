@@ -19,8 +19,8 @@
 #include <boost/type_traits/type_with_alignment.hpp>
 #include <boost/interprocess/detail/atomic.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/mpl/bool.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -147,10 +147,17 @@ class managed_open_or_create_impl
          , construct_func);
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    managed_open_or_create_impl
       (detail::moved_object<managed_open_or_create_impl> &moved)
    {  this->swap(moved.get());   }
+   #else
+   managed_open_or_create_impl
+      (managed_open_or_create_impl &&moved)
+   {  this->swap(moved);   }
+   #endif
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    managed_open_or_create_impl &operator=
       (detail::moved_object<managed_open_or_create_impl> &moved)
    {  
@@ -158,6 +165,15 @@ class managed_open_or_create_impl
       this->swap(tmp);
       return *this;  
    }
+   #else
+   managed_open_or_create_impl &operator=
+      (managed_open_or_create_impl &&moved)
+   {  
+      managed_open_or_create_impl tmp(move(moved));
+      this->swap(tmp);
+      return *this;  
+   }
+   #endif
 
    ~managed_open_or_create_impl()
    {}
@@ -184,11 +200,11 @@ class managed_open_or_create_impl
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
-   static void write_whole_device(DeviceAbstraction &, std::size_t, boost::mpl::false_)
+   static void write_whole_device(DeviceAbstraction &, std::size_t, false_)
    {} //Empty
 
    template<bool dummy>
-   static void write_whole_device(DeviceAbstraction &dev, std::size_t size, boost::mpl::true_)
+   static void write_whole_device(DeviceAbstraction &dev, std::size_t size, true_)
    {
       file_handle_t hnd = detail::file_handle_from_mapping_handle(dev.get_mapping_handle());
 
@@ -208,7 +224,7 @@ class managed_open_or_create_impl
          ;remaining -= write_size){
          const std::size_t DataSize = 512;
          static char data [DataSize];
-         write_size = min_value(DataSize, remaining);
+         write_size = DataSize < remaining ? DataSize : remaining;
          if(!detail::write_file(hnd, data, write_size)){
             error_info err = system_error_code();
             throw interprocess_exception(err);
@@ -218,23 +234,23 @@ class managed_open_or_create_impl
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
-   static void truncate_device(DeviceAbstraction &, std::size_t, boost::mpl::false_)
+   static void truncate_device(DeviceAbstraction &, std::size_t, false_)
    {} //Empty
 
    template<bool dummy>
-   static void truncate_device(DeviceAbstraction &dev, std::size_t size, boost::mpl::true_)
+   static void truncate_device(DeviceAbstraction &dev, std::size_t size, true_)
    {  dev.truncate(size);  }
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
-   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t size, boost::mpl::false_)
+   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t size, false_)
    {
       DeviceAbstraction tmp(create_only, name, read_write, size);
       tmp.swap(dev);
    }
 
    template<bool dummy>
-   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t, boost::mpl::true_)
+   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t, true_)
    {
       DeviceAbstraction tmp(create_only, name, read_write);
       tmp.swap(dev);
@@ -246,7 +262,7 @@ class managed_open_or_create_impl
        mode_t mode, const void *addr,
        ConstructFunc construct_func)
    {
-      typedef boost::mpl::bool_<FileBased> file_like_t;
+      typedef bool_<FileBased> file_like_t;
       (void)mode;
       error_info err;
       bool created = false;

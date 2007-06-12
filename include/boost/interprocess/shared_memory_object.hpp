@@ -75,13 +75,19 @@ class shared_memory_object
    //!Moves the ownership of "moved"'s shared memory object to *this. 
    //!After the call, "moved" does not represent any shared memory object. 
    //!Does not throw
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    shared_memory_object
       (detail::moved_object<shared_memory_object> &moved)
    {  this->swap(moved.get());   }
+   #else
+   shared_memory_object(shared_memory_object &&moved)
+   {  this->swap(moved);   }
+   #endif
 
    //!Moves the ownership of "moved"'s shared memory to *this.
    //!After the call, "moved" does not represent any shared memory. 
    //!Does not throw
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    shared_memory_object &operator=
       (detail::moved_object<shared_memory_object> &moved)
    {  
@@ -89,6 +95,14 @@ class shared_memory_object
       this->swap(tmp);
       return *this;  
    }
+   #else
+   shared_memory_object &operator=(shared_memory_object &&moved)
+   {  
+      shared_memory_object tmp(move(moved));
+      this->swap(tmp);
+      return *this;  
+   }
+   #endif
 
    //!Swaps the shared_memory_objects. Does not throw
    void swap(shared_memory_object &other);
@@ -122,8 +136,8 @@ class shared_memory_object
    bool priv_open_or_create(create_enum_t type, const char *filename, mode_t mode);
 
    file_handle_t  m_handle;
-   mode_t      m_mode;
-   std::string       m_filename;
+   mode_t         m_mode;
+   std::string    m_filename;
    /// @endcond
 };
 
@@ -261,10 +275,15 @@ inline bool shared_memory_object::priv_open_or_create
     const char *filename,
     mode_t mode)
 {
-   m_filename = filename;
+   bool slash_added = filename[0] != '/';
+   //First add precedding "/"
+   m_filename.clear();
+   if(slash_added){
+      m_filename = '/';
+   }
+   m_filename += filename;
 
    //Create new mapping
-
    int oflag = 0;
    if(mode == read_only){
       oflag |= O_RDONLY;
@@ -295,7 +314,7 @@ inline bool shared_memory_object::priv_open_or_create
    }
 
    //Open file using POSIX API
-   m_handle = shm_open(filename, oflag, S_IRWXO | S_IRWXG | S_IRWXU);
+   m_handle = shm_open(m_filename.c_str(), oflag, S_IRWXO | S_IRWXG | S_IRWXU);
 
    //Check for error
    if(m_handle == -1){
@@ -304,13 +323,28 @@ inline bool shared_memory_object::priv_open_or_create
       throw interprocess_exception(err);
    }
 
+   if(slash_added){
+      m_filename.erase(m_filename.begin());
+   }
+
    m_mode = mode;
    return true;
 }
 
 inline bool shared_memory_object::remove(const char *filename)
 {
-   return 0 != shm_unlink(filename);
+   try{
+      std::string file_str;
+      //First add precedding "/"
+      if(filename[0] != '/'){
+         file_str = '/';
+      }
+      file_str += filename;
+      return 0 != shm_unlink(file_str.c_str());
+   }
+   catch(...){
+      return false;
+   }
 }
 
 inline void shared_memory_object::truncate(offset_t length)

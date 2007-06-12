@@ -24,6 +24,7 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/min_max.hpp>
 #include <boost/type_traits/alignment_of.hpp>
 #include <boost/type_traits/type_with_alignment.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
@@ -137,6 +138,9 @@ class simple_seq_fit_impl
    /*!Returns the size of the memory segment*/
    std::size_t get_size()  const;
 
+   /*!Returns the number of free bytes of the memory segment*/
+   std::size_t get_free_memory()  const;
+
    /*!Increases managed memory in extra_size bytes more*/
    void grow(std::size_t extra_size);
 
@@ -148,7 +152,7 @@ class simple_seq_fit_impl
 
    //!Initializes to zero all the memory that's not in use.
    //!This function is normally used for security reasons.
-   void clear_free_memory();
+   void zero_free_memory();
 
    std::pair<void *, bool>
       allocation_command  (allocation_type command,   std::size_t limit_size,
@@ -289,6 +293,13 @@ inline std::size_t simple_seq_fit_impl<MutexFamily, VoidPointer>::get_size()  co
    {  return m_header.m_size;  }
 
 template<class MutexFamily, class VoidPointer>
+inline std::size_t simple_seq_fit_impl<MutexFamily, VoidPointer>::get_free_memory()  const
+{
+   return m_header.m_size - m_header.m_allocated - 
+      ((char*)detail::get_pointer(m_header.m_root.m_next) - (char*)this);
+}
+
+template<class MutexFamily, class VoidPointer>
 inline std::size_t simple_seq_fit_impl<MutexFamily, VoidPointer>::
    get_min_size (std::size_t extra_hdr_bytes)
 {
@@ -309,7 +320,7 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
 }
 
 template<class MutexFamily, class VoidPointer>
-inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::clear_free_memory()
+inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::zero_free_memory()
 {
    //-----------------------
    boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
@@ -448,7 +459,6 @@ void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
          detail::get_rounded_size(preferred_size - extra_forward, Alignment);
    
       if(!only_preferred_backwards){
-         needs_backwards = 
             max_value(detail::get_rounded_size(min_size - extra_forward, Alignment)
                      ,min_value(prev->get_user_bytes(), needs_backwards));
       }

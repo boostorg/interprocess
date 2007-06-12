@@ -18,9 +18,6 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/type_traits/is_pointer.hpp>
-
-
 namespace boost{
 namespace interprocess{
 

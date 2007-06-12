@@ -47,13 +47,19 @@ class file_wrapper
    /*!Moves the ownership of "moved"'s shared memory object to *this. 
       After the call, "moved" does not represent any shared memory object. 
       Does not throw*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    file_wrapper
       (detail::moved_object<file_wrapper> &moved)
    {  this->swap(moved.get());   }
+   #else
+   file_wrapper(file_wrapper &&moved)
+   {  this->swap(moved);   }
+   #endif
 
    /*!Moves the ownership of "moved"'s shared memory to *this.
       After the call, "moved" does not represent any shared memory. 
       Does not throw*/
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    file_wrapper &operator=
       (detail::moved_object<file_wrapper> &moved)
    {  
@@ -61,6 +67,14 @@ class file_wrapper
       this->swap(tmp);
       return *this;  
    }
+   #else
+   file_wrapper &operator=(file_wrapper &&moved)
+   {  
+      file_wrapper tmp(move(moved));
+      this->swap(tmp);
+      return *this;  
+   }
+   #endif
 
    /*!Swaps to shared_memory_objects. Does not throw*/
    void swap(file_wrapper &other);

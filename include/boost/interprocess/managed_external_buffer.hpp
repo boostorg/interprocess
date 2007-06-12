@@ -65,14 +65,26 @@ class basic_managed_external_buffer
    }
 
    //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_external_buffer
       (detail::moved_object<basic_managed_external_buffer> &moved)
    {  this->swap(moved.get());   }
+   #else
+   basic_managed_external_buffer
+      (basic_managed_external_buffer &&moved)
+   {  this->swap(moved);   }
+   #endif
 
    //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_external_buffer &operator=
       (detail::moved_object<basic_managed_external_buffer> &moved)
    {  this->swap(moved.get());   return *this;  }
+   #else
+   basic_managed_external_buffer &operator=
+      (basic_managed_external_buffer &&moved)
+   {  this->swap(moved);   return *this;  }
+   #endif
 
    void grow(std::size_t extra_bytes)
    {  base_t::grow(extra_bytes);   }

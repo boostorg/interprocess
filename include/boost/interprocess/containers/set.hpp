@@ -49,14 +49,16 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
+
 #include <utility>
 #include <functional>
 #include <memory>
+
+#include <boost/interprocess/detail/move.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/containers/detail/tree.hpp>
 #include <boost/interprocess/detail/move.hpp>
-
 
 namespace boost {   namespace interprocess {
 
@@ -84,7 +86,7 @@ class set
    /// @cond
    private:
    typedef detail::rbtree<T, T, 
-                     detail::identity<T>, Pred, Alloc> tree_t;
+                     identity<T>, Pred, Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing set
    /// @endcond
 
@@ -138,9 +140,15 @@ class set
    //! <b>Complexity</b>: Construct.
    //! 
    //! <b>Postcondition</b>: x is emptied.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    set(const detail::moved_object<set<T,Pred,Alloc> >& x) 
       : m_tree(move(x.get().m_tree))
    {}
+   #else
+   set(set<T,Pred,Alloc> &&x) 
+      : m_tree(move(x.m_tree))
+   {}
+   #endif
 
    //! <b>Effects</b>: Makes *this a copy of x.
    //! 
@@ -151,8 +159,13 @@ class set
    //! <b>Effects</b>: this->swap(x.get()).
    //! 
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    set<T,Pred,Alloc>& operator=(const detail::moved_object<set<T, Pred, Alloc> >& x)
    {  m_tree = move(x.get().m_tree);   return *this;  }
+   #else
+   set<T,Pred,Alloc>& operator=(set<T, Pred, Alloc> &&x)
+   {  m_tree = move(x.m_tree);   return *this;  }
+   #endif
 
    //! <b>Effects</b>: Returns the comparison object out
    //!   of which a was constructed.
@@ -282,8 +295,13 @@ class set
    //! <b>Throws</b>: Nothing.
    //!
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object<set<T,Pred,Alloc> >& x) 
    { m_tree.swap(x.get().m_tree); }
+   #else
+   void swap(set<T,Pred,Alloc> &&x) 
+   { m_tree.swap(x.m_tree); }
+   #endif
 
    //! <b>Effects</b>: Inserts x if and only if there is no element in the container 
    //!   with key equivalent to the key of x.
@@ -304,8 +322,13 @@ class set
    //!   points to the element with key equivalent to the key of x.
    //!
    //! <b>Complexity</b>: Logarithmic.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    std::pair<iterator,bool> insert(const detail::moved_object<value_type>& x) 
    {  return m_tree.insert_unique(x);  }
+   #else
+   std::pair<iterator,bool> insert(value_type &&x) 
+   {  return m_tree.insert_unique(move(x));  }
+   #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container if and only if there is 
    //!   no element in the container with key equivalent to the key of x.
@@ -325,8 +348,13 @@ class set
    //! <b>Returns</b>: An iterator pointing to the element with key equivalent to the key of x.
    //!
    //! <b>Complexity</b>: Logarithmic.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(const_iterator p, const detail::moved_object<value_type>& x) 
    {  return m_tree.insert_unique(p, x); }
+   #else
+   iterator insert(const_iterator p, value_type &&x) 
+   {  return m_tree.insert_unique(p, move(x)); }
+   #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.
    //!
@@ -473,6 +501,7 @@ inline bool operator>=(const set<T,Pred,Alloc>& x,
                        const set<T,Pred,Alloc>& y) 
 {  return !(x < y);  }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class T, class Pred, class Alloc>
 inline void swap(set<T,Pred,Alloc>& x, 
                  set<T,Pred,Alloc>& y) 
@@ -487,6 +516,13 @@ template <class T, class Pred, class Alloc>
 inline void swap(detail::moved_object<set<T,Pred,Alloc> >& y, 
                  set<T,Pred,Alloc>& x) 
 {  y.swap(x.get());  }
+
+#else
+template <class T, class Pred, class Alloc>
+inline void swap(set<T,Pred,Alloc>&&x, 
+                 set<T,Pred,Alloc>&&y) 
+{  x.swap(y);  }
+#endif
 
 /// @cond
 /*!This class is movable*/
@@ -530,7 +566,7 @@ class multiset
    /// @cond
    private:
    typedef detail::rbtree<T, T, 
-                     detail::identity<T>, Pred, Alloc> tree_t;
+                     identity<T>, Pred, Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing multiset
    /// @endcond
 
@@ -585,9 +621,15 @@ class multiset
    //! <b>Complexity</b>: Construct.
    //! 
    //! <b>Postcondition</b>: x is emptied.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    multiset(const detail::moved_object<multiset<T,Pred,Alloc> >& x) 
       : m_tree(move(x.get().m_tree))
    {}
+   #else
+   multiset(multiset<T,Pred,Alloc> &&x) 
+      : m_tree(move(x.m_tree))
+   {}
+   #endif
 
    //! <b>Effects</b>: Makes *this a copy of x.
    //! 
@@ -598,8 +640,13 @@ class multiset
    //! <b>Effects</b>: this->swap(x.get()).
    //! 
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    multiset<T,Pred,Alloc>& operator=(const detail::moved_object<multiset<T,Pred,Alloc> >& x) 
    {  m_tree = move(x.get().m_tree);   return *this;  }
+   #else
+   multiset<T,Pred,Alloc>& operator=(multiset<T,Pred,Alloc> &&x) 
+   {  m_tree = move(x.m_tree);   return *this;  }
+   #endif
 
    //! <b>Effects</b>: Returns the comparison object out
    //!   of which a was constructed.
@@ -729,8 +776,13 @@ class multiset
    //! <b>Throws</b>: Nothing.
    //!
    //! <b>Complexity</b>: Constant.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object<multiset<T,Pred,Alloc> >& x) 
    { m_tree.swap(x.get().m_tree); }
+   #else
+   void swap(multiset<T,Pred,Alloc> && x) 
+   { m_tree.swap(x.m_tree); }
+   #endif
 
    //! <b>Effects</b>: Inserts x and returns the iterator pointing to the
    //!   newly inserted element. 
@@ -746,8 +798,13 @@ class multiset
    //!
    //! <b>Complexity</b>: Logarithmic in general, but amortized constant if t
    //!   is inserted right before p.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(const detail::moved_object<value_type>& x) 
    {  return m_tree.insert_equal(x);  }
+   #else
+   iterator insert(value_type && x) 
+   {  return m_tree.insert_equal(move(x));  }
+   #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container.
    //!   p is a hint pointing to where the insert should start to search.
@@ -768,8 +825,13 @@ class multiset
    //!
    //! <b>Complexity</b>: Logarithmic in general, but amortized constant if t
    //!   is inserted right before p.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(const_iterator p, const detail::moved_object<value_type>& x) 
    {  return m_tree.insert_equal(p, x);  }
+   #else
+   iterator insert(const_iterator p, value_type && x) 
+   {  return m_tree.insert_equal(p, move(x));  }
+   #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.
    //!
@@ -916,6 +978,7 @@ inline bool operator>=(const multiset<T,Pred,Alloc>& x,
                        const multiset<T,Pred,Alloc>& y) 
 {  return !(x < y);  }
 
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 template <class T, class Pred, class Alloc>
 inline void swap(multiset<T,Pred,Alloc>& x, 
                  multiset<T,Pred,Alloc>& y) 
@@ -930,6 +993,12 @@ template <class T, class Pred, class Alloc>
 inline void swap(detail::moved_object<multiset<T,Pred,Alloc> >& y, 
                  multiset<T,Pred,Alloc>& x) 
 {  y.swap(x.get());  }
+#else
+template <class T, class Pred, class Alloc>
+inline void swap(multiset<T,Pred,Alloc>&&x, 
+                 multiset<T,Pred,Alloc>&&y) 
+{  x.swap(y);  }
+#endif
 
 /// @cond
 /*!This class is movable*/

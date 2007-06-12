@@ -84,8 +84,9 @@ class sp_counted_impl_pd
       this_pointer this_ptr (this);
       //Do it now!
       scoped_ptr<this_type, 
-                 scoped_deallocator<this_allocator> >(this_ptr, a_copy);
-      a_copy.destroy(this_ptr);
+                 scoped_ptr_deallocator<this_allocator> >(this_ptr, a_copy);
+      typedef typename this_allocator::value_type value_type;
+      detail::get_pointer(this_ptr)->~value_type();
    }
 
    void release() // nothrow

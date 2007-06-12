@@ -25,7 +25,11 @@ class move_iterator
    public:
    typedef typename boost::remove_reference<It>::type                      iterator_type;
    typedef typename std::iterator_traits<iterator_type>::value_type        value_type;
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    typedef typename move_type<value_type>::type                            reference;
+   #else
+   typedef value_type &&                                                   reference;
+   #endif
    typedef typename std::iterator_traits<iterator_type>::pointer           pointer;
    typedef typename std::iterator_traits<iterator_type>::difference_type   difference_type;
    typedef typename std::iterator_traits<iterator_type>::iterator_category iterator_category;
@@ -49,7 +53,11 @@ class move_iterator
    {  return m_it;   }
 
    reference operator*() const
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    {  return move(*m_it);  }
+   #else
+   {  return *m_it;  }
+   #endif
 
    pointer   operator->() const
    {  return m_it;   }

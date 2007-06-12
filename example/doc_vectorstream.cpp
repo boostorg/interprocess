@@ -12,6 +12,7 @@
 //[doc_vectorstream
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/containers/string.hpp>
+#include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/streams/vectorstream.hpp>
 #include <iterator>

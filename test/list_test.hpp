@@ -111,18 +111,6 @@ int list_test (bool copied_allocators_equal = true)
 
    MyStdList *stdlist = new MyStdList;
 
-/*
-   {
-      typedef typename MyShmList::value_type IntType;
-      for(int i = 0; i < max; ++i){
-         IntType move_me(i);
-         shmlist->push_front(move(move_me));
-         stdlist->push_front(i);
-      }
-      if(!CheckEqualContainers(shmlist, stdlist)) return 1;
-      return 0;
-   }*/
-
    if(push_data_t::execute(max, shmlist, stdlist)){
       return 1;
    }

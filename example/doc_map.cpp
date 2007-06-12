@@ -34,7 +34,7 @@ int main ()
       //so the allocator must allocate that pair.
       typedef int    KeyType;
       typedef float  MappedType;
-      typedef std::pair<int, float> ValueType;
+      typedef std::pair<const int, float> ValueType;
 
       //Alias an STL compatible allocator of for the map.
       //This allocator will allow to place containers
@@ -61,7 +61,7 @@ int main ()
 
       //Insert data in the map
       for(int i = 0; i < 100; ++i){
-         mymap->insert(std::pair<int, float>(i, (float)i));
+         mymap->insert(std::pair<const int, float>(i, (float)i));
       }
    }
    catch(...){

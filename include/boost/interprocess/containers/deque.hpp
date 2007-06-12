@@ -52,6 +52,10 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/iterators.hpp>
+#include <boost/interprocess/detail/algorithms.hpp>
+#include <boost/interprocess/detail/min_max.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/iterator.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
@@ -64,7 +68,6 @@
 #include <boost/interprocess/detail/move_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
-#include <boost/detail/allocator_utilities.hpp>
 
 namespace boost {
 
@@ -84,10 +87,8 @@ inline std::size_t deque_buf_size(std::size_t size)
 //  exception safety easier.
 template <class T, class Alloc>
 class deque_base
-   : public boost::detail::allocator::
-               rebind_to<Alloc, T >::type,
-     public boost::detail::allocator::
-               rebind_to<Alloc, typename Alloc::pointer>::type
+   : public Alloc::template rebind<T>::other,
+     public Alloc::template rebind<typename Alloc::pointer>::other
 {
  public:
    typedef typename Alloc::value_type           val_alloc_val;
@@ -96,16 +97,15 @@ class deque_base
    typedef typename Alloc::reference            val_alloc_ref;
    typedef typename Alloc::const_reference      val_alloc_cref;
    typedef typename Alloc::value_type           val_alloc_diff;
-   typedef typename boost::detail::allocator::
-      rebind_to<Alloc, val_alloc_ptr>::type     ptr_alloc;
+   typedef typename Alloc::template rebind
+      <typename Alloc::pointer>::other          ptr_alloc;
    typedef typename ptr_alloc::value_type       ptr_alloc_val;
    typedef typename ptr_alloc::pointer          ptr_alloc_ptr;
    typedef typename ptr_alloc::const_pointer    ptr_alloc_cptr;
    typedef typename ptr_alloc::reference        ptr_alloc_ref;
    typedef typename ptr_alloc::const_reference  ptr_alloc_cref;
-
-   typedef typename boost::detail::allocator::
-            rebind_to<Alloc, T >::type          allocator_type;
+   typedef typename Alloc::template
+      rebind<T>::other                          allocator_type;
    
    allocator_type get_allocator() const 
       { return *this; }
@@ -113,8 +113,8 @@ class deque_base
    protected:
    enum {   trivial_dctr_after_move = boost::has_trivial_destructor<val_alloc_val>::value   };
 
-   typedef typename boost::detail::allocator::
-         rebind_to<Alloc, typename Alloc::pointer>::type   map_allocator_type;
+   typedef typename Alloc::template
+      rebind<typename Alloc::pointer>::other map_allocator_type;
 
    val_alloc_ptr priv_allocate_node() 
       {  return this->allocator_type::allocate(deque_buf_size(sizeof(T)));  }
@@ -372,6 +372,7 @@ class deque_base
       : allocator_type(a), map_allocator_type(a),
         m_map(0), m_map_size(0), m_start(), m_finish() {}
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    deque_base(const detail::moved_object<deque_base> &md)
       : allocator_type(md.get()), map_allocator_type(md.get()),
         m_map(md.get().m_map), m_map_size(md.get().m_map_size),
@@ -382,6 +383,18 @@ class deque_base
       m_start = iterator();
       m_finish = iterator();
    }
+   #else
+   deque_base(deque_base &&md)
+      : allocator_type(md), map_allocator_type(md),
+        m_map(md.m_map), m_map_size(md.m_map_size),
+        m_start(md.m_start), m_finish(md.m_finish)
+   {
+      m_map = 0;
+      m_map_size = 0;
+      m_start = iterator();
+      m_finish = iterator();
+   }
+   #endif
 
    ~deque_base()
    {
@@ -464,8 +477,8 @@ class deque : protected deque_base<T, Alloc>
    typedef typename Alloc::const_pointer        val_alloc_cptr;
    typedef typename Alloc::reference            val_alloc_ref;
    typedef typename Alloc::const_reference      val_alloc_cref;
-   typedef typename boost::detail::allocator::
-      rebind_to<Alloc, val_alloc_ptr>::type     ptr_alloc;
+   typedef typename Alloc::template
+      rebind<val_alloc_ptr>::other              ptr_alloc;
    typedef typename ptr_alloc::value_type       ptr_alloc_val;
    typedef typename ptr_alloc::pointer          ptr_alloc_ptr;
    typedef typename ptr_alloc::const_pointer    ptr_alloc_cptr;
@@ -581,9 +594,15 @@ class deque : protected deque_base<T, Alloc>
    deque(const deque& x) : Base(x.get_allocator(), x.size()) 
    { std::uninitialized_copy(x.begin(), x.end(), this->m_start); }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    deque(const detail::moved_object<deque> &mx) 
       :  Base(move((Base&)mx.get()))
    {}
+   #else
+   deque(deque &&mx) 
+      :  Base(move((Base&)mx))
+   {}
+   #endif
 
    deque(size_type n, const value_type& value,
          const allocator_type& a = allocator_type()) : Base(a, n)
@@ -599,7 +618,7 @@ class deque : protected deque_base<T, Alloc>
    {
       //Dispatch depending on integer/iterator
       const bool aux_boolean = boost::is_integral<InpIt>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
+      typedef bool_<aux_boolean> Result;
       this->priv_initialize_dispatch(first, last, Result());
    }
 
@@ -621,8 +640,13 @@ class deque : protected deque_base<T, Alloc>
       return *this;
    }        
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    deque& operator= (const detail::moved_object<deque> &mx) 
    {  this->clear(); this->swap(mx.get());   return *this;  }
+   #else
+   deque& operator= (deque &&mx) 
+   {  this->clear(); this->swap(mx);   return *this;  }
+   #endif
 
    void swap(deque& x)
    {
@@ -632,8 +656,13 @@ class deque : protected deque_base<T, Alloc>
       std::swap(this->m_map_size, x.m_map_size);
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(const detail::moved_object<deque> &mx)
    {  this->swap(mx.get());   }
+   #else
+   void swap(deque &&mx)
+   {  this->swap(mx);   }
+   #endif
 
    void assign(size_type n, const T& val) {
       this->priv_fill_assign(n, val);
@@ -643,55 +672,79 @@ class deque : protected deque_base<T, Alloc>
    void assign(InpIt first, InpIt last) {
       //Dispatch depending on integer/iterator
       const bool aux_boolean = boost::is_integral<InpIt>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
+      typedef bool_<aux_boolean> Result;
       this->priv_assign_dispatch(first, last, Result());
    }
 
    void push_back(const value_type& t) 
    {
       if (this->m_finish.m_cur != this->m_finish.m_last - 1) {
-         this->allocator_type::construct(this->m_finish.m_cur, t);
+         new(detail::get_pointer(this->m_finish.m_cur))value_type(t);
          ++this->m_finish.m_cur;
       }
       else
          this->priv_push_back_aux(t);
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void push_back(const detail::moved_object<value_type> &mt) 
    {
       if (this->m_finish.m_cur != this->m_finish.m_last - 1) {
-         this->allocator_type::construct(this->m_finish.m_cur, mt);
+         new(detail::get_pointer(this->m_finish.m_cur))value_type(mt);
          ++this->m_finish.m_cur;
       }
       else
          this->priv_push_back_aux(mt);
    }
+   #else
+   void push_back(value_type &&mt) 
+   {
+      if (this->m_finish.m_cur != this->m_finish.m_last - 1) {
+         new(detail::get_pointer(this->m_finish.m_cur))value_type(move(mt));
+         ++this->m_finish.m_cur;
+      }
+      else
+         this->priv_push_back_aux(move(mt));
+   }
+   #endif
 
    void push_front(const value_type& t)
    {
       if (this->m_start.m_cur != this->m_start.m_first) {
-         this->allocator_type::construct(this->m_start.m_cur - 1, t);
+         new(detail::get_pointer(this->m_start.m_cur)- 1)value_type(t);
          --this->m_start.m_cur;
       }
       else
          this->priv_push_front_aux(t);
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void push_front(const detail::moved_object<value_type> &mt)
    {
       if (this->m_start.m_cur != this->m_start.m_first) {
-         this->allocator_type::construct(this->m_start.m_cur - 1, mt);
+         new(detail::get_pointer(this->m_start.m_cur)- 1)value_type(mt);
          --this->m_start.m_cur;
       }
       else
          this->priv_push_front_aux(mt);
    }
+   #else
+   void push_front(value_type &&mt)
+   {
+      if (this->m_start.m_cur != this->m_start.m_first) {
+         new(detail::get_pointer(this->m_start.m_cur)- 1)value_type(move(mt));
+         --this->m_start.m_cur;
+      }
+      else
+         this->priv_push_front_aux(move(mt));
+   }
+   #endif
 
    void pop_back() 
    {
       if (this->m_finish.m_cur != this->m_finish.m_first) {
          --this->m_finish.m_cur;
-         static_cast<allocator_type*>(this)->destroy(this->m_finish.m_cur);
+         detail::get_pointer(this->m_finish.m_cur)->~value_type();
       }
       else
          this->priv_pop_back_aux();
@@ -700,7 +753,7 @@ class deque : protected deque_base<T, Alloc>
    void pop_front() 
    {
       if (this->m_start.m_cur != this->m_start.m_last - 1) {
-         static_cast<allocator_type*>(this)->destroy(this->m_start.m_cur);
+         detail::get_pointer(this->m_start.m_cur)->~value_type();
          ++this->m_start.m_cur;
       }
       else 
@@ -724,6 +777,7 @@ class deque : protected deque_base<T, Alloc>
       }
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator insert(iterator position, const detail::moved_object<value_type> &mx) 
    {
       if (position.m_cur == this->m_start.m_cur) {
@@ -740,6 +794,24 @@ class deque : protected deque_base<T, Alloc>
          return this->priv_insert_aux(position, mx);
       }
    }
+   #else
+   iterator insert(iterator position, value_type &&mx) 
+   {
+      if (position.m_cur == this->m_start.m_cur) {
+         this->push_front(move(mx));
+         return this->m_start;
+      }
+      else if (position.m_cur == this->m_finish.m_cur) {
+         this->push_back(move(mx));
+         iterator tmp = this->m_finish;
+         --tmp;
+         return tmp;
+      }
+      else {
+         return this->priv_insert_aux(position, move(mx));
+      }
+   }
+   #endif
 
    void insert(iterator pos, size_type n, const value_type& x)
       { this->priv_fill_insert(pos, n, x); }
@@ -750,7 +822,7 @@ class deque : protected deque_base<T, Alloc>
    {
       //Dispatch depending on integer/iterator
       const bool aux_boolean = boost::is_integral<InpIt>::value;
-      typedef boost::mpl::bool_<aux_boolean> Result;
+      typedef bool_<aux_boolean> Result;
       this->priv_insert_dispatch(pos, first, last, Result());
    }
 
@@ -873,7 +945,7 @@ class deque : protected deque_base<T, Alloc>
       if (pos.m_cur == this->m_start.m_cur) {
          iterator new_start = this->priv_reserve_elements_at_front(n);
          BOOST_TRY{
-            std::uninitialized_copy(first, last, new_start);
+            boost::interprocess::uninitialized_copy(first, last, new_start);
             this->m_start = new_start;
          }
          BOOST_CATCH(...){
@@ -885,7 +957,7 @@ class deque : protected deque_base<T, Alloc>
       else if (pos.m_cur == this->m_finish.m_cur) {
          iterator new_finish = this->priv_reserve_elements_at_back(n);
          BOOST_TRY{
-            std::uninitialized_copy(first, last, this->m_finish);
+            boost::interprocess::uninitialized_copy(first, last, this->m_finish);
             this->m_finish = new_finish;
          }
          BOOST_CATCH(...){
@@ -914,31 +986,37 @@ class deque : protected deque_base<T, Alloc>
    }
 
    template <class Integer>
-   void priv_initialize_dispatch(Integer n, Integer x, boost::mpl::true_) 
+   void priv_initialize_dispatch(Integer n, Integer x, true_) 
    {
       this->priv_initialize_map(n);
       this->priv_fill_initialize(x);
    }
 
    template <class InpIt>
-   void priv_initialize_dispatch(InpIt first, InpIt last, boost::mpl::false_) 
+   void priv_initialize_dispatch(InpIt first, InpIt last, false_) 
    {
       typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
       this->priv_range_initialize(first, last, ItCat());
    }
 
    void priv_destroy_range(iterator p, iterator p2)
-      { for(;p != p2; ++p) static_cast<allocator_type*>(this)->destroy(&*p); }
+   {
+      for(;p != p2; ++p)
+         detail::get_pointer(&*p)->~value_type();
+   }
 
    void priv_destroy_range(pointer p, pointer p2)
-      { for(;p != p2; ++p) static_cast<allocator_type*>(this)->destroy(p); }
+   {
+      for(;p != p2; ++p)
+         detail::get_pointer(&*p)->~value_type();
+   }
 
    template <class Integer>
-   void priv_assign_dispatch(Integer n, Integer val, boost::mpl::true_)
+   void priv_assign_dispatch(Integer n, Integer val, true_)
       { this->priv_fill_assign((size_type) n, (T) val); }
 
    template <class InpIt>
-   void priv_assign_dispatch(InpIt first, InpIt last, boost::mpl::false_) 
+   void priv_assign_dispatch(InpIt first, InpIt last, false_) 
    {
       typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
       this->priv_assign_aux(first, last, ItCat());
@@ -973,7 +1051,7 @@ class deque : protected deque_base<T, Alloc>
 
    template <class Integer>
    void priv_insert_dispatch(iterator pos, Integer n, Integer x,
-                           boost::mpl::true_) 
+                           true_) 
    {
       this->priv_fill_insert(pos, (size_type) n, (value_type) x);
    }
@@ -981,7 +1059,7 @@ class deque : protected deque_base<T, Alloc>
    template <class InpIt>
    void priv_insert_dispatch(iterator pos,
                            InpIt first, InpIt last,
-                           boost::mpl::false_) 
+                           false_) 
    {
       typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
       this->insert(pos, first, last, ItCat());
@@ -994,6 +1072,7 @@ class deque : protected deque_base<T, Alloc>
       return iterator(this->begin() + n);
    }
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    iterator priv_insert_aux(iterator pos, const detail::moved_object<value_type> &mx)
    {
       typedef repeat_iterator<T, difference_type> r_iterator;
@@ -1005,6 +1084,19 @@ class deque : protected deque_base<T, Alloc>
                   ,move_it(r_iterator()));
       return iterator(this->begin() + n);
    }
+   #else
+   iterator priv_insert_aux(iterator pos, value_type &&mx)
+   {
+      typedef repeat_iterator<T, difference_type> r_iterator;
+      typedef detail::move_iterator<r_iterator> move_it;
+      //Just call more general insert(pos, size, value) and return iterator
+      size_type n = pos - begin();
+      this->insert(pos
+                  ,move_it(r_iterator(mx, 1))
+                  ,move_it(r_iterator()));
+      return iterator(this->begin() + n);
+   }
+   #endif
 
    void priv_insert_aux(iterator pos, size_type n, const value_type& x)
    {
@@ -1024,7 +1116,7 @@ class deque : protected deque_base<T, Alloc>
          BOOST_TRY {
             if (elemsbefore >= difference_type(n)) {
                iterator start_n = this->m_start + difference_type(n); 
-               std::uninitialized_copy(detail::make_move_iterator(this->m_start), detail::make_move_iterator(start_n), new_start);
+               boost::interprocess::uninitialized_copy(detail::make_move_iterator(this->m_start), detail::make_move_iterator(start_n), new_start);
                this->m_start = new_start;
                std::copy(detail::make_move_iterator(start_n), detail::make_move_iterator(pos), old_start);
                std::copy(first, last, pos - difference_type(n));
@@ -1053,7 +1145,7 @@ class deque : protected deque_base<T, Alloc>
          BOOST_TRY {
             if (elemsafter > difference_type(n)) {
                iterator finish_n = this->m_finish - difference_type(n);
-               std::uninitialized_copy(detail::make_move_iterator(finish_n), detail::make_move_iterator(this->m_finish), this->m_finish);
+               boost::interprocess::uninitialized_copy(detail::make_move_iterator(finish_n), detail::make_move_iterator(this->m_finish), this->m_finish);
                this->m_finish = new_finish;
                std::copy_backward(detail::make_move_iterator(pos), detail::make_move_iterator(finish_n), old_finish);
                std::copy(first, last, pos);
@@ -1087,9 +1179,9 @@ class deque : protected deque_base<T, Alloc>
       index_pointer cur;
       BOOST_TRY {
          for (cur = this->m_start.m_node; cur < this->m_finish.m_node; ++cur){
-            std::uninitialized_fill(*cur, *cur + this->s_buffer_size(), value);
+            boost::interprocess::uninitialized_fill(*cur, *cur + this->s_buffer_size(), value);
          }
-         std::uninitialized_fill(this->m_finish.m_first, this->m_finish.m_cur, value);
+         boost::interprocess::uninitialized_fill(this->m_finish.m_first, this->m_finish.m_cur, value);
       }
       BOOST_CATCH(...){
          this->priv_destroy_range(this->m_start, iterator(*cur, cur));
@@ -1127,10 +1219,10 @@ class deque : protected deque_base<T, Alloc>
                ++cur_node) {
             FwdIt mid = first;
             std::advance(mid, this->s_buffer_size());
-            std::uninitialized_copy(first, mid, *cur_node);
+            boost::interprocess::uninitialized_copy(first, mid, *cur_node);
             first = mid;
          }
-         std::uninitialized_copy(first, last, this->m_finish.m_first);
+         boost::interprocess::uninitialized_copy(first, last, this->m_finish.m_first);
       }
       BOOST_CATCH(...){
          this->priv_destroy_range(this->m_start, iterator(*cur_node, cur_node));
@@ -1145,7 +1237,7 @@ class deque : protected deque_base<T, Alloc>
       this->priv_reserve_map_at_back();
       *(this->m_finish.m_node + 1) = this->priv_allocate_node();
       BOOST_TRY {
-         this->allocator_type::construct(this->m_finish.m_cur, t);
+         new(detail::get_pointer(this->m_finish.m_cur))value_type(t);
          this->m_finish.priv_set_node(this->m_finish.m_node + 1);
          this->m_finish.m_cur = this->m_finish.m_first;
       }
@@ -1157,12 +1249,13 @@ class deque : protected deque_base<T, Alloc>
    }
 
    // Called only if this->m_finish.m_cur == this->m_finish.m_last - 1.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void priv_push_back_aux(const detail::moved_object<value_type> &mt)
    {
       this->priv_reserve_map_at_back();
       *(this->m_finish.m_node + 1) = this->priv_allocate_node();
       BOOST_TRY {
-         this->allocator_type::construct(this->m_finish.m_cur, mt);
+         new(detail::get_pointer(this->m_finish.m_cur))value_type(mt);
          this->m_finish.priv_set_node(this->m_finish.m_node + 1);
          this->m_finish.m_cur = this->m_finish.m_first;
       }
@@ -1172,6 +1265,23 @@ class deque : protected deque_base<T, Alloc>
       }
       BOOST_CATCH_END
    }
+   #else
+   void priv_push_back_aux(value_type &&mt)
+   {
+      this->priv_reserve_map_at_back();
+      *(this->m_finish.m_node + 1) = this->priv_allocate_node();
+      BOOST_TRY {
+         new(detail::get_pointer(this->m_finish.m_cur))value_type(move(mt));
+         this->m_finish.priv_set_node(this->m_finish.m_node + 1);
+         this->m_finish.m_cur = this->m_finish.m_first;
+      }
+      BOOST_CATCH(...){
+         this->priv_deallocate_node(*(this->m_finish.m_node + 1));
+         BOOST_RETHROW
+      }
+      BOOST_CATCH_END
+   }
+   #endif
 
    // Called only if this->m_start.m_cur == this->m_start.m_first.
    void priv_push_front_aux(const value_type& t)
@@ -1181,7 +1291,7 @@ class deque : protected deque_base<T, Alloc>
       BOOST_TRY {
          this->m_start.priv_set_node(this->m_start.m_node - 1);
          this->m_start.m_cur = this->m_start.m_last - 1;
-         this->allocator_type::construct(this->m_start.m_cur, t);
+         new(detail::get_pointer(this->m_start.m_cur))value_type(t);
       }
       BOOST_CATCH(...){
          ++this->m_start;
@@ -1191,6 +1301,7 @@ class deque : protected deque_base<T, Alloc>
       BOOST_CATCH_END
    } 
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void priv_push_front_aux(const detail::moved_object<value_type> &mt)
    {
       this->priv_reserve_map_at_front();
@@ -1198,7 +1309,7 @@ class deque : protected deque_base<T, Alloc>
       BOOST_TRY {
          this->m_start.priv_set_node(this->m_start.m_node - 1);
          this->m_start.m_cur = this->m_start.m_last - 1;
-         this->allocator_type::construct(this->m_start.m_cur, mt);
+         new(detail::get_pointer(this->m_start.m_cur))value_type(mt);
       }
       BOOST_CATCH(...){
          ++this->m_start;
@@ -1206,7 +1317,25 @@ class deque : protected deque_base<T, Alloc>
          BOOST_RETHROW
       }
       BOOST_CATCH_END
-   } 
+   }
+   #else
+   void priv_push_front_aux(value_type &&mt)
+   {
+      this->priv_reserve_map_at_front();
+      *(this->m_start.m_node - 1) = this->priv_allocate_node();
+      BOOST_TRY {
+         this->m_start.priv_set_node(this->m_start.m_node - 1);
+         this->m_start.m_cur = this->m_start.m_last - 1;
+         new(detail::get_pointer(this->m_start.m_cur))value_type(move(mt));
+      }
+      BOOST_CATCH(...){
+         ++this->m_start;
+         this->priv_deallocate_node(*(this->m_start.m_node - 1));
+         BOOST_RETHROW
+      }
+      BOOST_CATCH_END
+   }
+   #endif
 
    // Called only if this->m_finish.m_cur == this->m_finish.m_first.
    void priv_pop_back_aux()
@@ -1214,7 +1343,7 @@ class deque : protected deque_base<T, Alloc>
       this->priv_deallocate_node(this->m_finish.m_first);
       this->m_finish.priv_set_node(this->m_finish.m_node - 1);
       this->m_finish.m_cur = this->m_finish.m_last - 1;
-      static_cast<allocator_type*>(this)->destroy(this->m_finish.m_cur);
+      detail::get_pointer(this->m_finish.m_cur)->~value_type();
    }
 
    // Called only if this->m_start.m_cur == this->m_start.m_last - 1.  Note that 
@@ -1223,7 +1352,7 @@ class deque : protected deque_base<T, Alloc>
    // must have at least two nodes.
    void priv_pop_front_aux()
    {
-      static_cast<allocator_type*>(this)->destroy(this->m_start.m_cur);
+      detail::get_pointer(this->m_start.m_cur)->~value_type();
       this->priv_deallocate_node(this->m_start.m_first);
       this->m_start.priv_set_node(this->m_start.m_node + 1);
       this->m_start.m_cur = this->m_start.m_first;
@@ -1336,13 +1465,13 @@ class deque : protected deque_base<T, Alloc>
                                    iterator first2, iterator last2,
                                    const T& x)
    {
-      iterator mid2 = std::uninitialized_copy(first1, last1, first2);
+      iterator mid2 = boost::interprocess::uninitialized_copy(first1, last1, first2);
       BOOST_TRY {
-         std::uninitialized_fill(mid2, last2, x);
+         boost::interprocess::uninitialized_fill(mid2, last2, x);
       }
       BOOST_CATCH(...){
          for(;first2 != mid2; ++first2){
-            static_cast<allocator_type*>(this)->destroy(&*first2); 
+            detail::get_pointer(&*first2)->~value_type();
          }
       }
       BOOST_CATCH_END
@@ -1355,13 +1484,13 @@ class deque : protected deque_base<T, Alloc>
                                        const T& x,
                                        iterator first, iterator last)
    {
-      std::uninitialized_fill(result, mid, x);
+      boost::interprocess::uninitialized_fill(result, mid, x);
       BOOST_TRY {
-         return std::uninitialized_copy(first, last, mid);
+         return boost::interprocess::uninitialized_copy(first, last, mid);
       }
       BOOST_CATCH(...){
          for(;result != mid; ++result){
-            static_cast<allocator_type*>(this)->destroy(&*result); 
+            detail::get_pointer(&*result)->~value_type();
          }
          BOOST_RETHROW
       }
@@ -1377,13 +1506,13 @@ class deque : protected deque_base<T, Alloc>
                                     InpIt2 first2, InpIt2 last2,
                                     FwdIt result)
    {
-      FwdIt mid = std::uninitialized_copy(first1, last1, result);
+      FwdIt mid = boost::interprocess::uninitialized_copy(first1, last1, result);
       BOOST_TRY {
-         return std::uninitialized_copy(first2, last2, mid);
+         return boost::interprocess::uninitialized_copy(first2, last2, mid);
       }
       BOOST_CATCH(...){
          for(;result != mid; ++result){
-            static_cast<allocator_type*>(this)->destroy(&*result); 
+            detail::get_pointer(&*result)->~value_type();
          }
          BOOST_RETHROW
       }
