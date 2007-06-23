@@ -20,7 +20,6 @@
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/allocators/allocation_type.hpp>
-#include <boost/utility/addressof.hpp>
 #include <boost/assert.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
@@ -61,10 +60,10 @@ class expand_bwd_test_allocator
    typedef T                                    value_type;
    typedef T *                                  pointer;
    typedef const T *                            const_pointer;
-   typedef typename workaround::random_it
-      <T>::reference                            reference;
-   typedef typename workaround::random_it
-      <T>::const_reference                      const_reference;
+   typedef typename detail::add_reference
+                     <value_type>::type         reference;
+   typedef typename detail::add_reference
+                     <const value_type>::type   const_reference;
    typedef std::size_t                          size_type;
    typedef std::ptrdiff_t                       difference_type;
 
@@ -89,26 +88,26 @@ class expand_bwd_test_allocator
    expand_bwd_test_allocator(const expand_bwd_test_allocator<T2> &other)
       : mp_buffer(other.mp_buffer), m_size(other.m_size)
       , m_offset(other.m_offset),  m_allocations(0){ }
-
-   pointer address(reference value) const
-   {  return pointer(boost::addressof(value));  }
+/*
+   pointer address(reference value)
+   {  return pointer(addressof(value));  }
 
    const_pointer address(const_reference value) const
-   {  return const_pointer(boost::addressof(value));  }
-
+   {  return const_pointer(addressof(value));  }
+*/
    pointer allocate(size_type , cvoid_ptr hint = 0)
    {  (void)hint; return 0; }
 
    void deallocate(const pointer &, size_type)
    {}
-
+/*
    template<class Convertible>
    void construct(pointer ptr, const Convertible &value)
    {  new((void*)ptr) value_type(value);  }
 
    void destroy(pointer ptr)
    {  (*ptr).~value_type();  }
-
+*/
    size_type max_size() const
    {  return m_size;   }
 

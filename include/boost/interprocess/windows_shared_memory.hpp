@@ -25,6 +25,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/win32_api.hpp>
 #include <cstddef>
+#include <boost/cstdint.hpp>
 #include <string>
 
 /*!\file
@@ -126,6 +127,7 @@ class windows_shared_memory
 
    /// @cond
    private:
+
    //!Closes a previously opened file mapping. Never throws.
    void priv_close();
 

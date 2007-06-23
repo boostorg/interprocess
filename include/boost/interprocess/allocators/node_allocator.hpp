@@ -19,9 +19,6 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
-#include <boost/utility/addressof.hpp>
-#include <boost/detail/workaround.hpp>
-#include <boost/config.hpp>
 #include <boost/assert.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
@@ -68,10 +65,10 @@ class node_allocator
    typedef typename detail::
       pointer_to_other<void_pointer, const T>::type      const_pointer;
    typedef T                                             value_type;
-   typedef typename workaround::random_it
-                     <value_type>::reference             reference;
-   typedef typename workaround::random_it
-                     <value_type>::const_reference       const_reference;
+   typedef typename detail::add_reference
+                     <value_type>::type                  reference;
+   typedef typename detail::add_reference
+                     <const value_type>::type            const_reference;
    typedef std::size_t                                   size_type;
    typedef std::ptrdiff_t                                difference_type;
 
@@ -138,31 +135,31 @@ class node_allocator
          (detail::get_pointer(mp_node_pool));
       return node_pool->get_segment_manager();
    }
-
-   /*!Return address of mutable value. Never throws*/
+/*
+   //!Return address of mutable value. Never throws
    pointer address(reference value) const
-      {  return pointer(boost::addressof(value));  }
+      {  return pointer(addressof(value));  }
 
-   /*!Return address of nonmutable value. Never throws*/
+   //!Return address of nonmutable value. Never throws
    const_pointer address(const_reference value) const
-      {  return const_pointer(boost::addressof(value));  }
+      {  return const_pointer(addressof(value));  }
 
-   /*!Construct object, calling constructor. 
-   Throws if T(const Convertible &) throws*/
+   //!Construct object, calling constructor. 
+   //!Throws if T(const Convertible &) throws
    template<class Convertible>
    void construct(const pointer &ptr, const Convertible &value)
       {  new(detail::get_pointer(ptr)) value_type(value);  }
 
-   /*!Destroys object. Throws if object's destructor throws*/
+   //!Destroys object. Throws if object's destructor throws
    void destroy(const pointer &ptr)
       {  BOOST_ASSERT(ptr != 0); (*ptr).~value_type();  }
-
-   /*!Returns the number of elements that could be allocated. Never throws*/
+*/
+   //!Returns the number of elements that could be allocated. Never throws
    size_type max_size() const
       {  return this->get_segment_manager()->get_size()/sizeof(value_type);  }
 
-   /*!Allocate memory for an array of count elements. 
-      Throws boost::interprocess::bad_alloc if there is no enough memory*/
+   //!Allocate memory for an array of count elements. 
+   //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate(size_type count, cvoid_pointer = 0)
    {  
       if(count > ((size_type)-1)/sizeof(value_type))

@@ -13,6 +13,7 @@
 #include <iostream>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
+#include <memory>
 #include <cstdio>
 
 using namespace boost::interprocess;

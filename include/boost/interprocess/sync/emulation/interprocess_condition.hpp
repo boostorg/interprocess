@@ -80,8 +80,7 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
                                      const boost::posix_time::ptime &abs_time, 
                                      interprocess_mutex &mut)
 {
-   boost::posix_time::ptime now = 
-      boost::posix_time::microsec_clock::universal_time();
+   boost::posix_time::ptime now = microsec_clock::universal_time();
    
    if(tout_enabled){
       if(now >= abs_time) return false;
@@ -115,7 +114,7 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
 
          //Check for timeout
          if(tout_enabled){
-            now = boost::posix_time::microsec_clock::universal_time();
+            now = microsec_clock::universal_time();
 
             if(now >= abs_time){
                //If we can lock the interprocess_mutex it means that no notification

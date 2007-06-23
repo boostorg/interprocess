@@ -14,6 +14,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
+#include <boost/interprocess/detail/creation_tags.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
 

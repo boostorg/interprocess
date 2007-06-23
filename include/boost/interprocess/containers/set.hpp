@@ -86,7 +86,7 @@ class set
    /// @cond
    private:
    typedef detail::rbtree<T, T, 
-                     identity<T>, Pred, Alloc> tree_t;
+                     detail::identity<T>, Pred, Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing set
    /// @endcond
 
@@ -566,7 +566,7 @@ class multiset
    /// @cond
    private:
    typedef detail::rbtree<T, T, 
-                     identity<T>, Pred, Alloc> tree_t;
+                     detail::identity<T>, Pred, Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing multiset
    /// @endcond
 

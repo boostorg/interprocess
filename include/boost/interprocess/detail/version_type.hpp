@@ -15,35 +15,10 @@
 
 #ifndef BOOST_INTERPROCESS_DETAIL_VERSION_TYPE_HPP
 #define BOOST_INTERPROCESS_DETAIL_VERSION_TYPE_HPP
-/*
-#include <boost/type_traits/integral_constant.hpp>
 
-namespace boost{
-namespace interprocess{
-namespace detail{
+#include <boost/interprocess/detail/mpl.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 
-template <class T, unsigned V>
-struct version_type
-    : public boost::integral_constant<unsigned, V>
-{
-    typedef T type;
-
-    version_type(const version_type<T, 0>&);
-};
-
-template <class T>
-struct version
-   : public boost::integral_constant<unsigned, 1>
-{};
-
-}  //namespace detail{
-}  //namespace interprocess{
-}  //namespace boost{
-*/
-
-
-#include <boost/type_traits/integral_constant.hpp>
-#include <boost/type_traits/is_convertible.hpp>
 
 namespace boost{
 namespace interprocess{
@@ -53,7 +28,7 @@ namespace detail{
 
 template <class T, unsigned V>
 struct version_type
-    : public boost::integral_constant<unsigned, V>
+    : public detail::integral_constant<unsigned, V>
 {
     typedef T type;
 
@@ -63,7 +38,7 @@ struct version_type
 namespace impl{
 
 template <class T, 
-          bool = boost::is_convertible<version_type<T, 0>, typename T::version>::value>
+          bool = detail::is_convertible<version_type<T, 0>, typename T::version>::value>
 struct extract_version
 {
    static const unsigned value = 1;
@@ -103,36 +78,12 @@ struct version<T, true>
 
 template <class T>
 struct version
-   : public boost::integral_constant<unsigned, impl::version<T>::value>
+   : public detail::integral_constant<unsigned, impl::version<T>::value>
 {
 };
 
 }  //namespace detail{
 }  //namespace interprocess{
 }  //namespace boost{
-
-
-/*
-#include <iostream>
-#include <boost/interprocess/detail/version_type.hpp>
-
-struct A
-{
-    typedef boost::interprocess::detail::version_type<A, 2> version;
-};
-
-struct B
-{
-    struct version {static unsigned const value = 3;};
-};
-
-int main()
-{
-   boost::interprocess::detail::
-   std::cout << boost::interprocess::detail::version<int>::value << '\n';
-   std::cout << boost::interprocess::detail::version<A>::value << '\n';
-   std::cout << boost::interprocess::detail::version<B>::value << '\n';
-} 
-*/
 
 #endif   //#define BOOST_INTERPROCESS_DETAIL_VERSION_TYPE_HPP

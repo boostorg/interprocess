@@ -13,7 +13,6 @@
 
 #include <iterator>
 #include <boost/interprocess/detail/move.hpp>
-#include <boost/type_traits/remove_reference.hpp>
 
 namespace boost{
 namespace interprocess{
@@ -23,7 +22,7 @@ template <class It>
 class move_iterator
 {
    public:
-   typedef typename boost::remove_reference<It>::type                      iterator_type;
+   typedef It                                                              iterator_type;
    typedef typename std::iterator_traits<iterator_type>::value_type        value_type;
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    typedef typename move_type<value_type>::type                            reference;

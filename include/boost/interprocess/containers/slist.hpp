@@ -51,9 +51,6 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
-#include <boost/iterator/reverse_iterator.hpp>
-#include <boost/iterator.hpp>
-#include <boost/type_traits/is_integral.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
@@ -83,6 +80,9 @@ struct slist_node
          , boost::intrusive::safe_link
          , VoidPointer>                IslistData;
 
+   slist_node()
+      : m_data()
+   {}
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
    slist_node(const Convertible &value)
@@ -159,6 +159,9 @@ struct slist_alloc
    {  new(detail::get_pointer(ptr)) Node(forward<Convertible>(value));  }
    #endif
 
+   static void construct(const NodePtr &ptr)
+   {  new(detail::get_pointer(ptr)) Node();  }
+
    static void destroy(const NodePtr &ptr)
    {  detail::get_pointer(ptr)->~Node();  }
 
@@ -183,6 +186,15 @@ struct slist_alloc
       return (p);
    }
    #endif
+
+   NodePtr create_node()
+   {
+      NodePtr p = NodeAlloc::allocate(1);
+      Deallocator node_deallocator(p, *this);
+      self_t::construct(p);
+      node_deallocator.release();
+      return (p);
+   }
 
    void destroy_node(NodePtr node)
    {
@@ -321,7 +333,7 @@ class slist
    public:
    //! Const iterator used to iterate through a list. 
    class const_iterator
-      : public boost::iterator<std::forward_iterator_tag, 
+      : public std::iterator<std::forward_iterator_tag, 
                                  value_type,         list_difference_type, 
                                  list_const_pointer, list_const_reference>
    {
@@ -545,8 +557,8 @@ class slist
    template <class InpIt>
    void assign(InpIt first, InpIt last) 
    {
-      const bool aux_boolean = boost::is_integral<InpIt>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InpIt, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       this->assign_dispatch(first, last, Result());
    }
 
@@ -687,7 +699,7 @@ class slist
    //!
    //! <b>Complexity</b>: Amortized constant time.
    void pop_front()
-   {  this->m_islist.pop_front_and_destroy(Destroyer(*this));      }
+   {  this->m_islist.pop_front_and_dispose(Destroyer(*this));      }
 
    //! <b>Returns</b>: The iterator to the element before i in the sequence. 
    //!   Returns the end-iterator, if either i is the begin-iterator or the 
@@ -836,7 +848,7 @@ class slist
    //! <b>Note</b>: Does not invalidate iterators or references to non erased elements.
    iterator erase_after(iterator prev_pos)
    {
-      return iterator(this->m_islist.erase_after_and_destroy(prev_pos.get(), Destroyer(*this)));
+      return iterator(this->m_islist.erase_after_and_dispose(prev_pos.get(), Destroyer(*this)));
    }
 
    //! <b>Effects</b>: Erases the range (before_first, last) from
@@ -852,7 +864,7 @@ class slist
    //! <b>Note</b>: Does not invalidate iterators or references to non erased elements.
    iterator erase_after(iterator before_first, iterator last) 
    {
-      return iterator(this->m_islist.erase_after_and_destroy(before_first.get(), last.get(), Destroyer(*this)));
+      return iterator(this->m_islist.erase_after_and_dispose(before_first.get(), last.get(), Destroyer(*this)));
    }
 
    //! <b>Requires</b>: p must be a valid iterator of *this.
@@ -916,14 +928,8 @@ class slist
       }
       else{
          size_type n = newsize - len;
-         iterator c(cur);
-         while(n--){
-            T default_constructed;
-            if(boost::is_scalar<T>::value){
-               //Value initialization hack. Fix me!
-               new(&default_constructed)T();
-            }
-            c = this->insert_after(c, move(default_constructed));
+         for (size_type i = 0; i < n; ++i){
+            cur = this->m_islist.insert_after(cur, *this->create_node());
          }
       }
    }
@@ -934,11 +940,7 @@ class slist
    //!
    //! <b>Complexity</b>: Linear to the number of elements in the list.
    void clear() 
-   {  this->m_islist.clear_and_destroy(Destroyer(*this));  }
-
-   // Removes all of the elements from the slist x to *this, inserting
-   // them immediately after p.  x must not be *this.  Complexity:
-   // linear in x.size().
+   {  this->m_islist.clear_and_dispose(Destroyer(*this));  }
 
    //! <b>Requires</b>: p must point to an element contained
    //!   by the list. x != *this
@@ -1155,7 +1157,7 @@ class slist
    void remove_if(Pred pred)
    {
       typedef ValueCompareToNodeCompare<Pred> Predicate;
-      this->m_islist.remove_and_destroy_if(Predicate(pred), Destroyer(*this));
+      this->m_islist.remove_and_dispose_if(Predicate(pred), Destroyer(*this));
    }
 
    //! <b>Effects</b>: Removes adjacent duplicate elements or adjacent 
@@ -1183,7 +1185,7 @@ class slist
    void unique(Pred pred)
    {
       typedef ValueCompareToNodeCompare<Pred> Predicate;
-      this->m_islist.unique_and_destroy(Predicate(pred), Destroyer(*this));
+      this->m_islist.unique_and_dispose(Predicate(pred), Destroyer(*this));
    }
 
    //! <b>Requires</b>: The lists x and *this must be distinct. 
@@ -1282,12 +1284,12 @@ class slist
    }
 
    template <class Int>
-   void assign_dispatch(Int n, Int val, true_)
+   void assign_dispatch(Int n, Int val, detail::true_)
    {  this->fill_assign((size_type) n, (T)val); }
 
    template <class InpIt>
    void assign_dispatch(InpIt first, InpIt last,
-                           false_)
+                           detail::false_)
    {
       iterator end_n(end());
       iterator prev(before_begin());
@@ -1316,17 +1318,17 @@ class slist
    template <class InIter>
    void insert_after_range(iterator prev_pos, InIter first, InIter last) 
    {
-      const bool aux_boolean = boost::is_integral<InIter>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InIter, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       this->insert_after_range(prev_pos, first, last, Result());
    }
 
    template <class Int>
-   void insert_after_range(iterator prev_pos, Int n, Int x, true_) 
+   void insert_after_range(iterator prev_pos, Int n, Int x, detail::true_) 
    {  this->priv_insert_after_fill(prev_pos, n, x);  }
 
    template <class InIter>
-   void insert_after_range(iterator prev_pos, InIter first, InIter last, false_) 
+   void insert_after_range(iterator prev_pos, InIter first, InIter last, detail::false_) 
    {
       typename Islist::iterator intrusive_it(prev_pos.get());
       while (first != last){

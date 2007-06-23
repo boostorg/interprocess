@@ -60,8 +60,7 @@ class flat_set
 {
    /// @cond
    private:
-   typedef detail::flat_tree<T, T, 
-                     identity<T>, Pred, Alloc> tree_t;
+   typedef detail::flat_tree<T, T, detail::identity<T>, Pred, Alloc> tree_t;
    tree_t m_flat_tree;  // flat tree representing flat_set
    /// @endcond
 
@@ -577,8 +576,7 @@ class flat_multiset
 {
    /// @cond
    private:
-   typedef detail::flat_tree<T, T, 
-                     identity<T>, Pred, Alloc> tree_t;
+   typedef detail::flat_tree<T, T, detail::identity<T>, Pred, Alloc> tree_t;
    tree_t m_flat_tree;  // flat tree representing flat_multiset
    /// @endcond
 

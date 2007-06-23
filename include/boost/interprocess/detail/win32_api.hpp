@@ -190,6 +190,7 @@ extern "C" __declspec(dllimport) int __stdcall DuplicateHandle
    , unsigned long dwDesiredAccess, int bInheritHandle
    , unsigned long dwOptions);
 extern "C" __declspec(dllimport) void __stdcall GetSystemTimeAsFileTime(interprocess_filetime*);
+extern "C" __declspec(dllimport) int  __stdcall FileTimeToLocalFileTime(const interprocess_filetime *in, const interprocess_filetime *out);
 extern "C" __declspec(dllimport) void * __stdcall CreateMutexA(interprocess_security_attributes*, int, const char *);
 extern "C" __declspec(dllimport) void * __stdcall OpenMutexA(unsigned long, int, const char *);
 extern "C" __declspec(dllimport) unsigned long __stdcall WaitForSingleObject(void *, unsigned long);
@@ -221,6 +222,8 @@ extern "C" __declspec(dllimport) int __stdcall LockFile  (void *hnd, unsigned lo
 extern "C" __declspec(dllimport) int __stdcall UnlockFile(void *hnd, unsigned long offset_low, unsigned long offset_high, unsigned long size_low, unsigned long size_high);
 extern "C" __declspec(dllimport) int __stdcall LockFileEx(void *hnd, unsigned long flags, unsigned long reserved, unsigned long size_low, unsigned long size_high, interprocess_overlapped* overlapped);
 extern "C" __declspec(dllimport) int __stdcall UnlockFileEx(void *hnd, unsigned long reserved, unsigned long size_low, unsigned long size_high, interprocess_overlapped* overlapped);
+extern "C" __declspec(dllimport) int __stdcall WriteFile(void *hnd, const void *buffer, unsigned long bytes_to_write, unsigned long *bytes_written, interprocess_overlapped* overlapped);
+
 /*
 extern "C" __declspec(dllimport) long __stdcall InterlockedIncrement( long volatile * );
 extern "C" __declspec(dllimport) long __stdcall InterlockedDecrement( long volatile * );
@@ -280,6 +283,10 @@ static inline unsigned long get_last_error()
 
 static inline void get_system_time_as_file_time(interprocess_filetime *filetime)
 {  GetSystemTimeAsFileTime(filetime);  }
+
+static inline bool file_time_to_local_file_time
+   (const interprocess_filetime *in, const interprocess_filetime *out)
+{  return 0 != FileTimeToLocalFileTime(in, out);  }
 
 static inline void *create_mutex(const char *name)
 {  return CreateMutexA(0, 0, name); }
@@ -346,6 +353,9 @@ static inline bool lock_file_ex(void *hnd, unsigned long flags, unsigned long re
 
 static inline bool unlock_file_ex(void *hnd, unsigned long reserved, unsigned long size_low, unsigned long size_high, interprocess_overlapped *overlapped)
 {  return 0 != UnlockFileEx(hnd, reserved, size_low, size_high, overlapped);  }
+
+static inline bool write_file(void *hnd, const void *buffer, unsigned long bytes_to_write, unsigned long *bytes_written, interprocess_overlapped* overlapped)
+{  return 0 != WriteFile(hnd, buffer, bytes_to_write, bytes_written, overlapped);  }
 
 static inline long interlocked_increment(long volatile *addr)
 {  return BOOST_INTERLOCKED_INCREMENT(addr);  }

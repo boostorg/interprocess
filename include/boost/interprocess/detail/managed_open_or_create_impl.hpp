@@ -13,10 +13,10 @@
 
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
+#include <boost/interprocess/detail/creation_tags.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/type_traits/alignment_of.hpp>
-#include <boost/type_traits/type_with_alignment.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/atomic.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
@@ -49,7 +49,7 @@ class managed_open_or_create_impl
       ManagedOpenOrCreateUserOffset = 
          detail::ct_rounded_size
             < sizeof(boost::uint32_t)
-            , boost::alignment_of<boost::detail::max_align>::value>::value
+            , detail::alignment_of<detail::max_align>::value>::value
    };
 
    managed_open_or_create_impl(detail::create_only_t, 
@@ -200,11 +200,11 @@ class managed_open_or_create_impl
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
-   static void write_whole_device(DeviceAbstraction &, std::size_t, false_)
+   static void write_whole_device(DeviceAbstraction &, std::size_t, detail::false_)
    {} //Empty
 
    template<bool dummy>
-   static void write_whole_device(DeviceAbstraction &dev, std::size_t size, true_)
+   static void write_whole_device(DeviceAbstraction &dev, std::size_t size, detail::true_)
    {
       file_handle_t hnd = detail::file_handle_from_mapping_handle(dev.get_mapping_handle());
 
@@ -234,23 +234,23 @@ class managed_open_or_create_impl
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
-   static void truncate_device(DeviceAbstraction &, std::size_t, false_)
+   static void truncate_device(DeviceAbstraction &, std::size_t, detail::false_)
    {} //Empty
 
    template<bool dummy>
-   static void truncate_device(DeviceAbstraction &dev, std::size_t size, true_)
+   static void truncate_device(DeviceAbstraction &dev, std::size_t size, detail::true_)
    {  dev.truncate(size);  }
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
-   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t size, false_)
+   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t size, detail::false_)
    {
       DeviceAbstraction tmp(create_only, name, read_write, size);
       tmp.swap(dev);
    }
 
    template<bool dummy>
-   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t, true_)
+   static void create_device(DeviceAbstraction &dev, const char *name, std::size_t, detail::true_)
    {
       DeviceAbstraction tmp(create_only, name, read_write);
       tmp.swap(dev);
@@ -262,7 +262,7 @@ class managed_open_or_create_impl
        mode_t mode, const void *addr,
        ConstructFunc construct_func)
    {
-      typedef bool_<FileBased> file_like_t;
+      typedef detail::bool_<FileBased> file_like_t;
       (void)mode;
       error_info err;
       bool created = false;

@@ -208,7 +208,7 @@ class private_node_pool
          const void *addr = get_chunk_from_hook(&*it);
 
          //Execute the algorithm and get an iterator to the last value
-         m_freelist.remove_and_destroy_if
+         m_freelist.remove_and_dispose_if
             (is_between(addr, BlockSize), push_in_list(free_nodes, last_it));
 
          //If the number of nodes is equal to nodes_per_chunk

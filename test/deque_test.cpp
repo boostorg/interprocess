@@ -27,6 +27,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/move_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 
 //***************************************************************//
 //                                                               //
@@ -44,14 +45,14 @@ template class boost::interprocess::deque<test::movable_and_copyable_int,
 
 //Function to check if both sets are equal
 template<class V1, class V2>
-bool copyable_only(V1 *, V2 *, boost::false_type)
+bool copyable_only(V1 *, V2 *, detail::false_type)
 {
    return true;
 }
 
 //Function to check if both sets are equal
 template<class V1, class V2>
-bool copyable_only(V1 *shmdeque, V2 *stddeque, boost::true_type)
+bool copyable_only(V1 *shmdeque, V2 *stddeque, detail::true_type)
 {
    typedef typename V1::value_type IntType;
    std::size_t size = shmdeque->size();
@@ -174,8 +175,8 @@ bool do_test()
          }
 
          if(!copyable_only(shmdeque, stddeque
-                        ,boost::integral_constant
-                        <bool, !is_movable<IntType>::value>())){
+//                        ,boost::integral_constant
+                        ,detail::bool_<!is_movable<IntType>::value>())){
             return false;
          }
 

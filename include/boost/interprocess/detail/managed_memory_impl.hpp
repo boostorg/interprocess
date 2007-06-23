@@ -23,13 +23,13 @@
 #include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>
 #include <boost/interprocess/sync/mutex_family.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/creation_tags.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/segment_manager.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 //
-#include <boost/ref.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 //
 #include <utility>
@@ -624,7 +624,6 @@ template<class BasicManagedMemoryImpl>
 class create_open_func
 {
    public:
-
    create_open_func(BasicManagedMemoryImpl * const frontend, create_enum_t type)
       : m_frontend(frontend), m_type(type){}
 

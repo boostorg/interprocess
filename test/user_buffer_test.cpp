@@ -17,7 +17,7 @@
 #include <boost/interprocess/managed_external_buffer.hpp>
 #include <boost/interprocess/managed_heap_memory.hpp>
 #include <boost/interprocess/containers/list.hpp>
-#include <boost/type_traits/type_with_alignment.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/allocators/node_allocator.hpp>
 #include "print_container.hpp"
 
@@ -52,9 +52,9 @@ bool CheckEqual(MyUserList *userlist, MyStdList *stdlist, MyHeapList *heaplist)
 int main ()
 {
    //Create the user memory who will store all objects
-   const int size_aligner  = sizeof(boost::detail::max_align);
+   const int size_aligner  = sizeof(detail::max_align);
    const int memsize       = 65536/size_aligner*size_aligner;
-   static boost::detail::max_align static_buffer[memsize/size_aligner];
+   static detail::max_align static_buffer[memsize/size_aligner];
 
    //Named new capable user mem allocator
    wmanaged_external_buffer user_buffer(create_only, static_buffer, memsize);

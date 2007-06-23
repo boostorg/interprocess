@@ -55,6 +55,7 @@
 #include <functional>
 #include <memory>
 #include <boost/interprocess/containers/detail/tree.hpp>
+#include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/move.hpp>
 
@@ -90,7 +91,7 @@ class map
    private:
    typedef detail::rbtree<Key, 
                            std::pair<const Key, T>, 
-                           select1st< std::pair<const Key, T> >, 
+                           detail::select1st< std::pair<const Key, T> >, 
                            Pred, 
                            Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing map
@@ -730,7 +731,7 @@ class multimap
    private:
    typedef detail::rbtree<Key, 
                            std::pair<const Key, T>, 
-                           select1st< std::pair<const Key, T> >, 
+                           detail::select1st< std::pair<const Key, T> >, 
                            Pred, 
                            Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing map

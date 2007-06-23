@@ -40,7 +40,7 @@ class scoped_ptr
    scoped_ptr & operator=(scoped_ptr const &);
 
    typedef scoped_ptr<T, Deleter> this_type;
-   typedef typename workaround::random_it<T>::reference reference;
+   typedef typename detail::add_reference<T>::type reference;
    /// @endcond
 
    public:

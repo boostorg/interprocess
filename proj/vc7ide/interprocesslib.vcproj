@@ -423,9 +423,6 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\gcd_lcm.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\generic_cast.hpp">
-			</File>
-			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\in_place_interface.hpp">
 			</File>
 			<File
@@ -472,6 +469,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\ptime_wrk.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\type_traits.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\utilities.hpp">

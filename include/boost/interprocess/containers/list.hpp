@@ -52,9 +52,6 @@
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/detail/move.hpp>
-#include <boost/iterator.hpp>
-#include <boost/iterator/reverse_iterator.hpp>
-#include <boost/type_traits/is_integral.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
@@ -65,6 +62,7 @@
 #include <memory>
 #include <functional>
 #include <algorithm>
+#include <stdexcept>
 
 namespace boost {
 namespace interprocess {
@@ -83,6 +81,10 @@ struct list_node
          < boost::intrusive::tag
          , boost::intrusive::safe_link
          , VoidPointer>   IlistData;
+
+   list_node()
+      : m_data()
+   {}
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
@@ -161,6 +163,9 @@ struct list_alloc
    {  new(detail::get_pointer(ptr)) Node(forward<Convertible>(value));  }
    #endif
 
+   static void construct(const NodePtr &ptr)
+   {  new(detail::get_pointer(ptr)) Node();  }
+
    static void destroy(const NodePtr &ptr)
    {  detail::get_pointer(ptr)->~Node();  }
 
@@ -185,6 +190,15 @@ struct list_alloc
       return (p);
    }
    #endif
+
+   NodePtr create_node()
+   {
+      NodePtr p = NodeAlloc::allocate(1);
+      Deallocator node_deallocator(p, *this);
+      self_t::construct(p);
+      node_deallocator.release();
+      return (p);
+   }
 
    void destroy_node(NodePtr node)
    {
@@ -316,7 +330,7 @@ class list
    public:
    //! Const iterator used to iterate through a list. 
    class const_iterator
-      : public boost::iterator<std::bidirectional_iterator_tag, 
+      : public std::iterator<std::bidirectional_iterator_tag, 
                                  value_type,         list_difference_type, 
                                  list_const_pointer, list_const_reference>
    {
@@ -410,9 +424,9 @@ class list
    };
 
    //! Iterator used to iterate backwards through a list. 
-   typedef boost::reverse_iterator<iterator>        reverse_iterator;
+   typedef std::reverse_iterator<iterator>        reverse_iterator;
    //! Const iterator used to iterate backwards through a list. 
-   typedef boost::reverse_iterator<const_iterator>  const_reverse_iterator;
+   typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
 
    //! <b>Effects</b>: Constructs a list taking the allocator as parameter.
    //! 
@@ -499,7 +513,7 @@ class list
    //!
    //! <b>Complexity</b>: Linear to the number of elements in the list.
    void clear()
-   {  this->m_ilist.clear_and_destroy(Destroyer(*this));  }
+   {  this->m_ilist.clear_and_dispose(Destroyer(*this));  }
 
    //! <b>Effects</b>: Returns an iterator to the first element contained in the list.
    //! 
@@ -740,13 +754,8 @@ class list
       }
       else{
          size_type n = new_size - len;
-         while(n--){
-            T default_constructed;
-            if(boost::is_scalar<T>::value){
-               //Value initialization hack. Fix me!
-               new(&default_constructed)T();
-            }
-            this->push_back(move(default_constructed));
+         for (size_type i = 0; i < n; ++i){
+            this->m_ilist.push_back(*this->create_node());
          }
       }
    }
@@ -832,8 +841,8 @@ class list
    template <class InpIt>
    void insert(iterator p, InpIt first, InpIt last) 
    {
-      const bool aux_boolean = boost::is_integral<InpIt>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InpIt, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       this->priv_insert_dispatch(p, first, last, Result());
    }
 
@@ -879,7 +888,7 @@ class list
    //!
    //! <b>Complexity</b>: Amortized constant time.
    iterator erase(iterator p) 
-   {  return iterator(this->m_ilist.erase_and_destroy(p.get(), Destroyer(*this))); }
+   {  return iterator(this->m_ilist.erase_and_dispose(p.get(), Destroyer(*this))); }
 
    //! <b>Requires</b>: first and last must be valid iterator to elements in *this.
    //!
@@ -889,7 +898,7 @@ class list
    //!
    //! <b>Complexity</b>: Linear to the distance between first and last.
    iterator erase(iterator first, iterator last)
-   {  return iterator(this->m_ilist.erase_and_destroy(first.get(), last.get(), Destroyer(*this))); }
+   {  return iterator(this->m_ilist.erase_and_dispose(first.get(), last.get(), Destroyer(*this))); }
 
    //! <b>Effects</b>: Assigns the n copies of val to *this.
    //!
@@ -908,8 +917,8 @@ class list
    template <class InpIt>
    void assign(InpIt first, InpIt last) 
    {
-      const bool aux_boolean = boost::is_integral<InpIt>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InpIt, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       this->priv_assign_dispatch(first, last, Result());
    }
 
@@ -1053,7 +1062,7 @@ class list
    void remove_if(Pred pred)
    {
       typedef ValueCompareToNodeCompare<Pred> Predicate;
-      this->m_ilist.remove_and_destroy_if(Predicate(pred), Destroyer(*this));
+      this->m_ilist.remove_and_dispose_if(Predicate(pred), Destroyer(*this));
    }
 
    //! <b>Effects</b>: Removes adjacent duplicate elements or adjacent 
@@ -1081,7 +1090,7 @@ class list
    void unique(BinaryPredicate binary_pred)
    {
       typedef ValueCompareToNodeCompare<BinaryPredicate> Predicate;
-      this->m_ilist.unique_and_destroy(Predicate(binary_pred), Destroyer(*this));
+      this->m_ilist.unique_and_dispose(Predicate(binary_pred), Destroyer(*this));
    }
 
    //! <b>Requires</b>: The lists x and *this must be distinct. 
@@ -1197,7 +1206,7 @@ class list
    template <class InputIter>
    void priv_insert_dispatch(iterator p,
                              InputIter first, InputIter last,
-                             false_)
+                             detail::false_)
    {
       for ( ; first != last; ++first){
          this->insert(p, *first);
@@ -1205,7 +1214,7 @@ class list
    }
 
    template<class Integer>
-   void priv_insert_dispatch(iterator p, Integer n, Integer x, true_) 
+   void priv_insert_dispatch(iterator p, Integer n, Integer x, detail::true_) 
    {  this->priv_fill_insert(p, n, x);  }
 
    void priv_fill_assign(size_type n, const T& val) 
@@ -1221,12 +1230,12 @@ class list
    }
 
    template <class Integer>
-   void priv_assign_dispatch(Integer n, Integer val, true_)
+   void priv_assign_dispatch(Integer n, Integer val, detail::true_)
    {  this->priv_fill_assign((size_type) n, (T) val); }
 
    template <class InputIter>
    void priv_assign_dispatch(InputIter first2, InputIter last2,
-                                       false_)
+                                       detail::false_)
    {
       iterator first1   = this->begin();
       iterator last1    = this->end();

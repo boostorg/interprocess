@@ -40,7 +40,6 @@
 #include <boost/interprocess/allocators/allocation_type.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/move.hpp>
-#include <boost/type_traits/is_integral.hpp>
 
 #include <functional>
 #include <string>
@@ -54,8 +53,7 @@
 #include <locale>
 #include <cstddef>
 #include <climits>
-#include <boost/type_traits/type_with_alignment.hpp>
-#include <boost/type_traits/alignment_of.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 
@@ -154,8 +152,9 @@ class basic_string_base
    };
 
    //This basic type should have the same alignment as long_t
-   typedef typename type_with_alignment<boost::alignment_of<long_t>::value>::type
-      long_alignment_type;
+//   typedef typename type_with_alignment<detail::alignment_of<long_t>::value>::type
+//      long_alignment_type;
+   typedef void *long_alignment_type;
 
    //This type is the first part of the structure controlling a short string
    //The "data" member stores
@@ -234,9 +233,9 @@ class basic_string_base
 
    protected:
 
-   typedef boost::integral_constant<unsigned, 1>      allocator_v1;
-   typedef boost::integral_constant<unsigned, 2>      allocator_v2;
-   typedef boost::integral_constant<unsigned,
+   typedef detail::integral_constant<unsigned, 1>      allocator_v1;
+   typedef detail::integral_constant<unsigned, 2>      allocator_v2;
+   typedef detail::integral_constant<unsigned,
       boost::interprocess::detail::version<A>::value> alloc_version;
 
    std::pair<pointer, bool>
@@ -495,9 +494,9 @@ class basic_string
    //! Const iterator used to iterate through a string. It's a Random Access Iterator
    typedef const_pointer                           const_iterator;
    //! Iterator used to iterate backwards through a string
-   typedef boost::reverse_iterator<iterator>       reverse_iterator;
+   typedef std::reverse_iterator<iterator>       reverse_iterator;
    //! Const iterator used to iterate backwards through a string
-   typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
+   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
    //! The largest possible value of type size_type. That is, size_type(-1). 
    static const size_type npos;
 
@@ -591,8 +590,8 @@ class basic_string
       : base_t(a)
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<InputIterator>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InputIterator, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       this->priv_initialize_dispatch(f, l, Result());
    }
 
@@ -983,8 +982,8 @@ class basic_string
    basic_string& assign(InputIter first, InputIter last) 
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<InputIter>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InputIter, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       return this->priv_assign_dispatch(first, last, Result());
    }
 
@@ -1084,8 +1083,8 @@ class basic_string
    void insert(iterator p, InputIter first, InputIter last) 
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<InputIter>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InputIter, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       this->priv_insert_dispatch(p, first, last, Result());
    }
 
@@ -1227,8 +1226,8 @@ class basic_string
                         InputIter f, InputIter l) 
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<iterator>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InputIter, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       return this->priv_replace_dispatch(first, last, f, l,  Result());
    }
 
@@ -1619,7 +1618,7 @@ class basic_string
    }
 
    template <class Integer>
-   void priv_initialize_dispatch(Integer n, Integer x, true_)
+   void priv_initialize_dispatch(Integer n, Integer x, detail::true_)
    {
       this->allocate_initial_block(max_value<difference_type>(n+1, InternalBufferChars));
       priv_uninitialized_fill_n(this->priv_addr(), n, x);
@@ -1628,7 +1627,7 @@ class basic_string
    }
 
    template <class InputIter>
-   void priv_initialize_dispatch(InputIter f, InputIter l, false_)
+   void priv_initialize_dispatch(InputIter f, InputIter l, detail::false_)
    {  this->priv_range_initialize(f, l);  }
  
    template<class FwdIt, class Count> inline
@@ -1678,12 +1677,12 @@ class basic_string
    }
 
    template <class Integer>
-   basic_string& priv_assign_dispatch(Integer n, Integer x, true_) 
+   basic_string& priv_assign_dispatch(Integer n, Integer x, detail::true_) 
    {  return this->assign((size_type) n, (CharT) x);   }
 
    template <class InputIter>
    basic_string& priv_assign_dispatch(InputIter f, InputIter l,
-                                      false_)
+                                      detail::false_)
    {
       size_type cur = 0;
       CharT *ptr = detail::get_pointer(this->priv_addr());
@@ -1814,12 +1813,12 @@ class basic_string
 
    template <class Integer>
    void priv_insert_dispatch(iterator p, Integer n, Integer x,
-                           true_) 
+                           detail::true_) 
    {  insert(p, (size_type) n, (CharT) x);   }
 
    template <class InputIter>
    void priv_insert_dispatch(iterator p, InputIter first, InputIter last,
-                           false_) 
+                           detail::false_) 
    {
       typedef typename std::iterator_traits<InputIter>::iterator_category Category;
       priv_insert(p, first, last, Category());
@@ -1838,13 +1837,13 @@ class basic_string
    template <class Integer>
    basic_string& priv_replace_dispatch(iterator first, iterator last,
                                        Integer n, Integer x,
-                                       true_) 
+                                       detail::true_) 
    {  return this->replace(first, last, (size_type) n, (CharT) x);   }
 
    template <class InputIter>
    basic_string& priv_replace_dispatch(iterator first, iterator last,
                                        InputIter f, InputIter l,
-                                       false_) 
+                                       detail::false_) 
    {
       typedef typename std::iterator_traits<InputIter>::iterator_category Category;
       return this->priv_replace(first, last, f, l, Category());

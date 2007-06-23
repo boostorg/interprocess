@@ -47,8 +47,6 @@
 
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/generic_cast.hpp>
-#include <boost/iterator/reverse_iterator.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/intrusive/rbtree.hpp>
@@ -417,7 +415,7 @@ class rbtree
    public:
    //rbtree const_iterator
    class const_iterator
-      : public boost::iterator
+      : public std::iterator
          < std::bidirectional_iterator_tag
          , value_type            , rbtree_difference_type
          , rbtree_const_pointer  , rbtree_const_reference>
@@ -507,8 +505,8 @@ class rbtree
          {  iterator tmp = *this; --*this; return tmp; }
    };
 
-   typedef boost::reverse_iterator<iterator>        reverse_iterator;
-   typedef boost::reverse_iterator<const_iterator>  const_reverse_iterator;
+   typedef std::reverse_iterator<iterator>        reverse_iterator;
+   typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
 
    rbtree(const key_compare& comp = key_compare(), 
            const allocator_type& a = allocator_type())
@@ -837,16 +835,16 @@ class rbtree
    }
 
    iterator erase(const_iterator position)
-   {  return iterator(this->m_irbtree.erase_and_destroy(position.get(), Destroyer(*this))); }
+   {  return iterator(this->m_irbtree.erase_and_dispose(position.get(), Destroyer(*this))); }
 
    size_type erase(const key_type& k)
-   {  return this->m_irbtree.erase_and_destroy(k, KeyNodeCompare(value_comp()), Destroyer(*this)); }
+   {  return this->m_irbtree.erase_and_dispose(k, KeyNodeCompare(value_comp()), Destroyer(*this)); }
 
    iterator erase(const_iterator first, const_iterator last)
-   {  return iterator(this->m_irbtree.erase_and_destroy(first.get(), last.get(), Destroyer(*this))); }
+   {  return iterator(this->m_irbtree.erase_and_dispose(first.get(), last.get(), Destroyer(*this))); }
 
    void clear() 
-   {  this->m_irbtree.clear_and_destroy(Destroyer(*this)); }
+   {  this->m_irbtree.clear_and_dispose(Destroyer(*this)); }
 
    // set operations:
    iterator find(const key_type& k)

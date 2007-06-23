@@ -20,6 +20,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -60,7 +61,7 @@ template <class T, class D>
 struct pointer_type
 {
     typedef typename pointer_type_imp::pointer_type<T,
-        typename boost::remove_reference<D>::type>::type type;
+        typename detail::remove_reference<D>::type>::type type;
 };
 
 }  //namespace detail {

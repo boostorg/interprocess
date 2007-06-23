@@ -23,7 +23,6 @@
 
 #include <boost/assert.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/generic_cast.hpp>
 
 #include <functional>           // for std::less
 #include <iosfwd>               // for std::basic_ostream
@@ -268,36 +267,6 @@ inline T *get_pointer(boost::interprocess::intrusive_ptr<T, VP> p)
 /// @endcond
 
 } // namespace boost
-
-/// @cond
-namespace boost{
-namespace interprocess{
-
-/*!Simulation of cast operators between pointers.*/
-template<class T, class VP>
-class cast_to< intrusive_ptr<T, VP> >
-{
-   public:
-   template<class S>
-   static intrusive_ptr<T, VP> using_static_cast(const intrusive_ptr<S, VP> &s)
-   {  return intrusive_ptr<T, VP>(s, detail::static_cast_tag());   }
-
-   template<class S>
-   static intrusive_ptr<T, VP> using_reinterpret_cast(const intrusive_ptr<S, VP> &s)
-   {  return intrusive_ptr<T, VP>(s, detail::reinterpret_cast_tag());   }
-
-   template<class S>
-   static intrusive_ptr<T, VP> using_const_cast(const intrusive_ptr<S, VP> &s)
-   {  return intrusive_ptr<T, VP>(s, detail::const_cast_tag());   }
-
-   template<class S>
-   static intrusive_ptr<T, VP> using_dynamic_cast(const intrusive_ptr<S, VP> &s)
-   {  return intrusive_ptr<T, VP>(s, detail::dynamic_cast_tag());   }
-};
-/// @endcond
-
-}  //namespace interprocess{
-}  //namespace boost{
 
 #include <boost/interprocess/detail/config_end.hpp>
 

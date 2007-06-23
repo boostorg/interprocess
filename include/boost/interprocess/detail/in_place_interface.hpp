@@ -17,7 +17,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/type_traits/alignment_of.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <typeinfo>  //typeid
 
 /*!\file
@@ -49,7 +49,7 @@ template<class T>
 struct placement_destroy :  public in_place_interface
 {
    placement_destroy()
-      :  in_place_interface(boost::alignment_of<T>::value, sizeof(T), typeid(T).name())
+      :  in_place_interface(detail::alignment_of<T>::value, sizeof(T), typeid(T).name())
    {}
 
    virtual void destroy(void *mem)

@@ -19,8 +19,9 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/detail/no_exceptions_support.hpp>
-#include <boost/type_traits/alignment_of.hpp>
-#include <boost/iterator/transform_iterator.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
+
+#include <boost/interprocess/detail/iterators.hpp>
 
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/basic_segment_manager.hpp>
@@ -37,14 +38,16 @@
 #include <exception>
 #endif
 
-/*!\file
-   Describes the object placed in a memory segment that provides
-   named object allocation capabilities for single-segment and
-   multi-segment allocations.
-*/
+//!\file
+//!Describes the object placed in a memory segment that provides
+//!named object allocation capabilities for single-segment and
+//!multi-segment allocations.
 
 namespace boost{
 namespace interprocess{
+
+/// @cond
+
 namespace detail{
 
 //Anti-exception node eraser
@@ -115,7 +118,7 @@ struct intrusive_value_type_impl
 
    intrusive_value_type_impl(){}
 
-   enum  {  BlockHdrAlignment = boost::alignment_of<block_header>::value  };
+   enum  {  BlockHdrAlignment = detail::alignment_of<block_header>::value  };
 
    block_header *get_block_header() const
    {
@@ -363,8 +366,8 @@ class segment_manager
    typedef detail::index_config<CharType, MemoryAlgorithm>  index_config_named;
    typedef detail::index_config<char, MemoryAlgorithm>      index_config_unique;
    typedef IndexType<index_config_named>                    index_type;
-   typedef bool_<is_intrusive_index<index_type>::value >    is_intrusive_t;
-   typedef bool_<is_node_index<index_type>::value>          is_node_index_t;
+   typedef detail::bool_<is_intrusive_index<index_type>::value >    is_intrusive_t;
+   typedef detail::bool_<is_node_index<index_type>::value>          is_node_index_t;
 
    public:
    typedef IndexType<index_config_named>                    named_index_t;
@@ -381,19 +384,11 @@ class segment_manager
 
    typedef typename Base::mutex_family       mutex_family;
 
-   
-   typedef boost::transform_iterator
-      <named_transform
-      ,typename named_index_t::const_iterator> const_named_iterator;
-   typedef boost::transform_iterator
-      <unique_transform
-      ,typename unique_index_t::const_iterator> const_unique_iterator;
-/*
-   typedef typename 
-      named_index_t::const_iterator          const_named_iterator;
-   typedef typename 
-      unique_index_t::const_iterator         const_unique_iterator;
-*/
+   typedef transform_iterator
+      <typename named_index_t::const_iterator, named_transform> const_named_iterator;
+   typedef transform_iterator
+      <typename unique_index_t::const_iterator, unique_transform> const_unique_iterator;
+
    //!Constructor proxy object definition helper class
    template<class T>
    struct construct_proxy
@@ -669,31 +664,40 @@ class segment_manager
    void zero_free_memory()
    {   Base::zero_free_memory(); }
 
+   //!Returns a constant iterator to the beginning of the information about
+   //the named allocations performed in this segment manager
    const_named_iterator named_begin() const
    {
-      return boost::make_transform_iterator
+      return make_transform_iterator
          (m_header.m_named_index.begin(), named_transform());
    }
 
+   //!Returns a constant iterator to the end of the information about
+   //the named allocations performed in this segment manager
    const_named_iterator named_end() const
    {
-      return boost::make_transform_iterator
+      return make_transform_iterator
          (m_header.m_named_index.end(), named_transform());
    }
 
+   //!Returns a constant iterator to the beginning of the information about
+   //the unique allocations performed in this segment manager
    const_unique_iterator unique_begin() const
    {
-      return boost::make_transform_iterator
+      return make_transform_iterator
          (m_header.m_unique_index.begin(), unique_transform());
    }
 
+   //!Returns a constant iterator to the end of the information about
+   //the unique allocations performed in this segment manager
    const_unique_iterator unique_end() const
    {
-      return boost::make_transform_iterator
+      return make_transform_iterator
          (m_header.m_unique_index.end(), unique_transform());
    }
 
    /// @cond
+
    //!Generic named/anonymous new function. Offers all the possibilities, 
    //!such as throwing, search before creating, and the constructor is 
    //!encapsulated in an object function.
@@ -778,7 +782,7 @@ class segment_manager
        IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
        detail::in_place_interface &table,
        std::size_t &length,
-       true_ is_intrusive)
+       detail::true_ is_intrusive)
    {
       (void)is_intrusive;
       typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >         index_type;
@@ -817,7 +821,7 @@ class segment_manager
        IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
        detail::in_place_interface &table,
        std::size_t &length,
-       false_ is_intrusive)
+       detail::false_ is_intrusive)
    {
       (void)is_intrusive;
       typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >      index_type;
@@ -854,7 +858,7 @@ class segment_manager
      (block_header_t *block_header,
       IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
       detail::in_place_interface &table,
-      true_ is_node_index)
+      detail::true_ is_node_index)
    {
       (void)is_node_index;
       typedef typename IndexType<detail::index_config<CharT, MemoryAlgorithm> >::iterator index_it;
@@ -868,7 +872,7 @@ class segment_manager
      (block_header_t *block_header,
       IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
       detail::in_place_interface &table,
-      false_ is_node_index)
+      detail::false_ is_node_index)
    {
       (void)is_node_index;
       CharT *name = static_cast<CharT*>(block_header->template name<CharT>());
@@ -879,7 +883,7 @@ class segment_manager
    bool priv_generic_named_destroy(const CharT *name, 
                                    IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
                                    detail::in_place_interface &table,
-                                   true_ is_intrusive_index)
+                                   detail::true_ is_intrusive_index)
    {
       (void)is_intrusive_index;
       typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >         index_type;
@@ -930,7 +934,7 @@ class segment_manager
    bool priv_generic_named_destroy(const CharT *name, 
                                    IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
                                    detail::in_place_interface &table,
-                                   false_ is_intrusive_index)
+                                   detail::false_ is_intrusive_index)
    {
       (void)is_intrusive_index;
       typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >            index_type;
@@ -1010,7 +1014,7 @@ class segment_manager
                                bool dothrow,
                                detail::in_place_interface &table,
                                IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
-                               true_ is_intrusive)
+                               detail::true_ is_intrusive)
    {
       (void)is_intrusive;
       std::size_t namelen  = std::char_traits<CharT>::length(name);
@@ -1132,7 +1136,7 @@ class segment_manager
                                bool dothrow,
                                detail::in_place_interface &table,
                                IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
-                               false_ is_intrusive)
+                               detail::false_ is_intrusive)
    {
       (void)is_intrusive;
       std::size_t namelen  = std::char_traits<CharT>::length(name);

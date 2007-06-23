@@ -1,11 +1,13 @@
-#ifndef _CRT_SECURE_NO_DEPRECATE
-#define _CRT_SECURE_NO_DEPRECATE
+#ifndef BOOST_INTERPROCESS_CONFIG_INCLUDED
+#define BOOST_INTERPROCESS_CONFIG_INCLUDED
+#include <boost/config.hpp>
 #endif
 
-#include <boost/config.hpp>
-#include <boost/detail/workaround.hpp>
-
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
+   #ifdef _CRT_SECURE_NO_DEPRECATE
+   #define  BOOST_INTERPROCESS_CRT_SECURE_NO_DEPRECATE
+   #define _CRT_SECURE_NO_DEPRECATE
+   #endif
    #pragma warning (push)
    //
    //'function' : resolved overload was found by argument-dependent lookup
@@ -30,5 +32,6 @@
    #pragma warning (disable : 4521) ////Disable "multiple copy constructors specified"
    #pragma warning (disable : 4522)
    #pragma warning (disable : 4146)
+   #pragma warning (disable : 4503) //Decorated name length exceeded
    #pragma warning (disable : 4267) //conversion from 'X' to 'Y', possible loss of data
 #endif

@@ -25,8 +25,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/min_max.hpp>
-#include <boost/type_traits/alignment_of.hpp>
-#include <boost/type_traits/type_with_alignment.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <algorithm>
 #include <utility>
@@ -214,7 +213,7 @@ class simple_seq_fit_impl
    /*!Makes a new memory portion available for allocation*/
    void priv_add_segment(void *addr, std::size_t size);
 
-   enum { Alignment      = boost::alignment_of<boost::detail::max_align>::value  };
+   enum { Alignment      = detail::alignment_of<detail::max_align>::value  };
    enum { BlockCtrlBytes = detail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value  };
    enum { BlockCtrlSize  = BlockCtrlBytes/Alignment   };
    enum { MinBlockSize   = BlockCtrlSize + Alignment  };

@@ -19,7 +19,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/detail/no_exceptions_support.hpp>
-#include <boost/type_traits/alignment_of.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/in_place_interface.hpp>
 #include <boost/interprocess/exceptions.hpp>
@@ -105,7 +105,7 @@ struct block_header
    {
       return get_rounded_size
                (  sizeof(Header)
-               ,  boost::alignment_of<block_header>::value)
+               ,  detail::alignment_of<block_header>::value)
            + total_size();
    }
 
@@ -159,7 +159,7 @@ struct block_header
 
    template<class T>
    static block_header *block_header_from_value(T *value)
-   {  return block_header_from_value(value, sizeof(T), boost::alignment_of<T>::value);  }
+   {  return block_header_from_value(value, sizeof(T), detail::alignment_of<T>::value);  }
 
    static block_header *block_header_from_value(const void *value, std::size_t sz, std::size_t algn)
    {  
@@ -178,7 +178,7 @@ struct block_header
    {  
       block_header * hdr = 
          reinterpret_cast<block_header*>(detail::char_ptr_cast(header) + 
-         get_rounded_size(sizeof(Header), boost::alignment_of<block_header>::value));
+         get_rounded_size(sizeof(Header), detail::alignment_of<block_header>::value));
       //Some sanity checks
       return hdr;
    }
@@ -188,7 +188,7 @@ struct block_header
    {  
       Header * hdr = 
          reinterpret_cast<Header*>(detail::char_ptr_cast(bheader) - 
-         get_rounded_size(sizeof(Header), boost::alignment_of<block_header>::value));
+         get_rounded_size(sizeof(Header), detail::alignment_of<block_header>::value));
       //Some sanity checks
       return hdr;
    }

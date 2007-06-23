@@ -32,8 +32,10 @@ class weak_ptr
    typedef weak_ptr<T, A, D> this_type;
    typedef typename detail::pointer_to_other
       <typename A::pointer, T>::type      pointer;
-   typedef typename workaround::random_it<T>::reference       reference;
-   typedef typename workaround::random_it<T>::const_reference const_reference;
+   typedef typename detail::add_reference
+                     <T>::type            reference;
+   typedef typename detail::add_reference
+                     <T>::type            const_reference;
    /// @endcond
 
    public:

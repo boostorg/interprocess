@@ -24,6 +24,7 @@
 #include <memory>
 #include <boost/interprocess/containers/detail/flat_tree.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/move.hpp>
 
@@ -67,12 +68,12 @@ inline bool operator<(const flat_map<Key,T,Pred,Alloc>& x,
 template <class Key, class T, class Pred, class Alloc>
 class flat_map 
 {
-   /// @endcond
+   /// @cond
    private:
    //This is the real tree stored here. It's based on a movable pair
    typedef detail::flat_tree<Key, 
                            detail::pair<Key, T>, 
-                           select1st< detail::pair<Key, T> >, 
+                           detail::select1st< detail::pair<Key, T> >, 
                            Pred, 
                            typename Alloc::template
                               rebind<detail::pair<Key, T> >::other> impl_tree_t;
@@ -80,7 +81,7 @@ class flat_map
    //This is the tree that we should store if pair was movable
    typedef detail::flat_tree<Key, 
                            std::pair<Key, T>, 
-                           select1st< std::pair<Key, T> >, 
+                           detail::select1st< std::pair<Key, T> >, 
                            Pred, 
                            Alloc> tree_t;
 
@@ -700,14 +701,14 @@ class flat_multimap
    //This is the real tree stored here. It's based on a movable pair
    typedef detail::flat_tree<Key, 
                            detail::pair<Key, T>, 
-                           select1st< detail::pair<Key, T> >, 
+                           detail::select1st< detail::pair<Key, T> >, 
                            Pred, 
                            typename Alloc::template
                               rebind<detail::pair<Key, T> >::other> impl_tree_t;
 
    typedef detail::flat_tree<Key, 
                            std::pair<Key, T>, 
-                           select1st< std::pair<Key, T> >, 
+                           detail::select1st< std::pair<Key, T> >, 
                            Pred, 
                            Alloc> tree_t;
 //   tree_t m_flat_tree;  // flat tree representing flat_multimap

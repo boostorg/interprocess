@@ -54,11 +54,7 @@
 #include <utility>
 
 #include <boost/detail/no_exceptions_support.hpp>
-#include <boost/iterator.hpp>
-#include <boost/iterator/reverse_iterator.hpp>
-#include <boost/type_traits/is_scalar.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
-#include <boost/type_traits/integral_constant.hpp>
 
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/allocators/allocation_type.hpp>
@@ -114,11 +110,10 @@ struct vector_alloc_holder
    ~vector_alloc_holder()
    {  this->prot_deallocate(); }
 
-   typedef boost::integral_constant<unsigned, 1>      allocator_v1;
-   typedef boost::integral_constant<unsigned, 2>      allocator_v2;
-   typedef boost::integral_constant<unsigned,
+   typedef detail::integral_constant<unsigned, 1>      allocator_v1;
+   typedef detail::integral_constant<unsigned, 2>      allocator_v2;
+   typedef detail::integral_constant<unsigned,
       boost::interprocess::detail::version<A>::value> alloc_version;
-
    std::pair<pointer, bool>
       allocation_command(allocation_type command,
                          size_type limit_size, 
@@ -236,7 +231,7 @@ class vector : private detail::vector_alloc_holder<A>
 
    //! Const iterator used to iterate through a vector. 
    class const_iterator
-      : public boost::iterator<std::random_access_iterator_tag
+      : public std::iterator<std::random_access_iterator_tag
                               ,value_type
                               ,vec_diff
                               ,vec_cptr
@@ -378,10 +373,10 @@ class vector : private detail::vector_alloc_holder<A>
    };
 
    //! Iterator used to iterate backwards through a vector. 
-   typedef boost::reverse_iterator<iterator>   
+   typedef std::reverse_iterator<iterator>   
       reverse_iterator;
    //! Const iterator used to iterate backwards through a vector. 
-   typedef boost::reverse_iterator<const_iterator>                 
+   typedef std::reverse_iterator<const_iterator>                 
       const_reverse_iterator;
 
    public:
@@ -775,8 +770,8 @@ class vector : private detail::vector_alloc_holder<A>
    void assign(InIt first, InIt last) 
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<InIt>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InIt, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       this->priv_assign_dispatch(first, last, Result());
    }
 
@@ -933,8 +928,8 @@ class vector : private detail::vector_alloc_holder<A>
    void insert(iterator pos, InIt first, InIt last)
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<InIt>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InIt, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       this->priv_insert_dispatch(pos, first, last, Result());
    }
 
@@ -1038,13 +1033,11 @@ class vector : private detail::vector_alloc_holder<A>
       else{
          size_type n = new_size - this->size();
          this->reserve(new_size);
+         T *ptr = detail::get_pointer(this->m_start + this->m_size);
          while(n--){
-            T default_constructed;
-            if(boost::is_scalar<T>::value){
-               //Value initialization
-               new(&default_constructed)T();
-            }
-            this->push_back(move(default_constructed));
+            //Default construct
+            new(ptr++)T();
+            ++this->m_size;
          }
       }
    }
@@ -1195,7 +1188,7 @@ class vector : private detail::vector_alloc_holder<A>
          (pointer new_start, size_type new_capacity,
           pointer pos, FwdIt first, FwdIt last, size_type n)
    {
-      typedef detail::scoped_destructor_n<pointer> ValueArrayDestructor;
+      typedef detail::scoped_destructor_n<allocator_type> ValueArrayDestructor;
       typedef detail::move_iterator<pointer> move_it;
       //Backup old data
       pointer old_start  = this->m_start;
@@ -1587,7 +1580,7 @@ class vector : private detail::vector_alloc_holder<A>
          //Backwards expansion
          //If anything goes wrong, this object will destroy
          //all old objects
-         typedef detail::scoped_destructor_n<pointer> ValueArrayDestructor;
+         typedef detail::scoped_destructor_n<allocator_type> ValueArrayDestructor;
          pointer old_start    = this->m_start;
          size_type old_size   = this->m_size;
          ValueArrayDestructor old_values_destroyer(old_start, old_size);
@@ -1634,12 +1627,11 @@ class vector : private detail::vector_alloc_holder<A>
    }
 
    template <class Integer>
-   void priv_assign_dispatch(Integer n, Integer val, true_)
+   void priv_assign_dispatch(Integer n, Integer val, detail::true_)
    { this->assign((size_type) n, (T) val); }
 
    template <class InIt>
-   void priv_assign_dispatch(InIt first, InIt last, 
-                             false_)
+   void priv_assign_dispatch(InIt first, InIt last, detail::false_)
    { 
       //Dispatch depending on integer/iterator
       typedef typename 
@@ -1648,13 +1640,12 @@ class vector : private detail::vector_alloc_holder<A>
    }
 
    template <class Integer>
-   void priv_insert_dispatch( iterator pos, Integer n, 
-                              Integer val, true_) 
+   void priv_insert_dispatch( iterator pos, Integer n, Integer val, detail::true_) 
    {  this->insert(pos, (size_type)n, (T)val);  }
 
    template <class InIt>
    void priv_insert_dispatch(iterator pos,   InIt first, 
-                             InIt last,      false_)
+                             InIt last,      detail::false_)
    {
       //Dispatch depending on integer/iterator
       typedef typename 
@@ -1663,7 +1654,7 @@ class vector : private detail::vector_alloc_holder<A>
    }
 
    template <class Integer>
-   void priv_initialize_aux(Integer n, Integer value, true_) 
+   void priv_initialize_aux(Integer n, Integer value, detail::true_) 
    {
       this->priv_range_initialize(cvalue_iterator(value, n),
                                   cvalue_iterator(),
@@ -1672,7 +1663,7 @@ class vector : private detail::vector_alloc_holder<A>
 
    template <class InIt>
    void priv_initialize_aux(InIt first, InIt last,
-                            false_) 
+                            detail::false_) 
    {
       //Dispatch depending on integer/iterator
       typedef typename 

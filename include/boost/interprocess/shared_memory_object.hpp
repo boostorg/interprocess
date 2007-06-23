@@ -15,8 +15,8 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/detail/utilities.hpp>
-#include <boost/detail/workaround.hpp>
+//#include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
@@ -129,6 +129,7 @@ class shared_memory_object
 
    /// @cond
    private:
+
    //!Closes a previously opened file mapping. Never throws.
    void priv_close();
 

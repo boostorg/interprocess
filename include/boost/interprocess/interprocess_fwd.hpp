@@ -15,8 +15,9 @@
 #  pragma once
 #endif
 
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+//#include <boost/interprocess/detail/config_begin.hpp>
+//#include <boost/interprocess/detail/workaround.hpp>
+
 #include <cstddef>
 
 //////////////////////////////////////////////////////////////////////////////
@@ -460,7 +461,7 @@ string;
 
 }}  //namespace boost { namespace interprocess {
 
-#include <boost/interprocess/detail/config_end.hpp>
+//#include <boost/interprocess/detail/config_end.hpp>
 
 #endif //#ifndef BOOST_INTERPROCESS_FWD_HPP
 

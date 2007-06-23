@@ -31,4 +31,4 @@ rule test_all
    return $(all_rules) ;
 }
 
-test-suite interprocess_test : [ test_all r ] ; 
+test-suite interprocess_test : [ test_all r ] : <threading>multi ; 

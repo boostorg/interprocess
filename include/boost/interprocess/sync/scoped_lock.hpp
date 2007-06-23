@@ -25,7 +25,6 @@
 #include <boost/interprocess/sync/lock_options.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/move.hpp>
-#include <boost/utility.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 /*!\file

@@ -70,14 +70,14 @@ struct Ctor0Arg   :  public placement_destroy<T>
 //    {
 //       typedef Ctor2Arg self_t;
 //
-//       void do_increment(false_)
+//       void do_increment(detail::false_)
 //       { ++m_p1; ++m_p2;  }
 //
-//       void do_increment(true_){}
+//       void do_increment(detail::true_){}
 //
 //       self_t& operator++()
 //       {
-//          typedef bool_<param_or_it> Result;
+//          typedef detail::bool_<param_or_it> Result;
 //          this->do_increment(Result());
 //          return *this;
 //       }
@@ -97,7 +97,7 @@ struct Ctor0Arg   :  public placement_destroy<T>
 //          T* memory      = static_cast<T*>(mem);
 //          for(constructed = 0; constructed < num; ++constructed){
 //             new(memory++)T(m_p1, m_p2);
-//             typedef bool_<param_or_it> Result;
+//             typedef detail::bool_<param_or_it> Result;
 //             this->do_increment(Result());
 //          }
 //       }
@@ -140,14 +140,14 @@ struct Ctor0Arg   :  public placement_destroy<T>
       typedef BOOST_PP_CAT(BOOST_PP_CAT(Ctor, n), Arg) self_t;          \
       typedef T target_t;                                               \
                                                                         \
-      void do_increment(false_)                             \
+      void do_increment(detail::false_)                             \
          { BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INC, _); }     \
                                                                         \
-      void do_increment(true_){}                            \
+      void do_increment(detail::true_){}                            \
                                                                         \
       self_t& operator++()                                              \
       {                                                                 \
-         typedef bool_<param_or_it> Result;                 \
+         typedef detail::bool_<param_or_it> Result;                     \
          this->do_increment(Result());                                  \
          return *this;                                                  \
       }                                                                 \
@@ -168,7 +168,7 @@ struct Ctor0Arg   :  public placement_destroy<T>
          T* memory      = static_cast<T*>(mem);                         \
          for(constructed = 0; constructed < num; ++constructed){        \
             new(memory++)T(BOOST_PP_ENUM_PARAMS(n, m_p));               \
-            typedef bool_<param_or_it> Result;              \
+            typedef detail::bool_<param_or_it> Result;                  \
             this->do_increment(Result());                               \
          }                                                              \
       }                                                                 \

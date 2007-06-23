@@ -25,8 +25,9 @@
 #include <boost/compressed_pair.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
-#include <boost/type_traits.hpp>
-#include <boost/utility/enable_if.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
+//#include <boost/type_traits.hpp>
+//#include <boost/utility/enable_if.hpp>
 #include <cstddef>
 
 namespace boost{
@@ -85,8 +86,8 @@ class unique_ptr
 {
    /// @cond
    struct nat {int for_bool_;};
-   typedef typename boost::add_reference<D>::type deleter_reference;
-   typedef typename boost::add_reference<const D>::type deleter_const_reference;
+   typedef typename detail::add_reference<D>::type deleter_reference;
+   typedef typename detail::add_reference<const D>::type deleter_const_reference;
    /// @endcond
 
    public:
@@ -104,9 +105,9 @@ class unique_ptr
    {}
 
    unique_ptr(pointer p
-             ,typename if_<boost::is_reference<D>
+             ,typename detail::if_<detail::is_reference<D>
                   ,D
-                  ,typename boost::add_reference<const D>::type>::type d)
+                  ,typename detail::add_reference<const D>::type>::type d)
       : ptr_(p, d)
    {}
 /*
@@ -127,11 +128,11 @@ class unique_ptr
    template <class U, class E>
    unique_ptr(const unique_ptr<U, E>& u,
       typename boost::enable_if_c<
-            boost::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
-            boost::is_convertible<E, D>::value &&
+            detail::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
+            detail::is_convertible<E, D>::value &&
             (
-               !boost::is_reference<D>::value ||
-               boost::is_same<D, E>::value
+               !detail::is_reference<D>::value ||
+               detail::is_same<D, E>::value
             )
             ,
             nat
@@ -142,12 +143,12 @@ class unique_ptr
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class U, class E>
    unique_ptr(const detail::moved_object<unique_ptr<U, E> >& u,
-      typename boost::enable_if_c<
-            boost::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
-            boost::is_convertible<E, D>::value &&
+      typename detail::enable_if_c<
+            detail::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
+            detail::is_convertible<E, D>::value &&
             (
-               !boost::is_reference<D>::value ||
-               boost::is_same<D, E>::value
+               !detail::is_reference<D>::value ||
+               detail::is_same<D, E>::value
             )
             ,
             nat
@@ -158,11 +159,11 @@ class unique_ptr
    template <class U, class E>
    unique_ptr(unique_ptr<U, E> && u,
       typename boost::enable_if_c<
-            boost::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
-            boost::is_convertible<E, D>::value &&
+            detail::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
+            detail::is_convertible<E, D>::value &&
             (
-               !boost::is_reference<D>::value ||
-               boost::is_same<D, E>::value
+               !detail::is_reference<D>::value ||
+               detail::is_same<D, E>::value
             )
             ,
             nat
@@ -200,7 +201,7 @@ class unique_ptr
    }
 
    // observers
-   typename boost::add_reference<T>::type operator*()  const
+   typename detail::add_reference<T>::type operator*()  const
    {  return *ptr_.first();   }
 
    pointer operator->() const
@@ -266,8 +267,8 @@ template <class T, class D>
 class unique_ptr<T[], D>
 {
     struct nat {int for_bool_;};
-    typedef typename boost::add_reference<D>::type deleter_reference;
-    typedef typename boost::add_reference<const D>::type deleter_const_reference;
+    typedef typename detail::add_reference<D>::type deleter_reference;
+    typedef typename detail::add_reference<const D>::type deleter_const_reference;
 public:
     typedef T element_type;
     typedef D deleter_type;
@@ -279,7 +280,7 @@ public:
     unique_ptr(pointer p, typename if_<
                           boost::is_reference<D>,
                           D,
-                          typename boost::add_reference<const D>::type>::type d)
+                          typename detail::add_reference<const D>::type>::type d)
         : ptr_(p, d) {}
     unique_ptr(const unique_ptr& u)
         : ptr_(const_cast<unique_ptr&>(u).release(), u.get_deleter()) {}
@@ -302,7 +303,7 @@ public:
     }
 
     // observers
-    typename boost::add_reference<T>::type operator[](std::size_t i)  const {return ptr_.first()[i];}
+    typename detail::add_reference<T>::type operator[](std::size_t i)  const {return ptr_.first()[i];}
     pointer get()        const {return ptr_.first();}
     deleter_reference       get_deleter()       {return ptr_.second();}
     deleter_const_reference get_deleter() const {return ptr_.second();}
@@ -344,8 +345,8 @@ template <class T, class D, std::size_t N>
 class unique_ptr<T[N], D>
 {
     struct nat {int for_bool_;};
-    typedef typename boost::add_reference<D>::type deleter_reference;
-    typedef typename boost::add_reference<const D>::type deleter_const_reference;
+    typedef typename detail::add_reference<D>::type deleter_reference;
+    typedef typename detail::add_reference<const D>::type deleter_const_reference;
 public:
     typedef T element_type;
     typedef D deleter_type;
@@ -358,7 +359,7 @@ public:
     unique_ptr(pointer p, typename if_<
                          boost::is_reference<D>,
                          D,
-                         typename boost::add_reference<const D>::type>::type d)
+                         typename detail::add_reference<const D>::type>::type d)
         : ptr_(p, d) {}
     unique_ptr(const unique_ptr& u)
         : ptr_(const_cast<unique_ptr&>(u).release(), u.get_deleter()) {}
@@ -381,7 +382,7 @@ public:
     }
 
     // observers
-    typename boost::add_reference<T>::type operator[](std::size_t i)  const {return ptr_.first()[i];}
+    typename detail::add_reference<T>::type operator[](std::size_t i)  const {return ptr_.first()[i];}
     pointer get()        const {return ptr_.first();}
     deleter_reference       get_deleter()       {return ptr_.second();}
     deleter_const_reference get_deleter() const {return ptr_.second();}

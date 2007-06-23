@@ -21,8 +21,9 @@
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/cast_tags.hpp>
-#include <boost/interprocess/detail/generic_cast.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 #include <boost/assert.hpp>
+#include <iterator>
 
 /*!\file
    Describes a smart pointer that stores the offset between this pointer and
@@ -49,10 +50,10 @@ template <class PointedType>
 class offset_ptr
 {
    /// @cond
-   typedef boost::interprocess::workaround::random_it<PointedType> random_it_t;
-   typedef offset_ptr<PointedType>                          self_t;
-   typedef typename random_it_t::const_pointer              const_pointer_t;
-   typedef typename random_it_t::const_reference            const_reference_t;
+   typedef offset_ptr<PointedType>           self_t;
+   typedef const PointedType *               const_pointer_t;
+   typedef typename detail::add_reference
+      <const PointedType>::type              const_reference_t;
 
    void unspecified_bool_type_func() const {}
    typedef void (self_t::*unspecified_bool_type)() const;
@@ -88,11 +89,12 @@ class offset_ptr
    /// @endcond
 
    public:
-   typedef typename random_it_t::pointer                    pointer;
-   typedef typename random_it_t::reference                  reference;
-   typedef typename random_it_t::value_type                 value_type;
-   typedef typename random_it_t::difference_type            difference_type;
-   typedef typename random_it_t::iterator_category          iterator_category;
+   typedef PointedType *                     pointer;
+   typedef typename detail::
+      add_reference<PointedType>::type       reference;
+   typedef PointedType                       value_type;
+   typedef std::ptrdiff_t                    difference_type;
+   typedef std::random_access_iterator_tag   iterator_category;
 
    public:   //Public Functions
 
@@ -283,7 +285,8 @@ inline void swap (boost::interprocess::offset_ptr<T> &pt,
    pt2 = ptr;
 }
 
-/*!Simulation of static_cast between pointers. Never throws.*/
+/*
+//!Simulation of static_cast between pointers. Never throws.
 template<class T, class U> 
 inline boost::interprocess::offset_ptr<T> 
    static_pointer_cast(boost::interprocess::offset_ptr<U> const & r)
@@ -292,7 +295,7 @@ inline boost::interprocess::offset_ptr<T>
             (r, boost::interprocess::detail::static_cast_tag());  
 }
 
-/*!Simulation of const_cast between pointers. Never throws.*/
+//!Simulation of const_cast between pointers. Never throws.
 template<class T, class U> 
 inline boost::interprocess::offset_ptr<T>
    const_pointer_cast(boost::interprocess::offset_ptr<U> const & r)
@@ -301,7 +304,7 @@ inline boost::interprocess::offset_ptr<T>
             (r, boost::interprocess::detail::const_cast_tag());  
 }
 
-/*!Simulation of dynamic_cast between pointers. Never throws.*/
+//!Simulation of dynamic_cast between pointers. Never throws.
 template<class T, class U> 
 inline boost::interprocess::offset_ptr<T> 
    dynamic_pointer_cast(boost::interprocess::offset_ptr<U> const & r)
@@ -310,7 +313,7 @@ inline boost::interprocess::offset_ptr<T>
             (r, boost::interprocess::detail::dynamic_cast_tag());  
 }
 
-/*!Simulation of reinterpret_cast between pointers. Never throws.*/
+//!Simulation of reinterpret_cast between pointers. Never throws.
 template<class T, class U> 
 inline boost::interprocess::offset_ptr<T>
    reinterpret_pointer_cast(boost::interprocess::offset_ptr<U> const & r)
@@ -318,21 +321,23 @@ inline boost::interprocess::offset_ptr<T>
    return boost::interprocess::offset_ptr<T>
             (r, boost::interprocess::detail::reinterpret_cast_tag());  
 }
-
+*/
 }  //namespace interprocess {
 
 /// @cond
 //!has_trivial_constructor<> == true_type specialization for optimizations
 template <class T>
 struct has_trivial_constructor< boost::interprocess::offset_ptr<T> > 
-   : public true_type
-{};
+{
+   enum { value = true };
+};
 
 ///has_trivial_destructor<> == true_type specialization for optimizations
 template <class T>
 struct has_trivial_destructor< boost::interprocess::offset_ptr<T> > 
-   : public true_type
-{};
+{
+   enum { value = true };
+};
 
 //#if !defined(_MSC_VER) || (_MSC_VER >= 1400)
 namespace interprocess {
@@ -350,32 +355,8 @@ inline T * get_pointer(boost::interprocess::offset_ptr<T> const & p)
 }  //namespace boost {
 
 /// @cond
+
 namespace boost{
-namespace interprocess{
-
-/*!Simulation of cast operators between pointers.*/
-template<class T>
-class cast_to< offset_ptr<T> >
-{
-   public:
-   template<class S>
-   static offset_ptr<T> using_static_cast(const offset_ptr<S> &s)
-   {  return offset_ptr<T>(s, detail::static_cast_tag());   }
-
-   template<class S>
-   static offset_ptr<T> using_reinterpret_cast(const offset_ptr<S> &s)
-   {  return offset_ptr<T>(s, detail::reinterpret_cast_tag());   }
-
-   template<class S>
-   static offset_ptr<T> using_const_cast(const offset_ptr<S> &s)
-   {  return offset_ptr<T>(s, detail::const_cast_tag());   }
-
-   template<class S>
-   static offset_ptr<T> using_dynamic_cast(const offset_ptr<S> &s)
-   {  return offset_ptr<T>(s, detail::dynamic_cast_tag());   }
-};
-
-}  //namespace interprocess{
 
 //This is to support embedding a bit in the pointer
 //for intrusive containers, saving space

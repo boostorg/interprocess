@@ -20,14 +20,13 @@
 
 #include <boost/assert.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/generic_cast.hpp>
 #include <boost/interprocess/detail/cast_tags.hpp>
 #include <boost/assert.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/interprocess/smart_ptr/detail/shared_count.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/static_assert.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/type_traits/is_pointer.hpp>
 
 #include <algorithm>            // for std::swap
 #include <functional>           // for std::less
@@ -85,12 +84,14 @@ class shared_ptr
    typedef typename detail::pointer_to_other
       <typename VA::pointer, T>::type                          pointer;
 
-   typedef typename workaround::random_it<T>::reference        reference;
-   typedef typename workaround::random_it<T>::const_reference  const_reference;
+   typedef typename detail::add_reference
+                     <value_type>::type                        reference;
+   typedef typename detail::add_reference
+                     <const value_type>::type                  const_reference;
    typedef typename detail::pointer_to_other
-            <typename VA::pointer, const D>::type     const_deleter_pointer;
+            <typename VA::pointer, const D>::type              const_deleter_pointer;
    typedef typename detail::pointer_to_other
-            <typename VA::pointer, const VA>::type    const_allocator_pointer;
+            <typename VA::pointer, const VA>::type             const_allocator_pointer;
 
    /*!Constructs an empty shared_ptr. Use_count() == 0 && get() == 0.*/
    shared_ptr()
@@ -103,12 +104,11 @@ class shared_ptr
    explicit shared_ptr(const pointer&p, const VA &a = VA(), const D &d = D())
       :  m_pn(p, a, d)
    {  
-      typedef pointer Pointer;
       //Check that the pointer passed is of the same type that
       //the pointer the allocator defines or it's a raw pointer
-      typedef typename detail::pointer_to_other<Pointer, T>::type ParameterPointer;
-      BOOST_STATIC_ASSERT((boost::is_same<pointer, ParameterPointer>::value)||
-                          (boost::is_pointer<Pointer>::value));
+      typedef typename detail::pointer_to_other<pointer, T>::type ParameterPointer;
+      BOOST_STATIC_ASSERT((detail::is_same<pointer, ParameterPointer>::value) ||
+                          (detail::is_pointer<pointer>::value));
       //detail::sp_enable_shared_from_this( m_pn, p, p ); 
    }
 
@@ -128,23 +128,20 @@ class shared_ptr
 
    template<class Y>
    shared_ptr(shared_ptr<Y, VA, D> const & r, detail::static_cast_tag)
-      :  m_pn(cast_to<typename detail::pointer_to_other<pointer, T>::type>::
-            using_static_cast(r.m_pn.get_pointer()),
-              r.m_pn) 
+      :  m_pn( pointer(static_cast<T*>(detail::get_pointer(r.m_pn.get_pointer())))
+             , r.m_pn) 
    {}
 
    template<class Y>
    shared_ptr(shared_ptr<Y, VA, D> const & r, detail::const_cast_tag)
-      :  m_pn(cast_to<typename detail::pointer_to_other<pointer, T>::type>::
-            using_const_cast(r.m_pn.get_pointer()),
-              r.m_pn) 
+      :  m_pn( pointer(const_cast<T*>(detail::get_pointer(r.m_pn.get_pointer())))
+             , r.m_pn) 
    {}
 
    template<class Y>
    shared_ptr(shared_ptr<Y, VA, D> const & r, detail::dynamic_cast_tag)
-      :  m_pn(cast_to<typename detail::pointer_to_other<pointer, T>::type>::
-            using_dynamic_cast(r.m_pn.get_pointer()),
-              r.m_pn) 
+      :  m_pn( pointer(dynamic_cast<T*>(detail::get_pointer(r.m_pn.get_pointer())))
+             , r.m_pn) 
    {
       if(!m_pn.get_pointer()){ // need to allocate new counter -- the cast failed
          m_pn = detail::shared_count<T, VA, D>();
@@ -170,8 +167,8 @@ class shared_ptr
       //Check that the pointer passed is of the same type that
       //the pointer the allocator defines or it's a raw pointer
       typedef typename detail::pointer_to_other<Pointer, T>::type ParameterPointer;
-      BOOST_STATIC_ASSERT((boost::is_same<pointer, ParameterPointer>::value)||
-                          (boost::is_pointer<Pointer>::value));
+      BOOST_STATIC_ASSERT((detail::is_same<pointer, ParameterPointer>::value) ||
+                          (detail::is_pointer<Pointer>::value));
       this_type(p, a, d).swap(*this);  
    }
 
@@ -286,36 +283,6 @@ T * get_pointer(boost::interprocess::shared_ptr<T, VA, D> const & p)
 /// @endcond
 
 } // namespace boost
-
-/// @cond
-namespace boost{
-namespace interprocess{
-
-/*!Simulation of cast operators between pointers.*/
-template<class T, class VA, class D>
-class cast_to< shared_ptr<T, VA, D> >
-{
-   public:
-   template<class S>
-   static shared_ptr<T, VA, D> using_static_cast(const shared_ptr<S, VA, D> &s)
-   {  return shared_ptr<T, VA, D>(s, detail::static_cast_tag());   }
-
-   template<class S>
-   static shared_ptr<T, VA, D> using_reinterpret_cast(const shared_ptr<S, VA, D> &s)
-   {  return shared_ptr<T, VA, D>(s, detail::reinterpret_cast_tag());   }
-
-   template<class S>
-   static shared_ptr<T, VA, D> using_const_cast(const shared_ptr<S, VA, D> &s)
-   {  return shared_ptr<T, VA, D>(s, detail::const_cast_tag());   }
-
-   template<class S>
-   static shared_ptr<T, VA, D> using_dynamic_cast(const shared_ptr<S, VA, D> &s)
-   {  return shared_ptr<T, VA, D>(s, detail::dynamic_cast_tag());   }
-};
-/// @endcond
-
-}  //namespace interprocess{
-}  //namespace boost{
 
 #include <boost/interprocess/detail/config_end.hpp>
 

@@ -49,8 +49,7 @@ inline bool interprocess_mutex::try_lock(void)
 inline bool interprocess_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
 {
    //Obtain current count and target time
-   boost::posix_time::ptime now = 
-      boost::posix_time::microsec_clock::universal_time();
+   boost::posix_time::ptime now = microsec_clock::universal_time();
 
    if(now >= abs_time) return false;
 
@@ -60,7 +59,7 @@ inline bool interprocess_mutex::timed_lock(const boost::posix_time::ptime &abs_t
       if (m_s == 1 && prev_s == 0){
          break;
       }
-      now = boost::posix_time::microsec_clock::universal_time();
+      now = microsec_clock::universal_time();
 
       if(now >= abs_time){
          return false;

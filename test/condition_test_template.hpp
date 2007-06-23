@@ -37,7 +37,7 @@ namespace test {
 
 boost::posix_time::ptime ptime_delay(int secs)
 {
-   return   boost::posix_time::microsec_clock::universal_time() + 
+   return   microsec_clock::universal_time() + 
             boost::posix_time::time_duration(0, 0, secs);
 }
 

@@ -1,6 +1,6 @@
-[library Interprocess
+[library Boost.Interprocess
     [quickbook 1.4]
-    [version 2007-05-03]
+    [version 2007-06-23]
     [authors [Gazta&ntilde;aga, Ion]]
     [copyright 2005- 2007 Ion Gazta&ntilde;aga]
     [purpose Interprocess communication utilities]
@@ -2824,7 +2824,7 @@ These classes can be customized with the following template parameters:
       addresses in each process. If `void_pointer` is `void*` only fixed
       address mapping could be used.
 
-   *  See [link interprocess.customizing_boost_interprocess.custom_interprocess_alloc Writing a new memory 
+   *  See [link boost_interprocess.customizing_boost_interprocess.custom_interprocess_alloc Writing a new memory 
       allocation algorithm] for more details about memory algorithms.
      
 *  *IndexType* is the type of index that will be used to store the name-object 
@@ -3412,7 +3412,7 @@ just must specify [boost::interprocess::map_index map_index] as a template param
 [*Boost.Interprocess] plans to offer an *unordered_map* based index as soon as this
 container is included in Boost. If these indexes are not enough for you, you can define
 your own index type. To know how to do this, go to 
-[link interprocess.customizing_boost_interprocess.custom_indexes Building custom indexes] section.
+[link boost_interprocess.customizing_boost_interprocess.custom_indexes Building custom indexes] section.
 
 [endsect]
 
@@ -3695,7 +3695,7 @@ offers 3 allocators based on this segregated storage algorithm:
 
 To know the details of the implementation of
 of the segregated storage pools see the
-[link interprocess.architecture_2.implementation_segregated_storage_pools Implementation of [*Boost.Interprocess] segregated storage pools]
+[link boost_interprocess.architecture_2.implementation_segregated_storage_pools Implementation of [*Boost.Interprocess] segregated storage pools]
 section.
 
 [section:segregated_allocators_common Additional parameters and functions of segregated storage node allocators]
@@ -3704,7 +3704,7 @@ section.
 [classref boost::interprocess::private_node_allocator private_node_allocator] and
 [classref boost::interprocess::cached_node_allocator cached_node_allocator] implement
 the standard allocator interface and the functions explained in the
-[link interprocess.allocator_introduction.allocator_properties Properties of Boost.Interprocess allocators].
+[link boost_interprocess.allocator_introduction.allocator_properties Properties of Boost.Interprocess allocators].
 
 All these allocators are templatized by 3 parameters:
 
@@ -3731,7 +3731,7 @@ pool is used for each node size. This is not possible if you try to share
 a node allocator between processes. To achieve this sharing
 [classref boost::interprocess::node_allocator node_allocator]
 uses the segment manager's unique type allocation service
-(see [link interprocess.managed_memory_segment_features.unique Unique instance construction] section).
+(see [link boost_interprocess.managed_memory_segment_features.unique Unique instance construction] section).
 
 In the initialization, a
 [classref boost::interprocess::node_allocator node_allocator]
@@ -3926,7 +3926,7 @@ and performance (aceptable for many applications) with the ability to return fre
 of nodes to the memory segment, so that they can be used by any other container or managed
 object construction. To know the details of the implementation of
 of "adaptive pools" see the 
-[link interprocess.architecture_2.implementation_adaptive_pools Implementation of [*Boost.Intrusive] adaptive pools]
+[link boost_interprocess.architecture_2.implementation_adaptive_pools Implementation of [*Boost.Intrusive] adaptive pools]
 section.
 
 Like with segregated storage based node allocators, Boost.Interprocess offers
@@ -3940,7 +3940,7 @@ Like with segregated storage based node allocators, Boost.Interprocess offers
 [classref boost::interprocess::private_adaptive_pool private_adaptive_pool] and
 [classref boost::interprocess::cached_adaptive_pool cached_adaptive_pool] implement
 the standard allocator interface and the functions explained in the
-[link interprocess.allocator_introduction.allocator_properties Properties of Boost.Interprocess allocators].
+[link boost_interprocess.allocator_introduction.allocator_properties Properties of Boost.Interprocess allocators].
 
 All these allocators are templatized by 4 parameters:
 
@@ -4238,7 +4238,7 @@ in a generic way, [*Boost.Interprocess] offers the following classes:
    to be used in managed memory segments like shared memory.
    It's implemented using a vector-like contiguous storage, so
    it has fast c string conversion and can be used with the 
-   [link interprocess.streams.vectorstream vectorstream] iostream formatting classes.
+   [link boost_interprocess.streams.vectorstream vectorstream] iostream formatting classes.
    To use it include:
 
 [c++]
@@ -5139,7 +5139,7 @@ pointer. If the [*memory algorithm] will be used just with fixed address mapping
 `void_pointer` can be defined as `void*`.
 
 The rest of the interface of a [*Boost.Interprocess] [*memory algorithm] is described in 
-[link interprocess.customizing_boost_interprocess.custom_interprocess_alloc Writing a new shared memory allocation algorithm] 
+[link boost_interprocess.customizing_boost_interprocess.custom_interprocess_alloc Writing a new shared memory allocation algorithm] 
 section. As memory algorithm examples, you can see the implementations
 [classref boost::interprocess::simple_seq_fit  simple_seq_fit] or
 [classref boost::interprocess::rbtree_best_fit rbtree_best_fit] classes.
@@ -5216,7 +5216,7 @@ to be used to identify named objects, we can specify the memory algorithm that w
 control dynamically the portions of the memory segment, and we can specify 
 also the index type that will store the [name pointer, object information] mapping.
 We can construct our own index types as explained in
-[link interprocess.customizing_boost_interprocess.custom_indexes Building custom indexes] section.
+[link boost_interprocess.customizing_boost_interprocess.custom_indexes Building custom indexes] section.
 
 [endsect]
 
@@ -5483,7 +5483,7 @@ that boost::interprocess::rbtree_best_fit class offers:
 *  The [*allocate()] function must return 0 if there is no more available memory. 
    The memory returned by [*my_algorithm]
    must be aligned to the most restrictive memory alignment of the system, for example,
-   to the value returned by *boost::alignment_of<boost::detail::max_align>::value*.
+   to the value returned by *detail::alignment_of<boost::detail::max_align>::value*.
    This function should be executed with the synchronization capabilities offered
    by `typename mutex_family::mutex_type` interprocess_mutex. That means, that if we define 
    `typedef mutex_family mutex_family;` then this function should offer
@@ -5757,13 +5757,13 @@ these alternatives:
    allocators call `allocate()` only when the pool runs out of nodes. This is pretty
    efficient (much more than the current default general-purpose algorithm) and this
    can save a lot of memory. See
-   [link interprocess.stl_allocators_segregated_storage Segregated storage node allocators] and
-   [link interprocess.stl_allocators_adaptive Adaptive node allocators] for more information.
+   [link boost_interprocess.stl_allocators_segregated_storage Segregated storage node allocators] and
+   [link boost_interprocess.stl_allocators_adaptive Adaptive node allocators] for more information.
 
 *  Write your own memory algorithm. If you have experience with memory allocation algorithms
    and you think another algorithm is better suited than the default one for your application,
    you can specify it in all [*Boost.Interprocess] managed memory segments. See the section
-   [link interprocess.customizing_boost_interprocess.custom_interprocess_alloc Writing a new shared memory allocation algorithm]
+   [link boost_interprocess.customizing_boost_interprocess.custom_interprocess_alloc Writing a new shared memory allocation algorithm]
    to know how to do this. If you think its better than the default one for general-purpose
    applications, be polite and donate it to [*Boost.Interprocess] to make it default!
 
@@ -5842,7 +5842,7 @@ If you see that the performance is not good enough you have these alternatives:
 
 *  Use another [*Boost.Interprocess] index type if you feel the default one is
    not fast enough. If you are not still satisfied, write your own index type. See
-   [link interprocess.customizing_boost_interprocess.custom_indexes Building custom indexes] for this.
+   [link boost_interprocess.customizing_boost_interprocess.custom_indexes Building custom indexes] for this.
 
 *  Destruction via pointer is at least as fast as using the name of the object and
    can be faster (in node containers, for example). So if your problem is that you
@@ -6009,14 +6009,14 @@ limitations under the License.
 
 [section:changes Changes...]
 
-[section:changes_interprocess_2007_06_11 Changes in Interprocess 2007-06-11...]
+[section:changes_interprocess_2007_06_23 Changes in Interprocess 2007-06-23...]
 
 *  Added iteration of named and unique objects in a segment manager.
 *  Fixed leak in [classref boost::interprocess::vector vector].
 *  Added support for Solaris.
 *  Optimized [classref boost::interprocess::segment_manager] to avoid
    code bloat associated with templated instantiations.
-*  Removed the use of allocator::construct/destroy from containers.
+*  Removed the use of allocator::construct and allocator::destroy from containers.
 *  Correction of typos and documentation errors.
 *  Fixed bug for UNIX: No slash ('/') was being added as the first character
    for shared memory names, leading to errors in some UNIX systems.
@@ -6185,4 +6185,4 @@ allocators and containers, I've used to design Interprocess.
 
 [endsect]
 
-[xinclude interprocess_doxygen.boostbook]
+[xinclude interprocess_doxygen.xml]

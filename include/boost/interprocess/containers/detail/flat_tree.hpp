@@ -37,7 +37,6 @@
 
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/iterator/reverse_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <algorithm>
@@ -119,8 +118,8 @@ class flat_tree
    typedef typename allocator_type::difference_type   difference_type;
    typedef typename vector_t::iterator                iterator;
    typedef typename vector_t::const_iterator          const_iterator;
-   typedef boost::reverse_iterator<iterator>          reverse_iterator;
-   typedef boost::reverse_iterator<const_iterator>    const_reverse_iterator;
+   typedef std::reverse_iterator<iterator>          reverse_iterator;
+   typedef std::reverse_iterator<const_iterator>    const_reverse_iterator;
    
 
    // allocation/deallocation
@@ -718,8 +717,8 @@ template <class K, class V, class KOV,
 struct has_trivial_destructor_after_move<detail::flat_tree<K, V, KOV, C, A> >
 {
    enum {   value = 
-               has_trivial_destructor<A>::value &&
-               has_trivial_destructor<C>::value  };
+             has_trivial_destructor<A>::value &&
+             has_trivial_destructor<C>::value  };
 };
 
 }  //namespace interprocess {

@@ -13,8 +13,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-#include <boost/interprocess/detail/utilities.hpp>
+//#include <boost/interprocess/detail/utilities.hpp>
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 #  include <boost/interprocess/detail/win32_api.hpp>
@@ -126,7 +125,7 @@ inline bool get_file_pointer(file_handle_t hnd, offset_t &off)
 inline bool write_file(file_handle_t hnd, const void *data, std::size_t numdata)
 {  
    unsigned long written;
-   return 0 != WriteFile(hnd, data, (unsigned long)numdata, &written, 0);
+   return 0 != winapi::write_file(hnd, data, (unsigned long)numdata, &written, 0);
 }
 
 inline file_handle_t invalid_file()
@@ -160,34 +159,7 @@ inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
    return (acquired = true);
 }
 
-inline bool timed_acquire_file_lock
-   (file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
-{  
-   //Obtain current count and target time
-   boost::posix_time::ptime now = 
-      boost::posix_time::microsec_clock::universal_time();
-   using namespace boost::detail;
 
-   if(now >= abs_time) return false;
-
-   do{
-      if(!try_acquire_file_lock(hnd, acquired))
-         return false;
-
-      if(acquired)
-         return true;
-      else{
-         now = boost::posix_time::microsec_clock::universal_time();
-
-         if(now >= abs_time){
-            acquired = false;
-            return true;
-         }
-         // relinquish current time slice
-         winapi::sched_yield();
-      }
-   }while (true);
-}
 
 inline bool release_file_lock(file_handle_t hnd)
 {  
@@ -218,34 +190,7 @@ inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
    return (acquired = true);
 }
 
-inline bool timed_acquire_file_lock_sharable
-   (file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
-{  
-   //Obtain current count and target time
-   boost::posix_time::ptime now = 
-      boost::posix_time::microsec_clock::universal_time();
-   using namespace boost::detail;
 
-   if(now >= abs_time) return false;
-
-   do{
-      if(!try_acquire_file_lock_sharable(hnd, acquired))
-         return false;
-
-      if(acquired)
-         return true;
-      else{
-         now = boost::posix_time::microsec_clock::universal_time();
-
-         if(now >= abs_time){
-            acquired = false;
-            return true;
-         }
-         // relinquish current time slice
-         winapi::sched_yield();
-      }
-   }while (true);
-}
 
 inline bool release_file_lock_sharable(file_handle_t hnd)
 {  return release_file_lock(hnd);   }
@@ -373,35 +318,6 @@ inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
    return (acquired = true);
 }
 
-inline bool timed_acquire_file_lock
-   (file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
-{
-   //Obtain current count and target time
-   boost::posix_time::ptime now = 
-      boost::posix_time::microsec_clock::universal_time();
-   using namespace boost::detail;
-
-   if(now >= abs_time) return false;
-
-   do{
-      if(!try_acquire_file_lock(hnd, acquired))
-         return false;
-
-      if(acquired)
-         return true;
-      else{
-         now = boost::posix_time::microsec_clock::universal_time();
-
-         if(now >= abs_time){
-            acquired = false;
-            return true;
-         }
-         // relinquish current time slice
-         sleep(0);
-      }
-   }while (true);
-}
-
 inline bool release_file_lock(file_handle_t hnd)
 {
    struct ::flock lock;
@@ -437,34 +353,7 @@ inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
    return (acquired = true);
 }
 
-inline bool timed_acquire_file_lock_sharable
-   (file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
-{  
-   //Obtain current count and target time
-   boost::posix_time::ptime now = 
-      boost::posix_time::microsec_clock::universal_time();
-   using namespace boost::detail;
 
-   if(now >= abs_time) return false;
-
-   do{
-      if(!try_acquire_file_lock_sharable(hnd, acquired))
-         return false;
-
-      if(acquired)
-         return true;
-      else{
-         now = boost::posix_time::microsec_clock::universal_time();
-
-         if(now >= abs_time){
-            acquired = false;
-            return true;
-         }
-         // relinquish current time slice
-         ::sleep(0);
-      }
-   }while (true);
-}
 
 inline bool release_file_lock_sharable(file_handle_t hnd)
 {  return release_file_lock(hnd);   }

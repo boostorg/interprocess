@@ -25,9 +25,8 @@
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/interprocess/detail/min_max.hpp>
-//#include <functional>
 #include <utility>
-#include <stdexcept>
+#include <algorithm>
 
 namespace boost {
 namespace interprocess { 
@@ -143,10 +142,11 @@ struct scoped_array_deallocator
 
 //!A deleter for scoped_ptr that destroys
 //!an object using a STL allocator.
-template <class Pointer>
+template <class Allocator>
 struct scoped_destructor_n
 {
-   typedef Pointer pointer;
+   typedef typename Allocator::pointer pointer;
+   typedef typename Allocator::value_type value_type;
 
    pointer     m_p;
    std::size_t m_n;
@@ -160,7 +160,6 @@ struct scoped_destructor_n
    ~scoped_destructor_n()
    {
       if(!m_p) return;
-      typedef typename std::iterator_traits<Pointer>::value_type value_type;
       value_type *raw_ptr = detail::get_pointer(m_p);
       for(std::size_t i = 0; i < m_n; ++i, ++raw_ptr)
          raw_ptr->~value_type();
@@ -558,8 +557,12 @@ struct has_trivial_destructor_after_move
    : public boost::has_trivial_destructor<T>
 {};
 
-enum create_enum_t
-{  DoCreate, DoOpen, DoCreateOrOpen   };
+template <typename T> T*
+addressof(T& v)
+{
+  return reinterpret_cast<T*>(
+       &const_cast<char&>(reinterpret_cast<const volatile char &>(v)));
+}
 
 }  //namespace interprocess { 
 }  //namespace boost {

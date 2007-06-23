@@ -25,8 +25,7 @@
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/slist.hpp>
 #include <boost/math/common_factor_ct.hpp>
-#include <boost/type_traits/alignment_of.hpp>
-#include <boost/type_traits/type_with_alignment.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/allocators/detail/node_tools.hpp>
 #include <cstddef>
 #include <cassert>
@@ -77,7 +76,7 @@ class private_adaptive_node_pool
    typedef boost::intrusive::list
       <typename list_hook_t::template value_traits<chunk_info_t> > chunk_list_t;
 
-   enum { Alignment     = boost::alignment_of<boost::detail::max_align>::value  };
+   enum { Alignment     = detail::alignment_of<detail::max_align>::value  };
    enum { RealNodeSize  = 
             boost::math::static_lcm<NodeSize, sizeof(node_t)>::value };
    enum { HeaderSize    =  ct_min<detail::ct_rounded_size<sizeof(chunk_info_t), Alignment>::value
@@ -274,7 +273,7 @@ class private_adaptive_node_pool
       assert(m_allocated==0);
       priv_invariants();
       m_first_free_chunk = m_chunk_list.end();
-      m_chunk_list.clear_and_destroy
+      m_chunk_list.clear_and_dispose
          (chunk_destroyer(detail::get_pointer(mp_segment_mngr)));
       m_free_chunks = 0;
    }
@@ -373,7 +372,7 @@ class private_adaptive_node_pool
          chunk_iterator it(--m_chunk_list.end());
          if(it == m_first_free_chunk)
             ++m_first_free_chunk; //m_first_free_chunk is now equal to end()
-         m_chunk_list.erase_and_destroy(it, chunk_destroyer(detail::get_pointer(mp_segment_mngr)));
+         m_chunk_list.erase_and_dispose(it, chunk_destroyer(detail::get_pointer(mp_segment_mngr)));
          --m_free_chunks;
       }
    }

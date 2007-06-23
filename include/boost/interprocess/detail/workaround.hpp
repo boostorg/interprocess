@@ -13,11 +13,6 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 
-#include <boost/config.hpp>
-#include <boost/detail/workaround.hpp>
-#include <boost/iterator.hpp>
-#include <boost/iterator/reverse_iterator.hpp>
-
 #if !(defined BOOST_WINDOWS) || (defined BOOST_DISABLE_WIN32)
    #if defined(_POSIX_THREAD_PROCESS_SHARED) && (_POSIX_THREAD_PROCESS_SHARED - 0 > 0)
    #if !defined(__CYGWIN__)
@@ -70,26 +65,26 @@
 #if defined(BOOST_INTERPROCESS_RVALUE_REFERENCE) || defined(BOOST_INTERPROCESS_VARIADIC_TEMPLATES)
 #define BOOST_INTERPROCESS_PERFECT_FORWARDING
 #endif
-
+/*
 namespace boost {
 namespace interprocess {
 namespace workaround{
 
-//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*//
+//////////////////////////////////////////////////
 //                                              //
 //    We want generally const_shm_ptr to inherit//
 //    from iterator class but for void this     //
 //    doesn't work, so we must inherit from     //
 //    other class.                              //
 //                                              //
-//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*//
+//////////////////////////////////////////////////
 
 //Empty class
 struct empty_type{};
 
 template<class T>
 struct random_it 
-: public boost::iterator<std::random_access_iterator_tag, 
+: public std::iterator<std::random_access_iterator_tag, 
                          T, std::ptrdiff_t, T*, T&> 
 {
    typedef const T*           const_pointer;
@@ -143,7 +138,7 @@ template<> struct random_it<const volatile void>
 }  //namespace workaround
 }  //namespace interprocess {
 }  //namespace boost {
-
+*/
 #include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_INTERPROCESS_PTR_WRKRND_HPP

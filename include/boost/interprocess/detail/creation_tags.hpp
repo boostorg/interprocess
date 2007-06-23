@@ -26,6 +26,9 @@ static const detail::create_only_t     create_only    = detail::create_only_t();
 static const detail::open_or_create_t  open_or_create = detail::open_or_create_t();
 static const detail::open_only_t       open_only      = detail::open_only_t();
 
+enum create_enum_t
+{  DoCreate, DoOpen, DoCreateOrOpen   };
+
 }}  //namespace boost { namespace interprocess {
 
 #include <boost/interprocess/detail/config_end.hpp>

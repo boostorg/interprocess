@@ -20,12 +20,11 @@
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/allocators/allocation_type.hpp>
-#include <boost/utility/addressof.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/assert.hpp>
-#include <boost/type_traits/alignment_of.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 
 #include <memory>
 #include <algorithm>
@@ -85,10 +84,10 @@ class allocator
       <cvoid_ptr, T>::type                      pointer;
    typedef typename detail::
       pointer_to_other<pointer, const T>::type  const_pointer;
-   typedef typename workaround::random_it
-      <value_type>::reference                   reference;
-   typedef typename workaround::random_it
-      <value_type>::const_reference             const_reference;
+   typedef typename detail::add_reference
+                     <value_type>::type         reference;
+   typedef typename detail::add_reference
+                     <const value_type>::type   const_reference;
    typedef std::size_t                          size_type;
    typedef std::ptrdiff_t                       difference_type;
 
@@ -104,15 +103,15 @@ class allocator
    /*!Returns the segment manager. Never throws*/
    segment_manager* get_segment_manager()const
    {  return detail::get_pointer(mp_mngr);   }
+/*
+   //!Returns address of mutable object. Never throws
+   pointer address(reference value)
+   {  return pointer(addressof(value));  }
 
-   /*!Returns address of mutable object. Never throws*/
-   pointer address(reference value) const
-   {  return pointer(boost::addressof(value));  }
-
-   /*!Returns address of non mutable object. Never throws*/
+   //!Returns address of non mutable object. Never throws
    const_pointer address(const_reference value) const
-   {  return const_pointer(boost::addressof(value));  }
-
+   {  return const_pointer(addressof(value));  }
+*/
    /*!Constructor from the segment manager. Never throws*/
    allocator(segment_manager *segment_mngr) 
       : mp_mngr(segment_mngr) { }
@@ -176,7 +175,7 @@ class allocator
          mp_mngr->allocation_command
             (command, l_size, p_size, r_size, detail::get_pointer(reuse), sizeof(value_type));
       received_size = r_size/sizeof(value_type);
-      BOOST_ASSERT(0 == ((std::size_t)result.first % boost::alignment_of<value_type>::value));
+      BOOST_ASSERT(0 == ((std::size_t)result.first % detail::alignment_of<value_type>::value));
       return std::pair<pointer, bool> 
          (static_cast<value_type*>(result.first), result.second);
    }
@@ -224,8 +223,9 @@ struct has_trivial_destructor;
 template<class T, class SegmentManager>
 struct has_trivial_destructor
    <boost::interprocess::allocator <T, SegmentManager> >
-   :  public ::boost::true_type
-{};
+{
+   enum { value = true };
+};
 /// @endcond
 
 }  //namespace boost {

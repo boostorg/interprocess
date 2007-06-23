@@ -57,8 +57,7 @@
 #include <boost/interprocess/detail/min_max.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
-#include <boost/iterator.hpp>
-#include <boost/iterator/reverse_iterator.hpp>
+#include <iterator>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -70,7 +69,6 @@
 #include <boost/type_traits/has_trivial_destructor.hpp>
 
 namespace boost {
-
 namespace interprocess {
 
 /// @cond
@@ -154,7 +152,7 @@ class deque_base
    //  A pointer in the range [map, map + map_size) points to an allocated node
    //    if and only if the pointer is in the range [start.node, finish.node].
    class const_iterator 
-      : public boost::iterator<std::random_access_iterator_tag, 
+      : public std::iterator<std::random_access_iterator_tag, 
                               val_alloc_val,  val_alloc_diff, 
                               val_alloc_cptr, val_alloc_cref>
    {
@@ -500,8 +498,8 @@ class deque : protected deque_base<T, Alloc>
    typedef typename Base::iterator       iterator;
    typedef typename Base::const_iterator const_iterator;
 
-   typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
-   typedef boost::reverse_iterator<iterator> reverse_iterator;
+   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+   typedef std::reverse_iterator<iterator> reverse_iterator;
 
    /// @cond
    protected:                      // Internal typedefs
@@ -617,8 +615,8 @@ class deque : protected deque_base<T, Alloc>
          const allocator_type& a = allocator_type()) : Base(a) 
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<InpIt>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InpIt, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       this->priv_initialize_dispatch(first, last, Result());
    }
 
@@ -671,8 +669,8 @@ class deque : protected deque_base<T, Alloc>
    template <class InpIt>
    void assign(InpIt first, InpIt last) {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<InpIt>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InpIt, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       this->priv_assign_dispatch(first, last, Result());
    }
 
@@ -821,8 +819,8 @@ class deque : protected deque_base<T, Alloc>
    void insert(iterator pos, InpIt first, InpIt last) 
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = boost::is_integral<InpIt>::value;
-      typedef bool_<aux_boolean> Result;
+      const bool aux_boolean = detail::is_convertible<InpIt, std::size_t>::value;
+      typedef detail::bool_<aux_boolean> Result;
       this->priv_insert_dispatch(pos, first, last, Result());
    }
 
@@ -845,11 +843,12 @@ class deque : protected deque_base<T, Alloc>
          this->priv_reserve_elements_at_back(new_size);
 
          while(n--){
+            //T default_constructed = move(T());
             T default_constructed;
-            if(boost::is_scalar<T>::value){
+/*            if(boost::is_scalar<T>::value){
                //Value initialization
                new(&default_constructed)T();
-            }
+            }*/
             this->push_back(move(default_constructed));
          }
       }
@@ -986,14 +985,14 @@ class deque : protected deque_base<T, Alloc>
    }
 
    template <class Integer>
-   void priv_initialize_dispatch(Integer n, Integer x, true_) 
+   void priv_initialize_dispatch(Integer n, Integer x, detail::true_) 
    {
       this->priv_initialize_map(n);
       this->priv_fill_initialize(x);
    }
 
    template <class InpIt>
-   void priv_initialize_dispatch(InpIt first, InpIt last, false_) 
+   void priv_initialize_dispatch(InpIt first, InpIt last, detail::false_) 
    {
       typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
       this->priv_range_initialize(first, last, ItCat());
@@ -1012,11 +1011,11 @@ class deque : protected deque_base<T, Alloc>
    }
 
    template <class Integer>
-   void priv_assign_dispatch(Integer n, Integer val, true_)
+   void priv_assign_dispatch(Integer n, Integer val, detail::true_)
       { this->priv_fill_assign((size_type) n, (T) val); }
 
    template <class InpIt>
-   void priv_assign_dispatch(InpIt first, InpIt last, false_) 
+   void priv_assign_dispatch(InpIt first, InpIt last, detail::false_) 
    {
       typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
       this->priv_assign_aux(first, last, ItCat());
@@ -1051,7 +1050,7 @@ class deque : protected deque_base<T, Alloc>
 
    template <class Integer>
    void priv_insert_dispatch(iterator pos, Integer n, Integer x,
-                           true_) 
+                           detail::true_) 
    {
       this->priv_fill_insert(pos, (size_type) n, (value_type) x);
    }
@@ -1059,7 +1058,7 @@ class deque : protected deque_base<T, Alloc>
    template <class InpIt>
    void priv_insert_dispatch(iterator pos,
                            InpIt first, InpIt last,
-                           false_) 
+                           detail::false_) 
    {
       typedef typename std::iterator_traits<InpIt>::iterator_category ItCat;
       this->insert(pos, first, last, ItCat());

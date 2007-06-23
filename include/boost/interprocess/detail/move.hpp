@@ -37,6 +37,7 @@ struct is_movable
 #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -116,13 +117,11 @@ typename detail::move_type<Object>::type move
 
 #else //#ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
 
-#include <boost/type_traits/remove_reference.hpp>
-
 namespace boost {
 namespace interprocess {
 
 template <class T>
-inline typename boost::remove_reference<T>::type&&
+inline typename detail::remove_reference<T>::type&&
 move(T&& t)
 {  return t;   }
 

@@ -20,7 +20,6 @@
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/allocators/allocation_type.hpp>
-#include <boost/utility/addressof.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
@@ -80,10 +79,10 @@ class allocator_v1
       <cvoid_ptr, T>::type                      pointer;
    typedef typename detail::
       pointer_to_other<pointer, const T>::type  const_pointer;
-   typedef typename workaround::random_it
-      <value_type>::reference                   reference;
-   typedef typename workaround::random_it
-      <value_type>::const_reference             const_reference;
+   typedef typename detail::add_reference
+                     <value_type>::type         reference;
+   typedef typename detail::add_reference
+                     <const value_type>::type   const_reference;
    typedef std::size_t                          size_type;
    typedef std::ptrdiff_t                       difference_type;
 
@@ -97,15 +96,15 @@ class allocator_v1
    /*!Returns the segment manager. Never throws*/
    segment_manager* get_segment_manager()const
    {  return detail::get_pointer(mp_mngr);   }
-
-   /*!Returns address of mutable object. Never throws*/
+/*
+   //!Returns address of mutable object. Never throws
    pointer address(reference value) const
-   {  return pointer(boost::addressof(value));  }
+   {  return pointer(addressof(value));  }
 
-   /*!Returns address of non mutable object. Never throws*/
+   //!Returns address of non mutable object. Never throws
    const_pointer address(const_reference value) const
-   {  return const_pointer(boost::addressof(value));  }
-
+   {  return const_pointer(addressof(value));  }
+*/
    /*!Constructor from the segment manager. Never throws*/
    allocator_v1(segment_manager *segment_mngr) 
       : mp_mngr(segment_mngr) { }
@@ -127,16 +126,16 @@ class allocator_v1
    /*!Deallocates memory previously allocated. Never throws*/
    void deallocate(const pointer &ptr, size_type)
    {  mp_mngr->deallocate(detail::get_pointer(ptr));  }
-
-   /*!Construct object, calling constructor. 
-      Throws if T(const T&) throws*/
+/*
+   //!Construct object, calling constructor. 
+   //!Throws if T(const T&) throws
    void construct(const pointer &ptr, const_reference value)
    {  new(detail::get_pointer(ptr)) value_type(value);  }
 
-   /*!Destroys object. Throws if object's destructor throws*/
+   //!Destroys object. Throws if object's destructor throws
    void destroy(const pointer &ptr)
    {  BOOST_ASSERT(ptr != 0); (*ptr).~value_type();  }
-
+*/
    /*!Returns the number of elements that could be allocated. Never throws*/
    size_type max_size() const
    {  return mp_mngr->get_size();   }

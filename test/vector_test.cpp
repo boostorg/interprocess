@@ -31,7 +31,6 @@
 #include "expand_bwd_test_allocator.hpp"
 #include "expand_bwd_test_template.hpp"
 #include "dummy_test_allocator.hpp"
-#include <boost/type_traits/integral_constant.hpp>
 
 using namespace boost::interprocess;
 
@@ -46,14 +45,14 @@ template class boost::interprocess::vector<test::movable_and_copyable_int,
    test::dummy_test_allocator<test::movable_and_copyable_int> >;
 
 template<class V1, class V2>
-bool copyable_only(V1 *, V2 *, boost::false_type)
+bool copyable_only(V1 *, V2 *, detail::false_type)
 {
    return true;
 }
 
 //Function to check if both sets are equal
 template<class V1, class V2>
-bool copyable_only(V1 *shmvector, V2 *stdvector, boost::true_type)
+bool copyable_only(V1 *shmvector, V2 *stdvector, detail::true_type)
 {
    typedef typename V1::value_type IntType;
    std::size_t size = shmvector->size();
@@ -200,8 +199,7 @@ bool do_test()
          if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
 
          if(!copyable_only(shmvector, stdvector
-                        ,boost::integral_constant
-                        <bool, !is_movable<IntType>::value>())){
+                        ,detail::bool_<!is_movable<IntType>::value>())){
             return false;
          }
 

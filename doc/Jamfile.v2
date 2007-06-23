@@ -27,9 +27,9 @@ doxygen interprocess_doxygen
         <doxygen:param>EXTRACT_ALL=NO
         <doxygen:param>HIDE_UNDOC_MEMBERS=YES
         <doxygen:param>EXTRACT_PRIVATE=NO
+        <doxygen:param>EXPAND_ONLY_PREDEF=YES
 #        <doxygen:param>ENABLE_PREPROCESSING=NO
 #        <doxygen:param>MACRO_EXPANSION=YES
-        <doxygen:param>EXPAND_ONLY_PREDEF=YES
 #        <doxygen:param>SEARCH_INCLUDES=YES
 #        <doxygen:param>INCLUDE_PATH=$(BOOST_ROOT)
    ;
