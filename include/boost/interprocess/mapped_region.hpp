@@ -303,15 +303,15 @@ inline mapped_region::mapped_region
       winapi::close_handle(native_mapping_handle);
    }
 
+   //Calculate new base for the user
+   m_base = static_cast<char*>(m_base) + m_extra_offset;
+
    //Check error
    if(!m_base){
       error_info err = winapi::get_last_error();
       this->priv_close();
       throw interprocess_exception(err);
    }
-
-   //Calculate new base for the user
-   m_base = static_cast<char*>(m_base) + m_extra_offset;
 }
 
 inline bool mapped_region::flush(std::size_t mapping_offset, std::size_t numbytes)
