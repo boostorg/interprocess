@@ -160,20 +160,20 @@ inline void*    mapped_region::get_address()  const
 
 inline mapped_region::mapped_region()
    :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0)
-      ,  m_file_mapping_hnd(0)
+   ,  m_file_mapping_hnd(detail::invalid_file())
 {}
 
 #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 inline mapped_region::mapped_region(detail::moved_object<mapped_region> other)
    :  m_base(0), m_size(0), m_offset(0)
-      ,  m_extra_offset(0)
-      ,  m_file_mapping_hnd(0)
+   ,  m_extra_offset(0)
+   ,  m_file_mapping_hnd(detail::invalid_file())
 {  this->swap(other.get());   }
 #else
 inline mapped_region::mapped_region(mapped_region &&other)
    :  m_base(0), m_size(0), m_offset(0)
-      ,  m_extra_offset(0)
-      ,  m_file_mapping_hnd(0)
+   ,  m_extra_offset(0)
+   ,  m_file_mapping_hnd(detail::invalid_file())
 {  this->swap(other);   }
 #endif
 
@@ -193,7 +193,7 @@ inline mapped_region::mapped_region
    ,std::size_t size
    ,const void *address)
    :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0)
-      ,  m_file_mapping_hnd(0)
+   ,  m_file_mapping_hnd(detail::invalid_file())
 {
    mapping_handle_t mhandle = mapping.get_mapping_handle();
    file_handle_t native_mapping_handle;
@@ -303,15 +303,15 @@ inline mapped_region::mapped_region
       winapi::close_handle(native_mapping_handle);
    }
 
-   //Calculate new base for the user
-   m_base = static_cast<char*>(m_base) + m_extra_offset;
-
    //Check error
    if(!m_base){
       error_info err = winapi::get_last_error();
       this->priv_close();
       throw interprocess_exception(err);
    }
+
+   //Calculate new base for the user
+   m_base = static_cast<char*>(m_base) + m_extra_offset;
 }
 
 inline bool mapped_region::flush(std::size_t mapping_offset, std::size_t numbytes)
@@ -354,17 +354,19 @@ inline void mapped_region::priv_close()
 
 inline mapped_region::mapped_region()
    :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0)
+   ,  m_file_mapping_hnd(detail::invalid_file())
 {}
 
 #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 inline mapped_region::mapped_region(detail::moved_object<mapped_region> other)
-   :  m_base(MAP_FAILED), m_size(0), m_offset(0)
-      ,  m_extra_offset(0)
+   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0)
+   ,  m_file_mapping_hnd(detail::invalid_file())
 {  this->swap(other.get());   }
 #else
 inline mapped_region::mapped_region(mapped_region &&other)
    :  m_base(MAP_FAILED), m_size(0), m_offset(0)
-      ,  m_extra_offset(0)
+   ,  m_extra_offset(0)
+   ,  m_file_mapping_hnd(detail::invalid_file())
 {  this->swap(other);   }
 #endif
 
@@ -379,7 +381,8 @@ inline mapped_region::mapped_region
    offset_t offset,
    std::size_t size,
    const void *address)
-   :  m_base(MAP_FAILED)
+   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0)
+   ,  m_file_mapping_hnd(invalid_file())
 {
    if(size == 0){
 //      offset_t filesize = lseek64
@@ -461,17 +464,18 @@ inline mapped_region::mapped_region
       throw interprocess_exception(err);
    }
 
+   //Calculate new base for the user
+   void *old_base = m_base;
+   m_base = static_cast<char*>(m_base) + m_extra_offset;
+   m_offset = offset;
+   m_size   = size;
+
    //Check for fixed mapping error
-   if(address && (m_base != (void*)address)){
+   if(address && (old_base != (void*)address)){
       error_info err = system_error_code();
       this->priv_close();
       throw interprocess_exception(err);
    }
-
-   //Calculate new base for the user
-   m_base = static_cast<char*>(m_base) + m_extra_offset;
-   m_offset = offset;
-   m_size   = size;
 }
 
 inline bool mapped_region::flush(std::size_t mapping_offset, std::size_t numbytes)
