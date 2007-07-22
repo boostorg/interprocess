@@ -65,7 +65,7 @@ class dummy_test_allocator
    typedef std::size_t                          size_type;
    typedef std::ptrdiff_t                       difference_type;
 
-   typedef detail::version_type<dummy_test_allocator, 2>   version;
+//   typedef detail::version_type<dummy_test_allocator, 2>   version;
 
    template<class T2>
    struct rebind

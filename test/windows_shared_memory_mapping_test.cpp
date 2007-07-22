@@ -16,19 +16,24 @@
 #include <iostream>
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/mapped_region.hpp>
+#include <string>
+#include "get_compiler_name.hpp"
 
 using namespace boost::interprocess;
 
 int main ()
 {
+   std::string compiler_name;
+   test::get_compiler_name(compiler_name);
+
    try{
       const std::size_t FileSize = 99999*2;
       //Create shared memory and file mapping
-      windows_shared_memory mapping(create_only, "my_file", read_write, FileSize);
+      windows_shared_memory mapping(create_only, compiler_name.c_str(), read_write, FileSize);
 
       {
          //Create a file mapping
-         windows_shared_memory mapping(open_only, "my_file", read_write);
+         windows_shared_memory mapping(open_only, compiler_name.c_str(), read_write);
 
          //Create two mapped regions, one half of the file each
          mapped_region region (mapping
@@ -62,7 +67,7 @@ int main ()
       //See if the pattern is correct in the file using two mapped regions
       {
          //Create a file mapping
-         windows_shared_memory mapping(open_only, "my_file", read_write);
+         windows_shared_memory mapping(open_only, compiler_name.c_str(), read_write);
          mapped_region region(mapping, read_write, 0, FileSize/2, 0);
          mapped_region region2(mapping, read_write, FileSize/2, 0/*FileSize - FileSize/2*/, 0);
 
@@ -92,7 +97,7 @@ int main ()
       //Now check the pattern mapping a single read only mapped_region
       {
          //Create a file mapping
-         windows_shared_memory mapping(open_only, "my_file", read_only);
+         windows_shared_memory mapping(open_only, compiler_name.c_str(), read_only);
 
          //Create a single regions, mapping all the file
          mapped_region region (mapping

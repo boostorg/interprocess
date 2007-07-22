@@ -13,66 +13,65 @@
 #include "sharable_mutex_test_template.hpp"
 #include "named_creation_template.hpp"
 #include <boost/interprocess/sync/named_upgradable_mutex.hpp>
+#include <string>
+#include "get_compiler_name.hpp"
 
-struct deleter
+using namespace boost::interprocess;
+
+struct mutex_deleter
 {
-   ~deleter()
-   {  boost::interprocess::named_upgradable_mutex::remove("named_upgradable_mutex"); }
+   ~mutex_deleter()
+   {  named_upgradable_mutex::remove(test::get_compiler_name()); }
 };
 
 //This wrapper is necessary to have a default constructor
 //in generic mutex_test_template functions
 class named_upgradable_mutex_lock_test_wrapper
-   : public boost::interprocess::named_upgradable_mutex
+   : public named_upgradable_mutex
 {
    public:
    named_upgradable_mutex_lock_test_wrapper()
-      :  boost::interprocess::named_upgradable_mutex
-            (boost::interprocess::open_or_create, "named_upgradable_mutex")
+      :  named_upgradable_mutex(open_or_create, test::get_compiler_name())
    {}
 };
 
 //This wrapper is necessary to have a common constructor
 //in generic named_creation_template functions
 class named_upgradable_mutex_creation_test_wrapper
-   : public deleter, public boost::interprocess::named_upgradable_mutex
+   : public mutex_deleter, public named_upgradable_mutex
 {
    public:
    named_upgradable_mutex_creation_test_wrapper
-      (boost::interprocess::detail::create_only_t)
-      :  boost::interprocess::named_upgradable_mutex
-            (boost::interprocess::create_only, "named_upgradable_mutex")
+      (create_only_t)
+      :  named_upgradable_mutex(create_only, test::get_compiler_name())
    {}
 
    named_upgradable_mutex_creation_test_wrapper
-      (boost::interprocess::detail::open_only_t)
-      :  boost::interprocess::named_upgradable_mutex
-            (boost::interprocess::open_only, "named_upgradable_mutex")
+      (open_only_t)
+      :  named_upgradable_mutex(open_only, test::get_compiler_name())
    {}
 
    named_upgradable_mutex_creation_test_wrapper
-      (boost::interprocess::detail::open_or_create_t)
-      :  boost::interprocess::named_upgradable_mutex
-            (boost::interprocess::open_or_create, "named_upgradable_mutex")
+      (open_or_create_t)
+      :  named_upgradable_mutex(open_or_create, test::get_compiler_name())
    {}
 };
 
 int main ()
 {
-   using namespace boost::interprocess;
    try{
-      named_upgradable_mutex::remove("named_upgradable_mutex");
+      named_upgradable_mutex::remove(test::get_compiler_name());
       test::test_named_creation<named_upgradable_mutex_creation_test_wrapper>();
 //      test::test_all_lock<named_upgradable_mutex_lock_test_wrapper>();
 //      test::test_all_mutex<true, named_upgradable_mutex_lock_test_wrapper>();
 //      test::test_all_sharable_mutex<true, named_upgradable_mutex_lock_test_wrapper>();
    }
    catch(std::exception &ex){
-      named_upgradable_mutex::remove("named_upgradable_mutex");
+      named_upgradable_mutex::remove(test::get_compiler_name());
       std::cout << ex.what() << std::endl;
       return 1;
    }
-   named_upgradable_mutex::remove("named_upgradable_mutex");
+   named_upgradable_mutex::remove(test::get_compiler_name());
    return 0;
 }
 

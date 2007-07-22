@@ -15,6 +15,8 @@
 #include <boost/interprocess/smart_ptr/segment_deleter.hpp>
 #include <vector>
 #include <cstddef>
+#include <string>
+#include "get_compiler_name.hpp"
 
 using namespace boost::interprocess;
 
@@ -124,17 +126,17 @@ bool test_node_pool<NodePool>::deallocate_free_chunks(NodePool &pool)
    return true;
 }
 
-template<std::size_t NodeSize, std::size_t NumAlloc>
+template<std::size_t NodeSize, std::size_t NodesPerChunk>
 bool test_all_node_pool()
 {
    typedef managed_shared_memory::segment_manager segment_manager;
    typedef detail::private_node_pool
-      <segment_manager, NodeSize, NumAlloc> node_pool_t;
+      <segment_manager, NodeSize, NodesPerChunk> node_pool_t;
 
    typedef test_node_pool<node_pool_t> test_node_pool_t;
-   shared_memory_object::remove("MyShm");
+   shared_memory_object::remove(test::get_compiler_name());
    {
-      managed_shared_memory shm(create_only, "MyShm", 4096);
+      managed_shared_memory shm(create_only, test::get_compiler_name(), 4096);
 
       typedef segment_deleter<segment_manager, void*> deleter_t;
       typedef unique_ptr<node_pool_t, deleter_t> unique_ptr_t;
@@ -150,7 +152,7 @@ bool test_all_node_pool()
       if(!test_node_pool_t::deallocate_free_chunks(*p))
          return false;
    }
-   shared_memory_object::remove("MyShm");
+   shared_memory_object::remove(test::get_compiler_name());
    return true;
 }
 

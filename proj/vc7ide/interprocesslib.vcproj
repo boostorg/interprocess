@@ -174,6 +174,9 @@
 					RelativePath="..\..\..\..\boost\interprocess\containers\detail\flat_tree.hpp">
 				</File>
 				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\detail\node_alloc_holder.hpp">
+				</File>
+				<File
 					RelativePath="..\..\..\..\boost\interprocess\containers\detail\tree.hpp">
 				</File>
 			</Filter>
@@ -350,6 +353,9 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\creation_tags.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\errors.hpp">
 			</File>
 			<File
@@ -366,9 +372,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\managed_mapped_file.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\managed_multi_shared_memory.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\managed_shared_memory.hpp">
@@ -411,12 +414,6 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\config_end.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\construction_table.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\creation_tags.hpp">
-			</File>
-			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\file_wrapper.hpp">
 			</File>
 			<File
@@ -442,9 +439,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\move_iterator.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\moved_default_iterator.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\mpl.hpp">
@@ -562,6 +556,9 @@
 			</File>
 			<File
 				RelativePath="..\..\test\expand_bwd_test_template.hpp">
+			</File>
+			<File
+				RelativePath="..\..\test\get_compiler_name.hpp">
 			</File>
 			<File
 				RelativePath="..\..\test\itestvalue.hpp">

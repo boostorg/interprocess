@@ -15,15 +15,19 @@
 #include "named_creation_template.hpp"
 #include <cstring>   //for strcmp, memset
 #include <iostream>  //for cout
+#include <string>
+#include "get_compiler_name.hpp"
+
+using namespace boost::interprocess;
 
 static const std::size_t ShmSize = 1000;
-static const char *      ShmName = "shared_memory";
+static const char *      ShmName = test::get_compiler_name();
 
 struct eraser
 {
    ~eraser()
    {
-      boost::interprocess::shared_memory_object::remove(ShmName);
+      shared_memory_object::remove(ShmName);
    }
 };
 
@@ -31,30 +35,27 @@ struct eraser
 //in generic named_creation_template functions
 class shared_memory_creation_test_wrapper
    : public eraser
-   , public boost::interprocess::detail::managed_open_or_create_impl
-      <boost::interprocess::shared_memory_object>
+   , public detail::managed_open_or_create_impl<shared_memory_object>
 {
-   typedef boost::interprocess::detail::managed_open_or_create_impl
-      <boost::interprocess::shared_memory_object> shared_memory;
+   typedef detail::managed_open_or_create_impl<shared_memory_object> shared_memory;
 
    public:
-   shared_memory_creation_test_wrapper(boost::interprocess::detail::create_only_t)
-      :  shared_memory(boost::interprocess::create_only, ShmName, ShmSize)
+   shared_memory_creation_test_wrapper(create_only_t)
+      :  shared_memory(create_only, ShmName, ShmSize)
    {}
 
-   shared_memory_creation_test_wrapper(boost::interprocess::detail::open_only_t)
-      :  shared_memory(boost::interprocess::open_only, ShmName)
+   shared_memory_creation_test_wrapper(open_only_t)
+      :  shared_memory(open_only, ShmName)
    {}
 
-   shared_memory_creation_test_wrapper(boost::interprocess::detail::open_or_create_t)
-      :  shared_memory(boost::interprocess::open_or_create, ShmName, ShmSize)
+   shared_memory_creation_test_wrapper(open_or_create_t)
+      :  shared_memory(open_or_create, ShmName, ShmSize)
    {}
 };
 
 
 int main ()
 {
-   using namespace boost::interprocess;
    typedef detail::managed_open_or_create_impl<shared_memory_object> shared_memory;
 
    try{

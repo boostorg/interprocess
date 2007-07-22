@@ -1,8 +1,16 @@
+[/
+ / Copyright (c) 2007 Ion Gaztanaga
+ /
+ / Distributed under the Boost Software License, Version 1.0. (See accompanying
+ / file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+ /]
+
 [library Boost.Interprocess
-    [quickbook 1.4]
-    [version 2007-06-23]
+    [quickbook 1.3]
     [authors [Gazta&ntilde;aga, Ion]]
     [copyright 2005- 2007 Ion Gazta&ntilde;aga]
+    [id interprocess]
+    [dirname interprocess]
     [purpose Interprocess communication utilities]
     [license
         Distributed under the Boost Software License, Version 1.0.
@@ -50,14 +58,15 @@ compiler include path.
 
 [*Boost.Interprocess] has been tested in the following compilers/platforms:
 
-*  Visual 7.1/WinXP
-*  Visual 8.0/WinXP
-*  GCC 4.1.1/MinGW
-*  GCC 3.4.4/Cygwin
-*  Intel 9.1/WinXP
-*  GCC 4.1.2/Linux
-*  Codewarrior 9.4/WinXP
+*  Visual 7.1 Windows XP
+*  Visual 8.0 Windows XP
+*  GCC 4.1.1 MinGW
+*  GCC 3.4.4 Cygwin
+*  Intel 9.1 Windows XP
+*  GCC 4.1.2 Linux
+*  Codewarrior 9.4 Windows XP
 *  GCC 3.4.3 Solaris 11
+*  GCC 4.0 MacOs 10.4.1
 
 [endsect]
 
@@ -482,7 +491,7 @@ This is the server process:
 [doc_windows_shared_memory]
 
 Now, before destroying the
-[classref boost::interprocess::windows_shared memory windows_shared memory]
+[classref boost::interprocess::windows_shared_memory windows_shared memory]
 object, launch the client process:
 
 [import ../example/doc_windows_shared_memory2.cpp]
@@ -785,18 +794,18 @@ mapped regions for a file with which has `2*page_size` bytes:
 
    //Map the first quarter of the file
    //This will use a whole page
-   mapped_region region1( shm                     //Map shared memory
-                        , read_write              //Map it as read-write
-                        , 0                       //Map from offset 0
-                        , page_size/2             //Map page_size/2 bytes
+   mapped_region region1( shm                //Map shared memory
+                        , read_write         //Map it as read-write
+                        , 0                  //Map from offset 0
+                        , page_size/2        //Map page_size/2 bytes
                         );
 
    //Map the rest of the file
    //This will use a 2 pages
-   mapped_region region2( shm                     //Map shared memory
-                        , read_write              //Map it as read-write
-                        , page_size/2             //Map from offset 0
-                        , 3*page_size/2           //Map page_size/2 bytes
+   mapped_region region2( shm                //Map shared memory
+                        , read_write         //Map it as read-write
+                        , page_size/2        //Map from offset 0
+                        , 3*page_size/2      //Map the rest of the shared memory
                         );
 
 In this example, a half of the page is wasted in the first mapping and another
@@ -804,17 +813,17 @@ half is wasted in the second because the offset is not a multiple of the
 page size. The mapping with the minimum resource usage would be to map whole pages:
 
    //Map the whole first half: uses 1 page
-   mapped_region region1( shm                     //Map shared memory
-                        , read_write              //Map it as read-write
-                        , 0                       //Map from offset 0
-                        , page_size               //Map page_size/2 bytes
+   mapped_region region1( shm                //Map shared memory
+                        , read_write         //Map it as read-write
+                        , 0                  //Map from offset 0
+                        , page_size          //Map a full page_size
                         );
 
    //Map the second half: uses 1 page
-   mapped_region region2( shm                     //Map shared memory
-                        , read_write              //Map it as read-write
-                        , page_size               //Map from offset 0
-                        , page_size               //Map page_size/2 bytes
+   mapped_region region2( shm                //Map shared memory
+                        , read_write         //Map it as read-write
+                        , page_size          //Map from offset 0
+                        , page_size          //Map the rest
                         );
 
 How can we obtain the [*page size]? The `mapped_region` class has an static
@@ -824,13 +833,6 @@ function that returns that value:
 
    //Obtain the page size of the system
    std::size_t page_size = mapped_region::get_page_size();
-
-   //This mapping will optimally use system resources
-   mapped_region region ( shm                     //Map shared memory
-                        , read_write              //Map it as read-write
-                        , 0                       //Map from offset 0
-                        , page_size               //Map whole page
-                        );
 
 The operating system might also limit the number of mapped memory regions per
 process or per system.
@@ -2226,7 +2228,7 @@ queue using 3 methods:
 A message queue [*just copies raw bytes between processes] and does not send
 objects. This means that if we want to send an object using a message queue 
 [*the object must be binary serializable]. For example, we can send integers
-between processes but [*not] a std::string. You should use [*Boost.Serialization]
+between processes but [*not] a `std::string`. You should use [*Boost.Serialization]
 or use advanced [*Boost.Interprocess] mechanisms to send complex data between
 processes.
 
@@ -2756,8 +2758,7 @@ a memory management algorithm to allocate portions of that segment.
 Many times, we also want to associate a names to objects created in shared memory, so
 all the processes can find the object using the name.
 
-Managed memory segments offer a lot of possibilities and [*Boost.Interprocess] offers
-4 managed memory segment classes:
+[*Boost.Interprocess] offers 4 managed memory segment classes:
 
 *  To manage a shared memory mapped region ([*basic_managed_shared_memory] class).
 *  To manage a memory mapped file ([*basic_managed_mapped_file]).
@@ -2824,7 +2825,7 @@ These classes can be customized with the following template parameters:
       addresses in each process. If `void_pointer` is `void*` only fixed
       address mapping could be used.
 
-   *  See [link boost_interprocess.customizing_boost_interprocess.custom_interprocess_alloc Writing a new memory 
+   *  See [link interprocess.customizing_interprocess.custom_interprocess_alloc Writing a new memory 
       allocation algorithm] for more details about memory algorithms.
      
 *  *IndexType* is the type of index that will be used to store the name-object 
@@ -3160,36 +3161,6 @@ if there is no more memory and the non-throwing version returns 0 pointer.
 
 [endsect]
 
-[section:allocate_aligned Allocating aligned fragments of a managed memory segment]
-
-Sometimes it's interesting to be able to allocate aligned fragments of memory
-from a segment and managed memory segments offer also that possibility.
-
-This allocation is similar to the previously shown raw memory allocation but
-it takes an additional parameter specifying the alignment. There is
-a restriction for the alignment: [*the alignment must be power of two].
-
-If a user wants to allocate many aligned blocks (for example aligned to 128 bytes),
-the size that minimizes the memory waste is a value that's is nearly a multiple
-of that alignment (for example 128 - some bytes). This way, if the first bytes
-of a big block of memory are used
-to fulfill the aligned allocation, the rest of the block is also aligned to that
-value and ready for the next aligned allocation. Note
-that [*a size equal to the alignment is not correct] because the memory
-allocation algorithm needs some payload bytes to store deallocation information.
-
-If the user could know the size of the payload, he could request a size that will
-be optimal to allocate aligned chunks of memory maximizing both the size of the
-request [*and] the possibilities of future aligned allocations. This information
-is stored in the PayloadPerAllocation constant of managed memory segments.
-
-Here's is an small example showing how aligned allocation is used:
-
-[import ../example/doc_managed_aligned_allocation.cpp]
-[doc_managed_aligned_allocation]
-
-[endsect]
-
 [section:segment_offset Obtaining handles to identify data]
 
 The class also offers conversions between absolute addresses that belong to 
@@ -3336,10 +3307,16 @@ using this "unique instance" mechanism.
 
 [section:synchronization Synchronization guarantees]
 
-One of the features of named/anonymous/unique allocations/searches/destructions is that
-they are [*atomic]. Named allocations use the synchronization scheme defined by the
-internal `mutex_family` typedef defined by the template parameter MemoryAlgorithm of 
-the managed memory segment. So that two processes can call:
+One of the features of named/unique allocations/searches/destructions is that
+they are [*atomic]. Named allocations use the recursive synchronization scheme defined by the
+internal `mutex_family` typedef defined of the memory allocation algorithm template
+parameter (`MemoryAlgorithm`). That is, the mutex type used to synchronize
+named/unique allocations is defined by the 
+`MemoryAlgorithm::mutex_family::recursive_mutex_type` type. For shared memory,
+and memory mapped file based managed segments this recursive mutex is defined
+as [classref boost::interprocess::interprocess_recursive_mutex].
+
+If two processes can call:
 
 [c++]
 
@@ -3412,7 +3389,7 @@ just must specify [boost::interprocess::map_index map_index] as a template param
 [*Boost.Interprocess] plans to offer an *unordered_map* based index as soon as this
 container is included in Boost. If these indexes are not enough for you, you can define
 your own index type. To know how to do this, go to 
-[link boost_interprocess.customizing_boost_interprocess.custom_indexes Building custom indexes] section.
+[link interprocess.customizing_interprocess.custom_indexes Building custom indexes] section.
 
 [endsect]
 
@@ -3441,9 +3418,35 @@ memory segment using `get_segment_manager` member:
 
 [endsect]
 
-[section:managed_memory_segment_additional_features Additional functions]
+[section:managed_memory_segment_information Obtaining information about a constructed object]
 
-Managed memory segments offer additional functions:
+Once an object is constructed using `construct<>` function family, the
+programmer can obtain information about the object using a pointer to the
+object. The programmer can obtain the following information:
+
+*  Name of the object: If it's a named instance, the name used in the construction
+   function is returned, otherwise 0 is returned.
+
+*  Length of the object: Returns the number of elements of the object (1 if it's
+   a single value, >=1 if it's an array).
+
+*  The type of construction: Whether the object was construct using a named,
+   unique or anonymous construction.
+
+Here is an example showing this functionality:
+
+[import ../example/doc_managed_construction_info.cpp]
+[doc_managed_construction_info]
+
+[endsect]
+
+[endsect]
+
+[section:managed_memory_segment_advanced_features Managed Memory Segment Advanced Features]
+
+[section:managed_memory_segment_information Obtaining information about the managed segment]
+
+These functions are available to obtain information about the managed memory segments:
 
 Obtain the size of the memory segment:
 
@@ -3463,22 +3466,42 @@ Clear to zero the free memory:
 
    managed_shm.zero_free_memory();
 
-Returns true if all memory has been deallocated, false otherwise:
+Know if all memory has been deallocated, false otherwise:
 
 [c++]
 
    managed_shm.all_memory_deallocated();
 
-Tests internal structures of the managed segment and returns true
+Test internal structures of the managed segment. Returns true
 if no errors are detected:
 
 [c++]
 
    managed_shm.check_sanity();
 
-Reserves memory to make the subsequent allocation of named or unique objects more
-efficient. This function is only useful for pseudo-intrusive or non-node indexes (like
-`flat_map_index`, `iunordered_set_index`). This function has no effect with the
+Obtain the number of named and unique objects allocated in the segment:
+
+[c++]
+
+   managed_shm.get_num_named_objects();
+   managed_shm.get_num_unique_objects();
+
+[endsect]
+
+[section:managed_memory_segment_advanced_index_functions Advanced index functions]
+
+As mentioned, the managed segment stores the information about named and unique
+objects in two indexes. Depending on the type of those indexes, the index must
+reallocate some auxiliary structures when new named or unique allocations are made.
+For some indexes, if the user knows how many maned or unique objects is going to
+create it's possible to preallocate some structures to obtain much better
+performance (if the index is an ordered vector it can  preallocate memory to avoid
+reallocations, if the index is a hash structure it can preallocate the bucket array...).
+
+The following functions reserve memory to make the subsequent allocation of
+named or unique objects more efficient. These functions are only useful for
+pseudo-intrusive or non-node indexes (like `flat_map_index`,
+`iunordered_set_index`). These functions has no effect with the
 default index (`iset_index`) or other indexes (`map_index`):
 
 [c++]
@@ -3486,19 +3509,22 @@ default index (`iset_index`) or other indexes (`map_index`):
    managed_shm.reserve_named_objects(1000);
    managed_shm.reserve_unique_objects(1000);
 
-Returns the number of named and unique objects allocated in the segment:
-
 [c++]
 
-   managed_shm.get_num_named_objects();
-   managed_shm.get_num_unique_objects();
+   managed_shm.reserve_named_objects(1000);
+   managed_shm.reserve_unique_objects(1000);
 
-Returns constant iterators to the range of named and unique objects stored in the
-managed segment. [*Caution:] These functions are for debugging purposes
-and they are [*not] thread-safe. If any other process creates or destroys
-named/unique objects while a process iterates the named/unique objects the
-results are undefined. Iterators are invalidated after each named/unique object
-creation/erasure:
+Managed memory segments also offer the possibility to iterate through
+constructed named and unique objects for debugging purposes. [*Caution: this
+iteration is not thread-safe] so the user should make sure that no other
+thread is manipulating named or unique indexes (creating, erasing, 
+reserving...) in the segment. Other operations not involving indexes can
+be concurrently executed (raw memory allocation/deallocations, for example).
+
+The following functions return constant iterators to the range of named and
+unique objects stored in the managed segment. Depending on the index type, 
+iterators might be invalidated after a named or unique
+creation/erasure/reserve operation:
 
 [c++]
 
@@ -3527,6 +3553,282 @@ creation/erasure:
       //A constant void pointer to the unique object
       const void *value = unique_beg->value();
    }
+
+[endsect]
+
+[section:allocate_aligned Allocating aligned memory portions]
+
+Sometimes it's interesting to be able to allocate aligned fragments of memory
+because of some hardware or software restrictions. Sometimes, having
+aligned memory is an feature that can be used to improve several
+memory algorithms.
+
+This allocation is similar to the previously shown raw memory allocation but
+it takes an additional parameter specifying the alignment. There is
+a restriction for the alignment: [*the alignment must be power of two].
+
+If a user wants to allocate many aligned blocks (for example aligned to 128 bytes),
+the size that minimizes the memory waste is a value that's is nearly a multiple
+of that alignment (for example 2*128 - some bytes). The reason for this is that
+every memory allocation usually needs some additional metadata in the first
+bytes of the allocated buffer. If the user can know the value of "some bytes"
+and if the first bytes of a free block of memory are used to fulfill the aligned
+allocation, the rest of the block can be left also aligned and ready for the next
+aligned allocation. Note that requesting [*a size multiple of the alignment is not optimal]
+because lefts the next block of memory unaligned due to the needed metadata.
+
+Once the programmer knows the size of the payload of every memory allocation,
+he can request a size that will be optimal to allocate aligned chunks
+of memory maximizing both the size of the
+request [*and] the possibilities of future aligned allocations. This information
+is stored in the PayloadPerAllocation constant of managed memory segments.
+
+Here's is an small example showing how aligned allocation is used:
+
+[import ../example/doc_managed_aligned_allocation.cpp]
+[doc_managed_aligned_allocation]
+
+[endsect]
+
+[/
+/
+/[section:managed_memory_segment_multiple_allocations Multiple allocation functions]
+/
+/If an application needs to allocate a lot of memory buffers but it needs
+/to deallocate them independently, the application is normally forced to loop
+/calling `allocate()`. Managed memory segments offer an alternative function
+/to pack several allocations in a single call obtaining memory buffers that:
+/
+/*  are packed contiguously in memory (which improves locality)
+/*  can be independently deallocated.
+/
+/This allocation method is much faster
+/than calling `allocate()` in a loop. The downside is that the segment
+/must provide a contiguous memory segment big enough to hold all the allocations.
+/Managed memory segments offer this functionality through `allocate_many()` functions.
+/There are 2 types of `allocate_many` functions:
+/
+/* Allocation of N buffers of memory with the same size.
+/* Allocation ot N buffers of memory, each one of different size.
+/
+/[c++]
+/
+/   //!Allocates n_elements of elem_size bytes.
+/   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements);
+/
+/   //!Allocates n_elements, each one of elem_sizes[i] bytes.
+/   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements);
+/
+/   //!Allocates n_elements of elem_size bytes. No throwing version.
+/   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements, std::nothrow_t nothrow);
+/
+/   //!Allocates n_elements, each one of elem_sizes[i] bytes. No throwing version.
+/   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::nothrow_t nothrow);
+/
+/All functions return a `multiallocation iterator` that can be used to obtain
+/pointers to memory the user can overwrite. A `multiallocation_iterator`:
+/
+/*  Becomes invalidated if the memory is pointing to is deallocated or
+/   the next iterators (which previously were reachable with `operator++`)
+/   become invalid.
+/*  Returned from `allocate_many` can be checked in a boolean expression to
+/   know if the allocation has been successful.
+/*  A default constructed `multiallocation iterator` indicates
+/   both an invalid iterator and the "end" iterator.
+/*  Dereferencing an iterator (`operator *()`) returns a `char*` value
+/   pointing to the first byte of memory that the user can overwrite
+/   in that memory buffer.
+/*  The iterator category depends on the memory allocation algorithm,
+/   but it's a least a forward iterator.
+/
+/Here's an small example showing all this functionality:
+/
+/[import ../example/doc_managed_multiple_allocation.cpp]
+/[doc_managed_multiple_allocation]
+/
+/Allocating N buffers of the same size improves the performance of pools
+/and node containers (for example STL-like lists):
+/when inserting a range of forward iterators in a STL-like
+/list, the insertion function can detect the number of needed elements
+/and allocate in a single call. The nodes still can be deallocated.
+/
+/Allocating N buffers of different sizes can be used to speed up allocation in
+/cases where several objects must always be allocated at the same time but
+/deallocated at different times. For example, a class might perform several initial
+/allocations (some header data for a network packet, for example) in its
+/constructor but also allocations of buffers that might be reallocated in the future
+/(the data to be sent through the network). Instead of allocating all the data
+/independently, the constructor might use `allocate_many()` to speed up the
+/initialization, but it still can deallocate and expand the memory of the variable
+/size element.
+/
+/In general, `allocate_many` is useful with large values of N. Overuse
+/of `allocate_many` can increase the effective memory usage,
+/because it can't reuse existing non-contiguous memory fragments that
+/might be available for some of the elements.
+/
+/[endsect]
+]
+
+[section:managed_memory_segment_expand_in_place Expand in place memory allocation]
+
+When programming some data structures such as vectors, memory reallocation becomes
+an important tool to improve performance. Managed memory segments offer an advanced
+reallocation function that offers:
+
+*  Forward expansion: An allocated buffer can be expanded so that the end of the buffer
+   is moved further. New data can be written between the old end and the new end.
+
+*  Backwards expansion: An allocated buffer can be expanded so that the beginning of
+   the buffer is moved backwards. New data can be written between the new beginning
+   and the old beginning.
+
+*  Shrinking: An allocated buffer can be shrunk so that the end of the buffer
+   is moved backwards. The memory between the new end and the old end can be reused
+   for future allocations.
+
+The expansion can be combined with the allocation of a new buffer if the expansion
+fails obtaining a function with "expand, if fails allocate a new buffer" semantics.
+
+Apart from this features, the function always returns the real size of the
+allocated buffer, because many times, due to alignment issues the allocated
+buffer a bit bigger than the requested size. Thus, the programmer can maximize
+the memory use using `allocation_command`.
+
+Here's the declaration of the function:
+
+[c++]
+
+   enum allocation_type
+   {
+      //Bitwise OR (|) combinable values
+      allocate_new        = ...,
+      expand_fwd          = ...,
+      expand_bwd          = ...,
+      shrink_in_place     = ...,
+      nothrow_allocation  = ...
+   };
+
+
+   template<class T>
+   std::pair<T *, bool>
+      allocation_command( allocation_type command
+                        , std::size_t limit_size
+                        , std::size_t preferred_size
+                        , std::size_t &received_size
+                        , T *reuse_ptr = 0);
+
+
+[*Preconditions for the function]:
+
+*  If the parameter command contains the value `shrink_in_place` it can't
+contain any of these values: `expand_fwd`, `expand_bwd`.
+
+*  If the parameter command contains `expand_fwd` or `expand_bwd`, the parameter
+   `reuse_ptr` must be non-null and returned by a previous allocation function.
+
+*  If the parameter command contains the value `shrink_in_place`, the parameter 
+   `limit_size` must be equal or greater than the parameter `preferred_size`.
+
+*  If the parameter `command` contains any of these values: `expand_fwd` or `expand_bwd`,
+   the parameter `limit_size` must be equal or less than the parameter `preferred_size`.
+
+[*Which are the effects of this function:]
+
+*  If the parameter command contains the value `shrink_in_place`, the function
+   will try to reduce the size of the memory block referenced by pointer `reuse_ptr`
+   to the value `preferred_size` moving only the end of the block.
+   If it's not possible, it will try to reduce the size of the memory block as
+   much as possible as long as this results in `size(p) <= limit_size`. Success
+   is reported only if this results in `preferred_size <= size(p)` and `size(p) <= limit_size`.
+
+*  If the parameter `command` only contains the value `expand_fwd` (with optional
+   additional `nothrow_allocation`), the allocator will try to increase the size of the
+   memory block referenced by pointer reuse moving only the end of the block to the
+   value `preferred_size`. If it's not possible, it will try to increase the size
+   of the memory block as much as possible as long as this results in
+   `size(p) >= limit_size`. Success is reported only if this results in `limit_size <= size(p)`.
+
+*  If the parameter `command` only contains the value `expand_bwd` (with optional
+   additional `nothrow_allocation`), the allocator will try to increase the size of
+   the memory block referenced by pointer `reuse_ptr` only moving the start of the
+   block to a returned new position new_ptr. If it's not possible, it will try to
+   move the start of the block as much as possible as long as this results in
+   `size(new_ptr) >= limit_size`. Success is reported only if this results in
+   `limit_size <= size(new_ptr)`.
+
+*  If the parameter `command` only contains the value `allocate_new` (with optional
+   additional `nothrow_allocation`), the allocator will try to allocate memory for
+   `preferred_size` objects. If it's not possible it will try to allocate memory for
+   at least limit_size` objects.
+
+*  If the parameter `command` only contains a combination of `expand_fwd` and
+   `allocate_new`, (with optional additional `nothrow_allocation`) the allocator will
+   try first the forward expansion. If this fails, it would try a new allocation.
+
+*  If the parameter `command` only contains a combination of `expand_bwd` and
+   `allocate_new` (with optional additional `nothrow_allocation`), the allocator will
+   try first to obtain `preferred_size` objects using both methods if necessary.
+   If this fails, it will try to obtain `limit_size` objects using both methods if
+   necessary.
+
+*  If the parameter `command` only contains a combination of `expand_fwd` and
+   `expand_bwd` (with optional additional `nothrow_allocation`), the allocator will
+   try first forward expansion. If this fails it will try to obtain preferred_size
+   objects using backwards expansion or a combination of forward and backwards expansion.
+   If this fails, it will try to obtain `limit_size` objects using both methods if
+   necessary.
+
+*  If the parameter `command` only contains a combination of allocation_new,
+   `expand_fwd` and `expand_bwd`, (with optional additional `nothrow_allocation`)
+   the allocator will try first forward expansion. If this fails it will try to obtain
+   preferred_size objects using new allocation, backwards expansion or a combination of
+   forward and backwards expansion. If this fails, it will try to obtain `limit_size`
+   objects using the same methods.
+
+*  The allocator always writes the size or the expanded/allocated/shrunk memory block
+   in `received_size`. On failure the allocator writes in `received_size` a possibly
+   successful `limit_size` parameter for a new call.
+
+[*Throws an exception if two conditions are met:]
+
+*  The allocator is unable to allocate/expand/shrink the memory or there is an
+   error in preconditions
+
+*  The parameter command does not contain `nothrow_allocation`.
+
+[*This function returns:]
+
+*  The address of the allocated memory or the new address of the expanded memory
+   as the first member of the pair. If the parameter command contains
+   `nothrow_allocation` the first member will be 0
+   if the allocation/expansion fails or there is an error in preconditions.
+
+*  The second member of the pair will be false if the memory has been allocated,
+   true if the memory has been expanded. If the first member is 0, the second member
+   has an undefined value. 
+
+[*Notes:]
+
+*  If the user chooses `char` as template argument the returned buffer will
+   be suitably aligned to hold any type.
+*  If the user chooses `char` as template argument and a backwards expansion is
+   performed, although properly aligned, the returned buffer might not be 
+   suitable because the distance between the new beginning and the old beginning
+   might not multiple of the type the user wants to construct, because due to internal
+   restriction the expansion can be slightly bigger than the requested. [*When
+   performing backwards expansion, if you have already constructed objects in the
+   old buffer, make sure to specify correctly the type.]
+
+Here is an small example that shows the use of `allocation_command`:
+
+[import ../example/doc_managed_allocation_command.cpp]
+[doc_managed_allocation_command]
+
+`allocation_commmand` is a very powerful function that can lead to important
+performance gains. It's specially useful when programming vector-like data
+structures where the programmer can minimize both the number of allocation
+requests and the memory waste.
 
 [endsect]
 
@@ -3695,7 +3997,7 @@ offers 3 allocators based on this segregated storage algorithm:
 
 To know the details of the implementation of
 of the segregated storage pools see the
-[link boost_interprocess.architecture_2.implementation_segregated_storage_pools Implementation of [*Boost.Interprocess] segregated storage pools]
+[link interprocess.architecture_2.implementation_segregated_storage_pools Implementation of [*Boost.Interprocess] segregated storage pools]
 section.
 
 [section:segregated_allocators_common Additional parameters and functions of segregated storage node allocators]
@@ -3704,7 +4006,7 @@ section.
 [classref boost::interprocess::private_node_allocator private_node_allocator] and
 [classref boost::interprocess::cached_node_allocator cached_node_allocator] implement
 the standard allocator interface and the functions explained in the
-[link boost_interprocess.allocator_introduction.allocator_properties Properties of Boost.Interprocess allocators].
+[link interprocess.allocator_introduction.allocator_properties Properties of Boost.Interprocess allocators].
 
 All these allocators are templatized by 3 parameters:
 
@@ -3731,7 +4033,7 @@ pool is used for each node size. This is not possible if you try to share
 a node allocator between processes. To achieve this sharing
 [classref boost::interprocess::node_allocator node_allocator]
 uses the segment manager's unique type allocation service
-(see [link boost_interprocess.managed_memory_segment_features.unique Unique instance construction] section).
+(see [link interprocess.managed_memory_segment_features.unique Unique instance construction] section).
 
 In the initialization, a
 [classref boost::interprocess::node_allocator node_allocator]
@@ -3926,7 +4228,7 @@ and performance (aceptable for many applications) with the ability to return fre
 of nodes to the memory segment, so that they can be used by any other container or managed
 object construction. To know the details of the implementation of
 of "adaptive pools" see the 
-[link boost_interprocess.architecture_2.implementation_adaptive_pools Implementation of [*Boost.Intrusive] adaptive pools]
+[link interprocess.architecture_2.implementation_adaptive_pools Implementation of [*Boost.Intrusive] adaptive pools]
 section.
 
 Like with segregated storage based node allocators, Boost.Interprocess offers
@@ -3940,7 +4242,7 @@ Like with segregated storage based node allocators, Boost.Interprocess offers
 [classref boost::interprocess::private_adaptive_pool private_adaptive_pool] and
 [classref boost::interprocess::cached_adaptive_pool cached_adaptive_pool] implement
 the standard allocator interface and the functions explained in the
-[link boost_interprocess.allocator_introduction.allocator_properties Properties of Boost.Interprocess allocators].
+[link interprocess.allocator_introduction.allocator_properties Properties of Boost.Interprocess allocators].
 
 All these allocators are templatized by 4 parameters:
 
@@ -4054,7 +4356,7 @@ An example using [classref boost::interprocess::private_adaptive_pool private_ad
 
 [endsect]
 
-[section:cached_adaptive_pool boost::interprocess::cached_adaptive_pool: Avoiding synchronization overhead]
+[section:cached_adaptive_pool cached_adaptive_pool: Avoiding synchronization overhead]
 
 Adaptive pools have also a cached version. In this allocator the allocator caches
 some nodes to avoid the synchronization and bookeeping overhead of the shared
@@ -4238,7 +4540,7 @@ in a generic way, [*Boost.Interprocess] offers the following classes:
    to be used in managed memory segments like shared memory.
    It's implemented using a vector-like contiguous storage, so
    it has fast c string conversion and can be used with the 
-   [link boost_interprocess.streams.vectorstream vectorstream] iostream formatting classes.
+   [link interprocess.streams.vectorstream vectorstream] iostream formatting classes.
    To use it include:
 
 [c++]
@@ -4417,7 +4719,7 @@ Let's see an example of the use of managed_external_buffer:
 [*Boost.Interprocess] STL compatible allocators can also be used to place STL 
 compatible containers in the user segment.
 
-[classref boost::interprocess::managed_external_buffer managed_external_buffer] can 
+[classref boost::interprocess::basic_managed_external_buffer basic_managed_external_buffer] can 
 be also useful to build small databases for embedded systems limiting the size of
 the used memory to a predefined memory chunk, instead of letting the database
 fragment the heap memory.
@@ -4474,7 +4776,7 @@ To use a managed heap memory, you must include the following header:
    #include <boost/interprocess/managed_heap_memory.hpp>
 
 The use is exactly the same as 
-[classref boost::interprocess::managed_external_buffer],
+[classref boost::interprocess::basic_managed_external_buffer],
 except that memory is created by
 the managed memory segment itself using dynamic (new/delete) memory.
 
@@ -4688,17 +4990,17 @@ setting the string from which the stream will extract data. An example:
 
 The problem is even worse if the string is a shared-memory string, because
 to extract data, we must copy the data first from shared-memory to a 
-std::string and then to a stringstream. To encode data in a shared-memory
-string we should copy data from a stringstream to a std::string and then 
+`std::string` and then to a `std::stringstream`. To encode data in a shared memory
+string we should copy data from a `std::stringstream` to a `std::string` and then 
 to the shared-memory string. 
 
 Because of this overhead, [*Boost.Interprocess] offers a way to format memory-strings
 (in shared memory, memory mapped files or any other memory segment) that
-can avoid all unneeded string copy and memory allocation/deallocation, while
+can avoid all unneeded string copy and memory allocation/deallocations, while
 using all iostream facilities. [*Boost.Interprocess] *vectorstream* and *bufferstream* implement
 vector-based and fixed-size buffer based storage support for iostreams and
-all the formatting/locale hard work is done by standard std::basic_streambuf<>
-and std::basic_iostream<> classes.
+all the formatting/locale hard work is done by standard `std::basic_streambuf<>`
+and `std::basic_iostream<>` classes.
 
 [section:vectorstream Formatting directly in your character vector: vectorstream]
 
@@ -4709,10 +5011,10 @@ a shared-memory vector is used, data is extracted/written from/to the shared-mem
 vector, without additional copy/allocation. We can see the declaration of 
 basic_vectorstream here:
 
-   /*!A basic_iostream class that holds a character vector specified by CharVector
-      template parameter as its formatting buffer. The vector must have
-      contiguous storage, like std::vector, boost::interprocess::vector or
-      boost::interprocess::basic_string*/
+   //!A basic_iostream class that holds a character vector specified by CharVector
+   //!template parameter as its formatting buffer. The vector must have
+   //!contiguous storage, like std::vector, boost::interprocess::vector or
+   //!boost::interprocess::basic_string
    template <class CharVector, class CharTraits = 
             std::char_traits<typename CharVector::value_type> >
    class basic_vectorstream 
@@ -4728,37 +5030,37 @@ basic_vectorstream here:
       typedef typename std::basic_ios<char_type, CharTraits>::off_type     off_type;
       typedef typename std::basic_ios<char_type, CharTraits>::traits_type  traits_type;
 
-      /*!Constructor. Throws if vector_type default constructor throws.*/
+      //!Constructor. Throws if vector_type default constructor throws.
       basic_vectorstream(std::ios_base::openmode mode 
                         = std::ios_base::in | std::ios_base::out);
 
-      /*!Constructor. Throws if vector_type(const Parameter &param) throws.*/
+      //!Constructor. Throws if vector_type(const Parameter &param) throws.
       template<class Parameter>
       basic_vectorstream(const Parameter &param, std::ios_base::openmode mode
                         = std::ios_base::in | std::ios_base::out);
 
       ~basic_vectorstream(){}
 
-      //Returns the address of the stored stream buffer.
+      //!Returns the address of the stored stream buffer.
       basic_vectorbuf<CharVector, CharTraits>* rdbuf() const;
 
-      /*!Swaps the underlying vector with the passed vector. 
-         This function resets the position in the stream.
-         Does not throw.*/
+      //!Swaps the underlying vector with the passed vector. 
+      //!This function resets the position in the stream.
+      //!Does not throw.
       void swap_vector(vector_type &vect);
 
-      /*!Returns a const reference to the internal vector.
-         Does not throw.*/
+      //!Returns a const reference to the internal vector.
+      //!Does not throw.
       const vector_type &vector() const;
 
-      /*!Preallocates memory from the internal vector.
-         Resets the stream to the first position.
-         Throws if the internals vector's memory allocation throws.*/
+      //!Preallocates memory from the internal vector.
+      //!Resets the stream to the first position.
+      //!Throws if the internals vector's memory allocation throws.
       void reserve(typename vector_type::size_type size);
    };
 
 The vector type is templatized, so that we can use any type of vector:
-[*std::vector], [classref boost::interprocess::vector].... But the storage must be *contiguous*,
+[*std::vector], [classref boost::interprocess::vector]... But the storage must be *contiguous*,
 we can't use a deque. We can even use *boost::interprocess::basic_string*, since it has a 
 vector interface and it has contiguous storage. *We can't use std::string*, because 
 although some std::string implementation are vector-based, others can have 
@@ -4788,8 +5090,8 @@ embedded systems) choose sprintf family. The *bufferstream* classes offer
 iostream interface with direct formatting in a fixed size memory buffer with 
 protection against buffer overflows. This is the interface:
 
-   /*!A basic_iostream class that uses a fixed size character buffer
-      as its formatting buffer.*/
+   //!A basic_iostream class that uses a fixed size character buffer
+   //!as its formatting buffer.
    template <class CharT, class CharTraits = std::char_traits<CharT> >
    class basic_bufferstream 
       : public std::basic_iostream<CharT, CharTraits>
@@ -4803,24 +5105,24 @@ protection against buffer overflows. This is the interface:
       typedef typename std::basic_ios<char_type, CharTraits>::off_type     off_type;
       typedef typename std::basic_ios<char_type, CharTraits>::traits_type  traits_type;
       
-      /*!Constructor. Does not throw.*/
+      //!Constructor. Does not throw.
       basic_bufferstream(std::ios_base::openmode mode 
                         = std::ios_base::in | std::ios_base::out);
 
-      /*!Constructor. Assigns formatting buffer. Does not throw.*/
+      //!Constructor. Assigns formatting buffer. Does not throw.
       basic_bufferstream(CharT *buffer, std::size_t length,
                         std::ios_base::openmode mode
                            = std::ios_base::in | std::ios_base::out);
 
-      /*!Returns the address of the stored stream buffer.*/
+      //!Returns the address of the stored stream buffer.
       basic_bufferbuf<CharT, CharTraits>* rdbuf() const;
 
-      /*!Returns the pointer and size of the internal buffer. 
-         Does not throw.*/
+      //!Returns the pointer and size of the internal buffer. 
+      //!Does not throw.
       std::pair<CharT *, std::size_t> buffer() const;
 
-      /*!Sets the underlying buffer to a new value. Resets 
-         stream position. Does not throw.*/
+      //!Sets the underlying buffer to a new value. Resets 
+      //!stream position. Does not throw.
       void buffer(CharT *buffer, std::size_t length);
    };   
 
@@ -5139,7 +5441,7 @@ pointer. If the [*memory algorithm] will be used just with fixed address mapping
 `void_pointer` can be defined as `void*`.
 
 The rest of the interface of a [*Boost.Interprocess] [*memory algorithm] is described in 
-[link boost_interprocess.customizing_boost_interprocess.custom_interprocess_alloc Writing a new shared memory allocation algorithm] 
+[link interprocess.customizing_interprocess.custom_interprocess_alloc Writing a new shared memory allocation algorithm] 
 section. As memory algorithm examples, you can see the implementations
 [classref boost::interprocess::simple_seq_fit  simple_seq_fit] or
 [classref boost::interprocess::rbtree_best_fit rbtree_best_fit] classes.
@@ -5216,7 +5518,7 @@ to be used to identify named objects, we can specify the memory algorithm that w
 control dynamically the portions of the memory segment, and we can specify 
 also the index type that will store the [name pointer, object information] mapping.
 We can construct our own index types as explained in
-[link boost_interprocess.customizing_boost_interprocess.custom_indexes Building custom indexes] section.
+[link interprocess.customizing_interprocess.custom_indexes Building custom indexes] section.
 
 [endsect]
 
@@ -5372,7 +5674,7 @@ in `boost::interprocess` namespace, but with these little details:
 
 [endsect]
 
-[section:customizing_boost_interprocess Customizing Boost.Interprocess]
+[section:customizing_interprocess Customizing Boost.Interprocess]
 
 [section:custom_interprocess_alloc Writing a new shared memory allocation algorithm]
 
@@ -5757,13 +6059,13 @@ these alternatives:
    allocators call `allocate()` only when the pool runs out of nodes. This is pretty
    efficient (much more than the current default general-purpose algorithm) and this
    can save a lot of memory. See
-   [link boost_interprocess.stl_allocators_segregated_storage Segregated storage node allocators] and
-   [link boost_interprocess.stl_allocators_adaptive Adaptive node allocators] for more information.
+   [link interprocess.stl_allocators_segregated_storage Segregated storage node allocators] and
+   [link interprocess.stl_allocators_adaptive Adaptive node allocators] for more information.
 
 *  Write your own memory algorithm. If you have experience with memory allocation algorithms
    and you think another algorithm is better suited than the default one for your application,
    you can specify it in all [*Boost.Interprocess] managed memory segments. See the section
-   [link boost_interprocess.customizing_boost_interprocess.custom_interprocess_alloc Writing a new shared memory allocation algorithm]
+   [link interprocess.customizing_interprocess.custom_interprocess_alloc Writing a new shared memory allocation algorithm]
    to know how to do this. If you think its better than the default one for general-purpose
    applications, be polite and donate it to [*Boost.Interprocess] to make it default!
 
@@ -5842,7 +6144,7 @@ If you see that the performance is not good enough you have these alternatives:
 
 *  Use another [*Boost.Interprocess] index type if you feel the default one is
    not fast enough. If you are not still satisfied, write your own index type. See
-   [link boost_interprocess.customizing_boost_interprocess.custom_indexes Building custom indexes] for this.
+   [link interprocess.customizing_interprocess.custom_indexes Building custom indexes] for this.
 
 *  Destruction via pointer is at least as fast as using the name of the object and
    can be faster (in node containers, for example). So if your problem is that you
@@ -6007,23 +6309,39 @@ limitations under the License.
 
 [endsect]
 
-[section:changes Changes...]
+[section:release_notes Release Notes]
 
-[section:changes_interprocess_2007_06_23 Changes in Interprocess 2007-06-23...]
+[section:release_notes_boost_1_35_00 Boost 1.35 Release]
+
+*  Reduced template bloat for node and adaptive allocators extracting node
+   implementation to a class only depends on the memory algorithm, instead of
+   the segment manager + node size + node number...
+
+*  Fixed bug in `mapped_region` in UNIX when mapping address was provided but
+   the region was mapped in another address.
+
+*  Added `aligned_allocate` and `allocate_many` functions to managed memory segments.
+
+*  Improved documentation about managed memory segments.
+
+*  Added `get_instance_name`, `get_instance_length` and `get_instance_type` functions
+   to managed memory segments.
+
+*  Corrected suboptimal buffer expansion bug in `rbtree_best_fit`.
 
 *  Added iteration of named and unique objects in a segment manager.
+
 *  Fixed leak in [classref boost::interprocess::vector vector].
+
 *  Added support for Solaris.
-*  Optimized [classref boost::interprocess::segment_manager] to avoid
-   code bloat associated with templated instantiations.
-*  Removed the use of allocator::construct and allocator::destroy from containers.
+
+*  Optimized [classref boost::interprocess::segment_manager segment_manager]
+   to avoid code bloat associated with templated instantiations.
+
 *  Correction of typos and documentation errors.
+
 *  Fixed bug for UNIX: No slash ('/') was being added as the first character
    for shared memory names, leading to errors in some UNIX systems.
-
-[endsect]
-
-[section:changes_interprocess_2007_05_03 Changes in Interprocess 2007-05-03...]
 
 *  Fixed bug in VC-8.0: Broken function inlining in core offset_ptr functions.
 
@@ -6076,7 +6394,7 @@ limitations under the License.
 *  Optimized vector to take advantage of `boost::has_trivial_destructor`.
    This optimization avoids calling destructors of elements that have a trivial destructor.
 
-*  Optimized vector to take advantage of `boost::intrusive::has_trivial_destructor_after_move` trait.
+*  Optimized vector to take advantage of `has_trivial_destructor_after_move` trait.
    This optimization avoids calling destructors of elements that have a trivial destructor
    if the element has been moved (which is the case of many movable types). This trick
    was provided by Howard Hinnant.
@@ -6108,10 +6426,6 @@ limitations under the License.
 
 *  Minor bugfixes.
 
-[endsect]
-
-[section:changes_interprocess_2006_10_13 Changes in Interprocess 2006-10-13...]
-
 *  Implemented N1780 proposal to LWG issue 233: ['Insertion hints in associative containers]
    in interprocess [classref boost::interprocess::multiset multiset] and 
    [classref boost::interprocess::multimap multimap] classes.
@@ -6123,7 +6437,7 @@ limitations under the License.
    and memory mapped files. This change tries to minimize deadlocks.
 
 *  [*Source breaking]: Changed shared memory, memory mapped files and mapped region's
-   open mode to a single `boost::interprocess::mode_t` type.
+   open mode to a single `mode_t` type.
 
 *  Added extra WIN32_LEAN_AND_MEAN before including DateTime headers to avoid socket
    redefinition errors when using Interprocess and Asio in windows.
@@ -6177,7 +6491,7 @@ allocators and containers, I've used to design Interprocess.
 
 * A framework to put STL in shared memory: [@http://allocator.sourceforge.net/ ['"A C++ Standard Allocator for the Standard Template Library"] ]. 
 
-* A design for instantiating C++ objects in shared memory: [@http://www.cs.ubc.ca/local/reading/proceedings/cascon94/htm/english/abs/hon.htm ['"Using objects in shared memory for C++ application"] ].
+* Instantiating C++ objects in shared memory: [@http://www.cs.ubc.ca/local/reading/proceedings/cascon94/htm/english/abs/hon.htm ['"Using objects in shared memory for C++ application"] ].
 
 * A shared memory allocator and relative pointer: [@http://home.earthlink.net/~joshwalker1/writing/SharedMemory.html ['"Taming Shared Memory"] ].
 
@@ -6185,4 +6499,4 @@ allocators and containers, I've used to design Interprocess.
 
 [endsect]
 
-[xinclude interprocess_doxygen.xml]
+[xinclude autodoc.xml]

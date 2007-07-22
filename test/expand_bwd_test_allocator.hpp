@@ -126,7 +126,7 @@ class expand_bwd_test_allocator
                          size_type preferred_size,
                          size_type &received_size, const pointer &reuse = 0)
    {
-      (void)preferred_size;   (void)reuse;
+      (void)preferred_size;   (void)reuse;   (void)command;
       //This allocator only expands backwards!
       assert(m_allocations == 0 || (command & expand_bwd));
       

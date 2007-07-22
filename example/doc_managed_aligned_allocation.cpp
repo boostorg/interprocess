@@ -49,7 +49,7 @@ int main()
       //This allocation will maximize the size of the aligned memory
       //and will increase the possibility of finding more aligned memory
       ptr = managed_shm.allocate_aligned
-         (Alignment - managed_shared_memory::PayloadPerAllocation, Alignment);
+         (3*Alignment - managed_shared_memory::PayloadPerAllocation, Alignment);
 
       //Check alignment
       assert(((char*)ptr-(char*)0) % Alignment == 0);

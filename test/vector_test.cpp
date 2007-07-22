@@ -12,7 +12,6 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
-#include <vector>
 #include <iostream>
 #include <functional>
 
@@ -31,6 +30,8 @@
 #include "expand_bwd_test_allocator.hpp"
 #include "expand_bwd_test_template.hpp"
 #include "dummy_test_allocator.hpp"
+#include <string>
+#include "get_compiler_name.hpp"
 
 using namespace boost::interprocess;
 
@@ -99,8 +100,12 @@ bool do_test()
    //Alias vector types
    typedef vector<IntType, shmem_allocator_t>   MyShmVector;
    typedef std::vector<int>                     MyStdVector;
+
+   std::string compiler_name;
+   test::get_compiler_name(compiler_name);
+
    const int Memsize = 65536;
-   const char *const shMemName = "MySharedMemory";
+   const char *const shMemName = compiler_name.c_str();
    const int max = 100;
 
    {
@@ -216,6 +221,10 @@ bool do_test()
 
          delete stdvector;
          segment.template destroy<MyShmVector>("MyShmVector");
+         segment.shrink_to_fit_indexes();
+
+         if(!segment.all_memory_deallocated())
+            return false;
       }
       catch(std::exception &ex){
          shared_memory_object::remove(shMemName);

@@ -22,6 +22,8 @@
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/containers/string.hpp>
 #include <stdio.h>
+#include <string>
+#include "get_compiler_name.hpp"
 
 using namespace boost::interprocess;
 
@@ -68,10 +70,13 @@ typedef vector <my_unique_ptr_class
 
 int main()
 {
+   std::string compiler_name;
+   test::get_compiler_name(compiler_name);
+
    //Create managed shared memory
-   shared_memory_object::remove("mysegment");
+   shared_memory_object::remove(compiler_name.c_str());
    {
-      managed_shared_memory segment(create_only, "mysegment", 10000);
+      managed_shared_memory segment(create_only, compiler_name.c_str(), 10000);
       
       //Create unique_ptr using dynamic allocation
       my_unique_ptr_class my_ptr (segment.construct<MyClass>(anonymous_instance)()
@@ -99,11 +104,10 @@ int main()
       assert(my_ptr2.get() == 0);
       assert(list.begin()->get() == ptr1);
       assert(list.rbegin()->get() == ptr2);
-   /*
-      MyList list2(move(list));
-      list2.swap(move(MyList(segment.get_segment_manager())));
-      list.swap(move(MyList(segment.get_segment_manager())));
-   */
+   
+      //MyList list2(move(list));
+      //list2.swap(move(MyList(segment.get_segment_manager())));
+      //list.swap(move(MyList(segment.get_segment_manager())));
 
       assert(list.begin()->get() == ptr1);
       assert(list.rbegin()->get() == ptr2);
@@ -130,11 +134,9 @@ int main()
          assert(set.rbegin()->get() == ptr1);
          assert(set.begin()->get()  == ptr2);
       }
-   /*
-      MySet set2(move(set));
-      set2.swap(move(MySet(set_less_t(), segment.get_segment_manager())));
-      set.swap(move(MySet(set_less_t(), segment.get_segment_manager())));
-   */
+      //MySet set2(move(set));
+      //set2.swap(move(MySet(set_less_t(), segment.get_segment_manager())));
+      //set.swap(move(MySet(set_less_t(), segment.get_segment_manager())));
 
       //Now with vector
       MyVector vector(segment.get_segment_manager());
@@ -161,7 +163,7 @@ int main()
       assert(vector.begin()->get() == ptr1);
       assert(vector.rbegin()->get() == ptr2);
    }
-   shared_memory_object::remove("mysegment");
+   shared_memory_object::remove(compiler_name.c_str());
    return 0;
 }
 

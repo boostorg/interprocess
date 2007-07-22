@@ -379,6 +379,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "semaphore_test", "semaphore
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_managed_multiple_allocation", "doc_managed_multiple_allocation.vcproj", "{818C43EE-3561-F3AE-4FD7-8A2076E76A31}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_managed_allocation_command", "doc_managed_allocation_command.vcproj", "{5189DEA3-3261-F33E-47ED-83BC69F66061}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_managed_construction_info", "doc_managed_construction_info.vcproj", "{5C82D1D3-3861-3AF1-03EF-89AED4716761}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -767,6 +779,18 @@ Global
 		{5CE28C83-48FE-1676-4FA7-B50D3A76A013}.Debug.Build.0 = Debug|Win32
 		{5CE28C83-48FE-1676-4FA7-B50D3A76A013}.Release.ActiveCfg = Release|Win32
 		{5CE28C83-48FE-1676-4FA7-B50D3A76A013}.Release.Build.0 = Release|Win32
+		{818C43EE-3561-F3AE-4FD7-8A2076E76A31}.Debug.ActiveCfg = Debug|Win32
+		{818C43EE-3561-F3AE-4FD7-8A2076E76A31}.Debug.Build.0 = Debug|Win32
+		{818C43EE-3561-F3AE-4FD7-8A2076E76A31}.Release.ActiveCfg = Release|Win32
+		{818C43EE-3561-F3AE-4FD7-8A2076E76A31}.Release.Build.0 = Release|Win32
+		{5189DEA3-3261-F33E-47ED-83BC69F66061}.Debug.ActiveCfg = Debug|Win32
+		{5189DEA3-3261-F33E-47ED-83BC69F66061}.Debug.Build.0 = Debug|Win32
+		{5189DEA3-3261-F33E-47ED-83BC69F66061}.Release.ActiveCfg = Release|Win32
+		{5189DEA3-3261-F33E-47ED-83BC69F66061}.Release.Build.0 = Release|Win32
+		{5C82D1D3-3861-3AF1-03EF-89AED4716761}.Debug.ActiveCfg = Debug|Win32
+		{5C82D1D3-3861-3AF1-03EF-89AED4716761}.Debug.Build.0 = Debug|Win32
+		{5C82D1D3-3861-3AF1-03EF-89AED4716761}.Release.ActiveCfg = Release|Win32
+		{5C82D1D3-3861-3AF1-03EF-89AED4716761}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

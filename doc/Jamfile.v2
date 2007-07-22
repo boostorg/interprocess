@@ -7,12 +7,10 @@
 #
 #  See http://www.boost.org for updates, documentation, and revision history.
 
-project boost/interprocess/doc ;
+import doxygen ;
+import quickbook ;
 
-import boostbook : boostbook ;
-using quickbook ;
-
-doxygen interprocess_doxygen
+doxygen autodoc
    :
       [ glob ../../../boost/interprocess/*.hpp ]
       [ glob ../../../boost/interprocess/allocators/*.hpp ]
@@ -28,21 +26,17 @@ doxygen interprocess_doxygen
         <doxygen:param>HIDE_UNDOC_MEMBERS=YES
         <doxygen:param>EXTRACT_PRIVATE=NO
         <doxygen:param>EXPAND_ONLY_PREDEF=YES
-#        <doxygen:param>ENABLE_PREPROCESSING=NO
-#        <doxygen:param>MACRO_EXPANSION=YES
-#        <doxygen:param>SEARCH_INCLUDES=YES
-#        <doxygen:param>INCLUDE_PATH=$(BOOST_ROOT)
    ;
 
-xml interprocess_xml : interprocess.qbk ;
+xml interprocess : interprocess.qbk ;
 
-boostbook interprocess
+boostbook standalone
    :
-      interprocess_xml
-      interprocess_doxygen
+      interprocess
    :
         <xsl:param>boost.root=../../../..
         <xsl:param>boost.libraries=../../../../libs/libraries.htm
         <xsl:param>generate.section.toc.level=3
         <xsl:param>chunk.first.sections=1
+        <dependency>autodoc
    ;

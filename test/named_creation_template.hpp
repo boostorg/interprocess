@@ -15,7 +15,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include "boost_interprocess_check.hpp"
 #include <iostream>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 
 namespace boost { namespace interprocess { namespace test {
 

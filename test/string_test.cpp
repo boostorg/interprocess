@@ -26,6 +26,7 @@
 #include "expand_bwd_test_allocator.hpp"
 #include "expand_bwd_test_template.hpp"
 #include "allocator_v1.hpp"
+#include "get_compiler_name.hpp"
 
 using namespace boost::interprocess;
 
@@ -78,12 +79,15 @@ int string_test()
 
    const int MaxSize = 100;
 
+   std::string compiler_name;
+   test::get_compiler_name(compiler_name);
+
    //Create shared memory
-   shared_memory_object::remove("MySharedMemory");
+   shared_memory_object::remove(compiler_name.c_str());
    {
       managed_shared_memory segment
             (create_only,
-            "MySharedMemory",//segment name
+            compiler_name.c_str(),//segment name
             65536);           //segment size in bytes
       
       ShmemAllocatorChar shmallocator (segment.get_segment_manager());
@@ -260,7 +264,7 @@ int string_test()
       segment.destroy_ptr(shmStringVect);
       delete stdStringVect;
    }
-   shared_memory_object::remove("MySharedMemory");
+   shared_memory_object::remove(compiler_name.c_str());
    return 0;
 }
 

@@ -24,6 +24,7 @@
 #include <iterator>
 #include <set>
 #include <string>
+#include "get_compiler_name.hpp"
 
 namespace boost { namespace interprocess { namespace test {
 
@@ -49,19 +50,19 @@ bool test_names_and_types(ManagedMemory &m)
       if(!ptr)
          break;
 
-      std::size_t namelen = char_traits_type::length(m.get_name(ptr));
+      std::size_t namelen = char_traits_type::length(m.get_instance_name(ptr));
       if(namelen != char_traits_type::length(name)){
          return 1;
       }
 
-      if(char_traits_type::compare(m.get_name(ptr), name, namelen) != 0){
+      if(char_traits_type::compare(m.get_instance_name(ptr), name, namelen) != 0){
          return 1;
       }
 
       if(m.template find<char>(name).first == 0)
          return false;
 
-      if(m.get_type(ptr) != detail::named_type)
+      if(m.get_instance_type(ptr) != named_type)
          return false;
 
       buffers.push_back(ptr);
@@ -77,6 +78,9 @@ bool test_names_and_types(ManagedMemory &m)
    }
 
    if(m.get_num_named_objects() != 0 || !m.check_sanity())
+      return false;
+   m.shrink_to_fit_indexes();
+   if(!m.all_memory_deallocated())
       return false;
    return true;
 }
@@ -148,6 +152,51 @@ bool test_named_iterators(ManagedMemory &m)
 
    if(m.get_num_named_objects() != 0 || !m.check_sanity())
       return false;
+   m.shrink_to_fit_indexes();
+   if(!m.all_memory_deallocated())
+      return false;
+   return true;
+}
+
+//This test allocates until there is no more memory
+//and after that deallocates all in the same order
+template<class ManagedMemory>
+bool test_shrink_to_fit(ManagedMemory &m)
+{
+   typedef typename ManagedMemory::char_type char_type;
+   typedef std::char_traits<char_type> char_traits_type;
+   std::vector<char*> buffers;
+   const int BufferLen = 100;
+   char_type name[BufferLen];
+
+   basic_bufferstream<char_type> formatter(name, BufferLen);
+
+   std::size_t free_memory_before = m.get_free_memory();
+
+   for(int i = 0; true; ++i){
+      formatter.seekp(0);
+      formatter << "prefix_name_" << i << std::ends;
+
+      char *ptr = m.template construct<char>(name, std::nothrow)(i);
+
+      if(!ptr)
+         break;
+      buffers.push_back(ptr);
+   }
+
+   for(int j = 0, max = (int)buffers.size()
+      ;j < max
+      ;++j){
+      m.destroy_ptr(buffers[j]);
+   }
+
+   std::size_t free_memory_after = m.get_free_memory();
+
+   if(free_memory_before != free_memory_after){
+      m.shrink_to_fit_indexes();
+      if(free_memory_before != free_memory_after)
+         return false;
+   }
    return true;
 }
 
@@ -186,6 +235,9 @@ bool test_direct_named_allocation_destruction(ManagedMemory &m)
 
    if(m.get_num_named_objects() != 0 || !m.check_sanity())
       return false;
+   m.shrink_to_fit_indexes();
+   if(!m.all_memory_deallocated())
+      return false;
    return true;
 }
 
@@ -222,6 +274,9 @@ bool test_named_allocation_inverse_destruction(ManagedMemory &m)
    }
 
    if(m.get_num_named_objects() != 0 || !m.check_sanity())
+      return false;
+   m.shrink_to_fit_indexes();
+   if(!m.all_memory_deallocated())
       return false;
    return true;
 }
@@ -262,6 +317,9 @@ bool test_named_allocation_mixed_destruction(ManagedMemory &m)
 
    if(m.get_num_named_objects() != 0 || !m.check_sanity())
       return false;
+   m.shrink_to_fit_indexes();
+   if(!m.all_memory_deallocated())
+      return false;
    return true;
 }
 
@@ -298,6 +356,9 @@ bool test_inverse_named_allocation_destruction(ManagedMemory &m)
    }
 
    if(m.get_num_named_objects() != 0 || !m.check_sanity())
+      return false;
+   m.shrink_to_fit_indexes();
+   if(!m.all_memory_deallocated())
       return false;
    return true;
 }
@@ -366,7 +427,7 @@ bool test_named_allocation()
 {
    using namespace boost::interprocess;
    const int memsize = 163840;
-   const char *const shMemName = "MySharedMemory";
+   const char *const shMemName = test::get_compiler_name();
    try
    {
       //A shared memory with rbtree best fit algorithm

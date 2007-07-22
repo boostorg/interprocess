@@ -166,17 +166,3 @@ int main()
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
-
-/*
-//#include <boost/interprocess/shared_memory_object.hpp>
-//#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-//#include <boost/operators.hpp>
-*/
-/*
-//#define WIN32_LEAN_AND_MEAN
-//#define BOOST_USE_WINDOWS_H
-#include <boost/date_time/microsec_time_clock.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
-//#include <boost/shared_ptr.hpp>
-*/
-

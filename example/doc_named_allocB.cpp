@@ -27,30 +27,30 @@ int main ()
       //and initialize needed resources
       managed_shared_memory segment(open_only, "MySharedMemory");
 
-      //Find the array and object
       std::pair<MyType*, std::size_t> res;
+
+      //Find the array
       res = segment.find<MyType> ("MyType array");   
-
-      std::size_t array_len   = res.second;
       //Length should be 10
-      assert(array_len == 10);
+      assert(res.second == 10);
 
-      //Find the array and the object
+      //Find the object
       res = segment.find<MyType> ("MyType instance");   
-
-      std::size_t len   = res.second;
-
       //Length should be 1
-      assert(len == 1);
+      assert(res.second == 1);
+
+      //Find the array constructed from iterators
+      res = segment.find<MyType> ("MyType array from it");
+      //Length should be 3
+      assert(res.second == 3);
 
       //Use data
       // . . . 
 
-      //We're done, delete array from memory
+      //We're done, delete all the objects
       segment.destroy<MyType>("MyType array");
-
-      //We're done, delete object from memory
       segment.destroy<MyType>("MyType instance");
+      segment.destroy<MyType>("MyType array from it");
    }
    catch(...){
       shared_memory_object::remove("MySharedMemory");

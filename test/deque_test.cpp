@@ -28,6 +28,8 @@
 #include <boost/interprocess/detail/move_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <string>
+#include "get_compiler_name.hpp"
 
 //***************************************************************//
 //                                                               //
@@ -94,7 +96,7 @@ bool do_test()
    typedef deque<IntType, shmem_allocator_t>   MyShmDeque;
    typedef std::deque<int>                     MyStdDeque;
    const int Memsize = 65536;
-   const char *const shMemName = "MySharedMemory";
+   const char *const shMemName = test::get_compiler_name();
    const int max = 100;
 
    try{
@@ -194,6 +196,10 @@ bool do_test()
 
          segment.template destroy<MyShmDeque>("MyShmDeque");
          delete stddeque;
+         segment.shrink_to_fit_indexes();
+
+         if(!segment.all_memory_deallocated())
+            return 1;
       }
       catch(std::exception &ex){
          std::cout << ex.what() << std::endl;

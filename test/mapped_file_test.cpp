@@ -16,9 +16,13 @@
 #include "named_creation_template.hpp"
 #include <cstdio>
 #include <cstring>
+#include <string>
+#include "get_compiler_name.hpp"
+
+using namespace boost::interprocess;
 
 static const std::size_t FileSize = 1000;
-static const char *      FileName = "mapped_file";
+static const char *      FileName = test::get_compiler_name();
 
 struct file_destroyer
 {
@@ -39,22 +43,21 @@ class mapped_file_creation_test_wrapper
    typedef boost::interprocess::detail::managed_open_or_create_impl
       <boost::interprocess::detail::file_wrapper> mapped_file;
    public:
-   mapped_file_creation_test_wrapper(boost::interprocess::detail::create_only_t)
+   mapped_file_creation_test_wrapper(boost::interprocess::create_only_t)
       :  mapped_file(boost::interprocess::create_only, FileName, FileSize)
    {}
 
-   mapped_file_creation_test_wrapper(boost::interprocess::detail::open_only_t)
+   mapped_file_creation_test_wrapper(boost::interprocess::open_only_t)
       :  mapped_file(boost::interprocess::open_only, FileName)
    {}
 
-   mapped_file_creation_test_wrapper(boost::interprocess::detail::open_or_create_t)
+   mapped_file_creation_test_wrapper(boost::interprocess::open_or_create_t)
       :  mapped_file(boost::interprocess::open_or_create, FileName, FileSize)
    {}
 };
 
 int main ()
 {
-   using namespace boost::interprocess;
    typedef boost::interprocess::detail::managed_open_or_create_impl
       <boost::interprocess::detail::file_wrapper> mapped_file;
    std::remove(FileName);

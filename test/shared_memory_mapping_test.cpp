@@ -13,6 +13,8 @@
 #include <iostream>
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
+#include <string>
+#include "get_compiler_name.hpp"
 
 using namespace boost::interprocess;
 
@@ -22,16 +24,16 @@ int main ()
       const std::size_t FileSize = 99999*2;
       {
          //Remove shared memory
-         shared_memory_object::remove("my_file");
+         shared_memory_object::remove(test::get_compiler_name());
 
          //Create shared memory and file mapping
-         shared_memory_object mapping(create_only, "my_file", read_write);
+         shared_memory_object mapping(create_only, test::get_compiler_name(), read_write);
          mapping.truncate(FileSize);
       }
 
       {
          //Create a file mapping
-         shared_memory_object mapping(open_only, "my_file", read_write);
+         shared_memory_object mapping(open_only, test::get_compiler_name(), read_write);
 
          //Create two mapped regions, one half of the file each
          mapped_region region (mapping
@@ -65,7 +67,7 @@ int main ()
       //See if the pattern is correct in the file using two mapped regions
       {
          //Create a file mapping
-         shared_memory_object mapping(open_only, "my_file", read_write);
+         shared_memory_object mapping(open_only, test::get_compiler_name(), read_write);
          mapped_region region(mapping, read_write, 0, FileSize/2, 0);
          mapped_region region2(mapping, read_write, FileSize/2, 0/*FileSize - FileSize/2*/, 0);
 
@@ -95,7 +97,7 @@ int main ()
       //Now check the pattern mapping a single read only mapped_region
       {
          //Create a file mapping
-         shared_memory_object mapping(open_only, "my_file", read_only);
+         shared_memory_object mapping(open_only, test::get_compiler_name(), read_only);
 
          //Create a single regions, mapping all the file
          mapped_region region (mapping
@@ -113,10 +115,10 @@ int main ()
       }
    }
    catch(std::exception &exc){
-      shared_memory_object::remove("my_file");
+      shared_memory_object::remove(test::get_compiler_name());
       std::cout << "Unhandled exception: " << exc.what() << std::endl;
    }
-   shared_memory_object::remove("my_file");
+   shared_memory_object::remove(test::get_compiler_name());
    return 0;
 }
 

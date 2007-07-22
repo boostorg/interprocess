@@ -114,8 +114,9 @@ bool test_allocation_shrink(Allocator &a)
       ;i < max
       ; ++i){
       std::size_t received_size;
-      if(a.allocation_command( shrink_in_place | nothrow_allocation, i*2
-                             , i, received_size, buffers[i]).first){
+      if(a.template allocation_command<char>
+         ( shrink_in_place | nothrow_allocation, i*2
+         , i, received_size, (char*)buffers[i]).first){
          if(received_size > std::size_t(i*2)){
             return false;
          }
@@ -162,8 +163,9 @@ bool test_allocation_expand(Allocator &a)
       std::size_t preferred_size = i*2;
       preferred_size = min_size > preferred_size ? min_size : preferred_size;
 
-      while(a.allocation_command( expand_fwd | nothrow_allocation, min_size
-                                , preferred_size, received_size, buffers[i]).first){
+      while(a.template allocation_command<char>
+         ( expand_fwd | nothrow_allocation, min_size
+         , preferred_size, received_size, (char*)buffers[i]).first){
          //Check received size is bigger than minimum
          if(received_size < min_size){
             return false;
@@ -199,13 +201,11 @@ bool test_allocation_shrink_and_expand(Allocator &a)
    //Allocate buffers wand store received sizes
    for(int i = 0; true; ++i){
       std::size_t received_size;
-      void *ptr = a.allocation_command
-         ( allocate_new | nothrow_allocation, i
-                             , i*2, received_size).first;
+      void *ptr = a.template allocation_command<char>
+         ( allocate_new | nothrow_allocation, i, i*2, received_size).first;
       if(!ptr){
-         ptr = a.allocation_command
-            ( allocate_new | nothrow_allocation, 1
-                              , i*2, received_size).first;
+         ptr = a.template allocation_command<char>
+            ( allocate_new | nothrow_allocation, 1, i*2, received_size).first;
          if(!ptr)
             break;
       }
@@ -218,8 +218,9 @@ bool test_allocation_shrink_and_expand(Allocator &a)
       ;i < max
       ; ++i){
       std::size_t received_size;
-      if(a.allocation_command( shrink_in_place | nothrow_allocation, received_sizes[i]
-                             , i, received_size, buffers[i]).first){
+      if(a.template allocation_command<char>
+         ( shrink_in_place | nothrow_allocation, received_sizes[i]
+         , i, received_size, (char*)buffers[i]).first){
          if(received_size > std::size_t(received_sizes[i])){
             return false;
          }
@@ -235,9 +236,9 @@ bool test_allocation_shrink_and_expand(Allocator &a)
       ;i < max
       ;++i){
       std::size_t received_size;
-
-      if(a.allocation_command( expand_fwd | nothrow_allocation, received_sizes[i]
-                                , received_sizes[i], received_size, buffers[i]).first){
+      if(a.template allocation_command<char>
+         ( expand_fwd | nothrow_allocation, received_sizes[i]
+         , received_sizes[i], received_size, (char*)buffers[i]).first){
          if(received_size != received_sizes[i]){
             return false;
          }
@@ -298,8 +299,9 @@ bool test_allocation_deallocation_expand(Allocator &a)
          std::size_t preferred_size = i*2;
          preferred_size = min_size > preferred_size ? min_size : preferred_size;
 
-         while(a.allocation_command( expand_fwd | nothrow_allocation, min_size
-                                   , preferred_size, received_size, buffers[i]).first){
+         while(a.template allocation_command<char>
+            ( expand_fwd | nothrow_allocation, min_size
+            , preferred_size, received_size, (char*)buffers[i]).first){
             //Check received size is bigger than minimum
             if(received_size < min_size){
                return false;
@@ -363,9 +365,9 @@ bool test_allocation_with_reuse(Allocator &a)
       //Now allocate with reuse
       std::size_t received_size = 0;
       for(int i = 0; true; ++i){
-         std::pair<void*, bool> ret = 
-            a.allocation_command( expand_bwd | nothrow_allocation, received_size/size*size + size
-                              , received_size/size*size+(i+1)*size*2, received_size, ptr, size);
+         std::pair<void*, bool> ret = a.template allocation_command<char>
+            ( expand_bwd | nothrow_allocation, received_size/size*size + size
+            , received_size/size*size+(i+1)*size*2, received_size, (char*)ptr);
          if(!ret.first)
             break;
          //If we have memory, this must be a buffer reuse
@@ -519,6 +521,199 @@ bool test_clear_free_memory(Allocator &a)
    return true;
 }
 
+//This test allocates multiple values until there is no more memory
+//and after that deallocates all in the inverse order
+template<class Allocator>
+bool test_many_equal_allocation_inverse_deallocation(Allocator &a)
+{
+   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
+
+   std::vector<void*> buffers;
+   for(int i = 0; true; ++i){
+      std::size_t received_size;
+      multiallocation_iterator it = a.allocate_many(i+1, i+1, (i+1)*2, received_size, std::nothrow);
+      if(!it)
+         break;
+      multiallocation_iterator itend;
+
+      for(; it != itend; ++it){
+         buffers.push_back(*it);
+      }
+   }
+
+   for(int j = (int)buffers.size()
+      ;j--
+      ;){
+      a.deallocate(buffers[j]);
+   }
+
+   return a.all_memory_deallocated() && a.check_sanity();
+}
+
+//This test allocates multiple values until there is no more memory
+//and after that deallocates all in the same order
+template<class Allocator>
+bool test_many_equal_allocation_direct_deallocation(Allocator &a)
+{
+   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
+   std::vector<void*> buffers;
+   std::size_t free_memory = a.get_free_memory();
+
+   for(int i = 0; true; ++i){
+      std::size_t received_size;
+      multiallocation_iterator it = a.allocate_many(i+1, i+1, (i+1)*2, received_size, std::nothrow);
+      if(!it)
+         break;
+      multiallocation_iterator itend;
+
+      for(; it != itend; ++it){
+         buffers.push_back(*it);
+      }
+   }
+
+   for(int j = 0, max = (int)buffers.size()
+      ;j < max
+      ;++j){
+      a.deallocate(buffers[j]);
+   }
+
+   return free_memory == a.get_free_memory() && 
+          a.all_memory_deallocated() && a.check_sanity();
+}
+
+//This test allocates multiple values until there is no more memory
+//and after that deallocates all following a pattern
+template<class Allocator>
+bool test_many_equal_allocation_mixed_deallocation(Allocator &a)
+{
+   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
+   std::vector<void*> buffers;
+
+   for(int i = 0; true; ++i){
+      std::size_t received_size;
+      multiallocation_iterator it = a.allocate_many(i+1, i+1, (i+1)*2, received_size, std::nothrow);
+      if(!it)
+         break;
+      multiallocation_iterator itend;
+
+      for(; it != itend; ++it){
+         buffers.push_back(*it);
+      }
+   }
+
+   for(int j = 0, max = (int)buffers.size()
+      ;j < max
+      ;++j){
+      int pos = (j%4)*((int)buffers.size())/4;
+      a.deallocate(buffers[pos]);
+      buffers.erase(buffers.begin()+pos);
+   }
+
+   return a.all_memory_deallocated() && a.check_sanity();
+}
+
+//This test allocates multiple values until there is no more memory
+//and after that deallocates all in the inverse order
+template<class Allocator>
+bool test_many_different_allocation_inverse_deallocation(Allocator &a)
+{
+   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
+   const std::size_t ArraySize = 11;
+   std::size_t requested_sizes[ArraySize];
+   for(std::size_t i = 0; i < ArraySize; ++i){
+      requested_sizes[i] = 4*i;
+   }
+
+   std::vector<void*> buffers;
+   for(int i = 0; true; ++i){
+      multiallocation_iterator it = a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow);
+      if(!it)
+         break;
+      multiallocation_iterator itend;
+
+      for(; it != itend; ++it){
+         buffers.push_back(*it);
+      }
+   }
+
+   for(int j = (int)buffers.size()
+      ;j--
+      ;){
+      a.deallocate(buffers[j]);
+   }
+
+   return a.all_memory_deallocated() && a.check_sanity();
+}
+
+//This test allocates multiple values until there is no more memory
+//and after that deallocates all in the same order
+template<class Allocator>
+bool test_many_different_allocation_direct_deallocation(Allocator &a)
+{
+   std::size_t free_memory = a.get_free_memory();
+   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
+   const std::size_t ArraySize = 11;
+   std::size_t requested_sizes[ArraySize];
+   for(std::size_t i = 0; i < ArraySize; ++i){
+      requested_sizes[i] = 4*i;
+   }
+
+   std::vector<void*> buffers;
+   for(int i = 0; true; ++i){
+      multiallocation_iterator it = a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow);
+      if(!it)
+         break;
+      multiallocation_iterator itend;
+
+      for(; it != itend; ++it){
+         buffers.push_back(*it);
+      }
+   }
+
+   for(int j = 0, max = (int)buffers.size()
+      ;j < max
+      ;++j){
+      a.deallocate(buffers[j]);
+   }
+
+   return free_memory == a.get_free_memory() && 
+          a.all_memory_deallocated() && a.check_sanity();
+}
+
+//This test allocates multiple values until there is no more memory
+//and after that deallocates all following a pattern
+template<class Allocator>
+bool test_many_different_allocation_mixed_deallocation(Allocator &a)
+{
+   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
+   const std::size_t ArraySize = 11;
+   std::size_t requested_sizes[ArraySize];
+   for(std::size_t i = 0; i < ArraySize; ++i){
+      requested_sizes[i] = 4*i;
+   }
+
+   std::vector<void*> buffers;
+   for(int i = 0; true; ++i){
+      multiallocation_iterator it = a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow);
+      if(!it)
+         break;
+      multiallocation_iterator itend;
+
+      for(; it != itend; ++it){
+         buffers.push_back(*it);
+      }
+   }
+
+   for(int j = 0, max = (int)buffers.size()
+      ;j < max
+      ;++j){
+      int pos = (j%4)*((int)buffers.size())/4;
+      a.deallocate(buffers[pos]);
+      buffers.erase(buffers.begin()+pos);
+   }
+
+   return a.all_memory_deallocated() && a.check_sanity();
+}
 
 //This function calls all tests
 template<class Allocator>
@@ -547,6 +742,60 @@ bool test_all_allocation(Allocator &a)
 
    if(!test_allocation_mixed_deallocation(a)){
       std::cout << "test_allocation_mixed_deallocation failed. Class: "
+                << typeid(a).name() << std::endl;
+      return false;
+   }
+
+   std::cout << "Starting test_many_equal_allocation_direct_deallocation. Class: "
+             << typeid(a).name() << std::endl;
+
+   if(!test_many_equal_allocation_direct_deallocation(a)){
+      std::cout << "test_many_equal_allocation_direct_deallocation failed. Class: "
+                << typeid(a).name() << std::endl;
+      return false;
+   }
+
+   std::cout << "Starting test_many_equal_allocation_inverse_deallocation. Class: "
+             << typeid(a).name() << std::endl;
+
+   if(!test_many_equal_allocation_inverse_deallocation(a)){
+      std::cout << "test_many_equal_allocation_inverse_deallocation failed. Class: "
+                << typeid(a).name() << std::endl;
+      return false;
+   }
+
+   std::cout << "Starting test_many_equal_allocation_mixed_deallocation. Class: "
+             << typeid(a).name() << std::endl;
+
+   if(!test_many_equal_allocation_mixed_deallocation(a)){
+      std::cout << "test_many_equal_allocation_mixed_deallocation failed. Class: "
+                << typeid(a).name() << std::endl;
+      return false;
+   }
+
+   std::cout << "Starting test_many_different_allocation_direct_deallocation. Class: "
+             << typeid(a).name() << std::endl;
+
+   if(!test_many_different_allocation_direct_deallocation(a)){
+      std::cout << "test_many_different_allocation_direct_deallocation failed. Class: "
+                << typeid(a).name() << std::endl;
+      return false;
+   }
+
+   std::cout << "Starting test_many_different_allocation_inverse_deallocation. Class: "
+             << typeid(a).name() << std::endl;
+
+   if(!test_many_different_allocation_inverse_deallocation(a)){
+      std::cout << "test_many_different_allocation_inverse_deallocation failed. Class: "
+                << typeid(a).name() << std::endl;
+      return false;
+   }
+
+   std::cout << "Starting test_many_different_allocation_mixed_deallocation. Class: "
+             << typeid(a).name() << std::endl;
+
+   if(!test_many_different_allocation_mixed_deallocation(a)){
+      std::cout << "test_many_different_allocation_mixed_deallocation failed. Class: "
                 << typeid(a).name() << std::endl;
       return false;
    }

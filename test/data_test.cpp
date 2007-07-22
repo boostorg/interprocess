@@ -16,14 +16,20 @@
 #include <iostream>
 #include <algorithm>
 #include <functional>
+#include <string>
 #include "print_container.hpp"
+#include "get_compiler_name.hpp"
 
 using namespace boost::interprocess;
 
 int main ()
 {
    const int memsize = 65536;
-   const char *const shMemName = "MySharedMemory";
+   std::string compiler_name;
+   test::get_compiler_name(compiler_name);
+   const char *const shMemName = compiler_name.c_str();
+   std::string filename (test::get_compiler_name());
+   filename += "_file";
 
    try{
    shared_memory_object::remove(shMemName);
@@ -75,7 +81,7 @@ int main ()
 
       //Construct, dump to a file
       shmem_vect = segment.construct<MyVect> (allocName) (myallocator);
-      segment.save_to_file("shmem_file");
+      segment.save_to_file(filename.c_str());
 
 /*
       //Recreate objects in a new shared memory check object is present
@@ -91,11 +97,11 @@ int main ()
       if(!res)
          return 1;
 */
-      std::remove("shmem_file");
+      std::remove(filename.c_str());
    }
    }
    catch(...){
-      std::remove("shmem_file");
+      std::remove(filename.c_str());
       shared_memory_object::remove(shMemName);
       throw;
    }

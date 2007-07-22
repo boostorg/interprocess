@@ -13,9 +13,10 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/set.hpp>
 #include <boost/interprocess/containers/map.hpp>
-#include <boost/interprocess/allocators/node_allocator.hpp>
+#include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/indexes/map_index.hpp>
 #include <boost/interprocess/indexes/iset_index.hpp>
+#include <boost/interprocess/mem_algo/simple_seq_fit.hpp>
 #include "print_container.hpp"
 #include "movable_int.hpp"
 #include "dummy_test_allocator.hpp"
@@ -62,22 +63,21 @@ typedef basic_managed_shared_memory
    <char,
     simple_seq_fit<mutex_family>,
     map_index
-//    iset_index
    > my_managed_shared_memory;
 
 //We will work with narrow characters for shared memory objects
 //Alias a integer node allocator type
-typedef node_allocator<int, my_managed_shared_memory::segment_manager>   
-   shmem_node_allocator_t;
-typedef node_allocator<std::pair<const int, int>, my_managed_shared_memory::segment_manager>   
+typedef allocator<int, my_managed_shared_memory::segment_manager>   
+   shmem_allocator_t;
+typedef allocator<std::pair<const int, int>, my_managed_shared_memory::segment_manager>   
    shmem_node_pair_allocator_t;
-typedef node_allocator<test::movable_int, my_managed_shared_memory::segment_manager>   
-   shmem_movable_node_allocator_t;
-typedef node_allocator<std::pair<const test::movable_int, test::movable_int>, my_managed_shared_memory::segment_manager>   
+typedef allocator<test::movable_int, my_managed_shared_memory::segment_manager>   
+   shmem_movable_allocator_t;
+typedef allocator<std::pair<const test::movable_int, test::movable_int>, my_managed_shared_memory::segment_manager>   
    shmem_movable_node_pair_allocator_t;
-typedef node_allocator<test::movable_and_copyable_int, my_managed_shared_memory::segment_manager>   
-   shmem_move_copy_node_allocator_t;
-typedef node_allocator<std::pair<const test::movable_and_copyable_int, test::movable_and_copyable_int>, my_managed_shared_memory::segment_manager>   
+typedef allocator<test::movable_and_copyable_int, my_managed_shared_memory::segment_manager>   
+   shmem_move_copy_allocator_t;
+typedef allocator<std::pair<const test::movable_and_copyable_int, test::movable_and_copyable_int>, my_managed_shared_memory::segment_manager>   
    shmem_move_copy_node_pair_allocator_t;
 
 //Alias standard types
@@ -87,17 +87,17 @@ typedef std::map<int, int>                                     MyStdMap;
 typedef std::multimap<int, int>                                MyStdMultiMap;
 
 //Alias non-movable types
-typedef set<int, std::less<int>, shmem_node_allocator_t>       MyShmSet;
-typedef multiset<int, std::less<int>, shmem_node_allocator_t>  MyShmMultiSet;
+typedef set<int, std::less<int>, shmem_allocator_t>       MyShmSet;
+typedef multiset<int, std::less<int>, shmem_allocator_t>  MyShmMultiSet;
 typedef map<int, int, std::less<int>, shmem_node_pair_allocator_t>  MyShmMap;
 typedef multimap<int, int, std::less<int>, shmem_node_pair_allocator_t>  MyShmMultiMap;
 
 //Alias movable types
 typedef set<test::movable_int, std::less<test::movable_int>
-            ,shmem_movable_node_allocator_t>                   MyMovableShmSet;
+            ,shmem_movable_allocator_t>                   MyMovableShmSet;
 typedef multiset<test::movable_int, 
       std::less<test::movable_int>, 
-      shmem_movable_node_allocator_t>                          MyMovableShmMultiSet;
+      shmem_movable_allocator_t>                          MyMovableShmMultiSet;
 typedef map<test::movable_int, test::movable_int, 
       std::less<test::movable_int>, 
       shmem_movable_node_pair_allocator_t>                     MyMovableShmMap;
@@ -107,10 +107,10 @@ typedef multimap<test::movable_int, test::movable_int,
 
 typedef set<test::movable_and_copyable_int
            ,std::less<test::movable_and_copyable_int>
-           ,shmem_move_copy_node_allocator_t>                  MyMoveCopyShmSet;
+           ,shmem_move_copy_allocator_t>                  MyMoveCopyShmSet;
 typedef multiset<test::movable_and_copyable_int, 
       std::less<test::movable_and_copyable_int>, 
-      shmem_move_copy_node_allocator_t>                        MyMoveCopyShmMultiSet;
+      shmem_move_copy_allocator_t>                        MyMoveCopyShmMultiSet;
 typedef map<test::movable_and_copyable_int
            ,test::movable_and_copyable_int
            ,std::less<test::movable_and_copyable_int>

@@ -15,6 +15,8 @@
 #include <boost/interprocess/mapped_region.hpp>
 #include <memory>
 #include <cstdio>
+#include <string>
+#include "get_compiler_name.hpp"
 
 using namespace boost::interprocess;
 
@@ -24,14 +26,14 @@ int main ()
       const std::size_t FileSize = 99999*2;
       {
          //Create file with given size
-         std::ofstream file("my_file", std::ios::binary | std::ios::trunc);
+         std::ofstream file(test::get_compiler_name(), std::ios::binary | std::ios::trunc);
          file.seekp(static_cast<std::streamoff>(FileSize-1));
          file.write("", 1);
       }
 
       {
          //Create a file mapping
-         file_mapping mapping("my_file", read_write);
+         file_mapping mapping(test::get_compiler_name(), read_write);
          //Create two mapped regions, one half of the file each
          mapped_region region (mapping
                               ,read_write
@@ -64,7 +66,7 @@ int main ()
       //See if the pattern is correct in the file
       {
          //Open the file
-         std::ifstream file("my_file", std::ios::binary);
+         std::ifstream file(test::get_compiler_name(), std::ios::binary);
 
          //Create a memory buffer
          std::auto_ptr<unsigned char> memory (new unsigned char [FileSize/2 +1]);
@@ -101,7 +103,7 @@ int main ()
       //Now check the pattern mapping a single read only mapped_region
       {
          //Create a file mapping
-         file_mapping mapping("my_file", read_only);
+         file_mapping mapping(test::get_compiler_name(), read_only);
 
          //Create a single regions, mapping all the file
          mapped_region region (mapping
@@ -120,11 +122,11 @@ int main ()
       }
    }
    catch(std::exception &exc){
-      std::remove("my_file");
+      std::remove(test::get_compiler_name());
       std::cout << "Unhandled exception: " << exc.what() << std::endl;
       throw;
    }
-   std::remove("my_file");
+   std::remove(test::get_compiler_name());
    return 0;
 }
 

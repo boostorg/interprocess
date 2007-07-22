@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <functional>
 #include "print_container.hpp"
+#include <string>
+#include "get_compiler_name.hpp"
 
 struct InstanceCounter
 {
@@ -34,7 +36,7 @@ using namespace boost::interprocess;
 int main ()
 {
    const int memsize = 16384;
-   const char *const shMemName = "MySharedMemory";
+   const char *const shMemName = test::get_compiler_name();
 
    try{
    shared_memory_object::remove(shMemName);
