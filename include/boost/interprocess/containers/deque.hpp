@@ -104,9 +104,16 @@ class deque_base
    typedef typename ptr_alloc::const_reference  ptr_alloc_cref;
    typedef typename Alloc::template
       rebind<T>::other                          allocator_type;
-   
+   typedef allocator_type                       stored_allocator_type;
+
    allocator_type get_allocator() const 
       { return *this; }
+
+   const stored_allocator_type &get_stored_allocator() const 
+   {  return *this; }
+
+   stored_allocator_type &get_stored_allocator()
+   {  return *this; }
 
    protected:
    enum {   trivial_dctr_after_move = boost::has_trivial_destructor<val_alloc_val>::value   };
@@ -1560,6 +1567,7 @@ inline void swap(deque<T,Alloc>& x, deque<T,Alloc>& y)
    {  x.swap(y);  }
 
 /// @cond
+
 //!has_trivial_destructor_after_move<> == true_type
 //!specialization for optimizations
 template <class T, class A>

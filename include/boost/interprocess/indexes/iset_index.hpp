@@ -34,10 +34,10 @@ template <class MapConfig>
 struct iset_index_aux
 {
    typedef typename 
-      MapConfig::basic_segment_manager                 basic_segment_manager;
+      MapConfig::segment_manager_base                 segment_manager_base;
 
    typedef typename 
-      basic_segment_manager::void_pointer              void_pointer;
+      segment_manager_base::void_pointer              void_pointer;
 
    typedef boost::intrusive::set_base_hook
       < boost::intrusive::tag
@@ -109,7 +109,7 @@ class iset_index
 
    /*!Constructor. Takes a pointer to the
       segment manager. Can throw*/
-   iset_index(typename MapConfig::basic_segment_manager *)
+   iset_index(typename MapConfig::segment_manager_base *)
       : index_type(/*typename index_aux::value_compare()*/)
    {}
 
@@ -117,6 +117,10 @@ class iset_index
       elements in the index*/
    void reserve(std::size_t)
    {  /*Does nothing, map has not reserve or rehash*/  }
+
+   //!This frees all unnecessary memory
+   void shrink_to_fit()
+   {  /*Does nothing, this intrusive index does not allocate memory;*/   }
 
    iterator find(const intrusive_compare_key_type &key)
    {  return index_type::find(key, intrusive_key_value_less());  }

@@ -17,7 +17,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
@@ -48,18 +48,18 @@ class named_mutex
    /// @endcond
    public:
    /*!Creates a global interprocess_mutex with a name.*/
-   named_mutex(detail::create_only_t create_only, const char *name);
+   named_mutex(create_only_t create_only, const char *name);
 
    /*!Opens or creates a global mutex with a name. 
       If the mutex is created, this call is equivalent to create(). 
       If the mutex is already created, this call is equivalent to open(). 
       Does not throw*/
-   named_mutex(detail::open_or_create_t open_or_create, const char *name);
+   named_mutex(open_or_create_t open_or_create, const char *name);
 
    /*!Opens a global mutex with a name if that mutex is previously.
       created. If it is not previously created this function return false.
       Does not throw*/
-   named_mutex(detail::open_only_t open_only, const char *name);
+   named_mutex(open_only_t open_only, const char *name);
 
    /*!Closes the named mutex. Does not throw*/
    ~named_mutex();
@@ -132,7 +132,7 @@ class named_mutex::construct_func_t
 inline named_mutex::~named_mutex()
 {}
 
-inline named_mutex::named_mutex(detail::create_only_t, const char *name)
+inline named_mutex::named_mutex(create_only_t, const char *name)
    :  m_shmem  (create_only
                ,name
                ,sizeof(interprocess_mutex) +
@@ -143,7 +143,7 @@ inline named_mutex::named_mutex(detail::create_only_t, const char *name)
                ,construct_func_t(construct_func_t::create_only))
 {}
 
-inline named_mutex::named_mutex(detail::open_or_create_t, const char *name)
+inline named_mutex::named_mutex(open_or_create_t, const char *name)
    :  m_shmem  (open_or_create
                ,name
                ,sizeof(interprocess_mutex) +
@@ -154,7 +154,7 @@ inline named_mutex::named_mutex(detail::open_or_create_t, const char *name)
                ,construct_func_t(construct_func_t::open_or_create))
 {}
 
-inline named_mutex::named_mutex(detail::open_only_t, const char *name)
+inline named_mutex::named_mutex(open_only_t, const char *name)
    :  m_shmem  (open_only
                ,name
                ,read_write

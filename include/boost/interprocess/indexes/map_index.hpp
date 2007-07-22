@@ -38,7 +38,7 @@ struct map_index_aux
    typedef private_adaptive_pool
             <value_type,
                typename MapConfig::
-         basic_segment_manager>               allocator_type;
+         segment_manager_base>                    allocator_type;
 
    typedef boost::interprocess::map
       <key_type,  mapped_type,
@@ -56,13 +56,13 @@ class map_index
    typedef map_index_aux<MapConfig>       index_aux;
    typedef typename index_aux::index_t    base_type;
    typedef typename MapConfig::
-      basic_segment_manager          basic_segment_manager;
+      segment_manager_base          segment_manager_base;
    /// @endcond
 
    public:
    /*!Constructor. Takes a pointer to the
       segment manager. Can throw*/
-   map_index(basic_segment_manager *segment_mngr)
+   map_index(segment_manager_base *segment_mngr)
       : base_type(typename index_aux::key_less(),
                   segment_mngr){}
 
@@ -70,6 +70,11 @@ class map_index
       elements in the index*/
    void reserve(std::size_t)
       {  /*Does nothing, map has not reserve or rehash*/  }
+
+   //!This tries to free previously allocate
+   //!unused memory.
+   void shrink_to_fit()
+   {  base_type::get_stored_allocator().deallocate_free_chunks(); }
 };
 
 /// @cond

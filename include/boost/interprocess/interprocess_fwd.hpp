@@ -116,13 +116,13 @@ class private_node_allocator;
 template<class T, class SegmentManager, std::size_t NodesPerChunk = 64>
 class cached_node_allocator;
 
-template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeNodes = 2>
+template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeChunks = 2>
 class adaptive_pool;
 
-template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeNodes = 2>
+template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeChunks = 2>
 class private_adaptive_pool;
 
-template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeNodes = 2>
+template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeChunks = 2>
 class cached_adaptive_pool;
 
 

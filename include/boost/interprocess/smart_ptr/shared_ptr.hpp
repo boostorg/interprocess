@@ -274,12 +274,14 @@ typename detail::pointer_to_other<shared_ptr<T, VA, D>, D>::type
 } // namespace interprocess
 
 /// @cond
+
 #if defined(_MSC_VER) && (_MSC_VER < 1400)
 // get_pointer() enables boost::mem_fn to recognize shared_ptr
 template<class T, class VA, class D> inline
 T * get_pointer(boost::interprocess::shared_ptr<T, VA, D> const & p)
 {  return p.get();   }
 #endif
+
 /// @endcond
 
 } // namespace boost

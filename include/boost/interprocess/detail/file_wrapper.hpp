@@ -14,9 +14,9 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/move.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -31,19 +31,19 @@ class file_wrapper
 
    /*!Creates a shared memory object with name "name" and mode "mode", with the access mode "mode"
       If the file previously exists, throws an error.*/
-   file_wrapper(detail::create_only_t, const char *name, mode_t mode)
-   {  this->priv_open_or_create(DoCreate, name, mode);  }
+   file_wrapper(create_only_t, const char *name, mode_t mode)
+   {  this->priv_open_or_create(detail::DoCreate, name, mode);  }
 
    /*!Tries to create a file with name "name" and mode "mode", with the
       access mode "mode". If the file previously exists, it tries to open it with mode "mode".
       Otherwise throws an error.*/
-   file_wrapper(detail::open_or_create_t, const char *name, mode_t mode)
-   {  this->priv_open_or_create(DoCreateOrOpen, name, mode);  }
+   file_wrapper(open_or_create_t, const char *name, mode_t mode)
+   {  this->priv_open_or_create(detail::DoCreateOrOpen, name, mode);  }
 
    /*!Tries to open a shared memory object with name "name", with the access mode "mode". 
       If the file does not previously exist, it throws an error.*/
-   file_wrapper(detail::open_only_t, const char *name, mode_t mode)
-   {  this->priv_open_or_create(DoOpen, name, mode);  }
+   file_wrapper(open_only_t, const char *name, mode_t mode)
+   {  this->priv_open_or_create(detail::DoOpen, name, mode);  }
 
    /*!Moves the ownership of "moved"'s shared memory object to *this. 
       After the call, "moved" does not represent any shared memory object. 
@@ -104,7 +104,7 @@ class file_wrapper
    /*!Closes a previously opened file mapping. Never throws.*/
    void priv_close();
    /*!Closes a previously opened file mapping. Never throws.*/
-   bool priv_open_or_create(create_enum_t type, const char *filename, mode_t mode);
+   bool priv_open_or_create(detail::create_enum_t type, const char *filename, mode_t mode);
 
    file_handle_t  m_handle;
    mode_t      m_mode;
@@ -136,7 +136,7 @@ inline mode_t file_wrapper::get_mode() const
 {  return m_mode; }
 
 inline bool file_wrapper::priv_open_or_create
-   (create_enum_t type, 
+   (detail::create_enum_t type, 
     const char *filename,
     mode_t mode)
 {
@@ -149,13 +149,13 @@ inline bool file_wrapper::priv_open_or_create
 
    //Open file existing native API to obtain the handle
    switch(type){
-      case DoOpen:
+      case detail::DoOpen:
          m_handle = open_existing_file(filename, mode);
       break;
-      case DoCreate:
+      case detail::DoCreate:
          m_handle = create_new_file(filename, mode);
       break;
-      case DoCreateOrOpen:
+      case detail::DoCreateOrOpen:
          m_handle = create_or_open_file(filename, mode);
       break;
       default:

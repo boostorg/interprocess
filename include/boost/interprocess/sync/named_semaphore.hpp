@@ -17,7 +17,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -46,17 +46,17 @@ class named_semaphore
    public:
    /*!Creates a global interprocess_semaphore with a name, and an initial count. 
       It will return an false if the interprocess_semaphore is already created.*/
-   named_semaphore(detail::create_only_t, const char *name, int initialCount);
+   named_semaphore(create_only_t, const char *name, int initialCount);
 
    /*!Opens or creates a global interprocess_semaphore with a name, and an initial count. 
       If the interprocess_semaphore is created, this call is equivalent to create(). 
       If the interprocess_semaphore is already created, this call is equivalent to open()
       and initialCount is ignored.*/
-   named_semaphore(detail::open_or_create_t, const char *name, int initialCount);
+   named_semaphore(open_or_create_t, const char *name, int initialCount);
 
    /*!Opens a global interprocess_semaphore with a name if that interprocess_semaphore is previously.
       created. If it is not previously created this function return false.*/
-   named_semaphore(detail::open_only_t, const char *name);
+   named_semaphore(open_only_t, const char *name);
 
    /*!Destroys the named semaphore. Does not throw*/
    ~named_semaphore();
@@ -132,7 +132,7 @@ inline named_semaphore::~named_semaphore()
 {}
 
 inline named_semaphore::named_semaphore
-   (detail::create_only_t, const char *name, int initialCount)
+   (create_only_t, const char *name, int initialCount)
    :  m_shmem  (create_only
                ,name
                ,sizeof(interprocess_semaphore) +
@@ -144,7 +144,7 @@ inline named_semaphore::named_semaphore
 {}
 
 inline named_semaphore::named_semaphore
-   (detail::open_or_create_t, const char *name, int initialCount)
+   (open_or_create_t, const char *name, int initialCount)
    :  m_shmem  (open_or_create
                ,name
                ,sizeof(interprocess_semaphore) +
@@ -156,7 +156,7 @@ inline named_semaphore::named_semaphore
 {}
 
 inline named_semaphore::named_semaphore
-   (detail::open_only_t, const char *name)
+   (open_only_t, const char *name)
    :  m_shmem  (open_only
                ,name
                ,read_write

@@ -28,7 +28,7 @@ class null_index
 {
    /// @cond
    typedef typename MapConfig::
-      basic_segment_manager    basic_segment_manager;
+      segment_manager_base    segment_manager_base;
    /// @endcond
 
    public:
@@ -48,7 +48,7 @@ class null_index
    {  return iterator(0);  }
 
    /*!Dummy function*/
-   null_index(basic_segment_manager *){}
+   null_index(segment_manager_base *){}
 };
 
 }}   //namespace boost { namespace interprocess {

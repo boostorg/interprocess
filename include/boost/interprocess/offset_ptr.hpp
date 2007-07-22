@@ -325,6 +325,7 @@ inline boost::interprocess::offset_ptr<T>
 }  //namespace interprocess {
 
 /// @cond
+
 //!has_trivial_constructor<> == true_type specialization for optimizations
 template <class T>
 struct has_trivial_constructor< boost::interprocess::offset_ptr<T> > 

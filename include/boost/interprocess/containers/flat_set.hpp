@@ -81,6 +81,7 @@ class flat_set
    typedef typename tree_t::size_type              size_type;
    typedef typename tree_t::difference_type        difference_type;
    typedef typename tree_t::allocator_type         allocator_type;
+   typedef typename tree_t::stored_allocator_type  stored_allocator_type;
 
    //! <b>Effects</b>: Constructs an empty flat_map using the specified
    //! comparison object and allocator.
@@ -161,6 +162,12 @@ class flat_set
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
       { return m_flat_tree.get_allocator(); }
+
+   const stored_allocator_type &get_stored_allocator() const 
+   {  return m_flat_tree.get_stored_allocator(); }
+
+   stored_allocator_type &get_stored_allocator()
+   {  return m_flat_tree.get_stored_allocator(); }
 
    //! <b>Effects</b>: Returns an iterator to the first element contained in the container.
    //! 
@@ -395,6 +402,15 @@ class flat_set
    void clear() 
       { m_flat_tree.clear(); }
 
+   //! <b>Effects</b>: Tries to deallocate the excess of memory created
+   //    with previous allocations. The size of the vector is unchanged
+   //!
+   //! <b>Throws</b>: If memory allocation throws, or T's copy constructor throws.
+   //!
+   //! <b>Complexity</b>: Linear to size().
+   void shrink_to_fit()
+      { m_flat_tree.shrink_to_fit(); }
+
    //! <b>Returns</b>: An iterator pointing to an element with the key
    //!   equivalent to x, or end() if such an element is not found.
    //!
@@ -597,6 +613,7 @@ class flat_multiset
    typedef typename tree_t::size_type              size_type;
    typedef typename tree_t::difference_type        difference_type;
    typedef typename tree_t::allocator_type         allocator_type;
+   typedef typename tree_t::stored_allocator_type  stored_allocator_type;
 
    // allocation/deallocation
    explicit flat_multiset(const Pred& comp = Pred(),
@@ -651,7 +668,13 @@ class flat_multiset
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
-      { return m_flat_tree.get_allocator(); }
+   { return m_flat_tree.get_allocator(); }
+
+   const stored_allocator_type &get_stored_allocator() const 
+   { return m_flat_tree.get_stored_allocator(); }
+
+   stored_allocator_type &get_stored_allocator()
+   { return m_flat_tree.get_stored_allocator(); }
 
    //! <b>Effects</b>: Returns an iterator to the first element contained in the container.
    //! 
@@ -876,6 +899,15 @@ class flat_multiset
    //! <b>Complexity</b>: linear in size().
    void clear() 
       { m_flat_tree.clear(); }
+
+   //! <b>Effects</b>: Tries to deallocate the excess of memory created
+   //    with previous allocations. The size of the vector is unchanged
+   //!
+   //! <b>Throws</b>: If memory allocation throws, or T's copy constructor throws.
+   //!
+   //! <b>Complexity</b>: Linear to size().
+   void shrink_to_fit()
+      { m_flat_tree.shrink_to_fit(); }
 
    //! <b>Returns</b>: An iterator pointing to an element with the key
    //!   equivalent to x, or end() if such an element is not found.

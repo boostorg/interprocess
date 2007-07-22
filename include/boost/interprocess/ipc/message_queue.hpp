@@ -20,7 +20,7 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
@@ -53,7 +53,7 @@ class message_queue
    /*!Creates a process shared message queue with name "name". For this message queue,
       the maximum number of messages will be "max_num_msg" and the maximum message size
       will be "max_msg_size".*/
-   message_queue(detail::create_only_t create_only,
+   message_queue(create_only_t create_only,
                  const char *name, 
                  std::size_t max_num_msg, 
                  std::size_t max_msg_size);
@@ -63,7 +63,7 @@ class message_queue
       and the maximum message size will be "max_msg_size". If queue was previously 
       created the queue will be opened and "max_num_msg" and "max_msg_size" parameters
       are ignored.*/
-   message_queue(detail::open_or_create_t open_or_create,
+   message_queue(open_or_create_t open_or_create,
                  const char *name, 
                  std::size_t max_num_msg, 
                  std::size_t max_msg_size);
@@ -71,7 +71,7 @@ class message_queue
    /*!Opens a previously created process shared message queue with name "name". 
       If the was not previously created or there are no free resources, the 
       function returns false.*/
-   message_queue(detail::open_only_t open_only,
+   message_queue(open_only_t open_only,
                  const char *name);
 
    /*!Destructor. Never throws*/
@@ -370,7 +370,7 @@ inline std::size_t message_queue::get_mem_size
    (std::size_t max_msg_size, std::size_t max_num_msg)
 {  return detail::mq_hdr_t::get_mem_size(max_msg_size, max_num_msg);   }
 
-inline message_queue::message_queue(detail::create_only_t create_only,
+inline message_queue::message_queue(create_only_t create_only,
                                     const char *name, 
                                     std::size_t max_num_msg, 
                                     std::size_t max_msg_size)
@@ -389,7 +389,7 @@ inline message_queue::message_queue(detail::create_only_t create_only,
       and the maximum message size will be "max_msg_size". If queue was previously 
       created the queue will be opened and "max_num_msg" and "max_msg_size" parameters
       are ignored. If there are no free resources, the function returns false.*/
-inline message_queue::message_queue(detail::open_or_create_t open_or_create,
+inline message_queue::message_queue(open_or_create_t open_or_create,
                                     const char *name, 
                                     std::size_t max_num_msg, 
                                     std::size_t max_msg_size)
@@ -406,7 +406,7 @@ inline message_queue::message_queue(detail::open_or_create_t open_or_create,
    /*!Opens a previously created process shared message queue with name "name". 
       If the was not previously created or there are no free resources, the 
       function returns false.*/
-inline message_queue::message_queue(detail::open_only_t open_only,
+inline message_queue::message_queue(open_only_t open_only,
                                     const char *name)
    //Create shared memory and execute functor atomically
    :  m_shmem(open_only, 

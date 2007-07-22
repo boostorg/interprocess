@@ -20,6 +20,7 @@
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/assert.hpp>
+#include <boost/utility/addressof.hpp>
 #include <boost/interprocess/allocators/detail/adaptive_node_pool.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
@@ -58,6 +59,11 @@ class private_adaptive_pool
       mutex_family::mutex_type                           mutex_type;
    typedef private_adaptive_pool
       <T, SegmentManager, NodesPerChunk, MaxFreeChunks>  self_t;
+   typedef detail::private_adaptive_node_pool
+      <SegmentManager, sizeof(T)
+      , NodesPerChunk, MaxFreeChunks>                    priv_node_pool_t;
+
+
    /// @endcond
 
    public:
@@ -89,77 +95,37 @@ class private_adaptive_pool
 
    //!Not assignable from other private_adaptive_pool
    private_adaptive_pool& operator=(const private_adaptive_pool&);
-
-   void priv_initialize()
-   {
-      typedef detail::private_adaptive_node_pool
-               <SegmentManager, sizeof(T), NodesPerChunk, MaxFreeChunks>   priv_node_pool_t;
-      void * ptr = mp_segment_mngr->allocate(sizeof(priv_node_pool_t));
-      //This does not throw
-      new(ptr)priv_node_pool_t(detail::get_pointer(mp_segment_mngr));
-      //Construction ok, don't free memory
-      mp_node_pool = ptr;
-   }
-
-   void priv_free()
-   {
-      //-------------------------------------------------------------
-      typedef detail::private_adaptive_node_pool
-                  <SegmentManager, sizeof(T), NodesPerChunk, MaxFreeChunks>   priv_node_pool_t;
-      //-------------------------------------------------------------
-      priv_node_pool_t *pnode_pool     = static_cast<priv_node_pool_t*>
-                                          (detail::get_pointer(mp_node_pool));
-      segment_manager  &segment_mngr   = *mp_segment_mngr;
-      //This never throws
-      pnode_pool->~priv_node_pool_t();
-      segment_mngr.deallocate(pnode_pool);
-   }
    /// @endcond
 
    public:
    //!Constructor from a segment manager
    private_adaptive_pool(segment_manager *segment_mngr)
-      : mp_segment_mngr(segment_mngr), mp_node_pool(0){}
+      : m_node_pool(segment_mngr)
+   {}
 
    //!Copy constructor from other private_adaptive_pool. Never throws
    private_adaptive_pool(const private_adaptive_pool &other)
-      : mp_segment_mngr(other.get_segment_manager()), mp_node_pool(0){}
+      : m_node_pool(other.get_segment_manager())
+   {}
 
    //!Copy constructor from related private_adaptive_pool. Never throws.
    template<class T2>
    private_adaptive_pool
       (const private_adaptive_pool<T2, SegmentManager, NodesPerChunk, MaxFreeChunks> &other)
-      : mp_segment_mngr(other.get_segment_manager()), mp_node_pool(0){}
+      : m_node_pool(other.get_segment_manager())
+   {}
 
    //!Destructor, frees all used memory. Never throws
    ~private_adaptive_pool() 
-      {  if(mp_node_pool)  priv_free();  }
+   {}
 
    //!Returns the segment manager. Never throws
    segment_manager* get_segment_manager()const
-      {  return detail::get_pointer(mp_segment_mngr);  }
-/*
-   //!Return address of mutable value. Never throws
-   pointer address(reference value) const
-      {  return pointer(addressof(value));  }
+   {  return m_node_pool.get_segment_manager(); }
 
-   //!Return address of non mutable value. Never throws
-   const_pointer address(const_reference value) const
-      {  return const_pointer(addressof(value));  }
-
-   //!Construct object, calling constructor. 
-   //!Throws if T(const Convertible &) throws
-   template<class Convertible>
-   void construct(const pointer &ptr, const Convertible &value)
-      {  new(detail::get_pointer(ptr)) value_type(value);  }
-
-   //!Destroys object. Throws if object's destructor throws
-   void destroy(const pointer &ptr)
-      {  BOOST_ASSERT(ptr != 0); (*ptr).~value_type();  }
-*/
    //!Returns the number of elements that could be allocated. Never throws
    size_type max_size() const
-      {  return mp_segment_mngr->get_size()/sizeof(value_type);  }
+   {  return this->get_segment_manager()/sizeof(value_type);  }
 
    //!Allocate memory for an array of count elements. 
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
@@ -168,52 +134,47 @@ class private_adaptive_pool
       (void)hint;
       if(count > ((size_type)-1)/sizeof(value_type))
          throw bad_alloc();
-      //----------------------------------------------------------
-      typedef detail::private_adaptive_node_pool
-                  <SegmentManager, sizeof(T), NodesPerChunk, MaxFreeChunks>   priv_node_pool_t;
-      //----------------------------------------------------------
-      if(!mp_node_pool)   priv_initialize();
-      priv_node_pool_t *node_pool  = static_cast<priv_node_pool_t*>
-                                       (detail::get_pointer(mp_node_pool));
-      return pointer(static_cast<value_type*>(node_pool->allocate(count)));
+      return pointer(static_cast<value_type*>(m_node_pool.allocate(count)));
    }
 
    //!Deallocate allocated memory. Never throws
    void deallocate(const pointer &ptr, size_type count)
-   {
-      //----------------------------------------------------------
-      typedef detail::private_adaptive_node_pool
-                  <SegmentManager, sizeof(T), NodesPerChunk, MaxFreeChunks>   priv_node_pool_t;
-      //----------------------------------------------------------
-      if(!mp_node_pool)   priv_initialize();
-      priv_node_pool_t *node_pool = static_cast<priv_node_pool_t*>(
-                                       detail::get_pointer(mp_node_pool));
-      node_pool->deallocate(detail::get_pointer(ptr), count);
-   }
+   {  m_node_pool.deallocate(detail::get_pointer(ptr), count); }
+
+   //!Deallocates all free chunks of the pool
+   void deallocate_free_chunks()
+   {  m_node_pool.deallocate_free_chunks();  }
 
    //!Swaps allocators. Does not throw. If each allocator is placed in a
    //!different shared memory segments, the result is undefined.*/
    friend void swap(self_t &alloc1,self_t &alloc2)
-   {
-      using namespace std;
-      swap (alloc1.mp_segment_mngr,   alloc2.mp_segment_mngr);
-      swap (alloc1.mp_node_pool,    alloc2.mp_node_pool);
-   }
+   {  alloc1.m_node_pool.swap(alloc2.m_node_pool);  }
+
+   //These functions are obsolete. These are here to conserve
+   //backwards compatibility with containers using them...
+
+   //!Returns address of mutable object.
+   //!Never throws
+   pointer address(reference value) const
+   {  return pointer(boost::addressof(value));  }
+
+   /*!Returns address of non mutable object. Never throws*/
+   const_pointer address(const_reference value) const
+   {  return const_pointer(boost::addressof(value));  }
+
+   //!Default construct an object. 
+   //!Throws if T's default constructor throws*/
+   void construct(const pointer &ptr)
+   {  new(detail::get_pointer(ptr)) value_type;  }
+
+   //!Destroys object. Throws if object's
+   //!destructor throws
+   void destroy(const pointer &ptr)
+   {  BOOST_ASSERT(ptr != 0); (*ptr).~value_type();  }
 
    /// @cond
    private:
-   // We can't instantiate a pointer like this:
-   // detail::private_adaptive_node_pool<SegmentManager, 
-   //                             sizeof(T),  NodesPerChunk, MaxFreeChunks> *mp_node_pool;
-   // since it can provoke an early instantiation of T, that is not 
-   // complete at the moment (for example, a node of a node-based pointer)
-   // This provokes errors on some node based container implementations using
-   // this pooled allocator as this allocator type.
-   // 
-   // Because of this, we will use a void smart pointer and we'll do some casts
-   // when needed.
-   segment_mngr_ptr_t      mp_segment_mngr;
-   void_pointer            mp_node_pool;
+   priv_node_pool_t m_node_pool;
    /// @endcond
 };
 

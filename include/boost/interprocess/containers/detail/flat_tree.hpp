@@ -114,12 +114,13 @@ class flat_tree
    typedef Key                                        key_type;
    typedef Compare                                    key_compare;
    typedef typename vector_t::allocator_type          allocator_type;
+   typedef allocator_type                             stored_allocator_type;
    typedef typename allocator_type::size_type         size_type;
    typedef typename allocator_type::difference_type   difference_type;
    typedef typename vector_t::iterator                iterator;
    typedef typename vector_t::const_iterator          const_iterator;
-   typedef std::reverse_iterator<iterator>          reverse_iterator;
-   typedef std::reverse_iterator<const_iterator>    const_reverse_iterator;
+   typedef std::reverse_iterator<iterator>            reverse_iterator;
+   typedef std::reverse_iterator<const_iterator>      const_reverse_iterator;
    
 
    // allocation/deallocation
@@ -163,6 +164,12 @@ class flat_tree
 
    allocator_type get_allocator() const 
    { return this->m_data.m_vect.get_allocator(); }
+
+   const stored_allocator_type &get_stored_allocator() const 
+   {  return this->m_data.m_vect.get_stored_allocator(); }
+
+   stored_allocator_type &get_stored_allocator()
+   {  return this->m_data.m_vect.get_stored_allocator(); }
 
    iterator begin() 
    { return this->m_data.m_vect.begin(); }
@@ -364,6 +371,15 @@ class flat_tree
 
    void clear()
    {  this->m_data.m_vect.clear();  }
+
+   //! <b>Effects</b>: Tries to deallocate the excess of memory created
+   //    with previous allocations. The size of the vector is unchanged
+   //!
+   //! <b>Throws</b>: If memory allocation throws, or T's copy constructor throws.
+   //!
+   //! <b>Complexity</b>: Linear to size().
+   void shrink_to_fit()
+   {  this->m_data.m_vect.shrink_to_fit();  }
 
    // set operations:
    iterator find(const key_type& k)

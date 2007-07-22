@@ -19,7 +19,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/file_wrapper.hpp>
 #include <boost/interprocess/detail/move.hpp>
 
@@ -59,31 +59,31 @@ class basic_managed_mapped_file
    public: //functions
    /*!Creates shared memory and creates and places the segment manager. 
       This can throw.*/
-   basic_managed_mapped_file(detail::create_only_t create_only, const char *name,
+   basic_managed_mapped_file(create_only_t create_only, const char *name,
                              std::size_t size, const void *addr = 0)
       : m_mfile(create_only, name, size, read_write, addr, 
-                create_open_func_t(get_this_pointer(), DoCreate))
+                create_open_func_t(get_this_pointer(), detail::DoCreate))
    {}
 
    /*!Creates shared memory and creates and places the segment manager if
       segment was not created. If segment was created it connects to the
       segment.
       This can throw.*/
-   basic_managed_mapped_file (detail::open_or_create_t open_or_create,
+   basic_managed_mapped_file (open_or_create_t open_or_create,
                               const char *name, std::size_t size, 
                               const void *addr = 0)
       : m_mfile(open_or_create, name, size, read_write, addr, 
                 create_open_func_t(get_this_pointer(), 
-                DoCreateOrOpen))
+                detail::DoCreateOrOpen))
    {}
 
    /*!Connects to a created shared memory and it's the segment manager.
       Never throws.*/
-   basic_managed_mapped_file (detail::open_only_t open_only, const char* name, 
+   basic_managed_mapped_file (open_only_t open_only, const char* name, 
                               const void *addr = 0)
       : m_mfile(open_only, name, read_write, addr, 
                 create_open_func_t(get_this_pointer(), 
-                DoOpen))
+                detail::DoOpen))
    {}
 
    /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/

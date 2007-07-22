@@ -25,6 +25,8 @@ namespace boost {
 namespace interprocess { 
 namespace detail {
 
+struct nat{};
+
 //boost::alignment_of yields to 10K lines of preprocessed code, so we
 //need an alternative
 template <typename T> struct alignment_of;
@@ -118,13 +120,13 @@ struct add_reference<T&>
 template<>
 struct add_reference<void>
 {
-    typedef int& type;
+    typedef nat& type;
 };
 
 template<>
 struct add_reference<const void>
 {
-    typedef int& type;
+    typedef const nat& type;
 };
 template <typename T, typename U>
 struct is_same

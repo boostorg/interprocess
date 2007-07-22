@@ -25,7 +25,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/min_max.hpp>
-#include <boost/interprocess/detail/gcd_lcm.hpp>
+#include <boost/interprocess/detail/math_functions.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/intrusive/set.hpp>
@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <utility>
 #include <limits.h>
+#include <iterator>
 
 #include <assert.h>
 #include <new>
@@ -66,6 +67,9 @@ class rbtree_best_fit
    typedef VoidPointer        void_pointer;
 
    /// @cond
+
+   class multiallocation_iterator;
+
    private:
    struct block_ctrl;
    typedef typename detail::
@@ -128,9 +132,87 @@ class rbtree_best_fit
       //!The size of the memory segment
       std::size_t       m_size;
    }  m_header;
-   /// @endcond
+
+   friend class multiallocation_iterator;
+
 
    public:
+   class multiallocation_iterator
+      :  public std::iterator<std::bidirectional_iterator_tag, char *>
+   {
+      void unspecified_bool_type_func() const {}
+      typedef void (multiallocation_iterator::*unspecified_bool_type)() const;
+
+      public:
+      typedef char *       value_type;
+      typedef value_type & reference;
+      typedef value_type * pointer;
+
+      multiallocation_iterator()
+         : block_(0), n_elements_ (0)
+      {}
+
+      multiallocation_iterator(void *many_allocation, std::size_t n_elements)
+         : block_(static_cast<block_ctrl*>(many_allocation)), n_elements_ (n_elements)
+      {}
+
+      multiallocation_iterator &operator=(const multiallocation_iterator &other)
+      {  block_ = other.block_;  n_elements_ = other.n_elements_;  return *this;  }
+
+      public:
+      multiallocation_iterator& operator++() 
+      {
+         --n_elements_;
+         block_ = (block_ctrl*)((char*)block_ + block_->m_size*Alignment);
+         return *this;
+      }
+      
+      multiallocation_iterator operator++(int)
+      {
+         multiallocation_iterator result(block_, n_elements_);
+         ++*this;
+         return result;
+      }
+
+      multiallocation_iterator& operator--() 
+      { 
+         ++n_elements_;
+         block_ = (block_ctrl*)((char*)block_ - block_->m_prev_size*Alignment);
+         return *this;
+      }
+      
+      multiallocation_iterator operator--(int)
+      {
+         multiallocation_iterator result(block_, n_elements_);
+         --*this;
+         return result;
+      }
+
+      bool operator== (const multiallocation_iterator& other) const
+      { return n_elements_ == other.n_elements_; }
+
+      bool operator!= (const multiallocation_iterator& other) const
+      { return !operator== (other); }
+
+      value_type operator*() const
+      {
+         value_type v = (char*)priv_get_user_buffer(block_);
+         return v;
+      }
+
+      operator unspecified_bool_type() const  
+      {  return n_elements_? &multiallocation_iterator::unspecified_bool_type_func : 0;   }
+
+      pointer operator->() const
+      { return &operator*(); }
+
+      private:
+      block_ctrl *block_;
+      std::size_t n_elements_;
+   };
+
+   /// @endcond
+
    //!Constructor. "size" is the total size of the managed memory segment, 
    //!"extra_hdr_bytes" indicates the extra bytes beginning in the sizeof(rbtree_best_fit)
    //!offset that the allocator should not use at all.
@@ -146,6 +228,18 @@ class rbtree_best_fit
 
    //!Allocates bytes, returns 0 if there is not more memory
    void* allocate             (std::size_t nbytes);
+
+   /// @cond
+
+   //Experimental. Dont' use
+
+   //!Multiple element allocation, same size
+   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements);
+
+   //!Multiple element allocation, different size
+   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::size_t sizeof_element);
+
+   /// @endcond
 
    //!Deallocates previously allocated bytes
    void   deallocate          (void *addr);
@@ -169,10 +263,11 @@ class rbtree_best_fit
    //!Makes an internal sanity check and returns true if success
    bool check_sanity();
 
-   std::pair<void *, bool>
+   template<class T>
+   std::pair<T *, bool>
       allocation_command  (allocation_type command,   std::size_t limit_size,
                            std::size_t preferred_size,std::size_t &received_size, 
-                           void *reuse_ptr = 0, std::size_t backwards_multiple = 1);
+                           T *reuse_ptr = 0);
 
    //!Returns the size of the buffer previously allocated pointed by ptr
    std::size_t size(const void *ptr) const;
@@ -183,13 +278,27 @@ class rbtree_best_fit
 
    /// @cond
    private:
+   std::pair<void*, bool>
+      priv_allocation_command(allocation_type command,   std::size_t limit_size,
+                        std::size_t preferred_size,std::size_t &received_size, 
+                        void *reuse_ptr, std::size_t sizeof_object);
+
+
    //!Real allocation algorithm with min allocation option
    std::pair<void *, bool> priv_allocate(allocation_type command
-                                        ,std::size_t min_size
+                                        ,std::size_t limit_size
                                         ,std::size_t preferred_size
                                         ,std::size_t &received_size
                                         ,void *reuse_ptr = 0
                                         ,std::size_t backwards_multiple = 1);
+
+   //!Common function to implement multiple allocation
+   multiallocation_iterator priv_allocate_many
+      (const std::size_t *elem_sizes, std::size_t n_elements, std::size_t sizeof_elements);
+
+   multiallocation_iterator priv_allocate_many
+      ( std::size_t elem_size, std::size_t min_elements
+      , std::size_t preferred_elements, std::size_t &received_elements);
 
    //!Obtains the block control structure of the user buffer
    static block_ctrl *priv_get_block(const void *ptr);
@@ -281,7 +390,7 @@ class rbtree_best_fit
    BOOST_STATIC_ASSERT((0 == (Alignment & (Alignment - std::size_t(1u)))));
    /// @endcond
    public:
-   enum{ PayloadPerAllocation = AllocatedCtrlBytes };
+   static const std::size_t PayloadPerAllocation = AllocatedCtrlBytes;
 };
 
 template<class MutexFamily, class VoidPointer>
@@ -498,15 +607,40 @@ inline void* rbtree_best_fit<MutexFamily, VoidPointer>::
 }
 
 template<class MutexFamily, class VoidPointer>
-inline std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer>::
-   allocation_command  (allocation_type command,   std::size_t min_size,
+template<class T>
+inline std::pair<T*, bool> rbtree_best_fit<MutexFamily, VoidPointer>::
+   allocation_command  (allocation_type command,   std::size_t limit_size,
                         std::size_t preferred_size,std::size_t &received_size, 
-                        void *reuse_ptr, std::size_t backwards_multiple)
+                        T *reuse_ptr)
 {
-   //-----------------------
-   boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
-   //-----------------------
-   return priv_allocate(command, min_size, preferred_size, received_size, reuse_ptr, backwards_multiple);
+   std::pair<void*, bool> ret = priv_allocation_command
+      (command, limit_size, preferred_size, received_size, reuse_ptr, sizeof(T));
+   BOOST_ASSERT(0 == ((std::size_t)ret.first % detail::alignment_of<T>::value));
+   return std::pair<T *, bool>(static_cast<T*>(ret.first), ret.second);
+}
+
+template<class MutexFamily, class VoidPointer>
+inline std::pair<void*, bool> rbtree_best_fit<MutexFamily, VoidPointer>::
+   priv_allocation_command (allocation_type command,   std::size_t limit_size,
+                       std::size_t preferred_size,std::size_t &received_size, 
+                       void *reuse_ptr, std::size_t sizeof_object)
+{
+   std::pair<void*, bool> ret;
+   std::size_t max_count = m_header.m_size/sizeof_object;
+   if(limit_size > max_count || preferred_size > max_count){
+      ret.first = 0; return ret;
+   }
+   std::size_t l_size = limit_size*sizeof_object;
+   std::size_t p_size = preferred_size*sizeof_object;
+   std::size_t r_size;
+   {
+      //-----------------------
+      boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
+      //-----------------------
+      ret = priv_allocate(command, l_size, p_size, r_size, reuse_ptr, sizeof_object);
+   }
+   received_size = r_size/sizeof_object;
+   return ret;
 }
 
 template<class MutexFamily, class VoidPointer>
@@ -799,6 +933,29 @@ inline void* rbtree_best_fit<MutexFamily, VoidPointer>::
 }
 
 template<class MutexFamily, class VoidPointer>
+inline typename rbtree_best_fit<MutexFamily, VoidPointer>::multiallocation_iterator
+   rbtree_best_fit<MutexFamily, VoidPointer>::
+   allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements)
+{
+   //-----------------------
+   boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
+   //-----------------------
+   received_elements = min_elements;
+   return priv_allocate_many(elem_size, min_elements, preferred_elements, received_elements);
+}
+
+template<class MutexFamily, class VoidPointer>
+inline typename rbtree_best_fit<MutexFamily, VoidPointer>::multiallocation_iterator
+   rbtree_best_fit<MutexFamily, VoidPointer>::
+   allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::size_t sizeof_element)
+{
+   //-----------------------
+   boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
+   //-----------------------
+   return priv_allocate_many(elem_sizes, n_elements, sizeof_element);
+}
+
+template<class MutexFamily, class VoidPointer>
 std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer>::
    priv_allocate(allocation_type command
                 ,std::size_t limit_size
@@ -823,13 +980,9 @@ std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer>::
 
    //Number of units to request (including block_ctrl header)
    std::size_t preferred_units = priv_get_total_units(preferred_size);
-   if(preferred_units < BlockCtrlUnits)
-      preferred_units = BlockCtrlUnits;
 
    //Number of units to request (including block_ctrl header)
    std::size_t limit_units = priv_get_total_units(limit_size);
-   if(limit_units < BlockCtrlUnits)
-      limit_units = BlockCtrlUnits;
 
    //Expand in place
    if(reuse_ptr && (command & (expand_fwd | expand_bwd))){
@@ -845,7 +998,7 @@ std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer>::
 
       if(it != m_header.m_imultiset.end()){
          return return_type(this->priv_check_and_allocate
-            (limit_units, detail::get_pointer(&*it), received_size), false);
+            (preferred_units, detail::get_pointer(&*it), received_size), false);
       }
 
       if(it != m_header.m_imultiset.begin()&&
@@ -866,17 +1019,117 @@ std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer>::
 }
 
 template<class MutexFamily, class VoidPointer>
+typename rbtree_best_fit<MutexFamily, VoidPointer>::multiallocation_iterator
+   rbtree_best_fit<MutexFamily, VoidPointer>::priv_allocate_many
+      (const std::size_t *elem_sizes, std::size_t n_elements, std::size_t sizeof_element)
+{
+   //Calculate the total size of all requests
+   std::size_t total_request_units;
+   total_request_units = 0;
+   for(std::size_t i = 0; i < n_elements; ++i){
+      std::size_t preferred_units = priv_get_total_units(elem_sizes[i]*sizeof_element);
+      total_request_units += preferred_units;
+   }
+
+   std::size_t total_bytes = total_request_units*Alignment - AllocatedCtrlBytes;
+
+   std::size_t received_size;
+   std::pair<void *, bool> ret = priv_allocate
+      (allocate_new, total_bytes, total_bytes, received_size, 0);
+   if(!ret.first){
+      return multiallocation_iterator();
+   }
+
+   block_ctrl *block = reinterpret_cast<block_ctrl*>
+                           (detail::char_ptr_cast(ret.first) - AllocatedCtrlBytes);
+   std::size_t received_units = block->m_size;
+   char *block_address = (char*)block;
+
+   total_request_units = 0;
+
+   {
+      std::size_t preferred_units;
+      //If all have the same size, we don't need calculate it
+      //every iteration
+      for(std::size_t i = 0; i < n_elements; ++i){
+         //If all have different size, we have to calculate it each iteration
+         preferred_units = priv_get_total_units(elem_sizes[i]*sizeof_element);
+         //This is the position where the new block must be created
+         block_ctrl *new_block = new(block_address)block_ctrl;
+         //The last block should take all the remaining space
+         if((i + 1) == n_elements){
+            new_block->m_size = received_units - total_request_units;
+         }
+         else{
+            new_block->m_size = preferred_units;
+         }
+         priv_tail_size(new_block, new_block->m_size);
+         priv_mark_as_allocated_block(new_block);
+         block_address += new_block->m_size*Alignment;
+         total_request_units += new_block->m_size;
+      }
+      assert(total_request_units == received_units);
+   }
+   return multiallocation_iterator(block, n_elements);
+}
+
+template<class MutexFamily, class VoidPointer>
+typename rbtree_best_fit<MutexFamily, VoidPointer>::multiallocation_iterator
+   rbtree_best_fit<MutexFamily, VoidPointer>::priv_allocate_many
+      ( std::size_t elem_size, std::size_t min_elements
+      , std::size_t preferred_elements, std::size_t &received_elements)
+{
+   //Calculate the total size of all requests
+   const std::size_t elem_units = priv_get_total_units(elem_size);
+   const std::size_t total_min_usr_units = min_elements*elem_units - AllocatedCtrlUnits;
+   const std::size_t total_preferred_usr_units = preferred_elements*elem_units - AllocatedCtrlUnits;
+
+   std::size_t received_size;
+   std::pair<void *, bool> ret = priv_allocate
+      ( allocate_new, total_min_usr_units*Alignment
+      , total_preferred_usr_units*Alignment, received_size, 0);
+   if(!ret.first){
+      received_elements = (received_size + AllocatedCtrlBytes)/elem_units;
+      return multiallocation_iterator();
+   }
+
+   block_ctrl *block = reinterpret_cast<block_ctrl*>
+      (detail::char_ptr_cast(ret.first) - AllocatedCtrlBytes);
+   std::size_t received_units = block->m_size;
+   char *block_address = (char*)block;
+
+   received_elements = received_units/elem_units;
+   if(received_elements > preferred_elements){
+      received_elements = preferred_elements;
+   }
+   std::size_t total_request_units = 0;
+   {
+      for(std::size_t i = 0; i < received_elements; ++i){
+         //If all have different size, we have to calculate it each iteration
+         //This is the position where the new block must be created
+         block_ctrl *new_block = new(block_address)block_ctrl;
+         //The last block should take all the remaining space
+         if((i + 1) == received_elements){
+            new_block->m_size = received_units - (received_elements-1)*elem_units;
+         }
+         else{
+            new_block->m_size = elem_units;
+         }
+         priv_tail_size(new_block, new_block->m_size);
+         priv_mark_as_allocated_block(new_block);
+         block_address += new_block->m_size*Alignment;
+         total_request_units += new_block->m_size;
+      }
+      assert(total_request_units == received_units);
+   }
+   return multiallocation_iterator(block, received_elements);
+}
+template<class MutexFamily, class VoidPointer>
 inline
 typename rbtree_best_fit<MutexFamily, VoidPointer>::block_ctrl *
    rbtree_best_fit<MutexFamily, VoidPointer>::priv_get_block(const void *ptr)
 {
-   std::size_t offset = 0;
-   const void *p = (const void *)(std::size_t(ptr) & ~AlignmentMask);
-   if(p != ptr){
-      offset = detail::char_ptr_cast(p)[0]*Alignment;
-   }
-   return reinterpret_cast<block_ctrl*>
-                     (detail::char_ptr_cast(p) - offset - AllocatedCtrlBytes);
+   return reinterpret_cast<block_ctrl*>(detail::char_ptr_cast(ptr) - AllocatedCtrlBytes);
 }
 
 template<class MutexFamily, class VoidPointer>
@@ -890,7 +1143,9 @@ inline
 std::size_t rbtree_best_fit<MutexFamily, VoidPointer>::
    priv_get_total_units(std::size_t userbytes)
 {
-   return detail::get_rounded_size(userbytes, Alignment)/Alignment + AllocatedCtrlUnits;
+   std::size_t units = detail::get_rounded_size(userbytes, Alignment)/Alignment + AllocatedCtrlUnits;
+   if(units < BlockCtrlUnits) units = BlockCtrlUnits;
+   return units;
 }
 
 template<class MutexFamily, class VoidPointer>
@@ -940,47 +1195,50 @@ bool rbtree_best_fit<MutexFamily, VoidPointer>::
 {
    //Obtain the real size of the block
    block_ctrl *block = priv_get_block(ptr);
-   std::size_t old_block_size = block->m_size;
+   std::size_t old_block_units = block->m_size;
 
    //The block must be marked as allocated and the sizes must be equal
    assert(priv_is_allocated_block(block));
-   assert(old_block_size == priv_tail_size(block));
+   assert(old_block_units == priv_tail_size(block));
    
    //Put this to a safe value
-   received_size = (old_block_size - AllocatedCtrlUnits)*Alignment;
-
-   if(received_size >= min_size)
+   received_size = (old_block_units - AllocatedCtrlUnits)*Alignment;
+   if(received_size > preferred_size)
       return true;
 
    //Now translate it to Alignment units
-   const std::size_t min_units = priv_ceil_units(min_size);
-   const std::size_t preferred_units = priv_ceil_units(preferred_size);
+   const std::size_t min_user_units = priv_ceil_units(min_size);
+   const std::size_t preferred_user_units = priv_ceil_units(preferred_size);
 
    //Some parameter checks
-   assert(min_units <= preferred_units);
+   assert(min_user_units <= preferred_user_units);
 
    block_ctrl *next_block;
 
-   if(priv_is_allocated_block(next_block = priv_next_block(block)))
-      return false;
+   if(priv_is_allocated_block(next_block = priv_next_block(block))){
+      return received_size >= min_size ? true : false;
+   }
 
    //Is "block" + "next_block" big enough?
-   const std::size_t merged_size = old_block_size + next_block->m_size;
+   const std::size_t merged_units = old_block_units + next_block->m_size;
 
    //Now get the expansion size
-   const std::size_t max_size_to_expand = merged_size - AllocatedCtrlUnits;
+   const std::size_t merged_user_units = merged_units - AllocatedCtrlUnits;
 
-   if(max_size_to_expand < min_units){
-      received_size = max_size_to_expand*Alignment;
+   if(merged_user_units < min_user_units){
+      received_size = merged_user_units*Alignment;
       return false;
    }
 
    //Now get the maximum size the user can allocate
-   std::size_t size_to_expand = (max_size_to_expand < preferred_units) 
-                              ? max_size_to_expand : preferred_units;
+   std::size_t intended_user_units = (merged_user_units < preferred_user_units) ?
+      merged_user_units : preferred_user_units;
+
+   //These are total units of the merged block (supposing the next block can be split)
+   const std::size_t intended_units = AllocatedCtrlUnits + intended_user_units;
 
    //Check if we can split the next one in two parts
-   if((merged_size - (BlockCtrlUnits + AllocatedCtrlUnits)) >= size_to_expand){
+   if((merged_units - intended_units) >=  BlockCtrlUnits){
       //Now we have to update the data in the tree
       m_header.m_imultiset.erase(Imultiset::iterator_to(*next_block));
 
@@ -988,12 +1246,11 @@ bool rbtree_best_fit<MutexFamily, VoidPointer>::
       //two blocks, the first one will be merged and
       //the second's size will be the remaining space
       assert(next_block->m_size == priv_tail_size(next_block));
-      std::size_t new_block_offset = AllocatedCtrlUnits + size_to_expand;
 
       //This is the remaining block
       block_ctrl *new_block = new(reinterpret_cast<block_ctrl*>
-                     (detail::char_ptr_cast(block) + new_block_offset*Alignment))block_ctrl;
-      new_block->m_size  = merged_size - new_block_offset;
+                     (detail::char_ptr_cast(block) + intended_units*Alignment))block_ctrl;
+      new_block->m_size  = merged_units - intended_units;
       assert(new_block->m_size >= BlockCtrlUnits);
       priv_tail_size(new_block, new_block->m_size);
       priv_mark_as_free_block(new_block);
@@ -1002,10 +1259,10 @@ bool rbtree_best_fit<MutexFamily, VoidPointer>::
       m_header.m_imultiset.insert(m_header.m_imultiset.begin(), *new_block);
 
       //Write the new length
-      block->m_size = size_to_expand + AllocatedCtrlUnits;
+      block->m_size = intended_user_units + AllocatedCtrlUnits;
       assert(block->m_size >= BlockCtrlUnits);
       priv_tail_size(block, block->m_size);
-      m_header.m_allocated += (new_block_offset - old_block_size)*Alignment;
+      m_header.m_allocated += (intended_units - old_block_units)*Alignment;
    }
    //There is no free space to create a new node: just merge both blocks
    else{
@@ -1013,10 +1270,10 @@ bool rbtree_best_fit<MutexFamily, VoidPointer>::
       m_header.m_imultiset.erase(Imultiset::iterator_to(*next_block));
 
       //Write the new length
-      block->m_size = merged_size;
+      block->m_size = merged_units;
       assert(block->m_size >= BlockCtrlUnits);
-      priv_tail_size(block, merged_size);
-      m_header.m_allocated += (merged_size - old_block_size)*Alignment;
+      priv_tail_size(block, merged_units);
+      m_header.m_allocated += (merged_units - old_block_units)*Alignment;
    }
 
    received_size = (block->m_size - AllocatedCtrlUnits)*Alignment;
@@ -1032,7 +1289,7 @@ bool rbtree_best_fit<MutexFamily, VoidPointer>::
 {
    //Obtain the real block
    block_ctrl *block = priv_get_block(ptr);
-   std::size_t old_block_size = block->m_size;
+   std::size_t old_block_units = block->m_size;
 
    //The block must be marked as allocated
    assert(priv_is_allocated_block(block));
@@ -1041,47 +1298,47 @@ bool rbtree_best_fit<MutexFamily, VoidPointer>::
    priv_check_alignment(ptr);
 
    //Put this to a safe value
-   received_size = (old_block_size - AllocatedCtrlUnits)*Alignment;
+   received_size = (old_block_units - AllocatedCtrlUnits)*Alignment;
 
    //Now translate it to Alignment units
-   const std::size_t max_units       = priv_floor_units(max_size);
-   const std::size_t preferred_units = priv_ceil_units(preferred_size);
+   const std::size_t max_user_units       = priv_floor_units(max_size);
+   const std::size_t preferred_user_units = priv_ceil_units(preferred_size);
 
    //Check if rounded max and preferred are possible correct
-   if(max_units < preferred_units)
+   if(max_user_units < preferred_user_units)
       return false;
 
    //Check if the block is smaller than the requested minimum
-   std::size_t old_data_size = old_block_size - AllocatedCtrlUnits;
+   std::size_t old_user_units = old_block_units - AllocatedCtrlUnits;
 
-   if(old_data_size < preferred_units)
+   if(old_user_units < preferred_user_units)
       return false;
 
    //If the block is smaller than the requested minimum
-   if(old_data_size == preferred_units)
+   if(old_user_units == preferred_user_units)
       return true;
 
-   std::size_t size_to_shrink = 
-      ((BlockCtrlUnits - AllocatedCtrlUnits) > preferred_units)
+   std::size_t shrunk_user_units = 
+      ((BlockCtrlUnits - AllocatedCtrlUnits) > preferred_user_units)
       ? (BlockCtrlUnits - AllocatedCtrlUnits)
-      : preferred_units;
+      : preferred_user_units;
 
    //Some parameter checks
-   if(max_units < size_to_shrink)
+   if(max_user_units < shrunk_user_units)
       return false;
 
    //We must be able to create at least a new empty block
-   if((old_data_size - size_to_shrink) < BlockCtrlUnits ){
+   if((old_user_units - shrunk_user_units) < BlockCtrlUnits ){
       return false;
    }
 
    //Now we can just rewrite the size of the old buffer
-   block->m_size = size_to_shrink + AllocatedCtrlUnits;
+   block->m_size = shrunk_user_units + AllocatedCtrlUnits;
    assert(block->m_size >= BlockCtrlUnits);
    priv_tail_size(block, block->m_size);
 
    //Update new size
-   received_size = size_to_shrink*Alignment;
+   received_size = shrunk_user_units*Alignment;
 
    //We create the new block
    block_ctrl *new_block = new(reinterpret_cast<block_ctrl*>
@@ -1090,7 +1347,7 @@ bool rbtree_best_fit<MutexFamily, VoidPointer>::
    //Write control data to simulate this new block was previously allocated
    //and deallocate it
    priv_mark_as_allocated_block(new_block);
-   new_block->m_size = old_block_size - block->m_size;
+   new_block->m_size = old_block_units - block->m_size;
    assert(new_block->m_size >= BlockCtrlUnits);
    priv_tail_size(new_block, new_block->m_size);
    this->priv_deallocate(priv_get_user_buffer(new_block));

@@ -17,7 +17,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -44,18 +44,18 @@ class named_recursive_mutex
    /// @endcond
    public:
    /*!Creates a global interprocess_mutex with a name.*/
-   named_recursive_mutex(detail::create_only_t create_only, const char *name);
+   named_recursive_mutex(create_only_t create_only, const char *name);
 
    /*!Opens or creates a global interprocess_mutex with a name. 
       If the interprocess_mutex is created, this call is equivalent to create(). 
       If the interprocess_mutex is already created, this call is equivalent to open(). 
       Does not throw*/
-   named_recursive_mutex(detail::open_or_create_t open_or_create, const char *name);
+   named_recursive_mutex(open_or_create_t open_or_create, const char *name);
 
    /*!Opens a global interprocess_mutex with a name if that interprocess_mutex is previously.
       created. If it is not previously created this function return false.
       Does not throw*/
-   named_recursive_mutex(detail::open_only_t open_only, const char *name);
+   named_recursive_mutex(open_only_t open_only, const char *name);
 
    /*!Destroys named interprocess_mutex. Does not throw*/
    ~named_recursive_mutex();
@@ -128,7 +128,7 @@ class named_recursive_mutex::construct_func_t
 inline named_recursive_mutex::~named_recursive_mutex()
 {}
 
-inline named_recursive_mutex::named_recursive_mutex(detail::create_only_t, const char *name)
+inline named_recursive_mutex::named_recursive_mutex(create_only_t, const char *name)
    :  m_shmem  (create_only
                ,name
                ,sizeof(interprocess_recursive_mutex) +
@@ -139,7 +139,7 @@ inline named_recursive_mutex::named_recursive_mutex(detail::create_only_t, const
                ,construct_func_t(construct_func_t::create_only))
 {}
 
-inline named_recursive_mutex::named_recursive_mutex(detail::open_or_create_t, const char *name)
+inline named_recursive_mutex::named_recursive_mutex(open_or_create_t, const char *name)
    :  m_shmem  (open_or_create
                ,name
                ,sizeof(interprocess_recursive_mutex) +
@@ -150,7 +150,7 @@ inline named_recursive_mutex::named_recursive_mutex(detail::open_or_create_t, co
                ,construct_func_t(construct_func_t::open_or_create))
 {}
 
-inline named_recursive_mutex::named_recursive_mutex(detail::open_only_t, const char *name)
+inline named_recursive_mutex::named_recursive_mutex(open_only_t, const char *name)
    :  m_shmem  (open_only
                ,name
                ,read_write

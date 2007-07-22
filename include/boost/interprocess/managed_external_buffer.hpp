@@ -17,7 +17,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
 #include <boost/interprocess/detail/move.hpp>
 
@@ -48,7 +48,7 @@ class basic_managed_external_buffer
    public:
    //!Creates and places the segment manager. This can throw
    basic_managed_external_buffer
-      (detail::create_only_t, void *addr, std::size_t size)
+      (create_only_t, void *addr, std::size_t size)
    {
       if(!base_t::create_impl(addr, size)){
          throw interprocess_exception();
@@ -57,7 +57,7 @@ class basic_managed_external_buffer
 
    //!Creates and places the segment manager. This can throw
    basic_managed_external_buffer
-      (detail::open_only_t, void *addr, std::size_t size)
+      (open_only_t, void *addr, std::size_t size)
    {
       if(!base_t::open_impl(addr, size)){
          throw interprocess_exception();//return false;

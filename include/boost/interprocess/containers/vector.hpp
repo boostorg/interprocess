@@ -216,6 +216,9 @@ class vector : private detail::vector_alloc_holder<A>
    typedef typename A::difference_type    difference_type;
    //! The allocator type
    typedef A                              allocator_type;
+   //! The stored allocator type
+   typedef allocator_type                 stored_allocator_type;
+
    /// @cond
    private:
    //This shouldn't be needed but VC6.0 needs this
@@ -224,6 +227,11 @@ class vector : private detail::vector_alloc_holder<A>
    typedef typename A::reference          vec_ref;
    typedef typename A::const_reference    vec_cref;
    typedef typename A::difference_type    vec_diff;
+
+
+   typedef typename base_t::allocator_v1     allocator_v1;
+   typedef typename base_t::allocator_v2     allocator_v2;
+   typedef typename base_t::alloc_version    alloc_version;
 
    typedef constant_iterator<T, difference_type> cvalue_iterator;
    /// @endcond
@@ -660,6 +668,12 @@ class vector : private detail::vector_alloc_holder<A>
    allocator_type get_allocator() const 
    { return *this;  }
 
+   const stored_allocator_type &get_stored_allocator() const 
+   {  return *this; }
+
+   stored_allocator_type &get_stored_allocator()
+   {  return *this; }
+
    //! <b>Effects</b>: If n is less than or equal to capacity(), this call has no
    //!   effect. Otherwise, it is a request for allocation of additional memory.
    //!   If the request is successful, then capacity() is greater than or equal to
@@ -1050,8 +1064,43 @@ class vector : private detail::vector_alloc_holder<A>
    void clear() 
    {  this->priv_destroy_all();  }
 
+   //! <b>Effects</b>: Tries to deallocate the excess of memory created
+   //    with previous allocations. The size of the vector is unchanged
+   //!
+   //! <b>Throws</b>: If memory allocation throws, or T's copy constructor throws.
+   //!
+   //! <b>Complexity</b>: Linear to size().
+   void shrink_to_fit()
+   {  priv_shrink_to_fit(alloc_version());   }
+
    /// @cond
    private:
+   void priv_shrink_to_fit(allocator_v1)
+   {
+      if(this->m_start){
+         if(!size()){
+            this->prot_deallocate();
+         }
+         else{
+            //This would not work with stateful allocators
+            vector<T, A>(*this).swap(*this);
+         }
+      }
+   }
+
+   void priv_shrink_to_fit(allocator_v2)
+   {
+      if(this->m_start){
+         if(!size()){
+            this->prot_deallocate();
+         }
+         else{
+            size_type received_size;
+            A::allocation_command(shrink_in_place, this->size(), this->capacity()
+                                 ,received_size, this->m_start);
+         }
+      }
+   }
 
    void priv_destroy_all()
    {

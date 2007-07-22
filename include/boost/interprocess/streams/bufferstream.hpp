@@ -26,12 +26,11 @@
  * purpose.  It is provided "as is" without express or implied warranty.
  */
 
-/*!\file
-   This file defines basic_bufferbuf, basic_ibufferstream,
-   basic_obufferstream, and basic_bufferstream classes. These classes
-   represent streamsbufs and streams whose sources or destinations
-   are fixed size character buffers.
-*/
+//!\file
+//!This file defines basic_bufferbuf, basic_ibufferstream,
+//!basic_obufferstream, and basic_bufferstream classes. These classes
+//!represent streamsbufs and streams whose sources or destinations
+//!are fixed size character buffers.
 
 #ifndef BOOST_INTERPROCESS_BUFFERSTREAM_HPP
 #define BOOST_INTERPROCESS_BUFFERSTREAM_HPP
@@ -50,9 +49,9 @@
 
 namespace boost {  namespace interprocess {
 
-/*!A streambuf class that controls the transmission of elements to and from
-   a basic_xbufferstream. The elements are transmitted from a to a fixed
-   size buffer*/
+//!A streambuf class that controls the transmission of elements to and from
+//!a basic_xbufferstream. The elements are transmitted from a to a fixed
+//!size buffer
 template <class CharT, class CharTraits>
 class basic_bufferbuf 
    : public std::basic_streambuf<CharT, CharTraits>
@@ -66,13 +65,15 @@ class basic_bufferbuf
    typedef std::basic_streambuf<char_type, traits_type>  base_t;
 
    public:
-   /*!Constructor. Does not throw.*/
+   //!Constructor.
+   //!Does not throw.
    explicit basic_bufferbuf(std::ios_base::openmode mode
                             = std::ios_base::in | std::ios_base::out)
       :  base_t(), m_mode(mode), m_buffer(0), m_length(0)
       {}
 
-   /*!Constructor. Assigns formatting buffer. Does not throw.*/
+   //!Constructor. Assigns formatting buffer.
+   //!Does not throw.
    explicit basic_bufferbuf(CharT *buffer, std::size_t length, 
                             std::ios_base::openmode mode
                               = std::ios_base::in | std::ios_base::out)
@@ -82,12 +83,13 @@ class basic_bufferbuf
    virtual ~basic_bufferbuf(){}
 
    public:
-   /*!Returns the pointer and size of the internal buffer. 
-      Does not throw.*/
+   //!Returns the pointer and size of the internal buffer. 
+   //!Does not throw.
    std::pair<CharT *, std::size_t> buffer() const
       { return std::pair<CharT *, std::size_t>(m_buffer, m_length); }
 
-   /*!Sets the underlying buffer to a new value. Does not throw.*/
+   //!Sets the underlying buffer to a new value
+   //!Does not throw.
    void buffer(CharT *buffer, std::size_t length)
       {  m_buffer = buffer;   m_length = length;   this->set_pointers();   }
 
@@ -141,16 +143,16 @@ class basic_bufferbuf
    {
       if(m_mode & std::ios_base::out) {
          if(!CharTraits::eq_int_type(c, CharTraits::eof())) {
-            if(!(m_mode & std::ios_base::in)) {
-               if(this->pptr() != this->epptr()) {
-                  *this->pptr() = CharTraits::to_char_type(c);
-                  this->pbump(1);
-                  return c;
-               }
-               else
-                  return CharTraits::eof();
-            }
-            else {
+//            if(!(m_mode & std::ios_base::in)) {
+//               if(this->pptr() != this->epptr()) {
+//                  *this->pptr() = CharTraits::to_char_type(c);
+//                  this->pbump(1);
+//                  return c;
+//               }
+//               else
+//                  return CharTraits::eof();
+//            }
+//            else {
                if(this->pptr() == this->epptr()) {
                   //We can't append to a static buffer
                   return CharTraits::eof();
@@ -160,7 +162,7 @@ class basic_bufferbuf
                   this->pbump(1);
                   return c;
                }
-            }
+//            }
          }
          else  // c is EOF, so we don't have to do anything
             return CharTraits::not_eof(c);
@@ -246,11 +248,11 @@ class basic_bufferbuf
    /// @endcond
 };
 
-/*!A basic_istream class that uses a fixed size character buffer
-   as its formatting buffer.*/
+//!A basic_istream class that uses a fixed size character buffer
+//!as its formatting buffer.
 template <class CharT, class CharTraits>
 class basic_ibufferstream
-: public std::basic_istream<CharT, CharTraits>
+   : public std::basic_istream<CharT, CharTraits>
 {
    public:                         // Typedefs
    typedef typename std::basic_ios
@@ -265,12 +267,14 @@ class basic_ibufferstream
    typedef std::basic_istream<char_type, CharTraits>            base_t;
 
    public:
-   /*!Constructor. Does not throw.*/
+   //!Constructor.
+   //!Does not throw.
    basic_ibufferstream(std::ios_base::openmode mode = std::ios_base::in)
       :  basic_ios_t(), base_t(0), m_buf(mode | std::ios_base::in)
       {  basic_ios_t::init(&m_buf); }
 
-   /*!Constructor. Assigns formatting buffer. Does not throw.*/
+   //!Constructor. Assigns formatting buffer.
+   //!Does not throw.
    basic_ibufferstream(const CharT *buffer, std::size_t length,
                           std::ios_base::openmode mode = std::ios_base::in)
       :  basic_ios_t(), base_t(0), 
@@ -280,17 +284,18 @@ class basic_ibufferstream
    ~basic_ibufferstream(){};
 
    public:
-   /*!Returns the address of the stored stream buffer.*/
+   //!Returns the address of the stored
+   //!stream buffer.
    basic_bufferbuf<CharT, CharTraits>* rdbuf() const
       { return const_cast<basic_bufferbuf<CharT, CharTraits>*>(&m_buf); }
 
-   /*!Returns the pointer and size of the internal buffer. 
-      Does not throw.*/
+   //!Returns the pointer and size of the internal buffer. 
+   //!Does not throw.
    std::pair<const CharT *, std::size_t> buffer() const
       { return m_buf.buffer(); }
 
-   /*!Sets the underlying buffer to a new value. Resets 
-      stream position. Does not throw.*/
+   //!Sets the underlying buffer to a new value. Resets 
+   //!stream position. Does not throw.
    void buffer(const CharT *buffer, std::size_t length)
       {  m_buf.buffer(const_cast<CharT*>(buffer), length);  }
 
@@ -300,8 +305,8 @@ class basic_ibufferstream
    /// @endcond
 };
 
-/*!A basic_ostream class that uses a fixed size character buffer
-   as its formatting buffer.*/
+//!A basic_ostream class that uses a fixed size character buffer
+//!as its formatting buffer.
 template <class CharT, class CharTraits>
 class basic_obufferstream
    : public std::basic_ostream<CharT, CharTraits>
@@ -320,12 +325,14 @@ class basic_obufferstream
    typedef std::basic_ostream<char_type, CharTraits>  base_t;
    /// @endcond
    public:
-   /*!Constructor. Does not throw.*/
+   //!Constructor.
+   //!Does not throw.
    basic_obufferstream(std::ios_base::openmode mode = std::ios_base::out)
       :  basic_ios_t(), base_t(0), m_buf(mode | std::ios_base::out)
       {  basic_ios_t::init(&m_buf); }
 
-   /*!Constructor. Assigns formatting buffer. Does not throw.*/
+   //!Constructor. Assigns formatting buffer.
+   //!Does not throw.
    basic_obufferstream(CharT *buffer, std::size_t length,
                        std::ios_base::openmode mode = std::ios_base::out)
       :  basic_ios_t(), base_t(0), 
@@ -335,17 +342,18 @@ class basic_obufferstream
    ~basic_obufferstream(){}
 
    public:
-   /*!Returns the address of the stored stream buffer.*/
+   //!Returns the address of the stored
+   //!stream buffer.
    basic_bufferbuf<CharT, CharTraits>* rdbuf() const
       { return const_cast<basic_bufferbuf<CharT, CharTraits>*>(&m_buf); }
 
-   /*!Returns the pointer and size of the internal buffer. 
-      Does not throw.*/
+   //!Returns the pointer and size of the internal buffer. 
+   //!Does not throw.
    std::pair<CharT *, std::size_t> buffer() const
       { return m_buf.buffer(); }
 
-   /*!Sets the underlying buffer to a new value. Resets 
-      stream position. Does not throw.*/
+   //!Sets the underlying buffer to a new value. Resets 
+   //!stream position. Does not throw.
    void buffer(CharT *buffer, std::size_t length)
       {  m_buf.buffer(buffer, length);  }
 
@@ -356,11 +364,11 @@ class basic_obufferstream
 };
 
 
-/*!A basic_iostream class that uses a fixed size character buffer
-   as its formatting buffer.*/
+//!A basic_iostream class that uses a fixed size character buffer
+//!as its formatting buffer.
 template <class CharT, class CharTraits>
 class basic_bufferstream 
-: public std::basic_iostream<CharT, CharTraits>
+   : public std::basic_iostream<CharT, CharTraits>
 
 {
    public:                         // Typedefs
@@ -378,13 +386,15 @@ class basic_bufferstream
    /// @endcond
 
    public:
-   /*!Constructor. Does not throw.*/
+   //!Constructor.
+   //!Does not throw.
    basic_bufferstream(std::ios_base::openmode mode 
                       = std::ios_base::in | std::ios_base::out)
       :  basic_ios_t(), base_t(0), m_buf(mode)
       {  basic_ios_t::init(&m_buf); }
 
-   /*!Constructor. Assigns formatting buffer. Does not throw.*/
+   //!Constructor. Assigns formatting buffer.
+   //!Does not throw.
    basic_bufferstream(CharT *buffer, std::size_t length,
                       std::ios_base::openmode mode
                         = std::ios_base::in | std::ios_base::out)
@@ -394,17 +404,18 @@ class basic_bufferstream
    ~basic_bufferstream(){}
 
    public:
-   /*!Returns the address of the stored stream buffer.*/
+   //!Returns the address of the stored
+   //!stream buffer.
    basic_bufferbuf<CharT, CharTraits>* rdbuf() const
       { return const_cast<basic_bufferbuf<CharT, CharTraits>*>(&m_buf); }
 
-   /*!Returns the pointer and size of the internal buffer. 
-      Does not throw.*/
+   //!Returns the pointer and size of the internal buffer. 
+   //!Does not throw.
    std::pair<CharT *, std::size_t> buffer() const
       { return m_buf.buffer(); }
 
-   /*!Sets the underlying buffer to a new value. Resets 
-      stream position. Does not throw.*/
+   //!Sets the underlying buffer to a new value. Resets 
+   //!stream position. Does not throw.
    void buffer(CharT *buffer, std::size_t length)
       {  m_buf.buffer(buffer, length);  }
 

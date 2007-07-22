@@ -134,6 +134,7 @@ class flat_map
    typedef typename tree_t::size_type              size_type;
    typedef typename tree_t::difference_type        difference_type;
    typedef typename tree_t::allocator_type         allocator_type;
+   typedef typename tree_t::stored_allocator_type  stored_allocator_type;
 
    //! <b>Effects</b>: Constructs an empty flat_map using the specified
    //! comparison object and allocator.
@@ -214,6 +215,12 @@ class flat_map
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
       { return force<allocator_type>(m_flat_tree.get_allocator()); }
+
+   const stored_allocator_type &get_stored_allocator() const 
+      { return force<stored_allocator_type>(m_flat_tree.get_stored_allocator()); }
+
+   stored_allocator_type &get_stored_allocator()
+      { return force<stored_allocator_type>(m_flat_tree.get_stored_allocator()); }
 
    //! <b>Effects</b>: Returns an iterator to the first element contained in the container.
    //! 
@@ -503,6 +510,15 @@ class flat_map
    void clear() 
       { m_flat_tree.clear(); }
 
+   //! <b>Effects</b>: Tries to deallocate the excess of memory created
+   //    with previous allocations. The size of the vector is unchanged
+   //!
+   //! <b>Throws</b>: If memory allocation throws, or T's copy constructor throws.
+   //!
+   //! <b>Complexity</b>: Linear to size().
+   void shrink_to_fit()
+      { m_flat_tree.shrink_to_fit(); }
+
    //! <b>Returns</b>: An iterator pointing to an element with the key
    //!   equivalent to x, or end() if such an element is not found.
    //!
@@ -647,6 +663,7 @@ inline void swap(flat_map<Key,T,Pred,Alloc>&&x,
 #endif
 
 /// @cond
+
 //!This class is movable
 template <class K, class T, class C, class A>
 struct is_movable<flat_map<K, T, C, A> >
@@ -760,6 +777,7 @@ class flat_multimap
    typedef typename tree_t::size_type              size_type;
    typedef typename tree_t::difference_type        difference_type;
    typedef typename tree_t::allocator_type         allocator_type;
+   typedef typename tree_t::stored_allocator_type  stored_allocator_type;
 
    //! <b>Effects</b>: Constructs an empty flat_multimap using the specified comparison
    //!   object and allocator.
@@ -840,6 +858,12 @@ class flat_multimap
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
       { return force<allocator_type>(m_flat_tree.get_allocator()); }
+
+   const stored_allocator_type &get_stored_allocator() const 
+      { return force<stored_allocator_type>(m_flat_tree.get_stored_allocator()); }
+
+   stored_allocator_type &get_stored_allocator()
+      { return force<stored_allocator_type>(m_flat_tree.get_stored_allocator()); }
 
    //! <b>Effects</b>: Returns an iterator to the first element contained in the container.
    //! 
@@ -1067,6 +1091,15 @@ class flat_multimap
    void clear() 
       { m_flat_tree.clear(); }
 
+   //! <b>Effects</b>: Tries to deallocate the excess of memory created
+   //    with previous allocations. The size of the vector is unchanged
+   //!
+   //! <b>Throws</b>: If memory allocation throws, or T's copy constructor throws.
+   //!
+   //! <b>Complexity</b>: Linear to size().
+   void shrink_to_fit()
+      { m_flat_tree.shrink_to_fit(); }
+
    //! <b>Returns</b>: An iterator pointing to an element with the key
    //!   equivalent to x, or end() if such an element is not found.
    //!
@@ -1214,6 +1247,7 @@ inline void swap(flat_multimap<Key,T,Pred,Alloc>&&x,
 #endif
 
 /// @cond
+
 //!This class is movable
 template <class K, class T, class C, class A>
 struct is_movable<flat_multimap<K, T, C, A> >

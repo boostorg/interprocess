@@ -325,7 +325,10 @@ inline bool mapped_region::flush(std::size_t mapping_offset, std::size_t numbyte
    }
 
    //Update flush size if the user does not provide it
-   if(numbytes == 0){
+   if(m_size == 0){
+      numbytes = 0;
+   }
+   else if(numbytes == 0){
       numbytes = m_size - mapping_offset;
    }
 
@@ -354,19 +357,16 @@ inline void mapped_region::priv_close()
 
 inline mapped_region::mapped_region()
    :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0)
-   ,  m_file_mapping_hnd(detail::invalid_file())
 {}
 
 #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 inline mapped_region::mapped_region(detail::moved_object<mapped_region> other)
    :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0)
-   ,  m_file_mapping_hnd(detail::invalid_file())
 {  this->swap(other.get());   }
 #else
 inline mapped_region::mapped_region(mapped_region &&other)
    :  m_base(MAP_FAILED), m_size(0), m_offset(0)
    ,  m_extra_offset(0)
-   ,  m_file_mapping_hnd(detail::invalid_file())
 {  this->swap(other);   }
 #endif
 
@@ -382,7 +382,6 @@ inline mapped_region::mapped_region
    std::size_t size,
    const void *address)
    :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0)
-   ,  m_file_mapping_hnd(invalid_file())
 {
    if(size == 0){
 //      offset_t filesize = lseek64

@@ -24,6 +24,7 @@
 #include <boost/interprocess/interprocess_fwd.hpp>
 
 #include <iterator>
+#include <boost/interprocess/detail/type_traits.hpp>
 
 namespace boost {
 namespace interprocess { 
@@ -118,6 +119,106 @@ class constant_iterator
 
    const T & dereference() const
    { return *m_ptr; }
+
+   void advance(Difference n)
+   {  m_num -= n; }
+
+   Difference distance_to(const this_type &other)const
+   {  return m_num - other.m_num;   }
+};
+
+template <class T, class Difference = std::ptrdiff_t>
+class default_construct_iterator
+  : public std::iterator
+      <std::random_access_iterator_tag, T, Difference, const T*, const T &>
+{
+   typedef  default_construct_iterator<T, Difference> this_type;
+
+   public:
+   explicit default_construct_iterator(Difference range_size)
+      :  m_num(range_size){}
+
+   //Constructors
+   default_construct_iterator()
+      :  m_num(0){}
+
+   default_construct_iterator& operator++() 
+   { increment();   return *this;   }
+   
+   default_construct_iterator operator++(int)
+   {
+      default_construct_iterator result (*this);
+      increment();
+      return result;
+   }
+
+   friend bool operator== (const default_construct_iterator& i, const default_construct_iterator& i2)
+   { return i.equal(i2); }
+
+   friend bool operator!= (const default_construct_iterator& i, const default_construct_iterator& i2)
+   { return !(i == i2); }
+
+   friend bool operator< (const default_construct_iterator& i, const default_construct_iterator& i2)
+   { return i.less(i2); }
+
+   friend bool operator> (const default_construct_iterator& i, const default_construct_iterator& i2)
+   { return i2 < i; }
+
+   friend bool operator<= (const default_construct_iterator& i, const default_construct_iterator& i2)
+   { return !(i > i2); }
+
+   friend bool operator>= (const default_construct_iterator& i, const default_construct_iterator& i2)
+   { return !(i < i2); }
+
+   friend Difference operator- (const default_construct_iterator& i, const default_construct_iterator& i2)
+   { return i2.distance_to(i); }
+
+   //Arithmetic
+   default_construct_iterator& operator+=(Difference off)
+   {  this->advance(off); return *this;   }
+
+   default_construct_iterator operator+(Difference off) const
+   {
+      default_construct_iterator other(*this);
+      other.advance(off);
+      return other;
+   }
+
+   friend default_construct_iterator operator+(Difference off, const default_construct_iterator& right)
+   {  return right + off; }
+
+   default_construct_iterator& operator-=(Difference off)
+   {  this->advance(-off); return *this;   }
+
+   default_construct_iterator operator-(Difference off) const
+   {  return *this + (-off);  }
+
+   const T& operator*() const
+   { return dereference(); }
+
+   const T* operator->() const
+   { return &(dereference()); }
+
+   private:
+   Difference  m_num;
+
+   void increment()
+   { --m_num; }
+
+   void decrement()
+   { ++m_num; }
+
+   bool equal(const this_type &other) const
+   {  return m_num == other.m_num;   }
+
+   bool less(const this_type &other) const
+   {  return other.m_num < m_num;   }
+
+   const T & dereference() const
+   { 
+      static T dummy;
+      return dummy;
+   }
 
    void advance(Difference n)
    {  m_num -= n; }
@@ -237,20 +338,37 @@ struct operator_arrow_proxy
    mutable PseudoReference m_value;
 };
 
+template <class T>
+struct operator_arrow_proxy<T&>
+{
+   operator_arrow_proxy(T &px)
+      :  m_value(px)
+   {}
+
+   T* operator->() const { return &m_value; }
+   // This function is needed for MWCW and BCC, which won't call operator->
+   // again automatically per 13.3.1.2 para 8
+//   operator T*() const { return &m_value; }
+   mutable T &m_value;
+};
 
 template <class Iterator, class UnaryFunction>
 class transform_iterator
    : public UnaryFunction
    , public std::iterator
       < typename Iterator::iterator_category
-      , typename Iterator::value_type
+      , typename detail::remove_reference<typename UnaryFunction::result_type>::type
       , typename Iterator::difference_type
-      , typename Iterator::pointer
+      , operator_arrow_proxy<typename UnaryFunction::result_type>
       , typename UnaryFunction::result_type>
 {
    public:
-   explicit transform_iterator(const Iterator &it, const UnaryFunction &f)
+   explicit transform_iterator(const Iterator &it, const UnaryFunction &f = UnaryFunction())
       :  UnaryFunction(f), m_it(it)
+   {}
+
+   explicit transform_iterator()
+      :  UnaryFunction(), m_it()
    {}
 
    //Constructors

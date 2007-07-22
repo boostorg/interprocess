@@ -15,9 +15,11 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/detail/workaround.hpp>
 
-#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+#if !defined(BOOST_WINDOWS) || defined(BOOST_DISABLE_WIN32)
+#error "This header can only be used in Windows operating systems"
+#endif
 
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
@@ -28,24 +30,23 @@
 #include <boost/cstdint.hpp>
 #include <string>
 
-/*!\file
-   Describes a class representing a native windows shared memory.
-*/
+//!\file
+//!Describes a class representing a native windows shared memory.
 
 namespace boost {
 namespace interprocess {
 
-/*!A class that wraps the native Windows shared memory
-   that is implemented as a file mapping of the paging file.
-   Unlike shared_memory_object, windows_shared_memory has
-   no kernel persistence and the shared memory is destroyed
-   when all processes destroy all their windows_shared_memory
-   objects and mapped regions for the same shared memory
-   or the processes end/crash.
-   
-   Warning: Windows native shared memory and interprocess portable
-   shared memory can't communicate between them.
-   */
+//!A class that wraps the native Windows shared memory
+//!that is implemented as a file mapping of the paging file.
+//!Unlike shared_memory_object, windows_shared_memory has
+//!no kernel persistence and the shared memory is destroyed
+//!when all processes destroy all their windows_shared_memory
+//!objects and mapped regions for the same shared memory
+//!or the processes end/crash.
+//!
+//!Warning: Windows native shared memory and interprocess portable
+//!shared memory (boost::interprocess::shared_memory_object)
+//!can't communicate between them.
 class windows_shared_memory
 {
    /// @cond
@@ -61,19 +62,19 @@ class windows_shared_memory
    //!Creates a new native shared memory with name "name" and mode "mode",
    //!with the access mode "mode".
    //!If the file previously exists, throws an error.
-   windows_shared_memory(detail::create_only_t, const char *name, mode_t mode, std::size_t size)
-   {  this->priv_open_or_create(DoCreate, name, mode, size);  }
+   windows_shared_memory(create_only_t, const char *name, mode_t mode, std::size_t size)
+   {  this->priv_open_or_create(detail::DoCreate, name, mode, size);  }
 
    //!Tries to create a shared memory object with name "name" and mode "mode", with the
    //!access mode "mode". If the file previously exists, it tries to open it with mode "mode".
    //!Otherwise throws an error.
-   windows_shared_memory(detail::open_or_create_t, const char *name, mode_t mode, std::size_t size)
-   {  this->priv_open_or_create(DoCreateOrOpen, name, mode, size);  }
+   windows_shared_memory(open_or_create_t, const char *name, mode_t mode, std::size_t size)
+   {  this->priv_open_or_create(detail::DoCreateOrOpen, name, mode, size);  }
 
    //!Tries to open a shared memory object with name "name", with the access mode "mode". 
    //!If the file does not previously exist, it throws an error.
-   windows_shared_memory(detail::open_only_t, const char *name, mode_t mode)
-   {  this->priv_open_or_create(DoOpen, name, mode, 0);  }
+   windows_shared_memory(open_only_t, const char *name, mode_t mode)
+   {  this->priv_open_or_create(detail::DoOpen, name, mode, 0);  }
 
    //!Moves the ownership of "moved"'s shared memory object to *this. 
    //!After the call, "moved" does not represent any shared memory object. 
@@ -132,7 +133,7 @@ class windows_shared_memory
    void priv_close();
 
    //!Closes a previously opened file mapping. Never throws.
-   bool priv_open_or_create(create_enum_t type, const char *filename, mode_t mode, std::size_t size);
+   bool priv_open_or_create(detail::create_enum_t type, const char *filename, mode_t mode, std::size_t size);
 
    void *         m_handle;
    mode_t         m_mode;
@@ -164,7 +165,7 @@ inline mode_t windows_shared_memory::get_mode() const
 {  return m_mode; }
 
 inline bool windows_shared_memory::priv_open_or_create
-   (create_enum_t type, const char *filename, mode_t mode, std::size_t size)
+   (detail::create_enum_t type, const char *filename, mode_t mode, std::size_t size)
 {
    m_name = filename;
 
@@ -194,12 +195,12 @@ inline bool windows_shared_memory::priv_open_or_create
    }
 
    switch(type){
-      case DoOpen:
+      case detail::DoOpen:
          m_handle = winapi::open_file_mapping
             (map_access, filename);
       break;
-      case DoCreate:
-      case DoCreateOrOpen:
+      case detail::DoCreate:
+      case detail::DoCreateOrOpen:
       {
          __int64 s = size;
          unsigned long high_size(s >> 32), low_size((boost::uint32_t)s);
@@ -214,7 +215,7 @@ inline bool windows_shared_memory::priv_open_or_create
          }
    }
 
-   if(!m_handle || (type == DoCreate && winapi::get_last_error() == winapi::error_already_exists)){
+   if(!m_handle || (type == detail::DoCreate && winapi::get_last_error() == winapi::error_already_exists)){
       error_info err = system_error_code();
       this->priv_close();
       throw interprocess_exception(err);
@@ -234,10 +235,6 @@ inline void windows_shared_memory::priv_close()
 
 }  //namespace interprocess {
 }  //namespace boost {
-
-#else
-#error "This header can only be used in Windows operating systems"
-#endif
 
 #include <boost/interprocess/detail/config_end.hpp>
 

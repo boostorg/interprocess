@@ -114,6 +114,7 @@ class map
    typedef typename tree_t::size_type              size_type;
    typedef typename tree_t::difference_type        difference_type;
    typedef typename tree_t::allocator_type         allocator_type;
+   typedef typename tree_t::stored_allocator_type  stored_allocator_type;
 
    /// @cond
    class value_compare_impl
@@ -210,6 +211,12 @@ class map
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
    { return m_tree.get_allocator(); }
+
+   const stored_allocator_type &get_stored_allocator() const 
+   { return m_tree.get_stored_allocator(); }
+
+   stored_allocator_type &get_stored_allocator()
+   { return m_tree.get_stored_allocator(); }
 
    //! <b>Effects</b>: Returns an iterator to the first element contained in the container.
    //! 
@@ -754,6 +761,7 @@ class multimap
    typedef typename tree_t::size_type              size_type;
    typedef typename tree_t::difference_type        difference_type;
    typedef typename tree_t::allocator_type         allocator_type;
+   typedef typename tree_t::stored_allocator_type  stored_allocator_type;
 
    /// @cond
    class value_compare_impl
@@ -854,6 +862,12 @@ class multimap
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
    { return m_tree.get_allocator(); }
+
+   const stored_allocator_type &get_stored_allocator() const 
+   { return m_tree.get_stored_allocator(); }
+
+   stored_allocator_type &get_stored_allocator()
+   { return m_tree.get_stored_allocator(); }
 
    //! <b>Effects</b>: Returns an iterator to the first element contained in the container.
    //! 

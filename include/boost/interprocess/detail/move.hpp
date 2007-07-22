@@ -117,6 +117,8 @@ typename detail::move_type<Object>::type move
 
 #else //#ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
 
+#include <boost/interprocess/detail/type_traits.hpp>
+
 namespace boost {
 namespace interprocess {
 

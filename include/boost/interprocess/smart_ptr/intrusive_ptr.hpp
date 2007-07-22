@@ -258,12 +258,14 @@ inline boost::interprocess::intrusive_ptr<T, VP>reinterpret_pointer_cast
 } // namespace interprocess
 
 /// @cond
+
 #if defined(_MSC_VER) && (_MSC_VER < 1400)
 /*Returns p.get(). Does not throw*/
 template<class T, class VP>
 inline T *get_pointer(boost::interprocess::intrusive_ptr<T, VP> p)
 {  return p.get();   }
 #endif
+
 /// @endcond
 
 } // namespace boost

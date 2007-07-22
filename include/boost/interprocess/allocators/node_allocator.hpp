@@ -20,6 +20,7 @@
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/assert.hpp>
+#include <boost/utility/addressof.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/allocators/detail/node_pool.hpp>
@@ -29,22 +30,20 @@
 #include <stdio.h>
 #include <cstddef>
 
-/*!\file
-   Describes node_allocator pooled shared memory STL compatible allocator 
-*/
+//!\file
+//!Describes node_allocator pooled shared memory STL compatible allocator 
 
 namespace boost {
-
 namespace interprocess {
 
-/*!An STL node allocator that uses a segment manager as memory 
-   source. The internal pointer type will of the same type (raw, smart) as
-   "typename SegmentManager::void_pointer" type. This allows
-   placing the allocator in shared memory, memory mapped-files, etc...
-   This node allocator shares a segregated storage between all instances 
-   of node_allocator with equal sizeof(T) placed in the same segment 
-   group. NodesPerChunk is the number of nodes allocated at once when the allocator
-   needs runs out of nodes*/
+//!An STL node allocator that uses a segment manager as memory 
+//!source. The internal pointer type will of the same type (raw, smart) as
+//!"typename SegmentManager::void_pointer" type. This allows
+//!placing the allocator in shared memory, memory mapped-files, etc...
+//!This node allocator shares a segregated storage between all instances 
+//!of node_allocator with equal sizeof(T) placed in the same segment 
+//!group. NodesPerChunk is the number of nodes allocated at once when the allocator
+//!needs runs out of nodes
 template<class T, class SegmentManager, std::size_t NodesPerChunk>
 class node_allocator
 {
@@ -71,8 +70,14 @@ class node_allocator
                      <const value_type>::type            const_reference;
    typedef std::size_t                                   size_type;
    typedef std::ptrdiff_t                                difference_type;
+   typedef detail::shared_node_pool
+      < SegmentManager, mutex_type
+      , sizeof(T), NodesPerChunk>                        node_pool_t;
+   typedef typename detail::
+      pointer_to_other<void_pointer, node_pool_t>::type  node_pool_ptr;
 
-   /*!Obtains node_allocator from other node_allocator*/
+   //!Obtains node_allocator from other
+   //!node_allocator
    template<class T2>
    struct rebind
    {  
@@ -81,82 +86,59 @@ class node_allocator
 
    /// @cond
    private:
-   /*!Not assignable from related node_allocator*/
+   //!Not assignable from related
+   //!node_allocator
    template<class T2, class SegmentManager2, std::size_t N2>
    node_allocator& operator=
       (const node_allocator<T2, SegmentManager2, N2>&);
 
-   /*!Not assignable from other node_allocator*/
+   //!Not assignable from other
+   //!node_allocator
    node_allocator& operator=(const node_allocator&);
    /// @endcond
 
    public:
 
-   /*!Constructor from a segment manager. If not present, constructs a node
-      pool. Increments the reference count of the associated node pool.
-      Can throw boost::interprocess::bad_alloc*/
+   //!Constructor from a segment manager. If not present, constructs a node
+   //!pool. Increments the reference count of the associated node pool.
+   //!Can throw boost::interprocess::bad_alloc
    node_allocator(segment_manager *segment_mngr) 
-      : mp_node_pool(priv_get_or_create(segment_mngr)) { }
+      : mp_node_pool(priv_get_or_create(segment_mngr))
+   {}
 
-   /*!Copy constructor from other node_allocator. Increments the reference 
-      count of the associated node pool. Never throws*/
+   //!Copy constructor from other node_allocator. Increments the reference 
+   //!count of the associated node pool. Never throws
    node_allocator(const node_allocator &other) 
       : mp_node_pool(other.get_node_pool()) 
-   {  
-      typedef detail::shared_node_pool
-               <SegmentManager, mutex_type, sizeof(T), NodesPerChunk>   node_pool_t;
-      node_pool_t *node_pool  = static_cast<node_pool_t*>(other.get_node_pool());
-      node_pool->inc_ref_count();   
-   }
+   {  mp_node_pool->inc_ref_count();   }
 
-   /*!Copy constructor from related node_allocator. If not present, constructs
-      a node pool. Increments the reference count of the associated node pool.
-      Can throw boost::interprocess::bad_alloc*/
+   //!Copy constructor from related node_allocator. If not present, constructs
+   //!a node pool. Increments the reference count of the associated node pool.
+   //!Can throw boost::interprocess::bad_alloc
    template<class T2>
    node_allocator
       (const node_allocator<T2, SegmentManager, NodesPerChunk> &other)
-      : mp_node_pool(priv_get_or_create(other.get_segment_manager())) { }
+      : mp_node_pool(priv_get_or_create(other.get_segment_manager()))
+   {}
 
-   /*!Destructor, removes node_pool_t from memory
-      if its reference count reaches to zero. Never throws*/
+   //!Destructor, removes node_pool_t from memory
+   //!if its reference count reaches to zero. Never throws
    ~node_allocator() 
-      {     priv_destroy_if_last_link();   }
+   {  priv_destroy_if_last_link();  }
 
-   /*!Returns a pointer to the node pool. Never throws*/
-   void* get_node_pool() const
-      {  return detail::get_pointer(mp_node_pool);   }
+   //!Returns a pointer to the node pool.
+   //!Never throws
+   node_pool_t* get_node_pool() const
+   {  return detail::get_pointer(mp_node_pool);   }
 
-   /*!Returns the segment manager. Never throws*/
+   //!Returns the segment manager.
+   //!Never throws
    segment_manager* get_segment_manager()const
-   {  
-      typedef detail::shared_node_pool
-               <SegmentManager, mutex_type, sizeof(T), NodesPerChunk>   node_pool_t;
-      node_pool_t *node_pool  = static_cast<node_pool_t*>
-         (detail::get_pointer(mp_node_pool));
-      return node_pool->get_segment_manager();
-   }
-/*
-   //!Return address of mutable value. Never throws
-   pointer address(reference value) const
-      {  return pointer(addressof(value));  }
+   {  return mp_node_pool->get_segment_manager();  }
 
-   //!Return address of nonmutable value. Never throws
-   const_pointer address(const_reference value) const
-      {  return const_pointer(addressof(value));  }
-
-   //!Construct object, calling constructor. 
-   //!Throws if T(const Convertible &) throws
-   template<class Convertible>
-   void construct(const pointer &ptr, const Convertible &value)
-      {  new(detail::get_pointer(ptr)) value_type(value);  }
-
-   //!Destroys object. Throws if object's destructor throws
-   void destroy(const pointer &ptr)
-      {  BOOST_ASSERT(ptr != 0); (*ptr).~value_type();  }
-*/
    //!Returns the number of elements that could be allocated. Never throws
    size_type max_size() const
-      {  return this->get_segment_manager()->get_size()/sizeof(value_type);  }
+   {  return this->get_segment_manager()->get_size()/sizeof(value_type);  }
 
    //!Allocate memory for an array of count elements. 
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
@@ -164,39 +146,57 @@ class node_allocator
    {  
       if(count > ((size_type)-1)/sizeof(value_type))
          throw bad_alloc();
-      typedef detail::shared_node_pool
-               <SegmentManager, mutex_type, sizeof(T), NodesPerChunk>   node_pool_t;
-      node_pool_t *node_pool  = static_cast<node_pool_t*>
-         (detail::get_pointer(mp_node_pool));
-      return pointer(static_cast<T*>(node_pool->allocate(count)));
+      return pointer(static_cast<T*>(mp_node_pool->allocate(count)));
    }
 
-   /*!Deallocate allocated memory. Never throws*/
+   //!Deallocate allocated memory.
+   //!Never throws
    void deallocate(const pointer &ptr, size_type count)
-   {
-      typedef detail::shared_node_pool
-               <SegmentManager, mutex_type, sizeof(T), NodesPerChunk>   node_pool_t;
-      node_pool_t *node_pool  = static_cast<node_pool_t*>
-         (detail::get_pointer(mp_node_pool));
-      node_pool->deallocate(detail::get_pointer(ptr), count);
-   }
+   {  mp_node_pool->deallocate(detail::get_pointer(ptr), count);  }
 
-   /*!Swaps allocators. Does not throw. If each allocator is placed in a
-      different memory segment, the result is undefined.*/
+   //!Deallocates all free chunks of the pool
+   void deallocate_free_chunks()
+   {  mp_node_pool->deallocate_free_chunks();   }
+
+   //!Swaps allocators. Does not throw. If each allocator is placed in a
+   //!different memory segment, the result is undefined.
    friend void swap(self_t &alloc1, self_t &alloc2)
    {  detail::do_swap(alloc1.mp_node_pool, alloc2.mp_node_pool);  }
 
+   //These functions are obsolete. These are here to conserve
+   //backwards compatibility with containers using them...
+
+   //!Returns address of mutable object.
+   //!Never throws
+   pointer address(reference value) const
+   {  return pointer(boost::addressof(value));  }
+
+   //!Returns address of non mutable object.
+   //!Never throws
+   const_pointer address(const_reference value) const
+   {  return const_pointer(boost::addressof(value));  }
+
+   //!Default construct an object. 
+   //!Throws if T's default constructor throws*/
+   void construct(const pointer &ptr)
+   {  new(detail::get_pointer(ptr)) value_type;  }
+
+   //!Destroys object. Throws if object's
+   //!destructor throws
+   void destroy(const pointer &ptr)
+   {  BOOST_ASSERT(ptr != 0); (*ptr).~value_type();  }
+
    /// @cond
    private:
-   /*!Object function that creates the node allocator if it is not created and
-      increments reference count if it is already created*/
+   //!Object function that creates the node allocator if it is not created and
+   //!increments reference count if it is already created
    struct get_or_create_func
    {
       typedef detail::shared_node_pool
                <SegmentManager, mutex_type, sizeof(T), NodesPerChunk>   node_pool_t;
 
-      /*!This connects or constructs the unique instance of node_pool_t
-         Can throw boost::interprocess::bad_alloc*/
+      //!This connects or constructs the unique instance of node_pool_t
+      //!Can throw boost::interprocess::bad_alloc
       void operator()()
       {
          //Find or create the node_pool_t
@@ -207,32 +207,33 @@ class node_allocator
             mp_node_pool->inc_ref_count();
       }
 
-      /*!Constructor. Initializes function object parameters*/
+      //!Constructor. Initializes function
+      //!object parameters
       get_or_create_func(segment_manager *hdr) : mp_named_alloc(hdr){}
       
-      node_pool_t      *mp_node_pool;
-      segment_manager     *mp_named_alloc;
+      node_pool_t       *mp_node_pool;
+      segment_manager   *mp_named_alloc;
    };
 
-   /*!Initialization function, creates an executes atomically the 
-      initialization object functions. Can throw boost::interprocess::bad_alloc*/
-   void *priv_get_or_create(segment_manager *named_alloc)
+   //!Initialization function, creates an executes atomically the 
+   //!initialization object functions. Can throw boost::interprocess::bad_alloc
+   node_pool_t *priv_get_or_create(segment_manager *named_alloc)
    {
       get_or_create_func func(named_alloc);
       named_alloc->atomic_func(func);
       return func.mp_node_pool;
    }
 
-   /*!Object function that decrements the reference count. If the count 
-      reaches to zero destroys the node allocator from memory. 
-      Never throws*/
+   //!Object function that decrements the reference count. If the count 
+   //!reaches to zero destroys the node allocator from memory. 
+   //!Never throws
    struct destroy_if_last_link_func
    {
       typedef detail::shared_node_pool
                <SegmentManager, mutex_type,sizeof(T), NodesPerChunk>   node_pool_t;
 
-      /*!Decrements reference count and destroys the object if there is no 
-         more attached allocators. Never throws*/
+      //!Decrements reference count and destroys the object if there is no 
+      //!more attached allocators. Never throws
       void operator()()
       {
          //If not the last link return
@@ -242,54 +243,44 @@ class node_allocator
          mp_named_alloc->template destroy<node_pool_t>(unique_instance); 
       }  
 
-      /*!Constructor. Initializes function object parameters*/
+      //!Constructor. Initializes function
+      //!object parameters
       destroy_if_last_link_func(segment_manager    *nhdr,
                                 node_pool_t *phdr) 
-                            : mp_named_alloc(nhdr), mp_node_pool(phdr){}
+         : mp_named_alloc(nhdr), mp_node_pool(phdr)
+      {}
 
       segment_manager     *mp_named_alloc;     
       node_pool_t      *mp_node_pool;
    };
 
-   /*!Destruction function, initializes and executes destruction function 
-      object. Never throws*/
+   //!Destruction function, initializes and executes destruction function 
+   //!object. Never throws
    void priv_destroy_if_last_link()
    {
       typedef detail::shared_node_pool
                <SegmentManager, mutex_type,sizeof(T), NodesPerChunk>   node_pool_t;
       //Get segment manager
       segment_manager *named_segment_mngr = this->get_segment_manager();
-      //Get node pool pointer
-      node_pool_t  *node_pool = static_cast<node_pool_t*>
-         (detail::get_pointer(mp_node_pool));
-
       //Execute destruction functor atomically
-      destroy_if_last_link_func func(named_segment_mngr, node_pool);
+      destroy_if_last_link_func func(named_segment_mngr, detail::get_pointer(mp_node_pool));
       named_segment_mngr->atomic_func(func);
    }
 
- private:
-   // We can't instantiate a pointer like this:
-   // detail::shared_node_pool<SegmentManager, mutex_type, 
-   //                             sizeof(T), NodesPerChunk> *mp_node_pool;
-   // since it can provoke an early instantiation of T, that could be 
-   // incomplete at that moment (for example, a node of a node-based container)
-   // This provokes errors on some node based container implementations using
-   // this pooled allocator as allocator type.
-   // 
-   // Because of this, we will use a void offset pointer and we'll do some 
-   //(ugly )casts when needed.
-   void_pointer   mp_node_pool;
+   private:
+   node_pool_ptr   mp_node_pool;
    /// @endcond
 };
 
-/*!Equality test for same type of node_allocator*/
+//!Equality test for same type of
+//!node_allocator
 template<class T, class S, std::size_t NodesPerChunk> inline
 bool operator==(const node_allocator<T, S, NodesPerChunk> &alloc1, 
                 const node_allocator<T, S, NodesPerChunk> &alloc2)
    {  return alloc1.get_node_pool() == alloc2.get_node_pool(); }
 
-/*!Inequality test for same type of node_allocator*/
+//!Inequality test for same type of
+//!node_allocator
 template<class T, class S, std::size_t NodesPerChunk> inline
 bool operator!=(const node_allocator<T, S, NodesPerChunk> &alloc1, 
                 const node_allocator<T, S, NodesPerChunk> &alloc2)

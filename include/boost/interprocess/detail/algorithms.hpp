@@ -19,6 +19,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/detail/iterators.hpp>
 #include <boost/get_pointer.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 
@@ -105,6 +106,18 @@ typename std::iterator_traits<InIt>::difference_type
    return (constructed);
 }
 
+template<class T, class InpIt>
+inline void construct_in_place(T* dest, InpIt source)
+{
+   new(dest)T(*source);
+}
+
+template<class T, class U, class D>
+inline void construct_in_place(T *dest, default_construct_iterator<U, D>)
+{
+   new(dest)T();
+}
+
 template<class InIt, class FwdIt> inline
 FwdIt uninitialized_copy(InIt first, InIt last, FwdIt dest)
 {
@@ -143,7 +156,7 @@ InIt n_uninitialized_copy_n
    BOOST_TRY{
       //Try to build objects
       for (; --new_count; ++dest, ++first){
-         new(detail::get_pointer(&*dest))value_type(*first);
+         construct_in_place(detail::get_pointer(&*dest), first);
       }
    }
    BOOST_CATCH(...){

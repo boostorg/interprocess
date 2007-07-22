@@ -24,57 +24,66 @@
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/assert.hpp>
+#include <boost/utility/addressof.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
+#include <boost/interprocess/detail/iterators.hpp>
 
 #include <memory>
 #include <algorithm>
 #include <cstddef>
 #include <stdexcept>
 
-/*!\file
-   Describes an allocator that allocates portions of fixed size
-   memory buffer (shared memory, mapped file...)
-*/
+//!\file
+//!Describes an allocator that allocates portions of fixed size
+//!memory buffer (shared memory, mapped file...)
 
 namespace boost {
-
 namespace interprocess {
 
-/*!An STL compatible allocator that uses a segment manager as 
-   memory source. The internal pointer type will of the same type (raw, smart) as
-   "typename SegmentManager::void_pointer" type. This allows
-   placing the allocator in shared memory, memory mapped-files, etc...*/
+
+//!An STL compatible allocator that uses a segment manager as 
+//!memory source. The internal pointer type will of the same type (raw, smart) as
+//!"typename SegmentManager::void_pointer" type. This allows
+//!placing the allocator in shared memory, memory mapped-files, etc...
 template<class T, class SegmentManager>
 class allocator 
 {
    /// @cond
    private:
-   /*!Self type*/
+
+   struct cast_functor
+   {
+      typedef typename detail::add_reference<T>::type result_type;
+      result_type operator()(char *ptr) const
+      {  return *static_cast<T*>(static_cast<void*>(ptr));  }
+   };
+
+   //Self type
    typedef allocator<T, SegmentManager>   self_t;
 
-   /*!Segment manager*/
+   //Segment manager
    typedef SegmentManager                 segment_manager;
 
-   /*!Pointer to void */
+   //Pointer to void
    typedef typename segment_manager::void_pointer  aux_pointer_t;
 
-   /*!Typedef to const void pointer */
+   //Typedef to const void pointer
    typedef typename 
       detail::pointer_to_other
          <aux_pointer_t, const void>::type   cvoid_ptr;
 
-   /*!Pointer to the allocator*/
+   //Pointer to the allocator
    typedef typename detail::pointer_to_other
       <cvoid_ptr, segment_manager>::type     alloc_ptr_t;
 
-   /*!Not assignable from related allocator*/
+   //Not assignable from related allocator
    template<class T2, class SegmentManager2>
    allocator& operator=(const allocator<T2, SegmentManager2>&);
 
-   /*!Not assignable from other allocator*/
+   //Not assignable from other allocator
    allocator& operator=(const allocator&);
 
-   /*!Pointer to the allocator*/
+   //Pointer to the allocator
    alloc_ptr_t mp_mngr;
    /// @endcond
 
@@ -93,58 +102,67 @@ class allocator
 
    typedef detail::version_type<allocator, 2>   version;
 
-   /*!Obtains an allocator of other type*/
+   /// @cond
+
+   //Experimental. Don't use.
+   typedef transform_iterator
+      < typename SegmentManager::
+         multiallocation_iterator
+      , cast_functor>                           multiallocation_iterator;
+
+   /// @endcond
+
+   //!Obtains an allocator that allocates
+   //!objects of type T2
    template<class T2>
    struct rebind
    {   
       typedef allocator<T2, SegmentManager>     other;
    };
 
-   /*!Returns the segment manager. Never throws*/
+   //!Returns the segment manager.
+   //!Never throws
    segment_manager* get_segment_manager()const
    {  return detail::get_pointer(mp_mngr);   }
-/*
-   //!Returns address of mutable object. Never throws
-   pointer address(reference value)
-   {  return pointer(addressof(value));  }
 
-   //!Returns address of non mutable object. Never throws
-   const_pointer address(const_reference value) const
-   {  return const_pointer(addressof(value));  }
-*/
-   /*!Constructor from the segment manager. Never throws*/
+   //!Constructor from the segment manager.
+   //!Never throws
    allocator(segment_manager *segment_mngr) 
       : mp_mngr(segment_mngr) { }
 
-   /*!Constructor from other allocator. Never throws*/
+   //!Constructor from other allocator.
+   //!Never throws
    allocator(const allocator &other) 
       : mp_mngr(other.get_segment_manager()){ }
 
-   /*!Constructor from related allocator. Never throws*/
+   //!Constructor from related allocator.
+   //!Never throws
    template<class T2>
    allocator(const allocator<T2, SegmentManager> &other) 
       : mp_mngr(other.get_segment_manager()){}
 
-   /*!Allocates memory for an array of count elements. 
-      Throws boost::interprocess::bad_alloc if there is no enough memory*/
+   //!Allocates memory for an array of count elements. 
+   //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate(size_type count, cvoid_ptr hint = 0)
    {
       (void)hint;
-      if(count > ((size_type)-1)/sizeof(value_type))
+      if(count > ((size_type)-1)/sizeof(T))
          throw bad_alloc();
-      return pointer((value_type*)mp_mngr->allocate(count*sizeof(value_type)));
+      return pointer((value_type*)mp_mngr->allocate(count*sizeof(T)));
    }
 
-   /*!Deallocates memory previously allocated. Never throws*/
+   //!Deallocates memory previously allocated.
+   //!Never throws
    void deallocate(const pointer &ptr, size_type)
    {  mp_mngr->deallocate(detail::get_pointer(ptr));  }
 
-   /*!Returns the number of elements that could be allocated. Never throws*/
+   //!Returns the number of elements that could be allocated.
+   //!Never throws
    size_type max_size() const
-   {  return mp_mngr->get_size()/sizeof(value_type);   }
+   {  return mp_mngr->get_size()/sizeof(T);   }
 
-   /*!Swap segment manager. Does not throw. If each allocator is placed in
-      different memory segments, the result is undefined.*/
+   //!Swap segment manager. Does not throw. If each allocator is placed in
+   //!different memory segments, the result is undefined.
    friend void swap(self_t &alloc1, self_t &alloc2)
    {  detail::do_swap(alloc1.mp_mngr, alloc2.mp_mngr);   }
 
@@ -156,58 +174,106 @@ class allocator
                          size_type preferred_size,
                          size_type &received_size, const pointer &reuse = 0)
    {
-      std::pair<pointer, bool> ret;
-      size_type max_count = ((size_type)-1)/sizeof(value_type);
-      if(limit_size > max_count || preferred_size > max_count){
-         if(command & nothrow_allocation){
-            throw bad_alloc();
-         }
-         else{
-            ret.first = 0;
-            return ret;
-         }
-      }
-
-      std::size_t l_size = limit_size*sizeof(value_type);
-      std::size_t p_size = preferred_size*sizeof(value_type);
-      std::size_t r_size;
-      std::pair<void *, bool> result =
-         mp_mngr->allocation_command
-            (command, l_size, p_size, r_size, detail::get_pointer(reuse), sizeof(value_type));
-      received_size = r_size/sizeof(value_type);
-      BOOST_ASSERT(0 == ((std::size_t)result.first % detail::alignment_of<value_type>::value));
-      return std::pair<pointer, bool> 
-         (static_cast<value_type*>(result.first), result.second);
+      return mp_mngr->allocation_command
+         (command, limit_size, preferred_size, received_size, detail::get_pointer(reuse));
    }
 
-   /*!Returns maximum the number of objects the previously allocated memory
-      pointed by p can hold.*/
+   //!Returns maximum the number of objects the previously allocated memory
+   //!pointed by p can hold.
    size_type size(const pointer &p) const
    {  
-      return (size_type)mp_mngr->size
-         (detail::get_pointer(p))/sizeof(value_type);
+      return (size_type)mp_mngr->size(detail::get_pointer(p))/sizeof(T);
    }
 
-   /*!Allocates just one object. Memory allocated with this function
-      must be deallocated only with deallocate_one().
-      Throws boost::interprocess::bad_alloc if there is no enough memory*/
+   //!Allocates just one object. Memory allocated with this function
+   //!must be deallocated only with deallocate_one().
+   //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate_one()
    {  return this->allocate(1);  }
 
-   /*!Deallocates memory previously allocated with allocate_one().
-      You should never use deallocate_one to deallocate memory allocated
-      with other functions different from allocate_one(). Never throws*/
+   /// @cond
+
+   //Experimental. Don't use.
+
+   //!Allocates many elements of size == 1 in a contiguous chunk
+   //!of memory. The minimum number to be allocated is min_elements,
+   //!the preferred and maximum number is
+   //!preferred_elements. The number of actually allocated elements is
+   //!will be assigned to received_size. Memory allocated with this function
+   //!must be deallocated only with deallocate_one().
+   multiallocation_iterator allocate_individual(std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements)
+   {
+      return this->allocate_many
+            (1, min_elements, preferred_elements, received_elements);
+   }
+
+   /// @endcond
+
+   //!Deallocates memory previously allocated with allocate_one().
+   //!You should never use deallocate_one to deallocate memory allocated
+   //!with other functions different from allocate_one(). Never throws
    void deallocate_one(const pointer &p)
    {  return this->deallocate(p, 1);  }
+
+   /// @cond
+
+   //!Allocates many elements of size elem_size in a contiguous chunk
+   //!of memory. The minimum number to be allocated is min_elements,
+   //!the preferred and maximum number is
+   //!preferred_elements. The number of actually allocated elements is
+   //!will be assigned to received_size. The elements must be deallocated
+   //!with deallocate(...)
+   multiallocation_iterator allocate_many(size_type elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements)
+   {
+      return multiallocation_iterator
+         (mp_mngr->allocate_many
+            (sizeof(T)*elem_size, min_elements, preferred_elements, received_elements));
+   }
+
+   //!Allocates n_elements elements, each one of size elem_sizes[i]in a
+   //!contiguous chunk
+   //!of memory. The elements must be deallocated
+   multiallocation_iterator allocate_many(const size_type *elem_sizes, size_type n_elements)
+   {
+      return multiallocation_iterator
+         (mp_mngr->allocate_many(elem_sizes, n_elements, sizeof(T)));
+   }
+
+   /// @endcond
+
+   //These functions are obsolete. These are here to conserve
+   //backwards compatibility with containers using them...
+
+   //!Returns address of mutable object.
+   //!Never throws
+   pointer address(reference value) const
+   {  return pointer(boost::addressof(value));  }
+
+   //!Returns address of non mutable object.
+   //!Never throws
+   const_pointer address(const_reference value) const
+   {  return const_pointer(boost::addressof(value));  }
+
+   //!Default construct an object. 
+   //!Throws if T's default constructor throws*/
+   void construct(const pointer &ptr)
+   {  new(detail::get_pointer(ptr)) value_type;  }
+
+   //!Destroys object. Throws if object's
+   //!destructor throws
+   void destroy(const pointer &ptr)
+   {  BOOST_ASSERT(ptr != 0); (*ptr).~value_type();  }
 };
 
-/*!Equality test for same type of allocator*/
+//!Equality test for same type
+//!of allocator
 template<class T, class SegmentManager> inline
 bool operator==(const allocator<T , SegmentManager>  &alloc1, 
                 const allocator<T, SegmentManager>  &alloc2)
    {  return alloc1.get_segment_manager() == alloc2.get_segment_manager(); }
 
-/*!Inequality test for same type of allocator*/
+//!Inequality test for same type
+//!of allocator
 template<class T, class SegmentManager> inline
 bool operator!=(const allocator<T, SegmentManager>  &alloc1, 
                 const allocator<T, SegmentManager>  &alloc2)

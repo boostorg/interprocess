@@ -17,7 +17,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
@@ -42,18 +42,18 @@ class named_condition
    /// @endcond
    public:
    /*!Creates a global condition with a name.*/
-   named_condition(detail::create_only_t create_only, const char *name);
+   named_condition(create_only_t create_only, const char *name);
 
    /*!Opens or creates a global condition with a name. 
       If the condition is created, this call is equivalent to create(). 
       If the condition is already created, this call is equivalent to open(). 
       Does not throw*/
-   named_condition(detail::open_or_create_t open_or_create, const char *name);
+   named_condition(open_or_create_t open_or_create, const char *name);
 
    /*!Opens a global condition with a name if that condition is previously.
       created. If it is not previously created this function return false.
       Does not throw*/
-   named_condition(detail::open_only_t open_only, const char *name);
+   named_condition(open_only_t open_only, const char *name);
 
    /*!Destroys *this*/
    ~named_condition();
@@ -141,7 +141,7 @@ class named_condition::construct_func_t
 inline named_condition::~named_condition()
 {}
 
-inline named_condition::named_condition(detail::create_only_t, const char *name)
+inline named_condition::named_condition(create_only_t, const char *name)
    :  m_shmem  (create_only
                ,name
                ,sizeof(interprocess_condition) +
@@ -152,7 +152,7 @@ inline named_condition::named_condition(detail::create_only_t, const char *name)
                ,construct_func_t(construct_func_t::create_only))
 {}
 
-inline named_condition::named_condition(detail::open_or_create_t, const char *name)
+inline named_condition::named_condition(open_or_create_t, const char *name)
    :  m_shmem  (open_or_create
                ,name
                ,sizeof(interprocess_condition) +
@@ -163,7 +163,7 @@ inline named_condition::named_condition(detail::open_or_create_t, const char *na
                ,construct_func_t(construct_func_t::open_or_create))
 {}
 
-inline named_condition::named_condition(detail::open_only_t, const char *name)
+inline named_condition::named_condition(open_only_t, const char *name)
    :  m_shmem  (open_only
                ,name
                ,read_write

@@ -24,7 +24,7 @@
 #include <boost/interprocess/detail/iterators.hpp>
 
 #include <boost/interprocess/detail/mpl.hpp>
-#include <boost/interprocess/detail/basic_segment_manager.hpp>
+#include <boost/interprocess/detail/segment_manager_helper.hpp>
 #include <boost/interprocess/detail/named_proxy.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
@@ -46,283 +46,237 @@
 namespace boost{
 namespace interprocess{
 
-/// @cond
-
-namespace detail{
-
-//Anti-exception node eraser
-template<class Cont>
-class value_eraser
-{
-   public:
-   value_eraser(Cont & cont, typename Cont::iterator it) 
-      : m_cont(cont), m_index_it(it), m_erase(true){}
-   ~value_eraser()  
-   {  if(m_erase) m_cont.erase(m_index_it);  }
-
-   void release() {  m_erase = false;  }
-
-   private:
-   Cont                   &m_cont;
-   typename Cont::iterator m_index_it;
-   bool                    m_erase;
-};
-
-template<class CharT>
-struct intrusive_compare_key
-{
-   typedef CharT char_type;
-
-   intrusive_compare_key(const CharT *str, std::size_t len)
-      :  mp_str(str), m_len(len)
-   {}
-
-   const CharT *  mp_str;
-   std::size_t    m_len;
-};
-
-//!This struct indicates an anonymous object creation
-//!allocation
-template<instance_type type>
-class instance_t
-{
-   instance_t(){}
-};
-
-template<class T>
-struct char_if_void
-{
-   typedef T type;
-};
-
-template<>
-struct char_if_void<void>
-{
-   typedef char type;
-};
-
-typedef instance_t<anonymous_type>  anonymous_instance_t;
-typedef instance_t<unique_type>     unique_instance_t;
-
-template<class Hook, class CharType>
-struct intrusive_value_type_impl
-   :  public Hook
-{
-   private:
-   //Non-copyable
-   intrusive_value_type_impl(const intrusive_value_type_impl &);
-   intrusive_value_type_impl& operator=(const intrusive_value_type_impl &);
-
-   public:
-   typedef CharType char_type;
-
-   intrusive_value_type_impl(){}
-
-   enum  {  BlockHdrAlignment = detail::alignment_of<block_header>::value  };
-
-   block_header *get_block_header() const
-   {
-      return (block_header *)(detail::char_ptr_cast(this) +
-         get_rounded_size(sizeof(*this), BlockHdrAlignment));
-   }
-
-   bool operator <(const intrusive_value_type_impl<Hook, CharType> & other) const
-   {  return this->get_block_header()->template less<CharType>(*other.get_block_header());  }
-
-   bool operator ==(const intrusive_value_type_impl<Hook, CharType> & other) const
-   {  return this->get_block_header()->template equal<CharType>(*other.get_block_header());  }
-
-   static intrusive_value_type_impl *get_intrusive_value_type(block_header *hdr)
-   {
-      return (intrusive_value_type_impl *)(detail::char_ptr_cast(hdr) -
-         get_rounded_size(sizeof(intrusive_value_type_impl), BlockHdrAlignment));
-   }
-
-   CharType *name() const
-   {  return get_block_header()->template name<CharType>(); }
-
-   std::size_t name_length() const
-   {  return get_block_header()->name_length(); }
-
-   void *value() const
-   {  return get_block_header()->value(); }
-};
-
-template<class CharType>
-class char_ptr_holder
-{
-   public:
-   char_ptr_holder(const CharType *name) 
-      : m_name(name)
-   {}
-
-   char_ptr_holder(const detail::anonymous_instance_t *) 
-      : m_name((CharType*)0)
-   {}
-
-   char_ptr_holder(const detail::unique_instance_t *) 
-      : m_name((CharType*)-1)
-   {}
-
-   operator const CharType *()
-   {  return m_name;  }
-
-   private:
-   const CharType *m_name;
-};
-
-//!The key of the the named allocation information index. Stores an offset pointer 
-//!to a null terminated string and the length of the string to speed up sorting
-template<class CharT, class VoidPointer>
-struct index_key
-{
-   typedef typename detail::
-      pointer_to_other<VoidPointer, const CharT>::type   const_char_ptr_t;
-   typedef CharT                                         char_type;
-
-   private:
-   //Offset pointer to the object's name
-   const_char_ptr_t  mp_str;
-   //Length of the name buffer (null NOT included)
-   std::size_t       m_len;
-   public:
-
-   //!Constructor of the key
-   index_key (const char_type *name, std::size_t length)
-      : mp_str(name), m_len(length) {}
-
-   //!Less than function for index ordering
-   bool operator < (const index_key & right) const
-   {
-      return (m_len < right.m_len) || 
-               (m_len == right.m_len && 
-               std::char_traits<char_type>::compare 
-                  (detail::get_pointer(mp_str)
-                  ,detail::get_pointer(right.mp_str), m_len) < 0);
-   }
-
-   //!Equal to function for index ordering
-   bool operator == (const index_key & right) const
-   {
-      return   m_len == right.m_len && 
-               std::char_traits<char_type>::compare 
-                  (detail::get_pointer(mp_str),
-                   detail::get_pointer(right.mp_str), m_len) == 0;
-   }
-
-   void name(const CharT *name)
-   {  mp_str = name; }
-
-   void name_length(std::size_t len)
-   {  m_len = len; }
-
-   const CharT *name() const
-   {  return detail::get_pointer(mp_str); }
-
-   std::size_t name_length() const
-   {  return m_len; }
-};
-
-//!The index_data stores a pointer to a buffer and the element count needed
-//!to know how many destructors must be called when calling destroy
-template<class VoidPointer>
-struct index_data
-{
-   typedef VoidPointer void_ptr;
-   void_ptr    m_ptr;
-   index_data(void *ptr) : m_ptr(ptr){}
-
-   void *value() const
-   {  return (void*)detail::get_pointer(m_ptr);  }
-};
-
+//!This object is the public base class of segment manager.
+//!This class only depends on the memory allocation algorithm
+//!and implements all the allocation features not related
+//!to named or unique objects.
+//!
+//!Storing a reference to segment_manager forces
+//!the holder class to be dependent on index types and character types.
+//!When such dependence is not desirable and only anonymous and raw
+//!allocations are needed, segment_manager_base is the correct answer.
 template<class MemoryAlgorithm>
-struct basic_segment_manager_type
-{  typedef basic_segment_manager<MemoryAlgorithm> type;   };
-
-template<class CharT, class MemoryAlgorithm>
-struct index_config
+class segment_manager_base
+   :  private MemoryAlgorithm
 {
-   typedef typename MemoryAlgorithm::void_pointer        void_pointer;
-   typedef CharT                                         char_type;
-   typedef detail::index_key<CharT, void_pointer>        key_type;
-   typedef detail::index_data<void_pointer>              mapped_type;
-   typedef typename basic_segment_manager_type
-      <MemoryAlgorithm>::type                            basic_segment_manager;
-
-   template<class HeaderBase>
-   struct intrusive_value_type
-   {  typedef detail::intrusive_value_type_impl<HeaderBase, CharT>  type; };
-
-   typedef intrusive_compare_key<CharT>            intrusive_compare_key_type;
-};
-
-template<class Iterator, bool intrusive>
-class iterator_value_adaptor
-{
-   typedef typename Iterator::value_type        iterator_val_t;
-   typedef typename iterator_val_t::char_type   char_type;
-
    public:
-   iterator_value_adaptor(const typename Iterator::value_type &val)
-      :  m_val(&val)
-   {}
+   typedef segment_manager_base<MemoryAlgorithm> segment_manager_base_type;
+   typedef typename MemoryAlgorithm::void_pointer  void_pointer;
+   typedef typename MemoryAlgorithm::mutex_family  mutex_family;
+   typedef MemoryAlgorithm memory_algorithm;
+   
+   /// @cond
+   
+   //Experimental. Don't use
+   typedef typename MemoryAlgorithm::multiallocation_iterator multiallocation_iterator;
 
-   const char_type *name() const
-   {  return m_val->name(); }
+   /// @endcond
 
-   std::size_t name_length() const
-   {  return m_val->name_length(); }
+   //!This constant indicates the payload size
+   //!associated with each allocation of the memory algorithm
+   static const std::size_t PayloadPerAllocation = MemoryAlgorithm::PayloadPerAllocation;
 
-   const void *value() const
-   {  return m_val->value(); }
-
-   const typename Iterator::value_type *m_val;
-};
-
-
-template<class Iterator>
-class iterator_value_adaptor<Iterator, false>
-{
-   typedef typename Iterator::value_type        iterator_val_t;
-   typedef typename iterator_val_t::first_type  first_type;
-   typedef typename iterator_val_t::second_type second_type;
-   typedef typename first_type::char_type       char_type;
-
-   public:
-   iterator_value_adaptor(const typename Iterator::value_type &val)
-      :  m_val(&val)
-   {}
-
-   const char_type *name() const
-   {  return m_val->first.name(); }
-
-   std::size_t name_length() const
-   {  return m_val->first.name_length(); }
-
-   const void *value() const
+   //!Constructor of the segment_manager_base
+   //!
+   //!"size" is the size of the memory segment where
+   //!the basic segment manager is being constructed.
+   //!
+   //!"reserved_bytes" is the number of bytes 
+   //!after the end of the memory algorithm object itself
+   //!that the memory algorithm will exclude from
+   //!dynamic allocation
+   //!
+   //!Can throw
+   segment_manager_base(std::size_t size, std::size_t reserved_bytes)
+      :  MemoryAlgorithm(size, reserved_bytes)
    {
-      return reinterpret_cast<block_header*>
-         (detail::get_pointer(m_val->second.m_ptr))->value();
+      assert((sizeof(segment_manager_base<MemoryAlgorithm>) == sizeof(MemoryAlgorithm)));
    }
 
-   const typename Iterator::value_type *m_val;
+   //!Returns the size of the memory
+   //!segment
+   std::size_t get_size() const
+   {  return MemoryAlgorithm::get_size();  }
+
+   //!Returns the number of free bytes of the memory
+   //!segment
+   std::size_t get_free_memory() const
+   {  return MemoryAlgorithm::get_free_memory();  }
+
+   //!Obtains the minimum size needed by
+   //!the segment manager
+   static std::size_t get_min_size (std::size_t size)
+   {  return MemoryAlgorithm::get_min_size(size);  }
+
+   //!Allocates nbytes bytes. This function is only used in 
+   //!single-segment management. Never throws
+   void * allocate (std::size_t nbytes, std::nothrow_t)
+   {  return MemoryAlgorithm::allocate(nbytes);   }
+
+   /// @cond
+
+   //Experimental. Dont' use.
+   //!Allocates n_elements of
+   //!elem_size bytes. Throws bad_alloc on failure.
+   multiallocation_iterator allocate_many
+      (std::size_t elem_bytes, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements)
+   {
+      multiallocation_iterator ret = MemoryAlgorithm::allocate_many(elem_bytes, min_elements, preferred_elements, received_elements);
+      if(!ret) throw bad_alloc();
+      return ret;
+   }
+
+   //!Allocates n_elements, each one of
+   //!element_lenghts[i]*sizeof_element bytes. Throws bad_alloc on failure.
+   multiallocation_iterator allocate_many
+      (const std::size_t *element_lenghts, std::size_t n_elements, std::size_t sizeof_element = 1)
+   {
+      multiallocation_iterator ret = MemoryAlgorithm::allocate_many(element_lenghts, n_elements, sizeof_element);
+      if(!ret) throw bad_alloc();
+      return ret;
+   }
+
+   //!Allocates n_elements of
+   //!elem_size bytes. Returns a default constructed iterator on failure.
+   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements, std::nothrow_t)
+   {  return MemoryAlgorithm::allocate_many(elem_size, min_elements, preferred_elements, received_elements); }
+
+   //!Allocates n_elements, each one of
+   //!element_lenghts[i]*sizeof_element bytes.
+   //!Returns a default constructed iterator on failure.
+   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::size_t sizeof_element, std::nothrow_t)
+   {  return MemoryAlgorithm::allocate_many(elem_sizes, n_elements, sizeof_element); }
+
+   /// @endcond
+
+   //!Allocates nbytes bytes. Throws boost::interprocess::bad_alloc
+   //!on failure
+   void * allocate(std::size_t nbytes)
+   {  
+      void * ret = MemoryAlgorithm::allocate(nbytes);
+      if(!ret)
+         throw bad_alloc();
+      return ret;
+   }
+
+   //!Allocates nbytes bytes. This function is only used in 
+   //!single-segment management. Never throws
+   void * allocate_aligned (std::size_t nbytes, std::size_t alignment, std::nothrow_t)
+   {  return MemoryAlgorithm::allocate_aligned(nbytes, alignment);   }
+
+   //!Allocates nbytes bytes. This function is only used in 
+   //!single-segment management. Throws bad_alloc when fails
+   void * allocate_aligned(std::size_t nbytes, std::size_t alignment)
+   {  
+      void * ret = MemoryAlgorithm::allocate_aligned(nbytes, alignment);
+      if(!ret)
+         throw bad_alloc();
+      return ret;
+   }
+
+   template<class T>
+   std::pair<T *, bool>
+      allocation_command  (allocation_type command,   std::size_t limit_size,
+                           std::size_t preferred_size,std::size_t &received_size,
+                           T *reuse_ptr = 0)
+   {
+      std::pair<T *, bool> ret = MemoryAlgorithm::allocation_command
+         ( command | nothrow_allocation, limit_size, preferred_size, received_size
+         , reuse_ptr);
+      if(!(command & nothrow_allocation) && !ret.first)
+         throw bad_alloc();
+      return ret;
+   }
+
+   //!Deallocates the bytes allocated with allocate/allocate_many()
+   //!pointed by addr
+   void   deallocate          (void *addr)
+   {  MemoryAlgorithm::deallocate(addr);   }
+
+   //!Increases managed memory in extra_size bytes more. This only works
+   //!with single-segment management*
+   void grow(std::size_t extra_size)
+   {  MemoryAlgorithm::grow(extra_size);   }
+
+   //!Returns the result of "all_memory_deallocated()" function
+   //!of the used memory algorithm
+   bool all_memory_deallocated()
+   {   return MemoryAlgorithm::all_memory_deallocated(); }
+
+   //!Returns the result of "check_sanity()" function
+   //!of the used memory algorithm
+   bool check_sanity()
+   {   return MemoryAlgorithm::check_sanity(); }
+
+   //!Writes to zero free memory (memory not yet allocated) of the memory algorithm
+   void zero_free_memory()
+   {   MemoryAlgorithm::zero_free_memory(); }
+
+   /// @cond
+   protected:
+   void * prot_anonymous_construct
+      (std::size_t num, bool dothrow, detail::in_place_interface &table)
+   {
+      typedef detail::block_header block_header_t;
+      block_header_t block_info (  table.size*num
+                                 , table.alignment
+                                 , anonymous_type
+                                 , 1
+                                 , 0);
+
+      //Allocate memory
+      void *ptr_struct = this->allocate(block_info.total_size(), std::nothrow_t());
+
+      //Check if there is enough memory
+      if(!ptr_struct){
+         if(dothrow){
+            throw bad_alloc();
+         }
+         else{
+            return 0; 
+         }
+      }
+
+      //Build scoped ptr to avoid leaks with constructor exception
+      detail::mem_algo_deallocator<MemoryAlgorithm> mem(ptr_struct, *this);
+
+      //Now construct the header
+      block_header_t * hdr = new(ptr_struct) block_header_t(block_info);
+      void *ptr = hdr->value();
+
+      //Now call constructors
+      detail::array_construct(ptr, num, table);
+
+      //All constructors successful, we don't want erase memory
+      mem.release();
+      return ptr;
+   }
+
+   //!Calls the destructor and makes an anonymous deallocate
+   void prot_anonymous_destroy(const void *object, detail::in_place_interface &table)
+   {
+
+      //Get control data from associated with this object    
+      typedef detail::block_header block_header_t;
+      block_header_t *ctrl_data = block_header_t::block_header_from_value(object, table.size, table.alignment);
+
+      //-------------------------------
+      //boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      //-------------------------------
+
+      if(ctrl_data->allocation_type() != anonymous_type){
+         //This is not an anonymous object, the pointer is wrong!
+         assert(0);
+      }
+
+      //Call destructors and free memory
+      //Build scoped ptr to avoid leaks with destructor exception
+      std::size_t destroyed = 0;
+      table.destroy_n((void*)object, ctrl_data->m_value_bytes/table.size, destroyed);
+      this->deallocate(ctrl_data);
+   }
+   /// @endcond
 };
-
-template<class Iterator, bool intrusive>
-struct iterator_transform
-   :  std::unary_function< typename Iterator::value_type
-                         , iterator_value_adaptor<Iterator, intrusive> >
-{
-   typedef iterator_value_adaptor<Iterator, intrusive> result_type;
-   
-   result_type operator()(const typename Iterator::value_type &arg) const
-   {  return result_type(arg); }
-};
-
-}  //namespace detail{
-
-/// @endcond
 
 //These pointers are the ones the user will use to 
 //indicate previous allocation types
@@ -340,26 +294,35 @@ static const detail::unique_instance_t      * unique_instance = 0;
 //!The second index contains the association for unique instances. The key will
 //!be the const char * returned from type_info.name() function for the unique
 //!type to be constructed.
+//!
+//!segment_manager<CharType, MemoryAlgorithm, IndexType> inherits publicly
+//!from segment_manager_base<MemoryAlgorithm> and inherits from it
+//!many public functions related to anonymous object and raw memory allocation.
+//!See segment_manager_base reference to know about those functions.
 template<class CharType
         ,class MemoryAlgorithm
         ,template<class IndexConfig> class IndexType>
 class segment_manager
-   :  private detail::basic_segment_manager<MemoryAlgorithm>
+   :  public segment_manager_base<MemoryAlgorithm>
 { 
    /// @cond
    //Non-copyable
    segment_manager();
    segment_manager(const segment_manager &);
    segment_manager &operator=(const segment_manager &);
-   typedef detail::basic_segment_manager<MemoryAlgorithm> Base;
+   typedef segment_manager_base<MemoryAlgorithm> Base;
    typedef detail::block_header block_header_t;
    /// @endcond
 
    public:
+   typedef MemoryAlgorithm                memory_algorithm;
    typedef typename Base::void_pointer    void_pointer;
    typedef CharType                       char_type;
+   typedef typename Base::multiallocation_iterator   multiallocation_iterator;
 
-   enum {   PayloadPerAllocation = Base::PayloadPerAllocation };
+   typedef segment_manager_base<MemoryAlgorithm>   segment_manager_base_type;
+
+   static const std::size_t PayloadPerAllocation = Base::PayloadPerAllocation;
 
    /// @cond
    private:
@@ -373,11 +336,11 @@ class segment_manager
    typedef IndexType<index_config_named>                    named_index_t;
    typedef IndexType<index_config_unique>                   unique_index_t;
    typedef detail::char_ptr_holder<CharType>                char_ptr_holder_t;
-   typedef detail::iterator_transform
+   typedef detail::segment_manager_iterator_transform
       <typename named_index_t::const_iterator
       ,is_intrusive_index<index_type>::value>   named_transform;
 
-   typedef detail::iterator_transform
+   typedef detail::segment_manager_iterator_transform
       <typename unique_index_t::const_iterator
       ,is_intrusive_index<index_type>::value>   unique_transform;
    /// @endcond
@@ -389,28 +352,36 @@ class segment_manager
    typedef transform_iterator
       <typename unique_index_t::const_iterator, unique_transform> const_unique_iterator;
 
+   /// @cond
+
    //!Constructor proxy object definition helper class
    template<class T>
    struct construct_proxy
    {
-      typedef detail::named_proxy<segment_manager, T, true>   type;
+      typedef detail::named_proxy<segment_manager, T, false>   type;
    };
 
    //!Constructor proxy object definition helper class
    template<class T>
    struct construct_iter_proxy
    {
-      typedef detail::named_proxy<segment_manager, T, false>   type;
+      typedef detail::named_proxy<segment_manager, T, true>   type;
    };
 
-   //!Constructor. Can throw
+   /// @endcond
+
+   //!Constructor of the segment manager
+   //!"size" is the size of the memory segment where
+   //!the segment manager is being constructed.
+   //!Can throw
    segment_manager(std::size_t size)
       :  Base(size, priv_get_reserved_bytes())
       ,  m_header(static_cast<Base*>(get_this_pointer()))
    {  (void) anonymous_instance;   (void) unique_instance;   }
 
-   //!Tries to find a previous named allocation address. Returns a memory
-   //!buffer and the object count.
+   //!Tries to find a previous named allocation. Returns the address
+   //!and the object count. On failure the first member of the
+   //!returned pair is 0.
    template <class T>
    std::pair<T*, std::size_t> find  (const CharType* name)
    {  
@@ -429,6 +400,9 @@ class segment_manager
       return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
    }
 
+   //!Tries to find a previous unique allocation. Returns the address
+   //!and the object count. On failure the first member of the
+   //!returned pair is 0.
    template <class T>
    std::pair<T*, std::size_t> find (const detail::unique_instance_t* name)
    {
@@ -469,7 +443,7 @@ class segment_manager
    template <class T>
    typename construct_iter_proxy<T>::type     
       construct_it(char_ptr_holder_t name)
-   {  return construct_iter_proxy<T>::type (this, name, false, true);  }
+   {  return typename construct_iter_proxy<T>::type (this, name, false, true);  }
 
    //!Returns throwing "search or construct from iterators"
    //!proxy object
@@ -499,8 +473,8 @@ class segment_manager
    void atomic_func(Func &f)
    {  boost::interprocess::scoped_lock<rmutex> guard(m_header);  f();  }
 
-   //!Calls the destructor and makes an unique
-   //!deallocate
+   //!Destroys a previously created unique instance.
+   //!Returns false if the object was not present.
    template <class T>
    bool destroy(const detail::unique_instance_t *)
    {
@@ -509,6 +483,8 @@ class segment_manager
          (typeid(T).name(), m_header.m_unique_index, dtor, is_intrusive_t());
    }
 
+   //!Destroys the named object with
+   //!the given name. Returns false if that object can't be found.
    template <class T>
    bool destroy(const CharType *name)
    {
@@ -517,41 +493,34 @@ class segment_manager
                (name, m_header.m_named_index, dtor, is_intrusive_t());
    }
 
+   //!Destroys an anonymous, unique or named object
+   //!using it's address
    template <class T>
-   bool destroy_ptr(const T *p)
+   void destroy_ptr(const T *p)
    {
       //If T is void transform it to char
       typedef typename detail::char_if_void<T>::type data_t;
       detail::placement_destroy<data_t> dtor;
-      return priv_destroy_ptr(p, dtor);
+      priv_destroy_ptr(p, dtor);
    }
 
    //!Returns the name of an object created with construct/find_or_construct
    //!functions. Does not throw
    template<class T>
-   const CharType *get_name(const T *ptr)
-   {
-      //Get header
-      block_header_t *ctrl_data = block_header_t::block_header_from_value(ptr);
-      CharType *name = static_cast<CharType*>(ctrl_data->template name<CharType>());
-   
-      //Sanity checks
-      assert(ctrl_data->sizeof_char() == sizeof(CharType));
-      assert(ctrl_data->m_num_char == std::char_traits<CharType>::length(name));
+   static const CharType *get_instance_name(const T *ptr)
+   { return priv_get_instance_name(block_header_t::block_header_from_value(ptr));  }
 
-      return name;
-   }
+   //!Returns the length of an object created with construct/find_or_construct
+   //!functions. Does not throw.
+   template<class T>
+   static std::size_t get_instance_length(const T *ptr)
+   {  return priv_get_instance_length(block_header_t::block_header_from_value(ptr), sizeof(T));  }
 
    //!Returns is the the name of an object created with construct/find_or_construct
    //!functions. Does not throw
    template<class T>
-   detail::instance_type get_type(const T *ptr)
-   {
-      //Get header
-      block_header_t *ctrl_data = block_header_t::block_header_from_value(ptr);
-      assert((detail::instance_type)ctrl_data->allocation_type() < detail::max_allocation_type);
-      return (detail::instance_type)ctrl_data->allocation_type();
-   }
+   static instance_type get_instance_type(const T *ptr)
+   {  return priv_get_instance_type(block_header_t::block_header_from_value(ptr));  }
 
    //!Preallocates needed index resources to optimize the 
    //!creation of "num" named objects in the managed memory segment.
@@ -575,6 +544,17 @@ class segment_manager
       m_header.m_unique_index.reserve(num);
    }
 
+   //!Calls shrink_to_fit in both named and unique object indexes
+   //!to try to free unused memory from those indexes.
+   void shrink_to_fit_indexes()
+   {  
+      //-------------------------------
+      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      //-------------------------------
+      m_header.m_named_index.shrink_to_fit();  
+      m_header.m_unique_index.shrink_to_fit();  
+   }
+
    //!Returns the number of named objects stored in
    //!the segment.
    std::size_t get_num_named_objects()
@@ -595,77 +575,13 @@ class segment_manager
       return m_header.m_unique_index.size();  
    }
 
-   //!Returns the size of the memory
-   //!segment
-   std::size_t get_size() const
-   {  return Base::get_size();  }
-
-   //!Returns the number of free bytes of the memory
-   //!segment
-   std::size_t get_free_memory() const
-   {  return Base::get_free_memory();  }
-
    //!Obtains the minimum size needed by the
    //!segment manager
    static std::size_t get_min_size()
    {  return Base::get_min_size(priv_get_reserved_bytes());  }
 
-   //!Allocates nbytes bytes. Throws boost::interprocess::bad_alloc
-   //!when it can allocate
-   void * allocate(std::size_t nbytes)
-   {  return Base::allocate(nbytes);   }
-
-   //!Allocates nbytes bytes. This function is only used in 
-   //!single-segment management. Never throws
-   void * allocate (std::size_t nbytes, std::nothrow_t nothrow)
-   {  return Base::allocate(nbytes, nothrow);   }
-
-   //!Allocates aligned bytes, returns 0 if there is not more memory.
-   //!Alignment must be power of 2
-   void* allocate_aligned     (std::size_t nbytes, std::size_t alignment)
-   {  return Base::allocate_aligned(nbytes, alignment);  }
-
-   //!Allocates aligned bytes, throws bad_alloc when
-   //!it can allocate. Alignment must be power of 2
-   void* allocate_aligned     (std::size_t nbytes, std::size_t alignment, std::nothrow_t nothrow)
-   {  return Base::allocate_aligned(nbytes, alignment, nothrow);  }
-
-   std::pair<void *, bool>
-      allocation_command  (allocation_type command,   std::size_t limit_size,
-                           std::size_t preferred_size,std::size_t &received_size,
-                           void *reuse_ptr = 0, std::size_t backwards_multiple = 1)
-   {  
-      return Base::allocation_command
-         (command, limit_size, preferred_size, received_size, reuse_ptr, backwards_multiple);
-   }
-
-   //!Deallocates the bytes allocated with allocate/allocate_at_least()
-   //!pointed by addr
-   void   deallocate          (void *addr)
-   {  Base::deallocate(addr);   }
-
-   //!Increases managed memory in extra_size bytes more. This only works
-   //!with single-segment management
-   void grow(std::size_t extra_size)
-   {  Base::grow(extra_size);   }
-
-   //!Returns the result of "all_memory_deallocated()" function
-   //!of the used memory algorithm
-   bool all_memory_deallocated()
-   {   return Base::all_memory_deallocated(); }
-
-   //!Returns the result of "check_sanity()" function
-   //!of the used memory algorithm
-   bool check_sanity()
-   {   return Base::check_sanity(); }
-
-   //!Writes to zero free memory (memory not yet allocated) of
-   //!the memory algorithm
-   void zero_free_memory()
-   {   Base::zero_free_memory(); }
-
    //!Returns a constant iterator to the beginning of the information about
-   //the named allocations performed in this segment manager
+   //!the named allocations performed in this segment manager
    const_named_iterator named_begin() const
    {
       return make_transform_iterator
@@ -673,7 +589,7 @@ class segment_manager
    }
 
    //!Returns a constant iterator to the end of the information about
-   //the named allocations performed in this segment manager
+   //!the named allocations performed in this segment manager
    const_named_iterator named_end() const
    {
       return make_transform_iterator
@@ -681,7 +597,7 @@ class segment_manager
    }
 
    //!Returns a constant iterator to the beginning of the information about
-   //the unique allocations performed in this segment manager
+   //!the unique allocations performed in this segment manager
    const_unique_iterator unique_begin() const
    {
       return make_transform_iterator
@@ -689,7 +605,7 @@ class segment_manager
    }
 
    //!Returns a constant iterator to the end of the information about
-   //the unique allocations performed in this segment manager
+   //!the unique allocations performed in this segment manager
    const_unique_iterator unique_end() const
    {
       return make_transform_iterator
@@ -732,40 +648,72 @@ class segment_manager
       }
       else if(name == reinterpret_cast<const CharType*>(-1)){
          ret = this->priv_generic_named_construct<char>
-            (detail::unique_type, table.type_name, num, try2find, dothrow, table, m_header.m_unique_index, is_intrusive_t());
+            (unique_type, table.type_name, num, try2find, dothrow, table, m_header.m_unique_index, is_intrusive_t());
       }
       else{
          ret = this->priv_generic_named_construct<CharType>
-            (detail::named_type, name, num, try2find, dothrow, table, m_header.m_named_index, is_intrusive_t());
+            (named_type, name, num, try2find, dothrow, table, m_header.m_named_index, is_intrusive_t());
       }
       return ret;
    }
 
-   bool priv_destroy_ptr(const void *ptr, detail::in_place_interface &dtor)
+   void priv_destroy_ptr(const void *ptr, detail::in_place_interface &dtor)
    {
       block_header_t *ctrl_data = block_header_t::block_header_from_value(ptr, dtor.size, dtor.alignment);
       switch(ctrl_data->allocation_type()){
-         case detail::anonymous_type:
-            return this->prot_anonymous_destroy(ptr, dtor);
+         case anonymous_type:
+            this->prot_anonymous_destroy(ptr, dtor);
          break;
 
-         case detail::named_type:
-            return this->priv_generic_named_destroy<CharType>
+         case named_type:
+            this->priv_generic_named_destroy<CharType>
                (ctrl_data, m_header.m_named_index, dtor, is_node_index_t());
          break;
 
-         case detail::unique_type:
-            return this->priv_generic_named_destroy<char>
+         case unique_type:
+            this->priv_generic_named_destroy<char>
                (ctrl_data, m_header.m_unique_index, dtor, is_node_index_t());
          break;
 
          default:
             //This type is unknown, bad pointer passed to this function!
             assert(0);
-            return false;
          break;
       }
-      return false;
+   }
+
+   //!Returns the name of an object created with construct/find_or_construct
+   //!functions. Does not throw
+   static const CharType *priv_get_instance_name(block_header_t *ctrl_data)
+   {
+      allocation_type type = ctrl_data->allocation_type();
+      if(type != named_type){
+         assert((type == anonymous_type && ctrl_data->m_num_char == 0) ||
+                (type == unique_type    && ctrl_data->m_num_char != 0) );
+         return 0;
+      }
+      CharType *name = static_cast<CharType*>(ctrl_data->template name<CharType>());
+   
+      //Sanity checks
+      assert(ctrl_data->sizeof_char() == sizeof(CharType));
+      assert(ctrl_data->m_num_char == std::char_traits<CharType>::length(name));
+      return name;
+   }
+
+   static std::size_t priv_get_instance_length(block_header_t *ctrl_data, std::size_t sizeofvalue)
+   {
+      //Get header
+      assert((ctrl_data->value_bytes() %sizeofvalue) == 0);
+      return ctrl_data->value_bytes()/sizeofvalue;
+   }
+
+   //!Returns is the the name of an object created with construct/find_or_construct
+   //!functions. Does not throw
+   static instance_type priv_get_instance_type(block_header_t *ctrl_data)
+   {
+      //Get header
+      assert((instance_type)ctrl_data->allocation_type() < max_allocation_type);
+      return (instance_type)ctrl_data->allocation_type();
    }
 
    static std::size_t priv_get_reserved_bytes()
@@ -1113,8 +1061,8 @@ class segment_manager
       
       //Avoid constructions if constructor is trivial
       //Build scoped ptr to avoid leaks with constructor exception
-      detail::mem_algo_deallocator<MemoryAlgorithm> mem
-         (buffer_ptr, this->memory_algorithm());
+      detail::mem_algo_deallocator<segment_manager_base_type> mem
+         (buffer_ptr, *static_cast<segment_manager_base_type*>(this));
 
       //Construct array, this can throw
       detail::array_construct(ptr, num, table);
@@ -1241,8 +1189,8 @@ class segment_manager
       it->second.m_ptr  = hdr;
 
       //Build scoped ptr to avoid leaks with constructor exception
-      detail::mem_algo_deallocator<MemoryAlgorithm> mem
-         (buffer_ptr, this->memory_algorithm());
+      detail::mem_algo_deallocator<segment_manager_base_type> mem
+         (buffer_ptr, *static_cast<segment_manager_base_type*>(this));
 
       //Construct array, this can throw
       detail::array_construct(ptr, num, table);

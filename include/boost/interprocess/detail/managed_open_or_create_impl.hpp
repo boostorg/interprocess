@@ -13,12 +13,12 @@
 
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/atomic.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/cstdint.hpp>
 
@@ -52,7 +52,7 @@ class managed_open_or_create_impl
             , detail::alignment_of<detail::max_align>::value>::value
    };
 
-   managed_open_or_create_impl(detail::create_only_t, 
+   managed_open_or_create_impl(create_only_t, 
                  const char *name,
                  std::size_t size,
                  mode_t mode = read_write,
@@ -60,21 +60,21 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         ( DoCreate
+         ( detail::DoCreate
          , size
          , mode
          , addr
          , null_mapped_region_function());
    }
 
-   managed_open_or_create_impl(detail::open_only_t, 
+   managed_open_or_create_impl(open_only_t, 
                  const char *name,
                  mode_t mode = read_write,
                  const void *addr = 0)
    {
       m_name = name;
       priv_open_or_create
-         ( DoOpen
+         ( detail::DoOpen
          , 0
          , mode
          , addr
@@ -82,7 +82,7 @@ class managed_open_or_create_impl
    }
 
 
-   managed_open_or_create_impl(detail::open_or_create_t, 
+   managed_open_or_create_impl(open_or_create_t, 
                  const char *name,
                  std::size_t size,
                  mode_t mode = read_write,
@@ -90,7 +90,7 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         ( DoCreateOrOpen
+         ( detail::DoCreateOrOpen
          , size
          , mode
          , addr
@@ -98,7 +98,7 @@ class managed_open_or_create_impl
    }
 
    template <class ConstructFunc>
-   managed_open_or_create_impl(detail::create_only_t, 
+   managed_open_or_create_impl(create_only_t, 
                  const char *name,
                  std::size_t size,
                  mode_t mode,
@@ -107,7 +107,7 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         (DoCreate
+         (detail::DoCreate
          , size
          , mode
          , addr
@@ -115,7 +115,7 @@ class managed_open_or_create_impl
    }
 
    template <class ConstructFunc>
-   managed_open_or_create_impl(detail::open_only_t, 
+   managed_open_or_create_impl(open_only_t, 
                  const char *name,
                  mode_t mode,
                  const void *addr,
@@ -123,7 +123,7 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         ( DoOpen
+         ( detail::DoOpen
          , 0
          , mode
          , addr
@@ -131,7 +131,7 @@ class managed_open_or_create_impl
    }
 
    template <class ConstructFunc>
-   managed_open_or_create_impl(detail::open_or_create_t, 
+   managed_open_or_create_impl(open_or_create_t, 
                  const char *name,
                  std::size_t size,
                  mode_t mode,
@@ -140,7 +140,7 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         ( DoCreateOrOpen
+         ( detail::DoCreateOrOpen
          , size
          , mode
          , addr
@@ -258,7 +258,7 @@ class managed_open_or_create_impl
 
    template <class ConstructFunc> inline 
    void priv_open_or_create
-      (create_enum_t type, std::size_t size,
+      (detail::create_enum_t type, std::size_t size,
        mode_t mode, const void *addr,
        ConstructFunc construct_func)
    {
@@ -268,20 +268,20 @@ class managed_open_or_create_impl
       bool created = false;
       DeviceAbstraction dev;
 
-      if(type != DoOpen && size < ManagedOpenOrCreateUserOffset){
+      if(type != detail::DoOpen && size < ManagedOpenOrCreateUserOffset){
          throw interprocess_exception(error_info(size_error));
       }
 
-      if(type == DoOpen){
+      if(type == detail::DoOpen){
          DeviceAbstraction tmp(open_only, m_name.c_str(), read_write);
          tmp.swap(dev);
          created = false;
       }
-      else if(type == DoCreate){
+      else if(type == detail::DoCreate){
          create_device<FileBased>(dev, m_name.c_str(), size, file_like_t());
          created = true;
       }
-      else if(type == DoCreateOrOpen){
+      else if(type == detail::DoCreateOrOpen){
          //This loop is very ugly, but brute force is sometimes better
          //than diplomacy. If someone knows how to open or create a
          //file and know if we have really created it or just open it

@@ -38,9 +38,7 @@ struct in_place_interface
    std::size_t size;
    const char *type_name;
 
-   virtual void construct(void *mem) = 0;
    virtual void construct_n(void *mem, std::size_t num, std::size_t &constructed) = 0;
-   virtual void destroy(void *mem) = 0;
    virtual void destroy_n(void *mem, std::size_t num, std::size_t &destroyed) = 0;
    virtual ~in_place_interface(){}
 };
@@ -52,9 +50,6 @@ struct placement_destroy :  public in_place_interface
       :  in_place_interface(detail::alignment_of<T>::value, sizeof(T), typeid(T).name())
    {}
 
-   virtual void destroy(void *mem)
-   {  static_cast<T*>(mem)->~T();   }
-
    virtual void destroy_n(void *mem, std::size_t num, std::size_t &destroyed)
    {
       T* memory = static_cast<T*>(mem);
@@ -62,8 +57,11 @@ struct placement_destroy :  public in_place_interface
          (memory++)->~T();
    }
 
-   virtual void construct(void *) {}
    virtual void construct_n(void *, std::size_t, std::size_t &) {}
+
+   private:
+   void destroy(void *mem)
+   {  static_cast<T*>(mem)->~T();   }
 };
 
 }

@@ -22,23 +22,24 @@
 #include <boost/intrusive/unordered_set.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 
-/*!\file
-   Describes index adaptor of boost::intrusive::unordered_set container, to use it
-   as name/shared memory index
-*/
+//!\file
+//!Describes index adaptor of boost::intrusive::unordered_set container, to use it
+//!as name/shared memory index
 
 namespace boost { namespace interprocess {
 
 /// @cond
-/*!Helper class to define typedefs from IndexTraits*/
+
+//!Helper class to define typedefs
+//!from IndexTraits
 template <class MapConfig>
 struct iunordered_set_index_aux
 {
    typedef typename 
-      MapConfig::basic_segment_manager                 basic_segment_manager;
+      MapConfig::segment_manager_base                 segment_manager_base;
 
    typedef typename 
-      basic_segment_manager::void_pointer              void_pointer;
+      segment_manager_base::void_pointer              void_pointer;
 
    typedef boost::intrusive::unordered_set_base_hook
       < boost::intrusive::tag
@@ -104,20 +105,22 @@ struct iunordered_set_index_aux
    typedef typename index_t::bucket_type                 bucket_type;
 
    typedef allocator
-      <bucket_type, basic_segment_manager>          allocator_type;
+      <bucket_type, segment_manager_base>          allocator_type;
 
    struct allocator_holder
    {
-      allocator_holder(basic_segment_manager *mngr)
+      allocator_holder(segment_manager_base *mngr)
          :  alloc(mngr)
       {}
       allocator_type alloc;
+      bucket_type init_bucket;
    };
 };
 /// @endcond
 
-/*!Index type based in boost::intrusive::set. Just derives from boost::intrusive::set 
-   and defines the interface needed by managed memory segments*/
+//!Index type based in boost::intrusive::set.
+//!Just derives from boost::intrusive::set 
+//!and defines the interface needed by managed memory segments
 template <class MapConfig>
 class iunordered_set_index
       //Derive class from map specialization
@@ -125,7 +128,7 @@ class iunordered_set_index
    ,  public iunordered_set_index_aux<MapConfig>::index_t
 {
    /// @cond
-   typedef iunordered_set_index_aux<MapConfig>                 index_aux;
+   typedef iunordered_set_index_aux<MapConfig>           index_aux;
    typedef typename index_aux::index_t                   index_type;
    typedef typename MapConfig::
       intrusive_compare_key_type                         intrusive_compare_key_type;
@@ -150,7 +153,7 @@ class iunordered_set_index
    /// @cond
    private:
    typedef typename index_aux::
-      basic_segment_manager             basic_segment_manager;
+      segment_manager_base             segment_manager_base;
 
    enum {   InitBufferSize = 64};
 
@@ -165,6 +168,49 @@ class iunordered_set_index
       return buckets;
    }
 
+   static std::size_t shrink_buckets
+      ( bucket_ptr buckets, std::size_t old_size
+      , allocator_type &alloc, std::size_t new_size)
+   {
+      if(old_size <= new_size )
+         return old_size;
+      std::size_t received_size;
+      if(!alloc.allocation_command
+         (shrink_in_place | nothrow_allocation, old_size, new_size, received_size, buckets).first){
+         return old_size;
+      }
+
+      bucket_ptr buckets_init = buckets + received_size;
+      for(std::size_t i = 0; i < (old_size - received_size); ++i){
+         get_pointer(buckets_init++)->~bucket_type();
+      }
+      return received_size;
+   }
+
+   static bucket_ptr expand_or_create_buckets
+      ( bucket_ptr old_buckets, const std::size_t old_num
+      , allocator_type &alloc,  const std::size_t new_num)
+   {
+      std::size_t received_size;
+      std::pair<bucket_ptr, bool> ret =
+         alloc.allocation_command
+            (expand_fwd | allocate_new, new_num, new_num, received_size, old_buckets);
+      if(ret.first == old_buckets){
+         bucket_ptr buckets_init = old_buckets + old_num;
+         for(std::size_t i = 0; i < (new_num - old_num); ++i){
+            new(get_pointer(buckets_init++))bucket_type();
+         }
+      }
+      else{
+         bucket_ptr buckets_init = ret.first;
+         for(std::size_t i = 0; i < new_num; ++i){
+            new(get_pointer(buckets_init++))bucket_type();
+         }
+      }
+
+      return ret.first;
+   }
+
    static void destroy_buckets
       (allocator_type &alloc, bucket_ptr buckets, std::size_t num)
    {
@@ -174,24 +220,30 @@ class iunordered_set_index
       }
       alloc.deallocate(buckets, num);
    }
+
+   iunordered_set_index<MapConfig>* get_this_pointer()
+   {  return this;   }
+
    /// @endcond
 
    public:
-   /*!Constructor. Takes a pointer to the
-      segment manager. Can throw*/
-   iunordered_set_index(basic_segment_manager *mngr)
+   //!Constructor. Takes a pointer to the
+   //!segment manager. Can throw
+   iunordered_set_index(segment_manager_base *mngr)
       :  allocator_holder(mngr)
-      ,  index_type
-            (create_buckets( allocator_holder::alloc
-                           , index_type::suggested_upper_bucket_count(InitBufferSize))
-                           , index_type::suggested_upper_bucket_count(InitBufferSize))
+      ,  index_type(&get_this_pointer()->init_bucket, 1)
    {}
 
    ~iunordered_set_index()
-   {  destroy_buckets(this->alloc, index_type::bucket_pointer(), index_type::bucket_count()); }
+   {
+      index_type::clear();
+      if(index_type::bucket_pointer() != bucket_ptr(&this->init_bucket)){
+         destroy_buckets(this->alloc, index_type::bucket_pointer(), index_type::bucket_count());
+      }
+   }
 
-   /*!This reserves memory to optimize the insertion of n
-      elements in the index*/
+   //!This reserves memory to optimize the insertion of n
+   //!elements in the index
    void reserve(std::size_t new_n)
    {
       //Let's maintain a 1.0f load factor
@@ -200,9 +252,58 @@ class iunordered_set_index
          return;
       bucket_ptr old_p = this->bucket_pointer();
       new_n = index_type::suggested_upper_bucket_count(new_n);
-      bucket_ptr new_p = create_buckets(this->alloc, new_n);
+      bucket_ptr new_p;
+      //This can throw
+      try{
+         if(old_p != bucket_ptr(&this->init_bucket))
+            new_p = expand_or_create_buckets(old_p, old_n, this->alloc, new_n);
+         else
+            new_p = create_buckets(this->alloc, new_n);
+      }
+      catch(...){
+         return;
+      }
+      //Rehashing does not throw, since neither the hash nor the
+      //comparison function can throw
       this->rehash(new_p, new_n);
-      destroy_buckets(this->alloc, old_p, old_n);
+      if(new_p != old_p && old_p != bucket_ptr(&this->init_bucket)){
+         destroy_buckets(this->alloc, old_p, old_n);
+      }
+   }
+
+   //!This tries to free unused memory
+   //!previously allocated.
+   void shrink_to_fit()
+   {
+      size_type cur_size   = this->size();
+      size_type cur_count  = this->bucket_count();
+      bucket_ptr old_p = this->bucket_pointer();
+      size_type sug_count;
+      
+      if(!this->size() && old_p != bucket_ptr(&this->init_bucket)){
+         sug_count = 1;
+         this->rehash(bucket_ptr(&this->init_bucket), 1);
+         destroy_buckets(this->alloc, old_p, cur_count);
+      }
+      else{
+      /*
+      sug_count  = index_type::suggested_upper_bucket_count(cur_size);
+
+      if(sug_count >= cur_count)
+         return;
+
+      try{
+         shrink_buckets(old_p, cur_count, this->alloc, sug_count);
+      }
+      catch(...){
+         return;
+      }
+
+      //Rehashing does not throw, since neither the hash nor the
+      //comparison function can throw
+      this->rehash(old_p, sug_count);
+      */
+      }
    }
 
    iterator find(const intrusive_compare_key_type &key)
@@ -240,8 +341,9 @@ class iunordered_set_index
 };
 
 /// @cond
-/*!Trait class to detect if an index is an intrusive
-   index.*/
+
+//!Trait class to detect if an index is an intrusive
+//!index
 template<class MapConfig>
 struct is_intrusive_index
    <boost::interprocess::iunordered_set_index<MapConfig> >

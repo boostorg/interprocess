@@ -107,6 +107,7 @@ class set
    typedef typename tree_t::size_type              size_type;
    typedef typename tree_t::difference_type        difference_type;
    typedef typename tree_t::allocator_type         allocator_type;
+   typedef typename tree_t::stored_allocator_type  stored_allocator_type;
 
    //! <b>Effects</b>: Constructs an empty set using the specified comparison object 
    //! and allocator.
@@ -187,6 +188,12 @@ class set
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
    { return m_tree.get_allocator(); }
+
+   const stored_allocator_type &get_stored_allocator() const 
+   { return m_tree.get_stored_allocator(); }
+
+   stored_allocator_type &get_stored_allocator()
+   { return m_tree.get_stored_allocator(); }
 
    //! <b>Effects</b>: Returns an iterator to the first element contained in the container.
    //! 
@@ -587,6 +594,7 @@ class multiset
    typedef typename tree_t::size_type              size_type;
    typedef typename tree_t::difference_type        difference_type;
    typedef typename tree_t::allocator_type         allocator_type;
+   typedef typename tree_t::stored_allocator_type  stored_allocator_type;
 
    //! <b>Effects</b>: Constructs an empty multiset using the specified comparison
    //!   object and allocator.
@@ -668,6 +676,12 @@ class multiset
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
    { return m_tree.get_allocator(); }
+
+   const stored_allocator_type &get_stored_allocator() const 
+   { return m_tree.get_stored_allocator(); }
+
+   stored_allocator_type &get_stored_allocator()
+   { return m_tree.get_stored_allocator(); }
 
    //! <b>Effects</b>: Returns an iterator to the first element contained in the container.
    //! 

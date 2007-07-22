@@ -51,11 +51,14 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
+#include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/algorithms.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/intrusive/list.hpp>
+#include <boost/interprocess/containers/detail/node_alloc_holder.hpp>
 
 #include <iterator>
 #include <utility>
@@ -80,7 +83,7 @@ struct list_node
    typedef boost::intrusive::list_base_hook
          < boost::intrusive::tag
          , boost::intrusive::safe_link
-         , VoidPointer>   IlistData;
+         , VoidPointer>   hook_type;
 
    list_node()
       : m_data()
@@ -102,145 +105,20 @@ struct list_node
 };
 
 template<class A>
-struct list_alloc
-   :  public A::template rebind<list_node
-            < typename A::value_type
-            , typename detail::pointer_to_other<typename A::pointer, void>::type>
-            >::other
+struct intrusive_list_type
 {
-   typedef list_alloc<A>                 self_t;
-   typedef typename A::value_type                     value_type;
-   typedef list_node
-      <typename A::value_type
-      ,typename detail::pointer_to_other
-         <typename A::pointer, void>::type>           Node;
-   typedef typename A::template rebind<Node>::other   NodeAlloc;
-   typedef A                                          ValAlloc;
-   typedef typename NodeAlloc::pointer                NodePtr;
-   typedef detail::scoped_deallocator<NodeAlloc>      Deallocator;
+   typedef typename A::value_type               value_type;
+   typedef typename detail::pointer_to_other
+      <typename A::pointer, void>::type         void_pointer;
+   typedef typename detail::list_node
+         <value_type, void_pointer>             node_type;
 
-   list_alloc(const ValAlloc &a) 
-      : NodeAlloc(a)
-   {}
-
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   list_alloc(const detail::moved_object<ValAlloc> &a) 
-      : NodeAlloc(a.get())
-   {}
-   #else
-   list_alloc(ValAlloc &&a) 
-      : NodeAlloc(a)
-   {}
-   #endif
-
-   list_alloc(const list_alloc &other)
-      : NodeAlloc(other)
-   {}
-
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   list_alloc(const detail::moved_object<list_alloc> &other)
-      : NodeAlloc(move((NodeAlloc&)other.get()))
-   {  this->swap(other.get());  }
-   #else
-   list_alloc(list_alloc &&other)
-      : NodeAlloc(move((NodeAlloc&)other))
-   {  this->swap(other);  }
-   #endif
-
-   ~list_alloc()
-   {}
-
-   typename NodeAlloc::size_type max_size() const
-   {  return NodeAlloc::max_size();  }
-
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   template<class Convertible>
-   static void construct(const NodePtr &ptr, const Convertible &value)
-   {  new(detail::get_pointer(ptr)) Node(value);  }
-   #else
-   template<class Convertible>
-   static void construct(const NodePtr &ptr, Convertible &&value)
-   {  new(detail::get_pointer(ptr)) Node(forward<Convertible>(value));  }
-   #endif
-
-   static void construct(const NodePtr &ptr)
-   {  new(detail::get_pointer(ptr)) Node();  }
-
-   static void destroy(const NodePtr &ptr)
-   {  detail::get_pointer(ptr)->~Node();  }
-
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   template<class Convertible>
-   NodePtr create_node(const Convertible& x)
-   {
-      NodePtr p = NodeAlloc::allocate(1);
-      Deallocator node_deallocator(p, *this);
-      self_t::construct(p, x);
-      node_deallocator.release();
-      return (p);
-   }
-   #else
-   template<class Convertible>
-   NodePtr create_node(Convertible &&x)
-   {
-      NodePtr p = NodeAlloc::allocate(1);
-      Deallocator node_deallocator(p, *this);
-      self_t::construct(p, forward<Convertible>(x));
-      node_deallocator.release();
-      return (p);
-   }
-   #endif
-
-   NodePtr create_node()
-   {
-      NodePtr p = NodeAlloc::allocate(1);
-      Deallocator node_deallocator(p, *this);
-      self_t::construct(p);
-      node_deallocator.release();
-      return (p);
-   }
-
-   void destroy_node(NodePtr node)
-   {
-      self_t::destroy(node);
-      NodeAlloc::deallocate(node, 1);
-   }
-
-   void swap(list_alloc &x)
-   {
-      NodeAlloc& this_alloc   = static_cast<NodeAlloc&>(*this);
-      NodeAlloc& other_alloc  = static_cast<NodeAlloc&>(x);
-
-      if (this_alloc != other_alloc){
-         detail::do_swap(this_alloc, other_alloc);
-      }
-
-      this->m_ilist.swap(x.m_ilist);
-   }
-
-   protected:
-
-   struct destroyer
-   {
-      destroyer(list_alloc &holder)
-         :  m_holder(holder)
-      {}
-
-      void operator()(NodePtr n) const
-      {  m_holder.destroy_node(n);  }
-
-      list_alloc &m_holder;
-   };
-
-   //The intrusive list
    typedef typename boost::intrusive::list
-      <typename Node::IlistData::template value_traits<Node>
+      <typename node_type::hook_type::
+            template value_traits<node_type>
       ,true
-      ,typename A::size_type> Ilist;
-   Ilist m_ilist;
-
-   Ilist &non_const_ilist() const
-   {  return const_cast<Ilist&>(this->m_ilist);   }
+      ,typename A::size_type>                   container_type;
+   typedef container_type                       type ;
 };
 
 }  //namespace detail {
@@ -258,17 +136,22 @@ struct list_alloc
 //! or mutation is explicit.
 template <class T, class A>
 class list 
-   : protected detail::list_alloc<A>
+   : protected detail::node_alloc_holder
+      <A, typename detail::intrusive_list_type<A>::type>
 {
    /// @cond
-   typedef detail::list_alloc<A>                      AllocHolder;
+   typedef typename 
+      detail::intrusive_list_type<A>::type            Icont;
+   typedef detail::node_alloc_holder<A, Icont>        AllocHolder;
    typedef typename AllocHolder::NodePtr              NodePtr;
    typedef list <T, A>                                ThisType;
    typedef typename AllocHolder::NodeAlloc            NodeAlloc;
    typedef typename AllocHolder::ValAlloc             ValAlloc;
    typedef typename AllocHolder::Node                 Node;
-   typedef typename AllocHolder::Ilist                Ilist;
    typedef detail::allocator_destroyer<NodeAlloc>     Destroyer;
+   typedef typename AllocHolder::allocator_v1         allocator_v1;
+   typedef typename AllocHolder::allocator_v2         allocator_v2;
+   typedef typename AllocHolder::alloc_version        alloc_version;
 
    class equal_to_value
    {
@@ -317,6 +200,8 @@ class list
    typedef typename A::difference_type             difference_type;
    //! The allocator type
    typedef A                                       allocator_type;
+   //! The stored allocator type
+   typedef NodeAlloc                               stored_allocator_type;
 
    /// @cond
    private:
@@ -336,13 +221,13 @@ class list
    {
       /// @cond
       protected:
-      typename Ilist::iterator m_it;
-      explicit const_iterator(typename Ilist::iterator it)  : m_it(it){}
+      typename Icont::iterator m_it;
+      explicit const_iterator(typename Icont::iterator it)  : m_it(it){}
       void prot_incr() { ++m_it; }
       void prot_decr() { --m_it; }
 
       private:
-      typename Ilist::iterator get()
+      typename Icont::iterator get()
       {  return this->m_it;   }
       /// @endcond
 
@@ -367,13 +252,13 @@ class list
       { prot_incr();  return *this; }
 
       const_iterator operator++(int)      
-      { typename Ilist::iterator tmp = m_it; ++*this; return const_iterator(tmp);  }
+      { typename Icont::iterator tmp = m_it; ++*this; return const_iterator(tmp);  }
 
       const_iterator& operator--()
       {   prot_decr(); return *this;   }
 
       const_iterator operator--(int)
-      {  typename Ilist::iterator tmp = m_it; --*this; return const_iterator(tmp); }
+      {  typename Icont::iterator tmp = m_it; --*this; return const_iterator(tmp); }
 
       //Comparison operators
       bool operator==   (const const_iterator& r)  const
@@ -389,11 +274,11 @@ class list
    {
       /// @cond
       private:
-      explicit iterator(typename Ilist::iterator it)
+      explicit iterator(typename Icont::iterator it)
          :  const_iterator(it)
       {}
    
-      typename Ilist::iterator get()
+      typename Icont::iterator get()
       {  return this->m_it;   }
       /// @endcond
 
@@ -414,7 +299,7 @@ class list
          { this->prot_incr(); return *this;  }
 
       iterator operator++(int)
-         { typename Ilist::iterator tmp = this->m_it; ++*this; return iterator(tmp); }
+         { typename Icont::iterator tmp = this->m_it; ++*this; return iterator(tmp); }
       
       iterator& operator--()
          {  this->prot_decr(); return *this;  }
@@ -507,13 +392,19 @@ class list
    allocator_type get_allocator() const
    {  return allocator_type(*this); }
 
+   const stored_allocator_type &get_stored_allocator() const 
+   {  return *this; }
+
+   stored_allocator_type &get_stored_allocator()
+   {  return *this; }
+
    //! <b>Effects</b>: Erases all the elements of the list.
    //!
    //! <b>Throws</b>: Nothing.
    //!
    //! <b>Complexity</b>: Linear to the number of elements in the list.
    void clear()
-   {  this->m_ilist.clear_and_dispose(Destroyer(*this));  }
+   {  this->m_icont.clear_and_dispose(Destroyer(*this));  }
 
    //! <b>Effects</b>: Returns an iterator to the first element contained in the list.
    //! 
@@ -521,7 +412,7 @@ class list
    //! 
    //! <b>Complexity</b>: Constant.
    iterator begin()
-   { return iterator(this->m_ilist.begin()); }
+   { return iterator(this->m_icont.begin()); }
 
    //! <b>Effects</b>: Returns a const_iterator to the first element contained in the list.
    //! 
@@ -529,7 +420,7 @@ class list
    //! 
    //! <b>Complexity</b>: Constant.
    const_iterator begin() const
-   {  return const_iterator(this->non_const_ilist().begin());   }
+   {  return const_iterator(this->non_const_icont().begin());   }
 
    //! <b>Effects</b>: Returns an iterator to the end of the list.
    //! 
@@ -537,7 +428,7 @@ class list
    //! 
    //! <b>Complexity</b>: Constant.
    iterator end()
-   {  return iterator(this->m_ilist.end());  }
+   {  return iterator(this->m_icont.end());  }
 
    //! <b>Effects</b>: Returns a const_iterator to the end of the list.
    //! 
@@ -545,7 +436,7 @@ class list
    //! 
    //! <b>Complexity</b>: Constant.
    const_iterator end() const
-   {  return const_iterator(this->non_const_ilist().end());  }
+   {  return const_iterator(this->non_const_icont().end());  }
 
    //! <b>Effects</b>: Returns a reverse_iterator pointing to the beginning 
    //! of the reversed list. 
@@ -597,7 +488,7 @@ class list
    //! 
    //! <b>Complexity</b>: Constant.
    size_type size() const 
-   {   return this->m_ilist.size();   }
+   {   return this->m_icont.size();   }
 
    //! <b>Effects</b>: Returns the largest possible size of the list.
    //! 
@@ -730,7 +621,7 @@ class list
          this->erase(iend, this->end());
       }
       else{
-         this->insert(iend, new_size - len, x);
+         this->priv_create_and_insert_nodes(iend, new_size - len, x);
       }
    }
 
@@ -753,10 +644,7 @@ class list
          this->erase(iend, this->end());
       }
       else{
-         size_type n = new_size - len;
-         for (size_type i = 0; i < n; ++i){
-            this->m_ilist.push_back(*this->create_node());
-         }
+         this->priv_create_and_insert_nodes(this->end(), new_size - len);
       }
    }
 
@@ -828,7 +716,7 @@ class list
    //!
    //! <b>Complexity</b>: Linear to n.
    void insert(iterator p, size_type n, const T& x)
-   { this->priv_fill_insert(p, n, x); }
+   { this->priv_create_and_insert_nodes(p, n, x); }
 
    //! <b>Requires</b>: p must be a valid iterator of *this.
    //!
@@ -856,7 +744,7 @@ class list
    iterator insert(iterator p, const T& x) 
    {
       NodePtr tmp = AllocHolder::create_node(x);
-      return iterator(this->m_ilist.insert(p.get(), *tmp));
+      return iterator(this->m_icont.insert(p.get(), *tmp));
    }
 
    //! <b>Requires</b>: p must be a valid iterator of *this.
@@ -870,13 +758,13 @@ class list
    iterator insert(iterator p, const detail::moved_object<T>& x) 
    {
       NodePtr tmp = AllocHolder::create_node(x);
-      return iterator(this->m_ilist.insert(p.get(), *tmp));
+      return iterator(this->m_icont.insert(p.get(), *tmp));
    }
    #else
    iterator insert(iterator p, T &&x) 
    {
       NodePtr tmp = AllocHolder::create_node(move(x));
-      return iterator(this->m_ilist.insert(p.get(), *tmp));
+      return iterator(this->m_icont.insert(p.get(), *tmp));
    }
    #endif
 
@@ -888,7 +776,7 @@ class list
    //!
    //! <b>Complexity</b>: Amortized constant time.
    iterator erase(iterator p) 
-   {  return iterator(this->m_ilist.erase_and_dispose(p.get(), Destroyer(*this))); }
+   {  return iterator(this->m_icont.erase_and_dispose(p.get(), Destroyer(*this))); }
 
    //! <b>Requires</b>: first and last must be valid iterator to elements in *this.
    //!
@@ -898,7 +786,7 @@ class list
    //!
    //! <b>Complexity</b>: Linear to the distance between first and last.
    iterator erase(iterator first, iterator last)
-   {  return iterator(this->m_ilist.erase_and_dispose(first.get(), last.get(), Destroyer(*this))); }
+   {  return iterator(this->m_icont.erase_and_dispose(first.get(), last.get(), Destroyer(*this))); }
 
    //! <b>Effects</b>: Assigns the n copies of val to *this.
    //!
@@ -938,7 +826,7 @@ class list
    void splice(iterator p, ThisType& x) 
    {
       if((NodeAlloc&)*this == (NodeAlloc&)x){
-         this->m_ilist.splice(p.get(), x.m_ilist);
+         this->m_icont.splice(p.get(), x.m_icont);
       }
       else{
          throw std::runtime_error("list::splice called with unequal allocators");
@@ -965,7 +853,7 @@ class list
    void splice(iterator p, ThisType &x, iterator i) 
    {
       if((NodeAlloc&)*this == (NodeAlloc&)x){
-         this->m_ilist.splice(p.get(), x.m_ilist, i.get());
+         this->m_icont.splice(p.get(), x.m_icont, i.get());
       }
       else{
          throw std::runtime_error("list::splice called with unequal allocators");
@@ -991,7 +879,7 @@ class list
    void splice(iterator p, ThisType &x, iterator first, iterator last) 
    {
       if((NodeAlloc&)*this == (NodeAlloc&)x){
-         this->m_ilist.splice(p.get(), x.m_ilist, first.get(), last.get());
+         this->m_icont.splice(p.get(), x.m_icont, first.get(), last.get());
       }
       else{
          throw std::runtime_error("list::splice called with unequal allocators");
@@ -1018,7 +906,7 @@ class list
    void splice(iterator p, ThisType &x, iterator first, iterator last, size_type n) 
    {
       if((NodeAlloc&)*this == (NodeAlloc&)x){
-         this->m_ilist.splice(p.get(), x.m_ilist, first.get(), last.get(), n);
+         this->m_icont.splice(p.get(), x.m_icont, first.get(), last.get(), n);
       }
       else{
          throw std::runtime_error("list::splice called with unequal allocators");
@@ -1036,7 +924,7 @@ class list
    //! 
    //! <b>Note</b>: Iterators and references are not invalidated
    void reverse()
-   {  this->m_ilist.reverse(); }    
+   {  this->m_icont.reverse(); }    
 
    //! <b>Effects</b>: Removes all the elements that compare equal to value.
    //! 
@@ -1062,7 +950,7 @@ class list
    void remove_if(Pred pred)
    {
       typedef ValueCompareToNodeCompare<Pred> Predicate;
-      this->m_ilist.remove_and_dispose_if(Predicate(pred), Destroyer(*this));
+      this->m_icont.remove_and_dispose_if(Predicate(pred), Destroyer(*this));
    }
 
    //! <b>Effects</b>: Removes adjacent duplicate elements or adjacent 
@@ -1090,7 +978,7 @@ class list
    void unique(BinaryPredicate binary_pred)
    {
       typedef ValueCompareToNodeCompare<BinaryPredicate> Predicate;
-      this->m_ilist.unique_and_dispose(Predicate(binary_pred), Destroyer(*this));
+      this->m_icont.unique_and_dispose(Predicate(binary_pred), Destroyer(*this));
    }
 
    //! <b>Requires</b>: The lists x and *this must be distinct. 
@@ -1139,7 +1027,7 @@ class list
    void merge(list<T, A>& x, StrictWeakOrdering comp)
    {
       if((NodeAlloc&)*this == (NodeAlloc&)x){
-         this->m_ilist.merge(x.m_ilist,
+         this->m_icont.merge(x.m_icont,
             ValueCompareToNodeCompare<StrictWeakOrdering>(comp));
       }
       else{
@@ -1192,30 +1080,92 @@ class list
       // nothing if the list has length 0 or 1.
       if (this->size() < 2)
          return;
-      this->m_ilist.sort(ValueCompareToNodeCompare<StrictWeakOrdering>(comp));
+      this->m_icont.sort(ValueCompareToNodeCompare<StrictWeakOrdering>(comp));
    }
 
    /// @cond
    private:
-   void priv_fill_insert(iterator p, size_type n, const T& x)
+   //Iterator range version
+   template<class InpIterator>
+   void priv_create_and_insert_nodes
+      (const_iterator pos, InpIterator beg, InpIterator end)
    {
-      for ( ; n > 0; --n)
-         this->insert(p, x);
+      typedef typename std::iterator_traits<InpIterator>::iterator_category ItCat;
+      priv_create_and_insert_nodes(pos, beg, end, alloc_version(), ItCat());
    }
 
+   template<class InpIterator>
+   void priv_create_and_insert_nodes
+      (const_iterator pos, InpIterator beg, InpIterator end, allocator_v1, std::input_iterator_tag)
+   {
+      for (; beg != end; ++beg){
+         this->m_icont.insert(pos.get(), *this->create_node_from_it(beg));
+      }
+   }
+
+   template<class InpIterator>
+   void priv_create_and_insert_nodes
+      (const_iterator pos, InpIterator beg, InpIterator end, allocator_v2, std::input_iterator_tag)
+   {  //Just forward to the default one
+      priv_create_and_insert_nodes(pos, beg, end, allocator_v1(), std::input_iterator_tag());
+   }
+
+   template<class FwdIterator>
+   void priv_create_and_insert_nodes
+      (const_iterator pos, FwdIterator beg, FwdIterator end, allocator_v2, std::forward_iterator_tag)
+   {
+      //Optimize memory allocation obtaining the distance between iterators
+      size_type n = std::distance(beg, end);
+
+      //Allocate and construct as many nodes as possible with
+      //the one-shot allocation
+      typedef typename NodeAlloc::multiallocation_iterator multiallocation_iterator;
+      multiallocation_iterator many_beg, itend, it;
+      size_type received_array;
+      FwdIterator next = this->allocate_many_and_construct
+         (beg, n, many_beg, received_array);
+
+      //Insert constructed nodes (this does not throw)
+      for (it = many_beg; it != itend; ++it){
+         this->m_icont.insert(pos.get(), *it);
+      }
+
+      //Insert remaining nodes using individual allocation
+      //(this can throw, but there is no leak)
+      for (size_type i = received_array; i < n; ++i, ++next){
+         this->m_icont.insert(pos.get(), *this->create_node_from_it(next));
+      }
+
+      //good old version
+      //for (; beg != end; ++beg){
+      //   this->m_icont.insert(pos.get(), *this->create_node(*beg));
+      //}
+   }
+
+   //Default constructed version
+   void priv_create_and_insert_nodes(const_iterator pos, size_type n)
+   {
+      typedef default_construct_iterator<value_type, difference_type> default_iterator;
+      this->priv_create_and_insert_nodes(pos, default_iterator(n), default_iterator());
+   }
+
+   //Copy constructed version
+   void priv_create_and_insert_nodes(const_iterator pos, size_type n, const T& x)
+   {
+      typedef constant_iterator<value_type, difference_type> cvalue_iterator;
+      this->priv_create_and_insert_nodes(pos, cvalue_iterator(x, n), cvalue_iterator());
+   }
+
+   //Dispatch to detect iterator range or integer overloads
    template <class InputIter>
    void priv_insert_dispatch(iterator p,
                              InputIter first, InputIter last,
                              detail::false_)
-   {
-      for ( ; first != last; ++first){
-         this->insert(p, *first);
-      }
-   }
+   {  this->priv_create_and_insert_nodes(p, first, last);   }
 
    template<class Integer>
    void priv_insert_dispatch(iterator p, Integer n, Integer x, detail::true_) 
-   {  this->priv_fill_insert(p, n, x);  }
+   {  this->priv_create_and_insert_nodes(p, n, x);  }
 
    void priv_fill_assign(size_type n, const T& val) 
    {
@@ -1223,10 +1173,12 @@ class list
 
       for ( ; i != iend && n > 0; ++i, --n)
          *i = val;
-      if (n > 0)
-         this->insert(end(), n, val);
-      else
+      if (n > 0){
+         this->priv_create_and_insert_nodes(this->end(), n, val);
+      }
+      else{
          this->erase(i, end());
+      }
    }
 
    template <class Integer>
@@ -1243,8 +1195,9 @@ class list
          *first1 = *first2;
       if (first2 == last2)
          this->erase(first1, last1);
-      else
-         this->insert(last1, first2, last2);
+      else{
+         this->priv_create_and_insert_nodes(last1, first2, last2);
+      }
    }
 
    //Functors for member algorithm defaults
@@ -1260,6 +1213,7 @@ class list
          {  return a == b;  }
    };
    /// @endcond
+
 };
 
 template <class T, class A>
@@ -1339,27 +1293,28 @@ inline void swap(list<T, A> &&x, list<T, A> &&y)
 #endif
 
 /// @cond
-/*!This class is movable*/
+
+//!This class is movable
 template <class T, class A>
 struct is_movable<list<T, A> >
 {
    enum {   value = true };
 };
 
-/*!This class is movable*/
+//!This class is movable
 template <class T, class VoidPointer>
 struct is_movable<detail::list_node<T, VoidPointer> >
 {
    enum {   value = true };
 };
-
-/*!This class is movable*/
+/*
+//!This class is movable
 template <class A>
 struct is_movable<detail::list_alloc<A> >
 {
    enum {   value = true };
 };
-
+*/
 //!has_trivial_destructor_after_move<> == true_type
 //!specialization for optimizations
 template <class T, class A>

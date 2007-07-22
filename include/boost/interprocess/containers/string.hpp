@@ -40,6 +40,7 @@
 #include <boost/interprocess/allocators/allocation_type.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/move.hpp>
+#include <boost/static_assert.hpp>
 
 #include <functional>
 #include <string>
@@ -79,11 +80,19 @@ class basic_string_base
    basic_string_base();
  public:
    typedef A allocator_type;
+   //! The stored allocator type
+   typedef allocator_type                          stored_allocator_type;
    typedef typename A::pointer     pointer;
    typedef typename A::value_type  value_type;
    typedef typename A::size_type   size_type;
 
    allocator_type get_allocator() const { return *this; }
+
+   const stored_allocator_type &get_stored_allocator() const 
+   {  return *this; }
+
+   stored_allocator_type &get_stored_allocator()
+   {  return *this; }
 
    basic_string_base(const allocator_type& a)
       : allocator_type(a)
@@ -152,9 +161,12 @@ class basic_string_base
    };
 
    //This basic type should have the same alignment as long_t
-//   typedef typename type_with_alignment<detail::alignment_of<long_t>::value>::type
+//iG   typedef typename type_with_alignment<detail::alignment_of<long_t>::value>::type
 //      long_alignment_type;
    typedef void *long_alignment_type;
+   BOOST_STATIC_ASSERT((detail::alignment_of<long_alignment_type>::value % 
+                        detail::alignment_of<long_t>::value) == 0);
+
 
    //This type is the first part of the structure controlling a short string
    //The "data" member stores
@@ -173,17 +185,16 @@ class basic_string_base
    };
 
    protected:
-
-   enum  {  MinInternalBufferChars = 8
-         ,  AlignmentOfValueType = alignment_of<value_type>::value
-         ,  ShortDataOffset = detail::ct_rounded_size<sizeof(short_header)
-         ,  AlignmentOfValueType>::value
-         ,  ZeroCostInternalBufferChars =
-               (sizeof(long_t) - ShortDataOffset)/sizeof(value_type)
-         ,  UnalignedFinalInternalBufferChars =
-               (ZeroCostInternalBufferChars > MinInternalBufferChars) ?
-                ZeroCostInternalBufferChars : MinInternalBufferChars
-         };
+   static const size_type  MinInternalBufferChars = 8;
+   static const size_type  AlignmentOfValueType =
+      alignment_of<value_type>::value;
+   static const size_type  ShortDataOffset =
+      detail::ct_rounded_size<sizeof(short_header),  AlignmentOfValueType>::value;
+   static const size_type  ZeroCostInternalBufferChars =
+      (sizeof(long_t) - ShortDataOffset)/sizeof(value_type);
+   static const size_type  UnalignedFinalInternalBufferChars = 
+      (ZeroCostInternalBufferChars > MinInternalBufferChars) ?
+                ZeroCostInternalBufferChars : MinInternalBufferChars;
 
    struct short_t
    {
@@ -203,11 +214,11 @@ class basic_string_base
       {  return *static_cast<long_t*>(const_cast<void*>(static_cast<const void*>(&r)));  }
    } m_repr;
 
-   enum  {  InternalBufferChars = (sizeof(repr_t) - ShortDataOffset)/sizeof(value_type)  };
+   static const size_type InternalBufferChars = (sizeof(repr_t) - ShortDataOffset)/sizeof(value_type);
 
    private:
 
-   enum {   MinAllocation = InternalBufferChars*2   };
+   static const size_type MinAllocation = InternalBufferChars*2;
 
    protected:
    bool is_short() const
@@ -435,7 +446,7 @@ class basic_string
    /// @cond
    private:
    typedef detail::basic_string_base<A> base_t;
-   enum {   InternalBufferChars = base_t::InternalBufferChars   };
+   static const typename base_t::size_type InternalBufferChars = base_t::InternalBufferChars;
 
    protected:
    // A helper class to use a char_traits as a function object.
@@ -473,6 +484,8 @@ class basic_string
    public:
    //! The allocator type
    typedef A                                       allocator_type;
+   //! The stored allocator type
+   typedef allocator_type                          stored_allocator_type;
    //! The type of object, CharT, stored in the string
    typedef CharT                                   value_type;
    //! The second template parameter Traits

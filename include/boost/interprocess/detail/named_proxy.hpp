@@ -26,6 +26,7 @@
 #include <boost/preprocessor/repetition/enum.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <iterator>
 
 /*!\file
    Describes a proxy class that implements named allocation syntax.
@@ -40,14 +41,13 @@ template<class T>
 struct Ctor0Arg   :  public placement_destroy<T>
 {
    typedef Ctor0Arg self_t;
-   typedef T target_t;
 
    Ctor0Arg(){}
 
    self_t& operator++()       {  return *this;  }
    self_t  operator++(int)    {  return *this;  }
 
-   virtual void construct(void *mem)
+   void construct(void *mem)
    {  new(mem)T;  }
 
    virtual void construct_n(void *mem, std::size_t num, std::size_t &constructed)
@@ -65,9 +65,10 @@ struct Ctor0Arg   :  public placement_destroy<T>
 ////////////////////////////////////////////////////////////////
 //    What the macro should generate (n == 2):
 //
-//    template<class T, bool param_or_it, class P1, class P2>
+//    template<class T, bool is_iterator, class P1, class P2>
 //    struct Ctor2Arg
 //    {
+//       typedef detail::bool_<is_iterator> IsIterator;
 //       typedef Ctor2Arg self_t;
 //
 //       void do_increment(detail::false_)
@@ -77,8 +78,7 @@ struct Ctor0Arg   :  public placement_destroy<T>
 //
 //       self_t& operator++()
 //       {
-//          typedef detail::bool_<param_or_it> Result;
-//          this->do_increment(Result());
+//          this->do_increment(IsIterator());
 //          return *this;
 //       }
 //
@@ -87,7 +87,7 @@ struct Ctor0Arg   :  public placement_destroy<T>
 //       Ctor2Arg(const P1 &p1, const P2 &p2)
 //          : p1((P1 &)p_1), p2((P2 &)p_2) {}
 //
-//       virtual void construct(void *mem)
+//       void construct(void *mem)
 //       {  new(object)T(m_p1, m_p2); }
 //
 //       virtual void construct_n(void *mem
@@ -96,13 +96,18 @@ struct Ctor0Arg   :  public placement_destroy<T>
 //       {
 //          T* memory      = static_cast<T*>(mem);
 //          for(constructed = 0; constructed < num; ++constructed){
-//             new(memory++)T(m_p1, m_p2);
-//             typedef detail::bool_<param_or_it> Result;
-//             this->do_increment(Result());
+//             this->construct(memory++, IsIterator());
+//             this->do_increment(IsIterator());
 //          }
 //       }
 //
-//    private:
+//       private:
+//       void construct(void *mem, detail::true_)
+//       {  new(mem)T(*m_p1, *m_p2); }
+//                                                                           
+//       void construct(void *mem, detail::false_)
+//       {  new(mem)T(m_p1, m_p2); }
+//
 //       P1 &m_p1; P2 &m_p2;
 //    };
 ////////////////////////////////////////////////////////////////
@@ -128,54 +133,53 @@ struct Ctor0Arg   :  public placement_destroy<T>
 #define BOOST_INTERPROCESS_AUX_PARAM_DEFINE(z, n, data)   \
   BOOST_PP_CAT(P, n) & BOOST_PP_CAT(m_p, n);       \
 
-#define BOOST_INTERPROCESS_AUX_PARAM_DEREFERENCE(z, n, data)   \
-   BOOST_PP_CAT(P, n) & BOOST_PP_CAT(m_p, n);       \
 /**/
 
-#define BOOST_PP_LOCAL_MACRO(n)                                         \
-   template<class T, bool param_or_it, BOOST_PP_ENUM_PARAMS(n, class P) >\
-   struct BOOST_PP_CAT(BOOST_PP_CAT(Ctor, n), Arg)                      \
-      :  public placement_destroy<T>                                                 \
-   {                                                                    \
-      typedef BOOST_PP_CAT(BOOST_PP_CAT(Ctor, n), Arg) self_t;          \
-      typedef T target_t;                                               \
-                                                                        \
-      void do_increment(detail::false_)                             \
-         { BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INC, _); }     \
-                                                                        \
-      void do_increment(detail::true_){}                            \
-                                                                        \
-      self_t& operator++()                                              \
-      {                                                                 \
-         typedef detail::bool_<param_or_it> Result;                     \
-         this->do_increment(Result());                                  \
-         return *this;                                                  \
-      }                                                                 \
-                                                                        \
-      self_t  operator++(int) {  return ++*this;   *this;  }            \
-                                                                        \
-      BOOST_PP_CAT(BOOST_PP_CAT(Ctor, n), Arg)                          \
-         ( BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_LIST, _) )     \
-         : BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INIT, _) {}    \
-                                                                        \
-      virtual void construct(void *mem)                                 \
-      {  new(mem)T(BOOST_PP_ENUM_PARAMS(n, m_p)); }                     \
-                                                                        \
-      virtual void construct_n(void *mem                                \
-                        , std::size_t num                               \
-                        , std::size_t &constructed)                     \
-      {                                                                 \
-         T* memory      = static_cast<T*>(mem);                         \
-         for(constructed = 0; constructed < num; ++constructed){        \
-            new(memory++)T(BOOST_PP_ENUM_PARAMS(n, m_p));               \
-            typedef detail::bool_<param_or_it> Result;                  \
-            this->do_increment(Result());                               \
-         }                                                              \
-      }                                                                 \
-                                                                        \
-      private:                                                          \
-         BOOST_PP_REPEAT(n, BOOST_INTERPROCESS_AUX_PARAM_DEFINE, _)     \
-   };                                                                   \
+#define BOOST_PP_LOCAL_MACRO(n)                                            \
+   template<class T, bool is_iterator, BOOST_PP_ENUM_PARAMS(n, class P) >  \
+   struct BOOST_PP_CAT(BOOST_PP_CAT(Ctor, n), Arg)                         \
+      :  public placement_destroy<T>                                       \
+   {                                                                       \
+      typedef detail::bool_<is_iterator> IsIterator;                       \
+      typedef BOOST_PP_CAT(BOOST_PP_CAT(Ctor, n), Arg) self_t;             \
+                                                                           \
+      void do_increment(detail::true_)                                     \
+         { BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INC, _); }        \
+                                                                           \
+      void do_increment(detail::false_){}                                  \
+                                                                           \
+      self_t& operator++()                                                 \
+      {                                                                    \
+         this->do_increment(IsIterator());                                 \
+         return *this;                                                     \
+      }                                                                    \
+                                                                           \
+      self_t  operator++(int) {  return ++*this;   *this;  }               \
+                                                                           \
+      BOOST_PP_CAT(BOOST_PP_CAT(Ctor, n), Arg)                             \
+         ( BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_LIST, _) )        \
+         : BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INIT, _) {}       \
+                                                                           \
+      virtual void construct_n(void *mem                                   \
+                        , std::size_t num                                  \
+                        , std::size_t &constructed)                        \
+      {                                                                    \
+         T* memory      = static_cast<T*>(mem);                            \
+         for(constructed = 0; constructed < num; ++constructed){           \
+            this->construct(memory++, IsIterator());                       \
+            this->do_increment(IsIterator());                              \
+         }                                                                 \
+      }                                                                    \
+                                                                           \
+      private:                                                             \
+      void construct(void *mem, detail::true_)                             \
+      {  new(mem)T(BOOST_PP_ENUM_PARAMS(n, *m_p)); }                       \
+                                                                           \
+      void construct(void *mem, detail::false_)                            \
+      {  new(mem)T(BOOST_PP_ENUM_PARAMS(n, m_p)); }                        \
+                                                                           \
+      BOOST_PP_REPEAT(n, BOOST_INTERPROCESS_AUX_PARAM_DEFINE, _)        \
+   };                                                                      \
 /**/
 
 
@@ -192,12 +196,12 @@ struct Ctor0Arg   :  public placement_destroy<T>
 template 
    < class SegmentManager  //segment manager to construct the object
    , class T               //type of object to build
-   , bool param_or_it      //passing parameters are normal object or iterators?
+   , bool is_iterator      //passing parameters are normal object or iterators?
    >
 class named_proxy
 {
    typedef typename SegmentManager::char_type char_type;
-   const char_type *     mp_name;
+   const char_type *    mp_name;
    SegmentManager *     mp_mngr;
    mutable std::size_t  m_num;
    const bool           m_find;
@@ -232,7 +236,7 @@ class named_proxy
       T *operator()(BOOST_PP_ENUM (n, BOOST_INTERPROCESS_AUX_PARAM_LIST, _)) const   \
       {                                                                       \
          typedef BOOST_PP_CAT(BOOST_PP_CAT(Ctor, n), Arg)                     \
-            <T, param_or_it, BOOST_PP_ENUM (n, BOOST_INTERPROCESS_AUX_TYPE_LIST, _)> \
+            <T, is_iterator, BOOST_PP_ENUM (n, BOOST_INTERPROCESS_AUX_TYPE_LIST, _)> \
             ctor_obj_t;                                                       \
          ctor_obj_t ctor_obj (BOOST_PP_ENUM_PARAMS(n, p));                    \
          return mp_mngr->template generic_construct<T>                       \
@@ -253,7 +257,7 @@ class named_proxy
    // T *operator()(P1 &p1, P2 &p2) const 
    // {
    //    typedef Ctor2Arg
-   //       <T, param_or_it, P1, P2>
+   //       <T, is_iterator, P1, P2>
    //       ctor_obj_t;
    //    ctor_obj_t ctor_obj(p1, p2);
    //

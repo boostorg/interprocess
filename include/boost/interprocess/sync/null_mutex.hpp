@@ -133,12 +133,6 @@ class null_mutex
       Does not throw.*/
    bool try_unlock_sharable_and_lock_upgradable()
    {  return true;   }
-   /// @cond   
-   #if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
-   private:
-   char dummy; // BCB would by default use 8 B for empty structure
-   #endif
-   /// @endcond
 };
 
 }  //namespace interprocess {

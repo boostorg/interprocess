@@ -67,35 +67,17 @@ inline void do_swap(T& x, T& y)
 //!A deleter for scoped_ptr that deallocates the memory
 //!allocated for an object using a STL allocator.
 template <class Allocator>
-struct scoped_ptr_deallocator
+struct scoped_ptr_dealloc_functor
 {
    typedef typename Allocator::pointer pointer;
 
    Allocator& m_alloc;
 
-   scoped_ptr_deallocator(Allocator& a)
+   scoped_ptr_dealloc_functor(Allocator& a)
          : m_alloc(a) {}
 
    void operator()(pointer ptr)
       {  if (ptr) m_alloc.deallocate(ptr, 1);  }
-};
-
-//!A deleter for scoped_ptr that deallocates the memory
-//!allocated for an array of objects using a STL allocator.
-template <class Allocator>
-struct scoped_ptr_array_deallocator
-{
-   typedef typename Allocator::pointer pointer;
-
-   scoped_ptr_array_deallocator(Allocator& a, std::size_t length)
-         : m_alloc(a), m_length(length) {}
-
-   void operator()(pointer &ptr)
-      {  m_alloc.deallocate(ptr, m_length);  }
-
-   private:
-   Allocator&  m_alloc;
-   std::size_t m_length;
 };
 
 //!A deleter for scoped_ptr that deallocates the memory
@@ -183,6 +165,62 @@ class allocator_destroyer
       detail::get_pointer(p)->~value_type();
       a_.deallocate(p, 1);
    }
+};
+
+//!A class used for exception-safe multi-allocation + construction.
+template <class Allocator>
+struct multiallocation_deallocator
+{
+   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
+
+   multiallocation_iterator m_itbeg;
+   Allocator&  m_alloc;
+
+   multiallocation_deallocator(multiallocation_iterator itbeg, Allocator& a)
+      : m_itbeg(itbeg), m_alloc(a) {}
+
+   ~multiallocation_deallocator()
+   {
+      multiallocation_iterator endit;
+      while(m_itbeg != endit){
+         m_alloc.deallocate(&*m_itbeg, 1);
+         ++m_itbeg;
+      }
+   }
+
+   void release()
+   {  m_itbeg = multiallocation_iterator(); }
+};
+
+
+//!A class used for exception-safe multi-allocation + construction.
+template <class Allocator>
+struct multiallocation_destroy_dealloc
+{
+   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
+   typedef typename Allocator::value_type value_type;
+
+   multiallocation_iterator m_itbeg;
+   Allocator&  m_alloc;
+
+   multiallocation_destroy_dealloc(multiallocation_iterator itbeg, Allocator& a)
+      : m_itbeg(itbeg), m_alloc(a) {}
+
+   ~multiallocation_destroy_dealloc()
+   {
+      multiallocation_iterator endit;
+      while(m_itbeg != endit){
+         detail::get_pointer(&*m_itbeg)->~value_type();
+         m_alloc.deallocate(&*m_itbeg, 1);
+         ++m_itbeg;
+      }
+   }
+
+   void next()
+   {  ++m_itbeg; }
+
+   void release()
+   {  m_itbeg = multiallocation_iterator(); }
 };
 
 /*!Forces a cast from any pointer to char * pointer*/

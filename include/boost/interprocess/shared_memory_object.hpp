@@ -13,9 +13,8 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/creation_tags.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
-//#include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/exceptions.hpp>
@@ -34,15 +33,14 @@
 #  include<boost/interprocess/detail/os_file_functions.hpp>
 #endif
 
-/*!\file
-   Describes a shared memory object management class.
-*/
+//!\file
+//!Describes a shared memory object management class.
 
 namespace boost {
 namespace interprocess {
 
-/*!A class that wraps a shared memory mapping that can be used to
-   create mapped regions from the mapped files*/
+//!A class that wraps a shared memory mapping that can be used to
+//!create mapped regions from the mapped files
 class shared_memory_object
 {
    /// @cond
@@ -58,19 +56,19 @@ class shared_memory_object
 
    //!Creates a shared memory object with name "name" and mode "mode", with the access mode "mode"
    //!If the file previously exists, throws an error.*/
-   shared_memory_object(detail::create_only_t, const char *name, mode_t mode)
-   {  this->priv_open_or_create(DoCreate, name, mode);  }
+   shared_memory_object(create_only_t, const char *name, mode_t mode)
+   {  this->priv_open_or_create(detail::DoCreate, name, mode);  }
 
    //!Tries to create a shared memory object with name "name" and mode "mode", with the
    //!access mode "mode". If the file previously exists, it tries to open it with mode "mode".
    //!Otherwise throws an error.
-   shared_memory_object(detail::open_or_create_t, const char *name, mode_t mode)
-   {  this->priv_open_or_create(DoCreateOrOpen, name, mode);  }
+   shared_memory_object(open_or_create_t, const char *name, mode_t mode)
+   {  this->priv_open_or_create(detail::DoCreateOrOpen, name, mode);  }
 
    //!Tries to open a shared memory object with name "name", with the access mode "mode". 
    //!If the file does not previously exist, it throws an error.
-   shared_memory_object(detail::open_only_t, const char *name, mode_t mode)
-   {  this->priv_open_or_create(DoOpen, name, mode);  }
+   shared_memory_object(open_only_t, const char *name, mode_t mode)
+   {  this->priv_open_or_create(detail::DoOpen, name, mode);  }
 
    //!Moves the ownership of "moved"'s shared memory object to *this. 
    //!After the call, "moved" does not represent any shared memory object. 
@@ -134,7 +132,7 @@ class shared_memory_object
    void priv_close();
 
    //!Closes a previously opened file mapping. Never throws.
-   bool priv_open_or_create(create_enum_t type, const char *filename, mode_t mode);
+   bool priv_open_or_create(detail::create_enum_t type, const char *filename, mode_t mode);
 
    file_handle_t  m_handle;
    mode_t         m_mode;
@@ -169,7 +167,7 @@ inline mode_t shared_memory_object::get_mode() const
 #if !defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
 
 inline bool shared_memory_object::priv_open_or_create
-   (create_enum_t type, const char *filename, mode_t mode)
+   (detail::create_enum_t type, const char *filename, mode_t mode)
 {
    m_filename = filename;
 
@@ -203,13 +201,13 @@ inline bool shared_memory_object::priv_open_or_create
    }
 
    switch(type){
-      case DoOpen:
+      case detail::DoOpen:
          m_handle = detail::open_existing_file(shmfile.c_str(), mode, true);
       break;
-      case DoCreate:
+      case detail::DoCreate:
          m_handle = detail::create_new_file(shmfile.c_str(), mode, true);
       break;
-      case DoCreateOrOpen:
+      case detail::DoCreateOrOpen:
          m_handle = detail::create_or_open_file(shmfile.c_str(), mode, true);
       break;
       default:
@@ -272,7 +270,7 @@ inline void shared_memory_object::priv_close()
 #else //!defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
 
 inline bool shared_memory_object::priv_open_or_create
-   (create_enum_t type, 
+   (detail::create_enum_t type, 
     const char *filename,
     mode_t mode)
 {
@@ -298,13 +296,13 @@ inline bool shared_memory_object::priv_open_or_create
    }
 
    switch(type){
-      case DoOpen:
+      case detail::DoOpen:
          //No addition
       break;
-      case DoCreate:
+      case detail::DoCreate:
          oflag |= (O_CREAT | O_EXCL);
       break;
-      case DoCreateOrOpen:
+      case detail::DoCreateOrOpen:
          oflag |= O_CREAT;
       break;
       default:
