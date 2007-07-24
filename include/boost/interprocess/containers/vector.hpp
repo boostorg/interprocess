@@ -237,6 +237,8 @@ class vector : private detail::vector_alloc_holder<A>
    /// @endcond
    public:
 
+   /// @cond
+
    //! Const iterator used to iterate through a vector. 
    class const_iterator
       : public std::iterator<std::random_access_iterator_tag
@@ -379,6 +381,8 @@ class vector : private detail::vector_alloc_holder<A>
       difference_type operator-(const const_iterator& right) const
       {  return *((const_iterator*)this) - right;   }
    };
+
+   /// @endcond
 
    //! Iterator used to iterate backwards through a vector. 
    typedef std::reverse_iterator<iterator>   
