@@ -86,11 +86,8 @@ class basic_managed_memory_impl
    typedef typename MemoryAlgorithm::mutex_family     mutex_family;
    typedef CharType                                   char_t;
    typedef std::ptrdiff_t                             handle_t;
-   typedef typename segment_manager::
-      named_index_t::const_iterator                   const_named_iterator;
-   typedef typename segment_manager::
-      unique_index_t::const_iterator                  const_unique_iterator;
-
+   typedef typename segment_manager::const_named_iterator  const_named_iterator;
+   typedef typename segment_manager::const_unique_iterator const_unique_iterator;
    /// @cond
 
    //Experimental. Don't use.
