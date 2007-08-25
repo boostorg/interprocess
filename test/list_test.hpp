@@ -21,7 +21,7 @@
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/move_iterator.hpp>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 namespace boost{
 namespace interprocess{
@@ -94,7 +94,7 @@ int list_test (bool copied_allocators_equal = true)
    typedef std::list<int> MyStdList;
    typedef typename MyShmList::value_type IntType;
    const int memsize = 65536;
-   const char *const shMemName = test::get_compiler_name();
+   const char *const shMemName = test::get_process_id_name();
    const int max = 100;
    typedef push_data_function<DoublyLinked> push_data_t;
 

@@ -29,7 +29,7 @@
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 //***************************************************************//
 //                                                               //
@@ -96,7 +96,7 @@ bool do_test()
    typedef deque<IntType, shmem_allocator_t>   MyShmDeque;
    typedef std::deque<int>                     MyStdDeque;
    const int Memsize = 65536;
-   const char *const shMemName = test::get_compiler_name();
+   const char *const shMemName = test::get_process_id_name();
    const int max = 100;
 
    try{

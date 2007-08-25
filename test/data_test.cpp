@@ -18,17 +18,17 @@
 #include <functional>
 #include <string>
 #include "print_container.hpp"
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
 int main ()
 {
    const int memsize = 65536;
-   std::string compiler_name;
-   test::get_compiler_name(compiler_name);
-   const char *const shMemName = compiler_name.c_str();
-   std::string filename (test::get_compiler_name());
+   std::string process_name;
+   test::get_process_id_name(process_name);
+   const char *const shMemName = process_name.c_str();
+   std::string filename (test::get_process_id_name());
    filename += "_file";
 
    try{

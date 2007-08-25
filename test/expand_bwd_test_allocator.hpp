@@ -30,14 +30,11 @@
 #include <stdexcept>
 #include <assert.h>
 
-/*!\file
-   Describes an allocator to test expand capabilities
-*/
+//!\file
+//!Describes an allocator to test expand capabilities
 
 namespace boost {
-
 namespace interprocess {
-
 namespace test {
 
 //This allocator just allows two allocations. The first one will return 
@@ -73,17 +70,17 @@ class expand_bwd_test_allocator
    struct rebind
    {  typedef expand_bwd_test_allocator<T2>   other;   };
 
-   /*!Constructor from the segment manager. Never throws*/
+   //!Constructor from the segment manager. Never throws
    expand_bwd_test_allocator(T *buffer, size_type size, difference_type offset) 
       : mp_buffer(buffer), m_size(size)
       , m_offset(offset),  m_allocations(0){ }
 
-   /*!Constructor from other expand_bwd_test_allocator. Never throws*/
+   //!Constructor from other expand_bwd_test_allocator. Never throws
    expand_bwd_test_allocator(const expand_bwd_test_allocator &other) 
       : mp_buffer(other.mp_buffer), m_size(other.m_size)
       , m_offset(other.m_offset),  m_allocations(0){ }
 
-   /*!Constructor from related expand_bwd_test_allocator. Never throws*/
+   //!Constructor from related expand_bwd_test_allocator. Never throws
    template<class T2>
    expand_bwd_test_allocator(const expand_bwd_test_allocator<T2> &other)
       : mp_buffer(other.mp_buffer), m_size(other.m_size)
@@ -153,20 +150,20 @@ class expand_bwd_test_allocator
       return std::pair<pointer, bool>(0, true);
    }
 
-   /*!Returns maximum the number of objects the previously allocated memory
-      pointed by p can hold.*/
+   //!Returns maximum the number of objects the previously allocated memory
+   //!pointed by p can hold.
    size_type size(const pointer &p) const
    {  (void)p; return m_size; }
 
-   /*!Allocates just one object. Memory allocated with this function
-      must be deallocated only with deallocate_one().
-      Throws boost::interprocess::bad_alloc if there is no enough memory*/
+   //!Allocates just one object. Memory allocated with this function
+   //!must be deallocated only with deallocate_one().
+   //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate_one()
    {  return this->allocate(1);  }
 
-   /*!Deallocates memory previously allocated with allocate_one().
-      You should never use deallocate_one to deallocate memory allocated
-      with other functions different from allocate_one(). Never throws*/
+   //!Deallocates memory previously allocated with allocate_one().
+   //!You should never use deallocate_one to deallocate memory allocated
+   //!with other functions different from allocate_one(). Never throws
    void deallocate_one(const pointer &p)
    {  return this->deallocate(p, 1);  }
 
@@ -176,13 +173,13 @@ class expand_bwd_test_allocator
    char              m_allocations;
 };
 
-/*!Equality test for same type of expand_bwd_test_allocator*/
+//!Equality test for same type of expand_bwd_test_allocator
 template<class T> inline
 bool operator==(const expand_bwd_test_allocator<T>  &alloc1, 
                 const expand_bwd_test_allocator<T>  &alloc2)
 {  return false; }
 
-/*!Inequality test for same type of expand_bwd_test_allocator*/
+//!Inequality test for same type of expand_bwd_test_allocator
 template<class T> inline
 bool operator!=(const expand_bwd_test_allocator<T>  &alloc1, 
                 const expand_bwd_test_allocator<T>  &alloc2)

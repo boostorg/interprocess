@@ -30,9 +30,8 @@
 #include <stdexcept>
 #include <assert.h>
 
-/*!\file
-   Describes an allocator to test expand capabilities
-*/
+//!\file
+//!Describes an allocator to test expand capabilities
 
 namespace boost {
 namespace interprocess {
@@ -71,15 +70,15 @@ class dummy_test_allocator
    struct rebind
    {  typedef dummy_test_allocator<T2>   other;   };
 
-   /*!Default constructor. Never throws*/
+   //!Default constructor. Never throws
    dummy_test_allocator()
    {} 
 
-   /*!Constructor from other dummy_test_allocator. Never throws*/
+   //!Constructor from other dummy_test_allocator. Never throws
    dummy_test_allocator(const dummy_test_allocator &other)
    {}
 
-   /*!Constructor from related dummy_test_allocator. Never throws*/
+   //!Constructor from related dummy_test_allocator. Never throws
    template<class T2>
    dummy_test_allocator(const dummy_test_allocator<T2> &other)
    {}
@@ -118,31 +117,31 @@ class dummy_test_allocator
                          size_type &, const pointer & = 0)
    {  return std::pair<pointer, bool>(0, true); }
 
-   /*!Returns maximum the number of objects the previously allocated memory
-      pointed by p can hold.*/
+   //!Returns maximum the number of objects the previously allocated memory
+   //!pointed by p can hold.
    size_type size(const pointer &) const
    {  return 0; }
 
-   /*!Allocates just one object. Memory allocated with this function
-      must be deallocated only with deallocate_one().
-      Throws boost::interprocess::bad_alloc if there is no enough memory*/
+   //!Allocates just one object. Memory allocated with this function
+   //!must be deallocated only with deallocate_one().
+   //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate_one()
    {  return pointer(0);  }
 
-   /*!Deallocates memory previously allocated with allocate_one().
-      You should never use deallocate_one to deallocate memory allocated
-      with other functions different from allocate_one(). Never throws*/
+   //!Deallocates memory previously allocated with allocate_one().
+   //!You should never use deallocate_one to deallocate memory allocated
+   //!with other functions different from allocate_one(). Never throws
    void deallocate_one(const pointer &)
    {}
 };
 
-/*!Equality test for same type of dummy_test_allocator*/
+//!Equality test for same type of dummy_test_allocator
 template<class T> inline
 bool operator==(const dummy_test_allocator<T>  &alloc1, 
                 const dummy_test_allocator<T>  &alloc2)
 {  return false; }
 
-/*!Inequality test for same type of dummy_test_allocator*/
+//!Inequality test for same type of dummy_test_allocator
 template<class T> inline
 bool operator!=(const dummy_test_allocator<T>  &alloc1, 
                 const dummy_test_allocator<T>  &alloc2)

@@ -120,6 +120,7 @@ int main()
                   ,MyStdSet
                   ,MyShmMultiSet
                   ,MyStdMultiSet>()){
+      std::cout << "Error in set_test<MyShmSet>" << std::endl;
       return 1;
    }
    if (0 != set_test<my_managed_shared_memory
@@ -127,6 +128,7 @@ int main()
                   ,MyStdSet
                   ,MyMovableShmMultiSet
                   ,MyStdMultiSet>()){
+      std::cout << "Error in set_test<MyMovableShmSet>" << std::endl;
       return 1;
    }
 
@@ -135,6 +137,7 @@ int main()
                   ,MyStdSet
                   ,MyMoveCopyShmMultiSet
                   ,MyStdMultiSet>()){
+      std::cout << "Error in set_test<MyMoveCopyShmSet>" << std::endl;
       return 1;
    }
 
@@ -143,6 +146,7 @@ int main()
                   ,MyStdMap
                   ,MyShmMultiMap
                   ,MyStdMultiMap>()){
+      std::cout << "Error in set_test<MyShmMap>" << std::endl;
       return 1;
    }
 
@@ -159,6 +163,7 @@ int main()
                   ,MyStdMap
                   ,MyMoveCopyShmMultiMap
                   ,MyStdMultiMap>()){
+      std::cout << "Error in set_test<MyMoveCopyShmMap>" << std::endl;
       return 1;
    }
 
