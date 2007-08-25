@@ -275,7 +275,7 @@ class iunordered_set_index
    //!previously allocated.
    void shrink_to_fit()
    {
-      size_type cur_size   = this->size();
+      //size_type cur_size   = this->size();
       size_type cur_count  = this->bucket_count();
       bucket_ptr old_p = this->bucket_pointer();
       size_type sug_count;
