@@ -14,14 +14,14 @@
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <cstdio>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
 int main ()
 {
    const int FileSize          = 65536;
-   const char *const FileName = test::get_compiler_name();
+   const char *const FileName = test::get_process_id_name();
 
    //STL compatible allocator object for memory-mapped file
    typedef allocator<int, managed_mapped_file::segment_manager>

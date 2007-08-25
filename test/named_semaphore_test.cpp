@@ -15,13 +15,13 @@
 #include "named_creation_template.hpp"
 #include "mutex_test_template.hpp"
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
 static const std::size_t SemCount      = 1;
 static const std::size_t RecSemCount   = 100;
-static const char *      SemName = test::get_compiler_name();
+static const char *      SemName = test::get_process_id_name();
 
 struct semaphore_deleter
 {

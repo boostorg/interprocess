@@ -7,9 +7,6 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#ifdef _MSC_VER
-#pragma warning (disable : 4503)
-#endif
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
@@ -20,10 +17,10 @@
 #include <boost/interprocess/containers/set.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/containers/string.hpp>
-#include <boost/interprocess/containers/string.hpp>
+#include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <stdio.h>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
@@ -34,24 +31,8 @@ class MyClass
    {}
 };
 
-//Deleter. Takes a pointer to the segment manager which
-//has a function to delete the object from the shared memory
-//segment. 
-struct MyDeleter
-{
-   typedef offset_ptr<MyClass> pointer;
-
-   MyDeleter(managed_shared_memory::segment_manager *mngr)
-      :  m_mngr(mngr)
-   {}
-
-   void operator()(pointer ptr)
-   {  m_mngr->destroy_ptr(ptr.get());  }
-
-   offset_ptr<managed_shared_memory::segment_manager> m_mngr;
-};
-
-typedef unique_ptr<MyClass, MyDeleter> my_unique_ptr_class;
+typedef deleter<MyClass, managed_shared_memory::segment_manager> my_deleter_type;
+typedef unique_ptr<MyClass, my_deleter_type> my_unique_ptr_class;
 typedef set <my_unique_ptr_class
             ,std::less<my_unique_ptr_class>
             ,allocator  <my_unique_ptr_class
@@ -70,26 +51,26 @@ typedef vector <my_unique_ptr_class
 
 int main()
 {
-   std::string compiler_name;
-   test::get_compiler_name(compiler_name);
+   std::string process_name;
+   test::get_process_id_name(process_name);
 
    //Create managed shared memory
-   shared_memory_object::remove(compiler_name.c_str());
+   shared_memory_object::remove(process_name.c_str());
    {
-      managed_shared_memory segment(create_only, compiler_name.c_str(), 10000);
-      
+      managed_shared_memory segment(create_only, process_name.c_str(), 10000);
+      my_deleter_type my_deleter(segment.get_segment_manager());
       //Create unique_ptr using dynamic allocation
       my_unique_ptr_class my_ptr (segment.construct<MyClass>(anonymous_instance)()
-                                 ,segment.get_segment_manager());
+                                 ,my_deleter);
       my_unique_ptr_class my_ptr2(segment.construct<MyClass>(anonymous_instance)()
-                                 ,segment.get_segment_manager());
+                                 ,my_deleter);
 
       //Backup relative pointers to future tests
       offset_ptr<MyClass> ptr1 = my_ptr.get();
       offset_ptr<MyClass> ptr2 = my_ptr2.get();
 
       //Test some copy constructors
-      my_unique_ptr_class my_ptr3(0, segment.get_segment_manager());
+      my_unique_ptr_class my_ptr3(0, my_deleter);
       my_unique_ptr_class my_ptr4(move(my_ptr3));
 
       //Construct a list and fill
@@ -134,9 +115,6 @@ int main()
          assert(set.rbegin()->get() == ptr1);
          assert(set.begin()->get()  == ptr2);
       }
-      //MySet set2(move(set));
-      //set2.swap(move(MySet(set_less_t(), segment.get_segment_manager())));
-      //set.swap(move(MySet(set_less_t(), segment.get_segment_manager())));
 
       //Now with vector
       MyVector vector(segment.get_segment_manager());
@@ -162,8 +140,11 @@ int main()
 
       assert(vector.begin()->get() == ptr1);
       assert(vector.rbegin()->get() == ptr2);
+
+      my_unique_ptr_class a(0, my_deleter), b(0, my_deleter);
+      a = move(b);
    }
-   shared_memory_object::remove(compiler_name.c_str());
+   shared_memory_object::remove(process_name.c_str());
    return 0;
 }
 

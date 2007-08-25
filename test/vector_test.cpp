@@ -31,7 +31,7 @@
 #include "expand_bwd_test_template.hpp"
 #include "dummy_test_allocator.hpp"
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
@@ -101,11 +101,11 @@ bool do_test()
    typedef vector<IntType, shmem_allocator_t>   MyShmVector;
    typedef std::vector<int>                     MyStdVector;
 
-   std::string compiler_name;
-   test::get_compiler_name(compiler_name);
+   std::string process_name;
+   test::get_process_id_name(process_name);
 
    const int Memsize = 65536;
-   const char *const shMemName = compiler_name.c_str();
+   const char *const shMemName = process_name.c_str();
    const int max = 100;
 
    {
@@ -240,21 +240,33 @@ bool do_test()
 bool test_expand_bwd()
 {
    //Now test all back insertion possibilities
-   typedef test::expand_bwd_test_allocator<test::int_holder>
+
+   //First raw ints
+   typedef test::expand_bwd_test_allocator<int>
       int_allocator_type;
-   typedef vector<test::int_holder, int_allocator_type>
+   typedef vector<int, int_allocator_type>
       int_vector;
 
    if(!test::test_all_expand_bwd<int_vector>())
       return false;
 
+   //Now user defined wrapped int
+   typedef test::expand_bwd_test_allocator<test::int_holder>
+      int_holder_allocator_type;
+   typedef vector<test::int_holder, int_holder_allocator_type>
+      int_holder_vector;
+
+   if(!test::test_all_expand_bwd<int_holder_vector>())
+      return false;
+
+   //Now user defined bigger wrapped int
    typedef test::expand_bwd_test_allocator<test::triple_int_holder>
-      triple_allocator_type;
+      triple_int_holder_allocator_type;
 
-   typedef vector<test::triple_int_holder, triple_allocator_type>
-      triple_int_vector;
+   typedef vector<test::triple_int_holder, triple_int_holder_allocator_type>
+      triple_int_holder_vector;
 
-   if(!test::test_all_expand_bwd<triple_int_vector>())
+   if(!test::test_all_expand_bwd<triple_int_holder_vector>())
       return false;
 
    return true;

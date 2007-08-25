@@ -16,12 +16,12 @@
 #include <cstring>   //for strcmp, memset
 #include <iostream>  //for cout
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
 static const std::size_t ShmSize = 1000;
-static const char *      ShmName = test::get_compiler_name();
+static const char *      ShmName = test::get_process_id_name();
 
 struct eraser
 {

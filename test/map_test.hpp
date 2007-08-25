@@ -21,7 +21,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/iterators.hpp>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 template<class T1, class T2, class T3, class T4>
 bool operator ==(std::pair<T1, T2> &p1, std::pair<T1, T2> &p2)
@@ -44,7 +44,7 @@ int map_test ()
    typedef std::pair<IntType, IntType>    IntPairType;
    typedef typename MyStdMap::value_type  StdPairType;
    const int memsize = 65536;
-   const char *const shMemName = test::get_compiler_name();
+   const char *const shMemName = test::get_process_id_name();
    const int max = 100;
 
    try{
@@ -338,7 +338,7 @@ int map_test_copyable ()
    typedef typename MyStdMap::value_type  StdPairType;
 
    const int memsize = 65536;
-   const char *const shMemName = test::get_compiler_name();
+   const char *const shMemName = test::get_process_id_name();
    const int max = 100;
 
    try{

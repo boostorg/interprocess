@@ -21,7 +21,7 @@
 #include <boost/thread.hpp>
 #include <memory>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 #ifdef max
 #undef max
@@ -40,12 +40,12 @@ using namespace boost::interprocess;
 //messages with same priority are received in fifo order
 bool test_priority_order()
 {
-   message_queue::remove(test::get_compiler_name());
+   message_queue::remove(test::get_process_id_name());
    {
       message_queue mq1
-         (open_or_create, test::get_compiler_name(), 100, sizeof(std::size_t)),
+         (open_or_create, test::get_process_id_name(), 100, sizeof(std::size_t)),
          mq2
-         (open_or_create, test::get_compiler_name(), 100, sizeof(std::size_t));
+         (open_or_create, test::get_process_id_name(), 100, sizeof(std::size_t));
 
       //We test that the queue is ordered by priority and in the 
       //same priority, is a FIFO
@@ -77,7 +77,7 @@ bool test_priority_order()
          tstamp_prev    = tstamp;
       }
    }
-   message_queue::remove(test::get_compiler_name());
+   message_queue::remove(test::get_process_id_name());
    return true;
 }
 
@@ -105,13 +105,13 @@ bool test_serialize_db()
    //Allocate a memory buffer to hold the destiny database using vector<char>
    std::vector<char> buffer_destiny(BufferSize, 0);
 
-   message_queue::remove(test::get_compiler_name());
+   message_queue::remove(test::get_process_id_name());
    {
       //Create the message-queues
-      message_queue mq1(create_only, test::get_compiler_name(), 1, MaxMsgSize);
+      message_queue mq1(create_only, test::get_process_id_name(), 1, MaxMsgSize);
 
       //Open previously created message-queue simulating other process
-      message_queue mq2(open_only, test::get_compiler_name());
+      message_queue mq2(open_only, test::get_process_id_name());
 
       //A managed heap memory to create the origin database
       managed_heap_memory db_origin(buffer_destiny.size());
@@ -196,7 +196,7 @@ bool test_serialize_db()
       db_origin.destroy_ptr(map1);
       db_destiny.destroy_ptr(map2);
    }
-   message_queue::remove(test::get_compiler_name());
+   message_queue::remove(test::get_process_id_name());
    return true;
 }
 //]
@@ -221,11 +221,11 @@ void receiver()
 
 bool test_buffer_overflow()
 {
-   boost::interprocess::message_queue::remove(test::get_compiler_name());
+   boost::interprocess::message_queue::remove(test::get_process_id_name());
    {
       std::auto_ptr<boost::interprocess::message_queue>
          ptr(new boost::interprocess::message_queue
-               (create_only, test::get_compiler_name(), 10, 10));
+               (create_only, test::get_process_id_name(), 10, 10));
       pmessage_queue = ptr.get();
 
       //Launch the receiver thread
@@ -240,7 +240,7 @@ bool test_buffer_overflow()
 
       thread.join();
    }
-   boost::interprocess::message_queue::remove(test::get_compiler_name());
+   boost::interprocess::message_queue::remove(test::get_process_id_name());
    return true;
 }
 

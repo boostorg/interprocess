@@ -7,16 +7,16 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-
+/*
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/detail/node_pool.hpp>
 #include <boost/interprocess/smart_ptr/unique_ptr.hpp>
-#include <boost/interprocess/smart_ptr/segment_deleter.hpp>
+#include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <vector>
 #include <cstddef>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
@@ -134,11 +134,11 @@ bool test_all_node_pool()
       <segment_manager, NodeSize, NodesPerChunk> node_pool_t;
 
    typedef test_node_pool<node_pool_t> test_node_pool_t;
-   shared_memory_object::remove(test::get_compiler_name());
+   shared_memory_object::remove(test::get_process_id_name());
    {
-      managed_shared_memory shm(create_only, test::get_compiler_name(), 4096);
+      managed_shared_memory shm(create_only, test::get_process_id_name(), 4096);
 
-      typedef segment_deleter<segment_manager, void*> deleter_t;
+      typedef deleter<node_pool_t, segment_manager> deleter_t;
       typedef unique_ptr<node_pool_t, deleter_t> unique_ptr_t;
 
       //Delete the pool when the tests end
@@ -152,7 +152,7 @@ bool test_all_node_pool()
       if(!test_node_pool_t::deallocate_free_chunks(*p))
          return false;
    }
-   shared_memory_object::remove(test::get_compiler_name());
+   shared_memory_object::remove(test::get_process_id_name());
    return true;
 }
 
@@ -165,3 +165,13 @@ int main ()
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
+*/
+
+#include<stdlib.h>
+
+int main()
+{
+   void *addr = malloc(100);
+   free(addr);
+   return 0;
+}

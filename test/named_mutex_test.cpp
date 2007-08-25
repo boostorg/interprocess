@@ -14,14 +14,14 @@
 #include "mutex_test_template.hpp"
 #include "named_creation_template.hpp"
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
 struct mutex_deleter
 {
    ~mutex_deleter()
-   {  named_mutex::remove(test::get_compiler_name()); }
+   {  named_mutex::remove(test::get_process_id_name()); }
 };
 
 //This wrapper is necessary to have a default constructor
@@ -31,7 +31,7 @@ class named_mutex_lock_test_wrapper
 {
    public:
    named_mutex_lock_test_wrapper()
-      :  named_mutex(open_or_create, test::get_compiler_name())
+      :  named_mutex(open_or_create, test::get_process_id_name())
    {}
 };
 
@@ -42,32 +42,32 @@ class named_mutex_creation_test_wrapper
 {
    public:
    named_mutex_creation_test_wrapper(create_only_t)
-      :  named_mutex(create_only, test::get_compiler_name())
+      :  named_mutex(create_only, test::get_process_id_name())
    {}
 
    named_mutex_creation_test_wrapper(open_only_t)
-      :  named_mutex(open_only, test::get_compiler_name())
+      :  named_mutex(open_only, test::get_process_id_name())
    {}
 
    named_mutex_creation_test_wrapper(open_or_create_t)
-      :  named_mutex(open_or_create, test::get_compiler_name())
+      :  named_mutex(open_or_create, test::get_process_id_name())
    {}
 };
 
 int main ()
 {
    try{
-      named_mutex::remove(test::get_compiler_name());
+      named_mutex::remove(test::get_process_id_name());
       test::test_named_creation<named_mutex_creation_test_wrapper>();
       test::test_all_lock<named_mutex_lock_test_wrapper>();
       test::test_all_mutex<false, named_mutex_lock_test_wrapper>();
    }
    catch(std::exception &ex){
-      named_mutex::remove(test::get_compiler_name());
+      named_mutex::remove(test::get_process_id_name());
       std::cout << ex.what() << std::endl;
       return 1;
    }
-   named_mutex::remove(test::get_compiler_name());
+   named_mutex::remove(test::get_process_id_name());
    return 0;
 }
 

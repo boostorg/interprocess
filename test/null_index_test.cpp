@@ -15,7 +15,7 @@
 #include <cstddef>
 #include <assert.h>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 typedef basic_managed_shared_memory
@@ -25,11 +25,11 @@ my_shared_objects_t;
 int main ()
 {
    //Create shared memory
-   shared_memory_object::remove(test::get_compiler_name());
+   shared_memory_object::remove(test::get_process_id_name());
    {
       my_shared_objects_t segment
          (create_only,
-         test::get_compiler_name(), //segment name
+         test::get_process_id_name(), //segment name
          65536);                    //segment size in bytes
 
       //Allocate a portion of the segment
@@ -44,7 +44,7 @@ int main ()
 
       segment.deallocate(shptr);
    }
-   shared_memory_object::remove(test::get_compiler_name());
+   shared_memory_object::remove(test::get_process_id_name());
    return 0;
 }
 

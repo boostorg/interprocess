@@ -20,15 +20,15 @@
 #include <cstring>   //for strcmp, memset
 #include <iostream>  //for cout
 #include <string>  //for string
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
 static const char *name_initialization_routine()
 {
-   static std::string compiler_name;
-   test::get_compiler_name(compiler_name);
-   return compiler_name.c_str();
+   static std::string process_name;
+   test::get_process_id_name(process_name);
+   return process_name.c_str();
 }
 
 static const std::size_t ShmSize = 1000;

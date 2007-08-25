@@ -1,16 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Peter Dimov 2002-2005.
-// (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
-// Software License, Version 1.0. (See accompanying file
-// LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (C) Copyright Ion Gaztanaga 2006-2007.
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#ifdef _MSC_VER
-#pragma warning (disable : 4503)
-#endif
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
@@ -22,10 +20,11 @@
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
@@ -53,12 +52,12 @@ int simple_test()
    typedef shared_ptr<base_class, base_class_allocator, base_deleter_t>    base_shared_ptr;
    typedef weak_ptr<base_class, base_class_allocator, base_deleter_t>      base_weak_ptr;
 
-   std::string compiler_name;
-   test::get_compiler_name(compiler_name);
+   std::string process_name;
+   test::get_process_id_name(process_name);
 
-   shared_memory_object::remove(compiler_name.c_str());
+   shared_memory_object::remove(process_name.c_str());
    {
-      managed_shared_memory shmem(create_only, compiler_name.c_str(), 10000);
+      managed_shared_memory shmem(create_only, process_name.c_str(), 10000);
 
       {
          base_shared_ptr s_ptr(base_shared_ptr::pointer(0), 
@@ -90,7 +89,7 @@ int simple_test()
          //}
       }
    }
-   shared_memory_object::remove(compiler_name.c_str());
+   shared_memory_object::remove(process_name.c_str());
    return 0;
 }
 
@@ -134,13 +133,13 @@ int string_shared_ptr_vector_insertion_test()
    typedef vector<string_weak_ptr_t, string_weak_ptr_allocator_t>
       string_weak_ptr_vector_t;
 
-   std::string compiler_name;
-   test::get_compiler_name(compiler_name);
+   std::string process_name;
+   test::get_process_id_name(process_name);
 
    //A shared memory managed memory classes
-   shared_memory_object::remove(compiler_name.c_str());
+   shared_memory_object::remove(process_name.c_str());
    {
-      managed_shared_memory shmem(create_only, compiler_name.c_str(), 20000);
+      managed_shared_memory shmem(create_only, process_name.c_str(), 20000);
 
       {  
          const int NumElements = 100;
@@ -256,7 +255,7 @@ int string_shared_ptr_vector_insertion_test()
          string_weak_ptr.reset();
       }
    }
-   shared_memory_object::remove(compiler_name.c_str());
+   shared_memory_object::remove(process_name.c_str());
    return 0;
 }
 //
@@ -416,12 +415,12 @@ int basic_shared_ptr_test()
 
    typedef weak_ptr<Y, v_allocator_t, y_deleter_t> y_weak_ptr;
 
-   std::string compiler_name;
-   test::get_compiler_name(compiler_name);
+   std::string process_name;
+   test::get_process_id_name(process_name);
 
-   shared_memory_object::remove(compiler_name.c_str());
+   shared_memory_object::remove(process_name.c_str());
    {
-      managed_shared_memory shmem(create_only, compiler_name.c_str(), 10000);
+      managed_shared_memory shmem(create_only, process_name.c_str(), 10000);
       {
          v_allocator_t  v_allocator (shmem.get_segment_manager());
          x_deleter_t    x_deleter   (shmem.get_segment_manager());
@@ -534,7 +533,7 @@ int basic_shared_ptr_test()
 
       BOOST_TEST(cnt == 0);
    }
-   shared_memory_object::remove(compiler_name.c_str());
+   shared_memory_object::remove(process_name.c_str());
    return boost::report_errors();
 }
 

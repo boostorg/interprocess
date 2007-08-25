@@ -17,13 +17,13 @@
 #include "memory_algorithm_test_template.hpp"
 #include <iostream>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 int main ()
 {
    using namespace boost::interprocess;
    const int memsize = 16384;
-   const char *const shMemName = test::get_compiler_name();
+   const char *const shMemName = test::get_process_id_name();
 
    {
       //A shared memory with simple sequential fit algorithm

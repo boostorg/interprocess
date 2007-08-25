@@ -19,7 +19,7 @@
 #include "print_container.hpp"
 #include <boost/interprocess/detail/move_iterator.hpp>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 namespace boost{
 namespace interprocess{
@@ -34,7 +34,7 @@ int set_test ()
 {
    typedef typename MyShmSet::value_type IntType;
    const int memsize = 65536;
-   const char *const shMemName = test::get_compiler_name();
+   const char *const shMemName = test::get_process_id_name();
    const int max = 100;
 
    try{
@@ -90,8 +90,14 @@ int set_test ()
                , std::less<IntType>(), segment.get_segment_manager());
 
          MyStdMultiSet *stdmultiset2 = new MyStdMultiSet(aux_vect2, aux_vect2 + 50);
-         if(!CheckEqualContainers(shmset2, stdset2)) return 1;
-         if(!CheckEqualContainers(shmmultiset2, stdmultiset2)) return 1;
+         if(!CheckEqualContainers(shmset2, stdset2)){
+            std::cout << "Error in construct<MyShmSet>(MyShmSet2)" << std::endl;
+            return 1;
+         }
+         if(!CheckEqualContainers(shmmultiset2, stdmultiset2)){
+            std::cout << "Error in construct<MyShmMultiSet>(MyShmMultiSet2)" << std::endl;
+            return 1;
+         }
          segment.destroy_ptr(shmset2);
          segment.destroy_ptr(shmmultiset2);
          delete stdset2;
@@ -104,13 +110,19 @@ int set_test ()
          shmset->insert(move(move_me));
          stdset->insert(i);
          IntType move_me2(i);
-         if(i == 9)
-            i = i;
          shmmultiset->insert(move(move_me2));
          stdmultiset->insert(i);
       }
 
-      if(!CheckEqualContainers(shmmultiset, stdmultiset)) return 1;
+      if(!CheckEqualContainers(shmset, stdset)){
+         std::cout << "Error in shmset->insert(move(move_me)" << std::endl;
+         return 1;
+      }
+
+      if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+         std::cout << "Error in shmmultiset->insert(move(move_me)" << std::endl;
+         return 1;
+      }
 
       typename MyShmSet::iterator it;
       typename MyShmSet::const_iterator cit = it;
@@ -119,15 +131,27 @@ int set_test ()
       stdset->erase(stdset->begin()++);
       shmmultiset->erase(shmmultiset->begin()++);
       stdmultiset->erase(stdmultiset->begin()++);
-      if(!CheckEqualContainers(shmset, stdset)) return 1;
-      if(!CheckEqualContainers(shmmultiset, stdmultiset)) return 1;
+      if(!CheckEqualContainers(shmset, stdset)){
+         std::cout << "Error in shmset->erase(shmset->begin()++)" << std::endl;
+         return 1;
+      }
+      if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+         std::cout << "Error in shmmultiset->erase(shmmultiset->begin()++)" << std::endl;
+         return 1;
+      }
 
       shmset->erase(shmset->begin());
       stdset->erase(stdset->begin());
       shmmultiset->erase(shmmultiset->begin());
       stdmultiset->erase(stdmultiset->begin());
-      if(!CheckEqualContainers(shmset, stdset)) return 1;
-      if(!CheckEqualContainers(shmmultiset, stdmultiset)) return 1;
+      if(!CheckEqualContainers(shmset, stdset)){
+         std::cout << "Error in shmset->erase(shmset->begin())" << std::endl;
+         return 1;
+      }
+      if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+         std::cout << "Error in shmmultiset->erase(shmmultiset->begin())" << std::endl;
+         return 1;
+      }
 
       //Swapping test
       std::less<IntType> lessfunc;
@@ -143,8 +167,14 @@ int set_test ()
       stdset->swap(tmpstdset2);
       shmmultiset->swap(tmpshmemultiset2);
       stdmultiset->swap(tmpstdmultiset2);
-      if(!CheckEqualContainers(shmset, stdset)) return 1;
-      if(!CheckEqualContainers(shmmultiset, stdmultiset)) return 1;
+      if(!CheckEqualContainers(shmset, stdset)){
+         std::cout << "Error in shmset->swap(tmpshmeset2)" << std::endl;
+         return 1;
+      }
+      if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+         std::cout << "Error in shmmultiset->swap(tmpshmemultiset2)" << std::endl;
+         return 1;
+      }
 
       //Insertion from other container
       //Initialize values
@@ -168,8 +198,14 @@ int set_test ()
          stdset->insert(aux_vect2, aux_vect2 + 50);
          shmmultiset->insert(detail::make_move_iterator(&aux_vect3[0]), detail::make_move_iterator(aux_vect3 + 50));
          stdmultiset->insert(aux_vect2, aux_vect2 + 50);
-         if(!CheckEqualContainers(shmset, stdset)) return 1;
-         if(!CheckEqualContainers(shmmultiset, stdmultiset)) return 1;
+         if(!CheckEqualContainers(shmset, stdset)){
+            std::cout << "Error in shmset->insert(detail::make_move_iterator(&aux_vect[0])..." << std::endl;
+            return 1;
+         }
+         if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+            std::cout << "Error in shmmultiset->insert(detail::make_move_iterator(&aux_vect3[0]), ..." << std::endl;
+            return 1;
+         }
 
          for(int i = 0, j = static_cast<int>(shmset->size()); i < j; ++i){
             IntType erase_me(i);
@@ -177,9 +213,15 @@ int set_test ()
             stdset->erase(i);
             shmmultiset->erase(erase_me);
             stdmultiset->erase(i);
+            if(!CheckEqualContainers(shmset, stdset)){
+               std::cout << "Error in shmset->erase(erase_me)" << shmset->size() << " " << stdset->size() << std::endl;
+               return 1;
+            }
+            if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+               std::cout << "Error in shmmultiset->erase(erase_me)" << std::endl;
+               return 1;
+            }
          }
-         if(!CheckEqualContainers(shmset, stdset)) return 1;
-         if(!CheckEqualContainers(shmmultiset, stdmultiset)) return 1;
       }
       {
          IntType aux_vect[50];
@@ -217,15 +259,27 @@ int set_test ()
          shmmultiset->insert(detail::make_move_iterator(&aux_vect5[0]), detail::make_move_iterator(aux_vect5 + 50));
          stdmultiset->insert(aux_vect2, aux_vect2 + 50);
          stdmultiset->insert(aux_vect2, aux_vect2 + 50);
-         if(!CheckEqualContainers(shmset, stdset)) return 1;
-         if(!CheckEqualContainers(shmmultiset, stdmultiset)) return 1;
+         if(!CheckEqualContainers(shmset, stdset)){
+            std::cout << "Error in shmset->insert(detail::make_move_iterator(&aux_vect3[0])..." << std::endl;
+            return 1;
+         }
+         if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+            std::cout << "Error in shmmultiset->insert(detail::make_move_iterator(&aux_vect5[0])..." << std::endl;
+            return 1;
+         }
 
          shmset->erase(*shmset->begin());
          stdset->erase(*stdset->begin());
          shmmultiset->erase(*shmmultiset->begin());
          stdmultiset->erase(*stdmultiset->begin());
-         if(!CheckEqualContainers(shmset, stdset)) return 1;
-         if(!CheckEqualContainers(shmmultiset, stdmultiset)) return 1;
+         if(!CheckEqualContainers(shmset, stdset)){
+            std::cout << "Error in shmset->erase(*shmset->begin())" << std::endl;
+            return 1;
+         }
+         if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+            std::cout << "Error in shmmultiset->erase(*shmmultiset->begin())" << std::endl;
+            return 1;
+         }
       }
 
       for(i = 0; i < max; ++i){
@@ -237,8 +291,14 @@ int set_test ()
          stdmultiset->insert(i);
       }
 
-      if(!CheckEqualContainers(shmset, stdset)) return 1;
-      if(!CheckEqualContainers(shmmultiset, stdmultiset)) return 1;
+      if(!CheckEqualContainers(shmset, stdset)){
+         std::cout << "Error in shmset->insert(move(move_me)) try 2" << std::endl;
+         return 1;
+      }
+      if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+         std::cout << "Error in shmmultiset->insert(move(move_me2)) try 2" << std::endl;
+         return 1;
+      }
 
       for(i = 0; i < max; ++i){
          IntType move_me(i);
@@ -249,10 +309,14 @@ int set_test ()
          shmmultiset->insert(shmmultiset->begin(), move(move_me2));
          stdmultiset->insert(stdmultiset->begin(), i);
          //PrintContainers(shmmultiset, stdmultiset);
-         if(!CheckEqualContainers(shmset, stdset))
+         if(!CheckEqualContainers(shmset, stdset)){
+            std::cout << "Error in shmset->insert(shmset->begin(), move(move_me))" << std::endl;
             return 1;
-         if(!CheckEqualContainers(shmmultiset, stdmultiset))
+         }
+         if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+            std::cout << "Error in shmmultiset->insert(shmmultiset->begin(), move(move_me2))" << std::endl;
             return 1;
+         }
 
          IntType move_me3(i);
          shmset->insert(shmset->end(), move(move_me3));
@@ -260,10 +324,14 @@ int set_test ()
          IntType move_me4(i);
          shmmultiset->insert(shmmultiset->end(), move(move_me4));
          stdmultiset->insert(stdmultiset->end(), i);
-         if(!CheckEqualContainers(shmset, stdset))
+         if(!CheckEqualContainers(shmset, stdset)){
+            std::cout << "Error in shmset->insert(shmset->end(), move(move_me3))" << std::endl;
             return 1;
-         if(!CheckEqualContainers(shmmultiset, stdmultiset))
+         }
+         if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+            std::cout << "Error in shmmultiset->insert(shmmultiset->end(), move(move_me4))" << std::endl;
             return 1;
+         }
          {
          IntType move_me(i);
          shmset->insert(shmset->upper_bound(move_me), move(move_me));
@@ -273,10 +341,14 @@ int set_test ()
          shmmultiset->insert(shmmultiset->upper_bound(move_me2), move(move_me2));
          stdmultiset->insert(stdmultiset->upper_bound(i), i);
          //PrintContainers(shmmultiset, stdmultiset);
-         if(!CheckEqualContainers(shmset, stdset))
+         if(!CheckEqualContainers(shmset, stdset)){
+            std::cout << "Error in shmset->insert(shmset->upper_bound(move_me), move(move_me))" << std::endl;
             return 1;
-         if(!CheckEqualContainers(shmmultiset, stdmultiset))
+         }
+         if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+            std::cout << "Error in shmmultiset->insert(shmmultiset->upper_bound(move_me2), move(move_me2))" << std::endl;
             return 1;
+         }
 
          }
          {
@@ -288,10 +360,14 @@ int set_test ()
          shmmultiset->insert(shmmultiset->lower_bound(move_me2), move(move_me2));
          stdmultiset->insert(stdmultiset->lower_bound(i), i);
          //PrintContainers(shmmultiset, stdmultiset);
-         if(!CheckEqualContainers(shmset, stdset))
+         if(!CheckEqualContainers(shmset, stdset)){
+            std::cout << "Error in shmset->insert(shmset->lower_bound(move_me), move(move_me2))" << std::endl;
             return 1;
-         if(!CheckEqualContainers(shmmultiset, stdmultiset))
+         }
+         if(!CheckEqualContainers(shmmultiset, stdmultiset)){
+            std::cout << "Error in shmmultiset->insert(shmmultiset->lower_bound(move_me2), move(move_me2))" << std::endl;
             return 1;
+         }
          }
       }
 
@@ -317,10 +393,14 @@ int set_test ()
          IntType move_me2(i);
          shmmultiset->insert(move(move_me2));
          IntType count_me(i);
-         if(shmset->count(count_me) != typename MyShmMultiSet::size_type(1))
+         if(shmset->count(count_me) != typename MyShmMultiSet::size_type(1)){
+            std::cout << "Error in shmset->count(count_me)" << std::endl;
             return 1;
-         if(shmmultiset->count(count_me) != typename MyShmMultiSet::size_type(j+1))
+         }
+         if(shmmultiset->count(count_me) != typename MyShmMultiSet::size_type(j+1)){
+            std::cout << "Error in shmmultiset->count(count_me)" << std::endl;
             return 1;
+         }
       }
 
       segment.template destroy<MyShmSet>("MyShmSet");
@@ -329,8 +409,10 @@ int set_test ()
       delete stdmultiset;
       segment.shrink_to_fit_indexes();
 
-      if(!segment.all_memory_deallocated())
+      if(!segment.all_memory_deallocated()){
+         std::cout << "Error in segment.all_memory_deallocated()" << std::endl;
          return 1;
+      }
    }
    catch(...){
       shared_memory_object::remove(shMemName);
@@ -349,7 +431,7 @@ int set_test_copyable ()
 {
    typedef typename MyShmSet::value_type IntType;
    const int memsize = 65536;
-   const char *const shMemName = test::get_compiler_name();
+   const char *const shMemName = test::get_process_id_name();
    const int max = 100;
 
    try{
@@ -389,22 +471,26 @@ int set_test_copyable ()
          //Now, test copy constructor
          MyShmSet shmsetcopy(*shmset);
          MyStdSet stdsetcopy(*stdset);
-         MyShmMultiSet shmmsetcopy(*shmmultiset);
-         MyStdMultiSet stdmsetcopy(*stdmultiset);
 
          if(!CheckEqualContainers(&shmsetcopy, &stdsetcopy))
             return 1;
+
+         MyShmMultiSet shmmsetcopy(*shmmultiset);
+         MyStdMultiSet stdmsetcopy(*stdmultiset);
+
          if(!CheckEqualContainers(&shmmsetcopy, &stdmsetcopy))
             return 1;
 
          //And now assignment
          shmsetcopy  = *shmset;
          stdsetcopy  = *stdset;
+
+         if(!CheckEqualContainers(&shmsetcopy, &stdsetcopy))
+            return 1;
+
          shmmsetcopy = *shmmultiset;
          stdmsetcopy = *stdmultiset;
          
-         if(!CheckEqualContainers(&shmsetcopy, &stdsetcopy))
-            return 1;
          if(!CheckEqualContainers(&shmmsetcopy, &stdmsetcopy))
             return 1;
       }

@@ -17,12 +17,12 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
 static const std::size_t FileSize = 1000;
-static const char *      FileName = test::get_compiler_name();
+static const char *      FileName = test::get_process_id_name();
 
 struct file_destroyer
 {

@@ -17,14 +17,14 @@
 #include <boost/interprocess/managed_windows_shared_memory.hpp>
 #include <cstdio>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
 int main ()
 {
    const int MemSize          = 65536;
-   const char *const MemName  = test::get_compiler_name();
+   const char *const MemName  = test::get_process_id_name();
 
    //STL compatible allocator object for shared memory
    typedef allocator<int, managed_windows_shared_memory::segment_manager>

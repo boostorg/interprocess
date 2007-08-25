@@ -24,7 +24,7 @@
 #include <iterator>
 #include <set>
 #include <string>
-#include "get_compiler_name.hpp"
+#include "get_process_id_name.hpp"
 
 namespace boost { namespace interprocess { namespace test {
 
@@ -427,7 +427,7 @@ bool test_named_allocation()
 {
    using namespace boost::interprocess;
    const int memsize = 163840;
-   const char *const shMemName = test::get_compiler_name();
+   const char *const shMemName = test::get_process_id_name();
    try
    {
       //A shared memory with rbtree best fit algorithm
