@@ -344,30 +344,6 @@ struct is_multisegment_ptr
    enum {   value = false };
 };
 
-/*!A Interprocess shared pointer deleter that uses the segment manager's 
-   destroy_ptr function to destroy the shared resource.*/
-template<class T, class SegmentManager>
-class deleter
-{
-   public:
-   typedef typename detail::pointer_to_other
-      <typename SegmentManager::void_pointer, T>::type   pointer;
-
-   private:
-   typedef typename detail::pointer_to_other
-      <pointer, SegmentManager>::type   segment_manager_pointer;
-
-   segment_manager_pointer mp_deleter;
-
-   public:
-   deleter(const segment_manager_pointer &pdeleter)
-      :  mp_deleter(pdeleter)
-   {}
-
-   void operator()(const pointer &p)
-   {  mp_deleter->destroy_ptr(detail::get_pointer(p));   }
-};
-
 template <class SizeType>
 SizeType
    get_next_capacity(const SizeType max_size

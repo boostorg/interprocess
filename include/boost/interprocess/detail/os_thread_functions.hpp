@@ -32,7 +32,11 @@ namespace detail{
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
+typedef unsigned long OS_process_id_t;
 typedef unsigned long OS_thread_id_t;
+
+inline OS_process_id_t get_current_process_id()
+{  return winapi::get_current_process_id();  }
 
 inline OS_thread_id_t get_current_thread_id()
 {  return winapi::get_current_thread_id();  }
@@ -49,6 +53,10 @@ inline void thread_yield()
 #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
 typedef pthread_t OS_thread_id_t;
+typedef int OS_process_id_t;
+
+inline OS_process_id_t get_current_process_id()
+{  return getpid();  }
 
 inline pthread_t get_current_thread_id()
 {  return pthread_self();  }

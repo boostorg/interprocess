@@ -20,11 +20,19 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/iterators.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
+#include <boost/interprocess/detail/utilities.hpp>
 #include <boost/get_pointer.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 
 namespace boost {
-namespace interprocess { 
+namespace interprocess {
+
+template<class T>
+struct has_own_construct_from_it
+{
+   static const bool value = false;
+};
 
 template<class FwdIt, class T>
 void uninitialized_fill(FwdIt first,  FwdIt last, const T& val)
@@ -106,10 +114,27 @@ typename std::iterator_traits<InIt>::difference_type
    return (constructed);
 }
 
+namespace detail  {
+
+template<class T, class InpIt>
+inline void construct_in_place(T* dest, const InpIt &source, detail::true_)
+{
+   T::construct(dest, *source);
+}
+
+template<class T, class InpIt>
+inline void construct_in_place(T* dest, const InpIt &source, detail::false_)
+{
+   new(dest)T(*source);
+}
+
+}  //namespace detail   {
+
 template<class T, class InpIt>
 inline void construct_in_place(T* dest, InpIt source)
 {
-   new(dest)T(*source);
+   typedef detail::bool_<has_own_construct_from_it<T>::value> boolean_t;
+   detail::construct_in_place(dest, source, boolean_t());
 }
 
 template<class T, class U, class D>
