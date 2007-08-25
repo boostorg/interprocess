@@ -167,6 +167,17 @@ struct rbtree_node
    #endif
 };
 
+}//namespace detail {
+
+template<class T, class VoidPointer>
+struct has_own_construct_from_it
+   < boost::interprocess::detail::rbtree_node<T, VoidPointer> >
+{
+   static const bool value = true;
+};
+
+namespace detail {
+
 template<class A, class ValueCompare>
 struct intrusive_rbtree_type
 {
@@ -188,15 +199,6 @@ struct intrusive_rbtree_type
 };
 
 }  //namespace detail {
-
-//This specialization is necessary since std::pair is not movable.
-//We need to hack the constructor to add move semantics
-//to rbtrees
-template<class T, class VoidPointer, class InpIt>
-inline void construct_in_place(detail::rbtree_node<T, VoidPointer>* dest, InpIt source)
-{
-   detail::rbtree_node<T, VoidPointer>::construct(dest, *source);
-}
 
 namespace detail {
 

@@ -257,7 +257,7 @@ struct node_alloc_holder
    {
       NodePtr p = this->allocate_one();
       Deallocator node_deallocator(p, *this);
-      ::boost::interprocess::construct_in_place(detail::get_pointer(p), it);
+      construct_in_place(detail::get_pointer(p), it);
       node_deallocator.release();
       return (p);
    }
