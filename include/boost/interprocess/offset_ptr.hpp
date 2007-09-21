@@ -384,7 +384,7 @@ struct pointer_plus_bit<boost::interprocess::offset_ptr<T> >
    typedef boost::interprocess::offset_ptr<T>         pointer;
 
    static pointer get_pointer(const pointer &n)
-   {  return (T*)(std::size_t(n.get()) & std::size_t(~2u));  }
+   {  return (T*)(std::size_t(n.get()) & ~std::size_t(2u));  }
 
    static void set_pointer(pointer &n, pointer p)
    {  n = (T*)(std::size_t(p.get()) | (std::size_t(n.get()) & std::size_t(2u))); }
