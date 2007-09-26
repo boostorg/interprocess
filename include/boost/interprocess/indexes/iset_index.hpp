@@ -21,39 +21,34 @@
 #include <boost/intrusive/set.hpp>
 
 
-/*!\file
-   Describes index adaptor of boost::intrusive::set container, to use it
-   as name/shared memory index
-*/
+//!\file
+//!Describes index adaptor of boost::intrusive::set container, to use it
+//!as name/shared memory index
 
-namespace boost { namespace interprocess {
+namespace boost {
+namespace interprocess {
 
 /// @cond
-/*!Helper class to define typedefs from IndexTraits*/
+
+//!Helper class to define typedefs from IndexTraits
 template <class MapConfig>
 struct iset_index_aux
 {
    typedef typename 
-      MapConfig::segment_manager_base                 segment_manager_base;
+      MapConfig::segment_manager_base                          segment_manager_base;
 
    typedef typename 
-      segment_manager_base::void_pointer              void_pointer;
+      segment_manager_base::void_pointer                       void_pointer;
+   typedef typename bi::make_set_base_hook
+      <bi::void_pointer<void_pointer> >::type                  derivation_hook;
 
-   typedef boost::intrusive::set_base_hook
-      < boost::intrusive::tag
-      , boost::intrusive::safe_link
-      , void_pointer>   derivation_hook;
-
-//   typedef typename MapConfig::intrusive_value_type   intrusive_value_type;
-//   typedef intrusive_value_type<derivation_hook>::type      value_type;
    typedef typename MapConfig::template 
-      intrusive_value_type<derivation_hook>::type           value_type;
-
-   typedef std::less<value_type>                            value_compare;
-
-   typedef boost::intrusive::set
-      <typename derivation_hook::template 
-         value_traits<value_type>, std::less<value_type> >  index_t;
+      intrusive_value_type<derivation_hook>::type              value_type;
+   typedef std::less<value_type>                               value_compare;
+   typedef typename bi::make_set
+      < value_type
+      , bi::base_hook<derivation_hook>
+      >::type                                                  index_t;
 };
 /// @endcond
 
@@ -107,14 +102,14 @@ class iset_index
 
    public:
 
-   /*!Constructor. Takes a pointer to the
-      segment manager. Can throw*/
+   //!Constructor. Takes a pointer to the
+   //!segment manager. Can throw
    iset_index(typename MapConfig::segment_manager_base *)
       : index_type(/*typename index_aux::value_compare()*/)
    {}
 
-   /*!This reserves memory to optimize the insertion of n
-      elements in the index*/
+   //!This reserves memory to optimize the insertion of n
+   //!elements in the index
    void reserve(std::size_t)
    {  /*Does nothing, map has not reserve or rehash*/  }
 
@@ -134,8 +129,9 @@ class iset_index
 };
 
 /// @cond
-/*!Trait class to detect if an index is an intrusive
-   index.*/
+
+//!Trait class to detect if an index is an intrusive
+//!index.
 template<class MapConfig>
 struct is_intrusive_index
    <boost::interprocess::iset_index<MapConfig> >
@@ -144,7 +140,8 @@ struct is_intrusive_index
 };
 /// @endcond
 
-}}   //namespace boost { namespace interprocess {
+}  //namespace interprocess {
+}  //namespace boost 
 
 #include <boost/interprocess/detail/config_end.hpp>
 

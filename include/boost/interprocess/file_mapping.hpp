@@ -23,16 +23,15 @@
 #include <cstdio>    //std::remove
 #include <string>
 
-/*!\file
-   Describes file_mapping and mapped region classes
-*/
+//!\file
+//!Describes file_mapping and mapped region classes
 
 namespace boost {
 
 namespace interprocess {
 
-/*!A class that wraps a file-mapping that can be used to
-   create mapped regions from the mapped files*/
+//!A class that wraps a file-mapping that can be used to
+//!create mapped regions from the mapped files
 class file_mapping
 {
    /// @cond
@@ -42,18 +41,19 @@ class file_mapping
    /// @endcond
 
    public:
-   /*!Constructs an empty file mapping. Does not throw*/
+   //!Constructs an empty file mapping.
+   //!Does not throw
    file_mapping();
 
-   /*!Opens a file mapping of file "filename", starting in offset 
-      "file_offset", and the mapping's size will be "size". The mapping 
-      can be opened for read-only "read_only" or read-write "read_write"
-      modes. Throws interprocess_exception on error.*/
+   //!Opens a file mapping of file "filename", starting in offset 
+   //!"file_offset", and the mapping's size will be "size". The mapping 
+   //!can be opened for read-only "read_only" or read-write "read_write"
+   //!modes. Throws interprocess_exception on error.
    file_mapping(const char *filename, mode_t mode);
 
-   /*!Moves the ownership of "moved"'s shared memory object to *this. 
-      After the call, "moved" does not represent any shared memory object. 
-      Does not throw*/
+   //!Moves the ownership of "moved"'s shared memory object to *this. 
+   //!After the call, "moved" does not represent any shared memory object. 
+   //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    file_mapping(detail::moved_object<file_mapping> &moved)
    {  this->swap(moved.get());   }
@@ -62,9 +62,9 @@ class file_mapping
    {  this->swap(moved);   }
    #endif
 
-   /*!Moves the ownership of "moved"'s shared memory to *this.
-      After the call, "moved" does not represent any shared memory. 
-      Does not throw*/
+   //!Moves the ownership of "moved"'s shared memory to *this.
+   //!After the call, "moved" does not represent any shared memory. 
+   //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    file_mapping &operator=
       (detail::moved_object<file_mapping> &moved)
@@ -82,25 +82,29 @@ class file_mapping
    }
    #endif
 
-   /*!Swaps to file_mappings. Does not throw*/
+   //!Swaps to file_mappings.
+   //!Does not throw.
    void swap(file_mapping &other);
 
-   /*!Returns access mode*/
+   //!Returns access mode
+   //!used in the constructor
    mode_t get_mode() const;
 
-   /*!Get mapping handle*/
+   //!Obtains the mapping handle
+   //!to be used with mapped_region
    mapping_handle_t get_mapping_handle() const;
 
-   /*!Destroys the file mapping. All mapped regions created from this are still
-      valid. Does not throw*/
+   //!Destroys the file mapping. All mapped regions created from this are still
+   //!valid. Does not throw
    ~file_mapping();
 
-   /*!Returns the name of the file.*/
+   //!Returns the name of the file
+   //!used in the constructor.
    const char *get_name() const;
 
    /// @cond
    private:
-   /*!Closes a previously opened file mapping. Never throws.*/
+   //!Closes a previously opened file mapping. Never throws.
    void priv_close();
    file_handle_t  m_handle;
    mode_t    m_mode;

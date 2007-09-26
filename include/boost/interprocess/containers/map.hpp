@@ -40,8 +40,8 @@
  *
  */
 
-#ifndef BOOST_INTERPROCESS_SHMEM_MAP_HPP
-#define BOOST_INTERPROCESS_SHMEM_MAP_HPP
+#ifndef BOOST_INTERPROCESS_MAP_HPP
+#define BOOST_INTERPROCESS_MAP_HPP
 
 #if (defined _MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
@@ -687,10 +687,9 @@ inline void swap(map<Key,T,Pred,Alloc>&&x,
 #endif
 
 
-
-
 /// @cond
-/*!This class is movable*/
+
+//!This class is movable
 template <class T, class P, class A>
 struct is_movable<map<T, P, A> >
 {
@@ -1238,5 +1237,5 @@ struct has_trivial_destructor_after_move<multimap<K, T, C, A> >
 
 #include <boost/interprocess/detail/config_end.hpp>
 
-#endif /* BOOST_INTERPROCESS_SHMEM_MAP_HPP */
+#endif /* BOOST_INTERPROCESS_MAP_HPP */
 

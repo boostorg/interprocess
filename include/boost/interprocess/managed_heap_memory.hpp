@@ -23,9 +23,8 @@
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 
-/*!\file
-   Describes a named heap memory allocation user class. 
-*/
+//!\file
+//!Describes a named heap memory allocation user class. 
 
 namespace boost {
 namespace interprocess {
@@ -85,7 +84,8 @@ class basic_managed_heap_memory
    //!Constructor. Never throws.
    basic_managed_heap_memory(){}
 
-   //!Destructor. Calls priv_close. Never throws.
+   //!Destructor. Liberates the heap memory holding the managed data.
+   //!Never throws.
    ~basic_managed_heap_memory()
    {  this->priv_close();  }
 

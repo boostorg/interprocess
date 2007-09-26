@@ -30,22 +30,20 @@
 #include <stdio.h>
 #include <cstddef>
 
-/*!\file
-   Describes cached_cached_node_allocator pooled shared memory STL compatible allocator 
-*/
+//!\file
+//!Describes cached_cached_node_allocator pooled shared memory STL compatible allocator 
 
 namespace boost {
-
 namespace interprocess {
 
-/*!An STL node allocator that uses a segment manager as memory 
-   source. The internal pointer type will of the same type (raw, smart) as
-   "typename SegmentManager::void_pointer" type. This allows
-   placing the allocator in shared memory, memory mapped-files, etc...
-   This node allocator shares a segregated storage between all instances of 
-   cached_node_allocator with equal sizeof(T) placed in the same fixed size 
-   memory segment. But also caches some nodes privately to
-   avoid some synchronization overhead.*/
+//!An STL node allocator that uses a segment manager as memory 
+//!source. The internal pointer type will of the same type (raw, smart) as
+//!"typename SegmentManager::void_pointer" type. This allows
+//!placing the allocator in shared memory, memory mapped-files, etc...
+//!This node allocator shares a segregated storage between all instances of 
+//!cached_node_allocator with equal sizeof(T) placed in the same fixed size 
+//!memory segment. But also caches some nodes privately to
+//!avoid some synchronization overhead.
 template<class T, class SegmentManager, std::size_t NodesPerChunk>
 class cached_node_allocator
 {
@@ -97,30 +95,30 @@ class cached_node_allocator
    cached_node_allocator& operator=
       (const cached_node_allocator<T2, SegmentManager2, N2>&);
 
-   /*!Not assignable from other cached_node_allocator*/
+   //!Not assignable from other cached_node_allocator
    cached_node_allocator& operator=(const cached_node_allocator&);
    /// @endcond
 
    public:
-   /*!Constructor from a segment manager. If not present, constructs
-      a node pool. Increments the reference count of the node pool.
-      Can throw boost::interprocess::bad_alloc*/
+   //!Constructor from a segment manager. If not present, constructs
+   //!a node pool. Increments the reference count of the node pool.
+   //!Can throw boost::interprocess::bad_alloc
    cached_node_allocator(segment_manager *segment_mngr,
                          std::size_t max_cached_nodes = DEFAULT_MAX_CACHED_NODES) 
       : mp_node_pool(priv_get_or_create(segment_mngr)),
         m_max_cached_nodes(max_cached_nodes)
    {}
 
-   /*!Copy constructor from other cached_node_allocator. Increments the 
-      reference count of the associated node pool. Never throws*/
+   //!Copy constructor from other cached_node_allocator. Increments the 
+   //!reference count of the associated node pool. Never throws
    cached_node_allocator(const cached_node_allocator &other) 
       : mp_node_pool(other.get_node_pool()),
         m_max_cached_nodes(other.get_max_cached_nodes())
    {  mp_node_pool->inc_ref_count();   }
 
-   /*!Copy constructor from related cached_node_allocator. If not present, constructs
-      a node pool. Increments the reference count of the associated node pool.
-      Can throw boost::interprocess::bad_alloc*/
+   //!Copy constructor from related cached_node_allocator. If not present, constructs
+   //!a node pool. Increments the reference count of the associated node pool.
+   //!Can throw boost::interprocess::bad_alloc
    template<class T2>
    cached_node_allocator
       (const cached_node_allocator<T2, SegmentManager, NodesPerChunk> &other)
@@ -128,31 +126,34 @@ class cached_node_allocator
         m_max_cached_nodes(other.get_max_cached_nodes())
          { }
 
-   /*!Destructor, removes node_pool_t from memory
-      if its reference count reaches to zero. Never throws*/
+   //!Destructor, removes node_pool_t from memory
+   //!if its reference count reaches to zero. Never throws
    ~cached_node_allocator() 
    {     
       priv_deallocate_all_cached_nodes();
       priv_destroy_if_last_link();   
    }
 
-   /*!Returns a pointer to the node pool. Never throws*/
+   //!Returns a pointer to the node pool.
+   //!Never throws
    node_pool_t* get_node_pool() const
    {  return detail::get_pointer(mp_node_pool);   }
 
-   /*!Returns the segment manager. Never throws*/
+   //!Returns the segment manager.
+   //!Never throws
    segment_manager* get_segment_manager()const
    {  return mp_node_pool->get_segment_manager();  }
 
-   /*!Sets the new max cached nodes value. This can provoke deallocations
-      if "newmax" is less than current cached nodes. Never throws*/
+   //!Sets the new max cached nodes value. This can provoke deallocations
+   //!if "newmax" is less than current cached nodes. Never throws
    void set_max_cached_nodes(std::size_t newmax)
    {
       m_max_cached_nodes = newmax;
       priv_deallocate_remaining_nodes();
    }
 
-   /*!Returns the max cached nodes parameter. Never throws*/
+   //!Returns the max cached nodes parameter.
+   //!Never throws
    std::size_t get_max_cached_nodes() const
       {  return m_max_cached_nodes;  }
 
@@ -160,8 +161,8 @@ class cached_node_allocator
    size_type max_size() const
       {  return this->get_segment_manager()->get_size()/sizeof(value_type);  }
 
-   /*!Allocate memory for an array of count elements. 
-      Throws boost::interprocess::bad_alloc if there is no enough memory*/
+   //!Allocate memory for an array of count elements. 
+   //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate(size_type count, cvoid_pointer hint = 0)
    {
       (void)hint;
@@ -186,7 +187,8 @@ class cached_node_allocator
       return pointer(static_cast<T*>(ret));
    }
 
-   /*!Deallocate allocated memory. Never throws*/
+   //!Deallocate allocated memory.
+   //!Never throws
    void deallocate(const pointer &ptr, size_type count)
    {
       typedef detail::shared_node_pool
@@ -208,8 +210,8 @@ class cached_node_allocator
       }
    }
 
-   /*!Swaps allocators. Does not throw. If each allocator is placed in a
-      different shared memory segments, the result is undefined.*/
+   //!Swaps allocators. Does not throw. If each allocator is placed in a
+   //!different shared memory segments, the result is undefined.
    friend void swap(self_t &alloc1, self_t &alloc2)
    {
       detail::do_swap(alloc1.mp_node_pool,       alloc2.mp_node_pool);
@@ -233,7 +235,8 @@ class cached_node_allocator
    pointer address(reference value) const
    {  return pointer(boost::addressof(value));  }
 
-   /*!Returns address of non mutable object. Never throws*/
+   //!Returns address of non mutable object.
+   //!Never throws
    const_pointer address(const_reference value) const
    {  return const_pointer(boost::addressof(value));  }
 
@@ -250,15 +253,15 @@ class cached_node_allocator
    /// @cond
    private:
 
-   /*!Object function that creates the node allocator if it is not created and
-      increments reference count if it is already created*/
+   //!Object function that creates the node allocator if it is not created and
+   //!increments reference count if it is already created
    struct get_or_create_func
    {
       typedef detail::shared_node_pool
                <SegmentManager, mutex_type, sizeof(T), NodesPerChunk>   node_pool_t;
 
-      /*!This connects or constructs the unique instance of node_pool_t
-         Can throw boost::interprocess::bad_alloc*/
+      //!This connects or constructs the unique instance of node_pool_t
+      //!Can throw boost::interprocess::bad_alloc
       void operator()()
       {
          //Find or create the node_pool_t
@@ -269,18 +272,21 @@ class cached_node_allocator
             mp_node_pool->inc_ref_count();
       }
 
-      /*!Constructor. Initializes function object parameters*/
+      //!Constructor. Initializes function
+      //!object parameters
       get_or_create_func(segment_manager *hdr) : mp_named_alloc(hdr){}
       
       node_pool_t      *mp_node_pool;
       segment_manager  *mp_named_alloc;
    };
 
-   /*!Frees all cached nodes. Never throws*/
+   //!Frees all cached nodes.
+   //!Never throws
    void priv_deallocate_all_cached_nodes()
    {  mp_node_pool->deallocate_nodes(m_cached_nodes); }
 
-   /*!Frees all cached nodes at once. Never throws*/
+   //!Frees all cached nodes at once.
+   //!Never throws
    void priv_deallocate_remaining_nodes()
    {
       if(m_cached_nodes.size() > m_max_cached_nodes){
@@ -288,12 +294,13 @@ class cached_node_allocator
       }
    }
 
-   /*!Frees n cached nodes at once. Never throws*/
+   //!Frees n cached nodes at once.
+   //!Never throws
    void priv_deallocate_n_nodes(std::size_t n)
    {  mp_node_pool->deallocate_nodes(m_cached_nodes, n); }   
 
-   /*!Initialization function, creates an executes atomically the 
-      initialization object functions. Can throw boost::interprocess::bad_alloc*/
+   //!Initialization function, creates an executes atomically the 
+   //!initialization object functions. Can throw boost::interprocess::bad_alloc
    node_pool_t *priv_get_or_create(segment_manager *named_alloc)
    {
       get_or_create_func func(named_alloc);
@@ -301,16 +308,16 @@ class cached_node_allocator
       return func.mp_node_pool;
    }
 
-   /*!Object function that decrements the reference count. If the count 
-      reaches to zero destroys the node allocator from memory. 
-      Never throws*/
+   //!Object function that decrements the reference count. If the count 
+   //!reaches to zero destroys the node allocator from memory. 
+   //!Never throws
    struct destroy_if_last_link_func
    {
       typedef detail::shared_node_pool
                <SegmentManager, mutex_type,sizeof(T), NodesPerChunk>   node_pool_t;
 
-      /*!Decrements reference count and destroys the object if there is no 
-         more attached allocators. Never throws*/
+      //!Decrements reference count and destroys the object if there is no 
+      //!more attached allocators. Never throws
       void operator()()
       {
          //If not the last link return
@@ -320,7 +327,8 @@ class cached_node_allocator
          mp_named_alloc->template destroy<node_pool_t>(unique_instance); 
       }  
 
-      /*!Constructor. Initializes function object parameters*/
+      //!Constructor. Initializes function object
+      //!parameters
       destroy_if_last_link_func(segment_manager    *nhdr,
                                 node_pool_t *phdr) 
                             : mp_named_alloc(nhdr), mp_node_pool(phdr){}
@@ -329,8 +337,8 @@ class cached_node_allocator
       node_pool_t      *mp_node_pool;
    };
 
-   /*!Destruction function, initializes and executes destruction function 
-      object. Never throws*/
+   //!Destruction function, initializes and executes destruction function 
+   //!object. Never throws
    void priv_destroy_if_last_link()
    {
       typedef detail::shared_node_pool
@@ -349,13 +357,15 @@ class cached_node_allocator
    /// @endcond
 };
 
-/*!Equality test for same type of cached_node_allocator*/
+//!Equality test for same type of
+//!cached_node_allocator
 template<class T, class S, std::size_t NodesPerChunk> inline
 bool operator==(const cached_node_allocator<T, S, NodesPerChunk> &alloc1, 
                 const cached_node_allocator<T, S, NodesPerChunk> &alloc2)
    {  return alloc1.get_node_pool() == alloc2.get_node_pool(); }
 
-/*!Inequality test for same type of cached_node_allocator*/
+//!Inequality test for same type of
+//!cached_node_allocator
 template<class T, class S, std::size_t NodesPerChunk> inline
 bool operator!=(const cached_node_allocator<T, S, NodesPerChunk> &alloc1, 
                 const cached_node_allocator<T, S, NodesPerChunk> &alloc2)

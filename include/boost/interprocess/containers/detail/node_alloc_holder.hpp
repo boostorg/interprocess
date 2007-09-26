@@ -21,10 +21,11 @@
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/detail/move.hpp>
+#include <boost/interprocess/detail/algorithms.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/algorithms.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/intrusive/options.hpp>
 
 #include <utility>
 #include <functional>
@@ -58,7 +59,6 @@ struct node_compare
 
 template<class A, class ICont>
 struct node_alloc_holder
-   :  public A::template rebind<typename ICont::value_type>::other
 {
    typedef node_alloc_holder<A, ICont>                self_t;
    typedef typename A::value_type                     value_type;
@@ -76,91 +76,68 @@ struct node_alloc_holder
          version<NodeAlloc>::value>                   alloc_version;
 
    node_alloc_holder(const ValAlloc &a) 
-      : NodeAlloc(a)
+      : members_(a)
    {}
-
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   node_alloc_holder(const detail::moved_object<ValAlloc> &a) 
-      : NodeAlloc(a.get())
-   {}
-   #else
-   node_alloc_holder(ValAlloc &&a) 
-      : NodeAlloc(a)
-   {}
-   #endif
 
    node_alloc_holder(const node_alloc_holder &other)
-      : NodeAlloc(other)
+      : members_(other.node_alloc())
    {}
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    node_alloc_holder(const detail::moved_object<node_alloc_holder> &other)
-      : NodeAlloc(move((NodeAlloc&)other.get()))
+      : members_(move(other.get().node_alloc()))
    {  this->swap(other.get());  }
    #else
    node_alloc_holder(node_alloc_holder &&other)
-      : NodeAlloc(move((NodeAlloc&)other))
+      : members_(move(other.node_alloc()))
    {  this->swap(other);  }
    #endif
 
    template<class Pred>
    node_alloc_holder(const ValAlloc &a, const Pred &c) 
-      : NodeAlloc(a), m_icont(typename ICont::value_compare(c))
+      : members_(a, typename ICont::value_compare(c))
    {}
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Pred>
    node_alloc_holder(const detail::moved_object<ValAlloc> &a, const Pred &c) 
-      : NodeAlloc(a.get()), m_icont(typename ICont::value_compare(c))
+      : members_(a.get(), typename ICont::value_compare(c))
    {}
    #else
    template<class Pred>
    node_alloc_holder(ValAlloc &&a, const Pred &c) 
-      : NodeAlloc(a), m_icont(typename ICont::value_compare(c))
+      : members_(a, typename ICont::value_compare(c))
    {}
    #endif
 
    template<class Pred>
    node_alloc_holder(const node_alloc_holder &other, const Pred &c)
-      : NodeAlloc(other), m_icont(typename ICont::value_compare(c))
+      : members_(other.node_alloc(), typename ICont::value_compare(c))
    {}
-
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   template<class Pred>
-   node_alloc_holder
-      (const detail::moved_object<node_alloc_holder> &other, const Pred &c)
-      : NodeAlloc(move((NodeAlloc&)other.get())), m_icont(typename ICont::value_compare(c))
-   {  this->swap(other.get());  }
-   #else
-   template<class Pred>
-   node_alloc_holder(node_alloc_holder &&other, const Pred &c)
-      : NodeAlloc(move((NodeAlloc&)other)), m_icont(typename ICont::value_compare(c))
-   {  this->swap(other);  }
-   #endif
 
    ~node_alloc_holder()
    {}
 
    size_type max_size() const
-   {  return NodeAlloc::max_size();  }
+   {  return this->node_alloc().max_size();  }
 
    NodePtr allocate_one()
    {  return this->allocate_one(alloc_version());   }
 
    NodePtr allocate_one(allocator_v1)
-   {  return NodeAlloc::allocate(1);   }
+   {  return this->node_alloc().allocate(1);   }
 
    NodePtr allocate_one(allocator_v2)
-   {  return NodeAlloc::allocate_one();   }
+   {  return this->node_alloc().allocate_one();   }
 
    void deallocate_one(NodePtr p)
    {  return this->deallocate_one(p, alloc_version());   }
 
    void deallocate_one(NodePtr p, allocator_v1)
-   {  NodeAlloc::deallocate(p, 1);   }
+   {  this->node_alloc().deallocate(p, 1);   }
 
    void deallocate_one(NodePtr p, allocator_v2)
-   {  NodeAlloc::deallocate_one(p);   }
+   {  this->node_alloc().deallocate_one(p);   }
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
@@ -187,7 +164,7 @@ struct node_alloc_holder
 
       //Hook constructor does not throw
       new(static_cast<hook_type*>(nodeptr))hook_type();
-      //Now construct pair members
+      //Now construct pair members_holder
       value_type *valueptr = &nodeptr->m_data;
       new((void*)&valueptr->first) first_type(move(value.get().first));
       BOOST_TRY{
@@ -212,7 +189,7 @@ struct node_alloc_holder
 
       //Hook constructor does not throw
       new(static_cast<hook_type*>(nodeptr))hook_type();
-      //Now construct pair members
+      //Now construct pair members_holder
       value_type *valueptr = &nodeptr->m_data;
       new((void*)&valueptr->first) first_type(move(value.first));
       BOOST_TRY{
@@ -235,7 +212,7 @@ struct node_alloc_holder
    NodePtr create_node(const Convertible& x)
    {
       NodePtr p = this->allocate_one();
-      Deallocator node_deallocator(p, *this);
+      Deallocator node_deallocator(p, this->node_alloc());
       self_t::construct(p, x);
       node_deallocator.release();
       return (p);
@@ -245,7 +222,7 @@ struct node_alloc_holder
    NodePtr create_node(Convertible &&x)
    {
       NodePtr p = this->allocate_one();
-      Deallocator node_deallocator(p, *this);
+      Deallocator node_deallocator(p, this->node_alloc());
       self_t::construct(p, forward<Convertible>(x));
       node_deallocator.release();
       return (p);
@@ -256,8 +233,8 @@ struct node_alloc_holder
    NodePtr create_node_from_it(It it)
    {
       NodePtr p = this->allocate_one();
-      Deallocator node_deallocator(p, *this);
-      construct_in_place(detail::get_pointer(p), it);
+      Deallocator node_deallocator(p, this->node_alloc());
+      ::boost::interprocess::construct_in_place(detail::get_pointer(p), it);
       node_deallocator.release();
       return (p);
    }
@@ -265,7 +242,7 @@ struct node_alloc_holder
    NodePtr create_node()
    {
       NodePtr p = this->allocate_one();
-      Deallocator node_deallocator(p, *this);
+      Deallocator node_deallocator(p, this->node_alloc());
       self_t::construct(p);
       node_deallocator.release();
       return (p);
@@ -279,36 +256,52 @@ struct node_alloc_holder
 
    void swap(node_alloc_holder &x)
    {
-      NodeAlloc& this_alloc   = static_cast<NodeAlloc&>(*this);
-      NodeAlloc& other_alloc  = static_cast<NodeAlloc&>(x);
+      NodeAlloc& this_alloc   = this->node_alloc();
+      NodeAlloc& other_alloc  = x.node_alloc();
 
       if (this_alloc != other_alloc){
          detail::do_swap(this_alloc, other_alloc);
       }
 
-      this->m_icont.swap(x.m_icont);
+      this->icont().swap(x.icont());
    }
 
-   template<class FwdIterator, class MultiAllocator>
+   template<class FwdIterator, class Inserter>
    FwdIterator allocate_many_and_construct
-      (FwdIterator beg, difference_type n, MultiAllocator &multi_beg, size_type &constructed)
+      (FwdIterator beg, difference_type n, Inserter inserter)
    {
       typedef typename NodeAlloc::multiallocation_iterator multiallocation_iterator;
 
       //Try to allocate memory in a single chunk
-      MultiAllocator itbeg = NodeAlloc::allocate_individual(1, n, constructed), itend, it;
-
-      //Prepare exception-safety machinery
-      detail::multiallocation_deallocator<NodeAlloc> multi_deallocator(itbeg, *this);
-
-      //Initialize all the data (this can throw)
-      FwdIterator next = 
-         boost::interprocess::n_uninitialized_copy_n(beg, constructed, itbeg);
-
-      //Exception-unsafe zone passed. Disable auto-deallocation
-      multi_deallocator.release();
-      multi_beg = itbeg;
-      return next;
+      multiallocation_iterator itbeg =
+         this->node_alloc().allocate_individual(n), itend, itold;
+      int constructed = 0;
+      Node *p;
+      BOOST_TRY{
+         for(difference_type i = 0; i < n; ++i, ++beg, --constructed){
+            p = &*itbeg;
+            ++itbeg;
+            //This can throw
+            boost::interprocess::construct_in_place(p, beg);
+            ++constructed;
+            //This can throw in some containers (predicate might throw)
+            inserter(*p);
+         }
+      }
+      BOOST_CATCH(...){
+         if(constructed){
+            this->destroy(p);
+         }
+         this->deallocate_one(p);
+         multiallocation_iterator itend;
+         while(itbeg != itend){
+            Node *n = &*itbeg;
+            ++itbeg;
+            this->deallocate_one(n);
+         }
+      }
+      BOOST_CATCH_END
+      return beg;
    }
 
    protected:
@@ -336,11 +329,40 @@ struct node_alloc_holder
       node_alloc_holder &m_holder;
    };
 
-   //The intrusive container
-   ICont m_icont;
+   struct members_holder
+      :  public NodeAlloc
+   {
+      private:
+      members_holder(const members_holder&);
+
+      public:
+      template<class ConvertibleToAlloc>
+      members_holder(const ConvertibleToAlloc &c2alloc)
+         :  NodeAlloc(c2alloc)
+      {}
+
+      template<class ConvertibleToAlloc, class Pred>
+      members_holder(const ConvertibleToAlloc &c2alloc, const Pred &c)
+         :  NodeAlloc(c2alloc), m_icont(c)
+      {}
+      //The intrusive container
+      ICont m_icont;
+   } members_;
 
    ICont &non_const_icont() const
-   {  return const_cast<ICont&>(this->m_icont);   }
+   {  return const_cast<ICont&>(this->members_.m_icont);   }
+
+   ICont &icont()
+   {  return this->members_.m_icont;   }
+
+   const ICont &icont() const
+   {  return this->members_.m_icont;   }
+
+   NodeAlloc &node_alloc()
+   {  return this->members_;   }
+
+   const NodeAlloc &node_alloc() const
+   {  return this->members_;   }
 };
 
 }  //namespace detail {

@@ -348,8 +348,6 @@ class flat_tree
       typedef typename 
          std::iterator_traits<InIt>::iterator_category ItCat;
       priv_insert_equal(first, last, ItCat());
-//      for ( ; first != last; ++first)
-//         this->insert_equal(*first);
    }
 
    iterator erase(const_iterator position)
@@ -360,9 +358,8 @@ class flat_tree
       std::pair<iterator,iterator > itp = this->equal_range(k);
       size_type ret = static_cast<size_type>(itp.second-itp.first);
       if (ret){
-         this->erase(itp.first, itp.second);
+         this->m_data.m_vect.erase(itp.first, itp.second);
       }
-      
       return ret;
    }
 

@@ -43,9 +43,8 @@
 #  endif //ifdef BOOST_HAS_UNISTD_H
 #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
-/*!\file
-   Describes the error numbering of interprocess classes
-*/
+//!\file
+//!Describes the error numbering of interprocess classes
 
 namespace boost {
 namespace interprocess {

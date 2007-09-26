@@ -23,17 +23,17 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
+#include <boost/interprocess/sync/emulation/named_creation_functor.hpp>
 
-/*!\file
-   Describes a named interprocess_mutex class for inter-process synchronization
-*/
+//!\file
+//!Describes a named named_recursive_mutex class for inter-process synchronization
 
 namespace boost {
 namespace interprocess {
 
-/*!A recursive mutex with a global name, so it can be found from different 
-   processes. This mutex can't be placed in shared memory, and
-   each process should have it's own named_recursive_mutex.*/
+//!A recursive mutex with a global name, so it can be found from different 
+//!processes. This mutex can't be placed in shared memory, and
+//!each process should have it's own named_recursive_mutex.
 class named_recursive_mutex
 {
    /// @cond
@@ -43,41 +43,52 @@ class named_recursive_mutex
    named_recursive_mutex &operator=(const named_recursive_mutex &);
    /// @endcond
    public:
-   /*!Creates a global interprocess_mutex with a name.*/
+
+   //!Creates a global recursive_mutex with a name.
+   //!If the recursive_mutex can't be created throws interprocess_exception
    named_recursive_mutex(create_only_t create_only, const char *name);
 
-   /*!Opens or creates a global interprocess_mutex with a name. 
-      If the interprocess_mutex is created, this call is equivalent to create(). 
-      If the interprocess_mutex is already created, this call is equivalent to open(). 
-      Does not throw*/
+   //!Opens or creates a global recursive_mutex with a name. 
+   //!If the recursive_mutex is created, this call is equivalent to
+   //!named_recursive_mutex(create_only_t, ... )
+   //!If the recursive_mutex is already created, this call is equivalent
+   //!named_recursive_mutex(open_only_t, ... )
+   //!Does not throw
    named_recursive_mutex(open_or_create_t open_or_create, const char *name);
 
-   /*!Opens a global interprocess_mutex with a name if that interprocess_mutex is previously.
-      created. If it is not previously created this function return false.
-      Does not throw*/
+   //!Opens a global recursive_mutex with a name if that recursive_mutex is previously
+   //!created. If it is not previously created this function throws
+   //!interprocess_exception.
    named_recursive_mutex(open_only_t open_only, const char *name);
 
-   /*!Destroys named interprocess_mutex. Does not throw*/
+   //!Destroys *this and indicates that the calling process is finished using
+   //!the resource. The destructor function will deallocate
+   //!any system resources allocated by the system for use by this process for
+   //!this resource. The resource can still be opened again calling
+   //!the open constructor overload. To erase the resource from the system
+   //!use remove().
    ~named_recursive_mutex();
 
-   /*!Unlocks a previously locked interprocess_mutex.*/
+   //!Unlocks a previously locked
+   //!named_recursive_mutex.
    void unlock();
 
-   /*!Locks interprocess_mutex, sleeps when interprocess_mutex is already locked.
-      Throws interprocess_exception if a severe error is found*/
+   //!Locks named_recursive_mutex, sleeps when named_recursive_mutex is already locked.
+   //!Throws interprocess_exception if a severe error is found.
    void lock();
 
-   /*! Tries to lock the interprocess_mutex, returns false when interprocess_mutex 
-      is already locked, returns true when success.
-      Throws interprocess_exception if a severe error is found*/
+   //!Tries to lock the named_recursive_mutex, returns false when named_recursive_mutex 
+   //!is already locked, returns true when success.
+   //!Throws interprocess_exception if a severe error is found.
    bool try_lock();
 
-   /*! Tries to lock the interprocess_mutex until time abs_time,
-      Returns false when timeout expires, returns true when locks.
-      Throws interprocess_exception if a severe error is found*/
+   //!Tries to lock the named_recursive_mutex until time abs_time,
+   //!Returns false when timeout expires, returns true when locks.
+   //!Throws interprocess_exception if a severe error is found
    bool timed_lock(const boost::posix_time::ptime &abs_time);
 
-   /*! Erases a named recursive mutex from the system*/
+   //!Erases a named recursive mutex
+   //!from the system
    static bool remove(const char *name);
 
    /// @cond
@@ -86,44 +97,9 @@ class named_recursive_mutex
    {  return static_cast<interprocess_recursive_mutex*>(m_shmem.get_address()); }
 
    detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
-
-   class construct_func_t;
+   typedef detail::named_creation_functor<interprocess_recursive_mutex> construct_func_t;
    /// @endcond
 };
-
-/// @cond
-class named_recursive_mutex::construct_func_t
-{
-   public:
-   enum CreationType {  open_only, open_or_create, create_only  };
-
-   construct_func_t(CreationType type)
-      :  m_creation_type(type){}
-
-   bool operator()(void *address, std::size_t, bool created) const
-   {   
-      switch(m_creation_type){
-         case open_only:
-            return true;
-         break;
-         case create_only:
-         case open_or_create:
-            if(created){
-               new(address)interprocess_recursive_mutex;
-            }
-            return true;
-         break;
-
-         default:
-            return false;
-         break;
-      }
-      return true;
-   }
-   private:
-   CreationType       m_creation_type;
-};
-/// @endcond
 
 inline named_recursive_mutex::~named_recursive_mutex()
 {}
@@ -136,7 +112,7 @@ inline named_recursive_mutex::named_recursive_mutex(create_only_t, const char *n
                      ManagedOpenOrCreateUserOffset
                ,read_write
                ,0
-               ,construct_func_t(construct_func_t::create_only))
+               ,construct_func_t(detail::DoCreate))
 {}
 
 inline named_recursive_mutex::named_recursive_mutex(open_or_create_t, const char *name)
@@ -147,7 +123,7 @@ inline named_recursive_mutex::named_recursive_mutex(open_or_create_t, const char
                      ManagedOpenOrCreateUserOffset
                ,read_write
                ,0
-               ,construct_func_t(construct_func_t::open_or_create))
+               ,construct_func_t(detail::DoOpenOrCreate))
 {}
 
 inline named_recursive_mutex::named_recursive_mutex(open_only_t, const char *name)
@@ -155,7 +131,7 @@ inline named_recursive_mutex::named_recursive_mutex(open_only_t, const char *nam
                ,name
                ,read_write
                ,0
-               ,construct_func_t(construct_func_t::open_only))
+               ,construct_func_t(detail::DoOpen))
 {}
 
 inline void named_recursive_mutex::lock()

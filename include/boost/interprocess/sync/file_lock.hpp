@@ -22,16 +22,15 @@
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
-/*!\file
-   Describes a class that wraps file locking capabilities.
-*/
+//!\file
+//!Describes a class that wraps file locking capabilities.
 
 namespace boost {
 namespace interprocess {
 
-/*!A file lock, is a mutual exclusion utility similar to a mutex using a
-   file. A file lock has sharable and exclusive locking capabilities and
-   can be used with scoped_lock and sharable_lock classes.*/
+//!A file lock, is a mutual exclusion utility similar to a mutex using a
+//!file. A file lock has sharable and exclusive locking capabilities and
+//!can be used with scoped_lock and sharable_lock classes.
 class file_lock
 {
    /// @cond
@@ -41,67 +40,67 @@ class file_lock
    file_lock &operator=(const file_lock &);
    /// @endcond
    public:
-   /*!Opens a file lock. Throws interprocess_exception if the file does not
-      exist or there are no operating system resources.*/
+   //!Opens a file lock. Throws interprocess_exception if the file does not
+   //!exist or there are no operating system resources.
    file_lock(const char *name);
 
-   /*!Closes a file lock. Does not throw.*/
+   //!Closes a file lock. Does not throw.
    ~file_lock();
    
    //Exclusive locking
 
-   /*!Effects: The calling thread tries to obtain exclusive ownership of the mutex,
-         and if another thread has exclusive, or sharable ownership of
-         the mutex, it waits until it can obtain the ownership.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to obtain exclusive ownership of the mutex,
+   //!   and if another thread has exclusive, or sharable ownership of
+   //!   the mutex, it waits until it can obtain the ownership.
+   //!Throws: interprocess_exception on error.
    void lock();
 
-   /*!Effects: The calling thread tries to acquire exclusive ownership of the mutex
-         without waiting. If no other thread has exclusive, or sharable
-         ownership of the mutex this succeeds.
-      Returns: If it can acquire exclusive ownership immediately returns true.
-         If it has to wait, returns false.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to acquire exclusive ownership of the mutex
+   //!   without waiting. If no other thread has exclusive, or sharable
+   //!   ownership of the mutex this succeeds.
+   //!Returns: If it can acquire exclusive ownership immediately returns true.
+   //!   If it has to wait, returns false.
+   //!Throws: interprocess_exception on error.
    bool try_lock();
 
-   /*!Effects: The calling thread tries to acquire exclusive ownership of the mutex
-         waiting if necessary until no other thread has has exclusive, or sharable
-         ownership of the mutex or abs_time is reached.
-      Returns: If acquires exclusive ownership, returns true. Otherwise returns false. 
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to acquire exclusive ownership of the mutex
+   //!   waiting if necessary until no other thread has has exclusive, or sharable
+   //!   ownership of the mutex or abs_time is reached.
+   //!Returns: If acquires exclusive ownership, returns true. Otherwise returns false. 
+   //!Throws: interprocess_exception on error.
    bool timed_lock(const boost::posix_time::ptime &abs_time);
 
-   /*!Precondition: The thread must have exclusive ownership of the mutex. 
-      Effects: The calling thread releases the exclusive ownership of the mutex. 
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have exclusive ownership of the mutex. 
+   //!Effects: The calling thread releases the exclusive ownership of the mutex. 
+   //!Throws: An exception derived from interprocess_exception on error.
    void unlock();
 
    //Sharable locking
 
-   /*!Effects: The calling thread tries to obtain sharable ownership of the mutex,
-         and if another thread has exclusive ownership of the mutex, waits until
-         it can obtain the ownership.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to obtain sharable ownership of the mutex,
+   //!   and if another thread has exclusive ownership of the mutex, waits until
+   //!   it can obtain the ownership.
+   //!Throws: interprocess_exception on error.
    void lock_sharable();
 
-   /*!Effects: The calling thread tries to acquire sharable ownership of the mutex
-         without waiting. If no other thread has has exclusive ownership of the
-         mutex this succeeds. 
-      Returns: If it can acquire sharable ownership immediately returns true. If it
-         has to wait, returns false. 
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to acquire sharable ownership of the mutex
+   //!   without waiting. If no other thread has has exclusive ownership of the
+   //!   mutex this succeeds. 
+   //!Returns: If it can acquire sharable ownership immediately returns true. If it
+   //!   has to wait, returns false. 
+   //!Throws: interprocess_exception on error.
    bool try_lock_sharable();
 
-   /*!Effects: The calling thread tries to acquire sharable ownership of the mutex
-         waiting if necessary until no other thread has has exclusive ownership of
-         the mutex or abs_time is reached. 
-      Returns: If acquires sharable ownership, returns true. Otherwise returns false. 
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to acquire sharable ownership of the mutex
+   //!   waiting if necessary until no other thread has has exclusive ownership of
+   //!   the mutex or abs_time is reached. 
+   //!Returns: If acquires sharable ownership, returns true. Otherwise returns false. 
+   //!Throws: interprocess_exception on error.
    bool timed_lock_sharable(const boost::posix_time::ptime &abs_time);
 
-   /*!Precondition: The thread must have sharable ownership of the mutex. 
-      Effects: The calling thread releases the sharable ownership of the mutex. 
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have sharable ownership of the mutex. 
+   //!Effects: The calling thread releases the sharable ownership of the mutex. 
+   //!Throws: An exception derived from interprocess_exception on error.
    void unlock_sharable();
    /// @cond
    private:

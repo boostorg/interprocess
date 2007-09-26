@@ -18,10 +18,9 @@
 #include <boost/interprocess/containers/flat_map.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 
-/*!\file
-   Describes index adaptor of boost::map container, to use it
-   as name/shared memory index
-*/
+//!\file
+//!Describes index adaptor of boost::map container, to use it
+//!as name/shared memory index
 
 //[flat_map_index
 namespace boost { namespace interprocess {

@@ -18,15 +18,16 @@
 #include <utility>
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/allocators/private_adaptive_pool.hpp>
-//#include <boost/interprocess/allocators/allocator.hpp>
 
-/*!\file
-   Describes index adaptor of boost::map container, to use it
-   as name/shared memory index
-*/
-namespace boost { namespace interprocess {
+//!\file
+//!Describes index adaptor of boost::map container, to use it
+//!as name/shared memory index
 
-/*!Helper class to define typedefs from IndexTraits*/
+namespace boost {
+namespace interprocess {
+namespace detail{
+
+//!Helper class to define typedefs from IndexTraits
 template <class MapConfig>
 struct map_index_aux
 {
@@ -38,36 +39,38 @@ struct map_index_aux
    typedef private_adaptive_pool
             <value_type,
                typename MapConfig::
-         segment_manager_base>                    allocator_type;
+         segment_manager_base>                     allocator_type;
 
    typedef boost::interprocess::map
       <key_type,  mapped_type,
        key_less, allocator_type>                   index_t;
 };
 
-/*!Index type based in boost::interprocess::map. Just derives from boost::interprocess::map 
-   and defines the interface needed by managed memory segments*/
+}  //namespace detail {
+
+//!Index type based in boost::interprocess::map. Just derives from boost::interprocess::map 
+//!and defines the interface needed by managed memory segments
 template <class MapConfig>
 class map_index
    //Derive class from map specialization
-   : public map_index_aux<MapConfig>::index_t
+   : public detail::map_index_aux<MapConfig>::index_t
 {
    /// @cond
-   typedef map_index_aux<MapConfig>       index_aux;
-   typedef typename index_aux::index_t    base_type;
+   typedef detail::map_index_aux<MapConfig>  index_aux;
+   typedef typename index_aux::index_t       base_type;
    typedef typename MapConfig::
       segment_manager_base          segment_manager_base;
    /// @endcond
 
    public:
-   /*!Constructor. Takes a pointer to the
-      segment manager. Can throw*/
+   //!Constructor. Takes a pointer to the
+   //!segment manager. Can throw
    map_index(segment_manager_base *segment_mngr)
       : base_type(typename index_aux::key_less(),
                   segment_mngr){}
 
-   /*!This reserves memory to optimize the insertion of n
-      elements in the index*/
+   //!This reserves memory to optimize the insertion of n
+   //!elements in the index
    void reserve(std::size_t)
       {  /*Does nothing, map has not reserve or rehash*/  }
 
@@ -78,9 +81,10 @@ class map_index
 };
 
 /// @cond
-/*!Trait class to detect if an index is a node
-   index. This allows more efficient operations
-   when deallocating named objects.*/
+
+//!Trait class to detect if an index is a node
+//!index. This allows more efficient operations
+//!when deallocating named objects.
 template<class MapConfig>
 struct is_node_index
    <boost::interprocess::map_index<MapConfig> >

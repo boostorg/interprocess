@@ -56,7 +56,9 @@ class windows_shared_memory
    /// @endcond
 
    public:
-   //!Default constructor. Represents an empty windows_shared_memory.
+
+   //!Default constructor.
+   //!Represents an empty windows_shared_memory.
    windows_shared_memory();
 
    //!Creates a new native shared memory with name "name" and mode "mode",
@@ -69,7 +71,7 @@ class windows_shared_memory
    //!access mode "mode". If the file previously exists, it tries to open it with mode "mode".
    //!Otherwise throws an error.
    windows_shared_memory(open_or_create_t, const char *name, mode_t mode, std::size_t size)
-   {  this->priv_open_or_create(detail::DoCreateOrOpen, name, mode, size);  }
+   {  this->priv_open_or_create(detail::DoOpenOrCreate, name, mode, size);  }
 
    //!Tries to open a shared memory object with name "name", with the access mode "mode". 
    //!If the file does not previously exist, it throws an error.
@@ -200,7 +202,7 @@ inline bool windows_shared_memory::priv_open_or_create
             (map_access, filename);
       break;
       case detail::DoCreate:
-      case detail::DoCreateOrOpen:
+      case detail::DoOpenOrCreate:
       {
          __int64 s = size;
          unsigned long high_size(s >> 32), low_size((boost::uint32_t)s);

@@ -36,15 +36,14 @@
 
 #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
-/*!\file
-   Describes memory_mappable and mapped region classes
-*/
+//!\file
+//!Describes memory_mappable and mapped region classes
 
 namespace boost {
 namespace interprocess {
 
-/*!The mapped_region class represents a portion or region created from a
-   memory_mappable object.*/
+//!The mapped_region class represents a portion or region created from a
+//!memory_mappable object.
 class mapped_region
 {
    /// @cond
@@ -55,10 +54,10 @@ class mapped_region
 
    public:
 
-   /*!Creates a mapping region of the mapped memory "mapping", starting in
-      offset "offset", and the mapping's size will be "size". The mapping 
-      can be opened for read-only "read_only" or read-write 
-      "read_write.*/
+   //!Creates a mapping region of the mapped memory "mapping", starting in
+   //!offset "offset", and the mapping's size will be "size". The mapping 
+   //!can be opened for read-only "read_only" or read-write 
+   //!"read_write.
    template<class MemoryMappable>
    mapped_region(const MemoryMappable& mapping
                 ,mode_t mode
@@ -66,54 +65,58 @@ class mapped_region
                 ,std::size_t size = 0
                 ,const void *address = 0);
 
-   /*!Default constructor. Address and size and offset will be 0. Does not throw*/
+   //!Default constructor. Address and size and offset will be 0.
+   //!Does not throw
    mapped_region();
 
-   /*!Move constructor. *this will be constructed taking ownership of "other"'s 
-      region and "other" will be left in default constructor state.*/
+   //!Move constructor. *this will be constructed taking ownership of "other"'s 
+   //!region and "other" will be left in default constructor state.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    mapped_region(detail::moved_object<mapped_region> other);
    #else
    mapped_region(mapped_region &&other);
    #endif
 
-   /*!Destroys the mapped region. Does not throw*/
+   //!Destroys the mapped region.
+   //!Does not throw
    ~mapped_region();
 
-   /*!Move assignment. If *this owns a memory mapped region, it will be
-      destroyed and it will take ownership of "other"'s memory mapped region.*/
+   //!Move assignment. If *this owns a memory mapped region, it will be
+   //!destroyed and it will take ownership of "other"'s memory mapped region.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    mapped_region &operator=(detail::moved_object<mapped_region> other);
    #else
    mapped_region &operator=(mapped_region &&other);
    #endif
 
-   /*!Returns the size of the mapping. Note for windows users: If
-      windows_shared_memory is mapped using 0 as the size, it returns 0
-      because the size is unknown. Never throws.*/
+   //!Returns the size of the mapping. Note for windows users: If
+   //!windows_shared_memory is mapped using 0 as the size, it returns 0
+   //!because the size is unknown. Never throws.
    std::size_t get_size() const;
 
-   /*!Returns the base address of the mapping. Never throws.*/
+   //!Returns the base address of the mapping.
+   //!Never throws.
    void*       get_address() const;
 
-   /*!Returns the offset of the mapping from the beginning of the
-      mapped memory. Never throws.*/
+   //!Returns the offset of the mapping from the beginning of the
+   //!mapped memory. Never throws.
    offset_t    get_offset() const;
 
-   /*!Flushes to the disk a byte range within the mapped memory. 
-      Never throws*/
+   //!Flushes to the disk a byte range within the mapped memory. 
+   //!Never throws
    bool flush(std::size_t mapping_offset = 0, std::size_t numbytes = 0);
 
-   /*!Swaps the mapped_region with another mapped region*/
+   //!Swaps the mapped_region with another
+   //!mapped region
    void swap(mapped_region &other);
 
-   /*!Returns the size of the page. This size is the minimum memory that
-      will be used by the system when mapping a memory mappable source.*/
+   //!Returns the size of the page. This size is the minimum memory that
+   //!will be used by the system when mapping a memory mappable source.
    static std::size_t get_page_size();
 
    /// @cond
    private:
-   /*!Closes a previously opened memory mapping. Never throws.*/
+   //!Closes a previously opened memory mapping. Never throws
    void priv_close();
 
    template<int dummy>
@@ -521,7 +524,8 @@ inline void mapped_region::swap(mapped_region &other)
 }
 
 /// @cond
-/*!No-op functor*/
+
+//!No-op functor
 struct null_mapped_region_function
 {
    bool operator()(void *, std::size_t , bool) const

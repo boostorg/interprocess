@@ -20,113 +20,139 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
+
+#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+#include <boost/interprocess/sync/posix/semaphore_wrapper.hpp>
+#else
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
+#include <boost/interprocess/sync/emulation/named_creation_functor.hpp>
+#endif
 
-/*!\file
-   Describes a named semaphore class for inter-process synchronization
-*/
+//!\file
+//!Describes a named semaphore class for inter-process synchronization
 
 namespace boost {
-
 namespace interprocess {
 
-/*!A interprocess_semaphore with a global name, so it can be found from different 
-   processes. Allows several resource sharing patterns and efficient 
-   acknowledgment mechanisms.*/
+//!A semaphore with a global name, so it can be found from different 
+//!processes. Allows several resource sharing patterns and efficient 
+//!acknowledgment mechanisms.
 class named_semaphore
 {
    /// @cond
+
    //Non-copyable
    named_semaphore();
    named_semaphore(const named_semaphore &);
    named_semaphore &operator=(const named_semaphore &);
    /// @endcond
+
    public:
-   /*!Creates a global interprocess_semaphore with a name, and an initial count. 
-      It will return an false if the interprocess_semaphore is already created.*/
+   //!Creates a global semaphore with a name, and an initial count. 
+   //!If the semaphore can't be created throws interprocess_exception
    named_semaphore(create_only_t, const char *name, int initialCount);
 
-   /*!Opens or creates a global interprocess_semaphore with a name, and an initial count. 
-      If the interprocess_semaphore is created, this call is equivalent to create(). 
-      If the interprocess_semaphore is already created, this call is equivalent to open()
-      and initialCount is ignored.*/
+   //!Opens or creates a global semaphore with a name, and an initial count. 
+   //!If the semaphore is created, this call is equivalent to
+   //!named_semaphore(create_only_t, ...)
+   //!If the semaphore is already created, this call is equivalent to
+   //!named_semaphore(open_only_t, ... )
+   //!and initialCount is ignored.
    named_semaphore(open_or_create_t, const char *name, int initialCount);
 
-   /*!Opens a global interprocess_semaphore with a name if that interprocess_semaphore is previously.
-      created. If it is not previously created this function return false.*/
+   //!Opens a global semaphore with a name if that semaphore is previously.
+   //!created. If it is not previously created this function throws
+   //!interprocess_exception.
    named_semaphore(open_only_t, const char *name);
 
-   /*!Destroys the named semaphore. Does not throw*/
+   //!Destroys *this and indicates that the calling process is finished using
+   //!the resource. The destructor function will deallocate
+   //!any system resources allocated by the system for use by this process for
+   //!this resource. The resource can still be opened again calling
+   //!the open constructor overload. To erase the resource from the system
+   //!use remove().
    ~named_semaphore();
 
-   /*!Increments the interprocess_semaphore count. If there are processes/threads blocked waiting
-      for the interprocess_semaphore, then one of these processes will return successfully from
-      its wait function. If there is an error an interprocess_exception exception is thrown.*/
+   //!Increments the semaphore count. If there are processes/threads blocked waiting
+   //!for the semaphore, then one of these processes will return successfully from
+   //!its wait function. If there is an error an interprocess_exception exception is thrown.
    void post();
 
-   /*!Decrements the interprocess_semaphore. If the interprocess_semaphore value is not greater than zero,
-      then the calling process/thread blocks until it can decrement the counter. 
-      If there is an error an interprocess_exception exception is thrown.*/
+   //!Decrements the semaphore. If the semaphore value is not greater than zero,
+   //!then the calling process/thread blocks until it can decrement the counter. 
+   //!If there is an error an interprocess_exception exception is thrown.
    void wait();
 
-   /*!Decrements the interprocess_semaphore if the interprocess_semaphore's value is greater than zero
-      and returns true. If the value is not greater than zero returns false.
-      If there is an error an interprocess_exception exception is thrown.*/
+   //!Decrements the semaphore if the semaphore's value is greater than zero
+   //!and returns true. If the value is not greater than zero returns false.
+   //!If there is an error an interprocess_exception exception is thrown.
    bool try_wait();
 
-   /*!Decrements the interprocess_semaphore if the interprocess_semaphore's value is greater
-      than zero and returns true. Otherwise, waits for the interprocess_semaphore
-      to the posted or the timeout expires. If the timeout expires, the
-      function returns false. If the interprocess_semaphore is posted the function
-      returns true. If there is an error throws sem_exception*/
+   //!Decrements the semaphore if the semaphore's value is greater
+   //!than zero and returns true. Otherwise, waits for the semaphore
+   //!to the posted or the timeout expires. If the timeout expires, the
+   //!function returns false. If the semaphore is posted the function
+   //!returns true. If there is an error throws sem_exception
    bool timed_wait(const boost::posix_time::ptime &abs_time);
 
-   /*!Erases a named semaphore from the system*/
+   //!Erases a named semaphore from the system.
+   //!Returns false on error. Never throws.
    static bool remove(const char *name);
 
    /// @cond
    private:
+   #ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+   detail::named_semaphore_wrapper m_sem;
+   #else //#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+   interprocess_semaphore *semaphore() const
+   {  return static_cast<interprocess_semaphore*>(m_shmem.get_address()); }
+
    detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
-   class construct_func_t;
+   typedef detail::named_creation_functor<interprocess_semaphore, int> construct_func_t;
+   #endif
    /// @endcond
 };
 
 /// @cond
-class named_semaphore::construct_func_t
-{
-   public:
-   enum CreationType {  open_only, open_or_create, create_only  };
 
-   construct_func_t(CreationType type, int init_count)
-      :  m_creation_type(type), m_init_count(init_count){}
+#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
 
-   bool operator()(void *address, std::size_t, bool created) const
-   {   
-      switch(m_creation_type){
-         case open_only:
-            return true;
-         break;
-         case create_only:
-         case open_or_create:
-            if(created){
-               new(address)interprocess_semaphore(m_init_count);
-            }
-            return true;
-         break;
+inline named_semaphore::named_semaphore
+   (create_only_t, const char *name, int initialCount)
+   :  m_sem(detail::DoCreate, name, read_write, initialCount)
+{}
 
-         default:
-            return false;
-         break;
-      }
-      return true;
-   }
-   private:
-   CreationType   m_creation_type;
-   int            m_init_count;
-};
-/// @endcond
+inline named_semaphore::named_semaphore
+   (open_or_create_t, const char *name, int initialCount)
+   :  m_sem(detail::DoOpenOrCreate, name, read_write, initialCount)
+{}
+
+inline named_semaphore::named_semaphore
+   (open_only_t, const char *name)
+   :  m_sem(detail::DoOpen, name, read_write, 1)
+{}
+
+inline named_semaphore::~named_semaphore()
+{}
+
+inline void named_semaphore::wait()
+{  m_sem.wait();  }
+
+inline void named_semaphore::post()
+{  m_sem.post();  }
+
+inline bool named_semaphore::try_wait()
+{  return m_sem.try_wait();  }
+
+inline bool named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
+{  return m_sem.timed_wait(abs_time);  }
+
+inline bool named_semaphore::remove(const char *name)
+{  return detail::named_semaphore_wrapper::remove(name);   }
+
+#else //#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
 
 inline named_semaphore::~named_semaphore()
 {}
@@ -140,7 +166,7 @@ inline named_semaphore::named_semaphore
                      ManagedOpenOrCreateUserOffset
                ,read_write
                ,0
-               ,construct_func_t(construct_func_t::create_only, initialCount))
+               ,construct_func_t(detail::DoCreate, initialCount))
 {}
 
 inline named_semaphore::named_semaphore
@@ -152,7 +178,7 @@ inline named_semaphore::named_semaphore
                      ManagedOpenOrCreateUserOffset
                ,read_write
                ,0
-               ,construct_func_t(construct_func_t::open_or_create, initialCount))
+               ,construct_func_t(detail::DoOpenOrCreate, initialCount))
 {}
 
 inline named_semaphore::named_semaphore
@@ -161,26 +187,29 @@ inline named_semaphore::named_semaphore
                ,name
                ,read_write
                ,0
-               ,construct_func_t(construct_func_t::open_only, 0))
+               ,construct_func_t(detail::DoOpen, 0))
 {}
 
 inline void named_semaphore::post()
-{  static_cast<interprocess_semaphore*>(m_shmem.get_address())->post();   }
+{  semaphore()->post();   }
 
 inline void named_semaphore::wait()
-{  static_cast<interprocess_semaphore*>(m_shmem.get_address())->wait();   }
+{  semaphore()->wait();   }
 
 inline bool named_semaphore::try_wait()
-{  return static_cast<interprocess_semaphore*>(m_shmem.get_address())->try_wait();   }
+{  return semaphore()->try_wait();   }
 
 inline bool named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
-{  return static_cast<interprocess_semaphore*>(m_shmem.get_address())->timed_wait(abs_time);   }
+{  return semaphore()->timed_wait(abs_time);   }
 
 inline bool named_semaphore::remove(const char *name)
 {  return shared_memory_object::remove(name); }
 
-}  //namespace interprocess {
+#endif   //#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
 
+/// @endcond
+
+}  //namespace interprocess {
 }  //namespace boost {
 
 

@@ -39,16 +39,15 @@
    #define BOOST_INTERPROCESS_USE_GENERIC_EMULATION
 #endif
 
-/*!\file
-   Describes a interprocess_semaphore class for inter-process synchronization
-*/
+//!\file
+//!Describes a interprocess_semaphore class for inter-process synchronization
 
 namespace boost {
 
 namespace interprocess {
 
-/*!Wraps a interprocess_semaphore that can be placed in shared memory and can be 
-   shared between processes. Allows timed lock tries*/
+//!Wraps a interprocess_semaphore that can be placed in shared memory and can be 
+//!shared between processes. Allows timed lock tries
 class interprocess_semaphore
 {
    /// @cond
@@ -57,36 +56,37 @@ class interprocess_semaphore
    interprocess_semaphore &operator=(const interprocess_semaphore &);
    /// @endcond
    public:
-   /*!Creates a interprocess_semaphore with the given initial count. 
-      interprocess_exception if there is an error.*/
+   //!Creates a interprocess_semaphore with the given initial count. 
+   //!interprocess_exception if there is an error.*/
    interprocess_semaphore(int initialCount);
 
-   /*!Destroys the interprocess_semaphore. Does not throw*/
+   //!Destroys the interprocess_semaphore.
+   //!Does not throw
    ~interprocess_semaphore();
 
-   /*!Increments the interprocess_semaphore count. If there are processes/threads blocked waiting
-      for the interprocess_semaphore, then one of these processes will return successfully from
-      its wait function. If there is an error an interprocess_exception exception is thrown.*/
+   //!Increments the interprocess_semaphore count. If there are processes/threads blocked waiting
+   //!for the interprocess_semaphore, then one of these processes will return successfully from
+   //!its wait function. If there is an error an interprocess_exception exception is thrown.
    void post();
 
-   /*!Decrements the interprocess_semaphore. If the interprocess_semaphore value is not greater than zero,
-      then the calling process/thread blocks until it can decrement the counter. 
-      If there is an error an interprocess_exception exception is thrown.*/
+   //!Decrements the interprocess_semaphore. If the interprocess_semaphore value is not greater than zero,
+   //!then the calling process/thread blocks until it can decrement the counter. 
+   //!If there is an error an interprocess_exception exception is thrown.
    void wait();
 
-   /*!Decrements the interprocess_semaphore if the interprocess_semaphore's value is greater than zero
-      and returns true. If the value is not greater than zero returns false.
-      If there is an error an interprocess_exception exception is thrown.*/
+   //!Decrements the interprocess_semaphore if the interprocess_semaphore's value is greater than zero
+   //!and returns true. If the value is not greater than zero returns false.
+   //!If there is an error an interprocess_exception exception is thrown.
    bool try_wait();
 
-   /*!Decrements the interprocess_semaphore if the interprocess_semaphore's value is greater
-      than zero and returns true. Otherwise, waits for the interprocess_semaphore
-      to the posted or the timeout expires. If the timeout expires, the
-      function returns false. If the interprocess_semaphore is posted the function
-      returns true. If there is an error throws sem_exception*/
+   //!Decrements the interprocess_semaphore if the interprocess_semaphore's value is greater
+   //!than zero and returns true. Otherwise, waits for the interprocess_semaphore
+   //!to the posted or the timeout expires. If the timeout expires, the
+   //!function returns false. If the interprocess_semaphore is posted the function
+   //!returns true. If there is an error throws sem_exception
    bool timed_wait(const boost::posix_time::ptime &abs_time);
 
-   /*!Returns the interprocess_semaphore count*/
+   //!Returns the interprocess_semaphore count
 //   int get_count() const;
    /// @cond
    private:

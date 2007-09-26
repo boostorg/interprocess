@@ -44,7 +44,7 @@ static const open_or_create_t  open_or_create = open_or_create_t();
 namespace detail {
 
 enum create_enum_t
-{  DoCreate, DoOpen, DoCreateOrOpen   };
+{  DoCreate, DoOpen, DoOpenOrCreate   };
 
 }  //namespace detail {
 

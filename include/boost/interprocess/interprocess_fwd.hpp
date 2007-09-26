@@ -24,6 +24,17 @@
 //                        Standard predeclarations
 //////////////////////////////////////////////////////////////////////////////
 
+/// @cond
+
+namespace boost{
+namespace intrusive{
+}}
+
+namespace boost{
+namespace interprocess{
+namespace bi = boost::intrusive;
+}}
+
 namespace std {
 
 template <class T>
@@ -39,6 +50,8 @@ template <class CharType>
 struct char_traits;
 
 }  //namespace std {
+
+/// @endcond
 
 namespace boost { namespace interprocess {
 
@@ -134,44 +147,26 @@ template <class T>
 class offset_ptr;
 
 //////////////////////////////////////////////////////////////////////////////
-//                         intersegment_ptr
-//////////////////////////////////////////////////////////////////////////////
-
-template <class Mutex>
-struct flat_map_intersegment;
-
-template <class T/*, class PT = flat_map_intersegment<interprocess_mutex> */>
-class intersegment_ptr;
-
-//////////////////////////////////////////////////////////////////////////////
 //                    Memory allocation algorithms
 //////////////////////////////////////////////////////////////////////////////
 
 //Single segment memory allocation algorithms
-template<class MutexFamily, class VoidMutex = offset_ptr<void> >
-class seq_fit;
-
 template<class MutexFamily, class VoidMutex = offset_ptr<void> >
 class simple_seq_fit;
 
 template<class MutexFamily, class VoidMutex = offset_ptr<void> >
 class rbtree_best_fit;
 
-//Single segment memory allocation algorithms
-template<class MutexFamily, class VoidMutex = intersegment_ptr<void> >
-class multi_seq_fit;
-
-template<class MutexFamily, class VoidMutex = intersegment_ptr<void> >
-class multi_simple_seq_fit;
-
 //////////////////////////////////////////////////////////////////////////////
 //                         Index Types
 //////////////////////////////////////////////////////////////////////////////
 
 template<class IndexConfig> class flat_map_index;
-template<class IndexConfig> class map_index;
 template<class IndexConfig> class iset_index;
+template<class IndexConfig> class iunordered_set_index;
+template<class IndexConfig> class map_index;
 template<class IndexConfig> class null_index;
+template<class IndexConfig> class unordered_map_index;
 
 //////////////////////////////////////////////////////////////////////////////
 //                         Segment manager
@@ -204,7 +199,7 @@ typedef basic_managed_external_buffer
 wmanaged_external_buffer;
 
 //////////////////////////////////////////////////////////////////////////////
-//                      Shared memory managed memory classes
+//                      managed memory classes
 //////////////////////////////////////////////////////////////////////////////
 
 template <class CharType
@@ -368,6 +363,12 @@ class scoped_ptr;
 
 template<class T, class VoidPointer>
 class intrusive_ptr;
+
+template<class T, class VoidAllocator, class Deleter>
+class shared_ptr;
+
+template<class T, class VoidAllocator, class Deleter>
+class weak_ptr;
 
 //////////////////////////////////////////////////////////////////////////////
 //                                  IPC

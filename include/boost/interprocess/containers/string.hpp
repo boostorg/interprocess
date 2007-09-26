@@ -75,7 +75,6 @@ namespace detail {
 // allocator and whose size is this->m_storage.
 template <class A>
 class basic_string_base
-   : private A
 {
    basic_string_base();
  public:
@@ -86,20 +85,12 @@ class basic_string_base
    typedef typename A::value_type  value_type;
    typedef typename A::size_type   size_type;
 
-   allocator_type get_allocator() const { return *this; }
-
-   const stored_allocator_type &get_stored_allocator() const 
-   {  return *this; }
-
-   stored_allocator_type &get_stored_allocator()
-   {  return *this; }
-
    basic_string_base(const allocator_type& a)
-      : allocator_type(a)
+      : members_(a)
    {  init(); }
 
    basic_string_base(const allocator_type& a, std::size_t n)
-      : allocator_type(a)
+      : members_(a)
    {  
       this->init(); 
       this->allocate_initial_block(n);
@@ -107,14 +98,14 @@ class basic_string_base
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_string_base(const detail::moved_object<basic_string_base<A> >& b)
-      :  allocator_type(static_cast<allocator_type&>(b.get()))
+      :  members_(b.get().members_)
    {  
       init();
       this->swap(b.get()); 
    }
    #else
    basic_string_base(basic_string_base<A> && b)
-      :  allocator_type(static_cast<allocator_type&>(b))
+      :  members_(b.members_)
    {  
       init();
       this->swap(b); 
@@ -125,7 +116,7 @@ class basic_string_base
    {  
       this->deallocate_block(); 
       if(!this->is_short()){
-         static_cast<long_t*>(static_cast<void*>(&m_repr.r))->~long_t();
+         static_cast<long_t*>(static_cast<void*>(&this->members_.m_repr.r))->~long_t();
       }
    }
 
@@ -212,7 +203,23 @@ class basic_string_base
 
       long_t &long_repr() const
       {  return *static_cast<long_t*>(const_cast<void*>(static_cast<const void*>(&r)));  }
-   } m_repr;
+   };
+
+   struct members_holder
+      :  public A
+   {
+      members_holder(const A &a)
+         :  A(a)
+      {}
+
+      repr_t m_repr;
+   } members_;
+
+   const A &alloc() const
+   {  return members_;  }
+
+   A &alloc()
+   {  return members_;  }
 
    static const size_type InternalBufferChars = (sizeof(repr_t) - ShortDataOffset)/sizeof(value_type);
 
@@ -222,24 +229,24 @@ class basic_string_base
 
    protected:
    bool is_short() const
-   {  return static_cast<bool>(m_repr.s.h.is_short != 0);  }
+   {  return static_cast<bool>(this->members_.m_repr.s.h.is_short != 0);  }
 
    void is_short(bool yes)
    {  
       if(yes && !this->is_short()){
-         static_cast<long_t*>(static_cast<void*>(&m_repr.r))->~long_t();
+         static_cast<long_t*>(static_cast<void*>(&this->members_.m_repr.r))->~long_t();
       }
       else{
-         new(static_cast<void*>(&m_repr.r))long_t();
+         new(static_cast<void*>(&this->members_.m_repr.r))long_t();
       }
-      m_repr.s.h.is_short = yes;
+      this->members_.m_repr.s.h.is_short = yes;
    }
 
    private:
    void init()
    {
-      m_repr.s.h.is_short = 1;
-      m_repr.s.h.length   = 0;
+      this->members_.m_repr.s.h.is_short = 1;
+      this->members_.m_repr.s.h.length   = 0;
    }
 
    protected:
@@ -276,7 +283,7 @@ class basic_string_base
       if(!(command & allocate_new))
          return std::pair<pointer, bool>(0, 0);
       received_size = preferred_size;
-      return std::make_pair(A::allocate(received_size), false);
+      return std::make_pair(this->alloc().allocate(received_size), false);
    }
 
    std::pair<pointer, bool>
@@ -287,17 +294,17 @@ class basic_string_base
                          pointer reuse,
                          allocator_v2)
    {
-      return A::allocation_command(command, limit_size, preferred_size, 
-                                   received_size, reuse);
+      return this->alloc().allocation_command(command, limit_size, preferred_size, 
+                                              received_size, reuse);
    }
 
    size_type next_capacity(size_type additional_objects) const
-   {  return get_next_capacity(A::max_size(), this->priv_storage(), additional_objects);  }
+   {  return get_next_capacity(this->alloc().max_size(), this->priv_storage(), additional_objects);  }
 
    void deallocate(pointer p, std::size_t n) 
    {  
       if (p && (n > InternalBufferChars))
-         allocator_type::deallocate(p, n);
+         this->alloc().deallocate(p, n);
    }
 
    void construct(pointer p, const value_type &value = value_type())
@@ -332,7 +339,7 @@ class basic_string_base
    {  this->deallocate(this->priv_addr(), this->priv_storage());  }
       
    std::size_t max_size() const
-   {  return A::max_size() - 1; }
+   {  return this->alloc().max_size() - 1; }
 
    // Helper functions for exception handling.
    void throw_length_error() const
@@ -341,66 +348,60 @@ class basic_string_base
    void throw_out_of_range() const
    {  throw(std::out_of_range("basic_string"));  }
 
-   A & get_alloc()
-   {  return *this;  }
-
-   const A & get_alloc() const
-   {  return *this;  }
-
    protected:
    size_type priv_capacity() const
    { return this->priv_storage() - 1; }
 
    pointer priv_addr() const
-   {  return this->is_short() ? pointer(&m_repr.short_repr().data[0]) : m_repr.long_repr().start;  }
+   {  return this->is_short() ? pointer(&this->members_.m_repr.short_repr().data[0]) : this->members_.m_repr.long_repr().start;  }
 
    void priv_addr(pointer addr)
-   {  m_repr.long_repr().start = addr;  }
+   {  this->members_.m_repr.long_repr().start = addr;  }
 
    size_type priv_storage() const
-   {  return this->is_short() ? InternalBufferChars : m_repr.long_repr().storage;  }
+   {  return this->is_short() ? InternalBufferChars : this->members_.m_repr.long_repr().storage;  }
 
    void priv_storage(size_type storage)
    {  
       if(!this->is_short())
-         m_repr.long_repr().storage = storage;
+         this->members_.m_repr.long_repr().storage = storage;
    }
 
    size_type priv_size() const
-   {  return this->is_short() ? m_repr.short_repr().h.length : m_repr.long_repr().length;  }
+   {  return this->is_short() ? this->members_.m_repr.short_repr().h.length : this->members_.m_repr.long_repr().length;  }
 
    void priv_size(size_type sz)
    {  
       if(this->is_short())
-         m_repr.s.h.length = (unsigned char)sz;
+         this->members_.m_repr.s.h.length = (unsigned char)sz;
       else
-         m_repr.long_repr().length = static_cast<typename A::size_type>(sz);
+         this->members_.m_repr.long_repr().length = static_cast<typename A::size_type>(sz);
    }
 
    void swap(basic_string_base& other) 
    {
       if(this->is_short()){
          if(other.is_short()){
-            std::swap(m_repr, other.m_repr);
+            std::swap(this->members_.m_repr, other.members_.m_repr);
          }
          else{
-            repr_t copy(m_repr);
-            m_repr.long_repr() = other.m_repr.long_repr();
-            other.m_repr = copy;
+            repr_t copied(this->members_.m_repr);
+            this->members_.m_repr.long_repr() = other.members_.m_repr.long_repr();
+            other.members_.m_repr = copied;
          }
       }
       else{
          if(other.is_short()){
-            repr_t copy(other.m_repr);
-            other.m_repr.long_repr() = m_repr.long_repr();
-            m_repr = copy;
+            repr_t copied(other.members_.m_repr);
+            other.members_.m_repr.long_repr() = this->members_.m_repr.long_repr();
+            this->members_.m_repr = copied;
          }
          else{
-            std::swap(m_repr.long_repr(), other.m_repr.long_repr());
+            std::swap(this->members_.m_repr.long_repr(), other.members_.m_repr.long_repr());
          }
       }
 
-      allocator_type & this_al = this->get_alloc(), &other_al = other.get_alloc();
+      allocator_type & this_al = this->alloc(), &other_al = other.alloc();
       if(this_al != other_al){
          detail::do_swap(this_al, other_al);
       }
@@ -540,7 +541,7 @@ class basic_string
    //! 
    //! <b>Throws</b>: If allocator_type's default constructor or copy constructor throws.
    basic_string(const basic_string& s) 
-      : base_t(s.get_allocator()) 
+      : base_t(s.alloc()) 
    { this->priv_range_initialize(s.begin(), s.end()); }
 
    //! <b>Effects</b>: Move constructor. Moves mx's resources to *this.
@@ -735,7 +736,7 @@ class basic_string
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
-   { return base_t::get_allocator(); }
+   { return this->alloc(); }
 
    //! <b>Effects</b>: Returns the number of the elements contained in the vector.
    //! 
@@ -1531,7 +1532,7 @@ class basic_string
       if (pos > size())
          this->throw_out_of_range();
       return basic_string(this->priv_addr() + pos, 
-                          this->priv_addr() + pos + min_value(n, size() - pos), this->get_alloc());
+                          this->priv_addr() + pos + min_value(n, size() - pos), this->alloc());
    }
 
    //! <b>Effects</b>: Three-way lexicographical comparison of s and *this.
@@ -1917,7 +1918,7 @@ operator+(const basic_string<CharT,Traits,A>& x,
    typedef basic_string<CharT,Traits,A> str_t;
    typedef typename str_t::reserve_t reserve_t;
    reserve_t reserve;
-   str_t result(reserve, x.size() + y.size(), x.get_allocator());
+   str_t result(reserve, x.size() + y.size(), x.alloc());
    result.append(x);
    result.append(y);
    return result;
@@ -2038,7 +2039,7 @@ operator+(const basic_string<CharT,Traits,A>& x, const CharT* s)
    typedef typename str_t::reserve_t reserve_t;
    reserve_t reserve;
    const std::size_t n = Traits::length(s);
-   str_t result(reserve, x.size() + n, x.get_allocator());
+   str_t result(reserve, x.size() + n, x.alloc());
    result.append(x);
    result.append(s, s + n);
    return result;
@@ -2071,7 +2072,7 @@ operator+(const basic_string<CharT,Traits,A>& x, const CharT c)
   typedef basic_string<CharT,Traits,A> str_t;
   typedef typename str_t::reserve_t reserve_t;
    reserve_t reserve;
-   str_t result(reserve, x.size() + 1, x.get_allocator());
+   str_t result(reserve, x.size() + 1, x.alloc());
    result.append(x);
    result.push_back(c);
    return result;
@@ -2457,14 +2458,15 @@ inline std::size_t hash_value(basic_string<Ch, std::char_traits<Ch>, A> const& v
 }
 
 /// @cond
-/*!This class is movable*/
+
+//!This class is movable
 template <class C, class T, class A>
 struct is_movable<basic_string<C, T, A> >
 {
    enum {   value = true };
 };
 
-/*!This class is movable*/
+//!This class is movable
 template <class A>
 struct is_movable<detail::basic_string_base<A> >
 {

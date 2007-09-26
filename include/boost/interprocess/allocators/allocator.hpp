@@ -201,11 +201,8 @@ class allocator
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
-   multiallocation_iterator allocate_individual(std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements)
-   {
-      return this->allocate_many
-            (1, min_elements, preferred_elements, received_elements);
-   }
+   multiallocation_iterator allocate_individual(std::size_t num_elements)
+   {  return this->allocate_many(1, num_elements); }
 
    /// @endcond
 
@@ -223,11 +220,10 @@ class allocator
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. The elements must be deallocated
    //!with deallocate(...)
-   multiallocation_iterator allocate_many(size_type elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements)
+   multiallocation_iterator allocate_many(size_type elem_size, std::size_t num_elements)
    {
       return multiallocation_iterator
-         (mp_mngr->allocate_many
-            (sizeof(T)*elem_size, min_elements, preferred_elements, received_elements));
+         (mp_mngr->allocate_many(sizeof(T)*elem_size, num_elements));
    }
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a

@@ -25,10 +25,10 @@
 #include <boost/assert.hpp>
 #include <iterator>
 
-/*!\file
-   Describes a smart pointer that stores the offset between this pointer and
-   target pointee, called offset_ptr.
-*/
+//!\file
+//!Describes a smart pointer that stores the offset between this pointer and
+//!target pointee, called offset_ptr.
+
 namespace boost {
 
 //Predeclarations
@@ -40,12 +40,12 @@ struct has_trivial_destructor;
 
 namespace interprocess {
 
-/*!A smart pointer that stores the offset between between the pointer and the
-   the object it points. This allows offset allows special properties, since
-   the pointer is independent from the address address of the pointee, if the
-   pointer and the pointee are still separated by the same offset. This feature
-   converts offset_ptr in a smart pointer that can be placed in shared memory and
-   memory mapped files mapped in different addresses in every process.*/
+//!A smart pointer that stores the offset between between the pointer and the
+//!the object it points. This allows offset allows special properties, since
+//!the pointer is independent from the address address of the pointee, if the
+//!pointer and the pointee are still separated by the same offset. This feature
+//!converts offset_ptr in a smart pointer that can be placed in shared memory and
+//!memory mapped files mapped in different addresses in every process.
 template <class PointedType>
 class offset_ptr
 {
@@ -98,113 +98,134 @@ class offset_ptr
 
    public:   //Public Functions
 
-   /*!Constructor from raw pointer (allows "0" pointer conversion). Never throws.*/
+   //!Constructor from raw pointer (allows "0" pointer conversion).
+   //!Never throws.
    offset_ptr(pointer ptr = 0) {  this->set_offset(ptr); }
 
-   /*!Constructor from other pointer. Never throws.*/
+   //!Constructor from other pointer.
+   //!Never throws.
    template <class T>
    offset_ptr(T *ptr) 
    {  pointer p (ptr);  (void)p; this->set_offset(p); }
 
-   /*!Constructor from other offset_ptr */
+   //!Constructor from other offset_ptr
+   //!Never throws.
    offset_ptr(const offset_ptr& ptr) 
    {  this->set_offset(ptr.get());   }
 
-   /*!Constructor from other offset_ptr. If pointers of pointee types are 
-      convertible, offset_ptrs will be convertibles. Never throws.*/
+   //!Constructor from other offset_ptr. If pointers of pointee types are 
+   //!convertible, offset_ptrs will be convertibles. Never throws.
    template<class T2>
    offset_ptr(const offset_ptr<T2> &ptr) 
    {  pointer p(ptr.get());  (void)p; this->set_offset(p);   }
 
-   /*!Emulates static_cast operator. Never throws.  */
+   //!Emulates static_cast operator.
+   //!Never throws.
    template<class Y>
    offset_ptr(const offset_ptr<Y> & r, detail::static_cast_tag)
    {  this->set_offset(static_cast<PointedType*>(r.get()));   }
 
-   /*!Emulates const_cast operator. Never throws.*/
+   //!Emulates const_cast operator.
+   //!Never throws.
    template<class Y>
    offset_ptr(const offset_ptr<Y> & r, detail::const_cast_tag)
    {  this->set_offset(const_cast<PointedType*>(r.get()));   }
 
-   /*!Emulates dynamic_cast operator. Never throws.*/
+   //!Emulates dynamic_cast operator.
+   //!Never throws.
    template<class Y>
    offset_ptr(const offset_ptr<Y> & r, detail::dynamic_cast_tag)
    {  this->set_offset(dynamic_cast<PointedType*>(r.get()));   }
 
-   /*!Emulates reinterpret_cast operator. Never throws.*/
+   //!Emulates reinterpret_cast operator.
+   //!Never throws.
    template<class Y>
    offset_ptr(const offset_ptr<Y> & r, detail::reinterpret_cast_tag)
    {  this->set_offset(reinterpret_cast<PointedType*>(r.get()));   }
 
-   /*!Obtains raw pointer from offset. Never throws.*/
+   //!Obtains raw pointer from offset.
+   //!Never throws.
    pointer get()const
    {  return (pointer)this->get_pointer();   }
 
-   /*!Pointer-like -> operator. It can return 0 pointer. Never throws.*/
+   //!Pointer-like -> operator. It can return 0 pointer.
+   //!Never throws.
    pointer operator->() const           
    {  return this->get(); }
 
-   /*!Dereferencing operator, if it is a null offset_ptr behavior 
-         is undefined. Never throws.*/
+   //!Dereferencing operator, if it is a null offset_ptr behavior 
+   //!   is undefined. Never throws.
    reference operator* () const           
    {  return *(this->get());   }
 
-   /*!Indexing operator. Never throws.*/
+   //!Indexing operator.
+   //!Never throws.
    reference operator[](std::ptrdiff_t idx) const   
    {  return this->get()[idx];  }
 
-   /*!Assignment from pointer (saves extra conversion). Never throws.*/
+   //!Assignment from pointer (saves extra conversion).
+   //!Never throws.
    offset_ptr& operator= (pointer from)
    {  this->set_offset(from); return *this;  }
 
-   /*!Assignment from other offset_ptr. Never throws.*/
+   //!Assignment from other offset_ptr.
+   //!Never throws.
    offset_ptr& operator= (const offset_ptr & pt)
    {  pointer p(pt.get());  (void)p; this->set_offset(p);  return *this;  }
 
-   /*!Assignment from related offset_ptr. If pointers of pointee types 
-         are assignable, offset_ptrs will be assignable. Never throws.*/
+   //!Assignment from related offset_ptr. If pointers of pointee types 
+   //!   are assignable, offset_ptrs will be assignable. Never throws.
    template <class T2>
    offset_ptr& operator= (const offset_ptr<T2> & pt)
    {  pointer p(pt.get()); this->set_offset(p);  return *this;  }
  
-   /*!offset_ptr + std::ptrdiff_t. Never throws.*/
+   //!offset_ptr + std::ptrdiff_t.
+   //!Never throws.
    offset_ptr operator+ (std::ptrdiff_t offset) const   
    {  return offset_ptr(this->get()+offset);   }
 
-   /*!offset_ptr - std::ptrdiff_t. Never throws.*/
+   //!offset_ptr - std::ptrdiff_t.
+   //!Never throws.
    offset_ptr operator- (std::ptrdiff_t offset) const   
    {  return offset_ptr(this->get()-offset);   }
 
-   /*!offset_ptr += std::ptrdiff_t. Never throws.*/
+   //!offset_ptr += std::ptrdiff_t.
+   //!Never throws.
    offset_ptr &operator+= (std::ptrdiff_t offset)
    {  this->inc_offset(offset * sizeof (PointedType));   return *this;  }
 
-   /*!offset_ptr -= std::ptrdiff_t. Never throws.*/
+   //!offset_ptr -= std::ptrdiff_t.
+   //!Never throws.
    offset_ptr &operator-= (std::ptrdiff_t offset)
    {  this->dec_offset(offset * sizeof (PointedType));   return *this;  }
 
-   /*!++offset_ptr. Never throws.*/
+   //!++offset_ptr.
+   //!Never throws.
    offset_ptr& operator++ (void) 
    {  this->inc_offset(sizeof (PointedType));   return *this;  }
 
-   /*!offset_ptr++. Never throws.*/
+   //!offset_ptr++.
+   //!Never throws.
    offset_ptr operator++ (int)
    {  offset_ptr temp(*this); ++*this; return temp; }
 
-   /*!--offset_ptr. Never throws.*/
+   //!--offset_ptr.
+   //!Never throws.
    offset_ptr& operator-- (void) 
    {  this->dec_offset(sizeof (PointedType));   return *this;  }
 
-   /*!offset_ptr--. Never throws.*/
+   //!offset_ptr--.
+   //!Never throws.
    offset_ptr operator-- (int)
    {  offset_ptr temp(*this); --*this; return temp; }
 
-   /*!safe bool conversion operator. Never throws.*/
+   //!safe bool conversion operator.
+   //!Never throws.
    operator unspecified_bool_type() const  
    {  return this->get()? &self_t::unspecified_bool_type_func : 0;   }
 
-   /*!Not operator. Not needed in theory, but improves portability. 
-      Never throws.*/
+   //!Not operator. Not needed in theory, but improves portability. 
+   //!Never throws
    bool operator! () const
    {  return this->get() == 0;   }
 /*
@@ -217,65 +238,76 @@ class offset_ptr
 */
 };
 
-/*!offset_ptr<T1> == offset_ptr<T2>. Never throws.*/
+//!offset_ptr<T1> == offset_ptr<T2>.
+//!Never throws.
 template<class T1, class T2>
 inline bool operator== (const offset_ptr<T1> &pt1, 
                         const offset_ptr<T2> &pt2)
 {  return pt1.get() == pt2.get();  }
 
-/*!offset_ptr<T1> != offset_ptr<T2>. Never throws.*/
+//!offset_ptr<T1> != offset_ptr<T2>.
+//!Never throws.
 template<class T1, class T2>
 inline bool operator!= (const offset_ptr<T1> &pt1, 
                         const offset_ptr<T2> &pt2)
 {  return pt1.get() != pt2.get();  }
 
-/*!offset_ptr<T1> < offset_ptr<T2>. Never throws.*/
+//!offset_ptr<T1> < offset_ptr<T2>.
+//!Never throws.
 template<class T1, class T2>
 inline bool operator< (const offset_ptr<T1> &pt1, 
                        const offset_ptr<T2> &pt2)
 {  return pt1.get() < pt2.get();  }
 
-/*!offset_ptr<T1> <= offset_ptr<T2>. Never throws.*/
+//!offset_ptr<T1> <= offset_ptr<T2>.
+//!Never throws.
 template<class T1, class T2>
 inline bool operator<= (const offset_ptr<T1> &pt1, 
                         const offset_ptr<T2> &pt2)
 {  return pt1.get() <= pt2.get();  }
 
-/*!offset_ptr<T1> > offset_ptr<T2>. Never throws.*/
+//!offset_ptr<T1> > offset_ptr<T2>.
+//!Never throws.
 template<class T1, class T2>
 inline bool operator> (const offset_ptr<T1> &pt1, 
                        const offset_ptr<T2> &pt2)
 {  return pt1.get() > pt2.get();  }
 
-/*!offset_ptr<T1> >= offset_ptr<T2>. Never throws.*/
+//!offset_ptr<T1> >= offset_ptr<T2>.
+//!Never throws.
 template<class T1, class T2>
 inline bool operator>= (const offset_ptr<T1> &pt1, 
                         const offset_ptr<T2> &pt2)
 {  return pt1.get() >= pt2.get();  }
 
-/*!operator<< */
+//!operator<<
+//!for offset ptr
 template<class E, class T, class Y> 
 inline std::basic_ostream<E, T> & operator<< 
    (std::basic_ostream<E, T> & os, offset_ptr<Y> const & p)
 {  return os << p.get();   }
 
-/*!operator>> */
+//!operator>> 
+//!for offset ptr
 template<class E, class T, class Y> 
 inline std::basic_istream<E, T> & operator>> 
    (std::basic_istream<E, T> & os, offset_ptr<Y> & p)
 {  Y * tmp; return os >> tmp; p = tmp;   }
 
-/*!std::ptrdiff_t + offset_ptr  */
+//!std::ptrdiff_t + offset_ptr
+//!operation
 template<class T>
 inline offset_ptr<T> operator+(std::ptrdiff_t diff, const offset_ptr<T>& right)
 {  return right + diff;  }
 
-/*!offset_ptr - offset_ptr  */
+//!offset_ptr - offset_ptr
+//!operation
 template<class T, class T2>
 inline std::ptrdiff_t operator- (const offset_ptr<T> &pt, const offset_ptr<T2> &pt2)
 {  return pt.get()- pt2.get();   }
 
-/*!swap specialization */
+//!swap specialization 
+//!for offset_ptr
 template<class T>
 inline void swap (boost::interprocess::offset_ptr<T> &pt, 
                   boost::interprocess::offset_ptr<T> &pt2)
@@ -343,8 +375,8 @@ struct has_trivial_destructor< boost::interprocess::offset_ptr<T> >
 //#if !defined(_MSC_VER) || (_MSC_VER >= 1400)
 namespace interprocess {
 //#endif
-/*!get_pointer() enables boost::mem_fn to recognize offset_ptr. 
-   Never throws.*/
+//!get_pointer() enables boost::mem_fn to recognize offset_ptr. 
+//!Never throws.
 template<class T>
 inline T * get_pointer(boost::interprocess::offset_ptr<T> const & p)
 {  return p.get();   }

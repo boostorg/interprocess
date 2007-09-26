@@ -48,18 +48,17 @@
    #define BOOST_INTERPROCESS_USE_GENERIC_EMULATION
 #endif
 
-/*!\file
-   Describes a mutex class that can be placed in memory shared by
-   several processes.
-*/
+//!\file
+//!Describes a mutex class that can be placed in memory shared by
+//!several processes.
 
 namespace boost {
 namespace interprocess {
 
 class interprocess_condition;
 
-/*!Wraps a interprocess_mutex that can be placed in shared memory and can be 
-   shared between processes. Allows timed lock tries*/
+//!Wraps a interprocess_mutex that can be placed in shared memory and can be 
+//!shared between processes. Allows timed lock tries
 class interprocess_mutex
 {
    /// @cond
@@ -70,38 +69,39 @@ class interprocess_mutex
    /// @endcond
    public:
 
-   /*!Constructor. Throws interprocess_exception on error.*/
+   //!Constructor.
+   //!Throws interprocess_exception on error.
    interprocess_mutex();
 
-   /*!Destructor. If any process uses the mutex after the destructor is called
-      the result is undefined. Does not throw.*/
+   //!Destructor. If any process uses the mutex after the destructor is called
+   //!the result is undefined. Does not throw.
    ~interprocess_mutex();
 
-   /*!Effects: The calling thread tries to obtain ownership of the mutex, and
-         if another thread has ownership of the mutex, it waits until it can
-         obtain the ownership. If a thread takes ownership of the mutex the
-         mutex must be unlocked by the same mutex.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to obtain ownership of the mutex, and
+   //!   if another thread has ownership of the mutex, it waits until it can
+   //!   obtain the ownership. If a thread takes ownership of the mutex the
+   //!   mutex must be unlocked by the same mutex.
+   //!Throws: interprocess_exception on error.
    void lock();
 
-   /*!Effects: The calling thread tries to obtain ownership of the mutex, and
-         if another thread has ownership of the mutex returns immediately.
-      Returns: If the thread acquires ownership of the mutex, returns true, if
-         the another thread has ownership of the mutex, returns false.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to obtain ownership of the mutex, and
+   //!   if another thread has ownership of the mutex returns immediately.
+   //!Returns: If the thread acquires ownership of the mutex, returns true, if
+   //!   the another thread has ownership of the mutex, returns false.
+   //!Throws: interprocess_exception on error.
    bool try_lock();
 
-   /*!Effects: The calling thread will try to obtain exclusive ownership of the
-         mutex if it can do so in until the specified time is reached. If the
-         mutex supports recursive locking, the mutex must be unlocked the same
-         number of times it is locked. 
-      Returns: If the thread acquires ownership of the mutex, returns true, if
-         the timeout expires returns false. 
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread will try to obtain exclusive ownership of the
+   //!   mutex if it can do so in until the specified time is reached. If the
+   //!   mutex supports recursive locking, the mutex must be unlocked the same
+   //!   number of times it is locked. 
+   //!Returns: If the thread acquires ownership of the mutex, returns true, if
+   //!   the timeout expires returns false. 
+   //!Throws: interprocess_exception on error.
    bool timed_lock(const boost::posix_time::ptime &abs_time);
 
-   /*!Effects: The calling thread releases the exclusive ownership of the mutex.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread releases the exclusive ownership of the mutex.
+   //!Throws: interprocess_exception on error.
    void unlock();
    /// @cond
    private:

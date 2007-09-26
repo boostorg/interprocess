@@ -21,9 +21,8 @@
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
 #include <boost/interprocess/detail/move.hpp>
 
-/*!\file
-   Describes a named user memory allocation user class. 
-*/
+//!\file
+//!Describes a named user memory allocation user class. 
 
 namespace boost {
 namespace interprocess {
@@ -60,7 +59,7 @@ class basic_managed_external_buffer
       (open_only_t, void *addr, std::size_t size)
    {
       if(!base_t::open_impl(addr, size)){
-         throw interprocess_exception();//return false;
+         throw interprocess_exception();
       }
    }
 

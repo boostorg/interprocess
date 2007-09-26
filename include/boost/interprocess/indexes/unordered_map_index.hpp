@@ -20,14 +20,15 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/allocators/private_adaptive_pool.hpp>
 
-/*!\file
-   Describes index adaptor of boost::unordered_map container, to use it
-   as name/shared memory index
-*/
+//!\file
+//!Describes index adaptor of boost::unordered_map container, to use it
+//!as name/shared memory index
 
-namespace boost { namespace interprocess {
+namespace boost {
+namespace interprocess {
 
-/*!Helper class to define typedefs from IndexTraits*/
+//!Helper class to define typedefs from
+//!IndexTraits
 template <class MapConfig>
 struct unordered_map_index_aux
 {
@@ -54,8 +55,8 @@ struct unordered_map_index_aux
                          key_equal, allocator_type>      index_t;
 };
 
-/*!Index type based in unordered_map. Just derives from unordered_map and
-   defines the interface needed by managed memory segments*/
+//!Index type based in unordered_map. Just derives from unordered_map and
+//!defines the interface needed by managed memory segments
 template <class MapConfig>
 class unordered_map_index
    //Derive class from unordered_map specialization
@@ -69,16 +70,16 @@ class unordered_map_index
    /// @endcond
 
    public:
-   /*!Constructor. Takes a pointer to the
-      segment manager. Can throw*/
+   //!Constructor. Takes a pointer to the
+   //!segment manager. Can throw
    unordered_map_index(segment_manager_base *segment_mngr)
       : base_type(0,
                   typename index_aux::hasher(),
                   typename index_aux::key_equal(),
                   segment_mngr){}
 
-   /*!This reserves memory to optimize the insertion of n
-      elements in the index*/
+   //!This reserves memory to optimize the insertion of n
+   //!elements in the index
    void reserve(std::size_t n)
    {  base_type::rehash(n);  }
 
@@ -89,9 +90,10 @@ class unordered_map_index
 };
 
 /// @cond
-/*!Trait class to detect if an index is a node
-   index. This allows more efficient operations
-   when deallocating named objects.*/
+
+//!Trait class to detect if an index is a node
+//!index. This allows more efficient operations
+//!when deallocating named objects.
 template<class MapConfig>
 struct is_node_index
    <boost::interprocess::unordered_map_index<MapConfig> >

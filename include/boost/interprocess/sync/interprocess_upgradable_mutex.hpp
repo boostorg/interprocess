@@ -23,16 +23,14 @@
 #include <limits.h>
 
 
-/*!\file
-   Describes interprocess_upgradable_mutex class
-*/
+//!\file
+//!Describes interprocess_upgradable_mutex class
 
 namespace boost {
-
 namespace interprocess {
 
-/*!Wraps a interprocess_upgradable_mutex that can be placed in shared memory and can be 
-   shared between processes. Allows timed lock tries*/
+//!Wraps a interprocess_upgradable_mutex that can be placed in shared memory and can be 
+//!shared between processes. Allows timed lock tries
 class interprocess_upgradable_mutex
 {
    //Non-copyable
@@ -42,156 +40,158 @@ class interprocess_upgradable_mutex
    friend class interprocess_condition;
    public:
 
-   /*!Constructs the upgradable lock. Throws interprocess_exception on error.*/
+   //!Constructs the upgradable lock.
+   //!Throws interprocess_exception on error.
    interprocess_upgradable_mutex();
 
-   /*!Destroys the upgradable lock. Does not throw.*/
+   //!Destroys the upgradable lock.
+   //!Does not throw.
    ~interprocess_upgradable_mutex();
 
    //Exclusive locking
 
-   /*!Effects: The calling thread tries to obtain exclusive ownership of the mutex,
-         and if another thread has exclusive, sharable or upgradable ownership of
-         the mutex, it waits until it can obtain the ownership.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to obtain exclusive ownership of the mutex,
+   //!   and if another thread has exclusive, sharable or upgradable ownership of
+   //!   the mutex, it waits until it can obtain the ownership.
+   //!Throws: interprocess_exception on error.
    void lock();
 
-   /*!Effects: The calling thread tries to acquire exclusive ownership of the mutex
-         without waiting. If no other thread has exclusive, sharable or upgradable
-         ownership of the mutex this succeeds.
-      Returns: If it can acquire exclusive ownership immediately returns true.
-         If it has to wait, returns false.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to acquire exclusive ownership of the mutex
+   //!   without waiting. If no other thread has exclusive, sharable or upgradable
+   //!   ownership of the mutex this succeeds.
+   //!Returns: If it can acquire exclusive ownership immediately returns true.
+   //!   If it has to wait, returns false.
+   //!Throws: interprocess_exception on error.
    bool try_lock();
 
-   /*!Effects: The calling thread tries to acquire exclusive ownership of the mutex
-         waiting if necessary until no other thread has has exclusive, sharable or
-         upgradable ownership of the mutex or abs_time is reached. 
-      Returns: If acquires exclusive ownership, returns true. Otherwise returns false. 
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to acquire exclusive ownership of the mutex
+   //!   waiting if necessary until no other thread has has exclusive, sharable or
+   //!   upgradable ownership of the mutex or abs_time is reached. 
+   //!Returns: If acquires exclusive ownership, returns true. Otherwise returns false. 
+   //!Throws: interprocess_exception on error.
    bool timed_lock(const boost::posix_time::ptime &abs_time);
 
-   /*!Precondition: The thread must have exclusive ownership of the mutex. 
-      Effects: The calling thread releases the exclusive ownership of the mutex. 
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have exclusive ownership of the mutex. 
+   //!Effects: The calling thread releases the exclusive ownership of the mutex. 
+   //!Throws: An exception derived from interprocess_exception on error.
    void unlock();
 
    //Sharable locking
 
-   /*!Effects: The calling thread tries to obtain sharable ownership of the mutex,
-         and if another thread has exclusive or upgradable ownership of the mutex,
-         waits until it can obtain the ownership.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to obtain sharable ownership of the mutex,
+   //!   and if another thread has exclusive or upgradable ownership of the mutex,
+   //!   waits until it can obtain the ownership.
+   //!Throws: interprocess_exception on error.
    void lock_sharable();
 
-   /*!Effects: The calling thread tries to acquire sharable ownership of the mutex
-         without waiting. If no other thread has has exclusive or upgradable ownership
-         of the mutex this succeeds. 
-      Returns: If it can acquire sharable ownership immediately returns true. If it
-         has to wait, returns false. 
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to acquire sharable ownership of the mutex
+   //!   without waiting. If no other thread has has exclusive or upgradable ownership
+   //!   of the mutex this succeeds. 
+   //!Returns: If it can acquire sharable ownership immediately returns true. If it
+   //!   has to wait, returns false. 
+   //!Throws: interprocess_exception on error.
    bool try_lock_sharable();
 
-   /*!Effects: The calling thread tries to acquire sharable ownership of the mutex
-         waiting if necessary until no other thread has has exclusive or upgradable
-         ownership of the mutex or abs_time is reached. 
-      Returns: If acquires sharable ownership, returns true. Otherwise returns false. 
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to acquire sharable ownership of the mutex
+   //!   waiting if necessary until no other thread has has exclusive or upgradable
+   //!   ownership of the mutex or abs_time is reached. 
+   //!Returns: If acquires sharable ownership, returns true. Otherwise returns false. 
+   //!Throws: interprocess_exception on error.
    bool timed_lock_sharable(const boost::posix_time::ptime &abs_time);
 
-   /*!Precondition: The thread must have sharable ownership of the mutex. 
-      Effects: The calling thread releases the sharable ownership of the mutex. 
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have sharable ownership of the mutex. 
+   //!Effects: The calling thread releases the sharable ownership of the mutex. 
+   //!Throws: An exception derived from interprocess_exception on error.
    void unlock_sharable();
 
    //Upgradable locking
 
-   /*!Effects: The calling thread tries to obtain upgradable ownership of the mutex,
-         and if another thread has exclusive or upgradable ownership of the mutex,
-         waits until it can obtain the ownership.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to obtain upgradable ownership of the mutex,
+   //!   and if another thread has exclusive or upgradable ownership of the mutex,
+   //!   waits until it can obtain the ownership.
+   //!Throws: interprocess_exception on error.
    void lock_upgradable();
 
-   /*!Effects: The calling thread tries to acquire upgradable ownership of the mutex
-         without waiting. If no other thread has has exclusive or upgradable ownership
-         of the mutex this succeeds. 
-      Returns: If it can acquire upgradable ownership immediately returns true.
-         If it has to wait, returns false.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to acquire upgradable ownership of the mutex
+   //!   without waiting. If no other thread has has exclusive or upgradable ownership
+   //!   of the mutex this succeeds. 
+   //!Returns: If it can acquire upgradable ownership immediately returns true.
+   //!   If it has to wait, returns false.
+   //!Throws: interprocess_exception on error.
    bool try_lock_upgradable();
 
-   /*!Effects: The calling thread tries to acquire upgradable ownership of the mutex
-         waiting if necessary until no other thread has has exclusive or upgradable
-         ownership of the mutex or abs_time is reached.
-      Returns: If acquires upgradable ownership, returns true. Otherwise returns false. 
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to acquire upgradable ownership of the mutex
+   //!   waiting if necessary until no other thread has has exclusive or upgradable
+   //!   ownership of the mutex or abs_time is reached.
+   //!Returns: If acquires upgradable ownership, returns true. Otherwise returns false. 
+   //!Throws: interprocess_exception on error.
    bool timed_lock_upgradable(const boost::posix_time::ptime &abs_time);
 
-   /*!Precondition: The thread must have upgradable ownership of the mutex. 
-      Effects: The calling thread releases the upgradable ownership of the mutex. 
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have upgradable ownership of the mutex. 
+   //!Effects: The calling thread releases the upgradable ownership of the mutex. 
+   //!Throws: An exception derived from interprocess_exception on error.
    void unlock_upgradable();
 
    //Demotions
 
-   /*!Precondition: The thread must have exclusive ownership of the mutex. 
-      Effects: The thread atomically releases exclusive ownership and acquires
-         upgradable ownership. This operation is non-blocking. 
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have exclusive ownership of the mutex. 
+   //!Effects: The thread atomically releases exclusive ownership and acquires
+   //!   upgradable ownership. This operation is non-blocking. 
+   //!Throws: An exception derived from interprocess_exception on error.
    void unlock_and_lock_upgradable();
 
-   /*!Precondition: The thread must have exclusive ownership of the mutex. 
-      Effects: The thread atomically releases exclusive ownership and acquires
-         sharable ownership. This operation is non-blocking. 
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have exclusive ownership of the mutex. 
+   //!Effects: The thread atomically releases exclusive ownership and acquires
+   //!   sharable ownership. This operation is non-blocking. 
+   //!Throws: An exception derived from interprocess_exception on error.
    void unlock_and_lock_sharable();
 
-   /*!Precondition: The thread must have upgradable ownership of the mutex. 
-      Effects: The thread atomically releases upgradable ownership and acquires
-         sharable ownership. This operation is non-blocking. 
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have upgradable ownership of the mutex. 
+   //!Effects: The thread atomically releases upgradable ownership and acquires
+   //!   sharable ownership. This operation is non-blocking. 
+   //!Throws: An exception derived from interprocess_exception on error.
    void unlock_upgradable_and_lock_sharable();
 
    //Promotions
 
-   /*!Precondition: The thread must have upgradable ownership of the mutex. 
-      Effects: The thread atomically releases upgradable ownership and acquires
-         exclusive ownership. This operation will block until all threads with
-         sharable ownership releas it. 
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have upgradable ownership of the mutex. 
+   //!Effects: The thread atomically releases upgradable ownership and acquires
+   //!   exclusive ownership. This operation will block until all threads with
+   //!   sharable ownership release their sharable lock. 
+   //!Throws: An exception derived from interprocess_exception on error.
    void unlock_upgradable_and_lock();
 
-   /*!Precondition: The thread must have upgradable ownership of the mutex. 
-      Effects: The thread atomically releases upgradable ownership and tries to
-         acquire exclusive ownership. This operation will fail if there are threads
-         with sharable ownership, but it will maintain upgradable ownership. 
-      Returns: If acquires exclusive ownership, returns true. Otherwise returns false.
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have upgradable ownership of the mutex. 
+   //!Effects: The thread atomically releases upgradable ownership and tries to
+   //!   acquire exclusive ownership. This operation will fail if there are threads
+   //!   with sharable ownership, but it will maintain upgradable ownership. 
+   //!Returns: If acquires exclusive ownership, returns true. Otherwise returns false.
+   //!Throws: An exception derived from interprocess_exception on error.
    bool try_unlock_upgradable_and_lock();
 
-   /*!Precondition: The thread must have upgradable ownership of the mutex. 
-      Effects: The thread atomically releases upgradable ownership and tries to acquire
-         exclusive ownership, waiting if necessary until abs_time. This operation will
-         fail if there are threads with sharable ownership or timeout reaches, but it
-         will maintain upgradable ownership. 
-      Returns: If acquires exclusive ownership, returns true. Otherwise returns false. 
-      Throws: An exception derived from interprocess_exception on error. */
+   //!Precondition: The thread must have upgradable ownership of the mutex. 
+   //!Effects: The thread atomically releases upgradable ownership and tries to acquire
+   //!   exclusive ownership, waiting if necessary until abs_time. This operation will
+   //!   fail if there are threads with sharable ownership or timeout reaches, but it
+   //!   will maintain upgradable ownership. 
+   //!Returns: If acquires exclusive ownership, returns true. Otherwise returns false. 
+   //!Throws: An exception derived from interprocess_exception on error. */
    bool timed_unlock_upgradable_and_lock(const boost::posix_time::ptime &abs_time);
 
-   /*!Precondition: The thread must have sharable ownership of the mutex. 
-      Effects: The thread atomically releases sharable ownership and tries to acquire
-         exclusive ownership. This operation will fail if there are threads with sharable
-         or upgradable ownership, but it will maintain sharable ownership.
-      Returns: If acquires exclusive ownership, returns true. Otherwise returns false. 
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have sharable ownership of the mutex. 
+   //!Effects: The thread atomically releases sharable ownership and tries to acquire
+   //!   exclusive ownership. This operation will fail if there are threads with sharable
+   //!   or upgradable ownership, but it will maintain sharable ownership.
+   //!Returns: If acquires exclusive ownership, returns true. Otherwise returns false. 
+   //!Throws: An exception derived from interprocess_exception on error.
    bool try_unlock_sharable_and_lock();
 
-   /*!Precondition: The thread must have sharable ownership of the mutex. 
-      Effects: The thread atomically releases sharable ownership and tries to acquire
-         upgradable ownership. This operation will fail if there are threads with sharable
-         or upgradable ownership, but it will maintain sharable ownership. 
-      Returns: If acquires upgradable ownership, returns true. Otherwise returns false. 
-      Throws: An exception derived from interprocess_exception on error.*/
+   //!Precondition: The thread must have sharable ownership of the mutex. 
+   //!Effects: The thread atomically releases sharable ownership and tries to acquire
+   //!   upgradable ownership. This operation will fail if there are threads with sharable
+   //!   or upgradable ownership, but it will maintain sharable ownership. 
+   //!Returns: If acquires upgradable ownership, returns true. Otherwise returns false. 
+   //!Throws: An exception derived from interprocess_exception on error.
    bool try_unlock_sharable_and_lock_upgradable();
 
    /// @cond

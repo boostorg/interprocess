@@ -532,7 +532,8 @@ inline void swap(set<T,Pred,Alloc>&&x,
 #endif
 
 /// @cond
-/*!This class is movable*/
+
+//!This class is movable
 template <class T, class P, class A>
 struct is_movable<set<T, P, A> >
 {
@@ -1015,7 +1016,8 @@ inline void swap(multiset<T,Pred,Alloc>&&x,
 #endif
 
 /// @cond
-/*!This class is movable*/
+
+//!This class is movable
 template <class T, class P, class A>
 struct is_movable<multiset<T, P, A> >
 {

@@ -13,8 +13,6 @@
 
 #if (defined _MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
-#  pragma warning (disable : 4503)
-
 #endif
 
 #include <boost/interprocess/detail/config_begin.hpp>
@@ -34,9 +32,8 @@
 #include <cassert>
 #include <assert.h>
 
-/*!\file
-   Describes the real adaptive pool shared by many Interprocess pool allocators
-*/
+//!\file
+//!Describes the real adaptive pool shared by many Interprocess pool allocators
 
 namespace boost {
 namespace interprocess {
@@ -62,8 +59,8 @@ class private_adaptive_node_pool_impl
 
    private:
    //This hook will be used to chain the memory chunks
-   typedef boost::intrusive::list_base_hook
-      < boost::intrusive::tag, boost::intrusive::normal_link, void_pointer> list_hook_t;
+   typedef typename bi::make_list_base_hook
+      <bi::void_pointer<void_pointer>, bi::link_mode<bi::normal_link> >::type list_hook_t;
 
    struct chunk_info_t
       :  public list_hook_t
@@ -71,9 +68,7 @@ class private_adaptive_node_pool_impl
       //An intrusive list of free node from this chunk
       free_nodes_t free_nodes;
    };
-
-   typedef boost::intrusive::list
-      <typename list_hook_t::template value_traits<chunk_info_t> > chunk_list_t;
+   typedef typename bi::make_list<chunk_info_t, bi::base_hook<list_hook_t> >::type  chunk_list_t;
 
    public:
    //!Segment manager typedef
@@ -324,7 +319,7 @@ class private_adaptive_node_pool_impl
       //We put the node at the beginning of the free node list
       node_t * to_deallocate = static_cast<node_t*>(pElem);
       chunk_info->free_nodes.push_front(*to_deallocate);
-      chunk_iterator this_chunk(chunk_list_t::iterator_to(*chunk_info));
+      chunk_iterator this_chunk(chunk_list_t::s_iterator_to(*chunk_info));
       chunk_iterator next_chunk(this_chunk);
       ++next_chunk;
 
@@ -343,7 +338,7 @@ class private_adaptive_node_pool_impl
          }
          //Update m_first_free_chunk if the moved chunk crosses the empty boundary
          else if(this_chunk->free_nodes.size() == 1){
-            m_first_free_chunk = chunk_list_t::iterator_to(*chunk_info);
+            m_first_free_chunk = chunk_list_t::s_iterator_to(*chunk_info);
          }
          //Now move the chunk to the new position
          m_chunklist.erase(this_chunk);

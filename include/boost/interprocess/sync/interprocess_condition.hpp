@@ -38,9 +38,8 @@
    #define BOOST_INTERPROCESS_USE_GENERIC_EMULATION
 #endif
 
-/*!\file
-   Describes process-shared variables interprocess_condition class
-*/
+//!\file
+//!Describes process-shared variables interprocess_condition class
 
 namespace boost {
 
@@ -60,23 +59,24 @@ class interprocess_condition
    friend class named_condition;
    /// @endcond
    public:
-   /*!Constructs a interprocess_condition*/
+   //!Constructs a interprocess_condition. On error throws interprocess_exception.
    interprocess_condition();
 
-   /*!Destroys *this*/
+   //!Destroys *this
+   //!liberating system resources.
    ~interprocess_condition();
 
-   /*!If there is a thread waiting on *this, change that 
-      thread's state to ready. Otherwise there is no effect.*/
+   //!If there is a thread waiting on *this, change that 
+   //!thread's state to ready. Otherwise there is no effect.
    void notify_one();
 
-   /*!Change the state of all threads waiting on *this to ready.
-      If there are no waiting threads, notify_all() has no effect.*/
+   //!Change the state of all threads waiting on *this to ready.
+   //!If there are no waiting threads, notify_all() has no effect.
    void notify_all();
 
-   /*!Releases the lock on the interprocess_mutex object associated with lock, blocks 
-      the current thread of execution until readied by a call to 
-      this->notify_one() or this->notify_all(), and then reacquires the lock.*/
+   //!Releases the lock on the interprocess_mutex object associated with lock, blocks 
+   //!the current thread of execution until readied by a call to 
+   //!this->notify_one() or this->notify_all(), and then reacquires the lock.
    template <typename L>
    void wait(L& lock)
    {
@@ -85,7 +85,8 @@ class interprocess_condition
       do_wait(*lock.mutex());
    }
 
-   /*!The same as: while (!pred()) wait(lock)*/
+   //!The same as:
+   //!while (!pred()) wait(lock)
    template <typename L, typename Pr>
    void wait(L& lock, Pr pred)
    {
@@ -96,11 +97,11 @@ class interprocess_condition
          do_wait(*lock.mutex());
    }
 
-   /*!Releases the lock on the interprocess_mutex object associated with lock, blocks 
-      the current thread of execution until readied by a call to 
-      this->notify_one() or this->notify_all(), or until time abs_time is reached, 
-      and then reacquires the lock.
-      Returns: false if time abs_time is reached, otherwise true.*/
+   //!Releases the lock on the interprocess_mutex object associated with lock, blocks 
+   //!the current thread of execution until readied by a call to 
+   //!this->notify_one() or this->notify_all(), or until time abs_time is reached, 
+   //!and then reacquires the lock.
+   //!Returns: false if time abs_time is reached, otherwise true.
    template <typename L>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time)
    {
@@ -110,9 +111,9 @@ class interprocess_condition
       return do_timed_wait(abs_time, *lock.mutex());
    }
 
-   /*!The same as:   while (!pred()) { 
-                        if (!timed_wait(lock, abs_time)) return pred(); 
-                     } return true;*/
+   //!The same as:   while (!pred()) { 
+   //!                  if (!timed_wait(lock, abs_time)) return pred(); 
+   //!               } return true;
    template <typename L, typename Pr>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
    {

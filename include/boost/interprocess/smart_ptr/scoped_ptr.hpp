@@ -20,6 +20,9 @@
 #include <boost/interprocess/detail/pointer_type.hpp>
 #include <boost/assert.hpp>
 
+//!\file
+//!Describes the smart pointer scoped_ptr
+
 namespace boost {
 namespace interprocess {
 

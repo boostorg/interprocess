@@ -23,18 +23,15 @@
 #include <boost/interprocess/detail/file_wrapper.hpp>
 #include <boost/interprocess/detail/move.hpp>
 
-/*!\file
-   Describes a named shared memory object allocation user class. 
-*/
+//!\file
+//!Describes a named shared memory object allocation user class. 
 
 namespace boost {
-
 namespace interprocess {
 
-
-/*!A basic shared memory named object creation class. Initializes the 
-   shared memory segment. Inherits all basic functionality from 
-   basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>*/
+//!A basic shared memory named object creation class. Initializes the 
+//!shared memory segment. Inherits all basic functionality from 
+//!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>
 template
       <
          class CharType, 
@@ -57,28 +54,29 @@ class basic_managed_mapped_file
    /// @endcond
 
    public: //functions
-   /*!Creates shared memory and creates and places the segment manager. 
-      This can throw.*/
+
+   //!Creates shared memory and creates and places the segment manager. 
+   //!This can throw.
    basic_managed_mapped_file(create_only_t create_only, const char *name,
                              std::size_t size, const void *addr = 0)
       : m_mfile(create_only, name, size, read_write, addr, 
                 create_open_func_t(get_this_pointer(), detail::DoCreate))
    {}
 
-   /*!Creates shared memory and creates and places the segment manager if
-      segment was not created. If segment was created it connects to the
-      segment.
-      This can throw.*/
+   //!Creates shared memory and creates and places the segment manager if
+   //!segment was not created. If segment was created it connects to the
+   //!segment.
+   //!This can throw.
    basic_managed_mapped_file (open_or_create_t open_or_create,
                               const char *name, std::size_t size, 
                               const void *addr = 0)
       : m_mfile(open_or_create, name, size, read_write, addr, 
                 create_open_func_t(get_this_pointer(), 
-                detail::DoCreateOrOpen))
+                detail::DoOpenOrCreate))
    {}
 
-   /*!Connects to a created shared memory and it's the segment manager.
-      Never throws.*/
+   //!Connects to a created shared memory and it's the segment manager.
+   //!Never throws.
    basic_managed_mapped_file (open_only_t open_only, const char* name, 
                               const void *addr = 0)
       : m_mfile(open_only, name, read_write, addr, 
@@ -86,7 +84,8 @@ class basic_managed_mapped_file
                 detail::DoOpen))
    {}
 
-   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   //!Moves the ownership of "moved"'s managed memory to *this.
+   //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_mapped_file
       (detail::moved_object<basic_managed_mapped_file> &moved)
@@ -96,7 +95,8 @@ class basic_managed_mapped_file
    {  this->swap(moved);   }
    #endif
 
-   /*!Moves the ownership of "moved"'s managed memory to *this. Does not throw*/
+   //!Moves the ownership of "moved"'s managed memory to *this.
+   //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_mapped_file &operator=
       (detail::moved_object<basic_managed_mapped_file> &moved)
@@ -106,30 +106,36 @@ class basic_managed_mapped_file
    {  this->swap(moved);   return *this;  }
    #endif
 
-   /*!Destructor. Never throws.*/
+   //!Destroys *this and indicates that the calling process is finished using
+   //!the resource. The destructor function will deallocate
+   //!any system resources allocated by the system for use by this process for
+   //!this resource. The resource can still be opened again calling
+   //!the open constructor overload. To erase the resource from the system
+   //!use remove().
    ~basic_managed_mapped_file()
    {}
 
-   /*!Swaps the ownership of the managed mapped memories managed by *this and other.
-      Never throws.*/
+   //!Swaps the ownership of the managed mapped memories managed by *this and other.
+   //!Never throws.
    void swap(basic_managed_mapped_file &other)
    {
       base_t::swap(other);
       m_mfile.swap(other.m_mfile);
    }
 
-   /*!Flushes cached data to file. Never throws*/
+   //!Flushes cached data to file.
+   //!Never throws
    bool flush()
    {  return m_mfile.flush();  }
 
-   /*!Tries to resize mapped file so that we have room for 
-      more objects. 
-      WARNING: The memory mapping can change. To be able to use
-      this function, all pointers constructed in this buffer
-      must be offset pointers. Otherwise, the result is undefined.
-      Returns true if the growth has been successful, so you will
-      have some extra bytes to allocate new objects. If returns 
-      false, the heap allocation has failed.*/
+   //!Tries to resize mapped file so that we have room for 
+   //!more objects. 
+   //!WARNING: The memory mapping can change. To be able to use
+   //!this function, all pointers constructed in this buffer
+   //!must be offset pointers. Otherwise, the result is undefined.
+   //!Returns true if the growth has been successful, so you will
+   //!have some extra bytes to allocate new objects. If returns 
+   //!false, the heap allocation has failed.
 /*
    bool grow(std::size_t extra_bytes)
    {  

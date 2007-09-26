@@ -32,7 +32,8 @@ enum allocation_type_v
 //   expand_or_new  = allocate_new | expand_both,
    shrink_in_place_v = 0x08,
    nothrow_allocation_v = 0x10,
-   zero_memory_v = 0x20
+   zero_memory_v = 0x20,
+   try_shrink_in_place_v = 0x40
 };
 
 typedef int allocation_type;
@@ -41,6 +42,7 @@ static const allocation_type allocate_new       = (allocation_type)allocate_new_
 static const allocation_type expand_fwd         = (allocation_type)expand_fwd_v;
 static const allocation_type expand_bwd         = (allocation_type)expand_bwd_v;
 static const allocation_type shrink_in_place    = (allocation_type)shrink_in_place_v;
+static const allocation_type try_shrink_in_place= (allocation_type)try_shrink_in_place_v;
 static const allocation_type nothrow_allocation = (allocation_type)nothrow_allocation_v;
 static const allocation_type zero_memory        = (allocation_type)zero_memory_v;
 

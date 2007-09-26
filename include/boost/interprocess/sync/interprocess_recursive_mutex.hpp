@@ -49,17 +49,16 @@
    #define BOOST_INTERPROCESS_USE_GENERIC_EMULATION
 #endif
 
-/*!\file
-   Describes interprocess_recursive_mutex and shared_recursive_try_mutex classes
-*/
+//!\file
+//!Describes interprocess_recursive_mutex and shared_recursive_try_mutex classes
 
 namespace boost {
 
 namespace interprocess {
 
-/*!Wraps a interprocess_mutex that can be placed in shared memory and can be 
-   shared between processes. Allows several locking calls by the same 
-   process. Allows timed lock tries*/
+//!Wraps a interprocess_mutex that can be placed in shared memory and can be 
+//!shared between processes. Allows several locking calls by the same 
+//!process. Allows timed lock tries
 class interprocess_recursive_mutex
 {
    /// @cond
@@ -68,37 +67,38 @@ class interprocess_recursive_mutex
    interprocess_recursive_mutex &operator=(const interprocess_recursive_mutex &);
    /// @endcond
    public:
-   /*!Constructor. Throws interprocess_exception on error.*/
+   //!Constructor.
+   //!Throws interprocess_exception on error.
    interprocess_recursive_mutex();
 
-   /*!Destructor. If any process uses the mutex after the destructor is called
-      the result is undefined. Does not throw.*/
+   //!Destructor. If any process uses the mutex after the destructor is called
+   //!the result is undefined. Does not throw.
   ~interprocess_recursive_mutex();
 
-   /*!Effects: The calling thread tries to obtain ownership of the mutex, and
-         if another thread has ownership of the mutex, it waits until it can
-         obtain the ownership. If a thread takes ownership of the mutex the
-         mutex must be unlocked by the same mutex. The mutex must be unlocked
-         the same number of times it is locked.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread tries to obtain ownership of the mutex, and
+   //!   if another thread has ownership of the mutex, it waits until it can
+   //!   obtain the ownership. If a thread takes ownership of the mutex the
+   //!   mutex must be unlocked by the same mutex. The mutex must be unlocked
+   //!   the same number of times it is locked.
+   //!Throws: interprocess_exception on error.
    void lock(void);
 
-   /*! Tries to lock the interprocess_mutex, returns false when interprocess_mutex 
-      is already locked, returns true when success. The mutex must be unlocked
-      the same number of times it is locked.
-      Throws: interprocess_exception if a severe error is found*/
+   //!Tries to lock the interprocess_mutex, returns false when interprocess_mutex 
+   //!is already locked, returns true when success. The mutex must be unlocked
+   //!the same number of times it is locked.
+   //!Throws: interprocess_exception if a severe error is found
    bool try_lock(void);
 
-   /*! Tries to lock the interprocess_mutex, if interprocess_mutex can't be locked before
-      abs_time time, returns false. The mutex must be unlocked
-         the same number of times it is locked.
-      Throws: interprocess_exception if a severe error is found*/
+   //!Tries to lock the interprocess_mutex, if interprocess_mutex can't be locked before
+   //!abs_time time, returns false. The mutex must be unlocked
+   //!   the same number of times it is locked.
+   //!Throws: interprocess_exception if a severe error is found
    bool timed_lock(const boost::posix_time::ptime &abs_time);
 
-   /*!Effects: The calling thread releases the exclusive ownership of the mutex.
-         If the mutex supports recursive locking, the mutex must be unlocked the
-         same number of times it is locked.
-      Throws: interprocess_exception on error.*/
+   //!Effects: The calling thread releases the exclusive ownership of the mutex.
+   //!   If the mutex supports recursive locking, the mutex must be unlocked the
+   //!   same number of times it is locked.
+   //!Throws: interprocess_exception on error.
    void unlock(void);
    /// @cond
    private:

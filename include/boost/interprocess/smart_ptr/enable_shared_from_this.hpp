@@ -21,6 +21,9 @@
 #include <boost/interprocess/smart_ptr/weak_ptr.hpp>
 #include <boost/interprocess/smart_ptr/shared_ptr.hpp>
 
+//!\file
+//!Describes an utility to form a shared pointer from this
+
 namespace boost{
 namespace interprocess{
 

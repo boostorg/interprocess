@@ -23,25 +23,23 @@
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/detail/move.hpp>
 
-/*!\file
-   Describes a named shared memory object allocation user class. 
-*/
+//!\file
+//!Describes a named shared memory object allocation user class. 
 
 namespace boost {
 namespace interprocess {
 
-/*!A basic managed windows shared memory creation class. Initializes the 
-   shared memory segment. Inherits all basic functionality from 
-   basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>
-   Unlike basic_managed_shared_memory, it has
-   no kernel persistence and the shared memory is destroyed
-   when all processes destroy all their windows_shared_memory
-   objects and mapped regions for the same shared memory
-   or the processes end/crash.
-
-   Warning: basic_managed_windows_shared_memory and
-   basic_managed_shared_memory can't communicate between them.
-*/
+//!A basic managed windows shared memory creation class. Initializes the 
+//!shared memory segment. Inherits all basic functionality from 
+//!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>
+//!Unlike basic_managed_shared_memory, it has
+//!no kernel persistence and the shared memory is destroyed
+//!when all processes destroy all their windows_shared_memory
+//!objects and mapped regions for the same shared memory
+//!or the processes end/crash.
+//!
+//!Warning: basic_managed_windows_shared_memory and
+//!basic_managed_shared_memory can't communicate between them.
 template
       <
          class CharType, 
@@ -83,7 +81,7 @@ class basic_managed_windows_shared_memory
       const void *addr = 0)
       : m_wshm(open_or_create, name, size, read_write, addr, 
                 create_open_func_t(get_this_pointer(), 
-                detail::DoCreateOrOpen))
+                detail::DoOpenOrCreate))
    {}
 
    //!Connects to a created shared memory and it's the segment manager.
@@ -95,7 +93,8 @@ class basic_managed_windows_shared_memory
                 detail::DoOpen))
    {}
 
-   //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
+   //!Moves the ownership of "moved"'s managed memory to *this.
+   //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_windows_shared_memory
       (detail::moved_object<basic_managed_windows_shared_memory> &moved)
@@ -105,7 +104,8 @@ class basic_managed_windows_shared_memory
    {  this->swap(moved);   }
    #endif
 
-   //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
+   //!Moves the ownership of "moved"'s managed memory to *this.
+   //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_windows_shared_memory &operator=
       (detail::moved_object<basic_managed_windows_shared_memory> &moved)
@@ -116,7 +116,11 @@ class basic_managed_windows_shared_memory
    {  this->swap(moved);   return *this;  }
    #endif
 
-   //!Destructor. Never throws.
+   //!Destroys *this and indicates that the calling process is finished using
+   //!the resource. All mapped regions are still valid after
+   //!destruction. When all mapped regions and basic_managed_windows_shared_memory
+   //!objects referring the shared memory are destroyed, the
+   //!operating system will destroy the shared memory.
    ~basic_managed_windows_shared_memory()
    {}
 

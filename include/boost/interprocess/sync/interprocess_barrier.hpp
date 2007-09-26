@@ -52,31 +52,31 @@
 namespace boost {
 namespace interprocess {
 
-/*!An object of class barrier is a synchronization primitive that 
-   can be placed in shared memory used to cause a set of threads from 
-   different processes to wait until they each perform a certain 
-   function or each reach a particular point in their execution.*/
+//!An object of class barrier is a synchronization primitive that 
+//!can be placed in shared memory used to cause a set of threads from 
+//!different processes to wait until they each perform a certain 
+//!function or each reach a particular point in their execution.
 class barrier
 {
    public:
-   /*!Constructs a barrier object that will cause count threads 
-      to block on a call to wait(). */
+   //!Constructs a barrier object that will cause count threads 
+   //!to block on a call to wait().
    barrier(unsigned int count);
 
-   /*!Destroys *this. If threads are still executing their wait() 
-      operations, the behavior for these threads is undefined.*/
+   //!Destroys *this. If threads are still executing their wait() 
+   //!operations, the behavior for these threads is undefined.
    ~barrier();
 
-   /*!Effects: Wait until N threads call wait(), where N equals the count 
-      provided to the constructor for the barrier object.
-      Note that if the barrier is destroyed before wait() can return, 
-      the behavior is undefined.
-      Returns: Exactly one of the N threads will receive a return value 
-      of true, the others will receive a value of false. Precisely which 
-      thread receives the return value of true will be implementation-defined. 
-      Applications can use this value to designate one thread as a leader that 
-      will take a certain action, and the other threads emerging from the barrier 
-      can wait for that action to take place.*/
+   //!Effects: Wait until N threads call wait(), where N equals the count 
+   //!provided to the constructor for the barrier object.
+   //!Note that if the barrier is destroyed before wait() can return, 
+   //!the behavior is undefined.
+   //!Returns: Exactly one of the N threads will receive a return value 
+   //!of true, the others will receive a value of false. Precisely which 
+   //!thread receives the return value of true will be implementation-defined. 
+   //!Applications can use this value to designate one thread as a leader that 
+   //!will take a certain action, and the other threads emerging from the barrier 
+   //!can wait for that action to take place.
    bool wait();
 
    /// @cond

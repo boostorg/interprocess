@@ -30,6 +30,8 @@
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/indexes/iset_index.hpp>
 #include <boost/interprocess/exceptions.hpp>
+#include <boost/interprocess/allocators/allocator.hpp>
+#include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <cstddef>   //std::size_t
 #include <string>    //char_traits
 #include <new>       //std::nothrow
@@ -118,10 +120,9 @@ class segment_manager_base
    //Experimental. Dont' use.
    //!Allocates n_elements of
    //!elem_size bytes. Throws bad_alloc on failure.
-   multiallocation_iterator allocate_many
-      (std::size_t elem_bytes, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements)
+   multiallocation_iterator allocate_many(std::size_t elem_bytes, std::size_t num_elements)
    {
-      multiallocation_iterator ret = MemoryAlgorithm::allocate_many(elem_bytes, min_elements, preferred_elements, received_elements);
+      multiallocation_iterator ret = MemoryAlgorithm::allocate_many(elem_bytes, num_elements);
       if(!ret) throw bad_alloc();
       return ret;
    }
@@ -138,8 +139,8 @@ class segment_manager_base
 
    //!Allocates n_elements of
    //!elem_size bytes. Returns a default constructed iterator on failure.
-   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements, std::nothrow_t)
-   {  return MemoryAlgorithm::allocate_many(elem_size, min_elements, preferred_elements, received_elements); }
+   multiallocation_iterator allocate_many(std::size_t elem_bytes, std::size_t num_elements, std::nothrow_t)
+   {  return MemoryAlgorithm::allocate_many(elem_bytes, num_elements); }
 
    //!Allocates n_elements, each one of
    //!element_lenghts[i]*sizeof_element bytes.
@@ -208,7 +209,8 @@ class segment_manager_base
    bool check_sanity()
    {   return MemoryAlgorithm::check_sanity(); }
 
-   //!Writes to zero free memory (memory not yet allocated) of the memory algorithm
+   //!Writes to zero free memory (memory not yet allocated)
+   //!of the memory algorithm
    void zero_free_memory()
    {   MemoryAlgorithm::zero_free_memory(); }
 
@@ -612,6 +614,35 @@ class segment_manager
          (m_header.m_unique_index.end(), unique_transform());
    }
 
+   //!This is the default allocator to allocate types T
+   //!from this managed segment
+   template<class T>
+   struct allocator
+   {
+      typedef boost::interprocess::allocator<T, segment_manager> type;
+   };
+
+   //!Returns an instance of the default allocator for type T
+   //!initialized that allocates memory from this segment manager.
+   template<class T>
+   typename allocator<T>::type
+      get_allocator()
+   {   return typename allocator<T>::type(this); }
+
+   //!This is the default deleter to delete types T
+   //!from this managed segment.
+   template<class T>
+   struct deleter
+   {
+      typedef boost::interprocess::deleter<T, segment_manager> type;
+   };
+
+   //!Returns an instance of the default allocator for type T
+   //!initialized that allocates memory from this segment manager.
+   template<class T>
+   typename deleter<T>::type
+      get_deleter()
+   {   return typename deleter<T>::type(this); }
    /// @cond
 
    //!Generic named/anonymous new function. Offers all the possibilities, 

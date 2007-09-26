@@ -28,10 +28,10 @@ namespace detail{
 
    #if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
 
-   /*!Makes pthread_mutexattr_t cleanup easy when using exceptions*/
+   //!Makes pthread_mutexattr_t cleanup easy when using exceptions
    struct mutexattr_wrapper 
    {
-      /*!Constructor*/
+      //!Constructor
       mutexattr_wrapper(bool recursive = false)
       {
          if(pthread_mutexattr_init(&m_attr)!=0 ||
@@ -41,19 +41,19 @@ namespace detail{
             throw boost::interprocess::interprocess_exception();
       }
 
-      /*!Destructor*/
+      //!Destructor
      ~mutexattr_wrapper()  {  pthread_mutexattr_destroy(&m_attr);  }
 
-      /*!This allows using mutexattr_wrapper as pthread_mutexattr_t*/
+      //!This allows using mutexattr_wrapper as pthread_mutexattr_t
       operator pthread_mutexattr_t&()  {  return m_attr;  }
 
       pthread_mutexattr_t m_attr;
    };
 
-   /*!Makes pthread_condattr_t cleanup easy when using exceptions*/
+   //!Makes pthread_condattr_t cleanup easy when using exceptions
    struct condattr_wrapper 
    {
-      /*!Constructor*/
+      //!Constructor
       condattr_wrapper()
       {
          if(pthread_condattr_init(&m_attr)!=0 ||
@@ -61,20 +61,20 @@ namespace detail{
             throw boost::interprocess::interprocess_exception();
       }
 
-      /*!Destructor*/
+      //!Destructor
      ~condattr_wrapper() { pthread_condattr_destroy(&m_attr); }
 
-      /*!This allows using condattr_wrapper as pthread_condattr_t*/
+      //!This allows using condattr_wrapper as pthread_condattr_t
       operator pthread_condattr_t&(){  return m_attr;  }
 
       pthread_condattr_t m_attr;
    };
 
-   /*!Makes initialized pthread_mutex_t cleanup easy when using exceptions*/
+   //!Makes initialized pthread_mutex_t cleanup easy when using exceptions
    class mutex_initializer
    {
     public:
-      /*!Constructor. Takes interprocess_mutex attributes to initialize the interprocess_mutex*/
+      //!Constructor. Takes interprocess_mutex attributes to initialize the interprocess_mutex
       mutex_initializer(pthread_mutex_t &mut, pthread_mutexattr_t &mut_attr)
       : mp_mut(&mut)
       {
@@ -90,7 +90,7 @@ namespace detail{
       pthread_mutex_t *mp_mut;
    };
 
-   /*!Makes initialized pthread_cond_t cleanup easy when using exceptions*/
+   //!Makes initialized pthread_cond_t cleanup easy when using exceptions
    class condition_initializer
    {
     public:
@@ -113,10 +113,10 @@ namespace detail{
 
    #if defined BOOST_INTERPROCESS_POSIX_BARRIERS
 
-   /*!Makes pthread_barrierattr_t cleanup easy when using exceptions*/
+   //!Makes pthread_barrierattr_t cleanup easy when using exceptions
    struct barrierattr_wrapper 
    {
-      /*!Constructor*/
+      //!Constructor
       barrierattr_wrapper()
       {
          if(pthread_barrierattr_init(&m_attr)!=0 ||
@@ -124,20 +124,20 @@ namespace detail{
             throw boost::interprocess::interprocess_exception();
       }
 
-      /*!Destructor*/
+      //!Destructor
      ~barrierattr_wrapper()  {  pthread_barrierattr_destroy(&m_attr);  }
 
-      /*!This allows using mutexattr_wrapper as pthread_barrierattr_t*/
+      //!This allows using mutexattr_wrapper as pthread_barrierattr_t
       operator pthread_barrierattr_t&()  {  return m_attr;  }
 
       pthread_barrierattr_t m_attr;
    };
 
-   /*!Makes initialized pthread_barrier_t cleanup easy when using exceptions*/
+   //!Makes initialized pthread_barrier_t cleanup easy when using exceptions
    class barrier_initializer
    {
     public:
-      /*!Constructor. Takes barrier attributes to initialize the barrier*/
+      //!Constructor. Takes barrier attributes to initialize the barrier
       barrier_initializer(pthread_barrier_t &mut, 
                           pthread_barrierattr_t &mut_attr, 
                           int count)

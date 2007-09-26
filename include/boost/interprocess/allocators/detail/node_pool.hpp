@@ -13,7 +13,6 @@
 
 #if (defined _MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
-#  pragma warning (disable : 4503)
 #endif
 
 #include <boost/interprocess/detail/config_begin.hpp>
@@ -31,9 +30,8 @@
 #include <algorithm>
 #include <assert.h>
 
-/*!\file
-   Describes the real adaptive pool shared by many Interprocess adaptive pool allocators
-*/
+//!\file
+//!Describes the real adaptive pool shared by many Interprocess adaptive pool allocators
 
 namespace boost {
 namespace interprocess {
@@ -49,15 +47,14 @@ class private_node_pool_impl
 
    //A node object will hold node_t when it's not allocated
    public:
-   typedef typename SegmentManagerBase::void_pointer           void_pointer;
-   typedef typename node_slist<void_pointer>::slist_hook_t  slist_hook_t;
-   typedef typename node_slist<void_pointer>::node_t        node_t;
-   typedef typename node_slist<void_pointer>::node_slist_t  free_nodes_t;
+   typedef typename SegmentManagerBase::void_pointer              void_pointer;
+   typedef typename node_slist<void_pointer>::slist_hook_t        slist_hook_t;
+   typedef typename node_slist<void_pointer>::node_t              node_t;
+   typedef typename node_slist<void_pointer>::node_slist_t        free_nodes_t;
 
    private:
-   typedef boost::intrusive::slist
-      <typename slist_hook_t::template value_traits<node_t>, false > chunkslist_t;
-
+   typedef typename bi::make_slist < node_t, bi::base_hook<slist_hook_t>
+                     , bi::constant_time_size<false> >::type      chunkslist_t;
    public:
 
    //!Segment manager typedef

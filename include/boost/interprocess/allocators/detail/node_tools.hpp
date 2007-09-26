@@ -13,7 +13,6 @@
 
 #if (defined _MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
-#  pragma warning (disable : 4503)
 #endif
 
 #include <boost/interprocess/detail/config_begin.hpp>
@@ -30,16 +29,15 @@ template<class VoidPointer>
 struct node_slist
 {
    //This hook will be used to chain the individual nodes
-   typedef boost::intrusive::slist_base_hook
-      <boost::intrusive::tag, boost::intrusive::normal_link, VoidPointer> slist_hook_t;
+    typedef typename bi::make_slist_base_hook
+      <bi::void_pointer<VoidPointer>, bi::link_mode<bi::normal_link> >::type slist_hook_t;
 
    //A node object will hold node_t when it's not allocated
    struct node_t
       :  public slist_hook_t
    {};
 
-   typedef boost::intrusive::slist
-      <typename slist_hook_t::template value_traits<node_t> > node_slist_t;
+   typedef typename bi::make_slist<node_t, bi::base_hook<slist_hook_t> >::type node_slist_t;
 };
 
 }  //namespace detail {

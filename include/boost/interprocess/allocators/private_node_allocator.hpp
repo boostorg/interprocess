@@ -156,7 +156,8 @@ class private_node_allocator
    pointer address(reference value) const
    {  return pointer(boost::addressof(value));  }
 
-   /*!Returns address of non mutable object. Never throws*/
+   //!Returns address of non mutable object.
+   //!Never throws
    const_pointer address(const_reference value) const
    {  return const_pointer(boost::addressof(value));  }
 

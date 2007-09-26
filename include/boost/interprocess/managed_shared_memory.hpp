@@ -23,17 +23,16 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 
-/*!\file
-   Describes a named shared memory object allocation user class. 
-*/
+//!\file
+//!Describes a named shared memory object allocation user class. 
 
 namespace boost {
 
 namespace interprocess {
 
-/*!A basic shared memory named object creation class. Initializes the 
-   shared memory segment. Inherits all basic functionality from 
-   basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>*/
+//!A basic shared memory named object creation class. Initializes the 
+//!shared memory segment. Inherits all basic functionality from 
+//!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>*/
 template
       <
          class CharType, 
@@ -59,7 +58,13 @@ class basic_managed_shared_memory
    /// @endcond
 
    public: //functions
-   //!Destructor. Calls close. Never throws.
+
+   //!Destroys *this and indicates that the calling process is finished using
+   //!the resource. The destructor function will deallocate
+   //!any system resources allocated by the system for use by this process for
+   //!this resource. The resource can still be opened again calling
+   //!the open constructor overload. To erase the resource from the system
+   //!use remove().
    ~basic_managed_shared_memory()
    {}
 
@@ -82,7 +87,7 @@ class basic_managed_shared_memory
       : base_t()
       , base2_t(open_or_create, name, size, read_write, addr, 
                 create_open_func_t(get_this_pointer(), 
-                detail::DoCreateOrOpen))
+                detail::DoOpenOrCreate))
    {}
 
    //!Connects to a created shared memory and it's the segment manager.
@@ -95,7 +100,8 @@ class basic_managed_shared_memory
                 detail::DoOpen))
    {}
 
-   //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
+   //!Moves the ownership of "moved"'s managed memory to *this.
+   //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_shared_memory
       (detail::moved_object<basic_managed_shared_memory> &moved)
@@ -105,7 +111,8 @@ class basic_managed_shared_memory
    {  this->swap(moved);   }
    #endif
 
-   //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
+   //!Moves the ownership of "moved"'s managed memory to *this.
+   //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_shared_memory &operator=
       (detail::moved_object<basic_managed_shared_memory> &moved)

@@ -22,24 +22,23 @@
 #include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
 #include <boost/interprocess/sync/null_mutex.hpp>
 
-/*!\file
-   Describes a shared interprocess_mutex family fit algorithm used to allocate objects in shared memory.
-*/
+//!\file
+//!Describes a shared interprocess_mutex family fit algorithm used to allocate objects in shared memory.
 
 namespace boost {
 
 namespace interprocess {
 
-/*!Describes interprocess_mutex family to use with Interprocess framework 
-   based on boost::interprocess synchronization objects.*/
+//!Describes interprocess_mutex family to use with Interprocess framework 
+//!based on boost::interprocess synchronization objects.
 struct mutex_family
 {
    typedef boost::interprocess::interprocess_mutex                 mutex_type;
    typedef boost::interprocess::interprocess_recursive_mutex       recursive_mutex_type;
 };
 
-/*!Describes interprocess_mutex family to use with Interprocess frameworks 
-   based on null operation synchronization objects.*/
+//!Describes interprocess_mutex family to use with Interprocess frameworks 
+//!based on null operation synchronization objects.
 struct null_mutex_family
 {
    typedef boost::interprocess::null_mutex                   mutex_type;

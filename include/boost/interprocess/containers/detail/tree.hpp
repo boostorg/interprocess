@@ -86,15 +86,11 @@ struct value_compare_impl
 
 template <class T, class VoidPointer>
 struct rbtree_node
-   :  public boost::intrusive::set_base_hook
-         < boost::intrusive::tag
-         , boost::intrusive::safe_link
-         , VoidPointer>
+   :  public bi::make_set_base_hook
+         <bi::void_pointer<VoidPointer>, bi::link_mode<bi::normal_link> >::type
 {
-   typedef boost::intrusive::set_base_hook
-         < boost::intrusive::tag
-         , boost::intrusive::safe_link
-         , VoidPointer>   hook_type;
+   typedef typename bi::make_set_base_hook
+      <bi::void_pointer<VoidPointer>, bi::link_mode<bi::normal_link> >::type   hook_type;
 
    typedef T value_type;
 
@@ -129,16 +125,11 @@ struct rbtree_node
 
    public:
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+
    template<class Convertible>
    static void construct(node_type *ptr, const Convertible &value)
    {  new(ptr) node_type(value);  }
-   #else
-   template<class Convertible>
-   static void construct(node_type *ptr, Convertible &&value)
-   {  new(ptr) node_type(forward<Convertible>(value));  }
-   #endif
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible1, class Convertible2>
    static void construct(node_type *ptr, 
                          const detail::moved_object<std::pair<Convertible1, Convertible2> > &value)
@@ -151,7 +142,13 @@ struct rbtree_node
 
       new((void*)ptr) hack_node_t(value);  
    }
+
    #else
+
+   template<class Convertible>
+   static void construct(node_type *ptr, Convertible &&value)
+   {  new(ptr) node_type(forward<Convertible>(value));  }
+
    template<class Convertible1, class Convertible2>
    static void construct(node_type *ptr, 
                          std::pair<Convertible1, Convertible2> &&value)
@@ -164,6 +161,7 @@ struct rbtree_node
 
       new((void*)ptr) hack_node_t(value);  
    }
+
    #endif
 };
 
@@ -187,14 +185,13 @@ struct intrusive_rbtree_type
    typedef typename detail::rbtree_node
          <value_type, void_pointer>                node_type;
    typedef node_compare<ValueCompare, node_type>   node_compare_type;
-
-   typedef typename boost::intrusive::rbtree
-      <typename node_type::hook_type::
-            template value_traits<node_type>
-      ,node_compare_type
-      ,boost::intrusive::safe_link
-      ,typename A::size_type>                      container_type;
-
+   typedef typename bi::make_rbtree
+      <node_type
+      ,bi::compare<node_compare_type>
+      ,bi::base_hook<typename node_type::hook_type>
+      ,bi::constant_time_size<true>
+      ,bi::size_type<typename A::size_type>
+      >::type                                      container_type;
    typedef container_type                          type ;
 };
 
@@ -241,9 +238,10 @@ class rbtree
 
       NodePtr operator()(const Node &other) const
       {
-         if(!m_icont.empty()){
+//         if(!m_icont.empty()){
+         if(NodePtr p = m_icont.unlink_leftmost_without_rebalance()){
             //First recycle a node (this can't throw)
-            NodePtr p = m_icont.unlink_leftmost_without_rebalance();
+            //NodePtr p = m_icont.unlink_leftmost_without_rebalance();
             try{
                //This can throw
                *p = other;
@@ -421,8 +419,8 @@ class rbtree
    rbtree(const rbtree& x) 
       :  AllocHolder(x, x.key_comp())
    {
-      this->m_icont.clone_from
-         (x.m_icont, typename AllocHolder::cloner(*this), Destroyer(*this));
+      this->icont().clone_from
+         (x.icont(), typename AllocHolder::cloner(*this), Destroyer(this->node_alloc()));
    }
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
@@ -444,12 +442,15 @@ class rbtree
          //Transfer all the nodes to a temporary tree
          //If anything goes wrong, all the nodes will be destroyed
          //automatically
-         Icont other_tree(this->m_icont.value_comp());
-         other_tree.swap(this->m_icont);
+         Icont other_tree(this->icont().value_comp());
+         other_tree.swap(this->icont());
 
          //Now recreate the source tree reusing nodes stored by other_tree
-         this->m_icont.clone_from
-            (x.m_icont, RecyclingCloner(*this, other_tree), Destroyer(*this));
+         this->icont().clone_from
+            (x.icont()
+            , RecyclingCloner(*this, other_tree)
+            //, AllocHolder::cloner(*this)
+            , Destroyer(this->node_alloc()));
 
          //If there are remaining nodes, destroy them
          NodePtr p;
@@ -471,28 +472,28 @@ class rbtree
    public:    
    // accessors:
    value_compare value_comp() const 
-   {  return this->m_icont.value_comp().value_comp(); }
+   {  return this->icont().value_comp().value_comp(); }
 
    key_compare key_comp() const 
-   {  return this->m_icont.value_comp().value_comp().key_comp(); }
+   {  return this->icont().value_comp().value_comp().key_comp(); }
 
    allocator_type get_allocator() const 
-   {  return allocator_type(*this); }
+   {  return allocator_type(this->node_alloc()); }
 
    const stored_allocator_type &get_stored_allocator() const 
-   {  return static_cast<const stored_allocator_type &>(*this); }
+   {  return this->node_alloc(); }
 
    stored_allocator_type &get_stored_allocator()
-   {  return static_cast<stored_allocator_type&>(*this); }
+   {  return this->node_alloc(); }
 
    iterator begin()
-   { return iterator(this->m_icont.begin()); }
+   { return iterator(this->icont().begin()); }
 
    const_iterator begin() const
    {  return const_iterator(this->non_const_icont().begin());   }
 
    iterator end()
-   {  return iterator(this->m_icont.end());  }
+   {  return iterator(this->icont().end());  }
 
    const_iterator end() const
    {  return const_iterator(this->non_const_icont().end());  }
@@ -513,7 +514,7 @@ class rbtree
    {  return !this->size();  }
 
    size_type size() const 
-   {  return this->m_icont.size();   }
+   {  return this->icont().size();   }
 
    size_type max_size() const 
    {  return AllocHolder::max_size();  }
@@ -538,7 +539,7 @@ class rbtree
       (const key_type& key, insert_commit_data &data)
    {
       std::pair<iiterator, bool> ret = 
-         this->m_icont.insert_unique_check(key, KeyNodeCompare(value_comp()), data);
+         this->icont().insert_unique_check(key, KeyNodeCompare(value_comp()), data);
       return std::pair<iterator, bool>(iterator(ret.first), ret.second);
    }
 
@@ -546,14 +547,14 @@ class rbtree
       (const_iterator hint, const key_type& key, insert_commit_data &data)
    {
       std::pair<iiterator, bool> ret = 
-         this->m_icont.insert_unique_check(hint.get(), key, KeyNodeCompare(value_comp()), data);
+         this->icont().insert_unique_check(hint.get(), key, KeyNodeCompare(value_comp()), data);
       return std::pair<iterator, bool>(iterator(ret.first), ret.second);
    }
 
    iterator insert_unique_commit(const value_type& v, insert_commit_data &data)
    {
       NodePtr tmp = AllocHolder::create_node(v);
-      iiterator it(this->m_icont.insert_unique_commit(*tmp, data));
+      iiterator it(this->icont().insert_unique_commit(*tmp, data));
       return iterator(it);
    }
 
@@ -563,7 +564,7 @@ class rbtree
       (const detail::moved_object<MovableConvertible>& mv, insert_commit_data &data)
    {
       NodePtr tmp = AllocHolder::create_node(mv);
-      iiterator it(this->m_icont.insert_unique_commit(*tmp, data));
+      iiterator it(this->icont().insert_unique_commit(*tmp, data));
       return iterator(it);
    }
    #else
@@ -572,7 +573,7 @@ class rbtree
       (MovableConvertible && mv, insert_commit_data &data)
    {
       NodePtr tmp = AllocHolder::create_node(forward<MovableConvertible>(mv));
-      iiterator it(this->m_icont.insert_unique_commit(*tmp, data));
+      iiterator it(this->icont().insert_unique_commit(*tmp, data));
       return iterator(it);
    }
    #endif
@@ -670,7 +671,7 @@ class rbtree
    iterator insert_equal(const value_type& v)
    {
       NodePtr p(AllocHolder::create_node(v));
-      return iterator(this->m_icont.insert_equal_upper_bound(*p));
+      return iterator(this->icont().insert_equal_upper_bound(*p));
    }
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
@@ -678,21 +679,21 @@ class rbtree
    iterator insert_equal(const detail::moved_object<MovableConvertible> &mv)
    {
       NodePtr p(AllocHolder::create_node(mv));
-      return iterator(this->m_icont.insert_equal_upper_bound(*p));
+      return iterator(this->icont().insert_equal_upper_bound(*p));
    }
    #else
    template<class MovableConvertible>
    iterator insert_equal(MovableConvertible &&mv)
    {
       NodePtr p(AllocHolder::create_node(forward<MovableConvertible>(mv)));
-      return iterator(this->m_icont.insert_equal_upper_bound(*p));
+      return iterator(this->icont().insert_equal_upper_bound(*p));
    }
    #endif
 
    iterator insert_equal(const_iterator hint, const value_type& v)
    {
       NodePtr p(AllocHolder::create_node(v));
-      return iterator(this->m_icont.insert_equal(hint.get(), *p));
+      return iterator(this->icont().insert_equal(hint.get(), *p));
    }
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
@@ -700,14 +701,14 @@ class rbtree
    iterator insert_equal(const_iterator hint, const detail::moved_object<MovableConvertible> &mv)
    {
       NodePtr p(AllocHolder::create_node(mv));
-      return iterator(this->m_icont.insert_equal(hint.get(), *p));
+      return iterator(this->icont().insert_equal(hint.get(), *p));
    }
    #else
    template<class MovableConvertible>
    iterator insert_equal(const_iterator hint, MovableConvertible &&mv)
    {
       NodePtr p(AllocHolder::create_node(move(mv)));
-      return iterator(this->m_icont.insert_equal(hint.get(), *p));
+      return iterator(this->icont().insert_equal(hint.get(), *p));
    }
    #endif
 
@@ -728,35 +729,35 @@ class rbtree
    }
 
    iterator erase(const_iterator position)
-   {  return iterator(this->m_icont.erase_and_dispose(position.get(), Destroyer(*this))); }
+   {  return iterator(this->icont().erase_and_dispose(position.get(), Destroyer(this->node_alloc()))); }
 
    size_type erase(const key_type& k)
-   {  return this->m_icont.erase_and_dispose(k, KeyNodeCompare(value_comp()), Destroyer(*this)); }
+   {  return this->icont().erase_and_dispose(k, KeyNodeCompare(value_comp()), Destroyer(this->node_alloc())); }
 
    iterator erase(const_iterator first, const_iterator last)
-   {  return iterator(this->m_icont.erase_and_dispose(first.get(), last.get(), Destroyer(*this))); }
+   {  return iterator(this->icont().erase_and_dispose(first.get(), last.get(), Destroyer(this->node_alloc()))); }
 
    void clear() 
-   {  this->m_icont.clear_and_dispose(Destroyer(*this)); }
+   {  this->icont().clear_and_dispose(Destroyer(this->node_alloc())); }
 
    // set operations:
    iterator find(const key_type& k)
-   {  return iterator(this->m_icont.find(k, KeyNodeCompare(value_comp())));  }
+   {  return iterator(this->icont().find(k, KeyNodeCompare(value_comp())));  }
 
    const_iterator find(const key_type& k) const
    {  return const_iterator(this->non_const_icont().find(k, KeyNodeCompare(value_comp())));  }
 
    size_type count(const key_type& k) const
-   {  return size_type(this->m_icont.count(k, KeyNodeCompare(value_comp()))); }
+   {  return size_type(this->icont().count(k, KeyNodeCompare(value_comp()))); }
 
    iterator lower_bound(const key_type& k)
-   {  return iterator(this->m_icont.lower_bound(k, KeyNodeCompare(value_comp())));  }
+   {  return iterator(this->icont().lower_bound(k, KeyNodeCompare(value_comp())));  }
 
    const_iterator lower_bound(const key_type& k) const
    {  return const_iterator(this->non_const_icont().lower_bound(k, KeyNodeCompare(value_comp())));  }
 
    iterator upper_bound(const key_type& k)
-   {  return iterator(this->m_icont.upper_bound(k, KeyNodeCompare(value_comp())));   }
+   {  return iterator(this->icont().upper_bound(k, KeyNodeCompare(value_comp())));   }
 
    const_iterator upper_bound(const key_type& k) const
    {  return const_iterator(this->non_const_icont().upper_bound(k, KeyNodeCompare(value_comp())));  }
@@ -764,7 +765,7 @@ class rbtree
    std::pair<iterator,iterator> equal_range(const key_type& k)
    {  
       std::pair<iiterator, iiterator> ret =
-         this->m_icont.equal_range(k, KeyNodeCompare(value_comp()));
+         this->icont().equal_range(k, KeyNodeCompare(value_comp()));
       return std::pair<iterator,iterator>(iterator(ret.first), iterator(ret.second));
    }
 
@@ -809,6 +810,24 @@ class rbtree
       priv_create_and_insert_nodes(beg, end, unique, allocator_v1(), std::input_iterator_tag());
    }
 
+   class insertion_functor;
+   friend class insertion_functor;
+
+   class insertion_functor
+   {
+      Icont &icont_;
+      typename Icont::iterator pos_;
+
+      public:
+      insertion_functor(Icont &icont)
+         :  icont_(icont)
+      {}
+
+      void operator()(Node &n)
+      {  this->icont_.insert_equal_upper_bound(n); }
+   };
+
+
    template<class FwdIterator>
    void priv_create_and_insert_nodes
       (FwdIterator beg, FwdIterator end, bool unique, allocator_v2, std::forward_iterator_tag)
@@ -817,31 +836,9 @@ class rbtree
          priv_create_and_insert_nodes(beg, end, unique, allocator_v2(), std::input_iterator_tag());
       }
       else{
-         //Optimize memory allocation obtaining the distance between iterators
-         size_type n = std::distance(beg, end);
-
-         //Allocate and construct as many nodes as possible with
-         //the one-shot allocation
-         typedef typename NodeAlloc::multiallocation_iterator multiallocation_iterator;
-         multiallocation_iterator many_beg, itend, it;
-         size_type received_array;
-         FwdIterator next = this->allocate_many_and_construct
-            (beg, n, many_beg, received_array);
-
-         detail::multiallocation_destroy_dealloc<NodeAlloc>
-            multi_destroy_dealloc(many_beg, *this);
-
-         //Insert constructed nodes (this does not throw)
-         for (it = many_beg; it != itend; ++it){
-            this->m_icont.insert_equal_upper_bound(*it);
-            multi_destroy_dealloc.next();
-         }
-
-         //Insert remaining nodes using individual allocation
-         //(this can throw, but there is no leak)
-         for (size_type i = received_array; i < n; ++i, ++next){
-            this->insert_equal(*next);
-         }
+         //Optimized allocation and construction
+         this->allocate_many_and_construct
+            (beg, std::distance(beg, end), insertion_functor(this->icont()));
       }
    }
 };

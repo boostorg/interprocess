@@ -21,16 +21,15 @@
 #include <stdexcept>
 #include <new>
 
-/*!\file
-   Describes exceptions thrown by interprocess classes
-*/
+//!\file
+//!Describes exceptions thrown by interprocess classes
 
 namespace boost {
 
 namespace interprocess {
 
-/*!This class is the base class of all exceptions
-   thrown by boost::interprocess*/
+//!This class is the base class of all exceptions
+//!thrown by boost::interprocess
 class interprocess_exception : public std::exception
 {
    public:
@@ -79,8 +78,8 @@ class interprocess_exception : public std::exception
    /// @endcond
 };
 
-/*!This is the exception thrown by shared interprocess_mutex family when a deadlock situation
-   is detected or when using a interprocess_condition the interprocess_mutex is not locked*/
+//!This is the exception thrown by shared interprocess_mutex family when a deadlock situation
+//!is detected or when using a interprocess_condition the interprocess_mutex is not locked
 class lock_exception : public interprocess_exception
 {
    public:
@@ -92,8 +91,8 @@ class lock_exception : public interprocess_exception
    {  return "boost::interprocess::lock_exception";  }
 };
 
-/*!This is the exception thrown by named interprocess_semaphore when a deadlock situation
-   is detected or when an error is detected in the post/wait operation*/
+//!This is the exception thrown by named interprocess_semaphore when a deadlock situation
+//!is detected or when an error is detected in the post/wait operation
 /*
 class sem_exception : public interprocess_exception
 {
@@ -106,8 +105,8 @@ class sem_exception : public interprocess_exception
    {  return "boost::interprocess::sem_exception";  }
 };
 */
-/*!This is the exception thrown by synchronization objects when there is
-   an error in a wait() function*/
+//!This is the exception thrown by synchronization objects when there is
+//!an error in a wait() function
 /*
 class wait_exception : public interprocess_exception
 {
@@ -117,8 +116,8 @@ class wait_exception : public interprocess_exception
 };
 */
 
-/*!This exception is thrown when a named object is created
-   in "open_only" mode and the resource was not already created*/
+//!This exception is thrown when a named object is created
+//!in "open_only" mode and the resource was not already created
 /*
 class not_previously_created : public interprocess_exception
 {
@@ -127,7 +126,9 @@ class not_previously_created : public interprocess_exception
       {  return "boost::interprocess::not_previously_created";  }
 };
 */
-/*!This exception is thrown when a memory request can't be fulfilled.*/
+
+//!This exception is thrown when a memory request can't be
+//!fulfilled.
 class bad_alloc : public interprocess_exception
 {
  public:

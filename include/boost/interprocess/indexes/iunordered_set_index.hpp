@@ -41,20 +41,18 @@ struct iunordered_set_index_aux
    typedef typename 
       segment_manager_base::void_pointer              void_pointer;
 
-   typedef boost::intrusive::unordered_set_base_hook
-      < boost::intrusive::tag
-      , boost::intrusive::safe_link
-      , void_pointer>                                       derivation_hook;
+   typedef typename bi::make_unordered_set_base_hook
+      < bi::void_pointer<void_pointer> >::type        derivation_hook;
 
    typedef typename MapConfig::template 
-      intrusive_value_type<derivation_hook>::type           value_type;
+      intrusive_value_type<derivation_hook>::type     value_type;
 
    typedef typename MapConfig::
-      intrusive_compare_key_type                            intrusive_compare_key_type;
+      intrusive_compare_key_type                      intrusive_compare_key_type;
 
-   typedef std::equal_to<value_type>                        value_equal;
+   typedef std::equal_to<value_type>                  value_equal;
 
-   typedef typename MapConfig::char_type                    char_type;
+   typedef typename MapConfig::char_type              char_type;
 
    struct equal_function
    {
@@ -98,14 +96,14 @@ struct iunordered_set_index_aux
         }
     };
 
-   typedef boost::intrusive::unordered_set
-      <typename derivation_hook::template 
-         value_traits<value_type>, hash_function, equal_function, true>  index_t;
-
-   typedef typename index_t::bucket_type                 bucket_type;
-
+   typedef typename bi::make_unordered_set
+      < value_type
+      , bi::hash<hash_function>
+      , bi::equal<equal_function>
+      >::type                                         index_t;
+   typedef typename index_t::bucket_type              bucket_type;
    typedef allocator
-      <bucket_type, segment_manager_base>          allocator_type;
+      <bucket_type, segment_manager_base>             allocator_type;
 
    struct allocator_holder
    {
@@ -148,6 +146,7 @@ class iunordered_set_index
    typedef typename index_type::value_type               value_type;
    typedef typename index_type::bucket_ptr               bucket_ptr;
    typedef typename index_type::bucket_type              bucket_type;
+   typedef typename index_type::bucket_traits            bucket_traits;
    typedef typename index_type::size_type                size_type;
 
    /// @cond
@@ -176,9 +175,20 @@ class iunordered_set_index
          return old_size;
       std::size_t received_size;
       if(!alloc.allocation_command
-         (shrink_in_place | nothrow_allocation, old_size, new_size, received_size, buckets).first){
+         (try_shrink_in_place | nothrow_allocation, old_size, new_size, received_size, buckets).first){
          return old_size;
       }
+
+      for( bucket_type *p = detail::get_pointer(buckets) + received_size
+         , *pend = detail::get_pointer(buckets) + old_size
+         ; p != pend
+         ; ++p){
+         p->~bucket_type();
+      }
+
+      bucket_ptr shunk_p = alloc.allocation_command
+         (shrink_in_place | nothrow_allocation, received_size, received_size, received_size, buckets).first;
+      BOOST_ASSERT(buckets == shunk_p);
 
       bucket_ptr buckets_init = buckets + received_size;
       for(std::size_t i = 0; i < (old_size - received_size); ++i){
@@ -231,7 +241,7 @@ class iunordered_set_index
    //!segment manager. Can throw
    iunordered_set_index(segment_manager_base *mngr)
       :  allocator_holder(mngr)
-      ,  index_type(&get_this_pointer()->init_bucket, 1)
+      ,  index_type(bucket_traits(&get_this_pointer()->init_bucket, 1))
    {}
 
    ~iunordered_set_index()
@@ -265,7 +275,7 @@ class iunordered_set_index
       }
       //Rehashing does not throw, since neither the hash nor the
       //comparison function can throw
-      this->rehash(new_p, new_n);
+      this->rehash(bucket_traits(new_p, new_n));
       if(new_p != old_p && old_p != bucket_ptr(&this->init_bucket)){
          destroy_buckets(this->alloc, old_p, old_n);
       }
@@ -275,34 +285,32 @@ class iunordered_set_index
    //!previously allocated.
    void shrink_to_fit()
    {
-      //size_type cur_size   = this->size();
+      size_type cur_size   = this->size();
       size_type cur_count  = this->bucket_count();
       bucket_ptr old_p = this->bucket_pointer();
       size_type sug_count;
       
       if(!this->size() && old_p != bucket_ptr(&this->init_bucket)){
          sug_count = 1;
-         this->rehash(bucket_ptr(&this->init_bucket), 1);
+         this->rehash(bucket_traits(bucket_ptr(&this->init_bucket), 1));
          destroy_buckets(this->alloc, old_p, cur_count);
       }
       else{
-      /*
-      sug_count  = index_type::suggested_upper_bucket_count(cur_size);
+         sug_count  = index_type::suggested_upper_bucket_count(cur_size);
 
-      if(sug_count >= cur_count)
-         return;
+         if(sug_count >= cur_count)
+            return;
 
-      try{
-         shrink_buckets(old_p, cur_count, this->alloc, sug_count);
-      }
-      catch(...){
-         return;
-      }
+         try{
+            shrink_buckets(old_p, cur_count, this->alloc, sug_count);
+         }
+         catch(...){
+            return;
+         }
 
-      //Rehashing does not throw, since neither the hash nor the
-      //comparison function can throw
-      this->rehash(old_p, sug_count);
-      */
+         //Rehashing does not throw, since neither the hash nor the
+         //comparison function can throw
+         this->rehash(bucket_traits(old_p, sug_count));
       }
    }
 
