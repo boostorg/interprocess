@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="_interprocesslib"
-	ProjectGUID="{FFAA56F1-32EC-4B22-B6BD-95A311A67C35}"
+	ProjectGUID="{FF56BAF1-32EC-4B22-B6BD-95A3A67C3135}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -95,48 +95,6 @@
 	<References>
 	</References>
 	<Files>
-		<Filter
-			Name="Smart Pointer"
-			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\enable_shared_from_this.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\intrusive_ptr.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\offset_ptr.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\scoped_ptr.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\shared_ptr.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\unique_ptr.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\weak_ptr.hpp">
-			</File>
-			<Filter
-				Name="detail"
-				Filter="">
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\shared_count.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\sp_counted_base.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\sp_counted_base_atomic.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\sp_counted_impl.hpp">
-				</File>
-			</Filter>
-		</Filter>
 		<Filter
 			Name="Containers"
 			Filter="">
@@ -329,6 +287,9 @@
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_semaphore.hpp">
 				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\named_creation_functor.hpp">
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -343,6 +304,9 @@
 			<Filter
 				Name="detail"
 				Filter="">
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\mem_algo\detail\mem_algo_common.hpp">
+				</File>
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\mem_algo\detail\simple_seq_fit_impl.hpp">
 				</File>
@@ -432,6 +396,9 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\managed_open_or_create_impl.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\math_functions.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\min_max.hpp">
 			</File>
 			<File
@@ -447,9 +414,6 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\named_proxy.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\null_create_func.hpp">
-			</File>
-			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\os_file_functions.hpp">
 			</File>
 			<File
@@ -463,6 +427,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\ptime_wrk.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\segment_manager_helper.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\type_traits.hpp">
@@ -561,6 +528,9 @@
 				RelativePath="..\..\test\get_compiler_name.hpp">
 			</File>
 			<File
+				RelativePath="..\..\test\get_process_id_name.hpp">
+			</File>
+			<File
 				RelativePath="..\..\test\itestvalue.hpp">
 			</File>
 			<File
@@ -629,22 +599,508 @@
 			Name="Example"
 			Filter="">
 			<File
+				RelativePath="..\..\example\doc_adaptive_pool.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_allocator.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\example\doc_anonymous_condition_shared_data.hpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_anonymous_conditionA.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_anonymous_conditionB.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\example\doc_anonymous_mutex_shared_data.hpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_anonymous_mutexA.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_anonymous_mutexB.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\example\doc_anonymous_semaphore_shared_data.hpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_anonymous_semaphoreA.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_anonymous_semaphoreB.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_anonymous_upgradable_mutexA.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_anonymous_upgradable_mutexB.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_bufferstream.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_cached_adaptive_pool.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_cached_node_allocator.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_cont.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_contA.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_contB.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_file_mapping.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_file_mapping2.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_intrusive.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_ipc_messageA.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_ipc_messageB.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_managed_aligned_allocation.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_managed_allocation_command.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_managed_construction_info.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_managed_external_buffer.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_managed_heap_memory.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_managed_mapped_file.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_managed_multiple_allocation.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_managed_raw_allocation.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_map.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_message_queueA.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_message_queueB.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_move_containers.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_named_allocA.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_named_allocB.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\example\doc_named_condition_shared_data.hpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_named_mutex.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_node_allocator.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_offset_ptr.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_private_adaptive_pool.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_private_node_allocator.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_scoped_ptr.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_shared_memory.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_shared_memory2.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_shared_ptr.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_shared_ptr_explicit.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_unique_ptr.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\example\doc_upgradable_mutex_shared_data.hpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_vectorstream.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_where_allocate.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_windows_shared_memory.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_windows_shared_memory2.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\example\Jamfile.v2">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
@@ -653,6 +1109,51 @@
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\ipc\message_queue.hpp">
 			</File>
+		</Filter>
+		<Filter
+			Name="Smart Pointer"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\deleter.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\enable_shared_from_this.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\intrusive_ptr.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\offset_ptr.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\scoped_ptr.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\shared_ptr.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\unique_ptr.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\smart_ptr\weak_ptr.hpp">
+			</File>
+			<Filter
+				Name="detail"
+				Filter="">
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\shared_count.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\sp_counted_base.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\sp_counted_base_atomic.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\smart_ptr\detail\sp_counted_impl.hpp">
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath="..\..\..\..\boost\interprocess\interprocess_fwd.hpp">

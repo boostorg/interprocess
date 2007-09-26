@@ -2,8 +2,8 @@
 <VisualStudioProject
    ProjectType="Visual C++"
    Version="7.10"
-   Name="slist_test"
-   ProjectGUID="{58CCE183-6092-48FE-A4F7-BA0D3A792608}"
+   Name="doc_shared_ptr"
+   ProjectGUID="{51CE89A3-6092-F4EA-48A7-B4B9AC326093}"
    Keyword="Win32Proj">
    <Platforms>
       <Platform
@@ -13,7 +13,7 @@
       <Configuration
          Name="Debug|Win32"
          OutputDirectory="../../Bin/Win32/Debug"
-         IntermediateDirectory="Debug/slist_test"
+         IntermediateDirectory="Debug/doc_shared_ptr"
          ConfigurationType="1"
          CharacterSet="2">
          <Tool
@@ -34,11 +34,11 @@
          <Tool
             Name="VCLinkerTool"
             AdditionalDependencies="winmm.lib"
-            OutputFile="$(OutDir)/slist_test_d.exe"
+            OutputFile="$(OutDir)/doc_shared_ptr_d.exe"
             LinkIncremental="1"
             AdditionalLibraryDirectories="../../../../stage/lib"
             GenerateDebugInformation="TRUE"
-            ProgramDatabaseFile="$(OutDir)/slist_test.pdb"
+            ProgramDatabaseFile="$(OutDir)/doc_shared_ptr.pdb"
             SubSystem="1"
             TargetMachine="1"
             FixedBaseAddress="1"/>
@@ -66,7 +66,7 @@
       <Configuration
          Name="Release|Win32"
          OutputDirectory="../../Bin/Win32/Release"
-         IntermediateDirectory="Release/slist_test"
+         IntermediateDirectory="Release/doc_shared_ptr"
          ConfigurationType="1"
          CharacterSet="2">
          <Tool
@@ -84,7 +84,7 @@
          <Tool
             Name="VCLinkerTool"
             AdditionalDependencies="winmm.lib"
-            OutputFile="$(OutDir)/slist_test.exe"
+            OutputFile="$(OutDir)/doc_shared_ptr.exe"
             LinkIncremental="1"
             AdditionalLibraryDirectories="../../../../stage/lib"
             GenerateDebugInformation="TRUE"
@@ -120,15 +120,15 @@
       <Filter
          Name="Source Files"
          Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-         UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+         UniqueIdentifier="{4CEF7372-CA56-16A6-3646-D332672E2BDF}">
          <File
-            RelativePath="..\..\test\slist_test.cpp">
+            RelativePath="..\..\example\doc_shared_ptr.cpp">
          </File>
       </Filter>
       <Filter
          Name="Header Files"
          Filter="h;hpp;hxx;hm;inl;inc;xsd"
-         UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+         UniqueIdentifier="{93483B80-D995-C044-8BEB-625F27A58BFB}">
       </Filter>
    </Files>
    <Globals>
