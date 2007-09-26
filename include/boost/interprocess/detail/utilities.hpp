@@ -105,9 +105,10 @@ struct scoped_deallocator
 template <class Allocator>
 struct scoped_array_deallocator
 {
-   typedef typename Allocator::pointer pointer;
+   typedef typename Allocator::pointer    pointer;
+   typedef typename Allocator::size_type  size_type;
 
-   scoped_array_deallocator(pointer p, Allocator& a, std::size_t length)
+   scoped_array_deallocator(pointer p, Allocator& a, size_type length)
       : m_ptr(p), m_alloc(a), m_length(length) {}
 
    ~scoped_array_deallocator()
@@ -119,7 +120,20 @@ struct scoped_array_deallocator
    private:
    pointer     m_ptr;
    Allocator&  m_alloc;
-   std::size_t m_length;
+   size_type   m_length;
+};
+
+template <class Allocator>
+struct null_scoped_array_deallocator
+{
+   typedef typename Allocator::pointer    pointer;
+   typedef typename Allocator::size_type  size_type;
+
+   null_scoped_array_deallocator(pointer, Allocator&, size_type)
+   {}
+
+   void release()
+   {}
 };
 
 //!A deleter for scoped_ptr that destroys
@@ -127,17 +141,22 @@ struct scoped_array_deallocator
 template <class Allocator>
 struct scoped_destructor_n
 {
-   typedef typename Allocator::pointer pointer;
+   typedef typename Allocator::pointer    pointer;
    typedef typename Allocator::value_type value_type;
+   typedef typename Allocator::size_type  size_type;
 
    pointer     m_p;
-   std::size_t m_n;
+   size_type   m_n;
 
-   scoped_destructor_n(pointer p, std::size_t n)
-         : m_p(p), m_n(n){}
+   scoped_destructor_n(pointer p, size_type n)
+      : m_p(p), m_n(n)
+   {}
 
    void release()
    {  m_p = 0; }
+
+   void increment_size(size_type inc)
+   {  m_n += inc;   }
    
    ~scoped_destructor_n()
    {
@@ -146,6 +165,24 @@ struct scoped_destructor_n
       for(std::size_t i = 0; i < m_n; ++i, ++raw_ptr)
          raw_ptr->~value_type();
    }
+};
+
+//!A deleter for scoped_ptr that destroys
+//!an object using a STL allocator.
+template <class Allocator>
+struct null_scoped_destructor_n
+{
+   typedef typename Allocator::pointer pointer;
+   typedef typename Allocator::size_type size_type;
+
+   null_scoped_destructor_n(pointer, size_type)
+   {}
+
+   void increment_size(size_type)
+   {}
+
+   void release()
+   {}
 };
 
 template <class A>
@@ -187,9 +224,9 @@ struct multiallocation_deallocator
          ++m_itbeg;
       }
    }
-
-   void release()
-   {  m_itbeg = multiallocation_iterator(); }
+   
+   void increment()
+   {  ++m_itbeg;  }
 };
 
 
@@ -223,7 +260,7 @@ struct multiallocation_destroy_dealloc
    {  m_itbeg = multiallocation_iterator(); }
 };
 
-/*!Forces a cast from any pointer to char * pointer*/
+//!Forces a cast from any pointer to char *pointer
 template<class T>
 inline char* char_ptr_cast(T *ptr)
 {
@@ -282,8 +319,8 @@ struct ct_max_pow2_less<0, 0>
    static const std::size_t value = 0;
 };
 
-/*!Obtains a generic pointer of the same type that
-   can point to other pointed type: Ptr<?> -> Ptr<NewValueType>*/
+//!Obtains a generic pointer of the same type that
+//!can point to other pointed type: Ptr<?> -> Ptr<NewValueType>
 template<class T, class U>
 struct pointer_to_other;
 
@@ -316,9 +353,9 @@ struct pointer_to_other< T*, U >
 
 }  //namespace detail {
 
-/*!Trait class to detect if an index is a node
-   index. This allows more efficient operations
-   when deallocating named objects.*/
+//!Trait class to detect if an index is a node
+//!index. This allows more efficient operations
+//!when deallocating named objects.
 template <class Index>
 struct is_node_index
 {
@@ -326,20 +363,12 @@ struct is_node_index
 };
 
 
-/*!Trait class to detect if an index is an intrusive
-   index. This will embed the derivation hook in each
-   allocation header, to provide memory for the intrusive
-   container.*/
+//!Trait class to detect if an index is an intrusive
+//!index. This will embed the derivation hook in each
+//!allocation header, to provide memory for the intrusive
+//!container.
 template <class Index>
 struct is_intrusive_index
-{
-   enum {   value = false };
-};
-
-/*!Trait class to detect if an smart pointer has 
-   multi-segment addressing capabilities.*/
-template <class Ptr>
-struct is_multisegment_ptr
 {
    enum {   value = false };
 };

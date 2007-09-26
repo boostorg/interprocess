@@ -48,6 +48,10 @@
       #define BOOST_INTERPROCESS_POSIX_TIMEOUTS
    #endif
 
+   #if defined(_POSIX_SEMAPHORES) && (_POSIX_SEMAPHORES - 0 > 0)
+      #define BOOST_INTERPROCESS_POSIX_SEMAPHORES
+   #endif
+
 #endif
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)

@@ -141,11 +141,30 @@ struct is_same
    static yes_type is_same_tester(V*, V*);
    static no_type is_same_tester(...);
 
-   static T t;
-   static U u;
+   static T *t;
+   static U *u;
 
-   static const bool value = sizeof(yes_type) == sizeof(is_same_tester(&t,&u));
+   static const bool value = sizeof(yes_type) == sizeof(is_same_tester(t,u));
 };
+/*
+template <template<class P> typename T, template<typename P2> typename U>
+struct is_same
+{
+   typedef char yes_type;
+   struct no_type
+   {
+      char padding[8];
+   };
+
+   template <template<class P3> typename V>
+   static yes_type is_same_tester(V<P3>*, V<P3>*);
+   static no_type is_same_tester(...);
+
+   static T<int> *t;
+   static U<int> *u;
+
+   static const bool value = sizeof(yes_type) == sizeof(is_same_tester(t,u));
+};*/
 /*
 template< typename T >
 struct is_pointer_impl

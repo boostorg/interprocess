@@ -31,11 +31,9 @@
 #include <exception>
 #endif
 
-/*!\file
-   Describes the object placed in a memory segment that provides
-   named object allocation capabilities for single-segment and
-   multi-segment allocations.
-*/
+//!\file
+//!Describes the object placed in a memory segment that provides
+//!named object allocation capabilities.
 
 namespace boost{
 namespace interprocess{
@@ -133,22 +131,22 @@ struct block_header
    {  return m_num_char;   }
 
    std::size_t name_offset() const
-   {  
+   { 
       return value_offset() + get_rounded_size(m_value_bytes, sizeof_char());
    }
 
    void *value() const
-   {  
+   {
       return detail::char_ptr_cast(this) + value_offset();
    }
 
    std::size_t value_offset() const
-   {  
+   {
       return get_rounded_size(sizeof(block_header), m_value_alignment);
    }
 
    template<class CharType>
-   bool less(const block_header &b) const
+   bool less_comp(const block_header &b) const
    {
       return m_num_char < b.m_num_char ||
              (m_num_char < b.m_num_char && 
@@ -157,7 +155,7 @@ struct block_header
    }
 
    template<class CharType>
-   bool equal(const block_header &b) const
+   bool equal_comp(const block_header &b) const
    {
       return m_num_char == b.m_num_char &&
              std::char_traits<CharType>::compare
@@ -294,10 +292,10 @@ struct intrusive_value_type_impl
    }
 
    bool operator <(const intrusive_value_type_impl<Hook, CharType> & other) const
-   {  return this->get_block_header()->template less<CharType>(*other.get_block_header());  }
+   {  return (this->get_block_header())->template less_comp<CharType>(*other.get_block_header());  }
 
    bool operator ==(const intrusive_value_type_impl<Hook, CharType> & other) const
-   {  return this->get_block_header()->template equal<CharType>(*other.get_block_header());  }
+   {  return (this->get_block_header())->template equal_comp<CharType>(*other.get_block_header());  }
 
    static intrusive_value_type_impl *get_intrusive_value_type(block_header *hdr)
    {
@@ -395,8 +393,8 @@ struct index_key
 template<class VoidPointer>
 struct index_data
 {
-   typedef VoidPointer void_ptr;
-   void_ptr    m_ptr;
+   typedef VoidPointer void_pointer;
+   void_pointer    m_ptr;
    index_data(void *ptr) : m_ptr(ptr){}
 
    void *value() const

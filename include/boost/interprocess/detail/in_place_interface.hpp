@@ -20,9 +20,8 @@
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <typeinfo>  //typeid
 
-/*!\file
-   Describes an abstract interface for placement construction and destruction.
-*/
+//!\file
+//!Describes an abstract interface for placement construction and destruction.
 
 namespace boost {
 namespace interprocess { 

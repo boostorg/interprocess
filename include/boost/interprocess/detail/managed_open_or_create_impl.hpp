@@ -90,7 +90,7 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         ( detail::DoCreateOrOpen
+         ( detail::DoOpenOrCreate
          , size
          , mode
          , addr
@@ -140,7 +140,7 @@ class managed_open_or_create_impl
    {
       m_name = name;
       priv_open_or_create
-         ( detail::DoCreateOrOpen
+         ( detail::DoOpenOrCreate
          , size
          , mode
          , addr
@@ -281,7 +281,7 @@ class managed_open_or_create_impl
          create_device<FileBased>(dev, m_name.c_str(), size, file_like_t());
          created = true;
       }
-      else if(type == detail::DoCreateOrOpen){
+      else if(type == detail::DoOpenOrCreate){
          //This loop is very ugly, but brute force is sometimes better
          //than diplomacy. If someone knows how to open or create a
          //file and know if we have really created it or just open it

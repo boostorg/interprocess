@@ -86,8 +86,11 @@ class basic_managed_memory_impl
    typedef typename MemoryAlgorithm::mutex_family     mutex_family;
    typedef CharType                                   char_t;
    typedef std::ptrdiff_t                             handle_t;
-   typedef typename segment_manager::const_named_iterator  const_named_iterator;
-   typedef typename segment_manager::const_unique_iterator const_unique_iterator;
+   typedef typename segment_manager::
+      const_named_iterator                            const_named_iterator;
+   typedef typename segment_manager::
+      const_unique_iterator                           const_unique_iterator;
+
    /// @cond
 
    //Experimental. Don't use.
@@ -294,16 +297,16 @@ class basic_managed_memory_impl
    //Experimental. Don't use.
 
    //!Allocates n_elements of elem_size bytes.
-   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements)
-   {  return mp_header->allocate_many(elem_size, min_elements, preferred_elements, received_elements); }
+   multiallocation_iterator allocate_many(std::size_t elem_bytes, std::size_t num_elements)
+   {  return mp_header->allocate_many(elem_bytes, num_elements); }
 
    //!Allocates n_elements, each one of elem_sizes[i] bytes.
    multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements)
    {  return mp_header->allocate_many(elem_sizes, n_elements); }
 
    //!Allocates n_elements of elem_size bytes.
-   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements, std::nothrow_t nothrow)
-   {  return mp_header->allocate_many(elem_size, min_elements, preferred_elements, received_elements, nothrow); }
+   multiallocation_iterator allocate_many(std::size_t elem_bytes, std::size_t num_elements, std::nothrow_t nothrow)
+   {  return mp_header->allocate_many(elem_bytes, num_elements, nothrow); }
 
    //!Allocates n_elements, each one of elem_sizes[i] bytes.
    multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::nothrow_t nothrow)
@@ -661,6 +664,36 @@ class basic_managed_memory_impl
    //!storing the unique allocations. NOT thread-safe. Never throws.
    const_unique_iterator unique_end() const
    {  return mp_header->unique_end(); }
+
+   //!This is the default allocator to allocate types T
+   //!from this managed segment
+   template<class T>
+   struct allocator
+   {
+      typedef typename segment_manager::template allocator<T>::type type;
+   };
+
+   //!Returns an instance of the default allocator for type T
+   //!initialized that allocates memory from this segment manager.
+   template<class T>
+   typename allocator<T>::type
+      get_allocator()
+   {   return mp_header->get_allocator<T>(); }
+
+   //!This is the default deleter to delete types T
+   //!from this managed segment.
+   template<class T>
+   struct deleter
+   {
+      typedef typename segment_manager::template deleter<T>::type type;
+   };
+
+   //!Returns an instance of the default allocator for type T
+   //!initialized that allocates memory from this segment manager.
+   template<class T>
+   typename deleter<T>::type
+      get_deleter()
+   {   return mp_header->get_deleter<T>(); }
 
    protected:
    //!Sets the base address of the memory in this process. 

@@ -159,8 +159,6 @@ inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
    return (acquired = true);
 }
 
-
-
 inline bool release_file_lock(file_handle_t hnd)
 {  
    const unsigned long len = 0xffffffff;

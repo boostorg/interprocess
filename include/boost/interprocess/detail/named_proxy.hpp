@@ -28,15 +28,15 @@
 #include <boost/interprocess/detail/mpl.hpp>
 #include <iterator>
 
-/*!\file
-   Describes a proxy class that implements named allocation syntax.
-*/
+//!\file
+//!Describes a proxy class that implements named allocation syntax.
 
 namespace boost {
 namespace interprocess { 
 namespace detail {
 
-/*!Function object that makes placement new without arguments*/
+//!Function object that makes placement new
+//!without arguments
 template<class T>
 struct Ctor0Arg   :  public placement_destroy<T>
 {
@@ -120,20 +120,19 @@ struct Ctor0Arg   :  public placement_destroy<T>
 //bind rvalues with non-const references, we have to be ugly
 #define BOOST_INTERPROCESS_AUX_PARAM_LIST(z, n, data) \
   const BOOST_PP_CAT(P, n) & BOOST_PP_CAT(p, n) \
-/**/
+//!
 
 #define BOOST_INTERPROCESS_AUX_PARAM_INIT(z, n, data) \
   BOOST_PP_CAT(m_p, n) (const_cast<BOOST_PP_CAT(P, n) &>(BOOST_PP_CAT(p, n))) \
-/**/
+//!
 
 #define BOOST_INTERPROCESS_AUX_PARAM_INC(z, n, data)   \
   BOOST_PP_CAT(++m_p, n)                        \
-/**/
+//!
 
 #define BOOST_INTERPROCESS_AUX_PARAM_DEFINE(z, n, data)   \
   BOOST_PP_CAT(P, n) & BOOST_PP_CAT(m_p, n);       \
-
-/**/
+//!
 
 #define BOOST_PP_LOCAL_MACRO(n)                                            \
    template<class T, bool is_iterator, BOOST_PP_ENUM_PARAMS(n, class P) >  \
@@ -180,7 +179,7 @@ struct Ctor0Arg   :  public placement_destroy<T>
                                                                            \
       BOOST_PP_REPEAT(n, BOOST_INTERPROCESS_AUX_PARAM_DEFINE, _)        \
    };                                                                      \
-/**/
+//!
 
 
 #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
@@ -213,23 +212,24 @@ class named_proxy
       ,  m_find(find),  m_dothrow(dothrow)
    {}
 
-   /*!makes a named allocation and calls the default constructor*/
+   //!makes a named allocation and calls the
+   //!default constructor
    T *operator()() const
    {  
       Ctor0Arg<T> ctor_obj;
       return mp_mngr->template 
          generic_construct<T>(mp_name, m_num, m_find, m_dothrow, ctor_obj);
    }
-   /**/
+   //!
 
    // Boost preprocessor used to create operator() overloads
    #define BOOST_INTERPROCESS_AUX_TYPE_LIST(z, n, data) \
       BOOST_PP_CAT(P, n) \
-   /**/
+   //!
 
    #define BOOST_INTERPROCESS_AUX_PARAM_LIST(z, n, data) \
       const BOOST_PP_CAT(P, n) BOOST_PP_CAT(&p, n) \
-   /**/
+   //!
 
    #define BOOST_PP_LOCAL_MACRO(n)                                            \
       template<BOOST_PP_ENUM_PARAMS(n, class P)>                              \
@@ -242,7 +242,7 @@ class named_proxy
          return mp_mngr->template generic_construct<T>                       \
             (mp_name, m_num, m_find, m_dothrow, ctor_obj);                    \
       }                                                                       \
-   /**/
+   //!
 
    #define BOOST_PP_LOCAL_LIMITS ( 1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS )
    #include BOOST_PP_LOCAL_ITERATE()

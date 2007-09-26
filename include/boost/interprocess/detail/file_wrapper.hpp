@@ -26,28 +26,29 @@ class file_wrapper
 {
    public:
 
-   /*!Default constructor. Represents an empty file_wrapper.*/
+   //!Default constructor.
+   //!Represents an empty file_wrapper.
    file_wrapper();
 
-   /*!Creates a shared memory object with name "name" and mode "mode", with the access mode "mode"
-      If the file previously exists, throws an error.*/
+   //!Creates a file object with name "name" and mode "mode", with the access mode "mode"
+   //!If the file previously exists, throws an error.
    file_wrapper(create_only_t, const char *name, mode_t mode)
    {  this->priv_open_or_create(detail::DoCreate, name, mode);  }
 
-   /*!Tries to create a file with name "name" and mode "mode", with the
-      access mode "mode". If the file previously exists, it tries to open it with mode "mode".
-      Otherwise throws an error.*/
+   //!Tries to create a file with name "name" and mode "mode", with the
+   //!access mode "mode". If the file previously exists, it tries to open it with mode "mode".
+   //!Otherwise throws an error.
    file_wrapper(open_or_create_t, const char *name, mode_t mode)
-   {  this->priv_open_or_create(detail::DoCreateOrOpen, name, mode);  }
+   {  this->priv_open_or_create(detail::DoOpenOrCreate, name, mode);  }
 
-   /*!Tries to open a shared memory object with name "name", with the access mode "mode". 
-      If the file does not previously exist, it throws an error.*/
+   //!Tries to open a file with name "name", with the access mode "mode". 
+   //!If the file does not previously exist, it throws an error.
    file_wrapper(open_only_t, const char *name, mode_t mode)
    {  this->priv_open_or_create(detail::DoOpen, name, mode);  }
 
-   /*!Moves the ownership of "moved"'s shared memory object to *this. 
-      After the call, "moved" does not represent any shared memory object. 
-      Does not throw*/
+   //!Moves the ownership of "moved"'s file to *this. 
+   //!After the call, "moved" does not represent any file. 
+   //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    file_wrapper
       (detail::moved_object<file_wrapper> &moved)
@@ -57,9 +58,9 @@ class file_wrapper
    {  this->swap(moved);   }
    #endif
 
-   /*!Moves the ownership of "moved"'s shared memory to *this.
-      After the call, "moved" does not represent any shared memory. 
-      Does not throw*/
+   //!Moves the ownership of "moved"'s file to *this.
+   //!After the call, "moved" does not represent any file.
+   //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    file_wrapper &operator=
       (detail::moved_object<file_wrapper> &moved)
@@ -77,33 +78,37 @@ class file_wrapper
    }
    #endif
 
-   /*!Swaps to shared_memory_objects. Does not throw*/
+   //!Swaps to file_wrappers.
+   //!Does not throw
    void swap(file_wrapper &other);
 
-   /*!Erases a shared memory object from the system.*/
+   //!Erases a file from the system.
+   //!Returns false on error. Never throws
    static bool remove(const char *name);
    
-   /*!Sets the size of the shared memory mapping*/
+   //!Sets the size of the fil
    void truncate(offset_t length);
 
-   /*!Closes the shared memory mapping. All mapped regions are still
-      valid after destruction. The shared memory object still exists and
-      can be newly opened.*/
+   //!Closes the
+   //!file
    ~file_wrapper();
 
-   /*!Returns the name of the file.*/
+   //!Returns the name of the file
+   //!used in the constructor
    const char *get_name() const;
 
-   /*!Returns access mode*/
+   //!Returns access mode
+   //!used in the constructor
    mode_t get_mode() const;
 
-   /*!Get mapping handle*/
+   //!Get mapping handle
+   //!to use with mapped_region
    mapping_handle_t get_mapping_handle() const;
 
    private:
-   /*!Closes a previously opened file mapping. Never throws.*/
+   //!Closes a previously opened file mapping. Never throws.
    void priv_close();
-   /*!Closes a previously opened file mapping. Never throws.*/
+   //!Closes a previously opened file mapping. Never throws.
    bool priv_open_or_create(detail::create_enum_t type, const char *filename, mode_t mode);
 
    file_handle_t  m_handle;
@@ -118,7 +123,6 @@ inline file_wrapper::file_wrapper()
 inline file_wrapper::~file_wrapper() 
 {  this->priv_close(); }
 
-/*!Returns the name of the file.*/
 inline const char *file_wrapper::get_name() const
 {  return m_filename.c_str(); }
 
@@ -155,7 +159,7 @@ inline bool file_wrapper::priv_open_or_create
       case detail::DoCreate:
          m_handle = create_new_file(filename, mode);
       break;
-      case detail::DoCreateOrOpen:
+      case detail::DoOpenOrCreate:
          m_handle = create_or_open_file(filename, mode);
       break;
       default:

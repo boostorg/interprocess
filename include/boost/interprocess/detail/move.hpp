@@ -18,13 +18,14 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-/*!\file
-   Describes a function and a type to emulate move semantics.
-*/
+//!\file
+//!Describes a function and a type to emulate move semantics.
+
 namespace boost {
 namespace interprocess {
 
-/*!Trait class to detect if a type is movable*/
+//!Trait class to detect if a type is
+//!movable
 template <class T>
 struct is_movable
 {
@@ -43,7 +44,8 @@ namespace boost {
 namespace interprocess {
 namespace detail {
 
-/*!An object that represents a moved object.*/
+//!An object that represents a
+//!moved object.
 template<class T>
 struct moved_object
 {  
@@ -69,8 +71,10 @@ struct move_type
 template <typename T> 
 class move_return
 {
+   typedef moved_object<T> moved_type;
    private:
-   T m_moved;
+   mutable T m_moved;
+
 
    public:
    typedef T type;
@@ -83,8 +87,8 @@ class move_return
       : m_moved(const_cast<move_return&>(operand))
    {}
 
-   operator moved_object<T>()
-   {  return moved_object<T>(m_moved);  }
+   operator moved_type() const
+   {  return moved_type(m_moved);  }
 };
 
 template <typename T>
@@ -102,8 +106,8 @@ struct return_type
 namespace boost {
 namespace interprocess {
 
-/*!A function that converts an object to a moved object so that 
-   it can match a function taking a detail::moved_object object.*/
+//!A function that converts an object to a moved object so that 
+//!it can match a function taking a detail::moved_object object.
 template<class Object>
 typename detail::move_type<Object>::type move
    (const Object &object)
