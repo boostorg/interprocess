@@ -7,7 +7,6 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-/*
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/detail/node_pool.hpp>
@@ -165,13 +164,3 @@ int main ()
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
-*/
-
-#include<stdlib.h>
-
-int main()
-{
-   void *addr = malloc(100);
-   free(addr);
-   return 0;
-}

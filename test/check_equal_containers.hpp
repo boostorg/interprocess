@@ -32,7 +32,7 @@ bool CheckEqualContainers(MyShmCont *shmcont, MyStdCont *stdcont)
 
    typename MyShmCont::iterator itshm(shmcont->begin()), itshmend(shmcont->end());
    typename MyStdCont::iterator itstd(stdcont->begin());
-   if((typename MyShmCont::size_type)std::distance(itshm, itshmend) != shmcont->size()){
+   if((typename MyStdCont::size_type)std::distance(itshm, itshmend) != shmcont->size()){ 
       return false;
    }
    for(; itshm != itshmend; ++itshm, ++itstd){

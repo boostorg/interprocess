@@ -19,7 +19,6 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/containers/vector.hpp>
-#include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
 #include <boost/detail/lightweight_test.hpp>

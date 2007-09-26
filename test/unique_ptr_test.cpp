@@ -31,8 +31,7 @@ class MyClass
    {}
 };
 
-typedef deleter<MyClass, managed_shared_memory::segment_manager> my_deleter_type;
-typedef unique_ptr<MyClass, my_deleter_type> my_unique_ptr_class;
+typedef managed_unique_ptr<MyClass, managed_shared_memory>::type my_unique_ptr_class;
 typedef set <my_unique_ptr_class
             ,std::less<my_unique_ptr_class>
             ,allocator  <my_unique_ptr_class
@@ -58,19 +57,19 @@ int main()
    shared_memory_object::remove(process_name.c_str());
    {
       managed_shared_memory segment(create_only, process_name.c_str(), 10000);
-      my_deleter_type my_deleter(segment.get_segment_manager());
+      
       //Create unique_ptr using dynamic allocation
       my_unique_ptr_class my_ptr (segment.construct<MyClass>(anonymous_instance)()
-                                 ,my_deleter);
+                                 ,segment.get_deleter<MyClass>());
       my_unique_ptr_class my_ptr2(segment.construct<MyClass>(anonymous_instance)()
-                                 ,my_deleter);
+                                 ,segment.get_deleter<MyClass>());
 
       //Backup relative pointers to future tests
       offset_ptr<MyClass> ptr1 = my_ptr.get();
       offset_ptr<MyClass> ptr2 = my_ptr2.get();
 
       //Test some copy constructors
-      my_unique_ptr_class my_ptr3(0, my_deleter);
+      my_unique_ptr_class my_ptr3(0, segment.get_deleter<MyClass>());
       my_unique_ptr_class my_ptr4(move(my_ptr3));
 
       //Construct a list and fill
@@ -141,7 +140,7 @@ int main()
       assert(vector.begin()->get() == ptr1);
       assert(vector.rbegin()->get() == ptr2);
 
-      my_unique_ptr_class a(0, my_deleter), b(0, my_deleter);
+      my_unique_ptr_class a(0, segment.get_deleter<MyClass>()), b(0, segment.get_deleter<MyClass>());
       a = move(b);
    }
    shared_memory_object::remove(process_name.c_str());
