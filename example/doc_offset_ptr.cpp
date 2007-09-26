@@ -31,7 +31,7 @@ int main ()
    try{
       managed_shared_memory segment(
          create_only, 
-         "MySharedMemory",//segment name
+         "MySharedMemory", //segment name
          65536);           //segment size in bytes
 
       //Create linked list with 10 nodes in shared memory

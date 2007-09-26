@@ -35,7 +35,7 @@ int main ()
    try{
       managed_shared_memory segment(
          create_only, 
-         "MySharedMemory",//segment name
+         "MySharedMemory", //segment name
          65536);           //segment size in bytes
 
       //Construct shared memory vector

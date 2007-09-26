@@ -26,6 +26,8 @@ doxygen autodoc
         <doxygen:param>HIDE_UNDOC_MEMBERS=YES
         <doxygen:param>EXTRACT_PRIVATE=NO
         <doxygen:param>EXPAND_ONLY_PREDEF=YES
+        <xsl:param>"boost.doxygen.reftitle=\"Boost.Interprocess Reference\""
+        <xsl:param>"boost.doxygen.refid=\"reference\""
    ;
 
 xml interprocess : interprocess.qbk ;
@@ -36,7 +38,9 @@ boostbook standalone
    :
         <xsl:param>boost.root=../../../..
         <xsl:param>boost.libraries=../../../../libs/libraries.htm
-        <xsl:param>generate.section.toc.level=3
+        <xsl:param>toc.max.depth=1
+        <xsl:param>toc.section.depth=2
         <xsl:param>chunk.first.sections=1
+        <xsl:param>chunk.section.depth=2
         <dependency>autodoc
    ;
