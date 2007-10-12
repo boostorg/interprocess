@@ -343,7 +343,7 @@ inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
 //! "mem": pointer to the atomic value
 //! Returns false if the value becomes zero on decrement, otherwise true
 inline bool atomic_dec32(volatile boost::uint32_t *mem)
-{  return !(atomic_add32(mem, boost::uint32_t(-1u)) - 1u);  }
+{  return 0 != (atomic_add32(mem, boost::uint32_t(-1u)) - 1u);  }
 
 //! Atomically read an boost::uint32_t from memory
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
