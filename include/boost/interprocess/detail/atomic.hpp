@@ -436,7 +436,7 @@ inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
 }  //namespace interprocess{
 }  //namespace boost{
 
-#elif defined(__osf__)
+#elif defined(__osf__) && defined(__DECCXX)
 
 #include <machine/builtins.h>
 #include <c_asm.h>
