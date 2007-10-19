@@ -1949,7 +1949,11 @@ but it will maintain sharable ownership.
 [*Returns:] If acquires upgradable ownership, returns true. Otherwise 
 returns false.
 
-[*Throws:] An exception derived from *interprocess_exception* on error.[endsect][endsect]
+[*Throws:] An exception derived from *interprocess_exception* on error.
+
+[endsect]
+
+[endsect]
 
 [section:upgradable_mutexes_mutex_interprocess_mutexes Boost.Interprocess Upgradable Mutex Types And Headers]
 
