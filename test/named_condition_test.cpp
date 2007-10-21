@@ -66,16 +66,26 @@ class named_condition_creation_test_wrapper
    public:
    named_condition_creation_test_wrapper(create_only_t)
       :  named_condition(create_only, test::add_to_process_id_name("named_condition"))
-   {}
+   {  ++count_;   }
 
    named_condition_creation_test_wrapper(open_only_t)
       :  named_condition(open_only, test::add_to_process_id_name("named_condition"))
-   {}
+   {  ++count_;   }
 
    named_condition_creation_test_wrapper(open_or_create_t)
       :  named_condition(open_or_create, test::add_to_process_id_name("named_condition"))
-   {}
+   {  ++count_;   }
+
+   ~named_condition_creation_test_wrapper()   {
+      if(--count_){
+         detail::interprocess_tester::
+            dont_close_on_destruction(static_cast<named_condition&>(*this));
+      }
+   }
+   static int count_;
 };
+
+int named_condition_creation_test_wrapper::count_ = 0;
 
 struct mutex_deleter
 {

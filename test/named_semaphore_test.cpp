@@ -10,6 +10,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/sync/named_semaphore.hpp>
+#include <boost/interprocess/detail/interprocess_tester.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "named_creation_template.hpp"
@@ -37,26 +38,25 @@ class named_semaphore_test_wrapper
    public:
    named_semaphore_test_wrapper()
       :  named_semaphore(open_or_create, SemName, SemCount)
-   {}
+   {  ++count_;   }
 
    named_semaphore_test_wrapper(create_only_t)
       :  named_semaphore(create_only, SemName, SemCount)
-   {}
+   {  ++count_;   }
 
    named_semaphore_test_wrapper(open_only_t)
       :  named_semaphore(open_only, SemName)
-   {}
+   {  ++count_;   }
 
    named_semaphore_test_wrapper(open_or_create_t)
       :  named_semaphore(open_or_create, SemName, SemCount)
-   {}
+   {  ++count_;   }
 
    ~named_semaphore_test_wrapper()
    {
-      try{
-         
-      }
-      catch(...){
+      if(--count_){
+         detail::interprocess_tester::
+            dont_close_on_destruction(static_cast<named_semaphore&>(*this));
       }
    }
 
@@ -76,7 +76,11 @@ class named_semaphore_test_wrapper
    named_semaphore_test_wrapper(int initial_count)
       :  named_semaphore(create_only, SemName, initial_count)
    {}
+
+   static int count_;
 };
+
+int named_semaphore_test_wrapper::count_ = 0;
 
 //This wrapper is necessary to plug this class
 //in recursive tests
@@ -87,7 +91,11 @@ class recursive_named_semaphore_test_wrapper
    recursive_named_semaphore_test_wrapper()
       :  named_semaphore_test_wrapper(RecSemCount)
    {}
+
+   static int count_;
 };
+
+int recursive_named_semaphore_test_wrapper::count_ = 0;
 
 int main ()
 {

@@ -73,7 +73,7 @@ int main ()
          }
 
          //Overwrite all memory
-         std::memset(shm1.get_address(), 0, shm1.get_size());
+         std::memset(shm1.get_user_address(), 0, shm1.get_user_size());
       }
    }
    catch(std::exception &ex){

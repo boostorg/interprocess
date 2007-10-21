@@ -5,23 +5,17 @@ endif
 
 BOOST_ROOT=../../../..
 
-INTERPROCESS_CPP := $(wildcard ../../src/*.cpp)
-INTERPROCESS_OBJ := $(patsubst ../../src/%.cpp, lib_%.o, $(INTERPROCESS_CPP))
-
 INTERPROCESSTEST_CPP := $(wildcard ../../test/*.cpp)
 INTERPROCESSTEST_OUT := $(patsubst ../../test/%.cpp, ../../bin/cygwin/test_%.out, $(INTERPROCESSTEST_CPP))
 
-INTERPROCESSEXAMPLE_CPP := $(wildcard ../../example/*.cpp)
-INTERPROCESSEXAMPLE_OUT := $(patsubst ../../example/%.cpp, ../../bin/cygwin/ex_%.out, $(INTERPROCESSEXAMPLE_CPP))
-
-INTERPROCESSEXAMPLE_CPP := $(wildcard ../../example/*.cpp)
-INTERPROCESSEXAMPLE_OUT := $(patsubst ../../example/%.cpp, ../../bin/cygwin/ex__%.out, $(INTERPROCESSEXAMPLE_CPP))
+#INTERPROCESSEXAMPLE_CPP := $(wildcard ../../example/*.cpp)
+#INTERPROCESSEXAMPLE_OUT := $(patsubst ../../example/%.cpp, ../../bin/cygwin/ex_%.out, $(INTERPROCESSEXAMPLE_CPP))
 
 LIBDIR:= ../../../../stage/lib
 
 .PHONY: createdir clean
  
-all: createdir $(INTERPROCESSEXAMPLE_OUT) $(INTERPROCESSTEST_OUT) $(INTERPROCESSEXAMPLE_OUT)
+all: createdir $(INTERPROCESSEXAMPLE_OUT) $(INTERPROCESSTEST_OUT)
 	@cd .
 
 createdir:
@@ -30,8 +24,8 @@ createdir:
 ../../bin/cygwin/test_%.out: ../../test/%.cpp 
 	$(CC) -g $< -Wall -DBOOST_DATE_TIME_NO_LIB -L$(LIBDIR) -lboost_thread-gcc-mt -I$(BOOST_ROOT) -lstdc++ -o $@
 
-../../bin/cygwin/ex_%.out: ../../example/%.cpp 
-	$(CC) -g $< -Wall -DBOOST_DATE_TIME_NO_LIB -L$(LIBDIR)-lboost_thread-gcc-mt -I$(BOOST_ROOT) -lstdc++ -o $@
+#../../bin/cygwin/ex_%.out: ../../example/%.cpp 
+#	$(CC) -g $< -Wall -DBOOST_DATE_TIME_NO_LIB -L$(LIBDIR)-lboost_thread-gcc-mt -I$(BOOST_ROOT) -lstdc++ -o $@
 
 
 clean:

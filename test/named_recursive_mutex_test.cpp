@@ -33,8 +33,20 @@ class named_recursive_mutex_lock_test_wrapper
    public:
    named_recursive_mutex_lock_test_wrapper()
       :  named_recursive_mutex(open_or_create, test::get_process_id_name())
-   {}
+   {  ++count_;   }
+
+   ~named_recursive_mutex_lock_test_wrapper()
+   {
+      if(--count_){
+         detail::interprocess_tester::
+            dont_close_on_destruction(static_cast<named_recursive_mutex&>(*this));
+      }
+   }
+
+   static int count_;
 };
+
+int named_recursive_mutex_lock_test_wrapper::count_ = 0;
 
 //This wrapper is necessary to have a common constructor
 //in generic named_creation_template functions
@@ -44,16 +56,28 @@ class named_mutex_creation_test_wrapper
    public:
    named_mutex_creation_test_wrapper(create_only_t)
       :  named_recursive_mutex(create_only, test::get_process_id_name())
-   {}
+   {  ++count_;   }
 
    named_mutex_creation_test_wrapper(open_only_t)
       :  named_recursive_mutex(open_only, test::get_process_id_name())
-   {}
+   {  ++count_;   }
 
    named_mutex_creation_test_wrapper(open_or_create_t)
       :  named_recursive_mutex(open_or_create, test::get_process_id_name())
-   {}
+   {  ++count_;   }
+
+   ~named_mutex_creation_test_wrapper()
+   {
+      if(--count_){
+         detail::interprocess_tester::
+            dont_close_on_destruction(static_cast<named_recursive_mutex&>(*this));
+      }
+   }
+
+   static int count_;
 };
+
+int named_mutex_creation_test_wrapper::count_ = 0;
 
 int main ()
 {

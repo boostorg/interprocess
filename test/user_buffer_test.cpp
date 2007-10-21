@@ -189,8 +189,10 @@ int main ()
    const char *insert_beg = detail::char_ptr_cast(heap_buffer.get_address());
    const char *insert_end = insert_beg + heap_buffer.get_size();
    std::vector<char> grow_copy (insert_beg, insert_end);
+
    //Destroy old list
    heap_buffer.destroy<MyHeapList>(L"MyHeapList");
+
    //Resize copy buffer
    grow_copy.resize(memsize*2);
 

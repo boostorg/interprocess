@@ -28,6 +28,7 @@
 #include <boost/interprocess/detail/move_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <string>
 #include "get_process_id_name.hpp"
 
@@ -177,7 +178,6 @@ bool do_test()
          }
 
          if(!copyable_only(shmdeque, stddeque
-//                        ,boost::integral_constant
                         ,detail::bool_<!is_movable<IntType>::value>())){
             return false;
          }

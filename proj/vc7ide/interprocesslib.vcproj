@@ -387,6 +387,9 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\in_place_interface.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\interprocess_tester.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\iterators.hpp">
 			</File>
 			<File

@@ -403,6 +403,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_shared_ptr", "doc_share
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "managed_shared_memory_test", "managed_shared_memory.vcproj", "{58DF28E3-0926-F47A-E28A-B03A4D619631}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -815,6 +819,10 @@ Global
 		{51CE89A3-6092-F4EA-48A7-B4B9AC326093}.Debug.Build.0 = Debug|Win32
 		{51CE89A3-6092-F4EA-48A7-B4B9AC326093}.Release.ActiveCfg = Release|Win32
 		{51CE89A3-6092-F4EA-48A7-B4B9AC326093}.Release.Build.0 = Release|Win32
+		{58DF28E3-0926-F47A-E28A-B03A4D619631}.Debug.ActiveCfg = Debug|Win32
+		{58DF28E3-0926-F47A-E28A-B03A4D619631}.Debug.Build.0 = Debug|Win32
+		{58DF28E3-0926-F47A-E28A-B03A4D619631}.Release.ActiveCfg = Release|Win32
+		{58DF28E3-0926-F47A-E28A-B03A4D619631}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

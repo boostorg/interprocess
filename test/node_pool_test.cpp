@@ -12,6 +12,7 @@
 #include <boost/interprocess/allocators/detail/node_pool.hpp>
 #include <boost/interprocess/smart_ptr/unique_ptr.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <vector>
 #include <cstddef>
 #include <string>

@@ -73,7 +73,7 @@ int main ()
       }
 
       //Overwrite all memory
-      std::memset(file1.get_address(), 0, file1.get_size());
+      std::memset(file1.get_user_address(), 0, file1.get_user_size());
    }
    std::remove(FileName);
    return 0;
