@@ -29,7 +29,6 @@
 #include <boost/interprocess/detail/math_functions.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/intrusive/set.hpp>
 #include <boost/assert.hpp>
 #include <boost/static_assert.hpp>
 #include <algorithm>
@@ -39,6 +38,14 @@
 
 #include <assert.h>
 #include <new>
+
+//#define BOOST_INTERPROCESS_RBTREE_BEST_FIT_USE_SPLAY
+
+#ifndef BOOST_INTERPROCESS_RBTREE_BEST_FIT_USE_SPLAY
+#include <boost/intrusive/set.hpp>
+#else
+#include <boost/intrusive/splay_set.hpp>
+#endif
 
 //!\file
 //!Describes a best-fit algorithm based in an intrusive red-black tree used to allocate
@@ -77,9 +84,13 @@ class rbtree_best_fit
    typedef typename detail::
       pointer_to_other<void_pointer, char>::type         char_ptr;
 
+#ifndef BOOST_INTERPROCESS_RBTREE_BEST_FIT_USE_SPLAY
    typedef typename bi::make_set_base_hook
+#else
+   typedef typename bi::make_splay_set_base_hook
+#endif
       < bi::void_pointer<VoidPointer>
-      , bi::link_mode<bi::normal_link> >::type                TreeHook;
+      , bi::link_mode<bi::normal_link> >::type           TreeHook;
 
    typedef detail::multi_allocation_next<void_pointer>   multi_allocation_next_t;
    typedef typename multi_allocation_next_t::
@@ -119,8 +130,13 @@ class rbtree_best_fit
 
    //!Shared interprocess_mutex to protect memory allocate/deallocate
    typedef typename MutexFamily::mutex_type                       interprocess_mutex;
+#ifndef BOOST_INTERPROCESS_RBTREE_BEST_FIT_USE_SPLAY
    typedef typename bi::make_multiset
+#else
+   typedef typename bi::make_splay_multiset
+#endif
       <block_ctrl, bi::base_hook<TreeHook> >::type                Imultiset;
+
    typedef typename Imultiset::iterator                           imultiset_iterator;
 
    //!This struct includes needed data and derives from
@@ -186,13 +202,18 @@ class rbtree_best_fit
    //!This function is normally used for security reasons.
    void zero_free_memory();
 
-   //!Increases managed memory in extra_size bytes more
+   //!Increases managed memory in
+   //!extra_size bytes more
    void grow(std::size_t extra_size);
+
+   //!Decreases managed memory as much as possible
+   void shrink_to_fit();
 
    //!Returns true if all allocated memory has been deallocated
    bool all_memory_deallocated();
 
-   //!Makes an internal sanity check and returns true if success
+   //!Makes an internal sanity check
+   //!and returns true if success
    bool check_sanity();
 
    template<class T>
@@ -380,6 +401,57 @@ void rbtree_best_fit<MutexFamily, VoidPointer>::grow(std::size_t extra_size)
 }
 
 template<class MutexFamily, class VoidPointer>
+void rbtree_best_fit<MutexFamily, VoidPointer>::shrink_to_fit()
+{  
+   //Get the address of the first block
+   std::size_t block1_off  = 
+      algo_impl_t::multiple_of_units(sizeof(*this) + m_header.m_extra_hdr_bytes);
+
+   block_ctrl *first_block = reinterpret_cast<block_ctrl *>
+                                 (detail::char_ptr_cast(this) + block1_off);
+   block_ctrl *old_end_block   = priv_prev_block(first_block);
+   assert(priv_is_allocated_block(old_end_block));
+   assert(old_end_block->m_end);
+   std::size_t old_end_block_size      = old_end_block->m_size;
+
+   block_ctrl *last_block = priv_prev_block(old_end_block);
+
+   void *unique_block = 0;
+   if(last_block == first_block){
+      std::size_t ignore;
+      unique_block = priv_allocate(allocate_new, 0, 0, ignore).first;
+      if(!unique_block)
+         return;
+      last_block   = priv_prev_block(old_end_block);
+   }
+
+   //The last block must be free to be able to shrink
+   if(priv_is_allocated_block(last_block))
+      return;
+
+   std::size_t last_block_size      = last_block->m_size;
+
+   //Update managed buffer's size
+   m_header.m_size -= last_block->m_size*Alignment;
+
+   //Erase block from the free tree, since we will erase it
+   m_header.m_imultiset.erase(Imultiset::s_iterator_to(*last_block));
+
+   std::size_t shrunk_border_offset = (detail::char_ptr_cast(last_block) - 
+                                       detail::char_ptr_cast(this)) + EndCtrlBlockBytes;
+   
+   block_ctrl *new_end_block = last_block;
+   priv_mark_as_allocated_block(new_end_block);
+   new_end_block->m_end  = 1;
+   new_end_block->m_size = old_end_block_size + last_block_size;
+   priv_tail_size(new_end_block, new_end_block->m_size);
+   assert(priv_prev_block(first_block) == new_end_block);
+   assert(shrunk_border_offset == m_header.m_size);
+   if(unique_block)
+      priv_deallocate(unique_block);
+}
+
+template<class MutexFamily, class VoidPointer>
 void rbtree_best_fit<MutexFamily, VoidPointer>::
    priv_add_segment(void *addr, std::size_t size)
 {  
@@ -419,7 +491,6 @@ void rbtree_best_fit<MutexFamily, VoidPointer>::
 
    //Check that the alignment is power of two (we use some optimizations based on this)
    //assert((Alignment % 2) == 0);
-
    //Insert it in the intrusive containers
    m_header.m_imultiset.insert(*first_big_block);
 }
@@ -507,7 +578,8 @@ inline void* rbtree_best_fit<MutexFamily, VoidPointer>::
    boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
    //-----------------------
    std::size_t ignore;
-   return priv_allocate(allocate_new, nbytes, nbytes, ignore).first;
+   void * ret = priv_allocate(allocate_new, nbytes, nbytes, ignore).first;
+   return ret;
 }
 
 template<class MutexFamily, class VoidPointer>
@@ -984,38 +1056,7 @@ void* rbtree_best_fit<MutexFamily, VoidPointer>::priv_check_and_allocate
 {
    std::size_t upper_nunits = nunits + BlockCtrlUnits;
    imultiset_iterator it_old = Imultiset::s_iterator_to(*block);
-/*
-   if (block->m_size >= upper_nunits){
-      //Now we have to update the data in the tree
-      m_header.m_imultiset.erase(ittree);
 
-      //This block is bigger than needed, split it in 
-      //two blocks, the first's size will be "units" and
-      //the second's size "block->m_size-units"
-      std::size_t block_old_size = block->m_size;
-      block->m_size = nunits;
-      assert(block->m_size >= BlockCtrlUnits);
-      priv_tail_size(block, block->m_size);
-
-      //This is the remaining block
-      block_ctrl *new_block = new(reinterpret_cast<block_ctrl*>
-                     (detail::char_ptr_cast(block) + Alignment*nunits))block_ctrl;
-      new_block->m_size  = block_old_size - nunits;
-      assert(new_block->m_size >= BlockCtrlUnits);
-      priv_tail_size(new_block, new_block->m_size);
-      priv_mark_as_free_block(new_block);
-
-      //Insert the new block in the container
-      m_header.m_imultiset.insert(m_header.m_imultiset.begin(), *new_block);
-   }
-   else if (block->m_size >= nunits){
-      m_header.m_imultiset.erase(ittree);
-   }
-   else{
-      assert(0);
-      return 0;
-   }
-*/
    if (block->m_size >= upper_nunits){
       //This block is bigger than needed, split it in 
       //two blocks, the first's size will be "units" and

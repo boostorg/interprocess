@@ -211,11 +211,12 @@ class list
    public:
    //! Const iterator used to iterate through a list. 
    class const_iterator
+      /// @cond
       : public std::iterator<std::bidirectional_iterator_tag, 
                                  value_type,         list_difference_type, 
                                  list_const_pointer, list_const_reference>
    {
-      /// @cond
+
       protected:
       typename Icont::iterator m_it;
       explicit const_iterator(typename Icont::iterator it)  : m_it(it){}
@@ -225,7 +226,6 @@ class list
       private:
       typename Icont::iterator get()
       {  return this->m_it;   }
-      /// @endcond
 
       public:
       friend class list<T, A>;
@@ -262,13 +262,16 @@ class list
 
       bool operator!=   (const const_iterator& r)  const
       {  return m_it != r.m_it;  }
-   };
+   }
+   /// @endcond
+   ;
 
    //! Iterator used to iterate through a list
    class iterator
+   /// @cond
       : public const_iterator
    {
-      /// @cond
+
       private:
       explicit iterator(typename Icont::iterator it)
          :  const_iterator(it)
@@ -276,7 +279,6 @@ class list
    
       typename Icont::iterator get()
       {  return this->m_it;   }
-      /// @endcond
 
       public:
       friend class list<T, A>;
@@ -302,7 +304,9 @@ class list
 
       iterator operator--(int)
          {  iterator tmp = *this; --*this; return tmp; }
-   };
+   }
+   /// @endcond
+   ;
 
    //! Iterator used to iterate backwards through a list. 
    typedef std::reverse_iterator<iterator>        reverse_iterator;

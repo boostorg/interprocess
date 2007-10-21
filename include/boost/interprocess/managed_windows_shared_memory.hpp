@@ -48,13 +48,14 @@ template
       >
 class basic_managed_windows_shared_memory 
    : public detail::basic_managed_memory_impl
-      <CharType, AllocationAlgorithm, IndexType>
+      <CharType, AllocationAlgorithm, IndexType
+      ,detail::managed_open_or_create_impl<windows_shared_memory>::ManagedOpenOrCreateUserOffset>
 {
    /// @cond
    private:
    typedef detail::basic_managed_memory_impl 
-      <CharType, AllocationAlgorithm, IndexType>   base_t;
-
+      <CharType, AllocationAlgorithm, IndexType,
+      detail::managed_open_or_create_impl<windows_shared_memory>::ManagedOpenOrCreateUserOffset>   base_t;
    typedef detail::create_open_func<base_t>        create_open_func_t;
 
    basic_managed_windows_shared_memory *get_this_pointer()

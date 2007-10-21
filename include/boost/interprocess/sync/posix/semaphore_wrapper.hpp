@@ -26,6 +26,11 @@
 
 namespace boost {
 namespace interprocess {
+
+/// @cond
+namespace detail{ class interprocess_tester; }
+/// @endcond
+
 namespace detail {
 
 inline bool semaphore_open
@@ -206,7 +211,10 @@ class named_semaphore_wrapper
    {  semaphore_open(mp_sem, type, name, mode, count);   }
 
    ~named_semaphore_wrapper()
-   {  semaphore_close(mp_sem);  }
+   {
+      if(mp_sem != SEM_FAILED)
+         semaphore_close(mp_sem);
+   }
 
    void post()
    {  semaphore_post(mp_sem); }
@@ -224,6 +232,10 @@ class named_semaphore_wrapper
    {  return semaphore_unlink(name);   }
 
    private:
+   friend class detail::interprocess_tester;
+   void dont_close_on_destruction()
+   {  mp_sem = SEM_FAILED; }
+
    sem_t      *mp_sem;
 };
 

@@ -22,6 +22,7 @@
 #include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>
 #include <boost/interprocess/sync/mutex_family.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/exceptions.hpp>
@@ -64,11 +65,11 @@ struct segment_manager_type
 //!algorithm to place a named_allocator_algo, who takes care of name mappings.
 //!The class can be customized with the char type used for object names
 //!and the memory allocation algorithm to be used.*/
-template<
-         class CharType, 
-         class MemoryAlgorithm,
-         template<class IndexConfig> class IndexType
-        >
+template <  class CharType 
+         ,  class MemoryAlgorithm
+         ,  template<class IndexConfig> class IndexType
+         ,  std::size_t Offset = 0
+         >
 class basic_managed_memory_impl
 {
    //Non-copyable
@@ -103,11 +104,57 @@ class basic_managed_memory_impl
 
    private:
    typedef basic_managed_memory_impl
-               <CharType, MemoryAlgorithm, IndexType> self_t;
+               <CharType, MemoryAlgorithm, IndexType, Offset> self_t;
    typedef typename 
            segment_manager::char_ptr_holder_t         char_ptr_holder_t;
 
    protected:
+   template<class ManagedMemory>
+   static bool grow(const char *filename, std::size_t extra_bytes)
+   {
+      typedef typename ManagedMemory::device_type device_type;
+      //Increase file size
+      try{
+         offset_t old_size;
+         {
+            device_type f(open_or_create, filename, read_write);
+            if(!f.get_size(old_size))
+               return false;
+            f.truncate(old_size + extra_bytes);
+         }
+         ManagedMemory managed_memory(open_only, filename);
+         //Grow always works
+         managed_memory.self_t::grow(extra_bytes);
+      }
+      catch(...){
+         return false;
+      }
+      return true;
+   }
+
+   template<class ManagedMemory>
+   static bool shrink_to_fit(const char *filename)
+   {
+      typedef typename ManagedMemory::device_type device_type;
+      std::size_t new_size, old_size;
+      try{
+         ManagedMemory managed_memory(open_only, filename);
+         old_size = managed_memory.get_size();
+         managed_memory.self_t::shrink_to_fit();
+         new_size = managed_memory.get_size();
+      }
+      catch(...){
+         return false;
+      }
+
+      //Decrease file size
+      {
+         device_type f(open_or_create, filename, read_write);
+         f.truncate(new_size);
+      }
+      return true;
+   }
+
    //!Constructor. Allocates basic resources. Never throws.
    basic_managed_memory_impl() 
       : mp_header(0){}
@@ -196,13 +243,16 @@ class basic_managed_memory_impl
 
       if(!mp_header) return false;
       //Create memory    
-      return instream.read(detail::char_ptr_cast(mp_header), 
-                           (std::streamsize)size).good();
+      return instream.read(detail::char_ptr_cast(this->get_address()), 
+                           (std::streamsize)this->get_size).good();
    }
 
    //!
    void grow(std::size_t extra_bytes)
    {  mp_header->grow(extra_bytes); }
+
+   void shrink_to_fit()
+   {  mp_header->shrink_to_fit(); }
 
    public:
 
@@ -212,11 +262,11 @@ class basic_managed_memory_impl
 
    //!Returns the base address of the memory in this process. Never throws.
    void *   get_address   () const
-   {   return mp_header; }
+   {   return (char*)mp_header - Offset; }
 
    //!Returns the size of memory segment. Never throws.
    std::size_t   get_size   () const
-   {   return mp_header->get_size();  }
+   {   return mp_header->get_size() + Offset;  }
 
    //!Returns the number of free bytes of the memory
    //!segment
@@ -241,7 +291,7 @@ class basic_managed_memory_impl
    //!Transforms an absolute address into an offset from base address. 
    //!The address must belong to the memory segment. Never throws.
    handle_t get_handle_from_address   (const void *ptr) const
-   {  
+   {
       return detail::char_ptr_cast(ptr) - 
              detail::char_ptr_cast(this->get_address());  
    }
@@ -641,8 +691,8 @@ class basic_managed_memory_impl
    //!Never throws.
    bool save_to_ostream (std::ostream &outstream)
    {
-      return outstream.write(char_ptr_cast(mp_header), 
-                             (std::streamsize)get_size()).good();
+      return outstream.write(char_ptr_cast(this->get_address()), 
+                             (std::streamsize)this->get_size()).good();
    }
 
    //!Returns a constant iterator to the index storing the
@@ -696,15 +746,6 @@ class basic_managed_memory_impl
    {   return mp_header->get_deleter<T>(); }
 
    protected:
-   //!Sets the base address of the memory in this process. 
-   //!This is very low level, so use it only if you know what are 
-   //!you doing. Never throws.
-   void set_base (void *addr)
-   {  
-      assert(addr); 
-      mp_header = static_cast<segment_manager*>(addr);  
-   }
-
    //!Swaps the segment manager's managed by this managed memory segment.
    //!NOT thread-safe. Never throws.
    void swap(basic_managed_memory_impl &other)

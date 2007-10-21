@@ -226,11 +226,12 @@ class slist
    public:
    //! Const iterator used to iterate through a list. 
    class const_iterator
+      /// @cond
       : public std::iterator<std::forward_iterator_tag, 
                                  value_type,         list_difference_type, 
                                  list_const_pointer, list_const_reference>
    {
-      /// @cond
+
       protected:
       typename Icont::iterator m_it;
       explicit const_iterator(typename Icont::iterator it)  : m_it(it){}
@@ -239,7 +240,6 @@ class slist
       private:
       typename Icont::iterator get()
       {  return this->m_it;   }
-      /// @endcond
 
       public:
       friend class slist<T, A>;
@@ -270,12 +270,16 @@ class slist
 
       bool operator!=   (const const_iterator& r)  const
       {  return m_it != r.m_it;  }
-   };
+   }
+      /// @endcond
+   ;
 
    //! Iterator used to iterate through a list
-   class iterator : public const_iterator
-   {
+   class iterator
       /// @cond
+   : public const_iterator
+   {
+
       private:
       explicit iterator(typename Icont::iterator it)
          :  const_iterator(it)
@@ -283,7 +287,6 @@ class slist
    
       typename Icont::iterator get()
       {  return this->m_it;   }
-      /// @endcond
 
       public:
       friend class slist<T, A>;
@@ -303,7 +306,9 @@ class slist
 
       iterator operator++(int)
          { typename Icont::iterator tmp = this->m_it; ++*this; return iterator(tmp); }
-   };
+   }
+      /// @endcond
+   ;
 
    public:
    //! <b>Effects</b>: Constructs a list taking the allocator as parameter.

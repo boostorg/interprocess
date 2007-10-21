@@ -167,7 +167,7 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
          else{
             //If it is a NOTIFY_ALL command, all threads should return 
             //from do_timed_wait function. Decrement wait count. 
-            unlock_enter_mut = !detail::atomic_dec32((boost::uint32_t*)&m_num_waiters);
+            unlock_enter_mut = 1 == detail::atomic_dec32((boost::uint32_t*)&m_num_waiters);
             //Check if this is the last thread of notify_all waiters
             //Only the last thread will release the interprocess_mutex
             if(unlock_enter_mut){

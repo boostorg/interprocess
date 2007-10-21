@@ -18,12 +18,18 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/atomic.hpp>
+#include <boost/interprocess/detail/interprocess_tester.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/cstdint.hpp>
 
 namespace boost {
 namespace interprocess {
+
+/// @cond
+namespace detail{ class interprocess_tester; }
+/// @endcond
+
 namespace detail {
 
 template<class DeviceAbstraction, bool FileBased = true>
@@ -44,13 +50,11 @@ class managed_open_or_create_impl
 
    public:
 
-   enum
-   {
+   static const std::size_t
       ManagedOpenOrCreateUserOffset = 
          detail::ct_rounded_size
             < sizeof(boost::uint32_t)
-            , detail::alignment_of<detail::max_align>::value>::value
-   };
+            , detail::alignment_of<detail::max_align>::value>::value;
 
    managed_open_or_create_impl(create_only_t, 
                  const char *name,
@@ -178,11 +182,17 @@ class managed_open_or_create_impl
    ~managed_open_or_create_impl()
    {}
 
-   std::size_t get_size()  const
+   std::size_t get_user_size()  const
    {  return m_mapped_region.get_size() - ManagedOpenOrCreateUserOffset; }
 
-   void *get_address()  const
+   void *get_user_address()  const
    {  return (char*)m_mapped_region.get_address() + ManagedOpenOrCreateUserOffset;  }
+
+   std::size_t get_real_size()  const
+   {  return m_mapped_region.get_size(); }
+
+   void *get_real_address()  const
+   {  return (char*)m_mapped_region.get_address();  }
 
    void swap(managed_open_or_create_impl &other)
    {
@@ -388,6 +398,10 @@ class managed_open_or_create_impl
    }
 
    private:
+   friend class detail::interprocess_tester;
+   void dont_close_on_destruction()
+   {  detail::interprocess_tester::dont_close_on_destruction(m_mapped_region);  }
+
    mapped_region     m_mapped_region;
    std::string       m_name;
 };

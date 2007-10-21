@@ -31,6 +31,10 @@
 namespace boost {
 namespace interprocess {
 
+/// @cond
+namespace detail{ class interprocess_tester; }
+/// @endcond
+
 //!A recursive mutex with a global name, so it can be found from different 
 //!processes. This mutex can't be placed in shared memory, and
 //!each process should have it's own named_recursive_mutex.
@@ -93,8 +97,11 @@ class named_recursive_mutex
 
    /// @cond
    private:
+   friend class detail::interprocess_tester;
+   void dont_close_on_destruction();
+
    interprocess_recursive_mutex *mutex() const
-   {  return static_cast<interprocess_recursive_mutex*>(m_shmem.get_address()); }
+   {  return static_cast<interprocess_recursive_mutex*>(m_shmem.get_user_address()); }
 
    detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
    typedef detail::named_creation_functor<interprocess_recursive_mutex> construct_func_t;
@@ -103,6 +110,9 @@ class named_recursive_mutex
 
 inline named_recursive_mutex::~named_recursive_mutex()
 {}
+
+inline void named_recursive_mutex::dont_close_on_destruction()
+{  detail::interprocess_tester::dont_close_on_destruction(m_shmem);  }
 
 inline named_recursive_mutex::named_recursive_mutex(create_only_t, const char *name)
    :  m_shmem  (create_only

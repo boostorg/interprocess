@@ -40,12 +40,19 @@ template
          template<class IndexConfig> class IndexType
       >
 class basic_managed_shared_memory 
-   : public detail::basic_managed_memory_impl <CharType, AllocationAlgorithm, IndexType>
+   : public detail::basic_managed_memory_impl
+      <CharType, AllocationAlgorithm, IndexType
+      ,detail::managed_open_or_create_impl<shared_memory_object>::ManagedOpenOrCreateUserOffset>
    , private detail::managed_open_or_create_impl<shared_memory_object>
 {
    /// @cond
+   public:
+   typedef shared_memory_object                       device_type;
+
+   private:
    typedef detail::basic_managed_memory_impl 
-      <CharType, AllocationAlgorithm, IndexType>   base_t;
+      <CharType, AllocationAlgorithm, IndexType,
+      detail::managed_open_or_create_impl<shared_memory_object>::ManagedOpenOrCreateUserOffset>   base_t;
    typedef detail::managed_open_or_create_impl
       <shared_memory_object>                       base2_t;
 
@@ -128,6 +135,27 @@ class basic_managed_shared_memory
    {
       base_t::swap(other);
       base2_t::swap(other);
+   }
+
+   //!Tries to resize the managed shared memory object so that we have
+   //!room for more objects. 
+   //!
+   //!This function is not synchronized so no other thread or process should
+   //!be reading or writing the file
+   static bool grow(const char *filename, std::size_t extra_bytes)
+   {
+      return base_t::template grow
+         <basic_managed_shared_memory>(filename, extra_bytes);
+   }
+
+   //!Tries to resize the managed shared memory to minimized the size of the file.
+   //!
+   //!This function is not synchronized so no other thread or process should
+   //!be reading or writing the file
+   static bool shrink_to_fit(const char *filename)
+   {
+      return base_t::template shrink_to_fit
+         <basic_managed_shared_memory>(filename);
    }
 };
 

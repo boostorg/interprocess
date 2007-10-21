@@ -671,7 +671,7 @@ class rbtree
    iterator insert_equal(const value_type& v)
    {
       NodePtr p(AllocHolder::create_node(v));
-      return iterator(this->icont().insert_equal_upper_bound(*p));
+      return iterator(this->icont().insert_equal(this->icont().end(), *p));
    }
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
@@ -679,14 +679,14 @@ class rbtree
    iterator insert_equal(const detail::moved_object<MovableConvertible> &mv)
    {
       NodePtr p(AllocHolder::create_node(mv));
-      return iterator(this->icont().insert_equal_upper_bound(*p));
+      return iterator(this->icont().insert_equal(this->icont().end(), *p));
    }
    #else
    template<class MovableConvertible>
    iterator insert_equal(MovableConvertible &&mv)
    {
       NodePtr p(AllocHolder::create_node(forward<MovableConvertible>(mv)));
-      return iterator(this->icont().insert_equal_upper_bound(*p));
+      return iterator(this->icont().insert_equal(this->icont().end(), *p));
    }
    #endif
 
@@ -715,17 +715,11 @@ class rbtree
    template <class InputIterator>
    void insert_equal(InputIterator first, InputIterator last)
    {
-      if(this->empty()){
-         //Insert with end hint, to achieve linear
-         //complexity if [first, last) is ordered
-         iterator end(this->end());
-         for( ; first != last; ++first)
-            this->insert_equal(end, *first);
-      }
-      else{
-         for( ; first != last; ++first)
-            this->insert_equal(*first);
-      }
+      //Insert with end hint, to achieve linear
+      //complexity if [first, last) is ordered
+      iterator end(this->end());
+      for( ; first != last; ++first)
+         this->insert_equal(end, *first);
    }
 
    iterator erase(const_iterator position)
@@ -824,7 +818,7 @@ class rbtree
       {}
 
       void operator()(Node &n)
-      {  this->icont_.insert_equal_upper_bound(n); }
+      {  this->icont_.insert_equal(this->icont_.end(), n); }
    };
 
 

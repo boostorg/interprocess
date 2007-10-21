@@ -40,14 +40,20 @@ template
       >
 class basic_managed_mapped_file 
    : public detail::basic_managed_memory_impl
-      <CharType, AllocationAlgorithm, IndexType>
+      <CharType, AllocationAlgorithm, IndexType
+      ,detail::managed_open_or_create_impl<detail::file_wrapper>::ManagedOpenOrCreateUserOffset>
 {
    /// @cond
+   public:
+   typedef detail::basic_managed_memory_impl 
+      <CharType, AllocationAlgorithm, IndexType,
+      detail::managed_open_or_create_impl<detail::file_wrapper>::ManagedOpenOrCreateUserOffset>   base_t;
+   typedef detail::file_wrapper device_type;
+
    private:
 
-   typedef detail::basic_managed_memory_impl 
-      <CharType, AllocationAlgorithm, IndexType>   base_t;
    typedef detail::create_open_func<base_t>        create_open_func_t;   
+   typedef detail::managed_open_or_create_impl<detail::file_wrapper> managed_open_or_create_type;
 
    basic_managed_mapped_file *get_this_pointer()
    {  return this;   }
@@ -130,50 +136,28 @@ class basic_managed_mapped_file
 
    //!Tries to resize mapped file so that we have room for 
    //!more objects. 
-   //!WARNING: The memory mapping can change. To be able to use
-   //!this function, all pointers constructed in this buffer
-   //!must be offset pointers. Otherwise, the result is undefined.
-   //!Returns true if the growth has been successful, so you will
-   //!have some extra bytes to allocate new objects. If returns 
-   //!false, the heap allocation has failed.
-/*
-   bool grow(std::size_t extra_bytes)
-   {  
-      //If memory is reallocated, data will
-      //be automatically copied
-      std::size_t old_size = m_mfile.get_size();
-      std::size_t new_size = old_size + extra_bytes;
-      m_mfile.close();
-      //Increase file size
-      {
-         std::ofstream file(m_filename.c_str(), 
-                            std::ios::binary |std::ios::in | std::ios::out);
-         if(!file){
-            return false;
-         }
-         if(!file.seekp(static_cast<std::streamoff>(new_size - 1))){
-            return false;
-         }
-         if(!file.write("", 1)){
-            return false;
-         }
-      }
-
-      if(!m_mfile.open(m_filename.c_str(), 0, new_size, 
-                       (file_mapping::mode_t)read_write)){
-         return false;
-      }
-
-      //Grow always works
-      base_t::close_impl();
-      base_t::open_impl(m_mfile.get_address(), new_size);
-      base_t::grow(extra_bytes);
-      return true;
+   //!
+   //!This function is not synchronized so no other thread or process should
+   //!be reading or writing the file
+   static bool grow(const char *filename, std::size_t extra_bytes)
+   {
+      return base_t::template grow
+         <basic_managed_mapped_file>(filename, extra_bytes);
    }
-*/
+
+   //!Tries to resize mapped file to minimized the size of the file.
+   //!
+   //!This function is not synchronized so no other thread or process should
+   //!be reading or writing the file
+   static bool shrink_to_fit(const char *filename)
+   {
+      return base_t::template shrink_to_fit
+         <basic_managed_mapped_file>(filename);
+   }
+
    /// @cond
    private:
-   detail::managed_open_or_create_impl<detail::file_wrapper> m_mfile;
+   managed_open_or_create_type m_mfile;
    /// @endcond
 };
 

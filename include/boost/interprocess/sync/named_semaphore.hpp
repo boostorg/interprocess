@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////////////
+ //////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
@@ -19,9 +19,10 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
+#include <boost/interprocess/detail/interprocess_tester.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
-#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+#if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
 #include <boost/interprocess/sync/posix/semaphore_wrapper.hpp>
 #else
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -103,11 +104,14 @@ class named_semaphore
 
    /// @cond
    private:
-   #ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+   friend class detail::interprocess_tester;
+   void dont_close_on_destruction();
+
+   #if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
    detail::named_semaphore_wrapper m_sem;
-   #else //#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+   #else
    interprocess_semaphore *semaphore() const
-   {  return static_cast<interprocess_semaphore*>(m_shmem.get_address()); }
+   {  return static_cast<interprocess_semaphore*>(m_shmem.get_user_address()); }
 
    detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
    typedef detail::named_creation_functor<interprocess_semaphore, int> construct_func_t;
@@ -117,7 +121,7 @@ class named_semaphore
 
 /// @cond
 
-#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+#if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
 
 inline named_semaphore::named_semaphore
    (create_only_t, const char *name, int initialCount)
@@ -137,6 +141,9 @@ inline named_semaphore::named_semaphore
 inline named_semaphore::~named_semaphore()
 {}
 
+inline void named_semaphore::dont_close_on_destruction()
+{  detail::interprocess_tester::dont_close_on_destruction(m_sem);  }
+
 inline void named_semaphore::wait()
 {  m_sem.wait();  }
 
@@ -152,10 +159,13 @@ inline bool named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time
 inline bool named_semaphore::remove(const char *name)
 {  return detail::named_semaphore_wrapper::remove(name);   }
 
-#else //#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+#else
 
 inline named_semaphore::~named_semaphore()
 {}
+
+inline void named_semaphore::dont_close_on_destruction()
+{  detail::interprocess_tester::dont_close_on_destruction(m_shmem);  }
 
 inline named_semaphore::named_semaphore
    (create_only_t, const char *name, int initialCount)
@@ -205,7 +215,7 @@ inline bool named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time
 inline bool named_semaphore::remove(const char *name)
 {  return shared_memory_object::remove(name); }
 
-#endif   //#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+#endif
 
 /// @endcond
 

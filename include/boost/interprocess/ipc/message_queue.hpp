@@ -433,7 +433,7 @@ inline bool message_queue::do_send(block_t block,
                                 const void *buffer,      std::size_t buffer_size, 
                                 unsigned int priority,   const boost::posix_time::ptime &abs_time)
 {
-   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_address());
+   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_user_address());
    //Check if buffer is smaller than maximum allowed
    if (buffer_size > p_hdr->m_max_msg_size) {
       throw interprocess_exception(size_error);
@@ -517,7 +517,7 @@ inline bool
                           std::size_t &recvd_size,   unsigned int &priority,
                           const boost::posix_time::ptime &abs_time)
 {
-   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_address());
+   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_user_address());
    //Check if buffer is big enough for any message
    if (buffer_size < p_hdr->m_max_msg_size) {
       throw interprocess_exception(size_error);
@@ -586,18 +586,18 @@ inline bool
 
 inline std::size_t message_queue::get_max_msg() const
 {  
-   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_address());
+   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_user_address());
    return p_hdr ? p_hdr->m_max_num_msg : 0;  }
 
 inline std::size_t message_queue::get_max_msg_size() const
 {  
-   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_address());
+   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_user_address());
    return p_hdr ? p_hdr->m_max_msg_size : 0;  
 }
 
 inline std::size_t message_queue::get_num_msg()
 {  
-   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_address());
+   detail::mq_hdr_t *p_hdr = static_cast<detail::mq_hdr_t*>(m_shmem.get_user_address());
    if(p_hdr){
       //---------------------------------------------
       scoped_lock<interprocess_mutex> lock(p_hdr->m_mutex);

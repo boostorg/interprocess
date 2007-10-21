@@ -20,8 +20,6 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <cstddef>
-
-
 #include <string>
 
 #ifdef BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
@@ -124,6 +122,10 @@ class shared_memory_object
    //!Returns the name of the file.
    const char *get_name() const;
 
+   //!Returns the name of the file
+   //!used in the constructor
+   bool get_size(offset_t &size) const;
+
    //!Returns access mode
    mode_t get_mode() const;
 
@@ -155,6 +157,9 @@ inline shared_memory_object::~shared_memory_object()
 
 inline const char *shared_memory_object::get_name() const
 {  return m_filename.c_str(); }
+
+inline bool shared_memory_object::get_size(offset_t &size) const
+{  return detail::get_file_size((file_handle_t)m_handle, size);  }
 
 inline void shared_memory_object::swap(shared_memory_object &other)
 {  

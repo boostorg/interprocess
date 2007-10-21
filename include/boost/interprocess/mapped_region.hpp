@@ -42,6 +42,10 @@
 namespace boost {
 namespace interprocess {
 
+/// @cond
+namespace detail{ class interprocess_tester; }
+/// @endcond
+
 //!The mapped_region class represents a portion or region created from a
 //!memory_mappable object.
 class mapped_region
@@ -133,6 +137,9 @@ class mapped_region
    #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
    file_handle_t          m_file_mapping_hnd;
    #endif
+
+   friend class detail::interprocess_tester;
+   void dont_close_on_destruction();
    /// @endcond
 };
 
@@ -356,6 +363,9 @@ inline void mapped_region::priv_close()
    #endif
 }
 
+inline void mapped_region::dont_close_on_destruction()
+{}
+
 #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
 inline mapped_region::mapped_region()
@@ -502,6 +512,9 @@ inline void mapped_region::priv_close()
       m_base = MAP_FAILED;
    }
 }
+
+inline void mapped_region::dont_close_on_destruction()
+{  m_base = MAP_FAILED;   }
 
 #endif   //##if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 

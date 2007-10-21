@@ -20,8 +20,9 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/sync/emulation/named_creation_functor.hpp>
+#include <boost/interprocess/detail/interprocess_tester.hpp>
 
-#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+#if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
    #include <boost/interprocess/sync/posix/semaphore_wrapper.hpp>
 #else
    #include <boost/interprocess/shared_memory_object.hpp>
@@ -34,7 +35,6 @@
 //!Describes a named mutex class for inter-process synchronization
 
 namespace boost {
-
 namespace interprocess {
 
 class named_condition;
@@ -103,11 +103,14 @@ class named_mutex
 
    /// @cond
    private:
-   #ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+   friend class detail::interprocess_tester;
+   void dont_close_on_destruction();
+
+   #if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
    detail::named_semaphore_wrapper m_sem;
-   #else //#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+   #else
    interprocess_mutex *mutex() const
-   {  return static_cast<interprocess_mutex*>(m_shmem.get_address()); }
+   {  return static_cast<interprocess_mutex*>(m_shmem.get_user_address()); }
 
    detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
    typedef detail::named_creation_functor<interprocess_mutex> construct_func_t;
@@ -117,7 +120,7 @@ class named_mutex
 
 /// @cond
 
-#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+#if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
 
 inline named_mutex::named_mutex(create_only_t, const char *name)
    :  m_sem(detail::DoCreate, name, read_write, 1)
@@ -130,6 +133,9 @@ inline named_mutex::named_mutex(open_or_create_t, const char *name)
 inline named_mutex::named_mutex(open_only_t, const char *name)
    :  m_sem(detail::DoOpen, name, read_write, 1)
 {}
+
+inline void named_mutex::dont_close_on_destruction()
+{  detail::interprocess_tester::dont_close_on_destruction(m_sem);  }
 
 inline named_mutex::~named_mutex()
 {}
@@ -149,7 +155,10 @@ inline bool named_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
 inline bool named_mutex::remove(const char *name)
 {  return detail::named_semaphore_wrapper::remove(name);   }
 
-#else //#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+#else
+
+inline void named_mutex::dont_close_on_destruction()
+{  detail::interprocess_tester::dont_close_on_destruction(m_shmem);  }
 
 inline named_mutex::~named_mutex()
 {}
@@ -199,7 +208,7 @@ inline bool named_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
 inline bool named_mutex::remove(const char *name)
 {  return shared_memory_object::remove(name); }
 
-#endif   //#ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+#endif
 
 /// @endcond
 

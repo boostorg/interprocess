@@ -195,9 +195,14 @@ class segment_manager_base
    {  MemoryAlgorithm::deallocate(addr);   }
 
    //!Increases managed memory in extra_size bytes more. This only works
-   //!with single-segment management*
+   //!with single-segment management.
    void grow(std::size_t extra_size)
    {  MemoryAlgorithm::grow(extra_size);   }
+
+   //!Decreases managed memory to the minimum. This only works
+   //!with single-segment management.
+   void shrink_to_fit()
+   {  MemoryAlgorithm::shrink_to_fit();   }
 
    //!Returns the result of "all_memory_deallocated()" function
    //!of the used memory algorithm
