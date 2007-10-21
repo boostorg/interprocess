@@ -454,12 +454,13 @@ class deque_base
 };
 /// @endcond
 
+//! Deque class
+//!
 template <class T, class Alloc>
 class deque : protected deque_base<T, Alloc>
 {
    /// @cond
   typedef deque_base<T, Alloc> Base;
-   /// @endcond
 
    public:                         // Basic types
    typedef typename Alloc::value_type           val_alloc_val;
@@ -474,6 +475,7 @@ class deque : protected deque_base<T, Alloc>
    typedef typename ptr_alloc_t::const_pointer    ptr_alloc_cptr;
    typedef typename ptr_alloc_t::reference        ptr_alloc_ref;
    typedef typename ptr_alloc_t::const_reference  ptr_alloc_cref;
+   /// @endcond
 
    typedef T                                    value_type;
    typedef val_alloc_ptr                        pointer;
@@ -483,15 +485,14 @@ class deque : protected deque_base<T, Alloc>
    typedef std::size_t                          size_type;
    typedef std::ptrdiff_t                       difference_type;
 
-   typedef typename Base::allocator_type allocator_type;
-   allocator_type get_allocator() const { return Base::alloc(); }
+   typedef typename Base::allocator_type        allocator_type;
 
-   public:                         // Iterators
-   typedef typename Base::iterator       iterator;
-   typedef typename Base::const_iterator const_iterator;
+   public:                                // Iterators
+   typedef typename Base::iterator              iterator;
+   typedef typename Base::const_iterator        const_iterator;
 
    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-   typedef std::reverse_iterator<iterator> reverse_iterator;
+   typedef std::reverse_iterator<iterator>      reverse_iterator;
 
    /// @cond
    protected:                      // Internal typedefs
@@ -499,6 +500,8 @@ class deque : protected deque_base<T, Alloc>
    static std::size_t s_buffer_size() 
          { return deque_buf_size(sizeof(T)); }
    /// @endcond
+
+   allocator_type get_allocator() const { return Base::alloc(); }
 
    public:                         // Basic accessors
    iterator begin() 
