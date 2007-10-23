@@ -244,7 +244,7 @@ class basic_managed_memory_impl
       if(!mp_header) return false;
       //Create memory    
       return instream.read(detail::char_ptr_cast(this->get_address()), 
-                           (std::streamsize)this->get_size).good();
+                           (std::streamsize)this->get_size()).good();
    }
 
    //!
