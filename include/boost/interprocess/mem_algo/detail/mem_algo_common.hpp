@@ -101,7 +101,10 @@ class basic_multiallocation_iterator
    {  return next_alloc_.next_? &basic_multiallocation_iterator::unspecified_bool_type_func : 0;   }
 
    pointer operator->() const
-   { return &operator*(); }
+   {
+      BOOST_ASSERT(0);
+      return 0;
+   }
 
    private:
    multi_allocation_next<VoidPointer> next_alloc_;
