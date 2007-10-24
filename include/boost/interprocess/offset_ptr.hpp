@@ -24,6 +24,7 @@
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/assert.hpp>
 #include <iterator>
+#include <ostream>
 
 //!\file
 //!Describes a smart pointer that stores the offset between this pointer and
