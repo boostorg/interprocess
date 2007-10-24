@@ -21,6 +21,7 @@
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <cstddef>
 #include <string>
+#include <algorithm>
 
 #ifdef BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
 #  include <fcntl.h>        //O_CREAT, O_*... 
