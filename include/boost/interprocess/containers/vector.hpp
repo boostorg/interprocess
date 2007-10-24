@@ -1151,7 +1151,7 @@ class vector : private detail::vector_alloc_holder<A>
 
    void priv_destroy_all()
    {
-      destroy_n(detail::get_pointer(this->members_.m_start), this->members_.m_size);
+      this->destroy_n(detail::get_pointer(this->members_.m_start), this->members_.m_size);
       this->members_.m_size = 0;
    }
 
