@@ -292,8 +292,8 @@ inline std::basic_ostream<E, T> & operator<<
 //!for offset ptr
 template<class E, class T, class Y> 
 inline std::basic_istream<E, T> & operator>> 
-   (std::basic_istream<E, T> & os, offset_ptr<Y> & p)
-{  Y * tmp; return os >> tmp; p = tmp;   }
+   (std::basic_istream<E, T> & is, offset_ptr<Y> & p)
+{  return is >> p.get();  }
 
 //!std::ptrdiff_t + offset_ptr
 //!operation
