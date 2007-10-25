@@ -396,10 +396,10 @@ bool do_test_condition()
    do_test_condition_notify_all<Condition, Mutex>();
    std::cout << "do_test_condition_waits<" << typeid(Condition).name() << "," << typeid(Mutex).name() << std::endl;
    do_test_condition_waits<Condition, Mutex>();
-   std::cout << "do_test_condition_queue_notify_one<" << typeid(Condition).name() << "," << typeid(Mutex).name() << std::endl;
-   do_test_condition_queue_notify_one<Condition, Mutex>();
-   std::cout << "do_test_condition_queue_notify_all<" << typeid(Condition).name() << "," << typeid(Mutex).name() << std::endl;
-   do_test_condition_queue_notify_all<Condition, Mutex>();
+   //std::cout << "do_test_condition_queue_notify_one<" << typeid(Condition).name() << "," << typeid(Mutex).name() << std::endl;
+   //do_test_condition_queue_notify_one<Condition, Mutex>();
+   //std::cout << "do_test_condition_queue_notify_all<" << typeid(Condition).name() << "," << typeid(Mutex).name() << std::endl;
+   //do_test_condition_queue_notify_all<Condition, Mutex>();
    return true;
 }
 

@@ -81,22 +81,15 @@ int main ()
 
       //Construct, dump to a file
       shmem_vect = segment.construct<MyVect> (allocName) (myallocator);
-      segment.save_to_file(filename.c_str());
 
-/*
-      //Recreate objects in a new shared memory check object is present
-      bool created = segment.create_from_file("shmem_file", shMemName);
-      if(!created)
-         return 1;
-      shmem_vect = segment.find<MyVect>(allocName).first;
-      if(!shmem_vect)
+      if(shmem_vect != segment.find<MyVect>(allocName).first)
          return 1;
       //Destroy and check it is not present
       segment.destroy<MyVect> (allocName);
       res = (0 == segment.find<MyVect>(allocName).first);
       if(!res)
          return 1;
-*/
+
       std::remove(filename.c_str());
    }
    }

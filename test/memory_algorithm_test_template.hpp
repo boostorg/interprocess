@@ -549,7 +549,7 @@ bool test_many_equal_allocation(Allocator &a)
 
          std::size_t n = 0;
          for(; it != itend; ++n){
-            buffers.push_back(*it++);
+            buffers.push_back(&*it++);
          }
          if(n != std::size_t((i+1)*2))
             return false;
@@ -653,7 +653,7 @@ bool test_many_different_allocation(Allocator &a)
          multiallocation_iterator itend;
          std::size_t n = 0;
          for(; it != itend; ++n){
-            buffers.push_back(*it++);
+            buffers.push_back(&*it++);
          }
          if(n != ArraySize)
             return false;

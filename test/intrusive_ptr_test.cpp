@@ -61,19 +61,13 @@ class base
    }
 };
 
+inline void intrusive_ptr_add_ref(N::base *p)
+{  p->add_ref();  }
+
+inline void intrusive_ptr_release(N::base *p)
+{  p->release();  }
+
 } // namespace N
-
-inline void intrusive_ptr_add_ref
-   (const boost::interprocess::offset_ptr<N::base> &p)
-{
-   p->add_ref();
-}
-
-inline void intrusive_ptr_release
-   (const boost::interprocess::offset_ptr<N::base> &p)
-{
-   p->release();
-}
 
 struct X: public virtual N::base
 {

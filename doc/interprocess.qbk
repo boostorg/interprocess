@@ -3669,65 +3669,82 @@ Here's is an small example showing how aligned allocation is used:
 
 [endsect]
 
-[/
-/
-/[section:managed_memory_segment_multiple_allocations Multiple allocation functions]
-/
-/If an application needs to allocate a lot of memory buffers but it needs
-/to deallocate them independently, the application is normally forced to loop
-/calling `allocate()`. Managed memory segments offer an alternative function
-/to pack several allocations in a single call obtaining memory buffers that:
-/
-/*  are packed contiguously in memory (which improves locality)
-/*  can be independently deallocated.
-/
-/This allocation method is much faster
-/than calling `allocate()` in a loop. The downside is that the segment
-/must provide a contiguous memory segment big enough to hold all the allocations.
-/Managed memory segments offer this functionality through `allocate_many()` functions.
-/There are 2 types of `allocate_many` functions:
-/
-/* Allocation of N buffers of memory with the same size.
-/* Allocation ot N buffers of memory, each one of different size.
-/
-/[c++]
-/
-/   //!Allocates n_elements of elem_size bytes.
-/   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements);
-/
-/   //!Allocates n_elements, each one of elem_sizes[i] bytes.
-/   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements);
-/
-/   //!Allocates n_elements of elem_size bytes. No throwing version.
-/   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements, std::nothrow_t nothrow);
-/
-/   //!Allocates n_elements, each one of elem_sizes[i] bytes. No throwing version.
-/   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::nothrow_t nothrow);
-/
-/All functions return a `multiallocation iterator` that can be used to obtain
-/pointers to memory the user can overwrite. A `multiallocation_iterator`:
-/
-/*  Becomes invalidated if the memory is pointing to is deallocated or
-/   the next iterators (which previously were reachable with `operator++`)
-/   become invalid.
-/*  Returned from `allocate_many` can be checked in a boolean expression to
-/   know if the allocation has been successful.
-/*  A default constructed `multiallocation iterator` indicates
-/   both an invalid iterator and the "end" iterator.
-/*  Dereferencing an iterator (`operator *()`) returns a `char*` value
-/   pointing to the first byte of memory that the user can overwrite
-/   in that memory buffer.
-/*  The iterator category depends on the memory allocation algorithm,
-/   but it's a least a forward iterator.
-/
-/Here's an small example showing all this functionality:
-/
-/[import ../example/doc_managed_multiple_allocation.cpp]
-/[doc_managed_multiple_allocation]
-/
-/Allocating N buffers of the same size improves the performance of pools/and node containers (for example STL-like lists):/when inserting a range of forward iterators in a STL-like/list, the insertion function can detect the number of needed elements/and allocate in a single call. The nodes still can be deallocated.//Allocating N buffers of different sizes can be used to speed up allocation in/cases where several objects must always be allocated at the same time but/deallocated at different times. For example, a class might perform several initial/allocations (some header data for a network packet, for example) in its/constructor but also allocations of buffers that might be reallocated in the future/(the data to be sent through the network). Instead of allocating all the data/independently, the constructor might use `allocate_many()` to speed up the/initialization, but it still can deallocate and expand the memory of the variable/size element.//In general, `allocate_many` is useful with large values of N. Overuse/of `allocate_many` can increase the effective memory usage,/because it can't reuse existing non-contiguous memory fragments that/might be available for some of the elements./
-/[endsect]
-]
+[section:managed_memory_segment_multiple_allocations Multiple allocation functions]
+
+If an application needs to allocate a lot of memory buffers but it needs
+to deallocate them independently, the application is normally forced to loop
+calling `allocate()`. Managed memory segments offer an alternative function
+to pack several allocations in a single call obtaining memory buffers that:
+
+*  are packed contiguously in memory (which improves locality)
+*  can be independently deallocated.
+
+This allocation method is much faster
+than calling `allocate()` in a loop. The downside is that the segment
+must provide a contiguous memory segment big enough to hold all the allocations.
+Managed memory segments offer this functionality through `allocate_many()` functions.
+There are 2 types of `allocate_many` functions:
+
+* Allocation of N buffers of memory with the same size.
+* Allocation ot N buffers of memory, each one of different size.
+
+[c++]
+
+   //!Allocates n_elements of elem_size bytes.
+   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements);
+
+   //!Allocates n_elements, each one of elem_sizes[i] bytes.
+   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements);
+
+   //!Allocates n_elements of elem_size bytes. No throwing version.
+   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements, std::nothrow_t nothrow);
+
+   //!Allocates n_elements, each one of elem_sizes[i] bytes. No throwing version.
+   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::nothrow_t nothrow);
+
+All functions return a `multiallocation iterator` that can be used to obtain
+pointers to memory the user can overwrite. A `multiallocation_iterator`:
+
+*  Becomes invalidated if the memory is pointing to is deallocated or
+   the next iterators (which previously were reachable with `operator++`)
+   become invalid.
+*  Returned from `allocate_many` can be checked in a boolean expression to
+   know if the allocation has been successful.
+*  A default constructed `multiallocation iterator` indicates
+   both an invalid iterator and the "end" iterator.
+*  Dereferencing an iterator (`operator *()`) returns a `char &`
+   referencing the first byte user can overwrite
+   in the memory buffer.
+*  The iterator category depends on the memory allocation algorithm,
+   but it's a least a forward iterator.
+
+Here's an small example showing all this functionality:
+
+[import ../example/doc_managed_multiple_allocation.cpp]
+[doc_managed_multiple_allocation]
+
+Allocating N buffers of the same size improves the performance of pools
+and node containers (for example STL-like lists): when inserting a range of
+forward iterators in a STL-like list, the insertion function can detect the
+number of needed elements and allocate in a single call. The nodes still
+can be deallocated.
+
+Allocating N buffers of different sizes can be used to speed up allocation in
+cases where several objects must always be allocated at the same time but
+deallocated at different times. For example, a class might perform several initial
+allocations (some header data for a network packet, for example) in its
+constructor but also allocations of buffers that might be reallocated in the future
+(the data to be sent through the network). Instead of allocating all the data
+independently, the constructor might use `allocate_many()` to speed up the
+initialization, but it still can deallocate and expand the memory of the variable
+size element.
+
+In general, `allocate_many` is useful with large values of N. Overuse
+of `allocate_many` can increase the effective memory usage,
+because it can't reuse existing non-contiguous memory fragments that
+might be available for some of the elements.
+
+[endsect]
 
 [section:managed_memory_segment_expand_in_place Expand in place memory allocation]
 
