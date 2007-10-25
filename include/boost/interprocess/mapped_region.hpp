@@ -20,6 +20,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <string>
+#include <limits>
 
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 #  include <boost/interprocess/detail/win32_api.hpp>
@@ -242,7 +243,10 @@ inline mapped_region::mapped_region
             error_info err(winapi::get_last_error());
             throw interprocess_exception(err);
          }
-         if(total_size > (__int64)((std::size_t)(-1))){
+         #ifdef max
+         #undef max
+         #endif
+         if(total_size > std::numeric_limits<std::size_t>::max()){
             error_info err(size_error);
             throw interprocess_exception(err);
          }
