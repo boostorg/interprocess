@@ -42,7 +42,8 @@ struct iunordered_set_index_aux
       segment_manager_base::void_pointer              void_pointer;
 
    typedef typename bi::make_unordered_set_base_hook
-      < bi::void_pointer<void_pointer> >::type        derivation_hook;
+      < bi::void_pointer<void_pointer>
+      >::type        derivation_hook;
 
    typedef typename MapConfig::template 
       intrusive_value_type<derivation_hook>::type     value_type;

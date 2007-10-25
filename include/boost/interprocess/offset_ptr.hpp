@@ -23,8 +23,9 @@
 #include <boost/interprocess/detail/cast_tags.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/assert.hpp>
-#include <iterator>
 #include <ostream>
+#include <istream>
+#include <iterator>
 
 //!\file
 //!Describes a smart pointer that stores the offset between this pointer and
@@ -148,6 +149,9 @@ class offset_ptr
    //!Never throws.
    pointer get()const
    {  return (pointer)this->get_pointer();   }
+
+   std::ptrdiff_t get_offset()
+   {  return m_offset;  }
 
    //!Pointer-like -> operator. It can return 0 pointer.
    //!Never throws.
@@ -286,14 +290,14 @@ inline bool operator>= (const offset_ptr<T1> &pt1,
 template<class E, class T, class Y> 
 inline std::basic_ostream<E, T> & operator<< 
    (std::basic_ostream<E, T> & os, offset_ptr<Y> const & p)
-{  return os << p.get();   }
+{  return os << p.get_offset();   }
 
 //!operator>> 
 //!for offset ptr
 template<class E, class T, class Y> 
 inline std::basic_istream<E, T> & operator>> 
    (std::basic_istream<E, T> & is, offset_ptr<Y> & p)
-{  return is >> p.get();  }
+{  return is >> p.get_offset();  }
 
 //!std::ptrdiff_t + offset_ptr
 //!operation

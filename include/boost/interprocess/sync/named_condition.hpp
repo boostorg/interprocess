@@ -127,27 +127,40 @@ class named_condition
    interprocess_condition *condition() const
    {  return &static_cast<condition_holder*>(m_shmem.get_user_address())->cond_; }
 
+   template <class Lock>
+   class lock_inverter
+   {
+      Lock &l_;
+      public:
+      lock_inverter(Lock &l)
+         :  l_(l)
+      {}
+      void lock()    {   l_.unlock();   }
+      void unlock()  {   l_.lock();     }
+   };
+
    #if defined BOOST_INTERPROCESS_POSIX_SEMAPHORES && defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
    interprocess_mutex *mutex() const
    {  return &static_cast<condition_holder*>(m_shmem.get_user_address())->mutex_; }
 
    template <class Lock>
    void do_wait(Lock& lock)
-   {
-      scoped_lock<interprocess_mutex> internal_lock(*this->mutex());
-      lock.unlock();
+   {  
+      lock_inverter<Lock> inverted_lock(lock);
+      //unlock internal first to avoid deadlock with near simultaneous waits
+      scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);
+      scoped_lock<interprocess_mutex>     internal_lock(*this->mutex());
       this->condition()->wait(internal_lock);
-      lock.lock();
    }
 
    template <class Lock>
    bool do_timed_wait(Lock& lock, const boost::posix_time::ptime &abs_time)
    {
-      scoped_lock<interprocess_mutex> internal_lock(*this->mutex());
-      lock.unlock();
-      bool r = this->condition()->timed_wait(internal_lock, abs_time);
-      lock.lock();
-      return r;
+      //unlock internal first to avoid deadlock with near simultaneous waits
+      lock_inverter<Lock> inverted_lock(lock);
+      scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);
+      scoped_lock<interprocess_mutex>     internal_lock(*this->mutex());
+      return this->condition()->timed_wait(internal_lock, abs_time);
    }
    #endif
 

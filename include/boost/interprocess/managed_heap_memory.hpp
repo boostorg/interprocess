@@ -29,37 +29,6 @@
 namespace boost {
 namespace interprocess {
 
-/// @cond
-namespace detail {
-
-   //!This class defines an operator() that creates a heap memory
-   //!of the requested size. The rest of the parameters are
-   //!passed in the constructor. The class a template parameter
-   //!to be used with create_from_file/create_from_istream functions
-   //!of basic_named_object classes
-   class heap_mem_creator_t
-   {
-      public:
-      heap_mem_creator_t(std::vector<char> &heapmem)
-      : m_heapmem(heapmem){}
-
-      void *operator()(std::size_t size)
-      {
-         BOOST_TRY{
-            m_heapmem.resize(size, char(0));
-         }
-         BOOST_CATCH(...){
-            return 0;
-         }
-         BOOST_CATCH_END
-         return &m_heapmem[0];
-      }      
-      private:
-      std::vector<char> &m_heapmem;
-   };
-}  //namespace detail {
-/// @endcond
-
 //!A basic heap memory named object creation class. Initializes the 
 //!heap memory segment. Inherits all basic functionality from 
 //!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>*/

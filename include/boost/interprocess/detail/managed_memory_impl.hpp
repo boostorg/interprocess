@@ -211,42 +211,6 @@ class basic_managed_memory_impl
          return true;
    }
 
-   //!Creates named_xxx_object from file. Never throws.
-   template<class MemCreatorFunc, class CharT> 
-   bool create_from_file (const CharT *filename, 
-                          MemCreatorFunc &memcreator)
-   {
-      std::basic_ifstream< CharT, std::char_traits<CharT> > 
-         file(filename, std::ios::binary);
-      //Check file
-      if(!file)   return false;
-      //Calculate size
-      file.seekg(0, std::ios::end);
-      std::size_t size = file.tellg();
-      file.seekg(0, std::ios::beg);
-      //Create from stream
-      return create_from_istream(file, size, memcreator);
-   }
-
-   //!Creates memory from an istream. Never throws.
-   template<class MemCreatorFunc> 
-   bool create_from_istream (std::istream &instream, 
-                             std::size_t size,
-                             MemCreatorFunc &memcreator)
-   {
-      if(mp_header)  return false;
-      //Check for minimum size
-      if(size < MemoryAlgorithm::get_min_size (0))
-         return false;
-      
-      mp_header = static_cast<segment_manager*>(memcreator(size));
-
-      if(!mp_header) return false;
-      //Create memory    
-      return instream.read(detail::char_ptr_cast(this->get_address()), 
-                           (std::streamsize)this->get_size()).good();
-   }
-
    //!
    void grow(std::size_t extra_bytes)
    {  mp_header->grow(extra_bytes); }
@@ -672,28 +636,6 @@ class basic_managed_memory_impl
    //!in the managed segment.
    std::size_t get_num_unique_objects()
    {  return mp_header->get_num_unique_objects();  }
-
-   //!Saves the managed segment memory to a file.
-   //!It's NOT thread-safe. Returns true if successful.
-   //!Never throws.
-   template<class CharT> 
-   bool save_to_file (const CharT *filename)
-   {
-      //Open output file
-      std::basic_ofstream< CharT, std::char_traits<CharT> > 
-         file(filename, std::ios::binary);
-      //Check and save
-      return file.is_open() && save_to_ostream (file);
-   }
-
-   //!Saves the managed segment memory to a std::ostream.
-   //!It's NOT thread-safe. Returns true if successful.
-   //!Never throws.
-   bool save_to_ostream (std::ostream &outstream)
-   {
-      return outstream.write(char_ptr_cast(this->get_address()), 
-                             (std::streamsize)this->get_size()).good();
-   }
 
    //!Returns a constant iterator to the index storing the
    //!named allocations. NOT thread-safe. Never throws.

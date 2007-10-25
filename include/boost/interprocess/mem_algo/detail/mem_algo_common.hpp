@@ -49,7 +49,7 @@ struct multi_allocation_next
 //!the user can access the multiple buffers allocated in a single call
 template<class VoidPointer>
 class basic_multiallocation_iterator
-   :  public std::iterator<std::input_iterator_tag, char *>
+   :  public std::iterator<std::input_iterator_tag, char>
 {
    void unspecified_bool_type_func() const {}
    typedef void (basic_multiallocation_iterator::*unspecified_bool_type)() const;
@@ -59,7 +59,7 @@ class basic_multiallocation_iterator
             multi_allocation_next_ptr;
 
    public:
-   typedef char *       value_type;
+   typedef char         value_type;
    typedef value_type & reference;
    typedef value_type * pointer;
 
@@ -91,20 +91,14 @@ class basic_multiallocation_iterator
    bool operator!= (const basic_multiallocation_iterator& other) const
    { return !operator== (other); }
 
-   value_type operator*() const
-   {
-      value_type v = (char*)detail::get_pointer(next_alloc_.next_);
-      return v;
-   }
+   reference operator*() const
+   {  return *((char*)detail::get_pointer(next_alloc_.next_)); }
 
    operator unspecified_bool_type() const  
    {  return next_alloc_.next_? &basic_multiallocation_iterator::unspecified_bool_type_func : 0;   }
 
    pointer operator->() const
-   {
-      BOOST_ASSERT(0);
-      return 0;
-   }
+   { return &(*(*this)); }
 
    private:
    multi_allocation_next<VoidPointer> next_alloc_;

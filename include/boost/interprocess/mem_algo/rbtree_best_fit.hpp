@@ -90,6 +90,7 @@ class rbtree_best_fit
    typedef typename bi::make_splay_set_base_hook
 #endif
       < bi::void_pointer<VoidPointer>
+      , bi::optimize_size<true>
       , bi::link_mode<bi::normal_link> >::type           TreeHook;
 
    typedef detail::multi_allocation_next<void_pointer>   multi_allocation_next_t;

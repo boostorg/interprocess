@@ -87,10 +87,16 @@ struct value_compare_impl
 template <class T, class VoidPointer>
 struct rbtree_node
    :  public bi::make_set_base_hook
-         <bi::void_pointer<VoidPointer>, bi::link_mode<bi::normal_link> >::type
+         < bi::void_pointer<VoidPointer>
+         , bi::link_mode<bi::normal_link>
+         , bi::optimize_size<true>
+         >::type
 {
    typedef typename bi::make_set_base_hook
-      <bi::void_pointer<VoidPointer>, bi::link_mode<bi::normal_link> >::type   hook_type;
+      < bi::void_pointer<VoidPointer>
+      , bi::link_mode<bi::normal_link>
+      , bi::optimize_size<true>
+      >::type   hook_type;
 
    typedef T value_type;
 

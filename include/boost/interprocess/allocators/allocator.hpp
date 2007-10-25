@@ -54,8 +54,8 @@ class allocator
    struct cast_functor
    {
       typedef typename detail::add_reference<T>::type result_type;
-      result_type operator()(char *ptr) const
-      {  return *static_cast<T*>(static_cast<void*>(ptr));  }
+      result_type operator()(char &ptr) const
+      {  return *static_cast<T*>(static_cast<void*>(&ptr));  }
    };
 
    //Self type
