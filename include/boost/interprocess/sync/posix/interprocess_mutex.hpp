@@ -26,7 +26,7 @@
 
 #include <boost/interprocess/sync/posix/ptime_to_timespec.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-
+#include <boost/interprocess/exceptions.hpp>
 
 namespace boost {
 
