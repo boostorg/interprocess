@@ -322,7 +322,7 @@ inline void swap (boost::interprocess::offset_ptr<T> &pt,
    pt2 = ptr;
 }
 
-/*
+
 //!Simulation of static_cast between pointers. Never throws.
 template<class T, class U> 
 inline boost::interprocess::offset_ptr<T> 
@@ -358,7 +358,7 @@ inline boost::interprocess::offset_ptr<T>
    return boost::interprocess::offset_ptr<T>
             (r, boost::interprocess::detail::reinterpret_cast_tag());  
 }
-*/
+
 }  //namespace interprocess {
 
 /// @cond
