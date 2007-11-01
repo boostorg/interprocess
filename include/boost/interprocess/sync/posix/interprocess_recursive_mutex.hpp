@@ -112,7 +112,7 @@ inline void interprocess_recursive_mutex::lock()
    int res = 0;
    res = pthread_mutex_lock(&m_mut);
    if(res != 0){
-      throw inteprocess_exception(system_error_code());
+      throw interprocess_exception(system_error_code());
    }
    assert(res == 0);
 
