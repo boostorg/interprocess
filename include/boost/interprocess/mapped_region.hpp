@@ -207,7 +207,7 @@ inline mapped_region::mapped_region
    ,  m_file_mapping_hnd(detail::invalid_file())
 {
    mapping_handle_t mhandle = mapping.get_mapping_handle();
-   file_handle_t native_mapping_handle;
+   file_handle_t native_mapping_handle = 0;
 
    //Set accesses
    unsigned long file_map_access = 0;
