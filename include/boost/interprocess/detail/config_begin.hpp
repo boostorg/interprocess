@@ -4,7 +4,7 @@
 #endif
 
 #ifdef BOOST_MSVC
-   #ifdef _CRT_SECURE_NO_DEPRECATE
+   #ifndef _CRT_SECURE_NO_DEPRECATE
    #define  BOOST_INTERPROCESS_CRT_SECURE_NO_DEPRECATE
    #define _CRT_SECURE_NO_DEPRECATE
    #endif
