@@ -1,8 +1,11 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006-2007. Distributed under the Boost
-// Software License, Version 1.0. (See accompanying file
-// LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (C) Copyright Ion Gaztanaga 2006-2007
+// (C) Copyright Markus Schoepflin 2007
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
@@ -372,17 +375,19 @@ namespace boost{
 namespace interprocess{
 namespace detail{
 
-//! Atomically increment an apr_uint32_t by 1
+//! Atomically decrement a uint32_t by 1
+//! "mem": pointer to the atomic value
+//! Returns the old value pointed to by mem
+//! Acquire, memory barrier after decrement.
+inline boost::uint32_t atomic_dec32(volatile boost::uint32_t *mem)
+{  boost::uint32_t old_val = __ATOMIC_DECREMENT_LONG(mem); __MB(); return old_val; }
+
+//! Atomically increment a uint32_t by 1
 //! "mem": pointer to the object
 //! Returns the old value pointed to by mem
+//! Release, memory barrier before increment.
 inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
-{  return __ATOMIC_INCREMENT_LONG(mem); }
-
-//! Atomically decrement an boost::uint32_t by 1
-//! "mem": pointer to the atomic value
-//! Returns false if the value becomes zero on decrement, otherwise true
-inline boost::uint32_t atomic_dec32(volatile boost::uint32_t *mem)
-{  return __ATOMIC_DECREMENT_LONG(mem); }
+{  __MB(); return __ATOMIC_INCREMENT_LONG(mem); }
 
 // Rational for the implementation of the atomic read and write functions.
 //
@@ -396,14 +401,16 @@ inline boost::uint32_t atomic_dec32(volatile boost::uint32_t *mem)
 // aligned.
 
 //! Atomically read an boost::uint32_t from memory
+//! Acquire, memory barrier after load.
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
-{  return *mem;   }
+{  boost::uint32_t old_val = *mem; __MB(); return old_val;  }
 
 //! Atomically set an boost::uint32_t in memory
 //! "mem": pointer to the object
 //! "param": val value that the object will assume
+//! Release, memory barrier before store.
 inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
-{  *mem = val; }
+{  __MB(); *mem = val; }
 
 //! Compare an boost::uint32_t's value with "cmp".
 //! If they are the same swap the value with "with"
@@ -411,28 +418,43 @@ inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
 //! "with" what to swap it with
 //! "cmp": the value to compare it to
 //! Returns the old value of *mem
-inline boost::uint32_t atomic_cas32
-   (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
+//! Memory barrier between load and store.
+inline boost::uint32_t atomic_cas32(
+  volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
 {
-  // Notes:
+  // Note:
   //
-  // 1. Branch prediction prefers branches, as we assume that the lock
-  // is not stolen usually, we branch forward conditionally on success
-  // of the store, and not conditionally backwards on failure.
+  // Branch prediction prefers backward branches, and the Alpha Architecture
+  // Handbook explicitely states that the loop should not be implemented like
+  // it is below. (See chapter 4.2.5.) Therefore the code should probably look
+  // like this:
   //
-  // 2. The memory lock is invalidated when a branch is taken between
-  // load and store. Therefore we can only branch if we don't need a
-  // store.
+  // return asm(
+  //   "10: ldl_l %v0,(%a0) ;"
+  //   "    cmpeq %v0,%a2,%t0 ;"
+  //   "    beq %t0,20f ;"
+  //   "    mb ;"
+  //   "    mov %a1,%t0 ;"
+  //   "    stl_c %t0,(%a0) ;"
+  //   "    beq %t0,30f ;"
+  //   "20: ret ;"
+  //   "30: br 10b;",
+  //   mem, with, cmp);
+  //
+  // But as the compiler always transforms this into the form where a backward
+  // branch is taken on failure, we can as well implement it in the straight
+  // forward form, as this is what it will end up in anyway.
 
-  return asm("10: ldl_l %v0,(%a0) ;"    // load prev value from mem and lock mem
-	     "    cmpeq %v0,%a2,%t0 ;"  // compare with given value
-	     "    beq %t0,20f ;"        // if not equal, we're done
-	     "    mov %a1,%t0 ;"        // load new value into scratch register
-	     "    stl_c %t0,(%a0) ;"    // store new value to locked mem (overwriting scratch)
-	     "    bne %t0,20f ;"        // store succeeded, we're done
-	     "    br 10b ;"             // lock has been stolen, retry
-	     "20: ",
-	     mem, with, cmp);
+  return asm(
+    "10: ldl_l %v0,(%a0) ;"    // load prev value from mem and lock mem
+    "    cmpeq %v0,%a2,%t0 ;"  // compare with given value
+    "    beq %t0,20f ;"        // if not equal, we're done
+    "    mb ;"                 // memory barrier
+    "    mov %a1,%t0 ;"        // load new value into scratch register
+    "    stl_c %t0,(%a0) ;"    // store new value to locked mem (overwriting scratch)
+    "    beq %t0,10b ;"        // store failed because lock has been stolen, retry
+    "20: ",
+    mem, with, cmp);
 }
 
 }  //namespace detail{
