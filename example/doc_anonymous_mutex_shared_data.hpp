@@ -7,6 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/interprocess/detail/config_begin.hpp>
 //[doc_anonymous_mutex_shared_data
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
@@ -31,3 +32,4 @@ struct shared_memory_log
    bool   end_b;
 };
 //]
+#include <boost/interprocess/detail/config_end.hpp>

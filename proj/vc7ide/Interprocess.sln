@@ -407,6 +407,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "managed_shared_memory_test"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_managed_grow", "doc_managed_grow.vcproj", "{818C43EE-3561-F3AE-4FD7-8A2076E76A31}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -823,6 +827,10 @@ Global
 		{58DF28E3-0926-F47A-E28A-B03A4D619631}.Debug.Build.0 = Debug|Win32
 		{58DF28E3-0926-F47A-E28A-B03A4D619631}.Release.ActiveCfg = Release|Win32
 		{58DF28E3-0926-F47A-E28A-B03A4D619631}.Release.Build.0 = Release|Win32
+		{818C43EE-3561-F3AE-4FD7-8A2076E76A31}.Debug.ActiveCfg = Debug|Win32
+		{818C43EE-3561-F3AE-4FD7-8A2076E76A31}.Debug.Build.0 = Debug|Win32
+		{818C43EE-3561-F3AE-4FD7-8A2076E76A31}.Release.ActiveCfg = Release|Win32
+		{818C43EE-3561-F3AE-4FD7-8A2076E76A31}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

@@ -3567,6 +3567,33 @@ Obtain the number of named and unique objects allocated in the segment:
 
 [endsect]
 
+[section:growing_managed_memory Growing managed segments]
+
+Once a managed segment is created the managed segment can't be grown. The limitation
+is not easily solvable: every process attached to the managed segment would need to
+be stopped, notified of the new size, they would need to remap the managed segment
+and continue working. Nearly impossible to achieve with a user-level library without
+the help of the operating system kernel.
+
+On the other hand, [*Boost.Interprocess] offers off-line segment growing. What does this
+mean? That the segment can be grown if no process has mapped the managed segment. If the
+application can find a moment where no process is attached it can grow or shrink to fit
+the managed segment.
+
+Here we have an example showing how to grow and shrink to fit
+[classref boost::interprocess::managed_shared_memory managed_shared_memory]:
+
+[import ../example/doc_managed_grow.cpp]
+[doc_managed_grow]
+
+[classref boost::interprocess::managed_mapped_file managed_mapped_file] also
+offers a similar function to grow or shrink_to_fit the managed file.
+Please, remember that [*no process should be modifying the file/shared memory while
+the growing/shrinking process is performed]. Otherwise, the managed segment will be
+corrupted.
+
+[endsect]
+
 [section:managed_memory_segment_advanced_index_functions Advanced index functions]
 
 As mentioned, the managed segment stores the information about named and unique

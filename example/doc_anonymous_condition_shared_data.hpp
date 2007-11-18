@@ -7,6 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/interprocess/detail/config_begin.hpp>
 //[doc_anonymous_condition_shared_data
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
@@ -35,3 +36,4 @@ struct trace_queue
    bool message_in;
 };
 //]
+#include <boost/interprocess/detail/config_end.hpp>

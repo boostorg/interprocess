@@ -7,6 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/interprocess/detail/config_begin.hpp>
 //[doc_named_mutex
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
@@ -42,3 +43,4 @@ int main ()
    return 0;
 }
 //]
+#include <boost/interprocess/detail/config_end.hpp>

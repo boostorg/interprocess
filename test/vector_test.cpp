@@ -26,7 +26,6 @@
 #include "print_container.hpp"
 #include "check_equal_containers.hpp"
 #include "movable_int.hpp"
-#include <memory.h>
 #include "expand_bwd_test_allocator.hpp"
 #include "expand_bwd_test_template.hpp"
 #include "dummy_test_allocator.hpp"

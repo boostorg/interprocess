@@ -7,6 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/interprocess/detail/config_begin.hpp>
 //[doc_managed_construction_info
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <cassert>
@@ -58,3 +59,4 @@ int main()
    return 0;
 }
 //]
+#include <boost/interprocess/detail/config_end.hpp>

@@ -18,6 +18,7 @@
 #include <boost/interprocess/containers/list.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <cassert>
+#include <cstdio>    //std::remove
 
 using namespace boost::interprocess;
 

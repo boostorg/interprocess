@@ -16,6 +16,7 @@
 #include <boost/interprocess/smart_ptr/shared_ptr.hpp>
 #include <boost/interprocess/smart_ptr/weak_ptr.hpp>
 #include <cassert>
+#include <cstdio>    //std::remove
 
 using namespace boost::interprocess;
 

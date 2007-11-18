@@ -7,6 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/interprocess/detail/config_begin.hpp>
 //[doc_file_mapping
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
@@ -14,6 +15,7 @@
 #include <fstream>
 #include <cstring>
 #include <cstddef>
+#include <cstdio>    //std::remove
 
 int main ()
 {
@@ -58,3 +60,4 @@ int main ()
    return 0;
 }
 //]
+#include <boost/interprocess/detail/config_end.hpp>

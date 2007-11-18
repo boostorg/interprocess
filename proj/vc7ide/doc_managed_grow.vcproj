@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="managed_shared_memory_test"
-	ProjectGUID="{58DF28E3-0926-F47A-E28A-B03A4D619631}"
+	Name="doc_managed_grow"
+	ProjectGUID="{8418EC1A-5631-1AFE-FE74-8A2E76407A31}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -13,7 +13,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="../../Bin/Win32/Debug"
-			IntermediateDirectory="Debug/managed_shared_memory_test"
+			IntermediateDirectory="Debug/doc_managed_grow"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -24,6 +24,7 @@
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
+				DisableLanguageExtensions="FALSE"
 				TreatWChar_tAsBuiltInType="TRUE"
 				ForceConformanceInForLoopScope="FALSE"
 				UsePrecompiledHeader="0"
@@ -35,11 +36,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/managed_shared_memory_test_d.exe"
+				OutputFile="$(OutDir)/doc_managed_grow_d.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/managed_shared_memory_test.pdb"
+				ProgramDatabaseFile="$(OutDir)/doc_managed_grow.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 				FixedBaseAddress="1"/>
@@ -67,7 +68,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="../../Bin/Win32/Release"
-			IntermediateDirectory="Release/managed_shared_memory_test"
+			IntermediateDirectory="Release/doc_managed_grow"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -86,7 +87,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/managed_shared_memory_test.exe"
+				OutputFile="$(OutDir)/doc_managed_grow.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
@@ -122,15 +123,15 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4F277FC0-57BA-6A06-3746-225FD52A32AB}">
+			UniqueIdentifier="{48F54471-DA5A-4367-0A86-6A5D22FEA7FF}">
 			<File
-				RelativePath="..\..\test\managed_shared_memory_test.cpp">
+				RelativePath="..\..\example\doc_managed_grow.cpp">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93899C50-B034-89BD-8E7B-EB52EF6B2A7F}">
+			UniqueIdentifier="{351E556C-18B7-6CD8-3B17-D31DEFB6F91B}">
 		</Filter>
 	</Files>
 	<Globals>

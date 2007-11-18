@@ -13,7 +13,7 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <cstddef>
 #include <utility>
-#include <assert.h>
+#include <cassert>
 
 int main ()
 {
