@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <functional>
 #include <string>
+#include <cstdio>    //std::remove
 #include "print_container.hpp"
 #include "get_process_id_name.hpp"
 

@@ -16,6 +16,7 @@
 #include <memory>
 #include <cstdio>
 #include <string>
+#include <cstdio>    //std::remove
 #include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;

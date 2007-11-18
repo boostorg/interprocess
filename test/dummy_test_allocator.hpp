@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <stdexcept>
-#include <assert.h>
+#include <cassert>
 
 //!\file
 //!Describes an allocator to test expand capabilities
@@ -75,12 +75,12 @@ class dummy_test_allocator
    {} 
 
    //!Constructor from other dummy_test_allocator. Never throws
-   dummy_test_allocator(const dummy_test_allocator &other)
+   dummy_test_allocator(const dummy_test_allocator &)
    {}
 
    //!Constructor from related dummy_test_allocator. Never throws
    template<class T2>
-   dummy_test_allocator(const dummy_test_allocator<T2> &other)
+   dummy_test_allocator(const dummy_test_allocator<T2> &)
    {}
 /*
    pointer address(reference value) 
@@ -137,14 +137,14 @@ class dummy_test_allocator
 
 //!Equality test for same type of dummy_test_allocator
 template<class T> inline
-bool operator==(const dummy_test_allocator<T>  &alloc1, 
-                const dummy_test_allocator<T>  &alloc2)
+bool operator==(const dummy_test_allocator<T>  &, 
+                const dummy_test_allocator<T>  &)
 {  return false; }
 
 //!Inequality test for same type of dummy_test_allocator
 template<class T> inline
-bool operator!=(const dummy_test_allocator<T>  &alloc1, 
-                const dummy_test_allocator<T>  &alloc2)
+bool operator!=(const dummy_test_allocator<T>  &, 
+                const dummy_test_allocator<T>  &)
 {  return true; }
 
 }  //namespace test {

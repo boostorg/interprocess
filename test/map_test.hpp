@@ -97,19 +97,20 @@ int map_test ()
 
          MyStdMap *stdmap2 = new MyStdMap(aux_vect2, aux_vect2 + 50);
 
-         MyShmMultiMap *shmmultiset2 = 
+         MyShmMultiMap *shmmultimap2 = 
             segment.template construct<MyShmMultiMap>("MyShmMultiMap2")
                (detail::make_move_iterator(&aux_vect3[0])
                , detail::make_move_iterator(aux_vect3 + 50)
                , std::less<IntType>(), segment.get_segment_manager());
 
-         MyStdMultiMap *stdmultiset2 = new MyStdMultiMap(aux_vect2, aux_vect2 + 50);
+         MyStdMultiMap *stdmultimap2 = new MyStdMultiMap(aux_vect2, aux_vect2 + 50);
          if(!CheckEqualContainers(shmmap2, stdmap2)) return 1;
-         if(!CheckEqualContainers(shmmultiset2, stdmultiset2)) return 1;
+         if(!CheckEqualContainers(shmmultimap2, stdmultimap2)) return 1;
+
          segment.destroy_ptr(shmmap2);
-         segment.destroy_ptr(shmmultiset2);
+         segment.destroy_ptr(shmmultimap2);
          delete stdmap2;
-         delete stdmultiset2;
+         delete stdmultimap2;
       }
 
       int i, j;

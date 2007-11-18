@@ -79,6 +79,7 @@ int main ()
    catch(std::exception &ex){
       shared_memory_object::remove(ShmName);
       std::cout << ex.what() << std::endl;
+      return 1;
    }
    shared_memory_object::remove(ShmName);
    return 0;

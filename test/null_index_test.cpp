@@ -13,7 +13,7 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/mem_algo/simple_seq_fit.hpp>
 #include <cstddef>
-#include <assert.h>
+#include <cassert>
 #include <string>
 #include "get_process_id_name.hpp"
 

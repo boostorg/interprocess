@@ -123,6 +123,16 @@ int main()
       std::cout << "Error in set_test<MyShmSet>" << std::endl;
       return 1;
    }
+
+   if (0 != set_test_copyable<my_managed_shared_memory
+                  ,MyShmSet
+                  ,MyStdSet
+                  ,MyShmMultiSet
+                  ,MyStdMultiSet>()){
+      std::cout << "Error in set_test<MyShmSet>" << std::endl;
+      return 1;
+   }
+
    if (0 != set_test<my_managed_shared_memory
                   ,MyMovableShmSet
                   ,MyStdSet
@@ -142,6 +152,15 @@ int main()
    }
 
    if (0 != map_test<my_managed_shared_memory
+                  ,MyShmMap
+                  ,MyStdMap
+                  ,MyShmMultiMap
+                  ,MyStdMultiMap>()){
+      std::cout << "Error in set_test<MyShmMap>" << std::endl;
+      return 1;
+   }
+
+   if (0 != map_test_copyable<my_managed_shared_memory
                   ,MyShmMap
                   ,MyStdMap
                   ,MyShmMultiMap

@@ -98,6 +98,7 @@ int set_test ()
             std::cout << "Error in construct<MyShmMultiSet>(MyShmMultiSet2)" << std::endl;
             return 1;
          }
+
          segment.destroy_ptr(shmset2);
          segment.destroy_ptr(shmmultiset2);
          delete stdset2;

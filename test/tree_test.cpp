@@ -132,7 +132,6 @@ int main ()
       return 1;
    }
 
-   using namespace boost::interprocess::detail;
    if(0 != test::set_test_copyable<my_managed_shared_memory
                         ,MyShmSet
                         ,MyStdSet

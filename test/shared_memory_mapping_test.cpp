@@ -117,6 +117,7 @@ int main ()
    catch(std::exception &exc){
       shared_memory_object::remove(test::get_process_id_name());
       std::cout << "Unhandled exception: " << exc.what() << std::endl;
+      return 1;
    }
    shared_memory_object::remove(test::get_process_id_name());
    return 0;

@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <stdexcept>
-#include <assert.h>
+#include <cassert>
 
 //!\file
 //!Describes an allocator to test expand capabilities
@@ -147,7 +147,6 @@ class expand_bwd_test_allocator
          assert(0);
          throw std::bad_alloc();
       }
-      return std::pair<pointer, bool>(0, true);
    }
 
    //!Returns maximum the number of objects the previously allocated memory

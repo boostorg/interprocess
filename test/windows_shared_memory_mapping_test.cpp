@@ -116,6 +116,7 @@ int main ()
    }
    catch(std::exception &exc){
       std::cout << "Unhandled exception: " << exc.what() << std::endl;
+      return 1;
    }
 
    return 0;

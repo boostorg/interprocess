@@ -30,7 +30,7 @@
 #include <boost/interprocess/sync/sharable_lock.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 #include "util.hpp"
 
 namespace boost { namespace interprocess { namespace test {

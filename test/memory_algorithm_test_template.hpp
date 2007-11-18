@@ -17,6 +17,7 @@
 #include <new>
 #include <utility>
 #include <cstring>
+#include <cstdio>    //std::remove
 
 namespace boost { namespace interprocess { namespace test {
 
@@ -508,6 +509,102 @@ bool test_clear_free_memory(Allocator &a)
    return true;
 }
 
+
+//This test uses tests grow and shrink_to_fit functions
+template<class Allocator>
+bool test_grow_shrink_to_fit(Allocator &a)
+{
+   std::vector<void*> buffers;
+
+   std::size_t original_size = a.get_size();
+   std::size_t original_free = a.get_free_memory();
+
+   a.shrink_to_fit();
+
+   if(!a.all_memory_deallocated() && a.check_sanity())
+      return false;
+
+   std::size_t shrunk_size          = a.get_size();
+   std::size_t shrunk_free_memory   = a.get_free_memory();
+   if(shrunk_size != a.get_min_size())
+      return 1;
+
+   a.grow(original_size - shrunk_size);
+
+   if(!a.all_memory_deallocated() && a.check_sanity())
+      return false;
+
+   if(original_size != a.get_size())
+      return false;
+   if(original_free != a.get_free_memory())
+      return false;
+
+   //Allocate memory
+   for(int i = 0; true; ++i){
+      void *ptr = a.allocate(i, std::nothrow);
+      if(!ptr)
+         break;
+      buffers.push_back(ptr);
+   }
+
+   //Now deallocate the half of the blocks
+   //so expand maybe can merge new free blocks
+   for(int i = 0, max = (int)buffers.size()
+      ;i < max
+      ;++i){
+      if(i%2){
+         a.deallocate(buffers[i]);
+         buffers[i] = 0;
+      }
+   }
+
+   //Deallocate the rest of the blocks
+
+   //Deallocate it in non sequential order
+   for(int j = 0, max = (int)buffers.size()
+      ;j < max
+      ;++j){
+      int pos = (j%4)*((int)buffers.size())/4;
+      std::size_t old_free = a.get_free_memory();
+      a.shrink_to_fit();
+      if(!a.check_sanity())   return false;
+      if(original_size < a.get_size())    return false;
+      if(old_free < a.get_free_memory())  return false;
+
+      a.grow(original_size - a.get_size());
+
+      if(!a.check_sanity())   return false;
+      if(original_size != a.get_size())         return false;
+      if(old_free      != a.get_free_memory())  return false;
+
+      a.deallocate(buffers[pos]);
+      buffers.erase(buffers.begin()+pos);
+   }
+
+   //Now shrink it to the maximum
+   a.shrink_to_fit();
+
+   if(a.get_size() != a.get_min_size())
+      return 1;
+
+   if(shrunk_free_memory != a.get_free_memory())
+      return 1;
+
+   if(!a.all_memory_deallocated() && a.check_sanity())
+      return false;
+
+   a.grow(original_size - shrunk_size);
+
+   if(original_size != a.get_size())
+      return false;
+   if(original_free != a.get_free_memory())
+      return false;
+
+   if(!a.all_memory_deallocated() && a.check_sanity())
+      return false;
+   return true;
+}
+
 //This test allocates multiple values until there is no more memory
 //and after that deallocates all in the inverse order
 template<class Allocator>
@@ -526,6 +623,8 @@ bool test_many_equal_allocation(Allocator &a)
          void *ptr = a.allocate(i, std::nothrow);
          if(!ptr)
             break;
+         if(!a.check_sanity())
+            return false;
          buffers2.push_back(ptr);
       }
 
@@ -539,6 +638,9 @@ bool test_many_equal_allocation(Allocator &a)
             buffers2[i] = 0;
          }
       }
+
+      if(!a.check_sanity())
+         return false;
 
       std::vector<void*> buffers;
       for(int i = 0; true; ++i){
@@ -554,6 +656,9 @@ bool test_many_equal_allocation(Allocator &a)
          if(n != std::size_t((i+1)*2))
             return false;
       }
+
+      if(!a.check_sanity())
+         return false;
 
       switch(t){
          case DirectDeallocation:
@@ -807,6 +912,15 @@ bool test_all_allocation(Allocator &a)
 
    if(!test_clear_free_memory(a)){
       std::cout << "test_clear_free_memory failed. Class: "
+                << typeid(a).name() << std::endl;
+      return false;
+   }
+
+   std::cout << "Starting test_grow_shrink_to_fit. Class: "
+             << typeid(a).name() << std::endl;
+
+   if(!test_grow_shrink_to_fit(a)){
+      std::cout << "test_grow_shrink_to_fit failed. Class: "
                 << typeid(a).name() << std::endl;
       return false;
    }
