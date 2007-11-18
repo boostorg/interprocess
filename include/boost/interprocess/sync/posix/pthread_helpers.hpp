@@ -111,7 +111,7 @@ namespace detail{
 
    #endif   //   #if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
 
-   #if defined BOOST_INTERPROCESS_POSIX_BARRIERS
+   #if defined(BOOST_INTERPROCESS_POSIX_BARRIERS) && defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)
 
    //!Makes pthread_barrierattr_t cleanup easy when using exceptions
    struct barrierattr_wrapper 
@@ -155,7 +155,7 @@ namespace detail{
       pthread_barrier_t *mp_barrier;
    };
 
-   #endif   //#if defined BOOST_INTERPROCESS_POSIX_BARRIERS
+   #endif   //#if defined(BOOST_INTERPROCESS_POSIX_BARRIERS) && defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)
 
 }//namespace detail
 

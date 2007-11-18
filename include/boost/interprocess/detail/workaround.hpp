@@ -14,22 +14,29 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 
 #if !(defined BOOST_WINDOWS) || (defined BOOST_DISABLE_WIN32)
-   #if defined(_POSIX_THREAD_PROCESS_SHARED) && (_POSIX_THREAD_PROCESS_SHARED - 0 > 0)
-   #if !defined(__CYGWIN__)
-      #define BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
-   #endif
-   #endif
 
-   #if defined(_POSIX_BARRIERS) && (_POSIX_BARRIERS - 0 > 0)
-      #define BOOST_INTERPROCESS_POSIX_BARRIERS
-   #endif   //
+   #if defined(_POSIX_THREAD_PROCESS_SHARED)
+   # if !((_XOPEN_VERSION >= 600) && (_POSIX_THREAD_PROCESS_SHARED - 0 <= 0))
+   #  if !defined(__CYGWIN__)
+   #  define BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+   #  endif
+   # endif
+   #endif 
 
-   #if defined(_POSIX_SEMAPHORES) && (_POSIX_SEMAPHORES - 0 > 0)
-      #define BOOST_INTERPROCESS_POSIX_SEMAPHORES
-      #if defined(__CYGWIN__)
-         #define BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK
-      #endif
-   #endif
+   #if defined(_POSIX_BARRIERS)
+   # if !((_XOPEN_VERSION >= 600) && (_POSIX_BARRIERS - 0 <= 0))
+   # define BOOST_INTERPROCESS_POSIX_BARRIERS
+   # endif
+   #endif 
+
+   #if defined(_POSIX_SEMAPHORES)
+   # if !((_XOPEN_VERSION >= 600) && (_POSIX_SEMAPHORES - 0 <= 0))
+   # define BOOST_INTERPROCESS_POSIX_SEMAPHORES
+   #  if defined(__CYGWIN__)
+      #define BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK
+   #  endif
+   # endif
+   #endif 
 
    #if ((defined _V6_ILP32_OFFBIG)  &&(_V6_ILP32_OFFBIG   - 0 > 0)) ||\
        ((defined _V6_LP64_OFF64)    &&(_V6_LP64_OFF64     - 0 > 0)) ||\
@@ -43,12 +50,32 @@
    #else
    #endif
 
-   #if defined(_POSIX_SHARED_MEMORY_OBJECTS) && (_POSIX_SHARED_MEMORY_OBJECTS - 0 > 0)
-      #define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
+   #if defined(_POSIX_SHARED_MEMORY_OBJECTS)
+   # if !((_XOPEN_VERSION >= 600) && (_POSIX_SHARED_MEMORY_OBJECTS - 0 <= 0))
+   # define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
+   # endif
+   #else
+   # if defined(__vms)
+   #  if __CRTL_VER >= 70200000
+   #  define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
+   #  endif
+   # endif 
    #endif
 
-   #if defined(_POSIX_TIMEOUTS) && (_POSIX_TIMEOUTS - 0 > 0)
-      #define BOOST_INTERPROCESS_POSIX_TIMEOUTS
+   #if defined(_POSIX_TIMEOUTS)
+   # if !((_XOPEN_VERSION >= 600) && (_POSIX_TIMEOUTS - 0 <= 0))
+   # define BOOST_INTERPROCESS_POSIX_TIMEOUTS
+   # endif
+   #endif 
+
+   #ifdef BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
+      //Some systems have filesystem-based shared memory, so the
+      //portable "/shmname" format does not work due to permission issues
+      //For those systems we need to form a path to a temporary directory:
+      //          hp-ux               tru64               vms
+      #if defined(__hpux) || defined(__osf__) || defined(__vms)
+      #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
+      #endif
    #endif
 
 #endif
@@ -68,80 +95,22 @@
 #if defined(BOOST_INTERPROCESS_RVALUE_REFERENCE) || defined(BOOST_INTERPROCESS_VARIADIC_TEMPLATES)
 #define BOOST_INTERPROCESS_PERFECT_FORWARDING
 #endif
-/*
-namespace boost {
-namespace interprocess {
-namespace workaround{
 
-//////////////////////////////////////////////////
-//                                              //
-//    We want generally const_shm_ptr to inherit//
-//    from iterator class but for void this     //
-//    doesn't work, so we must inherit from     //
-//    other class.                              //
-//                                              //
-//////////////////////////////////////////////////
+//Now declare some Boost.Interprocess features depending on the implementation
 
-//Empty class
-struct empty_type{};
+#if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
 
-template<class T>
-struct random_it 
-: public std::iterator<std::random_access_iterator_tag, 
-                         T, std::ptrdiff_t, T*, T&> 
-{
-   typedef const T*           const_pointer;
-   typedef const T&           const_reference;
-};
+#define BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES
 
-template<> struct random_it<void>
-{
-   typedef void *             pointer;
-   typedef const void *       const_pointer;
-   typedef empty_type&        reference;
-   typedef const empty_type&  const_reference;
-   typedef void               value_type;
-   typedef empty_type         difference_type;
-   typedef empty_type         iterator_category;
-};
+#endif
 
-template<> struct random_it<const void>
-{
-   typedef const void *       pointer;
-   typedef const void *       const_pointer;
-   typedef const empty_type & reference;
-   typedef const empty_type & const_reference;
-   typedef const void         value_type;
-   typedef empty_type         difference_type;
-   typedef empty_type         iterator_category;
-};
+#if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
 
-template<> struct random_it<volatile void>
-{
-   typedef volatile void *       pointer;
-   typedef const volatile void * const_pointer;
-   typedef empty_type&           reference;
-   typedef const empty_type&     const_reference;
-   typedef volatile void         value_type;
-   typedef empty_type            difference_type;
-   typedef empty_type            iterator_category;
-};
+#define BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES
+#define BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES
 
-template<> struct random_it<const volatile void>
-{
-   typedef const volatile void *    pointer;
-   typedef const volatile void *    const_pointer;
-   typedef const empty_type &       reference;
-   typedef const empty_type &       const_reference;
-   typedef const volatile void      value_type;
-   typedef empty_type               difference_type;
-   typedef empty_type               iterator_category;
-};
+#endif
 
-}  //namespace workaround
-}  //namespace interprocess {
-}  //namespace boost {
-*/
 #include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_INTERPROCESS_PTR_WRKRND_HPP

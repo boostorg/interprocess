@@ -22,7 +22,7 @@
 #include <boost/interprocess/sync/emulation/named_creation_functor.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
 
-#if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
+#if defined(BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
    #include <boost/interprocess/sync/posix/semaphore_wrapper.hpp>
 #else
    #include <boost/interprocess/shared_memory_object.hpp>
@@ -106,7 +106,7 @@ class named_mutex
    friend class detail::interprocess_tester;
    void dont_close_on_destruction();
 
-   #if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
+   #if defined(BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
    detail::named_semaphore_wrapper m_sem;
    #else
    interprocess_mutex *mutex() const
@@ -120,7 +120,7 @@ class named_mutex
 
 /// @cond
 
-#if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
+#if defined(BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
 
 inline named_mutex::named_mutex(create_only_t, const char *name)
    :  m_sem(detail::DoCreate, name, read_write, 1)

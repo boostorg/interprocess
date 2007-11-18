@@ -33,8 +33,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED &&\
-    defined BOOST_INTERPROCESS_POSIX_BARRIERS
+#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED && defined BOOST_INTERPROCESS_POSIX_BARRIERS
 #  include <pthread.h>
 #  include <errno.h>   
 #  include <boost/interprocess/sync/posix/pthread_helpers.hpp>

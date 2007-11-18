@@ -28,7 +28,6 @@
 #include <boost/interprocess/allocators/detail/node_tools.hpp>
 #include <memory>
 #include <algorithm>
-#include <stdio.h>
 #include <cstddef>
 
 //!\file

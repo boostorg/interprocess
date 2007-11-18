@@ -20,7 +20,7 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
-#include <limits.h>
+#include <climits>
 
 
 //!\file

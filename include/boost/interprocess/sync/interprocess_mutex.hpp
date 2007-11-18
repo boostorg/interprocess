@@ -34,7 +34,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-#include <assert.h>
+#include <cassert>
 
 #if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
    #include <pthread.h>

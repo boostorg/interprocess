@@ -35,7 +35,7 @@
 #include <utility>
 #include <fstream>
 #include <new>
-#include <assert.h>
+#include <cassert>
 
 //!\file
 //!Describes a named shared memory allocation user class. 

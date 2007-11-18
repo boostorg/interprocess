@@ -38,6 +38,7 @@
 #else
 #  ifdef BOOST_HAS_UNISTD_H
 #    include <errno.h>        //Errors
+#    include <cstring>        //strerror
 #  else  //ifdef BOOST_HAS_UNISTD_H
 #    error Unknown platform
 #  endif //ifdef BOOST_HAS_UNISTD_H

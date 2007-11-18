@@ -55,7 +55,6 @@ class named_creation_functor
             return false;
          break;
       }
-      return true;
    }
    private:
    detail::create_enum_t m_creation_type;

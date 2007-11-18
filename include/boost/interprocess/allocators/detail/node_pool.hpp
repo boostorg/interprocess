@@ -28,7 +28,7 @@
 #include <cstddef>
 #include <functional>
 #include <algorithm>
-#include <assert.h>
+#include <cassert>
 
 //!\file
 //!Describes the real adaptive pool shared by many Interprocess adaptive pool allocators
@@ -77,6 +77,9 @@ class private_node_pool_impl
    //!Destructor. Deallocates all allocated chunks. Never throws
    ~private_node_pool_impl()
    {  priv_clear();  }
+
+   std::size_t get_real_num_node() const
+   {  return m_nodes_per_chunk; }
 
    //!Returns the segment manager. Never throws
    segment_manager_base_type* get_segment_manager_base()const

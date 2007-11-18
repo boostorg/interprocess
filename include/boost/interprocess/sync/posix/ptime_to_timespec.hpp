@@ -12,7 +12,6 @@
 #define BOOST_INTERPROCESS_DETAIL_PTIME_TO_TIMESPEC_HPP
 
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-#include <time.h>
 
 namespace boost {
 

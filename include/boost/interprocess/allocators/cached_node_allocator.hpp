@@ -27,7 +27,6 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <memory>
 #include <algorithm>
-#include <stdio.h>
 #include <cstddef>
 
 //!\file

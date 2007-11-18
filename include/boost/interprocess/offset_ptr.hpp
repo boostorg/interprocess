@@ -322,7 +322,6 @@ inline void swap (boost::interprocess::offset_ptr<T> &pt,
    pt2 = ptr;
 }
 
-
 //!Simulation of static_cast between pointers. Never throws.
 template<class T, class U> 
 inline boost::interprocess::offset_ptr<T> 
@@ -407,7 +406,7 @@ struct has_pointer_plus_bit;
 template<std::size_t N>
 struct has_pointer_plus_bit<boost::interprocess::offset_ptr<void>, N>
 {
-   enum  {  value = (N % 4u) == 0  };
+   static const bool value = (N % 4u == 0);
 };
 
 //Predeclaration
@@ -431,6 +430,41 @@ struct pointer_plus_bit<boost::interprocess::offset_ptr<T> >
 
    static void set_bit(pointer &n, bool c)
    {  n = (T*)(std::size_t(get_pointer(n).get()) | (std::size_t(c) << 1u));  }
+};
+
+//Predeclaration to avoid including header
+template<class VoidPointer, std::size_t N>
+struct has_pointer_plus_2_bits;
+
+template<std::size_t N>
+struct has_pointer_plus_2_bits<boost::interprocess::offset_ptr<void>, N>
+{
+   static const bool value = (N % 8u == 0);
+};
+
+//Predeclaration
+template<class Pointer>
+struct pointer_plus_2_bits;
+
+template<class T>
+struct pointer_plus_2_bits<boost::interprocess::offset_ptr<T> >
+{
+   typedef boost::interprocess::offset_ptr<T>         pointer;
+
+   static pointer get_pointer(const pointer &n)
+   {  return (T*)(std::size_t(n.get()) & ~std::size_t(6u));  }
+
+   static void set_pointer(pointer &n, pointer p)
+   {  n = (T*)(std::size_t(p.get()) | (std::size_t(n.get()) & std::size_t(6u))); }
+
+   static std::size_t get_bits(const pointer &n)
+   {  return(std::size_t(n.get()) & std::size_t(6u)) >> 1u;  }
+
+   static void set_bits(pointer &n, std::size_t b)
+   {
+      assert(b < 4);
+      n = (T*)(std::size_t(get_pointer(n).get()) | (b << 1u));
+   }
 };
 
 }  //namespace intrusive

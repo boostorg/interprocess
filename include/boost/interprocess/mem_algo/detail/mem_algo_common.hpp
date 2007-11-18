@@ -126,11 +126,17 @@ class memory_algorithm_common
    static const std::size_t BlockCtrlBytes      = MemoryAlgorithm::BlockCtrlBytes;
    static const std::size_t BlockCtrlUnits      = MemoryAlgorithm::BlockCtrlUnits;
 
-   static void check_alignment(const void *ptr)
+   static void assert_alignment(const void *ptr)
+   {  assert_alignment((std::size_t)ptr); }
+
+   static void assert_alignment(std::size_t uint_ptr)
    {
-      (void)ptr;
-      BOOST_ASSERT(((std::size_t)ptr) % Alignment == 0);
+      (void)uint_ptr;
+      BOOST_ASSERT(uint_ptr % Alignment == 0);
    }
+
+   static bool check_alignment(const void *ptr)
+   {  return (((std::size_t)ptr) % Alignment == 0);   }
 
    static std::size_t ceil_units(std::size_t size)
    {  return detail::get_rounded_size(size, Alignment)/Alignment; }
@@ -174,7 +180,7 @@ class memory_algorithm_common
       //We can find a aligned portion if we allocate a chunk that has alignment
       //nbytes + alignment bytes or more.
       std::size_t minimum_allocation = max_value
-         ( nbytes + alignment, std::size_t(MinBlockUnits*Alignment));
+         (nbytes + alignment, std::size_t(MinBlockUnits*Alignment));
       //Since we will split that chunk, we must request a bit more memory
       //if the alignment is near the beginning of the buffer, because otherwise,
       //there is no space for a new chunk before the alignment.
@@ -185,7 +191,7 @@ class memory_algorithm_common
       // | MBU | 
       //  -----------------------------------------------------
       std::size_t request = 
-         minimum_allocation + (MinBlockUnits*Alignment - AllocatedCtrlBytes);
+         minimum_allocation + (2*MinBlockUnits*Alignment - AllocatedCtrlBytes);
 
       //Now allocate the buffer
       void *buffer = memory_algo->priv_allocate(allocate_new, request, request, real_size).first;
@@ -232,7 +238,9 @@ class memory_algorithm_common
       //Now obtain the address of the blocks
       block_ctrl *first  = memory_algo->priv_get_block(buffer);
       block_ctrl *second = memory_algo->priv_get_block(pos);
-
+      assert(pos <= ((char*)first + first->m_size*Alignment));
+      assert(first->m_size >= 2*MinBlockUnits);
+      assert((pos + MinBlockUnits*Alignment - AllocatedCtrlBytes + nbytes*Alignment/Alignment) <= ((char*)first + first->m_size*Alignment));
       //Set the new size of the first block
       std::size_t old_size = first->m_size;
       first->m_size  = ((char*)second - (char*)first)/Alignment;
@@ -264,6 +272,7 @@ class memory_algorithm_common
       }
       else{
          second->m_size = old_size - first->m_size;
+         assert(second->m_size >= MinBlockUnits);
          memory_algo->priv_mark_new_allocated_block(second);
       }
 
@@ -284,7 +293,7 @@ class memory_algorithm_common
       BOOST_ASSERT(memory_algo->priv_is_allocated_block(block));
 
       //Check if alignment and block size are right
-      check_alignment(ptr);
+      assert_alignment(ptr);
 
       //Put this to a safe value
       received_size = (old_block_units - AllocatedCtrlUnits)*Alignment;
@@ -374,19 +383,22 @@ class memory_algorithm_common
 
       //Calculate the total size of all requests
       std::size_t total_request_units = 0;
-      std::size_t elem_units;
+      std::size_t elem_units = 0;
+      const std::size_t ptr_size_units = memory_algo->priv_get_total_units(sizeof(multi_allocation_next_ptr));
       if(!sizeof_element){
          elem_units = memory_algo->priv_get_total_units(*elem_sizes);
+         elem_units = ptr_size_units > elem_units ? ptr_size_units : elem_units;
          total_request_units = n_elements*elem_units;
       }
       else{
          for(std::size_t i = 0; i < n_elements; ++i){
             elem_units = memory_algo->priv_get_total_units(elem_sizes[i]*sizeof_element);
+            elem_units = ptr_size_units > elem_units ? ptr_size_units : elem_units;
             total_request_units += elem_units;
          }
       }
 
-      multi_allocation_next_ptr first = 0, previous;
+      multi_allocation_next_ptr first = 0, previous = 0;
       std::size_t low_idx = 0;
       while(low_idx < n_elements){
          std::size_t total_bytes = total_request_units*Alignment - AllocatedCtrlBytes;
@@ -410,12 +422,14 @@ class memory_algorithm_common
          while(total_used_units < received_units){
             if(sizeof_element){
                elem_units = memory_algo->priv_get_total_units(elem_sizes[low_idx]*sizeof_element);
+               elem_units = ptr_size_units > elem_units ? ptr_size_units : elem_units;
             }
             if(total_used_units + elem_units > received_units)
                break;
             total_request_units -= elem_units;
             //This is the position where the new block must be created
             block_ctrl *new_block = new(block_address)block_ctrl;
+            assert_alignment(new_block);
 
             //The last block should take all the remaining space
             if((low_idx + 1) == n_elements ||
@@ -457,7 +471,10 @@ class memory_algorithm_common
 
             block_address += new_block->m_size*Alignment;
             total_used_units += new_block->m_size;
+            //Check we have enough room to overwrite the intrusive pointer
+            assert((new_block->m_size*Alignment - AllocatedCtrlUnits) >= sizeof(multi_allocation_next_t));
             multi_allocation_next_ptr p = new(memory_algo->priv_get_user_buffer(new_block))multi_allocation_next_t(0);
+      
             if(!first){
                first = p;
             }
@@ -482,7 +499,6 @@ class memory_algorithm_common
       else{
          return multiallocation_iterator(first);
       }
-      return multiallocation_iterator(first);
    }
 };
 

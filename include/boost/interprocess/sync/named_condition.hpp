@@ -24,7 +24,7 @@
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/emulation/named_creation_functor.hpp>
-#if defined BOOST_INTERPROCESS_POSIX_SEMAPHORES && defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+#if defined BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #endif
@@ -119,7 +119,7 @@ class named_condition
       interprocess_condition cond_;
       //If named_mutex is implemented using semaphores
       //we need to store an additional mutex
-      #if defined BOOST_INTERPROCESS_POSIX_SEMAPHORES && defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+      #if defined (BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
       interprocess_mutex mutex_;
       #endif
    };
@@ -139,7 +139,7 @@ class named_condition
       void unlock()  {   l_.lock();     }
    };
 
-   #if defined BOOST_INTERPROCESS_POSIX_SEMAPHORES && defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+   #if defined (BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
    interprocess_mutex *mutex() const
    {  return &static_cast<condition_holder*>(m_shmem.get_user_address())->mutex_; }
 
@@ -210,7 +210,7 @@ inline named_condition::named_condition(open_only_t, const char *name)
 inline void named_condition::dont_close_on_destruction()
 {  detail::interprocess_tester::dont_close_on_destruction(m_shmem);  }
 
-#if defined BOOST_INTERPROCESS_POSIX_SEMAPHORES && defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+#if defined(BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
 
 inline void named_condition::notify_one()
 {

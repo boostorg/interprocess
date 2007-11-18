@@ -276,7 +276,7 @@ struct node_alloc_holder
       multiallocation_iterator itbeg =
          this->node_alloc().allocate_individual(n), itend, itold;
       int constructed = 0;
-      Node *p;
+      Node *p = 0;
       BOOST_TRY{
          for(difference_type i = 0; i < n; ++i, ++beg, --constructed){
             p = &*itbeg;

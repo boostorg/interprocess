@@ -31,8 +31,7 @@
 #include <algorithm>
 #include <utility>
 #include <cstring>
-
-#include <assert.h>
+#include <cassert>
 #include <new>
 
 //!\file
@@ -104,6 +103,8 @@ class simple_seq_fit_impl
       std::size_t       m_allocated;
       //!The size of the memory segment
       std::size_t       m_size;
+      //!The extra size required by the segment
+      std::size_t       m_extra_hdr_bytes;
    }  m_header;
 
    friend class detail::basic_multiallocation_iterator<void_pointer>;
@@ -149,6 +150,9 @@ class simple_seq_fit_impl
 
    //!Increases managed memory in extra_size bytes more
    void grow(std::size_t extra_size);
+
+   //!Decreases managed memory as much as possible
+   void shrink_to_fit();
 
    //!Returns true if all allocated memory has been deallocated
    bool all_memory_deallocated();
@@ -199,6 +203,9 @@ class simple_seq_fit_impl
    //!of "userbytes" bytes really occupies (including header)
    static std::size_t priv_get_total_units(std::size_t userbytes);
 
+   static std::size_t priv_first_block_offset(const void *this_ptr, std::size_t extra_hdr_bytes);
+   std::size_t priv_block_end_offset() const;
+
    //!Returns next block if it's free.
    //!Returns 0 if next block is not free.
    block_ctrl *priv_next_block_if_free(block_ctrl *ptr);
@@ -242,7 +249,7 @@ class simple_seq_fit_impl
 
    static const std::size_t Alignment      = detail::alignment_of<detail::max_align>::value;
    static const std::size_t BlockCtrlBytes = detail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value;
-   static const std::size_t BlockCtrlUnits  = BlockCtrlBytes/Alignment;
+   static const std::size_t BlockCtrlUnits = BlockCtrlBytes/Alignment;
    static const std::size_t MinBlockUnits  = BlockCtrlUnits;
    static const std::size_t MinBlockSize   = MinBlockUnits*Alignment;
    static const std::size_t AllocatedCtrlBytes = BlockCtrlBytes;
@@ -253,17 +260,49 @@ class simple_seq_fit_impl
 };
 
 template<class MutexFamily, class VoidPointer>
+inline std::size_t simple_seq_fit_impl<MutexFamily, VoidPointer>
+   ::priv_first_block_offset(const void *this_ptr, std::size_t extra_hdr_bytes)
+{
+   //First align "this" pointer
+   std::size_t uint_this         = (std::size_t)this_ptr;
+   std::size_t uint_aligned_this = uint_this/Alignment*Alignment;
+   std::size_t this_disalignment = (uint_this - uint_aligned_this);
+   std::size_t block1_off = 
+      detail::get_rounded_size(sizeof(simple_seq_fit_impl) + extra_hdr_bytes + this_disalignment, Alignment)
+      - this_disalignment;
+   algo_impl_t::assert_alignment(this_disalignment + block1_off);
+   return block1_off;
+}
+
+template<class MutexFamily, class VoidPointer>
+inline std::size_t simple_seq_fit_impl<MutexFamily, VoidPointer>
+   ::priv_block_end_offset() const
+{
+   //First align "this" pointer
+   std::size_t uint_this         = (std::size_t)this;
+   std::size_t uint_aligned_this = uint_this/Alignment*Alignment;
+   std::size_t this_disalignment = (uint_this - uint_aligned_this);
+   std::size_t old_end = 
+      detail::get_truncated_size(m_header.m_size + this_disalignment, Alignment)
+      - this_disalignment;
+   algo_impl_t::assert_alignment(old_end + this_disalignment);
+   return old_end;
+}
+
+template<class MutexFamily, class VoidPointer>
 inline simple_seq_fit_impl<MutexFamily, VoidPointer>::
    simple_seq_fit_impl(std::size_t size, std::size_t extra_hdr_bytes)
 {
    //Initialize sizes and counters
    m_header.m_allocated = 0;
    m_header.m_size      = size;
+   m_header.m_extra_hdr_bytes = extra_hdr_bytes;
 
    //Initialize pointers
-   std::size_t block1_off  = detail::get_rounded_size(sizeof(*this)+extra_hdr_bytes, Alignment);
+   std::size_t block1_off = priv_first_block_offset(this, extra_hdr_bytes);
    m_header.m_root.m_next  = reinterpret_cast<block_ctrl*>
                               (detail::char_ptr_cast(this) + block1_off);
+   algo_impl_t::assert_alignment(detail::get_pointer(m_header.m_root.m_next));
    m_header.m_root.m_next->m_size  = (size - block1_off)/Alignment;
    m_header.m_root.m_next->m_next  = &m_header.m_root;
 }
@@ -278,9 +317,9 @@ inline simple_seq_fit_impl<MutexFamily, VoidPointer>::~simple_seq_fit_impl()
 
 template<class MutexFamily, class VoidPointer>
 inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::grow(std::size_t extra_size)
-{  
+{
    //Old highest address block's end offset
-   std::size_t old_end = m_header.m_size/Alignment*Alignment;
+   std::size_t old_end = this->priv_block_end_offset();
 
    //Update managed buffer's size
    m_header.m_size += extra_size;
@@ -294,10 +333,65 @@ inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::grow(std::size_t extr
    block_ctrl *new_block = reinterpret_cast<block_ctrl*>
                               (detail::char_ptr_cast(this) + old_end);
 
+   algo_impl_t::assert_alignment(new_block);
    new_block->m_next = 0;
    new_block->m_size = (m_header.m_size - old_end)/Alignment;
    m_header.m_allocated += new_block->m_size*Alignment;
    this->priv_deallocate(priv_get_user_buffer(new_block));
+}
+
+template<class MutexFamily, class VoidPointer>
+void simple_seq_fit_impl<MutexFamily, VoidPointer>::shrink_to_fit()
+{
+   //Get the root and the first memory block
+   block_ctrl *prev                 = &m_header.m_root;
+   block_ctrl *last                 = &m_header.m_root;
+   block_ctrl *block                = detail::get_pointer(last->m_next);
+   block_ctrl *root                 = &m_header.m_root;
+
+   //No free block?
+   if(block == root) return;
+
+   //Iterate through the free block list
+   while(block != root){
+      prev  = last;
+      last  = block;
+      block = detail::get_pointer(block->m_next);
+   }
+
+   char *last_free_end_address   = (char*)last + last->m_size*Alignment;
+   if(last_free_end_address != ((char*)this + priv_block_end_offset())){
+      //there is an allocated block in the end of this block
+      //so no shrinking is possible
+      return;
+   }
+
+   //Check if have only 1 big free block
+   void *unique_block = 0;
+   if(!m_header.m_allocated){
+      assert(prev == root);
+      std::size_t ignore;
+      unique_block = priv_allocate(allocate_new, 0, 0, ignore).first;
+      if(!unique_block)
+         return;
+      last = detail::get_pointer(m_header.m_root.m_next);
+      assert(last_free_end_address == ((char*)last + last->m_size*Alignment));
+   }
+   std::size_t last_units = last->m_size;
+
+   std::size_t received_size;
+   void *addr = priv_check_and_allocate(last_units, prev, last, received_size);
+   assert(addr);
+   assert(received_size == last_units*Alignment - AllocatedCtrlBytes);
+   
+   //Shrink it
+   m_header.m_size /= Alignment;
+   m_header.m_size -= last->m_size;
+   m_header.m_size *= Alignment;
+   m_header.m_allocated -= last->m_size*Alignment;
+
+   if(unique_block)
+      priv_deallocate(unique_block);
 }
 
 template<class MutexFamily, class VoidPointer>
@@ -324,6 +418,7 @@ void *simple_seq_fit_impl<MutexFamily, VoidPointer>::
 template<class MutexFamily, class VoidPointer>
 inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_add_segment(void *addr, std::size_t size)
 {  
+   algo_impl_t::assert_alignment(addr);
    //Check size
    assert(!(size < MinBlockSize));
    if(size < MinBlockSize)
@@ -346,15 +441,15 @@ template<class MutexFamily, class VoidPointer>
 inline std::size_t simple_seq_fit_impl<MutexFamily, VoidPointer>::get_free_memory()  const
 {
    return m_header.m_size - m_header.m_allocated - 
-      ((char*)detail::get_pointer(m_header.m_root.m_next) - (char*)this);
+      algo_impl_t::multiple_of_units(sizeof(*this) + m_header.m_extra_hdr_bytes);
 }
 
 template<class MutexFamily, class VoidPointer>
 inline std::size_t simple_seq_fit_impl<MutexFamily, VoidPointer>::
    get_min_size (std::size_t extra_hdr_bytes)
 {
-   return detail::get_rounded_size(sizeof(simple_seq_fit_impl)+extra_hdr_bytes
-                                  ,Alignment)
+   return detail::get_rounded_size(sizeof(simple_seq_fit_impl),Alignment) +
+          detail::get_rounded_size(extra_hdr_bytes,Alignment)
           + MinBlockSize;
 }
 
@@ -400,7 +495,10 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
    std::size_t free_memory = 0;
 
    //Iterate through all blocks obtaining their size
-   do{
+   while(block != &m_header.m_root){
+      algo_impl_t::assert_alignment(block);
+      if(!algo_impl_t::check_alignment(block))
+         return false;
       //Free blocks's next must be always valid
       block_ctrl *next = detail::get_pointer(block->m_next);
       if(!next){
@@ -409,7 +507,6 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
       free_memory += block->m_size*Alignment;
       block = next;
    }
-   while(block != &m_header.m_root);
 
    //Check allocated bytes are less than size
    if(m_header.m_allocated > m_header.m_size){
@@ -648,8 +745,10 @@ std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
    if(reuse_ptr && (command & (expand_fwd | expand_bwd))){
       void *ret = priv_expand_both_sides
          (command, limit_size, preferred_size, received_size, reuse_ptr, true);
-      if(ret)
+      if(ret){
+         algo_impl_t::assert_alignment(ret);
          return return_type(ret, true);
+      }
    }
 
    if(command & allocate_new){
@@ -661,8 +760,12 @@ std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
             biggest_size  = block->m_size;
             biggest_block = block;
          }
+         algo_impl_t::assert_alignment(block);
          void *addr = this->priv_check_and_allocate(nunits, prev, block, received_size);
-         if(addr) return return_type(addr, false);
+         if(addr){
+            algo_impl_t::assert_alignment(addr);
+            return return_type(addr, false);
+         }
          //Bad luck, let's check next block
          prev  = block;
          block = detail::get_pointer(block->m_next);
@@ -679,13 +782,16 @@ std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
          void *ret = this->priv_check_and_allocate
             (biggest_block->m_size, prev_biggest_block, biggest_block, received_size);
          assert(ret != 0);
+         algo_impl_t::assert_alignment(ret);
          return return_type(ret, false);
       }
    }
    //Now try to expand both sides with min size
    if(reuse_ptr && (command & (expand_fwd | expand_bwd))){
-      return return_type(priv_expand_both_sides
+      return_type ret (priv_expand_both_sides
          (command, limit_size, preferred_size, received_size, reuse_ptr, false), true);
+      algo_impl_t::assert_alignment(ret.first);
+      return ret;
    }
    return return_type(0, false);
 }
@@ -837,8 +943,8 @@ void* simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_check_and_allocate
 
    if (block->m_size > upper_nunits){
       //This block is bigger than needed, split it in 
-      //two blocks, the first's size will be (block->m_size-units)
-      //the second's size (units)
+      //two blocks, the first's size will be "units"
+      //the second's size will be "block->m_size-units"
       std::size_t total_size = block->m_size;
       block->m_size  = nunits;
       block_ctrl *new_block = reinterpret_cast<block_ctrl*>
@@ -863,8 +969,7 @@ void* simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_check_and_allocate
       //Mark the block as allocated
       block->m_next = 0;
       //Check alignment
-      assert(((detail::char_ptr_cast(block) - detail::char_ptr_cast(this))
-               % Alignment) == 0 );
+      algo_impl_t::assert_alignment(block);
       return priv_get_user_buffer(block);
    }
    return 0;
@@ -897,8 +1002,7 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_deallocate(void* addr)
    assert(block->m_next == 0);
 
    //Check if alignment and block size are right
-   assert((detail::char_ptr_cast(addr) - detail::char_ptr_cast(this))
-            % Alignment == 0 );
+   algo_impl_t::assert_alignment(addr);
 
    std::size_t total_size = Alignment*block->m_size;
    assert(m_header.m_allocated >= total_size);

@@ -30,7 +30,7 @@
 #include <cstddef>
 #include <cmath>
 #include <cassert>
-#include <assert.h>
+#include <cassert>
 
 //!\file
 //!Describes the real adaptive pool shared by many Interprocess pool allocators
@@ -102,6 +102,9 @@ class private_adaptive_node_pool_impl
    ~private_adaptive_node_pool_impl()
    {  priv_clear();  }
 
+   std::size_t get_real_num_node() const
+   {  return m_real_num_node; }
+
    //!Returns the segment manager. Never throws
    segment_manager_base_type* get_segment_manager_base()const
    {  return detail::get_pointer(mp_segment_mngr_base);  }
@@ -162,7 +165,7 @@ class private_adaptive_node_pool_impl
       std::size_t count = 0;
       citerator it (m_first_free_chunk), itend(m_chunklist.end());
       for(; it != itend; ++it){
-         count += it->size();
+         count += it->free_nodes.size();
       }
       return count;
    }

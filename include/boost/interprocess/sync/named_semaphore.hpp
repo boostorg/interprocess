@@ -22,7 +22,7 @@
 #include <boost/interprocess/detail/interprocess_tester.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
-#if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
+#if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
 #include <boost/interprocess/sync/posix/semaphore_wrapper.hpp>
 #else
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -107,7 +107,7 @@ class named_semaphore
    friend class detail::interprocess_tester;
    void dont_close_on_destruction();
 
-   #if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
+   #if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
    detail::named_semaphore_wrapper m_sem;
    #else
    interprocess_semaphore *semaphore() const
@@ -121,7 +121,7 @@ class named_semaphore
 
 /// @cond
 
-#if defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
+#if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
 
 inline named_semaphore::named_semaphore
    (create_only_t, const char *name, int initialCount)

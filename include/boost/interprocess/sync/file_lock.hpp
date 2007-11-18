@@ -18,7 +18,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <assert.h>
+#include <cassert>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 

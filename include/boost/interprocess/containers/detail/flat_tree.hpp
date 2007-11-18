@@ -147,7 +147,7 @@ class flat_tree
    { }
 
    flat_tree&  operator=(const flat_tree& x)
-   {  flat_tree(x).swap(*this); return *this;  }
+   {  m_data = x.m_data;   return *this;  }
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_tree&  operator=(const detail::moved_object<flat_tree>& mx)
