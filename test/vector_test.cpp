@@ -31,7 +31,6 @@
 #include "dummy_test_allocator.hpp"
 #include <string>
 #include "get_process_id_name.hpp"
-#include <boost/utility.hpp>
 
 using namespace boost::interprocess;
 
@@ -142,11 +141,12 @@ bool do_test()
          }
          if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
 
-         typename MyShmVector::iterator it;
-         typename MyShmVector::const_iterator cit = it;
-
-         shmvector->erase(boost::next(shmvector->begin()));
-         stdvector->erase(boost::next(stdvector->begin()));
+         typename MyShmVector::iterator shmit(shmvector->begin());
+         typename MyStdVector::iterator stdit(stdvector->begin());
+         typename MyShmVector::const_iterator cshmit = shmit;
+         ++shmit; ++stdit;
+         shmvector->erase(shmit);
+         stdvector->erase(stdit);
          if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
 
          shmvector->erase(shmvector->begin());

@@ -411,6 +411,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_managed_grow", "doc_man
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "offset_ptr_test", "offset_ptr_test.vcproj", "{5CE11C83-096A-84FE-4FA2-D3A6BA792002}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -831,6 +835,10 @@ Global
 		{818C43EE-3561-F3AE-4FD7-8A2076E76A31}.Debug.Build.0 = Debug|Win32
 		{818C43EE-3561-F3AE-4FD7-8A2076E76A31}.Release.ActiveCfg = Release|Win32
 		{818C43EE-3561-F3AE-4FD7-8A2076E76A31}.Release.Build.0 = Release|Win32
+		{5CE11C83-096A-84FE-4FA2-D3A6BA792002}.Debug.ActiveCfg = Debug|Win32
+		{5CE11C83-096A-84FE-4FA2-D3A6BA792002}.Debug.Build.0 = Debug|Win32
+		{5CE11C83-096A-84FE-4FA2-D3A6BA792002}.Release.ActiveCfg = Release|Win32
+		{5CE11C83-096A-84FE-4FA2-D3A6BA792002}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
