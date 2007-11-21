@@ -63,14 +63,15 @@ class offset_ptr
    #if defined(_MSC_VER) && (_MSC_VER >= 1400)
    __declspec(noinline)
    #endif
-   void set_offset(const void *ptr)
+   void set_offset(const volatile void *ptr)
    {
+      const char *p = static_cast<const char*>(const_cast<const void*>(ptr));
       //offset == 1 && ptr != 0 is not legal for this pointer
       if(!ptr){
          m_offset = 1;
       }
       else{
-         m_offset = detail::char_ptr_cast(ptr) - detail::char_ptr_cast(this);
+         m_offset = p - detail::char_ptr_cast(this);
          BOOST_ASSERT(m_offset != 1);
       }
    }

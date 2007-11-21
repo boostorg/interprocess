@@ -241,7 +241,7 @@ class repeat_iterator
    repeat_iterator()
       :  m_ptr(0), m_num(0){}
 
-   repeat_iterator& operator++() 
+   this_type& operator++() 
    { increment();   return *this;   }
    
    this_type operator++(int)

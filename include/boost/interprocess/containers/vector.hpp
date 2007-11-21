@@ -408,8 +408,8 @@ class vector : private detail::vector_alloc_holder<A>
    typedef typename base_t::alloc_version          alloc_version;
 
    typedef constant_iterator<T, difference_type>   cvalue_iterator;
-   typedef repeat_iterator<T, difference_type>     rp_iterator;
-   typedef detail::move_iterator<rp_iterator>      repeat_move_it;
+   typedef repeat_iterator<T, difference_type>     repeat_it;
+   typedef detail::move_iterator<repeat_it>        repeat_move_it;
    //This is the anti-exception array destructor
    //to deallocate values already constructed
    typedef typename detail::if_c
@@ -961,8 +961,8 @@ class vector : private detail::vector_alloc_holder<A>
       //Just call more general insert(pos, size, value) and return iterator
       size_type n = position - begin();
       this->insert(position
-                  ,repeat_move_it(rp_iterator(mx.get(), 1))
-                  ,repeat_move_it(rp_iterator()));
+                  ,repeat_move_it(repeat_it(mx.get(), 1))
+                  ,repeat_move_it(repeat_it()));
       return iterator(this->members_.m_start + n);
    }
    #else
@@ -971,8 +971,8 @@ class vector : private detail::vector_alloc_holder<A>
       //Just call more general insert(pos, size, value) and return iterator
       size_type n = position - begin();
       this->insert(position
-                  ,repeat_move_it(rp_iterator(mx, 1))
-                  ,repeat_move_it(rp_iterator()));
+                  ,repeat_move_it(repeat_it(mx, 1))
+                  ,repeat_move_it(repeat_it()));
       return iterator(this->members_.m_start + n);
    }
    #endif
