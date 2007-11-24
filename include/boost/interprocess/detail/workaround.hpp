@@ -78,6 +78,16 @@
       #endif
    #endif
 
+   #ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
+      //Some systems have filesystem-based shared memory, so the
+      //portable "/semname" format does not work due to permission issues
+      //For those systems we need to form a path to a temporary directory:
+      //          hp-ux               tru64               vms
+      #if defined(__hpux) || defined(__osf__) || defined(__vms)
+      #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SEMAPHORES
+      #endif
+   #endif
+
 #endif
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)

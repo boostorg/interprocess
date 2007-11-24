@@ -15,8 +15,15 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
+#include <boost/interprocess/detail/tmp_dir_helpers.hpp>
 #include <string>
 #include <semaphore.h>
+
+#ifdef SEM_FAILED
+#define BOOST_INTERPROCESS_POSIX_SEM_FAILED SEM_FAILED
+#else
+#define BOOST_INTERPROCESS_POSIX_SEM_FAILED ((sem_t*)(-1))
+#endif
 
 #ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
 #include <boost/interprocess/sync/posix/ptime_to_timespec.hpp>
@@ -37,14 +44,12 @@ inline bool semaphore_open
    (sem_t *&handle, detail::create_enum_t type, const char *origname, mode_t mode,
     unsigned int count)
 {
-   bool slash_added = origname[0] != '/';
-   //First add preceding "/"
    std::string name;
-
-   if(slash_added){
-      name = '/';
-   }
-   name += origname;
+   #ifndef BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SEMAPHORES
+   detail::add_leading_slash(origname, name);
+   #else
+   detail::create_tmp_dir_and_get_filename(origname, name);
+   #endif
 
    //Create new mapping
    int oflag = 0;
@@ -83,12 +88,8 @@ inline bool semaphore_open
       handle = sem_open(name.c_str(), oflag);
 
    //Check for error
-   if(handle == SEM_FAILED){
+   if(handle == BOOST_INTERPROCESS_POSIX_SEM_FAILED){
       throw interprocess_exception(error_info(errno));
-   }
-
-   if(slash_added){
-      name.erase(name.begin());
    }
 
    return true;
@@ -102,16 +103,16 @@ inline void semaphore_close(sem_t *handle)
    }
 }
 
-inline bool semaphore_unlink(const char *name)
+inline bool semaphore_unlink(const char *semname)
 {
    try{
-      std::string str;
-      //First add preceding "/"
-      if(name[0] != '/'){
-         str = '/';
-      }
-      str += name;
-      return 0 != sem_unlink(str.c_str());
+      std::string sem_str;
+      #ifndef BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SEMAPHORES
+      detail::add_leading_slash(semname, sem_str);
+      #else
+      detail::tmp_filename(semname, sem_str);
+      #endif
+      return 0 != sem_unlink(sem_str.c_str());
    }
    catch(...){
       return false;
@@ -121,7 +122,10 @@ inline bool semaphore_unlink(const char *name)
 inline void semaphore_init(sem_t *handle, int initialCount)
 {
    int ret = sem_init(handle, 1, initialCount);
-   if(ret != 0){
+   //According to SUSV3 version 2003 edition, the return value of a successful
+   //sem_init call is not defined, but -1 is returned on failure.
+   //In the future, a successful call might be required to return 0.
+   if(ret == -1){
       throw interprocess_exception(system_error_code());
    }
 }
@@ -190,14 +194,7 @@ inline bool semaphore_timed_wait(sem_t *handle, const boost::posix_time::ptime &
    return false;
    #endif   //#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
 }
-/*
-inline int semaphore_get_count(sem_t *handle)
-{
-   int count;
-   sem_getvalue(handle, &ret);
-   return count;
-}
-*/
+
 
 class named_semaphore_wrapper
 {
@@ -212,7 +209,7 @@ class named_semaphore_wrapper
 
    ~named_semaphore_wrapper()
    {
-      if(mp_sem != SEM_FAILED)
+      if(mp_sem != BOOST_INTERPROCESS_POSIX_SEM_FAILED)
          semaphore_close(mp_sem);
    }
 
@@ -234,7 +231,7 @@ class named_semaphore_wrapper
    private:
    friend class detail::interprocess_tester;
    void dont_close_on_destruction()
-   {  mp_sem = SEM_FAILED; }
+   {  mp_sem = BOOST_INTERPROCESS_POSIX_SEM_FAILED; }
 
    sem_t      *mp_sem;
 };
@@ -271,5 +268,7 @@ class semaphore_wrapper
 }  //namespace detail {
 }  //namespace interprocess {
 }  //namespace boost {
+
+#undef BOOST_INTERPROCESS_POSIX_SEM_FAILED
 
 #endif   //#ifndef BOOST_INTERPROCESS_POSIX_SEMAPHORE_WRAPPER_HPP

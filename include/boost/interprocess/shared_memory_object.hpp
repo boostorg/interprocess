@@ -19,6 +19,7 @@
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
+#include <boost/interprocess/detail/tmp_dir_helpers.hpp>
 #include <cstddef>
 #include <string>
 #include <cstdio>    //std::remove
@@ -30,7 +31,7 @@
 #  include <unistd.h>       //ftruncate, close
 #  include <sys/stat.h>     //mode_t, S_IRWXG, S_IRWXO, S_IRWXU,
 #else
-#  include<boost/interprocess/detail/os_file_functions.hpp>
+//
 #endif
 
 //!\file
@@ -140,14 +141,6 @@ class shared_memory_object
    //!Closes a previously opened file mapping. Never throws.
    void priv_close();
 
-   //!Create a temporary file name
-   static void priv_tmp_filename(const char *name, std::string &tmp_name);
-
-   //!Create a temporary file name
-   static void priv_create_tmp_dir_and_get_filename(const char *name, std::string &tmp_name);
-
-   static void priv_add_leading_slash(const char *name, std::string &new_name);
-
    //!Closes a previously opened file mapping. Never throws.
    bool priv_open_or_create(detail::create_enum_t type, const char *filename, mode_t mode);
 
@@ -184,56 +177,6 @@ inline mapping_handle_t shared_memory_object::get_mapping_handle() const
 inline mode_t shared_memory_object::get_mode() const
 {  return m_mode; }
 
-inline void shared_memory_object::priv_tmp_filename
-   (const char *filename, std::string &tmp_name)
-{
-   const char *tmp_dir = detail::get_temporary_path();
-   if(!tmp_dir){
-      error_info err = system_error_code();
-      throw interprocess_exception(err);
-   }
-   tmp_name = tmp_dir;
-
-   //Remove final null.
-   tmp_name += "/boost_interprocess/";
-   tmp_name += filename;
-}
-
-inline void shared_memory_object::priv_create_tmp_dir_and_get_filename
-   (const char *filename, std::string &tmp_name)
-{
-   const char *tmp_path = detail::get_temporary_path(); 
-   if(!tmp_path){
-      error_info err = system_error_code();
-      throw interprocess_exception(err);
-   }
-
-   tmp_name = tmp_path;
-   tmp_name += "/boost_interprocess";
-
-   //Create the temporary directory.
-   //If fails, check that it's because already exists
-   if(!detail::create_directory(tmp_name.c_str())){
-      error_info info(system_error_code());
-      if(info.get_error_code() != already_exists_error){
-         throw interprocess_exception(info);
-      }
-   }
-
-   //Add filename
-   tmp_name += '/';
-   tmp_name += filename;
-}
-
-inline void shared_memory_object::priv_add_leading_slash
-   (const char *name, std::string &new_name)
-{
-   if(name[0] != '/'){
-      new_name = '/';
-   }
-   new_name += name;
-}
-
 #if !defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
 
 inline bool shared_memory_object::priv_open_or_create
@@ -241,7 +184,7 @@ inline bool shared_memory_object::priv_open_or_create
 {
    m_filename = filename;
    std::string shmfile;
-   priv_create_tmp_dir_and_get_filename(filename, shmfile);
+   detail::create_tmp_dir_and_get_filename(filename, shmfile);
 
    //Set accesses
    if (mode != read_write && mode != read_only){
@@ -282,7 +225,7 @@ inline bool shared_memory_object::remove(const char *filename)
    try{
       //Make sure a temporary path is created for shared memory
       std::string shmfile;
-      priv_tmp_filename(filename, shmfile);
+      detail::tmp_filename(filename, shmfile);
       return std::remove(shmfile.c_str()) == 0;
    }
    catch(...){
@@ -314,9 +257,9 @@ inline bool shared_memory_object::priv_open_or_create
     mode_t mode)
 {
    #ifndef BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
-   priv_add_leading_slash(filename, m_filename);
+   detail::add_leading_slash(filename, m_filename);
    #else
-   priv_create_tmp_dir_and_get_filename(filename, m_filename);
+   detail::create_tmp_dir_and_get_filename(filename, m_filename);
    #endif
 
    //Create new mapping
@@ -369,9 +312,9 @@ inline bool shared_memory_object::remove(const char *filename)
    try{
       std::string file_str;
       #ifndef BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
-      priv_add_leading_slash(filename, file_str);
+      detail::add_leading_slash(filename, file_str);
       #else
-      priv_tmp_filename(filename, file_str);
+      detail::tmp_filename(filename, file_str);
       #endif
       return 0 != shm_unlink(file_str.c_str());
    }
