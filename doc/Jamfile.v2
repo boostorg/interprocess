@@ -1,0 +1,46 @@
+#  Boost.Interprocess library documentation Jamfile  ---------------------------------
+#
+#  Copyright Ion Gaztañaga 2005-2007. Use, modification and
+#  distribution is subject to the Boost Software License, Version
+#  1.0. (See accompanying file LICENSE_1_0.txt or copy at
+#  http://www.boost.org/LICENSE_1_0.txt)
+#
+#  See http://www.boost.org for updates, documentation, and revision history.
+
+import doxygen ;
+import quickbook ;
+
+doxygen autodoc
+   :
+      [ glob ../../../boost/interprocess/*.hpp ]
+      [ glob ../../../boost/interprocess/allocators/*.hpp ]
+      [ glob ../../../boost/interprocess/containers/*.hpp ]
+      [ glob ../../../boost/interprocess/indexes/*.hpp ]
+      [ glob ../../../boost/interprocess/ipc/*.hpp ]
+      [ glob ../../../boost/interprocess/mem_algo/*.hpp ]
+      [ glob ../../../boost/interprocess/smart_ptr/*.hpp ]
+      [ glob ../../../boost/interprocess/streams/*.hpp ]
+      [ glob ../../../boost/interprocess/sync/*.hpp ]
+   :
+        <doxygen:param>EXTRACT_ALL=NO
+        <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+        <doxygen:param>EXTRACT_PRIVATE=NO
+        <doxygen:param>EXPAND_ONLY_PREDEF=YES
+        <xsl:param>"boost.doxygen.reftitle=Boost.Interprocess Reference"
+        <xsl:param>"boost.doxygen.refid=reference"
+   ;
+
+xml interprocess : interprocess.qbk ;
+
+boostbook standalone
+   :
+      interprocess
+   :
+        <xsl:param>boost.root=../../../..
+        <xsl:param>boost.libraries=../../../../libs/libraries.htm
+        <xsl:param>toc.max.depth=1
+        <xsl:param>toc.section.depth=2
+        <xsl:param>chunk.first.sections=1
+        <xsl:param>chunk.section.depth=2
+        <dependency>autodoc
+   ;

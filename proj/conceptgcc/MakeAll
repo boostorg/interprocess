@@ -1,0 +1,35 @@
+
+#ifndef CC
+CC=i686-pc-cygwin-conceptg++.exe
+#endif
+
+BOOST_ROOT=../../../..
+
+INTERPROCESS_CPP := $(wildcard ../../src/*.cpp)
+INTERPROCESS_OBJ := $(patsubst ../../src/%.cpp, lib_%.o, $(INTERPROCESS_CPP))
+
+INTERPROCESSTEST_CPP := $(wildcard ../../test/*.cpp)
+INTERPROCESSTEST_OUT := $(patsubst ../../test/%.cpp, ../../bin/conceptgcc/test_%.out, $(INTERPROCESSTEST_CPP))
+
+INTERPROCESSDOC_CPP := $(wildcard ../../example/*.cpp)
+INTERPROCESSDOC_OUT := $(patsubst ../../example/%.cpp, ../../bin/conceptgcc/ex_%.out, $(INTERPROCESSDOC_CPP))
+
+LIBDIR:= ../../../../stage/lib
+
+.PHONY: createdir clean
+ 
+all: createdir $(INTERPROCESSTEST_OUT) $(INTERPROCESSDOC_OUT)
+	@cd .
+
+createdir:
+	@mkdir -p ../../bin/conceptgcc
+
+../../bin/conceptgcc/test_%.out: ../../test/%.cpp 
+	$(CC) $< -Wall -DBOOST_DATE_TIME_NO_LIB -L$(LIBDIR) -lboost_thread-mgw-mt -I$(BOOST_ROOT) -lstdc++ -o $@
+
+../../bin/conceptgcc/ex_%.out: ../../example/%.cpp 
+	$(CC) $< -Wall -DBOOST_DATE_TIME_NO_LIB -L$(LIBDIR)-lboost_thread-mgw-mt -I$(BOOST_ROOT) -lstdc++ -o $@
+
+clean:
+	rm -f *.o
+	rm -f ../../bin/conceptgcc/*
