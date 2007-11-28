@@ -25,6 +25,8 @@ rule test_all
       :  # additional args
       :  # test-files
       :  # requirements
+        <toolset>acc:<linkflags>-lrt
+        <toolset>acc-pa_risc:<linkflags>-lrt
       ] ;
    }
 
