@@ -27,12 +27,12 @@
 #include <boost/interprocess/sync/posix/ptime_to_timespec.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/exceptions.hpp>
+#ifndef BOOST_INTERPROCESS_POSIX_TIMEOUTS
+#  include <boost/interprocess/detail/os_thread_functions.hpp>
+#endif
 
 namespace boost {
-
 namespace interprocess {
-
-#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
 
 inline interprocess_mutex::interprocess_mutex()
 {
@@ -56,139 +56,51 @@ inline void interprocess_mutex::lock()
 inline bool interprocess_mutex::try_lock()
 {
    int res = pthread_mutex_trylock(&m_mut);
-   if (res == EDEADLK) throw lock_exception();
-   assert(res == 0 || res == EBUSY);
+   if (!(res == 0 || res == EBUSY))
+      throw lock_exception();
    return res == 0;
 }
 
 inline bool interprocess_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
 {
+   #ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
+
    timespec ts = detail::ptime_to_timespec(abs_time);
    int res = pthread_mutex_timedlock(&m_mut, &ts);
-   if (res == EDEADLK || (res != 0 && res != ETIMEDOUT))
+   if (res != 0 && res != ETIMEDOUT)
       throw lock_exception();
    return res == 0;
+
+   #else //BOOST_INTERPROCESS_POSIX_TIMEOUTS
+
+   //Obtain current count and target time
+   boost::posix_time::ptime now = microsec_clock::universal_time();
+
+   if(now >= abs_time) return false;
+
+   do{
+      if(this->try_lock()){
+         break;
+      }
+      now = microsec_clock::universal_time();
+
+      if(now >= abs_time){
+         return false;
+      }
+      // relinquish current time slice
+     detail::thread_yield();
+   }while (true);
+   return true;
+
+   #endif   //BOOST_INTERPROCESS_POSIX_TIMEOUTS
 }
 
 inline void interprocess_mutex::unlock()
 {
    int res = 0;
    res = pthread_mutex_unlock(&m_mut);
-//   if (res == EPERM) throw lock_exception();
    assert(res == 0);
 }
 
-#else //#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
-
-inline interprocess_mutex::interprocess_mutex()
-    : m_locked(false)
-{ 
-   //Mutex init
-   detail::mutexattr_wrapper mut_attr;
-   detail::mutex_initializer mut(m_mut, mut_attr);
-
-   //Condition init
-   detail::condattr_wrapper  cond_attr;
-   detail::condition_initializer cond(m_cond, cond_attr);
-
-   mut.release();
-   cond.release();
-}
-
-inline interprocess_mutex::~interprocess_mutex()
-{
-    assert(!m_locked);
-    int res = 0;
-    res = pthread_mutex_destroy(&m_mut);
-    assert(res == 0);
-
-    res = pthread_cond_destroy(&m_cond);
-    assert(res == 0);
-}
-
-inline void interprocess_mutex::lock()
-{
-    int res = 0;
-    res = pthread_mutex_lock(&m_mut);
-    assert(res == 0);
-
-    while (m_locked){
-        res = pthread_cond_wait(&m_cond, &m_mut);
-        assert(res == 0);
-    }
-
-    assert(!m_locked);
-    m_locked = true;
-
-    res = pthread_mutex_unlock(&m_mut);
-    assert(res == 0);
-}
-
-inline bool interprocess_mutex::try_lock()
-{
-    int res = 0;
-    res = pthread_mutex_lock(&m_mut);
-    assert(res == 0);
-
-    bool ret = false;
-    if (!m_locked)
-    {
-        m_locked = true;
-        ret = true;
-    }
-
-    res = pthread_mutex_unlock(&m_mut);
-    assert(res == 0);
-    return ret;
-}
-
-inline bool interprocess_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
-{
-    int res = 0;
-    res = pthread_mutex_lock(&m_mut);
-    assert(res == 0);
-
-    timespec ts = detail::ptime_to_timespec(abs_time);
-
-    while (m_locked)
-    {
-        res = pthread_cond_timedwait(&m_cond, &m_mut, &ts);
-        assert(res == 0 || res == ETIMEDOUT);
-
-        if (res == ETIMEDOUT)
-            break;
-    }
-
-    bool ret = false;
-    if (!m_locked)
-    {
-        m_locked = true;
-        ret = true;
-    }
-
-    res = pthread_mutex_unlock(&m_mut);
-    assert(res == 0);
-    return ret;
-}
-
-inline void interprocess_mutex::unlock()
-{
-    int res = 0;
-    res = pthread_mutex_lock(&m_mut);
-    assert(res == 0);
-
-    assert(m_locked);
-    m_locked = false;
-
-    res = pthread_cond_signal(&m_cond);
-    assert(res == 0);
-
-    res = pthread_mutex_unlock(&m_mut);
-    assert(res == 0);
-}
-
-#endif   //#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
-
 }  //namespace interprocess {
-
 }  //namespace boost {

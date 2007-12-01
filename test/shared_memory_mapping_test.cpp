@@ -69,7 +69,7 @@ int main ()
          //Create a file mapping
          shared_memory_object mapping(open_only, test::get_process_id_name(), read_write);
          mapped_region region(mapping, read_write, 0, FileSize/2, 0);
-         mapped_region region2(mapping, read_write, FileSize/2, 0/*FileSize - FileSize/2*/, 0);
+         mapped_region region2(mapping, read_write, FileSize/2, FileSize - FileSize/2, 0);
 
          unsigned char *checker = (unsigned char*)region.get_address();
          //Check pattern

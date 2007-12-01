@@ -15,6 +15,8 @@
 
 #if !(defined BOOST_WINDOWS) || (defined BOOST_DISABLE_WIN32)
 
+   #include <unistd.h>
+
    #if defined(_POSIX_THREAD_PROCESS_SHARED)
    # if !((_XOPEN_VERSION >= 600) && (_POSIX_THREAD_PROCESS_SHARED - 0 <= 0))
    #  if !defined(__CYGWIN__)
@@ -88,6 +90,10 @@
       #endif
    #endif
 
+   #if ((_POSIX_VERSION + 0)>= 200112L || (_XOPEN_VERSION + 0)>= 500)
+   #define BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES
+   #endif
+
 #endif
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)
@@ -102,7 +108,7 @@
 #  endif
 #endif
 
-#if defined(BOOST_INTERPROCESS_RVALUE_REFERENCE) || defined(BOOST_INTERPROCESS_VARIADIC_TEMPLATES)
+#if defined(BOOST_INTERPROCESS_RVALUE_REFERENCE) && defined(BOOST_INTERPROCESS_VARIADIC_TEMPLATES)
 #define BOOST_INTERPROCESS_PERFECT_FORWARDING
 #endif
 

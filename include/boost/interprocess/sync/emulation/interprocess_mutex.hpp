@@ -54,9 +54,7 @@ inline bool interprocess_mutex::timed_lock(const boost::posix_time::ptime &abs_t
    if(now >= abs_time) return false;
 
    do{
-      boost::uint32_t prev_s = detail::atomic_cas32((boost::uint32_t*)&m_s, 1, 0);   
-
-      if (m_s == 1 && prev_s == 0){
+      if(this->try_lock()){
          break;
       }
       now = microsec_clock::universal_time();

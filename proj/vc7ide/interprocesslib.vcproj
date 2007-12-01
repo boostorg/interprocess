@@ -238,10 +238,6 @@
 				RelativePath="..\..\..\..\boost\interprocess\sync\upgradable_lock.hpp">
 			</File>
 			<Filter
-				Name="win32"
-				Filter="">
-			</Filter>
-			<Filter
 				Name="posix"
 				Filter="">
 				<File
