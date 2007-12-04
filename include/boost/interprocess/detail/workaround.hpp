@@ -19,7 +19,9 @@
 
    #if defined(_POSIX_THREAD_PROCESS_SHARED)
    # if !((_XOPEN_VERSION >= 600) && (_POSIX_THREAD_PROCESS_SHARED - 0 <= 0))
-   #  if !defined(__CYGWIN__)
+   // Cygwin defines _POSIX_THREAD_PROCESS_SHARED but does not support it.
+   // Mac Os X >= Leopard defines _POSIX_THREAD_PROCESS_SHARED but it does not seem to work
+   #  if !defined(__CYGWIN__) && !defined(__APPLE__)
    #  define BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
    #  endif
    # endif
