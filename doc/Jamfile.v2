@@ -27,7 +27,6 @@ doxygen autodoc
         <doxygen:param>EXTRACT_PRIVATE=NO
         <doxygen:param>EXPAND_ONLY_PREDEF=YES
         <xsl:param>"boost.doxygen.reftitle=Boost.Interprocess Reference"
-        <xsl:param>"boost.doxygen.refid=reference"
    ;
 
 xml interprocess : interprocess.qbk ;
