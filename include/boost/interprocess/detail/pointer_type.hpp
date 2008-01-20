@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007.
+// (C) Copyright Ion Gaztanaga 2005-2008.
 // (C) Copyright Gennaro Prota 2003 - 2004.
 //
 // Distributed under the Boost Software License, Version 1.0.

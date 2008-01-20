@@ -6418,7 +6418,7 @@ warranty.
    [classref boost::interprocess::named_mutex named_mutex].
 
 *  Reduced template bloat for node and adaptive allocators extracting node
-   implementation to a class taht only depends on the memory algorithm, instead of
+   implementation to a class that only depends on the memory algorithm, instead of
    the segment manager + node size + node number...
 
 *  Fixed bug in `mapped_region` in UNIX when mapping address was provided but

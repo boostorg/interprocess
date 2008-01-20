@@ -17,7 +17,7 @@ int main ()
    typedef managed_shared_memory::segment_manager segment_manager;
 
    typedef detail::private_adaptive_node_pool
-      <segment_manager, 4, 64, 64> node_pool_t;
+      <segment_manager, 4, 64, 64, 5> node_pool_t;
 
    if(!test::test_all_node_pool<node_pool_t>())
       return 1;

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -404,7 +404,7 @@ class list
    //!
    //! <b>Complexity</b>: Linear to the number of elements in the list.
    void clear()
-   {  this->icont().clear_and_dispose(Destroyer(this->node_alloc()));  }
+   {  AllocHolder::clear(alloc_version());  }
 
    //! <b>Effects</b>: Returns an iterator to the first element contained in the list.
    //! 
@@ -786,7 +786,7 @@ class list
    //!
    //! <b>Complexity</b>: Linear to the distance between first and last.
    iterator erase(iterator first, iterator last)
-   {  return iterator(this->icont().erase_and_dispose(first.get(), last.get(), Destroyer(this->node_alloc()))); }
+   {  return iterator(AllocHolder::erase_range(first.get(), last.get(), alloc_version())); }
 
    //! <b>Effects</b>: Assigns the n copies of val to *this.
    //!
@@ -1085,6 +1085,7 @@ class list
 
    /// @cond
    private:
+
    //Iterator range version
    template<class InpIterator>
    void priv_create_and_insert_nodes
@@ -1160,7 +1161,7 @@ class list
 
    template<class Integer>
    void priv_insert_dispatch(iterator p, Integer n, Integer x, detail::true_) 
-   {  this->priv_create_and_insert_nodes(p, n, x);  }
+   {  this->insert(p, (size_type)n, x);  }
 
    void priv_fill_assign(size_type n, const T& val) 
    {

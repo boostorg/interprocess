@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007.
+// (C) Copyright Ion Gaztanaga 2005-2008.
 // (C) Copyright Gennaro Prota 2003 - 2004.
 //
 // Distributed under the Boost Software License, Version 1.0.
@@ -427,6 +427,12 @@ class transform_iterator
    operator_arrow_proxy<typename UnaryFunction::result_type>
       operator->() const
    { return operator_arrow_proxy<typename UnaryFunction::result_type>(dereference());  }
+
+   Iterator & base()
+   {  return m_it;   }
+
+   const Iterator & base() const
+   {  return m_it;   }
 
    private:
    Iterator m_it;

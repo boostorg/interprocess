@@ -42,7 +42,7 @@ bool test_node_pool<NodePool>::allocate_then_deallocate(NodePool &pool)
 
    //First allocate nodes
    for(std::size_t i = 0; i < num_alloc; ++i){
-      nodes.push_back(pool.allocate(1));
+      nodes.push_back(pool.allocate_node());
    }
 
    //Check that the free count is correct
@@ -52,7 +52,7 @@ bool test_node_pool<NodePool>::allocate_then_deallocate(NodePool &pool)
    
    //Now deallocate all and check again
    for(std::size_t i = 0; i < num_alloc; ++i){
-       pool.deallocate(nodes[i], 1);
+       pool.deallocate_node(nodes[i]);
    }
 
    //Check that the free count is correct
@@ -85,7 +85,7 @@ bool test_node_pool<NodePool>::deallocate_free_chunks(NodePool &pool)
 
    //First allocate nodes
    for(std::size_t i = 0; i < max_nodes; ++i){
-      nodes.push_back(pool.allocate(1));
+      nodes.push_back(pool.allocate_node());
    }
 
    //Check that the free count is correct
@@ -97,7 +97,7 @@ bool test_node_pool<NodePool>::deallocate_free_chunks(NodePool &pool)
    for(std::size_t node_i = 0; node_i < nodes_per_chunk; ++node_i){
       //Deallocate a node per chunk
       for(std::size_t i = 0; i < max_chunks; ++i){
-         pool.deallocate(nodes[i*nodes_per_chunk + node_i], 1);
+         pool.deallocate_node(nodes[i*nodes_per_chunk + node_i]);
       }
 
       //Check that the free count is correct

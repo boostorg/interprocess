@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -740,6 +740,9 @@ class vector : private detail::vector_alloc_holder<A>
          //Check for forward expansion
          same_buffer_start = ret.second && this->members_.m_start == ret.first;
          if(same_buffer_start){
+            #ifdef BOOST_INTERPROCESS_VECTOR_ALLOC_STATS
+            ++this->num_expand_fwd;
+            #endif
             this->members_.m_capacity  = real_cap;
          }
          //If there is no forward expansion, move objects
@@ -748,6 +751,9 @@ class vector : private detail::vector_alloc_holder<A>
             copy_move_it dummy_it(detail::get_pointer(this->members_.m_start));
             //Backwards (and possibly forward) expansion
             if(ret.second){
+               #ifdef BOOST_INTERPROCESS_VECTOR_ALLOC_STATS
+               ++this->num_expand_bwd;
+               #endif
                this->priv_range_insert_expand_backwards
                   ( detail::get_pointer(ret.first)
                   , real_cap
@@ -758,6 +764,9 @@ class vector : private detail::vector_alloc_holder<A>
             }
             //New buffer
             else{
+               #ifdef BOOST_INTERPROCESS_VECTOR_ALLOC_STATS
+               ++this->num_alloc;
+               #endif
                this->priv_range_insert_new_allocation
                   ( detail::get_pointer(ret.first)
                   , real_cap
@@ -1184,11 +1193,17 @@ class vector : private detail::vector_alloc_holder<A>
          
          //If we had room or we have expanded forward
          if (same_buffer_start){
+            #ifdef BOOST_INTERPROCESS_VECTOR_ALLOC_STATS
+            ++this->num_expand_fwd;
+            #endif
             this->priv_range_insert_expand_forward
                (detail::get_pointer(pos), first, last, n);
          }
          //Backwards (and possibly forward) expansion
          else if(ret.second){
+            #ifdef BOOST_INTERPROCESS_VECTOR_ALLOC_STATS
+            ++this->num_expand_bwd;
+            #endif
             this->priv_range_insert_expand_backwards
                ( detail::get_pointer(ret.first)
                , real_cap
@@ -1199,6 +1214,9 @@ class vector : private detail::vector_alloc_holder<A>
          }
          //New buffer
          else{
+            #ifdef BOOST_INTERPROCESS_VECTOR_ALLOC_STATS
+            ++this->num_alloc;
+            #endif
             this->priv_range_insert_new_allocation
                ( detail::get_pointer(ret.first)
                , real_cap
@@ -1778,6 +1796,15 @@ class vector : private detail::vector_alloc_holder<A>
       if (n >= size())
          throw std::out_of_range("vector::at");
    }
+
+   #ifdef BOOST_INTERPROCESS_VECTOR_ALLOC_STATS
+   public:
+   unsigned int num_expand_fwd;
+   unsigned int num_expand_bwd;
+   unsigned int num_alloc;
+   void reset_alloc_stats()
+   {  num_expand_fwd = num_expand_bwd = num_alloc = 0;   }                 
+   #endif
    /// @endcond
 };
 

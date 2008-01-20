@@ -16,7 +16,7 @@
 #include <iostream>
 #include <new>
 #include <utility>
-#include <cstring>
+#include <cstring>   //std::memset
 #include <cstdio>    //std::remove
 
 namespace boost { namespace interprocess { namespace test {
@@ -38,6 +38,8 @@ bool test_allocation(Allocator &a)
          void *ptr = a.allocate(i, std::nothrow);
          if(!ptr)
             break;
+         std::size_t size = a.size(ptr);
+         std::memset(ptr, 0, size);
          buffers.push_back(ptr);
       }
 
@@ -94,6 +96,8 @@ bool test_allocation_shrink(Allocator &a)
       void *ptr = a.allocate(i*2, std::nothrow);
       if(!ptr)
          break;
+      std::size_t size = a.size(ptr);
+      std::memset(ptr, 0, size);
       buffers.push_back(ptr);
    }
 
@@ -111,6 +115,7 @@ bool test_allocation_shrink(Allocator &a)
          if(received_size < std::size_t(i)){
             return false;
          }
+         std::memset(buffers[i], 0, a.size(buffers[i]));
       }
    }
    
@@ -139,6 +144,8 @@ bool test_allocation_expand(Allocator &a)
       void *ptr = a.allocate(i, std::nothrow);
       if(!ptr)
          break;
+      std::size_t size = a.size(ptr);
+      std::memset(ptr, 0, size);
       buffers.push_back(ptr);
    }
 
@@ -203,7 +210,7 @@ bool test_allocation_shrink_and_expand(Allocator &a)
 
    //Now shrink to half
    for(int i = 0, max = (int)buffers.size()
-      ;i < max
+      ; i < max
       ; ++i){
       std::size_t received_size;
       if(a.template allocation_command<char>
@@ -224,9 +231,10 @@ bool test_allocation_shrink_and_expand(Allocator &a)
       ;i < max
       ;++i){
       std::size_t received_size;
+      std::size_t request_size = received_sizes[i];
       if(a.template allocation_command<char>
-         ( expand_fwd | nothrow_allocation, received_sizes[i]
-         , received_sizes[i], received_size, (char*)buffers[i]).first){
+         ( expand_fwd | nothrow_allocation, request_size
+         , request_size, received_size, (char*)buffers[i]).first){
          if(received_size != received_sizes[i]){
             return false;
          }
@@ -262,6 +270,8 @@ bool test_allocation_deallocation_expand(Allocator &a)
       void *ptr = a.allocate(i, std::nothrow);
       if(!ptr)
          break;
+      std::size_t size = a.size(ptr);
+      std::memset(ptr, 0, size);
       buffers.push_back(ptr);
    }
 
@@ -327,19 +337,21 @@ template<class Allocator>
 bool test_allocation_with_reuse(Allocator &a)
 {
    //We will repeat this test for different sized elements
-   for(int size = 1; size < 20; ++size){
+   for(int sizeof_object = 1; sizeof_object < 20; ++sizeof_object){
       std::vector<void*> buffers;
 
       //Allocate buffers with extra memory
       for(int i = 0; true; ++i){
-         void *ptr = a.allocate(i*size, std::nothrow);
+         void *ptr = a.allocate(i*sizeof_object, std::nothrow);
          if(!ptr)
             break;
+         std::size_t size = a.size(ptr);
+         std::memset(ptr, 0, size);
          buffers.push_back(ptr);
       }
       
       //Now deallocate all except the latest
-      //Now try to expand to the double of the size
+      //Now try to expand to the double of the sizeof_object
       for(int i = 0, max = (int)buffers.size() - 1
          ;i < max
          ;++i){
@@ -353,13 +365,17 @@ bool test_allocation_with_reuse(Allocator &a)
       //Now allocate with reuse
       std::size_t received_size = 0;
       for(int i = 0; true; ++i){
-         std::pair<void*, bool> ret = a.template allocation_command<char>
-            ( expand_bwd | nothrow_allocation, received_size/size*size + size
-            , received_size/size*size+(i+1)*size*2, received_size, (char*)ptr);
+         std::size_t min_size = (received_size + 1);
+         std::size_t prf_size = (received_size + (i+1)*2);
+         std::pair<void*, bool> ret = a.raw_allocation_command
+            ( expand_bwd | nothrow_allocation, min_size
+            , prf_size, received_size, (char*)ptr, sizeof_object);
          if(!ret.first)
             break;
          //If we have memory, this must be a buffer reuse
          if(!ret.second)
+            return 1;
+         if(received_size < min_size)
             return 1;
          ptr = ret.first;
       }
@@ -456,6 +472,8 @@ bool test_clear_free_memory(Allocator &a)
       void *ptr = a.allocate(i, std::nothrow);
       if(!ptr)
          break;
+      std::size_t size = a.size(ptr);
+      std::memset(ptr, 1, size);
       buffers.push_back(ptr);
    }
 
@@ -544,6 +562,8 @@ bool test_grow_shrink_to_fit(Allocator &a)
       void *ptr = a.allocate(i, std::nothrow);
       if(!ptr)
          break;
+      std::size_t size = a.size(ptr);
+      std::memset(ptr, 0, size);
       buffers.push_back(ptr);
    }
 
@@ -564,7 +584,11 @@ bool test_grow_shrink_to_fit(Allocator &a)
    for(int j = 0, max = (int)buffers.size()
       ;j < max
       ;++j){
-      int pos = (j%4)*((int)buffers.size())/4;
+      int pos = (j%5)*((int)buffers.size())/4;
+      if(pos == int(buffers.size()))
+         --pos;
+      a.deallocate(buffers[pos]);
+      buffers.erase(buffers.begin()+pos);
       std::size_t old_free = a.get_free_memory();
       a.shrink_to_fit();
       if(!a.check_sanity())   return false;
@@ -576,9 +600,6 @@ bool test_grow_shrink_to_fit(Allocator &a)
       if(!a.check_sanity())   return false;
       if(original_size != a.get_size())         return false;
       if(old_free      != a.get_free_memory())  return false;
-
-      a.deallocate(buffers[pos]);
-      buffers.erase(buffers.begin()+pos);
    }
 
    //Now shrink it to the maximum
@@ -623,6 +644,8 @@ bool test_many_equal_allocation(Allocator &a)
          void *ptr = a.allocate(i, std::nothrow);
          if(!ptr)
             break;
+         std::size_t size = a.size(ptr);
+         std::memset(ptr, 0, size);
          if(!a.check_sanity())
             return false;
          buffers2.push_back(ptr);
@@ -736,6 +759,8 @@ bool test_many_different_allocation(Allocator &a)
          void *ptr = a.allocate(i, std::nothrow);
          if(!ptr)
             break;
+         std::size_t size = a.size(ptr);
+         std::memset(ptr, 0, size);
          buffers2.push_back(ptr);
       }
 
@@ -816,6 +841,57 @@ bool test_many_different_allocation(Allocator &a)
    return true;
 }
 
+//This test allocates multiple values until there is no more memory
+//and after that deallocates all in the inverse order
+template<class Allocator>
+bool test_many_deallocation(Allocator &a)
+{
+   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
+   const std::size_t ArraySize = 11;
+   std::vector<multiallocation_iterator> buffers;
+   std::size_t requested_sizes[ArraySize];
+   for(std::size_t i = 0; i < ArraySize; ++i){
+      requested_sizes[i] = 4*i;
+   }
+   std::size_t free_memory = a.get_free_memory();
+
+   {
+      for(int i = 0; true; ++i){
+         multiallocation_iterator it = a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow);
+         if(!it)
+            break;
+         buffers.push_back(it);
+      }
+      for(int i = 0, max = (int)buffers.size(); i != max; ++i){
+         a.deallocate_many(buffers[i]);
+      }
+      buffers.clear();
+      bool ok = free_memory == a.get_free_memory() && 
+               a.all_memory_deallocated() && a.check_sanity();
+      if(!ok)  return ok;
+   }
+
+   {
+      for(int i = 0; true; ++i){
+         multiallocation_iterator it = a.allocate_many(i*4, ArraySize, std::nothrow);
+         if(!it)
+            break;
+         buffers.push_back(it);
+      }
+      for(int i = 0, max = (int)buffers.size(); i != max; ++i){
+         a.deallocate_many(buffers[i]);
+      }
+      buffers.clear();
+
+      bool ok = free_memory == a.get_free_memory() && 
+               a.all_memory_deallocated() && a.check_sanity();
+      if(!ok)  return ok;
+   }
+
+   return true;
+}
+
+
 //This function calls all tests
 template<class Allocator>
 bool test_all_allocation(Allocator &a)
@@ -843,6 +919,12 @@ bool test_all_allocation(Allocator &a)
 
    if(!test_many_different_allocation(a)){
       std::cout << "test_many_different_allocation failed. Class: "
+                << typeid(a).name() << std::endl;
+      return false;
+   }
+
+   if(!test_many_deallocation(a)){
+      std::cout << "test_many_deallocation failed. Class: "
                 << typeid(a).name() << std::endl;
       return false;
    }

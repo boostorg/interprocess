@@ -173,6 +173,9 @@
 					RelativePath="..\..\..\..\boost\interprocess\allocators\detail\adaptive_node_pool.hpp">
 				</File>
 				<File
+					RelativePath="..\..\..\..\boost\interprocess\allocators\detail\allocator_common.hpp">
+				</File>
+				<File
 					RelativePath="..\..\..\..\boost\interprocess\allocators\detail\node_pool.hpp">
 				</File>
 				<File
@@ -570,6 +573,9 @@
 			</File>
 			<File
 				RelativePath="..\..\test\util.hpp">
+			</File>
+			<File
+				RelativePath="..\..\test\vector_test.hpp">
 			</File>
 		</Filter>
 		<Filter

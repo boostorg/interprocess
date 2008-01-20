@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006-2007
+// (C) Copyright Ion Gaztanaga 2006-2008
 // (C) Copyright Markus Schoepflin 2007
 //
 // Distributed under the Boost Software License, Version 1.0. (See

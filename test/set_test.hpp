@@ -384,6 +384,8 @@ int set_test ()
       }
 
       //Now do count exercise
+      shmset->erase(shmset->begin(), shmset->end());
+      shmmultiset->erase(shmmultiset->begin(), shmmultiset->end());
       shmset->clear();
       shmmultiset->clear();
 

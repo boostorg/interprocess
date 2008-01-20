@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -104,6 +104,167 @@ class basic_multiallocation_iterator
    multi_allocation_next<VoidPointer> next_alloc_;
 };
 
+template<class VoidPointer>
+class basic_multiallocation_chain
+{
+   private:
+   basic_multiallocation_iterator<VoidPointer> it_;
+   VoidPointer last_mem_;
+   std::size_t num_mem_;
+
+   basic_multiallocation_chain(const basic_multiallocation_chain &);
+   basic_multiallocation_chain &operator=(const basic_multiallocation_chain &);
+
+   public:
+   typedef basic_multiallocation_iterator<VoidPointer> multiallocation_iterator;
+
+   basic_multiallocation_chain()
+      :  it_(0), last_mem_(0), num_mem_(0)
+   {}
+
+   void push_back(void *mem)
+   {
+      typedef multi_allocation_next<VoidPointer> next_impl_t;
+      next_impl_t * tmp_mem = static_cast<next_impl_t*>(mem);
+      
+      if(!this->last_mem_){
+         this->it_ = basic_multiallocation_iterator<VoidPointer>(tmp_mem);
+      }
+      else{
+         static_cast<next_impl_t*>(detail::get_pointer(this->last_mem_))->next_ = tmp_mem;
+      }
+      tmp_mem->next_ = 0;
+      this->last_mem_ = tmp_mem;
+      ++num_mem_;
+   }
+
+   void push_back(multiallocation_iterator it, std::size_t n)
+   {
+      typedef multi_allocation_next<VoidPointer> next_impl_t;
+      next_impl_t * tmp_mem = (next_impl_t*)(&*it);
+      
+      if(!this->last_mem_){
+         this->it_ = it;
+      }
+      else{
+         static_cast<next_impl_t*>(detail::get_pointer(this->last_mem_))->next_ = tmp_mem;
+      }
+      tmp_mem->next_ = 0;
+      this->last_mem_ = tmp_mem;
+      ++num_mem_;
+   }
+
+   void push_front(void *mem)
+   {
+      typedef multi_allocation_next<VoidPointer> next_impl_t;
+      
+      if(!this->last_mem_){
+         push_back(mem);
+      }
+      else{
+         next_impl_t * tmp_mem   = static_cast<next_impl_t*>(mem);
+         next_impl_t * old_first = (next_impl_t*)(&*this->it_);
+         static_cast<next_impl_t*>(mem)->next_ = old_first;
+         this->it_ = basic_multiallocation_iterator<VoidPointer>(tmp_mem);
+         ++num_mem_;
+      }
+   }
+
+   void swap(basic_multiallocation_chain &other_chain)
+   {
+      std::swap(this->it_, other_chain.it_);
+      std::swap(this->last_mem_, other_chain.last_mem_);
+      std::swap(this->num_mem_, other_chain.num_mem_);
+   }
+
+   void splice_back(basic_multiallocation_chain &other_chain)
+   {
+      typedef multi_allocation_next<VoidPointer> next_impl_t;
+      multiallocation_iterator end_it;
+      multiallocation_iterator other_it = other_chain.get_it();
+      multiallocation_iterator this_it  = this->get_it();
+      if(end_it == other_it){
+         return;
+      }
+      else if(end_it == other_it){
+         this->swap(other_chain);
+      }
+      
+      static_cast<next_impl_t*>(detail::get_pointer(this->last_mem_))->next_
+         = (next_impl_t*)&*this->it_;
+      this->last_mem_ = other_chain.last_mem_;
+      this->num_mem_ += other_chain.num_mem_;
+   }
+
+   void *pop_front()
+   {
+      multiallocation_iterator itend;
+      if(this->it_ == itend){
+         this->last_mem_= 0;
+         this->num_mem_ = 0;
+         return 0;
+      }
+      else{
+         void *addr = &*it_;
+         ++it_;
+         --num_mem_;
+         if(!num_mem_){
+            this->last_mem_ = 0;
+            this->it_ = multiallocation_iterator();
+         }
+         return addr;
+      }
+   }
+
+   bool empty() const
+   {  return !num_mem_; }
+
+   multiallocation_iterator get_it() const
+   {  return it_;  }
+
+   std::size_t size() const
+   {  return num_mem_;  }
+};
+
+template<class Allocator>
+class allocator_multiallocation_chain
+{
+   typedef typename detail::
+      pointer_to_other<typename Allocator::pointer, void>::type
+         void_ptr;
+
+   typedef typename Allocator::multiallocation_iterator  multiallocation_iterator;
+   basic_multiallocation_chain<void_ptr> chain_;
+
+   public:
+
+   allocator_multiallocation_chain()
+      :  chain_()
+   {}
+
+   void push_back(void *mem)
+   {  chain_.push_back(mem);  }
+
+   multiallocation_iterator get_it() const
+   {  return multiallocation_iterator(chain_.get_it());  }
+};
+
+
+#define BOOST_MULTIALLOC_IT_CHAIN_INIT(IT_CHAIN) ((IT_CHAIN).it.next = 0, (IT_CHAIN).last_mem = 0)
+#define BOOST_MULTIALLOC_IT_CHAIN_ADD(IT_CHAIN, MEM)\
+   do{\
+      multialloc_it_t *____tmp_mem____ = (multialloc_it_t*)(MEM);\
+      if(!IT_CHAIN.last_mem){\
+         (IT_CHAIN).it.next = ____tmp_mem____;\
+      }else{\
+         ((multialloc_it_t*)(IT_CHAIN.last_mem))->next = ____tmp_mem____;\
+      }\
+      ____tmp_mem____->next = 0;\
+      IT_CHAIN.last_mem = ____tmp_mem____;\
+   }while(0)
+
+#define BOOST_MULTIALLOC_IT_CHAIN_IT(IT_CHAIN) ((IT_CHAIN).it)
+
 
 //!This class implements several allocation functions shared by different algorithms
 //!(aligned allocation, multiple allocation...).
@@ -125,6 +286,7 @@ class memory_algorithm_common
    static const std::size_t AllocatedCtrlUnits  = MemoryAlgorithm::AllocatedCtrlUnits;
    static const std::size_t BlockCtrlBytes      = MemoryAlgorithm::BlockCtrlBytes;
    static const std::size_t BlockCtrlUnits      = MemoryAlgorithm::BlockCtrlUnits;
+   static const std::size_t UsableByPreviousChunk   = MemoryAlgorithm::UsableByPreviousChunk;
 
    static void assert_alignment(const void *ptr)
    {  assert_alignment((std::size_t)ptr); }
@@ -165,10 +327,11 @@ class memory_algorithm_common
    static void* allocate_aligned
       (MemoryAlgorithm *memory_algo, std::size_t nbytes, std::size_t alignment)
    {
+      
       //Ensure power of 2
       if ((alignment & (alignment - std::size_t(1u))) != 0){
          //Alignment is not power of two
-         BOOST_ASSERT((alignment & (alignment - std::size_t(1u))) != 0);
+         BOOST_ASSERT((alignment & (alignment - std::size_t(1u))) == 0);
          return 0;
       }
 
@@ -176,6 +339,9 @@ class memory_algorithm_common
       if(alignment <= Alignment){
          return memory_algo->priv_allocate(allocate_new, nbytes, nbytes, real_size).first;
       }
+
+      if(nbytes > UsableByPreviousChunk)
+         nbytes -= UsableByPreviousChunk;
       
       //We can find a aligned portion if we allocate a chunk that has alignment
       //nbytes + alignment bytes or more.
@@ -191,7 +357,9 @@ class memory_algorithm_common
       // | MBU | 
       //  -----------------------------------------------------
       std::size_t request = 
-         minimum_allocation + (2*MinBlockUnits*Alignment - AllocatedCtrlBytes);
+         minimum_allocation + (2*MinBlockUnits*Alignment - AllocatedCtrlBytes
+         //prevsize - UsableByPreviousChunk
+         );
 
       //Now allocate the buffer
       void *buffer = memory_algo->priv_allocate(allocate_new, request, request, real_size).first;
@@ -207,7 +375,8 @@ class memory_algorithm_common
             max_value(ceil_units(nbytes) + AllocatedCtrlUnits, std::size_t(MinBlockUnits));
          //We can create a new block in the end of the segment
          if(old_size >= (first_min_units + MinBlockUnits)){
-            block_ctrl *second =  new((char*)first + Alignment*first_min_units) block_ctrl;
+            //block_ctrl *second =  new((char*)first + Alignment*first_min_units) block_ctrl;
+            block_ctrl *second =  (block_ctrl *)((char*)first + Alignment*first_min_units);
             first->m_size  = first_min_units;
             second->m_size = old_size - first->m_size;
             BOOST_ASSERT(second->m_size >= MinBlockUnits);
@@ -285,6 +454,7 @@ class memory_algorithm_common
       ,const std::size_t max_size,   const std::size_t preferred_size
       ,std::size_t &received_size)
    {
+      (void)memory_algo;
       //Obtain the real block
       block_ctrl *block = memory_algo->priv_get_block(ptr);
       std::size_t old_block_units = block->m_size;
@@ -296,11 +466,11 @@ class memory_algorithm_common
       assert_alignment(ptr);
 
       //Put this to a safe value
-      received_size = (old_block_units - AllocatedCtrlUnits)*Alignment;
+      received_size = (old_block_units - AllocatedCtrlUnits)*Alignment + UsableByPreviousChunk;
 
       //Now translate it to Alignment units
-      const std::size_t max_user_units       = floor_units(max_size);
-      const std::size_t preferred_user_units = ceil_units(preferred_size);
+      const std::size_t max_user_units       = floor_units(max_size - UsableByPreviousChunk);
+      const std::size_t preferred_user_units = ceil_units(preferred_size - UsableByPreviousChunk);
 
       //Check if rounded max and preferred are possible correct
       if(max_user_units < preferred_user_units)
@@ -331,7 +501,7 @@ class memory_algorithm_common
       }
 
       //Update new size
-      received_size = shrunk_user_units*Alignment;
+      received_size = shrunk_user_units*Alignment + UsableByPreviousChunk;
       return true;
    }
 
@@ -350,22 +520,23 @@ class memory_algorithm_common
       }
 
       //Check if the old size was just the shrunk size (no splitting)
-      if((old_block_units - AllocatedCtrlUnits) == ceil_units(preferred_size))
+      if((old_block_units - AllocatedCtrlUnits) == ceil_units(preferred_size - UsableByPreviousChunk))
          return true;
 
       //Now we can just rewrite the size of the old buffer
-      block->m_size = received_size/Alignment + AllocatedCtrlUnits;
+      block->m_size = (received_size-UsableByPreviousChunk)/Alignment + AllocatedCtrlUnits;
       BOOST_ASSERT(block->m_size >= BlockCtrlUnits);
-      memory_algo->priv_mark_new_allocated_block(block);
 
       //We create the new block
-      block_ctrl *new_block = new(reinterpret_cast<block_ctrl*>
-                  (detail::char_ptr_cast(block) + block->m_size*Alignment)) block_ctrl;
-
+//      block_ctrl *new_block = new(reinterpret_cast<block_ctrl*>
+//                  (detail::char_ptr_cast(block) + block->m_size*Alignment)) block_ctrl;
+      block_ctrl *new_block = reinterpret_cast<block_ctrl*>
+                  (detail::char_ptr_cast(block) + block->m_size*Alignment);
       //Write control data to simulate this new block was previously allocated
       //and deallocate it
       new_block->m_size = old_block_units - block->m_size;
       BOOST_ASSERT(new_block->m_size >= BlockCtrlUnits);
+      memory_algo->priv_mark_new_allocated_block(block);
       memory_algo->priv_mark_new_allocated_block(new_block);
       memory_algo->priv_deallocate(memory_algo->priv_get_user_buffer(new_block));
       return true;
@@ -401,11 +572,11 @@ class memory_algorithm_common
       multi_allocation_next_ptr first = 0, previous = 0;
       std::size_t low_idx = 0;
       while(low_idx < n_elements){
-         std::size_t total_bytes = total_request_units*Alignment - AllocatedCtrlBytes;
+         std::size_t total_bytes = total_request_units*Alignment - AllocatedCtrlBytes + UsableByPreviousChunk;
          std::size_t min_allocation = (!sizeof_element)
             ?  elem_units
             :  memory_algo->priv_get_total_units(elem_sizes[low_idx]*sizeof_element);
-         min_allocation = min_allocation*Alignment - AllocatedCtrlBytes;
+         min_allocation = min_allocation*Alignment - AllocatedCtrlBytes + UsableByPreviousChunk;
 
          std::size_t received_size;
          std::pair<void *, bool> ret = memory_algo->priv_allocate
@@ -419,6 +590,7 @@ class memory_algorithm_common
          char *block_address = (char*)block;
 
          std::size_t total_used_units = 0;
+//         block_ctrl *prev_block = 0;
          while(total_used_units < received_units){
             if(sizeof_element){
                elem_units = memory_algo->priv_get_total_units(elem_sizes[low_idx]*sizeof_element);
@@ -428,7 +600,10 @@ class memory_algorithm_common
                break;
             total_request_units -= elem_units;
             //This is the position where the new block must be created
-            block_ctrl *new_block = new(block_address)block_ctrl;
+//            if(prev_block)
+//               memory_algo->priv_mark_new_allocated_block(prev_block);
+            block_ctrl *new_block = (block_ctrl *)(block_address);
+//             block_ctrl *new_block = new(block_address)block_ctrl;
             assert_alignment(new_block);
 
             //The last block should take all the remaining space
@@ -446,7 +621,7 @@ class memory_algorithm_common
                //split it obtaining a new free memory block do it.
                if((received_units - total_used_units) >= (elem_units + MemoryAlgorithm::BlockCtrlUnits)){
                   std::size_t shrunk_received;
-                  std::size_t shrunk_request = elem_units*Alignment - AllocatedCtrlBytes;
+                  std::size_t shrunk_request = elem_units*Alignment - AllocatedCtrlBytes + UsableByPreviousChunk;
                   bool ret = shrink
                         (memory_algo
                         ,memory_algo->priv_get_user_buffer(new_block)
@@ -457,7 +632,7 @@ class memory_algorithm_common
                   BOOST_ASSERT(ret);
                   //Some sanity checks
                   BOOST_ASSERT(shrunk_request == shrunk_received);
-                  BOOST_ASSERT(elem_units == (shrunk_request/Alignment + AllocatedCtrlUnits));
+                  BOOST_ASSERT(elem_units == ((shrunk_request-UsableByPreviousChunk)/Alignment + AllocatedCtrlUnits));
                   //"new_block->m_size" must have been reduced to elem_units by "shrink"
                   BOOST_ASSERT(new_block->m_size == elem_units);
                   //Now update the total received units with the reduction
@@ -483,6 +658,7 @@ class memory_algorithm_common
             }
             previous = p;
             ++low_idx;
+            //prev_block = new_block;
          }
          //Sanity check
          BOOST_ASSERT(total_used_units == received_units);

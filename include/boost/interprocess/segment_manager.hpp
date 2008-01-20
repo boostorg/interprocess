@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -70,7 +70,8 @@ class segment_manager_base
    /// @cond
    
    //Experimental. Don't use
-   typedef typename MemoryAlgorithm::multiallocation_iterator multiallocation_iterator;
+   typedef typename MemoryAlgorithm::multiallocation_iterator  multiallocation_iterator;
+   typedef typename MemoryAlgorithm::multiallocation_chain     multiallocation_chain;
 
    /// @endcond
 
@@ -148,6 +149,11 @@ class segment_manager_base
    multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::size_t sizeof_element, std::nothrow_t)
    {  return MemoryAlgorithm::allocate_many(elem_sizes, n_elements, sizeof_element); }
 
+   //!Deallocates elements pointed by the
+   //!multiallocation iterator range.
+   void deallocate_many(multiallocation_iterator it)
+   {  MemoryAlgorithm::deallocate_many(it); }
+
    /// @endcond
 
    //!Allocates nbytes bytes. Throws boost::interprocess::bad_alloc
@@ -189,6 +195,19 @@ class segment_manager_base
       return ret;
    }
 
+   std::pair<void *, bool>
+      raw_allocation_command  (allocation_type command,   std::size_t limit_objects,
+                           std::size_t preferred_objects,std::size_t &received_objects,
+                           void *reuse_ptr = 0, std::size_t sizeof_object = 1)
+   {
+      std::pair<void *, bool> ret = MemoryAlgorithm::raw_allocation_command
+         ( command | nothrow_allocation, limit_objects, preferred_objects, received_objects
+         , reuse_ptr, sizeof_object);
+      if(!(command & nothrow_allocation) && !ret.first)
+         throw bad_alloc();
+      return ret;
+   }
+
    //!Deallocates the bytes allocated with allocate/allocate_many()
    //!pointed by addr
    void   deallocate          (void *addr)
@@ -218,6 +237,10 @@ class segment_manager_base
    //!of the memory algorithm
    void zero_free_memory()
    {   MemoryAlgorithm::zero_free_memory(); }
+
+   //!Returns the size of the buffer previously allocated pointed by ptr
+   std::size_t size(const void *ptr) const
+   {   return MemoryAlgorithm::size(ptr); }
 
    /// @cond
    protected:

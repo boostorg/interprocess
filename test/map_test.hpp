@@ -296,6 +296,8 @@ int map_test ()
       }
 
       //Now do count exercise
+      shmmap->erase(shmmap->begin(), shmmap->end());
+      shmmultimap->erase(shmmultimap->begin(), shmmultimap->end());
       shmmap->clear();
       shmmultimap->clear();
 

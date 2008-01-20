@@ -26,6 +26,7 @@ doxygen autodoc
         <doxygen:param>HIDE_UNDOC_MEMBERS=YES
         <doxygen:param>EXTRACT_PRIVATE=NO
         <doxygen:param>EXPAND_ONLY_PREDEF=YES
+        <doxygen:param>PREDEFINED=BOOST_INTERPROCESS_DOXYGEN_INVOKED
         <xsl:param>"boost.doxygen.reftitle=Boost.Interprocess Reference"
    ;
 

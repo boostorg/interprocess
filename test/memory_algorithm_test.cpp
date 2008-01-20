@@ -19,47 +19,67 @@
 #include <string>
 #include "get_process_id_name.hpp"
 
+using namespace boost::interprocess;
+
+const int memsize = 16384;
+const char *const shMemName = test::get_process_id_name();
+
+int test_simple_seq_fit()
+{
+   //A shared memory with simple sequential fit algorithm
+   typedef basic_managed_shared_memory
+      <char
+      ,simple_seq_fit<mutex_family>
+      ,null_index
+      > my_managed_shared_memory;
+
+   //Create shared memory
+   shared_memory_object::remove(shMemName);
+   my_managed_shared_memory segment(create_only, shMemName, memsize);
+
+   //Now take the segment manager and launch memory test
+   if(!test::test_all_allocation(*segment.get_segment_manager())){
+      return 1;
+   }
+   return 0;
+}
+
+template<std::size_t Alignment>
+int test_rbtree_best_fit()
+{
+   //A shared memory with red-black tree best fit algorithm
+   typedef basic_managed_shared_memory
+      <char
+      ,rbtree_best_fit<mutex_family, offset_ptr<void>, Alignment>
+      ,null_index
+      > my_managed_shared_memory;
+
+   //Create shared memory
+   shared_memory_object::remove(shMemName);
+   my_managed_shared_memory segment(create_only, shMemName, memsize);
+
+   //Now take the segment manager and launch memory test
+   if(!test::test_all_allocation(*segment.get_segment_manager())){
+      return 1;
+   }
+   return 0;
+}
+
 int main ()
 {
-   using namespace boost::interprocess;
-   const int memsize = 16384;
-   const char *const shMemName = test::get_process_id_name();
-
-   {
-      //A shared memory with simple sequential fit algorithm
-      typedef basic_managed_shared_memory
-         <char
-         ,simple_seq_fit<mutex_family>
-         ,null_index
-         > my_managed_shared_memory;
-
-      //Create shared memory
-      shared_memory_object::remove(shMemName);
-      my_managed_shared_memory segment(create_only, shMemName, memsize);
-
-      //Now take the segment manager and launch memory test
-      if(!test::test_all_allocation(*segment.get_segment_manager())){
-         return 1;
-      }
+   if(test_simple_seq_fit()){
+      return 1;
+   }
+   if(test_rbtree_best_fit<4>()){
+      return 1;
+   }
+   if(test_rbtree_best_fit<8>()){
+      return 1;
+   }
+   if(test_rbtree_best_fit<16>()){
+      return 1;
    }
 
-   {
-      //A shared memory with red-black tree best fit algorithm
-      typedef basic_managed_shared_memory
-         <char
-         ,rbtree_best_fit<mutex_family>
-         ,null_index
-         > my_managed_shared_memory;
-
-      //Create shared memory
-      shared_memory_object::remove(shMemName);
-      my_managed_shared_memory segment(create_only, shMemName, memsize);
-
-      //Now take the segment manager and launch memory test
-      if(!test::test_all_allocation(*segment.get_segment_manager())){
-         return 1;
-      }
-   }
    shared_memory_object::remove(shMemName);
    return 0;
 }
