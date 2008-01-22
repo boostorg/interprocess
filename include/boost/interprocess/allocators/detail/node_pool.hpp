@@ -91,11 +91,26 @@ class private_node_pool_impl
 
    //!Allocates array of count elements. Can throw boost::interprocess::bad_alloc
    void *allocate_node()
-   {  return priv_alloc_node();  }
+   {
+      //If there are no free nodes we allocate a new block
+      if (m_freelist.empty())
+         priv_alloc_chunk();
+      //We take the first free node
+      node_t *n = (node_t*)&m_freelist.front();
+      m_freelist.pop_front();
+      ++m_allocated;
+      return n;
+   }
    
    //!Deallocates an array pointed by ptr. Never throws
    void deallocate_node(void *ptr)
-   {  priv_dealloc_node(ptr); }
+   {
+      //We put the node at the beginning of the free node list
+      node_t * to_deallocate = static_cast<node_t*>(ptr);
+      m_freelist.push_front(*to_deallocate);
+      assert(m_allocated>0);
+      --m_allocated;
+   }
 
    //!Allocates a singly linked list of n nodes ending in null pointer and pushes them in the chain. 
    //!can throw boost::interprocess::bad_alloc
@@ -104,7 +119,7 @@ class private_node_pool_impl
       std::size_t i = 0;
       try{
          for(; i < n; ++i){
-            nodes.push_front(priv_alloc_node());
+            nodes.push_front(this->allocate_node());
          }
       }
       catch(...){
@@ -121,7 +136,7 @@ class private_node_pool_impl
       std::size_t i = 0;
       try{
          for(; i < n; ++i){
-            nodes.push_front(priv_alloc_node());
+            nodes.push_front(this->allocate_node());
          }
       }
       catch(...){
@@ -133,7 +148,10 @@ class private_node_pool_impl
 
    //!Deallocates a linked list of nodes. Never throws
    void deallocate_nodes(multiallocation_chain &nodes)
-   {  this->deallocate_nodes(nodes.get_it());  }
+   {
+      this->deallocate_nodes(nodes.get_it());
+      nodes.reset();
+   }
 
    //!Deallocates the first n nodes of a linked list of nodes. Never throws
    void deallocate_nodes(multiallocation_chain &nodes, std::size_t num)
@@ -286,31 +304,6 @@ class private_node_pool_impl
       const char *      beg_;
       const char *      end_;
    };
-
-   //!Allocates one node, using single segregated storage algorithm.
-   //!Never throws
-   node_t *priv_alloc_node()
-   {
-      //If there are no free nodes we allocate a new block
-      if (m_freelist.empty())
-         priv_alloc_chunk();
-      //We take the first free node
-      node_t *n = (node_t*)&m_freelist.front();
-      m_freelist.pop_front();
-      ++m_allocated;
-      return n;
-   }
-
-   //!Deallocates one node, using single segregated storage algorithm.
-   //!Never throws
-   void priv_dealloc_node(void *pElem)
-   {
-      //We put the node at the beginning of the free node list
-      node_t * to_deallocate = static_cast<node_t*>(pElem);
-      m_freelist.push_front(*to_deallocate);
-      assert(m_allocated>0);
-      --m_allocated;
-   }
 
    //!Allocates a chunk of nodes. Can throw boost::interprocess::bad_alloc
    void priv_alloc_chunk()

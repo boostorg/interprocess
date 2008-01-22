@@ -186,39 +186,11 @@ class private_adaptive_node_pool_impl
    //!Deallocates an array pointed by ptr. Never throws
    void deallocate_node(void *pElem)
    {
-      priv_invariants();
-      chunk_info_t *chunk_info = priv_chunk_from_node(pElem);
-      assert(chunk_info->free_nodes.size() < m_real_num_node);
-      //We put the node at the beginning of the free node list
-      node_t * to_deallocate = static_cast<node_t*>(pElem);
-      chunk_info->free_nodes.push_front(*to_deallocate);
-
-      chunk_iterator this_chunk(chunk_multiset_t::s_iterator_to(*chunk_info));
-      chunk_iterator next_chunk(this_chunk);
-      ++next_chunk;
-
-      //Cache the free nodes from the chunk
-      std::size_t this_chunk_free_nodes = this_chunk->free_nodes.size();
-
-      if(this_chunk_free_nodes == 1){
-         m_chunk_multiset.insert(m_chunk_multiset.begin(), *chunk_info);
-      }
-      else{
-         chunk_iterator next_chunk(this_chunk);
-         ++next_chunk;
-         if(next_chunk != m_chunk_multiset.end()){
-            std::size_t next_free_nodes = next_chunk->free_nodes.size();
-            if(this_chunk_free_nodes > next_free_nodes){
-               //Now move the chunk to the new position
-               m_chunk_multiset.erase(this_chunk);
-               m_chunk_multiset.insert(*chunk_info);
-            }
-         }
-      }
+      this->priv_reinsert_nodes_in_chunk
+         (multiallocation_iterator::create_simple_range(pElem));
       //Update free chunk count
-      if(this_chunk_free_nodes == m_real_num_node){
-         ++m_totally_free_chunks;
-         priv_deallocate_free_chunks(m_max_free_chunks);
+      if(m_totally_free_chunks > m_max_free_chunks){
+         this->priv_deallocate_free_chunks(m_max_free_chunks);
       }
       priv_invariants();
    }
@@ -239,8 +211,8 @@ class private_adaptive_node_pool_impl
          }
       }
       catch(...){
-         priv_deallocate_nodes(nodes, nodes.size());
-         priv_deallocate_free_chunks(m_max_free_chunks);
+         this->deallocate_nodes(nodes, nodes.size());
+         this->priv_deallocate_free_chunks(m_max_free_chunks);
          throw;
       }
       //remove me
@@ -259,25 +231,31 @@ class private_adaptive_node_pool_impl
 
    //!Deallocates a linked list of nodes. Never throws
    void deallocate_nodes(multiallocation_chain &nodes)
-   {  priv_deallocate_nodes(nodes, nodes.size());  }
+   {
+      this->deallocate_nodes(nodes.get_it());
+      nodes.reset();
+   }
 
    //!Deallocates the first n nodes of a linked list of nodes. Never throws
    void deallocate_nodes(multiallocation_chain &nodes, std::size_t n)
-   {  priv_deallocate_nodes(nodes, n);  }
+   {
+      assert(nodes.size() >= n);
+      for(std::size_t i = 0; i < n; ++i){
+         this->deallocate_node(nodes.pop_front());
+      }
+   }
 
    //!Deallocates the nodes pointed by the multiallocation iterator. Never throws
    void deallocate_nodes(multiallocation_iterator it)
    {
-      multiallocation_iterator itend;
-      while(it != itend){
-         void *addr = &*it;
-         ++it;
-         deallocate_node(addr);
+      this->priv_reinsert_nodes_in_chunk(it);
+      if(m_totally_free_chunks > m_max_free_chunks){
+         this->priv_deallocate_free_chunks(m_max_free_chunks);
       }
    }
 
    void deallocate_free_chunks()
-   {  priv_deallocate_free_chunks(0);  }
+   {  this->priv_deallocate_free_chunks(0);   }
 
    std::size_t num_free_nodes()
    {
@@ -302,6 +280,71 @@ class private_adaptive_node_pool_impl
    }
 
    private:
+   void priv_deallocate_free_chunks(std::size_t max_free_chunks)
+   {
+      priv_invariants();
+      //Now check if we've reached the free nodes limit
+      //and check if we have free chunks. If so, deallocate as much
+      //as we can to stay below the limit
+      for( chunk_iterator itend = m_chunk_multiset.end()
+         ; m_totally_free_chunks > max_free_chunks
+         ; --m_totally_free_chunks
+         ){
+         assert(!m_chunk_multiset.empty());
+         chunk_iterator it = itend;
+         --it;
+         std::size_t num_nodes = it->free_nodes.size();
+         assert(num_nodes == m_real_num_node);
+         (void)num_nodes;
+         m_chunk_multiset.erase_and_dispose
+            (it, chunk_destroyer(this));
+      }
+   }
+
+   void priv_reinsert_nodes_in_chunk(multiallocation_iterator it)
+   {
+      multiallocation_iterator itend;
+      chunk_iterator chunk_it(m_chunk_multiset.end());
+      while(it != itend){
+         void *pElem = &*it;
+         ++it;
+         priv_invariants();
+         chunk_info_t *chunk_info = this->priv_chunk_from_node(pElem);
+         assert(chunk_info->free_nodes.size() < m_real_num_node);
+         //We put the node at the beginning of the free node list
+         node_t * to_deallocate = static_cast<node_t*>(pElem);
+         chunk_info->free_nodes.push_front(*to_deallocate);
+
+         chunk_iterator this_chunk(chunk_multiset_t::s_iterator_to(*chunk_info));
+         chunk_iterator next_chunk(this_chunk);
+         ++next_chunk;
+
+         //Cache the free nodes from the chunk
+         std::size_t this_chunk_free_nodes = this_chunk->free_nodes.size();
+
+         if(this_chunk_free_nodes == 1){
+            m_chunk_multiset.insert(m_chunk_multiset.begin(), *chunk_info);
+         }
+         else{
+            chunk_iterator next_chunk(this_chunk);
+            ++next_chunk;
+            if(next_chunk != chunk_it){
+               std::size_t next_free_nodes = next_chunk->free_nodes.size();
+               if(this_chunk_free_nodes > next_free_nodes){
+                  //Now move the chunk to the new position
+                  m_chunk_multiset.erase(this_chunk);
+                  m_chunk_multiset.insert(*chunk_info);
+               }
+            }
+         }
+         //Update free chunk count
+         if(this_chunk_free_nodes == m_real_num_node){
+            ++m_totally_free_chunks;
+         }
+         priv_invariants();
+      }
+   }
+
    node_t *priv_take_first_node()
    {
       assert(m_chunk_multiset.begin() != m_chunk_multiset.end());
@@ -319,14 +362,6 @@ class private_adaptive_node_pool_impl
       }
       priv_invariants();
       return first_node;
-   }
-
-   void priv_deallocate_nodes(multiallocation_chain &nodes, const std::size_t num)
-   {
-      assert(nodes.size() >= num);
-      for(std::size_t i = 0; i < num; ++i){
-         deallocate_node(nodes.pop_front());
-      }
    }
 
    class chunk_destroyer;
@@ -449,27 +484,6 @@ class private_adaptive_node_pool_impl
       assert(0 == ((std::size_t)hdr_off_holder & (m_real_chunk_alignment - 1)));
       assert(0 == (hdr_off_holder->hdr_offset & (m_real_chunk_alignment - 1)));
       return hdr_off_holder;
-   }
-
-   void priv_deallocate_free_chunks(std::size_t max_free_chunks)
-   {
-      priv_invariants();
-      //Now check if we've reached the free nodes limit
-      //and check if we have free chunks. If so, deallocate as much
-      //as we can to stay below the limit
-      for( chunk_iterator itend = m_chunk_multiset.end()
-         ; m_totally_free_chunks > max_free_chunks
-         ; --m_totally_free_chunks
-         ){
-         assert(!m_chunk_multiset.empty());
-         chunk_iterator it = itend;
-         --it;
-         std::size_t num_nodes = it->free_nodes.size();
-         assert(num_nodes == m_real_num_node);
-         (void)num_nodes;
-         m_chunk_multiset.erase_and_dispose
-            (it, chunk_destroyer(this));
-      }
    }
 
    //!Allocates a several chunks of nodes. Can throw boost::interprocess::bad_alloc

@@ -26,7 +26,7 @@
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/interprocess/detail/min_max.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
-#include <boost/interprocess/detail/type_traits.hpp>
+#include <boost/interprocess/detail/iterators.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
 #include <utility>
 #include <algorithm>
@@ -676,6 +676,52 @@ struct cast_functor
    typedef typename detail::add_reference<T>::type result_type;
    result_type operator()(char &ptr) const
    {  return *static_cast<T*>(static_cast<void*>(&ptr));  }
+};
+
+template<class MultiallocChain, class T>
+class multiallocation_chain_adaptor
+{
+   private:
+   MultiallocChain   chain_;
+
+   multiallocation_chain_adaptor
+      (const multiallocation_chain_adaptor &);
+   multiallocation_chain_adaptor &operator=
+      (const multiallocation_chain_adaptor &);
+
+   public:
+   typedef transform_iterator
+      < typename MultiallocChain::
+         multiallocation_iterator
+      , detail::cast_functor <T> >        multiallocation_iterator;
+
+   multiallocation_chain_adaptor()
+      : chain_()
+   {}
+
+   void push_back(T *mem)
+   {  chain_.push_back(mem);  }
+
+   void push_front(T *mem)
+   {  chain_.push_front(mem);  }
+
+   void swap(multiallocation_chain_adaptor &other_chain)
+   {  chain_.swap(other_chain.chain_); }
+
+   void splice_back(multiallocation_chain_adaptor &other_chain)
+   {  chain_.splice_back(other_chain.chain_);   }
+
+   T *pop_front()
+   {  return static_cast<T*>(chain_.pop_front());   }
+
+   bool empty() const
+   {  return chain_.empty(); }
+
+   multiallocation_iterator get_it() const
+   {  return multiallocation_iterator(chain_.get_it()); }
+
+   std::size_t size() const
+   {  return chain_.size(); }
 };
 
 }  //namespace detail {

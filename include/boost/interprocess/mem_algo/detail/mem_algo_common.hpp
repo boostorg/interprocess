@@ -22,6 +22,7 @@
 #include <boost/interprocess/allocators/allocation_type.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
+#include <boost/interprocess/detail/iterators.hpp>
 #include <boost/assert.hpp>
 #include <boost/static_assert.hpp>
 
@@ -100,6 +101,16 @@ class basic_multiallocation_iterator
    pointer operator->() const
    { return &(*(*this)); }
 
+   static basic_multiallocation_iterator create_simple_range(void *mem)
+   {
+      basic_multiallocation_iterator it;
+      typedef multi_allocation_next<VoidPointer> next_impl_t;
+      next_impl_t * tmp_mem = static_cast<next_impl_t*>(mem);
+      it = basic_multiallocation_iterator<VoidPointer>(tmp_mem);
+      tmp_mem->next_ = 0;
+      return it;
+   }
+
    private:
    multi_allocation_next<VoidPointer> next_alloc_;
 };
@@ -122,6 +133,13 @@ class basic_multiallocation_chain
       :  it_(0), last_mem_(0), num_mem_(0)
    {}
 
+   void reset()
+   {
+      this->it_ = multiallocation_iterator();
+      this->last_mem_ = 0;
+      this->num_mem_ = 0;
+   }
+
    void push_back(void *mem)
    {
       typedef multi_allocation_next<VoidPointer> next_impl_t;
@@ -138,35 +156,21 @@ class basic_multiallocation_chain
       ++num_mem_;
    }
 
-   void push_back(multiallocation_iterator it, std::size_t n)
-   {
-      typedef multi_allocation_next<VoidPointer> next_impl_t;
-      next_impl_t * tmp_mem = (next_impl_t*)(&*it);
-      
-      if(!this->last_mem_){
-         this->it_ = it;
-      }
-      else{
-         static_cast<next_impl_t*>(detail::get_pointer(this->last_mem_))->next_ = tmp_mem;
-      }
-      tmp_mem->next_ = 0;
-      this->last_mem_ = tmp_mem;
-      ++num_mem_;
-   }
-
    void push_front(void *mem)
    {
       typedef multi_allocation_next<VoidPointer> next_impl_t;
-      
+      next_impl_t * tmp_mem   = static_cast<next_impl_t*>(mem);      
+      ++num_mem_;
+
       if(!this->last_mem_){
-         push_back(mem);
+         this->it_ = basic_multiallocation_iterator<VoidPointer>(tmp_mem);
+         tmp_mem->next_ = 0;
+         this->last_mem_ = tmp_mem;
       }
       else{
-         next_impl_t * tmp_mem   = static_cast<next_impl_t*>(mem);
          next_impl_t * old_first = (next_impl_t*)(&*this->it_);
-         static_cast<next_impl_t*>(mem)->next_ = old_first;
+         tmp_mem->next_          = old_first;
          this->it_ = basic_multiallocation_iterator<VoidPointer>(tmp_mem);
-         ++num_mem_;
       }
    }
 
@@ -186,14 +190,15 @@ class basic_multiallocation_chain
       if(end_it == other_it){
          return;
       }
-      else if(end_it == other_it){
+      else if(end_it == this_it){
          this->swap(other_chain);
       }
-      
-      static_cast<next_impl_t*>(detail::get_pointer(this->last_mem_))->next_
-         = (next_impl_t*)&*this->it_;
-      this->last_mem_ = other_chain.last_mem_;
-      this->num_mem_ += other_chain.num_mem_;
+      else{
+         static_cast<next_impl_t*>(detail::get_pointer(this->last_mem_))->next_
+            = (next_impl_t*)&*other_chain.it_;
+         this->last_mem_ = other_chain.last_mem_;
+         this->num_mem_ += other_chain.num_mem_;
+      }
    }
 
    void *pop_front()
@@ -225,45 +230,6 @@ class basic_multiallocation_chain
    std::size_t size() const
    {  return num_mem_;  }
 };
-
-template<class Allocator>
-class allocator_multiallocation_chain
-{
-   typedef typename detail::
-      pointer_to_other<typename Allocator::pointer, void>::type
-         void_ptr;
-
-   typedef typename Allocator::multiallocation_iterator  multiallocation_iterator;
-   basic_multiallocation_chain<void_ptr> chain_;
-
-   public:
-
-   allocator_multiallocation_chain()
-      :  chain_()
-   {}
-
-   void push_back(void *mem)
-   {  chain_.push_back(mem);  }
-
-   multiallocation_iterator get_it() const
-   {  return multiallocation_iterator(chain_.get_it());  }
-};
-
-
-#define BOOST_MULTIALLOC_IT_CHAIN_INIT(IT_CHAIN) ((IT_CHAIN).it.next = 0, (IT_CHAIN).last_mem = 0)
-#define BOOST_MULTIALLOC_IT_CHAIN_ADD(IT_CHAIN, MEM)\
-   do{\
-      multialloc_it_t *____tmp_mem____ = (multialloc_it_t*)(MEM);\
-      if(!IT_CHAIN.last_mem){\
-         (IT_CHAIN).it.next = ____tmp_mem____;\
-      }else{\
-         ((multialloc_it_t*)(IT_CHAIN.last_mem))->next = ____tmp_mem____;\
-      }\
-      ____tmp_mem____->next = 0;\
-      IT_CHAIN.last_mem = ____tmp_mem____;\
-   }while(0)
-
-#define BOOST_MULTIALLOC_IT_CHAIN_IT(IT_CHAIN) ((IT_CHAIN).it)
 
 
 //!This class implements several allocation functions shared by different algorithms

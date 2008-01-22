@@ -101,10 +101,11 @@ class allocator
    typedef transform_iterator
       < typename SegmentManager::
          multiallocation_iterator
-      , detail::cast_functor <T> >          multiallocation_iterator;
-   typedef typename SegmentManager::
-      multiallocation_chain                     multiallocation_chain;
-
+      , detail::cast_functor <T> >              multiallocation_iterator;
+   typedef detail::multiallocation_chain_adaptor
+      <typename SegmentManager::
+         multiallocation_chain
+      , T>                                      multiallocation_chain;
    /// @endcond
 
    //!Obtains an allocator that allocates

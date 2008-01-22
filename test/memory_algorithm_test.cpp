@@ -14,6 +14,7 @@
 #include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>
 #include <boost/interprocess/indexes/null_index.hpp>
 #include <boost/interprocess/sync/mutex_family.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include "memory_algorithm_test_template.hpp"
 #include <iostream>
 #include <string>
@@ -67,16 +68,17 @@ int test_rbtree_best_fit()
 
 int main ()
 {
+   const std::size_t void_ptr_align = detail::alignment_of<void*>::value;
    if(test_simple_seq_fit()){
       return 1;
    }
-   if(test_rbtree_best_fit<4>()){
+   if(test_rbtree_best_fit<void_ptr_align>()){
       return 1;
    }
-   if(test_rbtree_best_fit<8>()){
+   if(test_rbtree_best_fit<2*void_ptr_align>()){
       return 1;
    }
-   if(test_rbtree_best_fit<16>()){
+   if(test_rbtree_best_fit<4*void_ptr_align>()){
       return 1;
    }
 
