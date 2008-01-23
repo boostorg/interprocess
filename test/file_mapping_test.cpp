@@ -9,6 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
+#include <ios>       // for std::streamoff
 #include <fstream>
 #include <iostream>
 #include <boost/interprocess/file_mapping.hpp>
