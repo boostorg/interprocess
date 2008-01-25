@@ -12,9 +12,8 @@
 #define BOOST_INTERPROCESS_GET_PROCESS_ID_NAME_HPP
 
 #include <boost/config.hpp>
-#include <string>
-#include <algorithm>
-#include <sstream>
+#include <string>    //std::string
+#include <sstream>   //std::stringstream
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 
 namespace boost{

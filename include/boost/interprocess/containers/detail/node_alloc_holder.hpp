@@ -176,7 +176,7 @@ struct node_alloc_holder
       BOOST_CATCH(...){
          valueptr->first.~first_type();
          static_cast<hook_type*>(nodeptr)->~hook_type();
-         throw;
+         BOOST_RETHROW
       }
       BOOST_CATCH_END
    }
@@ -201,7 +201,7 @@ struct node_alloc_holder
       BOOST_CATCH(...){
          valueptr->first.~first_type();
          static_cast<hook_type*>(nodeptr)->~hook_type();
-         throw;
+         BOOST_RETHROW
       }
       BOOST_CATCH_END
    }
@@ -296,6 +296,7 @@ struct node_alloc_holder
             this->destroy(p);
          }
          this->node_alloc().deallocate_many(itbeg);
+         BOOST_RETHROW
       }
       BOOST_CATCH_END
       return beg;

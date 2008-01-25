@@ -174,7 +174,7 @@ class cache_impl
       }
       BOOST_CATCH(...){
          this->cached_deallocation(multiallocation_iterator(chain.get_it()));
-         throw;
+         BOOST_RETHROW
       }
       BOOST_CATCH_END
    }

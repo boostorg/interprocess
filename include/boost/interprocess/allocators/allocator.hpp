@@ -106,6 +106,9 @@ class allocator
       <typename SegmentManager::
          multiallocation_chain
       , T>                                      multiallocation_chain;
+//   typedef typename SegmentManager::
+//      multiallocation_chain                     multiallocation_chain;
+
    /// @endcond
 
    //!Obtains an allocator that allocates

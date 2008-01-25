@@ -272,7 +272,8 @@ class segment_manager_base
 
       //Now construct the header
       block_header_t * hdr = new(ptr_struct) block_header_t(block_info);
-      void *ptr = hdr->value();
+      void *ptr = 0; //avoid gcc warning
+      ptr = hdr->value();
 
       //Now call constructors
       detail::array_construct(ptr, num, table);
@@ -1062,7 +1063,7 @@ class segment_manager
       //Ignore exceptions
       BOOST_CATCH(...){
          if(dothrow)
-            BOOST_RETHROW;
+            BOOST_RETHROW
          return 0;
       }
       BOOST_CATCH_END
@@ -1096,7 +1097,8 @@ class segment_manager
       //Now construct the intrusive hook plus the header
       intrusive_value_type * intrusive_hdr = new(buffer_ptr) intrusive_value_type();
       block_header_t * hdr = new(intrusive_hdr->get_block_header())block_header_t(block_info);
-      void *ptr = hdr->value();
+      void *ptr = 0; //avoid gcc warning
+      ptr = hdr->value();
 
       //Copy name to memory segment and insert data
       CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
@@ -1109,7 +1111,7 @@ class segment_manager
       //Ignore exceptions
       BOOST_CATCH(...){
          if(dothrow)
-            BOOST_RETHROW;
+            BOOST_RETHROW
          return 0;
       }
       BOOST_CATCH_END
@@ -1235,7 +1237,8 @@ class segment_manager
       }
 
       hdr = new(hdr)block_header_t(block_info);
-      void *ptr = hdr->value();
+      void *ptr = 0; //avoid gcc warning
+      ptr = hdr->value();
 
       //Copy name to memory segment and insert data
       CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());

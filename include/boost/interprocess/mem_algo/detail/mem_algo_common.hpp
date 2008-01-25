@@ -588,14 +588,15 @@ class memory_algorithm_common
                if((received_units - total_used_units) >= (elem_units + MemoryAlgorithm::BlockCtrlUnits)){
                   std::size_t shrunk_received;
                   std::size_t shrunk_request = elem_units*Alignment - AllocatedCtrlBytes + UsableByPreviousChunk;
-                  bool ret = shrink
+                  bool shrink_ok = shrink
                         (memory_algo
                         ,memory_algo->priv_get_user_buffer(new_block)
                         ,shrunk_request
                         ,shrunk_request
                         ,shrunk_received);
+                  (void)shrink_ok;
                   //Shrink must always succeed with passed parameters
-                  BOOST_ASSERT(ret);
+                  BOOST_ASSERT(shrink_ok);
                   //Some sanity checks
                   BOOST_ASSERT(shrunk_request == shrunk_received);
                   BOOST_ASSERT(elem_units == ((shrunk_request-UsableByPreviousChunk)/Alignment + AllocatedCtrlUnits));

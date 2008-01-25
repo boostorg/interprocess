@@ -1138,6 +1138,7 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_is_prev_alloc
    }
    else{
       block_ctrl *prev = priv_prev_block(ptr);
+      (void)prev;
       assert(!priv_is_allocated_block(prev));
       return false;
    }
@@ -1151,6 +1152,7 @@ typename rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::block_ctrl *
    assert(first_segment_block->m_prev_allocated);
    block_ctrl *end_block = reinterpret_cast<block_ctrl *>
       (detail::char_ptr_cast(first_segment_block) - first_segment_block->m_prev_size*Alignment);
+   (void)end_block;
    assert(priv_is_allocated_block(end_block));
    assert(end_block > first_segment_block);
    return end_block;

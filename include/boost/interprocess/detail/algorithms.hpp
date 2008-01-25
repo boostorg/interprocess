@@ -92,7 +92,7 @@ InIt n_uninitialized_copy_n
       for (; new_count--; ++dest_init){
          detail::get_pointer(&*dest_init)->~value_type();
       }
-      BOOST_RETHROW;
+      BOOST_RETHROW
    }
    BOOST_CATCH_END
    return first;

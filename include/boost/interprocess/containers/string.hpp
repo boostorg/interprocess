@@ -1684,7 +1684,7 @@ class basic_string
          for (; constructed--; ++dest_init){
             this->destroy(dest_init);
          }
-         BOOST_RETHROW;
+         BOOST_RETHROW
       }
       BOOST_CATCH_END
       return (constructed);

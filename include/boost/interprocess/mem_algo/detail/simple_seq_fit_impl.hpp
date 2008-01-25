@@ -394,6 +394,7 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::shrink_to_fit()
 
    std::size_t received_size;
    void *addr = priv_check_and_allocate(last_units, prev, last, received_size);
+   (void)addr;
    assert(addr);
    assert(received_size == last_units*Alignment - AllocatedCtrlBytes);
    

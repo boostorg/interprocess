@@ -199,7 +199,6 @@ class private_adaptive_node_pool_impl
    //!can throw boost::interprocess::bad_alloc
    void allocate_nodes(multiallocation_chain &nodes, const std::size_t n)
    {
-      std::size_t old_node_count = nodes.size();
       try{
          priv_invariants();
          for(std::size_t i = 0; i != n; ++i){
@@ -215,8 +214,6 @@ class private_adaptive_node_pool_impl
          this->priv_deallocate_free_chunks(m_max_free_chunks);
          throw;
       }
-      //remove me
-      assert((n+old_node_count) == (std::size_t)std::distance(nodes.get_it(), multiallocation_iterator()));
       priv_invariants();
    }
 

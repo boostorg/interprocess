@@ -731,7 +731,7 @@ class vector : private detail::vector_alloc_holder<A>
          //There is not enough memory, allocate a new
          //buffer or expand the old one.
          bool same_buffer_start;
-         size_type real_cap;
+         size_type real_cap = 0;
          std::pair<pointer, bool> ret =
             this->allocation_command
                (allocate_new | expand_fwd | expand_bwd,

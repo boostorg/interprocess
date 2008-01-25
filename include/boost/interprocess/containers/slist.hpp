@@ -347,7 +347,7 @@ class slist
    slist(InpIt first, InpIt last,
          const allocator_type& a =  allocator_type()) 
       : AllocHolder(a)
-   { this->insert_after(this->end_node(), first, last); }
+   { this->insert_after(this->before_begin(), first, last); }
 
    //! <b>Effects</b>: Copy constructs a list.
    //!
@@ -804,7 +804,7 @@ class slist
    //! <b>Complexity</b>: Linear to the difference between size() and new_size.
    void resize(size_type new_size, const T& x)
    {
-      typename Icont::iterator end_n(this->icont().end()), cur(end_n), cur_next;
+      typename Icont::iterator end_n(this->icont().end()), cur(this->icont().before_begin()), cur_next;
       while (++(cur_next = cur) != end_n && new_size > 0){
          --new_size;
          cur = cur_next;
@@ -823,7 +823,7 @@ class slist
    //! <b>Complexity</b>: Linear to the difference between size() and new_size.
    void resize(size_type new_size)
    {
-      typename Icont::iterator end_n(this->icont().end()), cur(end_n), cur_next;
+      typename Icont::iterator end_n(this->icont().end()), cur(this->icont().before_begin()), cur_next;
       size_type len = this->size();
       size_type left = new_size;
       
@@ -835,7 +835,7 @@ class slist
          this->erase_after(iterator(cur), iterator(end_n));
       }
       else{
-         this->priv_create_and_insert_nodes(this->end(), new_size - len);
+         this->priv_create_and_insert_nodes(iterator(cur), new_size - len);
       }
    }
 
@@ -1252,9 +1252,9 @@ class slist
 
    void priv_fill_assign(size_type n, const T& val) 
    {
-      iterator end_n(end());
-      iterator prev(before_begin());
-      iterator node(begin());
+      iterator end_n(this->end());
+      iterator prev(this->before_begin());
+      iterator node(this->begin());
       for ( ; node != end_n && n > 0 ; --n){
          *node = val;
          prev = node;
@@ -1274,9 +1274,9 @@ class slist
    void priv_assign_dispatch(InpIt first, InpIt last,
                            detail::false_)
    {
-      iterator end_n(end());
-      iterator prev(before_begin());
-      iterator node(begin());
+      iterator end_n(this->end());
+      iterator prev(this->before_begin());
+      iterator node(this->begin());
       while (node != end_n && first != last){
          *node = *first;
          prev = node;
@@ -1295,7 +1295,7 @@ class slist
 
    template <class InIter>
    void priv_insert_after_range_dispatch(iterator prev_pos, InIter first, InIter last, detail::false_) 
-   {  return priv_create_and_insert_nodes(prev_pos, first, last); }
+   {  this->priv_create_and_insert_nodes(prev_pos, first, last); }
 
    //Functors for member algorithm defaults
    struct value_less

@@ -92,7 +92,7 @@ class shared_count
       }
       BOOST_CATCH (...){
          d(p); // delete p
-         throw;
+         BOOST_RETHROW
       }
       BOOST_CATCH_END
    }
