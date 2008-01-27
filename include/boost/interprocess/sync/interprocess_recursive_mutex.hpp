@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -36,7 +36,7 @@
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <cassert>
 
-#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED && defined BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES
    #include <pthread.h>
    #include <errno.h>   
    #include <boost/interprocess/sync/posix/pthread_helpers.hpp>
@@ -107,15 +107,7 @@ class interprocess_recursive_mutex
    unsigned int            m_nLockCount;
    detail::OS_thread_id_t  m_nOwner;
    #else    //#if defined (BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
-      #if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined BOOST_INTERPROCESS_POSIX_TIMEOUTS
-         pthread_mutex_t m_mut;   
-      #else //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined BOOST_INTERPROCESS_POSIX_TIMEOUTS
-         pthread_mutex_t   m_mut;
-         pthread_cond_t    m_unlocked;
-         pthread_t         m_thread_id;
-         bool              m_valid_id;
-         unsigned int      m_count;
-      #endif   //#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 500) && defined BOOST_INTERPROCESS_POSIX_TIMEOUTS
+   pthread_mutex_t m_mut;
    #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
    /// @endcond
 };

@@ -9,14 +9,16 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <fstream>
+#include <ios> //std::streamoff
+#include <fstream>   //std::ofstream, std::ifstream
 #include <iostream>
+#include <ios>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
-#include <memory>
-#include <cstdio>
-#include <string>
+#include <memory>    //std::auto_ptr
+#include <stdexcept> //std::exception
 #include <cstdio>    //std::remove
+#include <cstddef>   //std::size_t
 #include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;

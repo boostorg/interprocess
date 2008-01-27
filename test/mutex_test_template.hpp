@@ -123,7 +123,7 @@ struct test_timedlock
       BOOST_INTERPROCES_CHECK(lock ? true : false);
       lock.unlock();
       BOOST_INTERPROCES_CHECK(!lock);
-      boost::posix_time::ptime pt = delay(10*BaseSeconds, 0);
+      boost::posix_time::ptime pt = delay(3*BaseSeconds, 0);
       BOOST_INTERPROCES_CHECK(lock.timed_lock(pt));
       BOOST_INTERPROCES_CHECK(lock ? true : false);
    }
@@ -152,7 +152,7 @@ struct test_recursive_lock
       }
       {
          //This should always lock
-         boost::posix_time::ptime pt = delay(3*BaseSeconds);
+         boost::posix_time::ptime pt = delay(2*BaseSeconds);
          lock_type lock1(mx, pt);
          lock_type lock2(mx, pt);
       }
@@ -171,7 +171,7 @@ void lock_and_sleep(void *arg, M &sm)
       boost::thread::sleep(xsecs(pdata->m_secs));
    }
    else{
-      boost::thread::sleep(xsecs(3*BaseSeconds));
+      boost::thread::sleep(xsecs(2*BaseSeconds));
    }
 
    ++shared_val;
@@ -184,7 +184,7 @@ void try_lock_and_sleep(void *arg, M &sm)
    data<M> *pdata = (data<M> *) arg;
    boost::interprocess::scoped_lock<M> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
-      boost::thread::sleep(xsecs(3*BaseSeconds));
+      boost::thread::sleep(xsecs(2*BaseSeconds));
       ++shared_val;
       pdata->m_value = shared_val;
    }
@@ -198,7 +198,7 @@ void timed_lock_and_sleep(void *arg, M &sm)
    boost::interprocess::scoped_lock<M> 
       l (sm, boost::interprocess::defer_lock);
    if (l.timed_lock(pt)){
-      boost::thread::sleep(xsecs(3*BaseSeconds));
+      boost::thread::sleep(xsecs(2*BaseSeconds));
       ++shared_val;
       pdata->m_value = shared_val;
    }
@@ -223,13 +223,13 @@ void test_mutex_lock()
    data<M> d1(1);
    data<M> d2(2);
 
-   // Locker one launches, holds the lock for 3*BaseSeconds seconds.
+   // Locker one launches, holds the lock for 2*BaseSeconds seconds.
    boost::thread tm1(thread_adapter<M>(&lock_and_sleep, &d1, *pm1));
 
    //Wait 1*BaseSeconds
    boost::thread::sleep(xsecs(1*BaseSeconds));
 
-   // Locker two launches, but it won't hold the lock for 3*BaseSeconds seconds.
+   // Locker two launches, but it won't hold the lock for 2*BaseSeconds seconds.
    boost::thread tm2(thread_adapter<M>(&lock_and_sleep, &d2, *pm2));
 
    //Wait completion
@@ -259,7 +259,7 @@ void test_mutex_try_lock()
    data<M> d1(1);
    data<M> d2(2);
 
-   // Locker one launches, holds the lock for 3*BaseSeconds seconds.
+   // Locker one launches, holds the lock for 2*BaseSeconds seconds.
    boost::thread tm1(thread_adapter<M>(&try_lock_and_sleep, &d1, *pm1));
 
    //Wait 1*BaseSeconds
@@ -293,16 +293,16 @@ void test_mutex_timed_lock()
       pm2 = &m2;
    }
 
-   data<M> d1(1, 3*BaseSeconds);
-   data<M> d2(2, 3*BaseSeconds);
+   data<M> d1(1, 2*BaseSeconds);
+   data<M> d2(2, 2*BaseSeconds);
 
-   // Locker one launches, holds the lock for 3*BaseSeconds seconds.
+   // Locker one launches, holds the lock for 2*BaseSeconds seconds.
    boost::thread tm1(thread_adapter<M>(&timed_lock_and_sleep, &d1, *pm1));
 
    //Wait 1*BaseSeconds
    boost::thread::sleep(xsecs(1*BaseSeconds));
 
-   // Locker two launches, holds the lock for 3*BaseSeconds seconds.
+   // Locker two launches, holds the lock for 2*BaseSeconds seconds.
    boost::thread tm2(thread_adapter<M>(&timed_lock_and_sleep, &d2, *pm2));
 
    //Wait completion
@@ -315,7 +315,7 @@ void test_mutex_timed_lock()
 }
 
 template <typename M>
-static inline void test_all_lock()
+inline void test_all_lock()
 {
    //Now generic interprocess_mutex tests
    std::cout << "test_lock<" << typeid(M).name() << ">" << std::endl;
@@ -327,7 +327,7 @@ static inline void test_all_lock()
 } 
 
 template <typename M>
-static inline void test_all_recursive_lock()
+inline void test_all_recursive_lock()
 {
    //Now generic interprocess_mutex tests
    std::cout << "test_recursive_lock<" << typeid(M).name() << ">" << std::endl;

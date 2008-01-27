@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -15,9 +15,13 @@
 
 #if !(defined BOOST_WINDOWS) || (defined BOOST_DISABLE_WIN32)
 
+   #include <unistd.h>
+
    #if defined(_POSIX_THREAD_PROCESS_SHARED)
    # if !((_XOPEN_VERSION >= 600) && (_POSIX_THREAD_PROCESS_SHARED - 0 <= 0))
-   #  if !defined(__CYGWIN__)
+   //Cygwin defines _POSIX_THREAD_PROCESS_SHARED but does not implement it.
+   //Mac Os X >= Leopard defines _POSIX_THREAD_PROCESS_SHARED but does not seems to work.
+   #  if !defined(__CYGWIN__) && !defined(__APPLE__)
    #  define BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
    #  endif
    # endif
@@ -88,6 +92,10 @@
       #endif
    #endif
 
+   #if ((_POSIX_VERSION + 0)>= 200112L || (_XOPEN_VERSION + 0)>= 500)
+   #define BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES
+   #endif
+
 #endif
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)
@@ -102,7 +110,7 @@
 #  endif
 #endif
 
-#if defined(BOOST_INTERPROCESS_RVALUE_REFERENCE) || defined(BOOST_INTERPROCESS_VARIADIC_TEMPLATES)
+#if defined(BOOST_INTERPROCESS_RVALUE_REFERENCE) && defined(BOOST_INTERPROCESS_VARIADIC_TEMPLATES)
 #define BOOST_INTERPROCESS_PERFECT_FORWARDING
 #endif
 

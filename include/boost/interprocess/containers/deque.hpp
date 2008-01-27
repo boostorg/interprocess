@@ -1359,9 +1359,9 @@ class deque : protected deque_base<T, Alloc>
       size_type new_nodes = (new_elems + this->s_buffer_size() - 1) / 
                               this->s_buffer_size();
       this->priv_reserve_map_at_front(new_nodes);
-      size_type i;
+      size_type i = 1;
       BOOST_TRY {
-         for (i = 1; i <= new_nodes; ++i)
+         for (; i <= new_nodes; ++i)
             *(this->members_.m_start.m_node - i) = this->priv_allocate_node();
       }
       BOOST_CATCH(...) {
@@ -1453,6 +1453,7 @@ class deque : protected deque_base<T, Alloc>
          for(;first2 != mid2; ++first2){
             detail::get_pointer(&*first2)->~value_type();
          }
+         BOOST_RETHROW
       }
       BOOST_CATCH_END
    }

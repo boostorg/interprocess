@@ -16,6 +16,7 @@
 #include "dummy_test_allocator.hpp"
 #include "movable_int.hpp"
 #include "list_test.hpp"
+#include "vector_test.hpp"
 
 using namespace boost::interprocess;
 
@@ -23,15 +24,31 @@ using namespace boost::interprocess;
 //Alias a private adaptive pool that allocates ints
 typedef private_adaptive_pool
    <int, managed_shared_memory::segment_manager> priv_node_allocator_t;
+typedef detail::private_adaptive_pool_v1
+   <int, managed_shared_memory::segment_manager> priv_node_allocator_v1_t;
+
+//Explicit instantiations to catch compilation errors
+template class private_adaptive_pool<int, managed_shared_memory::segment_manager>;
+template class detail::private_adaptive_pool_v1<int, managed_shared_memory::segment_manager>;
 
 //Alias list types
 typedef list<int, priv_node_allocator_t>    MyShmList;
+typedef list<int, priv_node_allocator_v1_t>    MyShmListV1;
+
+//Alias vector types
+typedef vector<int, priv_node_allocator_t>     MyShmVector;
+typedef vector<int, priv_node_allocator_v1_t>  MyShmVectorV1;
 
 int main ()
 {
    if(test::list_test<managed_shared_memory, MyShmList, true>(false))
       return 1;
-
+   if(test::list_test<managed_shared_memory, MyShmListV1, true>(false))
+      return 1;
+   if(test::vector_test<managed_shared_memory, MyShmVector>())
+      return 1;
+   if(test::vector_test<managed_shared_memory, MyShmVectorV1>())
+      return 1;
    return 0;
 }
 

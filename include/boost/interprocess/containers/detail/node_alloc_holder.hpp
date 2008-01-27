@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -74,6 +74,9 @@ struct node_alloc_holder
    typedef detail::integral_constant<unsigned,
       boost::interprocess::detail::
          version<NodeAlloc>::value>                   alloc_version;
+   typedef typename ICont::iterator                   icont_iterator;
+   typedef typename ICont::const_iterator             icont_citerator;
+   typedef allocator_destroyer<NodeAlloc>             Destroyer;
 
    node_alloc_holder(const ValAlloc &a) 
       : members_(a)
@@ -173,7 +176,7 @@ struct node_alloc_holder
       BOOST_CATCH(...){
          valueptr->first.~first_type();
          static_cast<hook_type*>(nodeptr)->~hook_type();
-         throw;
+         BOOST_RETHROW
       }
       BOOST_CATCH_END
    }
@@ -198,7 +201,7 @@ struct node_alloc_holder
       BOOST_CATCH(...){
          valueptr->first.~first_type();
          static_cast<hook_type*>(nodeptr)->~hook_type();
-         throw;
+         BOOST_RETHROW
       }
       BOOST_CATCH_END
    }
@@ -292,16 +295,40 @@ struct node_alloc_holder
          if(constructed){
             this->destroy(p);
          }
-         this->deallocate_one(p);
-         multiallocation_iterator itend;
-         while(itbeg != itend){
-            Node *n = &*itbeg;
-            ++itbeg;
-            this->deallocate_one(n);
-         }
+         this->node_alloc().deallocate_many(itbeg);
+         BOOST_RETHROW
       }
       BOOST_CATCH_END
       return beg;
+   }
+
+   void clear(allocator_v1)
+   {  this->icont().clear_and_dispose(Destroyer(this->node_alloc()));   }
+
+   void clear(allocator_v2)
+   {
+      allocator_multialloc_chain_node_deallocator<NodeAlloc> chain_holder(this->node_alloc());
+      this->icont().clear_and_dispose(chain_holder.get_chain_builder());
+   }
+
+   icont_iterator erase_range(icont_iterator first, icont_iterator last, allocator_v1)
+   {  return this->icont().erase_and_dispose(first, last, Destroyer(this->node_alloc())); }
+
+   icont_iterator erase_range(icont_iterator first, icont_iterator last, allocator_v2)
+   {
+      allocator_multialloc_chain_node_deallocator<NodeAlloc> chain_holder(this->node_alloc());
+      return this->icont().erase_and_dispose(first, last, chain_holder.get_chain_builder());
+   }
+
+   template<class Key, class Comparator>
+   size_type erase_key(const Key& k, const Comparator &comp, allocator_v1)
+   {  return this->icont().erase_and_dispose(k, comp, Destroyer(this->node_alloc())); }
+
+   template<class Key, class Comparator>
+   size_type erase_key(const Key& k, const Comparator &comp, allocator_v2)
+   {
+      allocator_multialloc_chain_node_deallocator<NodeAlloc> chain_holder(this->node_alloc());
+      return this->icont().erase_and_dispose(k, comp, chain_holder.get_chain_builder());
    }
 
    protected:
@@ -359,10 +386,10 @@ struct node_alloc_holder
    {  return this->members_.m_icont;   }
 
    NodeAlloc &node_alloc()
-   {  return this->members_;   }
+   {  return static_cast<NodeAlloc &>(this->members_);   }
 
    const NodeAlloc &node_alloc() const
-   {  return this->members_;   }
+   {  return static_cast<const NodeAlloc &>(this->members_);   }
 };
 
 }  //namespace detail {

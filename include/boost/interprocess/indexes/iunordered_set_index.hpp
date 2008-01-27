@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -289,15 +289,14 @@ class iunordered_set_index
       size_type cur_size   = this->size();
       size_type cur_count  = this->bucket_count();
       bucket_ptr old_p = this->bucket_pointer();
-      size_type sug_count;
       
       if(!this->size() && old_p != bucket_ptr(&this->init_bucket)){
-         sug_count = 1;
          this->rehash(bucket_traits(bucket_ptr(&this->init_bucket), 1));
          destroy_buckets(this->alloc, old_p, cur_count);
       }
       else{
-         sug_count  = index_type::suggested_upper_bucket_count(cur_size);
+         size_type sug_count = 0; //gcc warning
+         sug_count = index_type::suggested_upper_bucket_count(cur_size);
 
          if(sug_count >= cur_count)
             return;

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -109,13 +109,7 @@ class interprocess_mutex
    #if   defined(BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
       volatile boost::uint32_t m_s;
    #elif defined(BOOST_INTERPROCESS_USE_POSIX)
-      #ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
-         pthread_mutex_t   m_mut;
-      #else
-         pthread_mutex_t   m_mut;
-         pthread_cond_t    m_cond;
-         bool              m_locked;
-      #endif
+      pthread_mutex_t   m_mut;
    #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
    /// @endcond
 };

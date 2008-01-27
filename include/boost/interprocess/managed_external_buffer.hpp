@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -20,6 +20,7 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
 #include <boost/interprocess/detail/move.hpp>
+#include <cassert>
 
 //!\file
 //!Describes a named user memory allocation user class. 
@@ -49,6 +50,8 @@ class basic_managed_external_buffer
    basic_managed_external_buffer
       (create_only_t, void *addr, std::size_t size)
    {
+      //Check if alignment is correct
+      assert((0 == (((std::size_t)addr) & (AllocationAlgorithm::Alignment - std::size_t(1u)))));
       if(!base_t::create_impl(addr, size)){
          throw interprocess_exception();
       }
@@ -58,6 +61,8 @@ class basic_managed_external_buffer
    basic_managed_external_buffer
       (open_only_t, void *addr, std::size_t size)
    {
+      //Check if alignment is correct
+      assert((0 == (((std::size_t)addr) & (AllocationAlgorithm::Alignment - std::size_t(1u)))));
       if(!base_t::open_impl(addr, size)){
          throw interprocess_exception();
       }

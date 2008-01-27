@@ -9,6 +9,7 @@
    #define _CRT_SECURE_NO_DEPRECATE
    #endif
    #pragma warning (push)
+   #pragma warning (disable : 4702) // unreachable code
    #pragma warning (disable : 4706) // assignment within conditional expression
    #pragma warning (disable : 4127) // conditional expression is constant
    #pragma warning (disable : 4146) // unary minus operator applied to unsigned type, result still unsigned

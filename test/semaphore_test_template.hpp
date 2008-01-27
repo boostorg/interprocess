@@ -282,7 +282,7 @@ void test_mutex_timed_lock(P &sm)
 }
 
 template <typename P>
-static inline void test_all_lock()
+inline void test_all_lock()
 {
    //Now generic interprocess_mutex tests
    std::cout << "test_wait<" << typeid(P).name() << ">" << std::endl;
@@ -294,7 +294,7 @@ static inline void test_all_lock()
 } 
 
 template <typename P>
-static inline void test_all_recursive_lock()
+inline void test_all_recursive_lock()
 {
    //Now generic interprocess_mutex tests
    std::cout << "test_recursive_lock<" << typeid(P).name() << ">" << std::endl;

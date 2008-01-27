@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -61,7 +61,7 @@ class offset_ptr
    typedef void (self_t::*unspecified_bool_type)() const;
 
    #if defined(_MSC_VER) && (_MSC_VER >= 1400)
-   __declspec(noinline)
+   __declspec(noinline) //this workaround is needed for msvc-8.0 and msvc-9.0
    #endif
    void set_offset(const volatile void *ptr)
    {
@@ -77,7 +77,7 @@ class offset_ptr
    }
 
    #if defined(_MSC_VER) && (_MSC_VER >= 1400)
-   __declspec(noinline)
+   __declspec(noinline) //this workaround is needed for msvc-8.0 and msvc-9.0
    #endif
    void* get_pointer() const
    {  return (m_offset == 1) ? 0 : (detail::char_ptr_cast(this) + m_offset); }

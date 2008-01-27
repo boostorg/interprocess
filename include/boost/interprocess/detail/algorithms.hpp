@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2007.
+// (C) Copyright Ion Gaztanaga 2005-2008.
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at
@@ -92,7 +92,7 @@ InIt n_uninitialized_copy_n
       for (; new_count--; ++dest_init){
          detail::get_pointer(&*dest_init)->~value_type();
       }
-      BOOST_RETHROW;
+      BOOST_RETHROW
    }
    BOOST_CATCH_END
    return first;

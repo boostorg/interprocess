@@ -76,7 +76,7 @@ typedef triple_value_holder<int> triple_int_holder;
 
 //Function to check if both sets are equal
 template <class Vector1, class Vector2>
-static bool CheckEqualVector(const Vector1 &vector1, const Vector2 &vector2)
+bool CheckEqualVector(const Vector1 &vector1, const Vector2 &vector2)
 {
    if(vector1.size() != vector2.size())
       return false;
@@ -84,7 +84,7 @@ static bool CheckEqualVector(const Vector1 &vector1, const Vector2 &vector2)
 }
 
 template<class Vector>
-static bool CheckUninitializedIsZero(const Vector & v)
+bool CheckUninitializedIsZero(const Vector & v)
 {
    typedef  typename Vector::value_type value_type;
    typename Vector::size_type sz    = v.size();

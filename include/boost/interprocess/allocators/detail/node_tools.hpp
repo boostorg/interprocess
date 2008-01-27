@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2007-2008. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -37,7 +37,8 @@ struct node_slist
       :  public slist_hook_t
    {};
 
-   typedef typename bi::make_slist<node_t, bi::base_hook<slist_hook_t> >::type node_slist_t;
+   typedef typename bi::make_slist
+      <node_t, bi::linear<true>, bi::base_hook<slist_hook_t> >::type node_slist_t;
 };
 
 }  //namespace detail {

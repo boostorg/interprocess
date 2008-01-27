@@ -332,7 +332,8 @@ class managed_open_or_create_impl
 
             //If the following throws, we will truncate the file to 1
             mapped_region        region(dev, read_write, 0, 0, addr);
-            boost::uint32_t *patomic_word = static_cast<boost::uint32_t*>(region.get_address());
+            boost::uint32_t *patomic_word = 0;  //avoid gcc warning
+            patomic_word = static_cast<boost::uint32_t*>(region.get_address());
             boost::uint32_t previous = detail::atomic_cas32(patomic_word, InitializingSegment, UninitializedSegment);
 
             if(previous == UninitializedSegment){
