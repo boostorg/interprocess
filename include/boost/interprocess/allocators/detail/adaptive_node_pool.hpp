@@ -49,7 +49,7 @@ class private_adaptive_node_pool_impl
    private_adaptive_node_pool_impl &operator=(const private_adaptive_node_pool_impl &);
 
    typedef typename SegmentManagerBase::void_pointer void_pointer;
-
+   static const std::size_t PayloadPerAllocation = SegmentManagerBase::PayloadPerAllocation;
    public:
    typedef typename node_slist<void_pointer>::node_t node_t;
    typedef typename node_slist<void_pointer>::node_slist_t free_nodes_t;
@@ -106,9 +106,11 @@ class private_adaptive_node_pool_impl
       std::size_t candidate_power_of_2 = 
          upper_power_of_2(elements_per_subchunk*real_node_size + HdrOffsetSize);
       bool overhead_satisfied = false;
+      //Now calculate the wors-case overhead for a subchunk
+      const std::size_t max_subchunk_overhead  = HdrSize + PayloadPerAllocation;
       while(!overhead_satisfied){
-         elements_per_subchunk = (candidate_power_of_2 - HdrOffsetSize)/real_node_size;
-         std::size_t overhead_size = candidate_power_of_2 - elements_per_subchunk*real_node_size;
+         elements_per_subchunk = (candidate_power_of_2 - max_subchunk_overhead)/real_node_size;
+         const std::size_t overhead_size = candidate_power_of_2 - elements_per_subchunk*real_node_size;
          if(overhead_size*100/candidate_power_of_2 < overhead_percent){
             overhead_satisfied = true;
          }
@@ -121,13 +123,25 @@ class private_adaptive_node_pool_impl
 
    static void calculate_num_subchunks
       (std::size_t alignment, std::size_t real_node_size, std::size_t elements_per_chunk
-      ,std::size_t &num_subchunks, std::size_t &real_num_node)
+      ,std::size_t &num_subchunks, std::size_t &real_num_node, std::size_t overhead_percent)
    {
       std::size_t elements_per_subchunk = (alignment - HdrOffsetSize)/real_node_size;
       std::size_t possible_num_subchunk = (elements_per_chunk - 1)/elements_per_subchunk + 1;
-      std::size_t hdr_subchunk_elements   = (alignment - HdrSize - SegmentManagerBase::PayloadPerAllocation)/real_node_size;
+      std::size_t hdr_subchunk_elements   = (alignment - HdrSize - PayloadPerAllocation)/real_node_size;
       while(((possible_num_subchunk-1)*elements_per_subchunk + hdr_subchunk_elements) < elements_per_chunk){
          ++possible_num_subchunk;
+      }
+      elements_per_subchunk = (alignment - HdrOffsetSize)/real_node_size;
+      bool overhead_satisfied = false;
+      while(!overhead_satisfied){
+         const std::size_t total_data = (elements_per_subchunk*(possible_num_subchunk-1) + hdr_subchunk_elements)*real_node_size;
+         const std::size_t total_size = alignment*possible_num_subchunk;
+         if((total_size - total_data)*100/total_size < overhead_percent){
+            overhead_satisfied = true;
+         }
+         else{
+            ++possible_num_subchunk;
+         }
       }
       num_subchunks = possible_num_subchunk;
       real_num_node = (possible_num_subchunk-1)*elements_per_subchunk + hdr_subchunk_elements;
@@ -157,7 +171,7 @@ class private_adaptive_node_pool_impl
    ,  m_chunk_multiset()
    ,  m_totally_free_chunks(0)
    {
-      calculate_num_subchunks(m_real_chunk_alignment, m_real_node_size, nodes_per_chunk, m_num_subchunks, m_real_num_node);
+      calculate_num_subchunks(m_real_chunk_alignment, m_real_node_size, nodes_per_chunk, m_num_subchunks, m_real_num_node, overhead_percent);
    }
 
    //!Destructor. Deallocates all allocated chunks. Never throws

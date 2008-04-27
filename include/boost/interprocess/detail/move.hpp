@@ -79,7 +79,7 @@ class move_return
    public:
    typedef T type;
 
-   move_return(T& returned)
+   move_return(const T& returned)
       : m_moved(moved_object<T>(returned))
    {}
 

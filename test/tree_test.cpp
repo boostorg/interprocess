@@ -61,7 +61,7 @@ template class boost::interprocess::multimap
 //Customize managed_shared_memory class
 typedef basic_managed_shared_memory
    <char,
-    simple_seq_fit<mutex_family, void*>,
+    simple_seq_fit<mutex_family, offset_ptr<void> >,
     map_index
    > my_managed_shared_memory;
 

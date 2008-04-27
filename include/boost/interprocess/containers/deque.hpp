@@ -658,7 +658,7 @@ class deque : protected deque_base<T, Alloc>
    void push_back(const value_type& t) 
    {
       if (this->members_.m_finish.m_cur != this->members_.m_finish.m_last - 1) {
-         new(detail::get_pointer(this->members_.m_finish.m_cur))value_type(t);
+         new((void*)detail::get_pointer(this->members_.m_finish.m_cur))value_type(t);
          ++this->members_.m_finish.m_cur;
       }
       else
@@ -669,7 +669,7 @@ class deque : protected deque_base<T, Alloc>
    void push_back(const detail::moved_object<value_type> &mt) 
    {
       if (this->members_.m_finish.m_cur != this->members_.m_finish.m_last - 1) {
-         new(detail::get_pointer(this->members_.m_finish.m_cur))value_type(mt);
+         new((void*)detail::get_pointer(this->members_.m_finish.m_cur))value_type(mt);
          ++this->members_.m_finish.m_cur;
       }
       else
@@ -679,7 +679,7 @@ class deque : protected deque_base<T, Alloc>
    void push_back(value_type &&mt) 
    {
       if (this->members_.m_finish.m_cur != this->members_.m_finish.m_last - 1) {
-         new(detail::get_pointer(this->members_.m_finish.m_cur))value_type(move(mt));
+         new((void*)detail::get_pointer(this->members_.m_finish.m_cur))value_type(move(mt));
          ++this->members_.m_finish.m_cur;
       }
       else
@@ -690,7 +690,7 @@ class deque : protected deque_base<T, Alloc>
    void push_front(const value_type& t)
    {
       if (this->members_.m_start.m_cur != this->members_.m_start.m_first) {
-         new(detail::get_pointer(this->members_.m_start.m_cur)- 1)value_type(t);
+         new((void*)(detail::get_pointer(this->members_.m_start.m_cur)- 1))value_type(t);
          --this->members_.m_start.m_cur;
       }
       else
@@ -701,7 +701,7 @@ class deque : protected deque_base<T, Alloc>
    void push_front(const detail::moved_object<value_type> &mt)
    {
       if (this->members_.m_start.m_cur != this->members_.m_start.m_first) {
-         new(detail::get_pointer(this->members_.m_start.m_cur)- 1)value_type(mt);
+         new((void*)(detail::get_pointer(this->members_.m_start.m_cur)- 1))value_type(mt);
          --this->members_.m_start.m_cur;
       }
       else
@@ -711,7 +711,7 @@ class deque : protected deque_base<T, Alloc>
    void push_front(value_type &&mt)
    {
       if (this->members_.m_start.m_cur != this->members_.m_start.m_first) {
-         new(detail::get_pointer(this->members_.m_start.m_cur)- 1)value_type(move(mt));
+         new((void*)(detail::get_pointer(this->members_.m_start.m_cur)- 1))value_type(move(mt));
          --this->members_.m_start.m_cur;
       }
       else
@@ -1217,7 +1217,7 @@ class deque : protected deque_base<T, Alloc>
       this->priv_reserve_map_at_back();
       *(this->members_.m_finish.m_node + 1) = this->priv_allocate_node();
       BOOST_TRY {
-         new(detail::get_pointer(this->members_.m_finish.m_cur))value_type(t);
+         new((void*)detail::get_pointer(this->members_.m_finish.m_cur))value_type(t);
          this->members_.m_finish.priv_set_node(this->members_.m_finish.m_node + 1);
          this->members_.m_finish.m_cur = this->members_.m_finish.m_first;
       }
@@ -1235,7 +1235,7 @@ class deque : protected deque_base<T, Alloc>
       this->priv_reserve_map_at_back();
       *(this->members_.m_finish.m_node + 1) = this->priv_allocate_node();
       BOOST_TRY {
-         new(detail::get_pointer(this->members_.m_finish.m_cur))value_type(mt);
+         new((void*)detail::get_pointer(this->members_.m_finish.m_cur))value_type(mt);
          this->members_.m_finish.priv_set_node(this->members_.m_finish.m_node + 1);
          this->members_.m_finish.m_cur = this->members_.m_finish.m_first;
       }
@@ -1251,7 +1251,7 @@ class deque : protected deque_base<T, Alloc>
       this->priv_reserve_map_at_back();
       *(this->members_.m_finish.m_node + 1) = this->priv_allocate_node();
       BOOST_TRY {
-         new(detail::get_pointer(this->members_.m_finish.m_cur))value_type(move(mt));
+         new((void*)detail::get_pointer(this->members_.m_finish.m_cur))value_type(move(mt));
          this->members_.m_finish.priv_set_node(this->members_.m_finish.m_node + 1);
          this->members_.m_finish.m_cur = this->members_.m_finish.m_first;
       }
@@ -1271,7 +1271,7 @@ class deque : protected deque_base<T, Alloc>
       BOOST_TRY {
          this->members_.m_start.priv_set_node(this->members_.m_start.m_node - 1);
          this->members_.m_start.m_cur = this->members_.m_start.m_last - 1;
-         new(detail::get_pointer(this->members_.m_start.m_cur))value_type(t);
+         new((void*)detail::get_pointer(this->members_.m_start.m_cur))value_type(t);
       }
       BOOST_CATCH(...){
          ++this->members_.m_start;
@@ -1289,7 +1289,7 @@ class deque : protected deque_base<T, Alloc>
       BOOST_TRY {
          this->members_.m_start.priv_set_node(this->members_.m_start.m_node - 1);
          this->members_.m_start.m_cur = this->members_.m_start.m_last - 1;
-         new(detail::get_pointer(this->members_.m_start.m_cur))value_type(mt);
+         new((void*)detail::get_pointer(this->members_.m_start.m_cur))value_type(mt);
       }
       BOOST_CATCH(...){
          ++this->members_.m_start;
@@ -1306,7 +1306,7 @@ class deque : protected deque_base<T, Alloc>
       BOOST_TRY {
          this->members_.m_start.priv_set_node(this->members_.m_start.m_node - 1);
          this->members_.m_start.m_cur = this->members_.m_start.m_last - 1;
-         new(detail::get_pointer(this->members_.m_start.m_cur))value_type(move(mt));
+         new((void*)detail::get_pointer(this->members_.m_start.m_cur))value_type(move(mt));
       }
       BOOST_CATCH(...){
          ++this->members_.m_start;

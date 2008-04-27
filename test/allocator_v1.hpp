@@ -114,17 +114,17 @@ class allocator_v1
 
    //!Deallocates memory previously allocated. Never throws
    void deallocate(const pointer &ptr, size_type)
-   {  mp_mngr->deallocate(detail::get_pointer(ptr));  }
-/*
+   {  mp_mngr->deallocate((void*)detail::get_pointer(ptr));  }
+
    //!Construct object, calling constructor. 
    //!Throws if T(const T&) throws
    void construct(const pointer &ptr, const_reference value)
-   {  new(detail::get_pointer(ptr)) value_type(value);  }
+   {  new((void*)detail::get_pointer(ptr)) value_type(value);  }
 
    //!Destroys object. Throws if object's destructor throws
    void destroy(const pointer &ptr)
    {  BOOST_ASSERT(ptr != 0); (*ptr).~value_type();  }
-*/
+
    //!Returns the number of elements that could be allocated. Never throws
    size_type max_size() const
    {  return mp_mngr->get_size();   }

@@ -159,7 +159,9 @@ class named_condition
       //unlock internal first to avoid deadlock with near simultaneous waits
       lock_inverter<Lock> inverted_lock(lock);
       scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);
-      scoped_lock<interprocess_mutex>     internal_lock(*this->mutex());
+      if(!external_unlock) return false;
+      scoped_lock<interprocess_mutex>     internal_lock(*this->mutex(), abs_time);
+      if(!internal_lock) return false;
       return this->condition()->timed_wait(internal_lock, abs_time);
    }
    #endif

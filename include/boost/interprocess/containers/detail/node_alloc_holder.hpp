@@ -145,15 +145,15 @@ struct node_alloc_holder
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
    static void construct(const NodePtr &ptr, const Convertible &value)
-   {  new(detail::get_pointer(ptr)) Node(value);  }
+   {  new((void*)detail::get_pointer(ptr)) Node(value);  }
    #else
    template<class Convertible>
    static void construct(const NodePtr &ptr, Convertible &&value)
-   {  new(detail::get_pointer(ptr)) Node(forward<Convertible>(value));  }
+   {  new((void*)detail::get_pointer(ptr)) Node(forward<Convertible>(value));  }
    #endif
 
    static void construct(const NodePtr &ptr)
-   {  new(detail::get_pointer(ptr)) Node();  }
+   {  new((void*)detail::get_pointer(ptr)) Node();  }
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible1, class Convertible2>

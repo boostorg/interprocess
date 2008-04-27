@@ -26,6 +26,9 @@ template class boost::interprocess::list<test::movable_and_copyable_int,
 typedef allocator<int, managed_shared_memory::segment_manager> ShmemAllocator;
 typedef list<int, ShmemAllocator> MyList;
 
+typedef allocator<volatile int, managed_shared_memory::segment_manager> ShmemVolatileAllocator;
+typedef list<volatile int, ShmemVolatileAllocator> MyVolatileList;
+
 typedef allocator<test::movable_int, managed_shared_memory::segment_manager> ShmemMoveAllocator;
 typedef list<test::movable_int, ShmemMoveAllocator> MyMoveList;
 
@@ -35,6 +38,9 @@ typedef list<test::movable_and_copyable_int, ShmemCopyMoveAllocator> MyCopyMoveL
 int main ()
 {
    if(test::list_test<managed_shared_memory, MyList, true>())
+      return 1;
+
+   if(test::list_test<managed_shared_memory, MyVolatileList, true>())
       return 1;
 
    if(test::list_test<managed_shared_memory, MyMoveList, true>())

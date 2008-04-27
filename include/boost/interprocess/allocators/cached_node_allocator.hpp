@@ -225,7 +225,7 @@ class cached_node_allocator
 
    //!Default construct an object. 
    //!Throws if T's default constructor throws
-   void construct(const pointer &ptr);
+   void construct(const pointer &ptr, const_reference v);
 
    //!Destroys object. Throws if object's
    //!destructor throws
@@ -302,15 +302,15 @@ class cached_node_allocator
 
 //!Equality test for same type
 //!of cached_node_allocator
-template<class T, class S, std::size_t NodesPerChunk> inline
-bool operator==(const cached_node_allocator<T, S, NodesPerChunk> &alloc1, 
-                const cached_node_allocator<T, S, NodesPerChunk> &alloc2);
+template<class T, class S, std::size_t NPC> inline
+bool operator==(const cached_node_allocator<T, S, NPC> &alloc1, 
+                const cached_node_allocator<T, S, NPC> &alloc2);
 
 //!Inequality test for same type
 //!of cached_node_allocator
-template<class T, class S, std::size_t NodesPerChunk> inline
-bool operator!=(const cached_node_allocator<T, S, NodesPerChunk> &alloc1, 
-                const cached_node_allocator<T, S, NodesPerChunk> &alloc2);
+template<class T, class S, std::size_t NPC> inline
+bool operator!=(const cached_node_allocator<T, S, NPC> &alloc1, 
+                const cached_node_allocator<T, S, NPC> &alloc2);
 
 #endif
 

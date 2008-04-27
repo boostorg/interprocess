@@ -342,7 +342,12 @@ class array_allocation_impl
    //!Default construct an object. 
    //!Throws if T's default constructor throws
    void construct(const pointer &ptr)
-   {  new(detail::get_pointer(ptr)) value_type;  }
+   {  new((void*)detail::get_pointer(ptr)) value_type;  }
+
+   //!Copy construct an object
+   //!Throws if T's copy constructor throws
+   void construct(const pointer &ptr, const_reference v)
+   {  new((void*)detail::get_pointer(ptr)) value_type(v);  }
 
    //!Destroys object. Throws if object's
    //!destructor throws
@@ -386,36 +391,53 @@ class node_pool_allocation_impl
    typedef typename SegmentManager::
       multiallocation_chain                 multiallocation_chain;
 
+   template <int Dummy>
+   struct node_pool
+   {
+      typedef typename Derived::template node_pool<0>::type type;
+      static type *get(void *p)
+      {  return static_cast<type*>(p); }
+   };
+
    public:
    //!Allocate memory for an array of count elements. 
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate(size_type count, cvoid_pointer hint = 0)
    {
       (void)hint;
+      typedef typename node_pool<0>::type node_pool_t;
+      node_pool_t *pool = node_pool<0>::get(this->derived()->get_node_pool());
       if(count > this->max_size())
          throw bad_alloc();
       else if(Version == 1 && count == 1)
-         return pointer(static_cast<value_type*>(this->derived()->get_node_pool()->allocate_node()));
+         return pointer(static_cast<value_type*>
+         (pool->allocate_node()));
       else
          return pointer(static_cast<value_type*>
-            (this->derived()->get_node_pool()->get_segment_manager()->allocate(sizeof(T)*count)));
+            (pool->get_segment_manager()->allocate(sizeof(T)*count)));
    }
 
    //!Deallocate allocated memory. Never throws
    void deallocate(const pointer &ptr, size_type count)
    {
       (void)count;
+      typedef typename node_pool<0>::type node_pool_t;
+      node_pool_t *pool = node_pool<0>::get(this->derived()->get_node_pool());
       if(Version == 1 && count == 1)
-         this->derived()->get_node_pool()->deallocate_node(detail::get_pointer(ptr));
+         pool->deallocate_node(detail::get_pointer(ptr));
       else
-         this->derived()->get_node_pool()->get_segment_manager()->deallocate(detail::get_pointer(ptr));
+         pool->get_segment_manager()->deallocate((void*)detail::get_pointer(ptr));
    }
 
    //!Allocates just one object. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate_one()
-   {  return pointer(static_cast<value_type*>(this->derived()->get_node_pool()->allocate_node()));   }
+   {
+      typedef typename node_pool<0>::type node_pool_t;
+      node_pool_t *pool = node_pool<0>::get(this->derived()->get_node_pool());
+      return pointer(static_cast<value_type*>(pool->allocate_node()));
+   }
 
    //!Allocates many elements of size == 1 in a contiguous chunk
    //!of memory. The minimum number to be allocated is min_elements,
@@ -424,13 +446,21 @@ class node_pool_allocation_impl
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
    multiallocation_iterator allocate_individual(std::size_t num_elements)
-   {  return multiallocation_iterator(this->derived()->get_node_pool()->allocate_nodes(num_elements));   }
+   {
+      typedef typename node_pool<0>::type node_pool_t;
+      node_pool_t *pool = node_pool<0>::get(this->derived()->get_node_pool());
+      return multiallocation_iterator(pool->allocate_nodes(num_elements));
+   }
 
    //!Deallocates memory previously allocated with allocate_one().
    //!You should never use deallocate_one to deallocate memory allocated
    //!with other functions different from allocate_one(). Never throws
    void deallocate_one(const pointer &p)
-   {  this->derived()->get_node_pool()->deallocate_node(detail::get_pointer(p)); }
+   {
+      typedef typename node_pool<0>::type node_pool_t;
+      node_pool_t *pool = node_pool<0>::get(this->derived()->get_node_pool());
+      pool->deallocate_node(detail::get_pointer(p));
+   }
 
    //!Allocates many elements of size == 1 in a contiguous chunk
    //!of memory. The minimum number to be allocated is min_elements,
@@ -439,11 +469,11 @@ class node_pool_allocation_impl
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
    void deallocate_individual(multiallocation_iterator it)
-   {  this->derived()->get_node_pool()->deallocate_nodes(it.base());   }
+   {  node_pool<0>::get(this->derived()->get_node_pool())->deallocate_nodes(it.base());   }
 
    //!Deallocates all free chunks of the pool
    void deallocate_free_chunks()
-   {  this->derived()->get_node_pool()->deallocate_free_chunks();  }
+   {  node_pool<0>::get(this->derived()->get_node_pool())->deallocate_free_chunks();  }
 };
 
 template<class T, class NodePool, unsigned int Version>
@@ -536,7 +566,7 @@ class cached_allocator_impl
          m_cache.cached_deallocation(detail::get_pointer(ptr));
       }
       else{
-         this->get_segment_manager()->deallocate(detail::get_pointer(ptr));
+         this->get_segment_manager()->deallocate((void*)detail::get_pointer(ptr));
       }
    }
 

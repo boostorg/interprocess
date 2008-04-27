@@ -11,6 +11,8 @@
 #include "node_pool_test.hpp"
 #include <boost/interprocess/allocators/detail/adaptive_node_pool.hpp>
 
+#include <vector>
+
 int main ()
 {
    using namespace boost::interprocess;

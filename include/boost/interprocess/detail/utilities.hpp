@@ -373,11 +373,24 @@ inline std::size_t get_rounded_size(std::size_t orig_size, std::size_t round_to)
    return ((orig_size-1)/round_to+1)*round_to;
 }
 
+//Truncates "orig_size" to a multiple of "multiple" bytes.
 inline std::size_t get_truncated_size(std::size_t orig_size, std::size_t multiple)
 {
    return orig_size/multiple*multiple;
 }
- 
+
+//Rounds "orig_size" by excess to round_to bytes. round_to must be power of two
+inline std::size_t get_rounded_size_po2(std::size_t orig_size, std::size_t round_to)
+{
+   return ((orig_size-1)&(~(round_to-1))) + round_to;
+}
+
+//Truncates "orig_size" to a multiple of "multiple" bytes. multiple must be power of two
+inline std::size_t get_truncated_size_po2(std::size_t orig_size, std::size_t multiple)
+{
+   return (orig_size & (~(multiple-1)));
+}
+
 template <std::size_t OrigSize, std::size_t RoundTo>
 struct ct_rounded_size
 {

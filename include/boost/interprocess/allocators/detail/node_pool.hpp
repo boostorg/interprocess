@@ -253,7 +253,7 @@ class private_node_pool_impl
       while(!m_chunklist.empty()){
          void *addr = get_chunk_from_hook(&m_chunklist.front(), blocksize);
          m_chunklist.pop_front();
-         mp_segment_mngr_base->deallocate(addr);
+         mp_segment_mngr_base->deallocate((void*)addr);
       }
       //Just clear free node list
       m_freelist.clear();

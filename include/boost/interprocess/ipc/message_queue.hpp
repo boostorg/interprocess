@@ -98,7 +98,7 @@ class message_queue
 
    //!Sends a message stored in buffer "buffer" with size "buffer_size" in the 
    //!message queue with priority "priority". If the message queue is full
-   //!the sender is retries until time "abs_time" is reached. Returns true if
+   //!the sender retries until time "abs_time" is reached. Returns true if
    //!the message has been successfully sent. Returns false if timeout is reached.
    //!Throws interprocess_error on error.
    bool timed_send    (const void *buffer,     std::size_t buffer_size, 
@@ -106,23 +106,23 @@ class message_queue
 
    //!Receives a message from the message queue. The message is stored in buffer 
    //!"buffer", which has size "buffer_size". The received message has size 
-   //!"recvd_size" and priority "priority". If the message queue is full
-   //!the sender is blocked. Throws interprocess_error on error.
+   //!"recvd_size" and priority "priority". If the message queue is empty
+   //!the receiver is blocked. Throws interprocess_error on error.
    void receive (void *buffer,           std::size_t buffer_size, 
                  std::size_t &recvd_size,unsigned int &priority);
 
    //!Receives a message from the message queue. The message is stored in buffer 
    //!"buffer", which has size "buffer_size". The received message has size 
-   //!"recvd_size" and priority "priority". If the message queue is full
-   //!the sender is not blocked and returns false, otherwise returns true.
+   //!"recvd_size" and priority "priority". If the message queue is empty
+   //!the receiver is not blocked and returns false, otherwise returns true.
    //!Throws interprocess_error on error.
    bool try_receive (void *buffer,           std::size_t buffer_size, 
                      std::size_t &recvd_size,unsigned int &priority);
 
    //!Receives a message from the message queue. The message is stored in buffer 
    //!"buffer", which has size "buffer_size". The received message has size 
-   //!"recvd_size" and priority "priority". If the message queue is full
-   //!the sender is retries until time "abs_time" is reached. Returns true if
+   //!"recvd_size" and priority "priority". If the message queue is empty
+   //!the receiver retries until time "abs_time" is reached. Returns true if
    //!the message has been successfully sent. Returns false if timeout is reached.
    //!Throws interprocess_error on error.
    bool timed_receive (void *buffer,           std::size_t buffer_size, 

@@ -82,26 +82,26 @@ class dummy_test_allocator
    template<class T2>
    dummy_test_allocator(const dummy_test_allocator<T2> &)
    {}
-/*
+
    pointer address(reference value) 
    {  return pointer(addressof(value));  }
 
    const_pointer address(const_reference value) const
    {  return const_pointer(addressof(value));  }
-*/
+
    pointer allocate(size_type, cvoid_ptr = 0)
    {  return 0; }
 
    void deallocate(const pointer &, size_type)
    { }
-/*
+
    template<class Convertible>
    void construct(pointer, const Convertible &)
    {}
 
    void destroy(pointer)
    {}
-*/
+
    size_type max_size() const
    {  return 0;   }
 

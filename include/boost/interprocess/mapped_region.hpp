@@ -45,6 +45,8 @@ namespace interprocess {
 
 /// @cond
 namespace detail{ class interprocess_tester; }
+namespace detail{ class raw_mapped_region_creator; }
+
 /// @endcond
 
 //!The mapped_region class represents a portion or region created from a
@@ -140,6 +142,7 @@ class mapped_region
    #endif
 
    friend class detail::interprocess_tester;
+   friend class detail::raw_mapped_region_creator;
    void dont_close_on_destruction();
    /// @endcond
 };
@@ -362,9 +365,9 @@ inline void mapped_region::priv_close()
       m_base = 0;
    }
    #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-      if(m_file_mapping_hnd){
+      if(m_file_mapping_hnd != detail::invalid_file()){
          winapi::close_handle(m_file_mapping_hnd);
-         m_file_mapping_hnd = 0;
+         m_file_mapping_hnd = detail::invalid_file();
       }
    #endif
 }

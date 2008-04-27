@@ -20,6 +20,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <cassert>
 #include <boost/interprocess/detail/os_file_functions.hpp>
+#include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 //!\file
@@ -108,62 +109,6 @@ class file_lock
 
    bool timed_acquire_file_lock
       (file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
-   {  
-      //Obtain current count and target time
-      boost::posix_time::ptime now = microsec_clock::universal_time();
-      using namespace boost::detail;
-
-      if(now >= abs_time) return false;
-
-      do{
-         if(!try_acquire_file_lock(hnd, acquired))
-            return false;
-
-         if(acquired)
-            return true;
-         else{
-            now = microsec_clock::universal_time();
-
-            if(now >= abs_time){
-               acquired = false;
-               return true;
-            }
-            // relinquish current time slice
-            winapi::sched_yield();
-         }
-      }while (true);
-   }
-
-   bool timed_acquire_file_lock_sharable
-      (file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
-   {  
-      //Obtain current count and target time
-      boost::posix_time::ptime now = microsec_clock::universal_time();
-      using namespace boost::detail;
-
-      if(now >= abs_time) return false;
-
-      do{
-         if(!try_acquire_file_lock_sharable(hnd, acquired))
-            return false;
-
-         if(acquired)
-            return true;
-         else{
-            now = microsec_clock::universal_time();
-
-            if(now >= abs_time){
-               acquired = false;
-               return true;
-            }
-            // relinquish current time slice
-            winapi::sched_yield();
-         }
-      }while (true);
-   }
-
-   bool timed_acquire_file_lock
-      (file_handle_t hnd, bool &acquired, const boost::posix_time::ptime &abs_time)
    {
       //Obtain current count and target time
       boost::posix_time::ptime now = microsec_clock::universal_time();
@@ -172,7 +117,7 @@ class file_lock
       if(now >= abs_time) return false;
 
       do{
-         if(!try_acquire_file_lock(hnd, acquired))
+         if(!detail::try_acquire_file_lock(hnd, acquired))
             return false;
 
          if(acquired)
@@ -185,7 +130,7 @@ class file_lock
                return true;
             }
             // relinquish current time slice
-            sleep(0);
+            detail::thread_yield();
          }
       }while (true);
    }
@@ -200,7 +145,7 @@ class file_lock
       if(now >= abs_time) return false;
 
       do{
-         if(!try_acquire_file_lock_sharable(hnd, acquired))
+         if(!detail::try_acquire_file_lock_sharable(hnd, acquired))
             return false;
 
          if(acquired)
@@ -213,7 +158,7 @@ class file_lock
                return true;
             }
             // relinquish current time slice
-            ::sleep(0);
+            detail::thread_yield();
          }
       }while (true);
    }
@@ -259,7 +204,7 @@ inline bool file_lock::try_lock()
 inline bool file_lock::timed_lock(const boost::posix_time::ptime &abs_time)
 {
    bool result;
-   if(!detail::timed_acquire_file_lock(m_file_hnd, result, abs_time)){
+   if(!this->timed_acquire_file_lock(m_file_hnd, result, abs_time)){
       error_info err(system_error_code());
       throw interprocess_exception(err);
    }
@@ -295,7 +240,7 @@ inline bool file_lock::try_lock_sharable()
 inline bool file_lock::timed_lock_sharable(const boost::posix_time::ptime &abs_time)
 {
    bool result;
-   if(!detail::timed_acquire_file_lock_sharable(m_file_hnd, result, abs_time)){
+   if(!this->timed_acquire_file_lock_sharable(m_file_hnd, result, abs_time)){
       error_info err(system_error_code());
       throw interprocess_exception(err);
    }

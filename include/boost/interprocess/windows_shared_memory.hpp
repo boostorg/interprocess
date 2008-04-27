@@ -169,7 +169,7 @@ inline mode_t windows_shared_memory::get_mode() const
 inline bool windows_shared_memory::priv_open_or_create
    (detail::create_enum_t type, const char *filename, mode_t mode, std::size_t size)
 {
-   m_name = filename;
+   m_name = filename ? filename : "";
 
    unsigned long file_map_access = 0;
    unsigned long map_access = 0;

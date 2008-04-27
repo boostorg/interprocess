@@ -564,7 +564,7 @@ inline std::pair<T*, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
                         T *reuse_ptr)
 {
    std::pair<void*, bool> ret = priv_allocation_command
-      (command, limit_size, preferred_size, received_size, reuse_ptr, sizeof(T));
+      (command, limit_size, preferred_size, received_size, (void*)reuse_ptr, sizeof(T));
 
    BOOST_ASSERT(0 == ((std::size_t)ret.first % detail::alignment_of<T>::value));
    return std::pair<T *, bool>(static_cast<T*>(ret.first), ret.second);

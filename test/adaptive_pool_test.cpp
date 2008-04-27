@@ -41,7 +41,6 @@ typedef list<int, shmem_node_allocator_v1_t> MyShmListV1;
 typedef vector<int, shmem_node_allocator_t>    MyShmVector;
 typedef vector<int, shmem_node_allocator_v1_t> MyShmVectorV1;
 
-
 int main ()
 {
    if(test::list_test<managed_shared_memory, MyShmList, true>())

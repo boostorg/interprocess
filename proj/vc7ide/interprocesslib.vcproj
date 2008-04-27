@@ -316,6 +316,9 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\anonymous_shared_memory.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\creation_tags.hpp">
 			</File>
 			<File

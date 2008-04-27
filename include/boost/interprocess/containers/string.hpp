@@ -308,7 +308,7 @@ class basic_string_base
    }
 
    void construct(pointer p, const value_type &value = value_type())
-   {  new(detail::get_pointer(p)) value_type(value);   }
+   {  new((void*)detail::get_pointer(p)) value_type(value);   }
 
    void destroy(pointer p, size_type n)
    {

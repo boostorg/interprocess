@@ -48,13 +48,13 @@ struct Ctor0Arg   :  public placement_destroy<T>
    self_t  operator++(int)    {  return *this;  }
 
    void construct(void *mem)
-   {  new(mem)T;  }
+   {  new((void*)mem)T;  }
 
    virtual void construct_n(void *mem, std::size_t num, std::size_t &constructed)
    {
-      T* memory = static_cast<T*>(mem);
+      T* memory = (T*)(mem);
       for(constructed = 0; constructed < num; ++constructed)
-         new(memory++)T;
+         new((void*)memory++)T;
    }
 };
 
@@ -88,13 +88,13 @@ struct Ctor0Arg   :  public placement_destroy<T>
 //          : p1((P1 &)p_1), p2((P2 &)p_2) {}
 //
 //       void construct(void *mem)
-//       {  new(object)T(m_p1, m_p2); }
+//       {  new((void*)object)T(m_p1, m_p2); }
 //
 //       virtual void construct_n(void *mem
 //                                , std::size_t num
 //                                , std::size_t &constructed)
 //       {
-//          T* memory      = static_cast<T*>(mem);
+//          T* memory      = (T*)(mem);
 //          for(constructed = 0; constructed < num; ++constructed){
 //             this->construct(memory++, IsIterator());
 //             this->do_increment(IsIterator());
@@ -103,10 +103,10 @@ struct Ctor0Arg   :  public placement_destroy<T>
 //
 //       private:
 //       void construct(void *mem, detail::true_)
-//       {  new(mem)T(*m_p1, *m_p2); }
+//       {  new((void*)mem)T(*m_p1, *m_p2); }
 //                                                                           
 //       void construct(void *mem, detail::false_)
-//       {  new(mem)T(m_p1, m_p2); }
+//       {  new((void*)mem)T(m_p1, m_p2); }
 //
 //       P1 &m_p1; P2 &m_p2;
 //    };
@@ -163,7 +163,7 @@ struct Ctor0Arg   :  public placement_destroy<T>
                         , std::size_t num                                  \
                         , std::size_t &constructed)                        \
       {                                                                    \
-         T* memory      = static_cast<T*>(mem);                            \
+         T* memory      = (T*)(mem);                            \
          for(constructed = 0; constructed < num; ++constructed){           \
             this->construct(memory++, IsIterator());                       \
             this->do_increment(IsIterator());                              \
@@ -172,10 +172,10 @@ struct Ctor0Arg   :  public placement_destroy<T>
                                                                            \
       private:                                                             \
       void construct(void *mem, detail::true_)                             \
-      {  new(mem)T(BOOST_PP_ENUM_PARAMS(n, *m_p)); }                       \
+      {  new((void*)mem)T(BOOST_PP_ENUM_PARAMS(n, *m_p)); }                       \
                                                                            \
       void construct(void *mem, detail::false_)                            \
-      {  new(mem)T(BOOST_PP_ENUM_PARAMS(n, m_p)); }                        \
+      {  new((void*)mem)T(BOOST_PP_ENUM_PARAMS(n, m_p)); }                        \
                                                                            \
       BOOST_PP_REPEAT(n, BOOST_INTERPROCESS_AUX_PARAM_DEFINE, _)        \
    };                                                                      \

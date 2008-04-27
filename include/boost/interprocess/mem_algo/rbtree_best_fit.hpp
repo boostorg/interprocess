@@ -651,7 +651,7 @@ inline std::pair<T*, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignmen
                         T *reuse_ptr)
 {
    std::pair<void*, bool> ret = priv_allocation_command
-      (command, limit_size, preferred_size, received_size, reuse_ptr, sizeof(T));
+      (command, limit_size, preferred_size, received_size, (void*)reuse_ptr, sizeof(T));
 
    BOOST_ASSERT(0 == ((std::size_t)ret.first % detail::alignment_of<T>::value));
    return std::pair<T *, bool>(static_cast<T*>(ret.first), ret.second);
@@ -776,25 +776,15 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
       assert(prev_block->m_size == reuse->m_prev_size);
       algo_impl_t::assert_alignment(prev_block);
 
-      //Let's calculate the number of extra bytes of data before the current
-      //block's begin. The value is a multiple of backwards_multiple
-      std::size_t needs_backwards = preferred_size - 
-         detail::get_truncated_size(received_size, backwards_multiple);
-
-      const std::size_t lcm = detail::lcm(max_value(backwards_multiple, (std::size_t)Alignment)
-                                         ,min_value(backwards_multiple, (std::size_t)Alignment));
-
-      //If we want to use min_size data to get a buffer between preferred_size
-      //and min_size if preferred_size can't be achieved, calculate the 
-      //biggest of all possibilities
-      if(!only_preferred_backwards){
-         needs_backwards = min_size - detail::get_truncated_size(received_size, backwards_multiple);
+      std::size_t needs_backwards_aligned;
+      std::size_t lcm;
+      if(!algo_impl_t::calculate_lcm_and_needs_backwards_lcmed
+         ( backwards_multiple
+         , received_size
+         , only_preferred_backwards ? preferred_size : min_size
+         , lcm, needs_backwards_aligned)){
+         return 0;
       }
-
-      assert((needs_backwards % backwards_multiple) == 0);
-
-      const std::size_t needs_backwards_aligned = 
-         detail::get_rounded_size(needs_backwards, lcm);
 
       //Check if previous block has enough size
       if(std::size_t(prev_block->m_size*Alignment) >= needs_backwards_aligned){
@@ -857,10 +847,8 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
             m_header.m_imultiset.erase(Imultiset::s_iterator_to(*prev_block));
 
             //Just merge the whole previous block
-            needs_backwards = detail::get_truncated_size
-               (prev_block->m_size*Alignment, backwards_multiple);
-            //received_size = received_size/backwards_multiple*backwards_multiple + needs_backwards;
-            received_size = received_size + needs_backwards;
+            //prev_block->m_size*Alignment is multiple of lcm (and backwards_multiple)
+            received_size = received_size + prev_block->m_size*Alignment;
 
             m_header.m_allocated += prev_block->m_size*Alignment;
             //Now update sizes

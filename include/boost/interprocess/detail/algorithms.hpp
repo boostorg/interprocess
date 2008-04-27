@@ -43,7 +43,7 @@ inline void construct_in_place_impl(T* dest, const InpIt &source, detail::true_)
 template<class T, class InpIt>
 inline void construct_in_place_impl(T* dest, const InpIt &source, detail::false_)
 {
-   new(dest)T(*source);
+   new((void*)dest)T(*source);
 }
 
 }  //namespace detail   {
@@ -58,7 +58,7 @@ inline void construct_in_place(T* dest, InpIt source)
 template<class T, class U, class D>
 inline void construct_in_place(T *dest, default_construct_iterator<U, D>)
 {
-   new(dest)T();
+   new((void*)dest)T();
 }
 
 template<class InIt, class OutIt>

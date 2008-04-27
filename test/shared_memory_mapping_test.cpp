@@ -13,6 +13,7 @@
 #include <iostream>
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
+#include <boost/interprocess/anonymous_shared_memory.hpp>
 #include <string>
 #include "get_process_id_name.hpp"
 
@@ -105,6 +106,28 @@ int main ()
 
          //Check pattern
          unsigned char *pattern = static_cast<unsigned char*>(region.get_address());
+         for(std::size_t i = 0
+            ;i < FileSize
+            ;++i, ++pattern){
+            if(*pattern != static_cast<unsigned char>(i)){
+               return 1;
+            }
+         }
+      }
+      {
+         //Now check anonymous mapping
+         mapped_region region(anonymous_shared_memory(FileSize));
+
+         //Write pattern
+         unsigned char *pattern = static_cast<unsigned char*>(region.get_address());
+         for(std::size_t i = 0
+            ;i < FileSize
+            ;++i, ++pattern){
+            *pattern = static_cast<unsigned char>(i);
+         }
+
+         //Check pattern
+         pattern = static_cast<unsigned char*>(region.get_address());
          for(std::size_t i = 0
             ;i < FileSize
             ;++i, ++pattern){

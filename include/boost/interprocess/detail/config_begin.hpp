@@ -30,4 +30,5 @@
    #pragma warning (disable : 4711) // function selected for automatic inline expansion
    #pragma warning (disable : 4786) // identifier truncated in debug info
    #pragma warning (disable : 4996) // 'function': was declared deprecated
+   #pragma warning (disable : 4197) // top-level volatile in cast is ignored
 #endif
