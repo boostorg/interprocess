@@ -5704,7 +5704,7 @@ between all managed memory segments, since many times they just forward the func
 to the segment manager. Because of this,
 in [*Boost.Interprocess] all managed memory segments derive from a common class that
 implements memory-independent (shared memory, memory mapped files) functions:
-[@../../../../boost/interprocess/detail/managed_memory_impl.hpp 
+[@../../boost/interprocess/detail/managed_memory_impl.hpp 
 boost::interprocess::detail::basic_managed_memory_impl]
 
 Deriving from this class, [*Boost.Interprocess] implements several managed memory
@@ -5766,7 +5766,7 @@ Segregated storage pools are simple and follow the classic segregated storage al
    to the segment manager.
 
 The pool is implemented by the
-[@../../../../boost/interprocess/allocators/detail/node_pool.hpp
+[@../../boost/interprocess/allocators/detail/node_pool.hpp
 private_node_pool and shared_node_pool] classes.
 
 [endsect]
@@ -5809,7 +5809,7 @@ approach:
    to the segment manager.
 
 The adaptive pool is implemented by the
-[@../../../../boost/interprocess/allocators/detail/adaptive_node_pool.hpp
+[@../../boost/interprocess/allocators/detail/adaptive_node_pool.hpp
 private_adaptive_node_pool and adaptive_node_pool] classes.
 
 [endsect]
