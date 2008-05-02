@@ -62,10 +62,13 @@ class private_node_allocator_base
    , SegmentManager
    >
 {
+   public:
+   //Segment manager
+   typedef SegmentManager                                segment_manager;
+   typedef typename SegmentManager::void_pointer         void_pointer;
+
    /// @cond
    private:
-   typedef typename SegmentManager::void_pointer         void_pointer;
-   typedef SegmentManager                                segment_manager;
    typedef private_node_allocator_base
       < Version, T, SegmentManager, NodesPerChunk>       self_t;
    typedef detail::private_node_pool

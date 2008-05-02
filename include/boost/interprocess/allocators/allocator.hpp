@@ -48,14 +48,16 @@ namespace interprocess {
 template<class T, class SegmentManager>
 class allocator 
 {
+   public:
+   //Segment manager
+   typedef SegmentManager                                segment_manager;
+   typedef typename SegmentManager::void_pointer         void_pointer;
+
    /// @cond
    private:
 
    //Self type
    typedef allocator<T, SegmentManager>   self_t;
-
-   //Segment manager
-   typedef SegmentManager                 segment_manager;
 
    //Pointer to void
    typedef typename segment_manager::void_pointer  aux_pointer_t;

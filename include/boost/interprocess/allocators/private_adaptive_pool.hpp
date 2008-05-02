@@ -55,10 +55,13 @@ class private_adaptive_pool_base
    , SegmentManager
    >
 {
+   public:
+   //Segment manager
+   typedef SegmentManager                                segment_manager;
+   typedef typename SegmentManager::void_pointer         void_pointer;
+
    /// @cond
    private:
-   typedef typename SegmentManager::void_pointer         void_pointer;
-   typedef SegmentManager                                segment_manager;
    typedef private_adaptive_pool_base
       < Version, T, SegmentManager, NodesPerChunk
       , MaxFreeChunks, OverheadPercent>                  self_t;
