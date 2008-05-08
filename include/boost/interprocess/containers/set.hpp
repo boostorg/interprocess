@@ -183,7 +183,7 @@ class set
    { return m_tree.key_comp(); }
 
    //! <b>Effects</b>: Returns a copy of the Allocator that
-   //!   was passed to the object’s constructor.
+   //!   was passed to the object's constructor.
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
@@ -672,7 +672,7 @@ class multiset
    { return m_tree.key_comp(); }
 
    //! <b>Effects</b>: Returns a copy of the Allocator that
-   //!   was passed to the object’s constructor.
+   //!   was passed to the object's constructor.
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 

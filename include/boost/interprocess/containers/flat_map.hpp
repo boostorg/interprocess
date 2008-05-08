@@ -210,7 +210,7 @@ class flat_map
       { return value_compare(force<key_compare>(m_flat_tree.key_comp())); }
 
    //! <b>Effects</b>: Returns a copy of the Allocator that
-   //!   was passed to the object’s constructor.
+   //!   was passed to the object's constructor.
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
@@ -853,7 +853,7 @@ class flat_multimap
       { return value_compare(force<key_compare>(m_flat_tree.key_comp())); }
 
    //! <b>Effects</b>: Returns a copy of the Allocator that
-   //!   was passed to the object’s constructor.
+   //!   was passed to the object's constructor.
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 

@@ -138,11 +138,11 @@ class unique_ptr
    //!
    //!Effects: Constructs a unique_ptr which owns the pointer which u owns
    //!(if any). If the deleter is not a reference type, it is move constructed
-   //!from u’s deleter, otherwise the reference is copy constructed from u’s deleter.
+   //!from u's deleter, otherwise the reference is copy constructed from u's deleter.
    //!
    //!After the construction, u no longer owns a pointer.
    //![ Note: The deleter constructor can be implemented with
-   //!std::forward<D>. —end note ]
+   //!std::forward<D>. -end note ]
    //!
    //!Postconditions: get() == value u.get() had before the construction.
    //!get_deleter() returns a reference to the internally stored deleter which
@@ -168,8 +168,8 @@ class unique_ptr
    //!
    //!Effects: Constructs a unique_ptr which owns the pointer which u owns
    //!(if any). If the deleter is not a reference
-   //!type, it is move constructed from u’s deleter, otherwise the reference
-   //!is copy constructed from u’s deleter.
+   //!type, it is move constructed from u's deleter, otherwise the reference
+   //!is copy constructed from u's deleter.
    //!
    //!After the construction, u no longer owns a pointer.
    //!
@@ -221,7 +221,7 @@ class unique_ptr
 
    //!Requires: Assignment of the deleter D from an rvalue D must not throw an exception.
    //!
-   //!Effects: reset(u.release()) followed by a move assignment from u’s deleter to
+   //!Effects: reset(u.release()) followed by a move assignment from u's deleter to
    //!this deleter.
    //!
    //!Postconditions: This unique_ptr now owns the pointer which u owned, and u no
@@ -250,7 +250,7 @@ class unique_ptr
    //!throw an exception. U* must be implicitly convertible to T*.
    //!
    //!Effects: reset(u.release()) followed by a move assignment from
-   //!u’s deleter to this deleter. If either D or E is
+   //!u's deleter to this deleter. If either D or E is
    //!a reference type, then the referenced lvalue deleter participates
    //!in the move assignment.
    //!
@@ -356,7 +356,7 @@ class unique_ptr
 
    //!Requires: The deleter D is Swappable and will not throw an exception under swap.
    //!
-   //!Effects: The stored pointers of this and u are exchanged. The stored deleters are swap’d (unqualified).
+   //!Effects: The stored pointers of this and u are exchanged. The stored deleters are swap'd (unqualified).
    //!
    //!Throws: nothing.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE

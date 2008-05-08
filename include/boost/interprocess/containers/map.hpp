@@ -206,7 +206,7 @@ class map
    { return value_compare(m_tree.key_comp()); }
 
    //! <b>Effects</b>: Returns a copy of the Allocator that
-   //!   was passed to the objects constructor.
+   //!   was passed to the object's constructor.
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
@@ -856,7 +856,7 @@ class multimap
    { return value_compare(m_tree.key_comp()); }
 
    //! <b>Effects</b>: Returns a copy of the Allocator that
-   //!   was passed to the objects constructor.
+   //!   was passed to the object's constructor.
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 

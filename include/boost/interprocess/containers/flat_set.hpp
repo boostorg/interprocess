@@ -157,7 +157,7 @@ class flat_set
       { return m_flat_tree.key_comp(); }
 
    //! <b>Effects</b>: Returns a copy of the Allocator that
-   //!   was passed to the object’s constructor.
+   //!   was passed to the object's constructor.
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
@@ -665,7 +665,7 @@ class flat_multiset
       { return m_flat_tree.key_comp(); }
 
    //! <b>Effects</b>: Returns a copy of the Allocator that
-   //!   was passed to the object’s constructor.
+   //!   was passed to the object's constructor.
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
