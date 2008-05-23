@@ -77,7 +77,7 @@ class map_index
    //!This tries to free previously allocate
    //!unused memory.
    void shrink_to_fit()
-   {  base_type::get_stored_allocator().deallocate_free_chunks(); }
+   {  base_type::get_stored_allocator().deallocate_free_blocks(); }
 };
 
 /// @cond
