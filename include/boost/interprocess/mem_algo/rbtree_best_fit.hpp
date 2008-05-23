@@ -812,7 +812,7 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
             assert(prev_block->m_size >= BlockCtrlUnits);
             priv_mark_as_free_block(prev_block);
 
-            //Update the old previous block in the free chunks tree
+            //Update the old previous block in the free blocks tree
             //If the new size fulfills tree invariants do nothing,
             //otherwise erase() + insert()
             {
@@ -1058,12 +1058,12 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
       assert(next_block->m_size == priv_next_block(next_block)->m_prev_size);
       const std::size_t rem_units = merged_units - intended_units;
 
-      //Check if we we need to update the old next block in the free chunks tree
+      //Check if we we need to update the old next block in the free blocks tree
       //If the new size fulfills tree invariants, we just need to replace the node
       //(the block start has been displaced), otherwise erase() + insert().
       //
-      //This fixup must be done in two parts, because the new next chunk might
-      //overwrite the tree hook of the old next chunk. So we first erase the
+      //This fixup must be done in two parts, because the new next block might
+      //overwrite the tree hook of the old next block. So we first erase the
       //old if needed and we'll insert the new one after creating the new next
       imultiset_iterator old_next_block_it(Imultiset::s_iterator_to(*next_block));
       const bool size_invariants_broken = 
@@ -1292,7 +1292,7 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_deallocate(vo
    bool merge_with_prev    = !priv_is_prev_allocated(block);
    bool merge_with_next    = !priv_is_allocated_block(next_block);
 
-   //Merge logic. First just update block sizes, then fix free chunks tree
+   //Merge logic. First just update block sizes, then fix free blocks tree
    if(merge_with_prev || merge_with_next){
       //Merge if the previous is free
       if(merge_with_prev){
@@ -1338,4 +1338,3 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_deallocate(vo
 #include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_INTERPROCESS_MEM_ALGO_RBTREE_BEST_FIT_HPP
-
