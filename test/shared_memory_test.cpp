@@ -74,6 +74,11 @@ int main ()
 
          //Overwrite all memory
          std::memset(shm1.get_user_address(), 0, shm1.get_user_size());
+
+         //Now test move semantics
+         shared_memory move_ctor(move(shm1));
+         shared_memory move_assign;
+         move_assign = move(move_ctor);
       }
    }
    catch(std::exception &ex){

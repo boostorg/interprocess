@@ -15,9 +15,6 @@
 #include <iostream>
 #include <functional>
 
-#include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/containers/vector.hpp>
-#include <boost/interprocess/indexes/flat_map_index.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/move_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
@@ -25,6 +22,7 @@
 #include "check_equal_containers.hpp"
 #include "movable_int.hpp"
 #include <string>
+#include <vector>
 #include "get_process_id_name.hpp"
 
 namespace boost{

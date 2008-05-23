@@ -443,6 +443,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "file_lock_test", "file_lock
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "intersegment_ptr_test", "intersegment_ptr_test.vcproj", "{5E81CD01-4FA2-2A96-84FE-DA631CA20962}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_managed_copy_on_write", "doc_managed_copy_on_write.vcproj", "{8E0C437E-3613-FD46-F3AE-876A0731CA85}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -895,6 +903,14 @@ Global
 		{58CCE183-6092-48FE-A4F7-BA0D3A792639}.Debug.Build.0 = Debug|Win32
 		{58CCE183-6092-48FE-A4F7-BA0D3A792639}.Release.ActiveCfg = Release|Win32
 		{58CCE183-6092-48FE-A4F7-BA0D3A792639}.Release.Build.0 = Release|Win32
+		{5E81CD01-4FA2-2A96-84FE-DA631CA20962}.Debug.ActiveCfg = Debug|Win32
+		{5E81CD01-4FA2-2A96-84FE-DA631CA20962}.Debug.Build.0 = Debug|Win32
+		{5E81CD01-4FA2-2A96-84FE-DA631CA20962}.Release.ActiveCfg = Release|Win32
+		{5E81CD01-4FA2-2A96-84FE-DA631CA20962}.Release.Build.0 = Release|Win32
+		{8E0C437E-3613-FD46-F3AE-876A0731CA85}.Debug.ActiveCfg = Debug|Win32
+		{8E0C437E-3613-FD46-F3AE-876A0731CA85}.Debug.Build.0 = Debug|Win32
+		{8E0C437E-3613-FD46-F3AE-876A0731CA85}.Release.ActiveCfg = Release|Win32
+		{8E0C437E-3613-FD46-F3AE-876A0731CA85}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

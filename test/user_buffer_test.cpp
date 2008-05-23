@@ -62,6 +62,18 @@ int main ()
    //Named new capable heap mem allocator
    wmanaged_heap_memory heap_buffer(memsize);
 
+   //Test move semantics
+   {
+      wmanaged_external_buffer user_default;
+      wmanaged_external_buffer temp_external(move(user_buffer));
+      user_default = move(temp_external);
+      user_buffer  = move(user_default);
+      wmanaged_heap_memory heap_default;
+      wmanaged_heap_memory temp_heap(move(heap_buffer));
+      heap_default = move(temp_heap);
+      heap_buffer  = move(heap_default);
+   }
+
    //Initialize memory
    user_buffer.reserve_named_objects(100);
    heap_buffer.reserve_named_objects(100);

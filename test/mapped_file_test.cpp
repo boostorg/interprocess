@@ -74,6 +74,11 @@ int main ()
 
       //Overwrite all memory
       std::memset(file1.get_user_address(), 0, file1.get_user_size());
+
+      //Now test move semantics
+      mapped_file move_ctor(move(file1));
+      mapped_file move_assign;
+      move_assign = move(move_ctor);
    }
    std::remove(FileName);
    return 0;

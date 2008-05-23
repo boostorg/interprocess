@@ -52,3 +52,9 @@
 -> barrier_test fails on MacOS X on PowerPC.
 
 -> void allocator instantiations fail.
+
+-> Read-only managed classes. They should avoid internal locking and map memory as read-only
+
+-> add private_read_only to mapped_region to support MAP_PRIVATE plus PROT_READ
+
+-> add contiguous_elements option to burst allocation

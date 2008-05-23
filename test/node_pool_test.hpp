@@ -25,7 +25,7 @@ template <class NodePool>
 struct test_node_pool
 {
    static bool allocate_then_deallocate(NodePool &pool);
-   static bool deallocate_free_chunks(NodePool &pool);
+   static bool deallocate_free_blocks(NodePool &pool);
 };
 
 template <class NodePool>
@@ -60,7 +60,7 @@ bool test_node_pool<NodePool>::allocate_then_deallocate(NodePool &pool)
       return false;
    }
    
-   pool.deallocate_free_chunks();
+   pool.deallocate_free_blocks();
 
    if(0 != pool.num_free_nodes()){
       return false;
@@ -70,11 +70,11 @@ bool test_node_pool<NodePool>::allocate_then_deallocate(NodePool &pool)
 }
 
 template <class NodePool>
-bool test_node_pool<NodePool>::deallocate_free_chunks(NodePool &pool)
+bool test_node_pool<NodePool>::deallocate_free_blocks(NodePool &pool)
 {
-   const std::size_t max_chunks        = 10;
-   const std::size_t max_nodes         = max_chunks*pool.get_real_num_node();
-   const std::size_t nodes_per_chunk   = pool.get_real_num_node();
+   const std::size_t max_blocks        = 10;
+   const std::size_t max_nodes         = max_blocks*pool.get_real_num_node();
+   const std::size_t nodes_per_block   = pool.get_real_num_node();
 
    std::vector<void*> nodes;
 
@@ -93,25 +93,25 @@ bool test_node_pool<NodePool>::deallocate_free_chunks(NodePool &pool)
       return false;
    }
    
-   //Now deallocate one of each chunk per iteration
-   for(std::size_t node_i = 0; node_i < nodes_per_chunk; ++node_i){
-      //Deallocate a node per chunk
-      for(std::size_t i = 0; i < max_chunks; ++i){
-         pool.deallocate_node(nodes[i*nodes_per_chunk + node_i]);
+   //Now deallocate one of each block per iteration
+   for(std::size_t node_i = 0; node_i < nodes_per_block; ++node_i){
+      //Deallocate a node per block
+      for(std::size_t i = 0; i < max_blocks; ++i){
+         pool.deallocate_node(nodes[i*nodes_per_block + node_i]);
       }
 
       //Check that the free count is correct
-      if(max_chunks*(node_i+1) != pool.num_free_nodes()){
+      if(max_blocks*(node_i+1) != pool.num_free_nodes()){
          return false;
       }
       
-      //Now try to deallocate free chunks
-      pool.deallocate_free_chunks();
+      //Now try to deallocate free blocks
+      pool.deallocate_free_blocks();
 
-      //Until we don't deallocate the last node of every chunk
+      //Until we don't deallocate the last node of every block
       //no node should be deallocated
-      if(node_i != (nodes_per_chunk - 1)){
-         if(max_chunks*(node_i+1) != pool.num_free_nodes()){
+      if(node_i != (nodes_per_block - 1)){
+         if(max_blocks*(node_i+1) != pool.num_free_nodes()){
             return false;
          }
       }
@@ -149,7 +149,7 @@ bool test_all_node_pool()
       //Now call each test
       if(!test_node_pool_t::allocate_then_deallocate(*p))
          return false;
-      if(!test_node_pool_t::deallocate_free_chunks(*p))
+      if(!test_node_pool_t::deallocate_free_blocks(*p))
          return false;
    }
    shared_memory_object::remove(test::get_process_id_name());

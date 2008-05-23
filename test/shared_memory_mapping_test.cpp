@@ -136,6 +136,13 @@ int main ()
             }
          }
       }
+      {
+         //Now test move semantics
+         shared_memory_object mapping(open_only, test::get_process_id_name(), read_write);
+         shared_memory_object move_ctor(move(mapping));
+         shared_memory_object move_assign;
+         move_assign = move(move_ctor);
+      }
    }
    catch(std::exception &exc){
       shared_memory_object::remove(test::get_process_id_name());

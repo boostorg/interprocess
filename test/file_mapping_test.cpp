@@ -122,6 +122,13 @@ int main ()
             }
          }
       }
+      {
+         //Now test move semantics
+         file_mapping mapping(test::get_process_id_name(), read_only);
+         file_mapping move_ctor(move(mapping));
+         file_mapping move_assign;
+         move_assign = move(move_ctor);
+      }
    }
    catch(std::exception &exc){
       std::remove(test::get_process_id_name());

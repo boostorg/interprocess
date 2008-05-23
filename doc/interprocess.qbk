@@ -3096,6 +3096,8 @@ To use a managed shared memory, you must include the following header:
    //
    managed_shared_memory segment      (open_only,       "MySharedMemory");//Shared memory object name[c++]
 
+[c++]
+
    //1.  If the segment was previously created
    //    equivalent to "open_only".
    //2.  Otherwise, equivalent to "open_only" (size is ignored)
@@ -3257,6 +3259,21 @@ For more information about managed mapped file capabilities, see
 The following features are common to all managed memory segment classes, but
 we will use managed shared memory in our examples. We can do the same with 
 memory mapped files or other managed memory segment classes.
+
+[section:copy_on_write Opening managed shared memory and mapped files with Copy On Write mode]
+
+When mapping a memory segment based on shared memory or files, there is an option to
+open them using `open_copy_on_write` option. This option is similar to `open_only` but
+every change the programmer does with this managed segment is kept private to this process
+and is not translated to the underlying device (shared memory or file).
+
+The underlying shared memory or file is opened as read-only so several processes can
+share an initial managed segment and make private changes to it. Here's an example:
+
+[import ../example/doc_managed_copy_on_write.cpp]
+[doc_managed_copy_on_write]
+
+[endsect]
 
 [section:allocate_deallocate Allocating fragments of a managed memory segment]
 
@@ -3888,7 +3905,7 @@ contain any of these values: `expand_fwd`, `expand_bwd`.
 *  If the parameter `command` only contains the value `expand_bwd` (with optional
    additional `nothrow_allocation`), the allocator will try to increase the size of
    the memory block referenced by pointer `reuse_ptr` only moving the start of the
-   block to a returned new position new_ptr. If it's not possible, it will try to
+   block to a returned new position `new_ptr`. If it's not possible, it will try to
    move the start of the block as much as possible as long as this results in
    `size(new_ptr) >= limit_size`. Success is reported only if this results in
    `limit_size <= size(new_ptr)`.
@@ -3896,7 +3913,7 @@ contain any of these values: `expand_fwd`, `expand_bwd`.
 *  If the parameter `command` only contains the value `allocate_new` (with optional
    additional `nothrow_allocation`), the allocator will try to allocate memory for
    `preferred_size` objects. If it's not possible it will try to allocate memory for
-   at least limit_size` objects.
+   at least `limit_size` objects.
 
 *  If the parameter `command` only contains a combination of `expand_fwd` and
    `allocate_new`, (with optional additional `nothrow_allocation`) the allocator will
@@ -3951,8 +3968,8 @@ contain any of these values: `expand_fwd`, `expand_bwd`.
 *  If the user chooses `char` as template argument and a backwards expansion is
    performed, although properly aligned, the returned buffer might not be 
    suitable because the distance between the new beginning and the old beginning
-   might not multiple of the type the user wants to construct, because due to internal
-   restriction the expansion can be slightly bigger than the requested. [*When
+   might not multiple of the type the user wants to construct, since due to internal
+   restrictions the expansion can be slightly bigger than the requested bytes. [*When
    performing backwards expansion, if you have already constructed objects in the
    old buffer, make sure to specify correctly the type.]
 
@@ -6456,6 +6473,9 @@ warranty.
 [section:release_notes_boost_1_36_00 Boost 1.36 Release]
 
 *  Added anonymous shared memory for UNIX systems.
+*  Fixed erroneous `void` return types from `flat_map::erase()` functions.
+*  Fixed missing move semantics on managed memory classes.
+*  Added copy_on_write option for shared memory and mapped file managed classes.
 
 [endsect]
 
