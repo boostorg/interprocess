@@ -83,7 +83,7 @@ class windows_shared_memory
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    windows_shared_memory
-      (detail::moved_object<windows_shared_memory> &moved)
+      (detail::moved_object<windows_shared_memory> moved)
    {  this->swap(moved.get());   }
    #else
    windows_shared_memory(windows_shared_memory &&moved)
@@ -95,7 +95,7 @@ class windows_shared_memory
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    windows_shared_memory &operator=
-      (detail::moved_object<windows_shared_memory> &moved)
+      (detail::moved_object<windows_shared_memory> moved)
    {  
       windows_shared_memory tmp(moved);
       this->swap(tmp);
@@ -234,6 +234,18 @@ inline void windows_shared_memory::priv_close()
       m_handle = 0;
    }
 }
+
+///@cond
+
+//!Trait class to detect if a type is
+//!movable
+template<>
+struct is_movable<windows_shared_memory>
+{
+   static const bool value = true;
+};
+
+///@endcond
 
 }  //namespace interprocess {
 }  //namespace boost {
