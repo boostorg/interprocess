@@ -76,10 +76,12 @@ class shared_memory_object
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    shared_memory_object
-      (detail::moved_object<shared_memory_object> &moved)
+      (const detail::moved_object<shared_memory_object> moved)
+      :  m_handle(file_handle_t(detail::invalid_file()))
    {  this->swap(moved.get());   }
    #else
    shared_memory_object(shared_memory_object &&moved)
+      :  m_handle(file_handle_t(detail::invalid_file()))
    {  this->swap(moved);   }
    #endif
 
@@ -88,7 +90,7 @@ class shared_memory_object
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    shared_memory_object &operator=
-      (detail::moved_object<shared_memory_object> &moved)
+      (detail::moved_object<shared_memory_object> moved)
    {  
       shared_memory_object tmp(moved);
       this->swap(tmp);
@@ -340,6 +342,18 @@ inline void shared_memory_object::priv_close()
 }
 
 #endif
+
+///@cond
+
+//!Trait class to detect if a type is
+//!movable
+template<>
+struct is_movable<shared_memory_object>
+{
+   enum {  value = true };
+};
+
+///@endcond
 
 }  //namespace interprocess {
 }  //namespace boost {

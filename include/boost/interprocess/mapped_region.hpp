@@ -444,7 +444,7 @@ inline mapped_region::mapped_region
       break;
 
       case copy_on_write:
-         prot  |= PROT_READ;
+         prot  |= (PROT_WRITE | PROT_READ);
          flags |= MAP_PRIVATE;
       break;
    
@@ -552,6 +552,14 @@ struct null_mapped_region_function
 {
    bool operator()(void *, std::size_t , bool) const
       {   return true;   }
+};
+
+//!Trait class to detect if a type is
+//!movable
+template<>
+struct is_movable<mapped_region>
+{
+   enum {  value = true };
 };
 /// @endcond
 

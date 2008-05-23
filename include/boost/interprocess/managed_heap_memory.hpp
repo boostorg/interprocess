@@ -50,7 +50,8 @@ class basic_managed_heap_memory
 
    public: //functions
 
-   //!Constructor. Never throws.
+   //!Default constructor. Does nothing.
+   //!Useful in combination with move semantics
    basic_managed_heap_memory(){}
 
    //!Destructor. Liberates the heap memory holding the managed data.
@@ -72,7 +73,7 @@ class basic_managed_heap_memory
    //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_heap_memory
-      (detail::moved_object<basic_managed_heap_memory> &moved)
+      (detail::moved_object<basic_managed_heap_memory> moved)
    {  this->swap(moved.get());   }
    #else
    basic_managed_heap_memory(basic_managed_heap_memory &&moved)
@@ -82,7 +83,7 @@ class basic_managed_heap_memory
    //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_heap_memory &operator=
-      (detail::moved_object<basic_managed_heap_memory> &moved)
+      (detail::moved_object<basic_managed_heap_memory> moved)
    {  this->swap(moved.get());   return *this;  }
    #else
    basic_managed_heap_memory &operator=
@@ -138,6 +139,25 @@ class basic_managed_heap_memory
    std::vector<char>  m_heapmem;
    /// @endcond
 };
+
+///@cond
+
+//!Trait class to detect if a type is
+//!movable
+template
+      <
+         class CharType, 
+         class AllocationAlgorithm, 
+         template<class IndexConfig> class IndexType
+      >
+struct is_movable<basic_managed_heap_memory
+   <CharType,  AllocationAlgorithm, IndexType>
+>
+{
+   static const bool value = true;
+};
+
+///@endcond
 
 }  //namespace interprocess {
 

@@ -23,14 +23,11 @@
 #include <boost/interprocess/detail/file_wrapper.hpp>
 #include <boost/interprocess/detail/move.hpp>
 
-//!\file
-//!Describes a named shared memory object allocation user class. 
-
 namespace boost {
 namespace interprocess {
 
-//!A basic shared memory named object creation class. Initializes the 
-//!shared memory segment. Inherits all basic functionality from 
+//!A basic mapped file named object creation class. Initializes the 
+//!mapped file. Inherits all basic functionality from 
 //!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>
 template
       <
@@ -61,7 +58,12 @@ class basic_managed_mapped_file
 
    public: //functions
 
-   //!Creates shared memory and creates and places the segment manager. 
+   //!Creates mapped file and creates and places the segment manager. 
+   //!This can throw.
+   basic_managed_mapped_file()
+   {}
+
+   //!Creates mapped file and creates and places the segment manager. 
    //!This can throw.
    basic_managed_mapped_file(create_only_t create_only, const char *name,
                              std::size_t size, const void *addr = 0)
@@ -69,7 +71,7 @@ class basic_managed_mapped_file
                 create_open_func_t(get_this_pointer(), detail::DoCreate))
    {}
 
-   //!Creates shared memory and creates and places the segment manager if
+   //!Creates mapped file and creates and places the segment manager if
    //!segment was not created. If segment was created it connects to the
    //!segment.
    //!This can throw.
@@ -81,11 +83,21 @@ class basic_managed_mapped_file
                 detail::DoOpenOrCreate))
    {}
 
-   //!Connects to a created shared memory and it's the segment manager.
-   //!Never throws.
+   //!Connects to a created mapped file and its segment manager.
+   //!This can throw.
    basic_managed_mapped_file (open_only_t open_only, const char* name, 
                               const void *addr = 0)
       : m_mfile(open_only, name, read_write, addr, 
+                create_open_func_t(get_this_pointer(), 
+                detail::DoOpen))
+   {}
+
+   //!Connects to a created mapped file and its segment manager
+   //!in copy_on_write mode.
+   //!This can throw.
+   basic_managed_mapped_file (open_copy_on_write_t, const char* name, 
+                              const void *addr = 0)
+      : m_mfile(open_only, name, copy_on_write, addr, 
                 create_open_func_t(get_this_pointer(), 
                 detail::DoOpen))
    {}
@@ -94,7 +106,7 @@ class basic_managed_mapped_file
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_mapped_file
-      (detail::moved_object<basic_managed_mapped_file> &moved)
+      (detail::moved_object<basic_managed_mapped_file> moved)
    {  this->swap(moved.get());   }
    #else
    basic_managed_mapped_file(basic_managed_mapped_file &&moved)
@@ -105,7 +117,7 @@ class basic_managed_mapped_file
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_mapped_file &operator=
-      (detail::moved_object<basic_managed_mapped_file> &moved)
+      (detail::moved_object<basic_managed_mapped_file> moved)
    {  this->swap(moved.get());   return *this;  }
    #else
    basic_managed_mapped_file &operator=(basic_managed_mapped_file &&moved)
@@ -160,6 +172,25 @@ class basic_managed_mapped_file
    managed_open_or_create_type m_mfile;
    /// @endcond
 };
+
+///@cond
+
+//!Trait class to detect if a type is
+//!movable
+template
+      <
+         class CharType, 
+         class AllocationAlgorithm, 
+         template<class IndexConfig> class IndexType
+      >
+struct is_movable<basic_managed_mapped_file
+   <CharType,  AllocationAlgorithm, IndexType>
+>
+{
+   static const bool value = true;
+};
+
+///@endcond
 
 }  //namespace interprocess {
 

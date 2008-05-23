@@ -1118,7 +1118,7 @@ class segment_manager
 
       //Initialize the node value_eraser to erase inserted node
       //if something goes wrong
-      detail::value_eraser<index_type> value_eraser(index, it);
+      value_eraser<index_type> v_eraser(index, it);
       
       //Avoid constructions if constructor is trivial
       //Build scoped ptr to avoid leaks with constructor exception
@@ -1130,8 +1130,8 @@ class segment_manager
 
       //All constructors successful, we don't want to release memory
       mem.release();
-      //Release node value_eraser since construction was successful
-      value_eraser.release();
+      //Release node v_eraser since construction was successful
+      v_eraser.release();
       return ptr;
    }
 
@@ -1204,7 +1204,7 @@ class segment_manager
       }
       //Initialize the node value_eraser to erase inserted node
       //if something goes wrong
-      detail::value_eraser<index_type> value_eraser(index, it);
+      value_eraser<index_type> v_eraser(index, it);
 
       //Allocates buffer for name + data, this can throw (it hurts)
       void *buffer_ptr; 
@@ -1260,8 +1260,8 @@ class segment_manager
       //All constructors successful, we don't want to release memory
       mem.release();
 
-      //Release node value_eraser since construction was successful
-      value_eraser.release();
+      //Release node v_eraser since construction was successful
+      v_eraser.release();
       return ptr;
    }
 

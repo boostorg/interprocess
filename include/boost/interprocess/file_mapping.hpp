@@ -19,6 +19,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
+#include <boost/interprocess/detail/move.hpp>
 #include <string>    //std::string
 #include <cstdio>    //std::remove
 #include <string>
@@ -55,10 +56,12 @@ class file_mapping
    //!After the call, "moved" does not represent any shared memory object. 
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   file_mapping(detail::moved_object<file_mapping> &moved)
+   file_mapping(detail::moved_object<file_mapping> moved)
+      :  m_handle(file_handle_t(detail::invalid_file()))
    {  this->swap(moved.get());   }
    #else
    file_mapping(file_mapping &&moved)
+      :  m_handle(file_handle_t(detail::invalid_file()))
    {  this->swap(moved);   }
    #endif
 
@@ -67,7 +70,7 @@ class file_mapping
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    file_mapping &operator=
-      (detail::moved_object<file_mapping> &moved)
+      (detail::moved_object<file_mapping> moved)
    {  
       file_mapping tmp(moved);
       this->swap(tmp);
@@ -164,6 +167,18 @@ inline void file_mapping::priv_close()
       m_handle = detail::invalid_file();
    }
 }
+
+///@cond
+
+//!Trait class to detect if a type is
+//!movable
+template<>
+struct is_movable<file_mapping>
+{
+   enum {  value = true };
+};
+
+///@endcond
 
 }  //namespace interprocess {
 }  //namespace boost {

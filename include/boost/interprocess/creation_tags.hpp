@@ -26,20 +26,36 @@ struct create_only_t {};
 struct open_only_t {};
 
 //!Tag to indicate that the resource must
+//!be only opened for reading
+struct open_read_only_t {};
+
+//!Tag to indicate that the resource must
+//!be only opened for reading
+struct open_copy_on_write_t {};
+
+//!Tag to indicate that the resource must
 //!be created. If already created, it must be opened.
 struct open_or_create_t {};
 
 //!Value to indicate that the resource must
 //!be only created
-static const create_only_t     create_only    = create_only_t();
+static const create_only_t    create_only    = create_only_t();
 
 //!Value to indicate that the resource must
 //!be only opened
-static const open_only_t       open_only      = open_only_t();
+static const open_only_t      open_only      = open_only_t();
+
+//!Value to indicate that the resource must
+//!be only opened for reading
+static const open_read_only_t open_read_only = open_read_only_t();
 
 //!Value to indicate that the resource must
 //!be created. If already created, it must be opened.
-static const open_or_create_t  open_or_create = open_or_create_t();
+static const open_or_create_t open_or_create = open_or_create_t();
+
+//!Value to indicate that the resource must
+//!be only opened for reading
+static const open_copy_on_write_t open_copy_on_write = open_copy_on_write_t();
 
 namespace detail {
 
