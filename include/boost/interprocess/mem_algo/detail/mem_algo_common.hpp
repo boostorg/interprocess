@@ -406,13 +406,13 @@ class memory_algorithm_common
       if(nbytes > UsableByPreviousChunk)
          nbytes -= UsableByPreviousChunk;
       
-      //We can find a aligned portion if we allocate a chunk that has alignment
+      //We can find a aligned portion if we allocate a block that has alignment
       //nbytes + alignment bytes or more.
       std::size_t minimum_allocation = max_value
          (nbytes + alignment, std::size_t(MinBlockUnits*Alignment));
-      //Since we will split that chunk, we must request a bit more memory
+      //Since we will split that block, we must request a bit more memory
       //if the alignment is near the beginning of the buffer, because otherwise,
-      //there is no space for a new chunk before the alignment.
+      //there is no space for a new block before the alignment.
       // 
       //            ____ Aligned here
       //           |
@@ -487,7 +487,7 @@ class memory_algorithm_common
       // | MBU +more | ACB | (3) | BCU |
       //  -----------------------------------------------------
       //This size will be the minimum size to be able to create a
-      //new chunk in the end.
+      //new block in the end.
       const std::size_t second_min_units = max_value(std::size_t(MinBlockUnits),
                         ceil_units(nbytes) + AllocatedCtrlUnits );
 
