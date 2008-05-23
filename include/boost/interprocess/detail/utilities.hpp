@@ -767,6 +767,24 @@ addressof(T& v)
        &const_cast<char&>(reinterpret_cast<const volatile char &>(v)));
 }
 
+//Anti-exception node eraser
+template<class Cont>
+class value_eraser
+{
+   public:
+   value_eraser(Cont & cont, typename Cont::iterator it) 
+      : m_cont(cont), m_index_it(it), m_erase(true){}
+   ~value_eraser()  
+   {  if(m_erase) m_cont.erase(m_index_it);  }
+
+   void release() {  m_erase = false;  }
+
+   private:
+   Cont                   &m_cont;
+   typename Cont::iterator m_index_it;
+   bool                    m_erase;
+};
+
 }  //namespace interprocess { 
 }  //namespace boost {
 
