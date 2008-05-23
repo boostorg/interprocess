@@ -479,8 +479,8 @@ class flat_map
    //!
    //! <b>Note</b>: Invalidates elements with keys
    //!   not less than the erased element.
-   void erase(const_iterator position) 
-      { m_flat_tree.erase(force<impl_const_iterator>(position)); }
+   iterator erase(const_iterator position) 
+      { return force<iterator>(m_flat_tree.erase(force<impl_const_iterator>(position))); }
 
    //! <b>Effects</b>: Erases all elements in the container with key equivalent to x.
    //!
@@ -499,8 +499,8 @@ class flat_map
    //!
    //! <b>Complexity</b>: Logarithmic search time plus erasure time
    //!   linear to the elements with bigger keys.
-   void erase(const_iterator first, const_iterator last)
-      { m_flat_tree.erase(force<impl_const_iterator>(first), force<impl_const_iterator>(last)); }
+   iterator erase(const_iterator first, const_iterator last)
+      { return force<iterator>(m_flat_tree.erase(force<impl_const_iterator>(first), force<impl_const_iterator>(last))); }
 
    //! <b>Effects</b>: erase(a.begin(),a.end()).
    //!
@@ -1060,8 +1060,8 @@ class flat_multimap
    //!
    //! <b>Note</b>: Invalidates elements with keys
    //!   not less than the erased element.
-   void erase(const_iterator position) 
-      { m_flat_tree.erase(force<impl_const_iterator>(position)); }
+   iterator erase(const_iterator position) 
+      { return force<iterator>(m_flat_tree.erase(force<impl_const_iterator>(position))); }
 
    //! <b>Effects</b>: Erases all elements in the container with key equivalent to x.
    //!
@@ -1080,8 +1080,8 @@ class flat_multimap
    //!
    //! <b>Complexity</b>: Logarithmic search time plus erasure time
    //!   linear to the elements with bigger keys.
-   void erase(const_iterator first, const_iterator last)
-      { m_flat_tree.erase(force<impl_const_iterator>(first), force<impl_const_iterator>(last)); }
+   iterator erase(const_iterator first, const_iterator last)
+      { return force<iterator>(m_flat_tree.erase(force<impl_const_iterator>(first), force<impl_const_iterator>(last))); }
 
    //! <b>Effects</b>: erase(a.begin(),a.end()).
    //!

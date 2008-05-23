@@ -1148,8 +1148,15 @@ class vector : private detail::vector_alloc_holder<A>
          }
          else{
             size_type received_size;
-            this->alloc().allocation_command(shrink_in_place, this->size(), this->capacity()
-                                      ,received_size, this->members_.m_start);
+            if(this->alloc().allocation_command
+               ( shrink_in_place | nothrow_allocation
+               , this->capacity(), this->size()
+               , received_size,   this->members_.m_start).first){
+               this->members_.m_capacity = received_size;
+               #ifdef BOOST_INTERPROCESS_VECTOR_ALLOC_STATS
+               ++this->num_shrink;
+               #endif
+            }
          }
       }
    }
@@ -1786,9 +1793,10 @@ class vector : private detail::vector_alloc_holder<A>
    public:
    unsigned int num_expand_fwd;
    unsigned int num_expand_bwd;
+   unsigned int num_shrink;
    unsigned int num_alloc;
    void reset_alloc_stats()
-   {  num_expand_fwd = num_expand_bwd = num_alloc = 0;   }                 
+   {  num_expand_fwd = num_expand_bwd = num_alloc = 0, num_shrink = 0;   }
    #endif
    /// @endcond
 };

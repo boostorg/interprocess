@@ -60,30 +60,30 @@ class private_node_pool_impl
    typedef typename bi::make_slist
       < node_t, bi::base_hook<slist_hook_t>
       , bi::linear<true>
-      , bi::constant_time_size<false> >::type      chunkslist_t;
+      , bi::constant_time_size<false> >::type      blockslist_t;
    public:
 
    //!Segment manager typedef
    typedef SegmentManagerBase segment_manager_base_type;
 
    //!Constructor from a segment manager. Never throws
-   private_node_pool_impl(segment_manager_base_type *segment_mngr_base, std::size_t node_size, std::size_t nodes_per_chunk)
-   :  m_nodes_per_chunk(nodes_per_chunk)
+   private_node_pool_impl(segment_manager_base_type *segment_mngr_base, std::size_t node_size, std::size_t nodes_per_block)
+   :  m_nodes_per_block(nodes_per_block)
    ,  m_real_node_size(detail::lcm(node_size, std::size_t(alignment_of<node_t>::value)))
       //General purpose allocator
    ,  mp_segment_mngr_base(segment_mngr_base)
-   ,  m_chunklist()
+   ,  m_blocklist()
    ,  m_freelist()
       //Debug node count
    ,  m_allocated(0)
    {}
 
-   //!Destructor. Deallocates all allocated chunks. Never throws
+   //!Destructor. Deallocates all allocated blocks. Never throws
    ~private_node_pool_impl()
-   {  this->purge_chunks();  }
+   {  this->purge_blocks();  }
 
    std::size_t get_real_num_node() const
-   {  return m_nodes_per_chunk; }
+   {  return m_nodes_per_block; }
 
    //!Returns the segment manager. Never throws
    segment_manager_base_type* get_segment_manager_base()const
@@ -94,7 +94,7 @@ class private_node_pool_impl
    {
       //If there are no free nodes we allocate a new block
       if (m_freelist.empty())
-         priv_alloc_chunk();
+         priv_alloc_block();
       //We take the first free node
       node_t *n = (node_t*)&m_freelist.front();
       m_freelist.pop_front();
@@ -173,36 +173,36 @@ class private_node_pool_impl
       }
    }
 
-   //!Deallocates all the free chunks of memory. Never throws
-   void deallocate_free_chunks()
+   //!Deallocates all the free blocks of memory. Never throws
+   void deallocate_free_blocks()
    {
       typedef typename free_nodes_t::iterator nodelist_iterator;
-      typename chunkslist_t::iterator bit(m_chunklist.before_begin()),
-                                      it(m_chunklist.begin()),
-                                      itend(m_chunklist.end());
+      typename blockslist_t::iterator bit(m_blocklist.before_begin()),
+                                      it(m_blocklist.begin()),
+                                      itend(m_blocklist.end());
       free_nodes_t backup_list;
       nodelist_iterator backup_list_last = backup_list.before_begin();
 
       //Execute the algorithm and get an iterator to the last value
       std::size_t blocksize = detail::get_rounded_size
-         (m_real_node_size*m_nodes_per_chunk, alignment_of<node_t>::value);
+         (m_real_node_size*m_nodes_per_block, alignment_of<node_t>::value);
 
       while(it != itend){
-         //Collect all the nodes from the chunk pointed by it
+         //Collect all the nodes from the block pointed by it
          //and push them in the list
          free_nodes_t free_nodes;
          nodelist_iterator last_it = free_nodes.before_begin();
-         const void *addr = get_chunk_from_hook(&*it, blocksize);
+         const void *addr = get_block_from_hook(&*it, blocksize);
 
          m_freelist.remove_and_dispose_if
             (is_between(addr, blocksize), push_in_list(free_nodes, last_it));
 
-         //If the number of nodes is equal to m_nodes_per_chunk
+         //If the number of nodes is equal to m_nodes_per_block
          //this means that the block can be deallocated
-         if(free_nodes.size() == m_nodes_per_chunk){
+         if(free_nodes.size() == m_nodes_per_block){
             //Unlink the nodes
             free_nodes.clear();
-            it = m_chunklist.erase_after(bit);
+            it = m_blocklist.erase_after(bit);
             mp_segment_mngr_base->deallocate((void*)addr);
          }
          //Otherwise, insert them in the backup list, since the
@@ -240,19 +240,19 @@ class private_node_pool_impl
 
    //!Deallocates all used memory. Precondition: all nodes allocated from this pool should
    //!already be deallocated. Otherwise, undefined behaviour. Never throws
-   void purge_chunks()
+   void purge_blocks()
    {
       //check for memory leaks
       assert(m_allocated==0);
       std::size_t blocksize = detail::get_rounded_size
-         (m_real_node_size*m_nodes_per_chunk, alignment_of<node_t>::value);
-      typename chunkslist_t::iterator
-         it(m_chunklist.begin()), itend(m_chunklist.end()), aux;
+         (m_real_node_size*m_nodes_per_block, alignment_of<node_t>::value);
+      typename blockslist_t::iterator
+         it(m_blocklist.begin()), itend(m_blocklist.end()), aux;
 
       //We iterate though the NodeBlock list to free the memory
-      while(!m_chunklist.empty()){
-         void *addr = get_chunk_from_hook(&m_chunklist.front(), blocksize);
-         m_chunklist.pop_front();
+      while(!m_blocklist.empty()){
+         void *addr = get_block_from_hook(&m_blocklist.front(), blocksize);
+         m_blocklist.pop_front();
          mp_segment_mngr_base->deallocate((void*)addr);
       }
       //Just clear free node list
@@ -262,7 +262,7 @@ class private_node_pool_impl
    void swap(private_node_pool_impl &other)
    {
       std::swap(mp_segment_mngr_base, other.mp_segment_mngr_base);
-      m_chunklist.swap(other.m_chunklist);
+      m_blocklist.swap(other.m_blocklist);
       m_freelist.swap(other.m_freelist);
       std::swap(m_allocated, other.m_allocated);
    }
@@ -305,36 +305,44 @@ class private_node_pool_impl
       const char *      end_;
    };
 
-   //!Allocates a chunk of nodes. Can throw boost::interprocess::bad_alloc
-   void priv_alloc_chunk()
+   //!Allocates a block of nodes. Can throw boost::interprocess::bad_alloc
+   void priv_alloc_block()
    {
       //We allocate a new NodeBlock and put it as first
       //element in the free Node list
       std::size_t blocksize = 
-         detail::get_rounded_size(m_real_node_size*m_nodes_per_chunk, alignment_of<node_t>::value);
+         detail::get_rounded_size(m_real_node_size*m_nodes_per_block, alignment_of<node_t>::value);
       char *pNode = detail::char_ptr_cast
          (mp_segment_mngr_base->allocate(blocksize + sizeof(node_t)));
       if(!pNode)  throw bad_alloc();
       char *pBlock = pNode;
-      m_chunklist.push_front(get_chunk_hook(pBlock, blocksize));
+      m_blocklist.push_front(get_block_hook(pBlock, blocksize));
 
       //We initialize all Nodes in Node Block to insert 
       //them in the free Node list
-      for(std::size_t i = 0; i < m_nodes_per_chunk; ++i, pNode += m_real_node_size){
+      for(std::size_t i = 0; i < m_nodes_per_block; ++i, pNode += m_real_node_size){
          m_freelist.push_front(*new (pNode) node_t);
       }
    }
 
+   //!Deprecated, use deallocate_free_blocks
+   void deallocate_free_chunks()
+   {  this->deallocate_free_blocks(); }
+
+   //!Deprecated, use purge_blocks
+   void purge_chunks()
+   {  this->purge_blocks()(); }
+
    private:
-   //!Returns a reference to the chunk hook placed in the end of the chunk
-   static inline node_t & get_chunk_hook (void *chunk, std::size_t blocksize)
+   //!Returns a reference to the block hook placed in the end of the block
+   static inline node_t & get_block_hook (void *block, std::size_t blocksize)
    {  
       return *static_cast<node_t*>(
-               static_cast<void*>((detail::char_ptr_cast(chunk) + blocksize)));  
+               static_cast<void*>((detail::char_ptr_cast(block) + blocksize)));  
    }
 
-   //!Returns the starting address of the chunk reference to the chunk hook placed in the end of the chunk
-   inline void *get_chunk_from_hook (node_t *hook, std::size_t blocksize)
+   //!Returns the starting address of the block reference to the block hook placed in the end of the block
+   inline void *get_block_from_hook (node_t *hook, std::size_t blocksize)
    {  
       return static_cast<void*>((detail::char_ptr_cast(hook) - blocksize));  
    }
@@ -343,10 +351,10 @@ class private_node_pool_impl
    typedef typename pointer_to_other
       <void_pointer, segment_manager_base_type>::type   segment_mngr_base_ptr_t;
 
-   const std::size_t m_nodes_per_chunk;
+   const std::size_t m_nodes_per_block;
    const std::size_t m_real_node_size;
    segment_mngr_base_ptr_t mp_segment_mngr_base;   //Segment manager
-   chunkslist_t      m_chunklist;      //Intrusive container of chunks
+   blockslist_t      m_blocklist;      //Intrusive container of blocks
    free_nodes_t      m_freelist;       //Intrusive container of free nods
    std::size_t       m_allocated;      //Used nodes for debugging
 };
@@ -355,8 +363,8 @@ class private_node_pool_impl
 //!Pooled shared memory allocator using single segregated storage. Includes
 //!a reference count but the class does not delete itself, this is  
 //!responsibility of user classes. Node size (NodeSize) and the number of
-//!nodes allocated per chunk (NodesPerChunk) are known at compile time
-template< class SegmentManager, std::size_t NodeSize, std::size_t NodesPerChunk >
+//!nodes allocated per block (NodesPerBlock) are known at compile time
+template< class SegmentManager, std::size_t NodeSize, std::size_t NodesPerBlock >
 class private_node_pool
    //Inherit from the implementation to avoid template bloat
    :  public private_node_pool_impl<typename SegmentManager::segment_manager_base_type>
@@ -370,11 +378,13 @@ class private_node_pool
    public:
    typedef SegmentManager segment_manager;
 
-   static const std::size_t nodes_per_chunk = NodesPerChunk;
+   static const std::size_t nodes_per_block = NodesPerBlock;
+   //Deprecated, use nodes_per_block
+   static const std::size_t nodes_per_chunk = NodesPerBlock;
 
    //!Constructor from a segment manager. Never throws
    private_node_pool(segment_manager *segment_mngr)
-      :  base_t(segment_mngr, NodeSize, NodesPerChunk)
+      :  base_t(segment_mngr, NodeSize, NodesPerBlock)
    {}
 
    //!Returns the segment manager. Never throws
@@ -386,24 +396,24 @@ class private_node_pool
 //!Pooled shared memory allocator using single segregated storage. Includes
 //!a reference count but the class does not delete itself, this is  
 //!responsibility of user classes. Node size (NodeSize) and the number of
-//!nodes allocated per chunk (NodesPerChunk) are known at compile time
+//!nodes allocated per block (NodesPerBlock) are known at compile time
 //!Pooled shared memory allocator using adaptive pool. Includes
 //!a reference count but the class does not delete itself, this is  
 //!responsibility of user classes. Node size (NodeSize) and the number of
-//!nodes allocated per chunk (NodesPerChunk) are known at compile time
+//!nodes allocated per block (NodesPerBlock) are known at compile time
 template< class SegmentManager
         , std::size_t NodeSize
-        , std::size_t NodesPerChunk
+        , std::size_t NodesPerBlock
         >
 class shared_node_pool 
    :  public detail::shared_pool_impl
       < private_node_pool
-         <SegmentManager, NodeSize, NodesPerChunk>
+         <SegmentManager, NodeSize, NodesPerBlock>
       >
 {
    typedef detail::shared_pool_impl
       < private_node_pool
-         <SegmentManager, NodeSize, NodesPerChunk>
+         <SegmentManager, NodeSize, NodesPerBlock>
       > base_t;
    public:
    shared_node_pool(SegmentManager *segment_mgnr)

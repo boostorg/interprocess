@@ -51,7 +51,7 @@ class file_wrapper
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    file_wrapper
-      (detail::moved_object<file_wrapper> &moved)
+      (detail::moved_object<file_wrapper> moved)
    {  this->swap(moved.get());   }
    #else
    file_wrapper(file_wrapper &&moved)
@@ -63,7 +63,7 @@ class file_wrapper
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    file_wrapper &operator=
-      (detail::moved_object<file_wrapper> &moved)
+      (detail::moved_object<file_wrapper> moved)
    {  
       file_wrapper tmp(moved);
       this->swap(tmp);

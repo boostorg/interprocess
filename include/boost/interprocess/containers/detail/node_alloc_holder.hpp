@@ -275,7 +275,7 @@ struct node_alloc_holder
    {
       typedef typename NodeAlloc::multiallocation_iterator multiallocation_iterator;
 
-      //Try to allocate memory in a single chunk
+      //Try to allocate memory in a single block
       multiallocation_iterator itbeg =
          this->node_alloc().allocate_individual(n), itend, itold;
       int constructed = 0;
