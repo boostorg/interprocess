@@ -183,7 +183,7 @@ class allocator
          (command, limit_size, preferred_size, received_size, detail::get_pointer(reuse));
    }
 
-   //!Allocates many elements of size elem_size in a contiguous chunk
+   //!Allocates many elements of size elem_size in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -196,7 +196,7 @@ class allocator
    }
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
-   //!contiguous chunk
+   //!contiguous block
    //!of memory. The elements must be deallocated
    multiallocation_iterator allocate_many(const size_type *elem_sizes, size_type n_elements)
    {
@@ -204,7 +204,7 @@ class allocator
          (mp_mngr->allocate_many(elem_sizes, n_elements, sizeof(T)));
    }
 
-   //!Allocates many elements of size elem_size in a contiguous chunk
+   //!Allocates many elements of size elem_size in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -219,7 +219,7 @@ class allocator
    pointer allocate_one()
    {  return this->allocate(1);  }
 
-   //!Allocates many elements of size == 1 in a contiguous chunk
+   //!Allocates many elements of size == 1 in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -234,7 +234,7 @@ class allocator
    void deallocate_one(const pointer &p)
    {  return this->deallocate(p, 1);  }
 
-   //!Allocates many elements of size == 1 in a contiguous chunk
+   //!Allocates many elements of size == 1 in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is

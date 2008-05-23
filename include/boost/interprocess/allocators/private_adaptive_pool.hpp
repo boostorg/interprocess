@@ -42,14 +42,14 @@ namespace detail {
 template < unsigned int Version
          , class T
          , class SegmentManager
-         , std::size_t NodesPerChunk
-         , std::size_t MaxFreeChunks
+         , std::size_t NodesPerBlock
+         , std::size_t MaxFreeBlocks
          , unsigned char OverheadPercent
          >
 class private_adaptive_pool_base
    : public node_pool_allocation_impl
-   < private_adaptive_pool_base < Version, T, SegmentManager, NodesPerChunk
-                                , MaxFreeChunks, OverheadPercent>
+   < private_adaptive_pool_base < Version, T, SegmentManager, NodesPerBlock
+                                , MaxFreeBlocks, OverheadPercent>
    , Version
    , T
    , SegmentManager
@@ -63,13 +63,13 @@ class private_adaptive_pool_base
    /// @cond
    private:
    typedef private_adaptive_pool_base
-      < Version, T, SegmentManager, NodesPerChunk
-      , MaxFreeChunks, OverheadPercent>                  self_t;
+      < Version, T, SegmentManager, NodesPerBlock
+      , MaxFreeBlocks, OverheadPercent>                  self_t;
    typedef detail::private_adaptive_node_pool
       <SegmentManager
       , sizeof(T)
-      , NodesPerChunk
-      , MaxFreeChunks
+      , NodesPerBlock
+      , MaxFreeBlocks
       , OverheadPercent
       > node_pool_t;
 
@@ -103,7 +103,7 @@ class private_adaptive_pool_base
    struct rebind
    {  
       typedef private_adaptive_pool_base
-         <Version, T2, SegmentManager, NodesPerChunk, MaxFreeChunks, OverheadPercent>   other;
+         <Version, T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent>   other;
    };
 
    /// @cond
@@ -114,8 +114,8 @@ class private_adaptive_pool_base
       typedef detail::private_adaptive_node_pool
       <SegmentManager
       , sizeof(T)
-      , NodesPerChunk
-      , MaxFreeChunks
+      , NodesPerBlock
+      , MaxFreeBlocks
       , OverheadPercent
       > type;
 
@@ -148,7 +148,7 @@ class private_adaptive_pool_base
    template<class T2>
    private_adaptive_pool_base
       (const private_adaptive_pool_base
-         <Version, T2, SegmentManager, NodesPerChunk, MaxFreeChunks, OverheadPercent> &other)
+         <Version, T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> &other)
       : m_node_pool(other.get_segment_manager())
    {}
 
@@ -176,21 +176,21 @@ class private_adaptive_pool_base
 };
 
 //!Equality test for same type of private_adaptive_pool_base
-template<unsigned int V, class T, class S, std::size_t NodesPerChunk, std::size_t F, unsigned char OP> inline
-bool operator==(const private_adaptive_pool_base<V, T, S, NodesPerChunk, F, OP> &alloc1, 
-                const private_adaptive_pool_base<V, T, S, NodesPerChunk, F, OP> &alloc2)
+template<unsigned int V, class T, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
+bool operator==(const private_adaptive_pool_base<V, T, S, NodesPerBlock, F, OP> &alloc1, 
+                const private_adaptive_pool_base<V, T, S, NodesPerBlock, F, OP> &alloc2)
 {  return &alloc1 == &alloc2; }
 
 //!Inequality test for same type of private_adaptive_pool_base
-template<unsigned int V, class T, class S, std::size_t NodesPerChunk, std::size_t F, unsigned char OP> inline
-bool operator!=(const private_adaptive_pool_base<V, T, S, NodesPerChunk, F, OP> &alloc1, 
-                const private_adaptive_pool_base<V, T, S, NodesPerChunk, F, OP> &alloc2)
+template<unsigned int V, class T, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
+bool operator!=(const private_adaptive_pool_base<V, T, S, NodesPerBlock, F, OP> &alloc1, 
+                const private_adaptive_pool_base<V, T, S, NodesPerBlock, F, OP> &alloc2)
 {  return &alloc1 != &alloc2; }
 
 template < class T
          , class SegmentManager
-         , std::size_t NodesPerChunk = 64
-         , std::size_t MaxFreeChunks = 2
+         , std::size_t NodesPerBlock = 64
+         , std::size_t MaxFreeBlocks = 2
          , unsigned char OverheadPercent = 5
          >
 class private_adaptive_pool_v1
@@ -198,19 +198,19 @@ class private_adaptive_pool_v1
          < 1
          , T
          , SegmentManager
-         , NodesPerChunk
-         , MaxFreeChunks
+         , NodesPerBlock
+         , MaxFreeBlocks
          , OverheadPercent
          >
 {
    public:
    typedef detail::private_adaptive_pool_base
-         < 1, T, SegmentManager, NodesPerChunk, MaxFreeChunks, OverheadPercent> base_t;
+         < 1, T, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> base_t;
 
    template<class T2>
    struct rebind
    {  
-      typedef private_adaptive_pool_v1<T2, SegmentManager, NodesPerChunk, MaxFreeChunks, OverheadPercent>  other;
+      typedef private_adaptive_pool_v1<T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent>  other;
    };
 
    private_adaptive_pool_v1(SegmentManager *segment_mngr) 
@@ -219,7 +219,7 @@ class private_adaptive_pool_v1
 
    template<class T2>
    private_adaptive_pool_v1
-      (const private_adaptive_pool_v1<T2, SegmentManager, NodesPerChunk, MaxFreeChunks, OverheadPercent> &other)
+      (const private_adaptive_pool_v1<T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> &other)
       : base_t(other)
    {}
 };
@@ -234,17 +234,17 @@ class private_adaptive_pool_v1
 //!placing the allocator in shared memory, memory mapped-files, etc...
 //!This allocator has its own node pool.
 //!
-//!NodesPerChunk is the minimum number of nodes of nodes allocated at once when
-//!the allocator needs runs out of nodes. MaxFreeChunks is the maximum number of totally free chunks
-//!that the adaptive node pool will hold. The rest of the totally free chunks will be
+//!NodesPerBlock is the minimum number of nodes of nodes allocated at once when
+//!the allocator needs runs out of nodes. MaxFreeBlocks is the maximum number of totally free blocks
+//!that the adaptive node pool will hold. The rest of the totally free blocks will be
 //!deallocated with the segment manager.
 //!
 //!OverheadPercent is the (approximated) maximum size overhead (1-20%) of the allocator:
 //!(memory usable for nodes / total memory allocated from the segment manager)
 template < class T
          , class SegmentManager
-         , std::size_t NodesPerChunk
-         , std::size_t MaxFreeChunks
+         , std::size_t NodesPerBlock
+         , std::size_t MaxFreeBlocks
          , unsigned char OverheadPercent
          >
 class private_adaptive_pool
@@ -253,8 +253,8 @@ class private_adaptive_pool
          < 2
          , T
          , SegmentManager
-         , NodesPerChunk
-         , MaxFreeChunks
+         , NodesPerBlock
+         , MaxFreeBlocks
          , OverheadPercent
          >
    /// @endcond
@@ -262,7 +262,7 @@ class private_adaptive_pool
 
    #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    typedef detail::private_adaptive_pool_base
-         < 2, T, SegmentManager, NodesPerChunk, MaxFreeChunks, OverheadPercent> base_t;
+         < 2, T, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> base_t;
    public:
    typedef detail::version_type<private_adaptive_pool, 2>   version;
 
@@ -270,7 +270,7 @@ class private_adaptive_pool
    struct rebind
    {  
       typedef private_adaptive_pool
-         <T2, SegmentManager, NodesPerChunk, MaxFreeChunks, OverheadPercent>  other;
+         <T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent>  other;
    };
 
    private_adaptive_pool(SegmentManager *segment_mngr) 
@@ -279,7 +279,7 @@ class private_adaptive_pool
 
    template<class T2>
    private_adaptive_pool
-      (const private_adaptive_pool<T2, SegmentManager, NodesPerChunk, MaxFreeChunks, OverheadPercent> &other)
+      (const private_adaptive_pool<T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> &other)
       : base_t(other)
    {}
 
@@ -303,7 +303,7 @@ class private_adaptive_pool
    struct rebind
    {  
       typedef private_adaptive_pool
-         <T2, SegmentManager, NodesPerChunk, MaxFreeChunks, OverheadPercent> other;
+         <T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> other;
    };
 
    private:
@@ -332,7 +332,7 @@ class private_adaptive_pool
    //!Can throw boost::interprocess::bad_alloc
    template<class T2>
    private_adaptive_pool
-      (const private_adaptive_pool<T2, SegmentManager, NodesPerChunk, MaxFreeChunks, OverheadPercent> &other);
+      (const private_adaptive_pool<T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> &other);
 
    //!Destructor, removes node_pool_t from memory
    //!if its reference count reaches to zero. Never throws
@@ -358,9 +358,9 @@ class private_adaptive_pool
    //!Never throws
    void deallocate(const pointer &ptr, size_type count);
 
-   //!Deallocates all free chunks
+   //!Deallocates all free blocks
    //!of the pool
-   void deallocate_free_chunks();
+   void deallocate_free_blocks();
 
    //!Swaps allocators. Does not throw. If each allocator is placed in a
    //!different memory segment, the result is undefined.
@@ -393,7 +393,7 @@ class private_adaptive_pool
                          size_type preferred_size,
                          size_type &received_size, const pointer &reuse = 0);
 
-   //!Allocates many elements of size elem_size in a contiguous chunk
+   //!Allocates many elements of size elem_size in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -402,11 +402,11 @@ class private_adaptive_pool
    multiallocation_iterator allocate_many(size_type elem_size, std::size_t num_elements);
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
-   //!contiguous chunk
+   //!contiguous block
    //!of memory. The elements must be deallocated
    multiallocation_iterator allocate_many(const size_type *elem_sizes, size_type n_elements);
 
-   //!Allocates many elements of size elem_size in a contiguous chunk
+   //!Allocates many elements of size elem_size in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -419,7 +419,7 @@ class private_adaptive_pool
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate_one();
 
-   //!Allocates many elements of size == 1 in a contiguous chunk
+   //!Allocates many elements of size == 1 in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -432,7 +432,7 @@ class private_adaptive_pool
    //!with other functions different from allocate_one(). Never throws
    void deallocate_one(const pointer &p);
 
-   //!Allocates many elements of size == 1 in a contiguous chunk
+   //!Allocates many elements of size == 1 in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -446,15 +446,15 @@ class private_adaptive_pool
 
 //!Equality test for same type
 //!of private_adaptive_pool
-template<class T, class S, std::size_t NodesPerChunk, std::size_t F, unsigned char OP> inline
-bool operator==(const private_adaptive_pool<T, S, NodesPerChunk, F, OP> &alloc1, 
-                const private_adaptive_pool<T, S, NodesPerChunk, F, OP> &alloc2);
+template<class T, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
+bool operator==(const private_adaptive_pool<T, S, NodesPerBlock, F, OP> &alloc1, 
+                const private_adaptive_pool<T, S, NodesPerBlock, F, OP> &alloc2);
 
 //!Inequality test for same type
 //!of private_adaptive_pool
-template<class T, class S, std::size_t NodesPerChunk, std::size_t F, unsigned char OP> inline
-bool operator!=(const private_adaptive_pool<T, S, NodesPerChunk, F, OP> &alloc1, 
-                const private_adaptive_pool<T, S, NodesPerChunk, F, OP> &alloc2);
+template<class T, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
+bool operator!=(const private_adaptive_pool<T, S, NodesPerBlock, F, OP> &alloc1, 
+                const private_adaptive_pool<T, S, NodesPerBlock, F, OP> &alloc2);
 
 #endif
 
