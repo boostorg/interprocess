@@ -181,7 +181,7 @@ class unique_ptr
    //!Throws: nothing.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class U, class E>
-   unique_ptr(const detail::moved_object<unique_ptr<U, E> >& u,
+   unique_ptr(detail::moved_object<unique_ptr<U, E> > u,
       typename detail::enable_if_c<
             detail::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
             detail::is_convertible<E, D>::value &&
@@ -231,7 +231,7 @@ class unique_ptr
    //!
    //!Throws: nothing.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   unique_ptr& operator=(const detail::moved_object<unique_ptr>& u)
+   unique_ptr& operator=(detail::moved_object<unique_ptr> u)
    {
       reset(u.get().release());
       ptr_.second() = move(u.get().get_deleter());
@@ -262,7 +262,7 @@ class unique_ptr
    //!Throws: nothing.
    template <class U, class E>
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   unique_ptr& operator=(const detail::moved_object<unique_ptr<U, E> >& mu)
+   unique_ptr& operator=(detail::moved_object<unique_ptr<U, E> > mu)
    {
       reset(mu.get().release());
       ptr_.second() = move(mu.get().get_deleter());
@@ -356,8 +356,8 @@ class unique_ptr
 
    //!Requires: The deleter D is Swappable and will not throw an exception under swap.
    //!
-   //!Effects: The stored pointers of this and u are exchanged. The stored deleters are swap'd (unqualified).
-   //!
+   //!Effects: The stored pointers of this and u are exchanged.
+   //!   The stored deleters are swapped (unqualified).
    //!Throws: nothing.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(unique_ptr& u)
