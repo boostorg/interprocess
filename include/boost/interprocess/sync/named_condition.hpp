@@ -146,23 +146,30 @@ class named_condition
    template <class Lock>
    void do_wait(Lock& lock)
    {  
-      lock_inverter<Lock> inverted_lock(lock);
-      //unlock internal first to avoid deadlock with near simultaneous waits
-      scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);
+      //lock internal before unlocking external to avoid race with a notifier
       scoped_lock<interprocess_mutex>     internal_lock(*this->mutex());
-      this->condition()->wait(internal_lock);
+      lock_inverter<Lock> inverted_lock(lock);
+      scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);
+
+      //unlock internal first to avoid deadlock with near simultaneous waits
+      scoped_lock<interprocess_mutex>     internal_unlock;
+      internal_lock.swap(internal_unlock);
+      this->condition()->wait(internal_unlock);
    }
 
    template <class Lock>
    bool do_timed_wait(Lock& lock, const boost::posix_time::ptime &abs_time)
    {
-      //unlock internal first to avoid deadlock with near simultaneous waits
-      lock_inverter<Lock> inverted_lock(lock);
-      scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);
+      //lock internal before unlocking external to avoid race with a notifier  
+      scoped_lock<interprocess_mutex>     internal_lock(*this->mutex(), abs_time);  
       if(!external_unlock) return false;
-      scoped_lock<interprocess_mutex>     internal_lock(*this->mutex(), abs_time);
-      if(!internal_lock) return false;
-      return this->condition()->timed_wait(internal_lock, abs_time);
+      lock_inverter<Lock> inverted_lock(lock);  
+      scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);  
+
+      //unlock internal first to avoid deadlock with near simultaneous waits  
+      scoped_lock<interprocess_mutex>     internal_unlock;  
+      internal_lock.swap(internal_unlock);  
+      return this->condition()->timed_wait(internal_unlock, abs_time);  
    }
    #endif
 
