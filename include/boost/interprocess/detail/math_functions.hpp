@@ -16,6 +16,8 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_MATH_FUNCTIONS_HPP
 #define BOOST_INTERPROCESS_DETAIL_MATH_FUNCTIONS_HPP
 
+#include <boost/static_assert.hpp>
+
 namespace boost {
 namespace interprocess {
 namespace detail {

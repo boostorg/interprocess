@@ -38,7 +38,6 @@ int main ()
       std::cout << ex.what() << std::endl;
       return 1;
    }
-   shared_memory_object::remove("shared_memory");
    return 0;
 }
 //]

@@ -56,7 +56,6 @@ int main ()
       std::cout << ex.what() << std::endl;
       return 1;
    }
-   std::remove("file.bin");
    return 0;
 }
 //]

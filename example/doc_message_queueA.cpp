@@ -35,11 +35,9 @@ int main ()
       }
    }
    catch(interprocess_exception &ex){
-      message_queue::remove("message_queue");
       std::cout << ex.what() << std::endl;
       return 1;
    }
-   message_queue::remove("message_queue");
 
    return 0;
 }
