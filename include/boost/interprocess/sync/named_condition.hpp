@@ -162,7 +162,7 @@ class named_condition
    {
       //lock internal before unlocking external to avoid race with a notifier  
       scoped_lock<interprocess_mutex>     internal_lock(*this->mutex(), abs_time);  
-      if(!external_unlock) return false;
+      if(!internal_lock) return false;
       lock_inverter<Lock> inverted_lock(lock);  
       scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);  
 
