@@ -107,8 +107,11 @@
 // defined by some very early development versions of GCC 4.3; we will
 // remove this part of the check in the near future.
 #  if defined(__GXX_EXPERIMENTAL_CPP0X__) || defined(__GXX_EXPERIMENTAL_CXX0X__)
-#    define BOOST_INTERPROCESS_RVALUE_REFERENCE
-#    define BOOST_INTERPROCESS_VARIADIC_TEMPLATES
+#     define BOOST_INTERPROCESS_RVALUE_REFERENCE
+#     define BOOST_INTERPROCESS_VARIADIC_TEMPLATES
+#     if defined(__GLIBCPP__) || defined(__GLIBCXX__)
+#        define BOOST_INTERPROCESS_RVALUE_PAIR
+#     endif
 #  endif
 #endif
 

@@ -30,6 +30,8 @@
 namespace boost {
 namespace interprocess { 
 
+#if !defined(BOOST_INTERPROCESS_RVALUE_REFERENCE) || !defined(BOOST_INTERPROCESS_RVALUE_PAIR)
+
 template<class T>
 struct has_own_construct_from_it
 {
@@ -59,11 +61,18 @@ inline void construct_in_place(T* dest, InpIt source)
    detail::construct_in_place_impl(dest, source, boolean_t());
 }
 
+#else
+template<class T, class InpIt>
+inline void construct_in_place(T* dest, InpIt source)
+{     new((void*)dest)T(*source);   }
+#endif
+
 template<class T, class U, class D>
 inline void construct_in_place(T *dest, default_construct_iterator<U, D>)
 {
    new((void*)dest)T();
 }
+
 
 template<class InIt, class OutIt>
 struct optimize_assign

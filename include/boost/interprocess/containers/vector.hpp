@@ -434,7 +434,10 @@ class vector : private detail::vector_alloc_holder<A>
    //This is the optimized move iterator for copy constructors
    //so that std::copy and similar can use memcpy
    typedef typename detail::if_c
-      <base_t::trivial_copy  || !is_movable<value_type>::value
+      <base_t::trivial_copy 
+      #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+      || !is_movable<value_type>::value
+      #endif
       ,T*
       ,detail::move_iterator<T*>
       >::type   copy_move_it;
@@ -442,7 +445,10 @@ class vector : private detail::vector_alloc_holder<A>
    //This is the optimized move iterator for assignments
    //so that std::uninitialized_copy and similar can use memcpy
    typedef typename detail::if_c
-      <base_t::trivial_assign || !is_movable<value_type>::value
+      <base_t::trivial_assign
+      #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+      || !is_movable<value_type>::value
+      #endif
       ,T*
       ,detail::move_iterator<T*>
       >::type   assign_move_it;

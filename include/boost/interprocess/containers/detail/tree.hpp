@@ -130,7 +130,7 @@ struct rbtree_node
    {  m_data = v; }
 
    public:
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+   #if !defined(BOOST_INTERPROCESS_RVALUE_REFERENCE)
 
    template<class Convertible>
    static void construct(node_type *ptr, const Convertible &value)
@@ -149,7 +149,7 @@ struct rbtree_node
       new((void*)ptr) hack_node_t(value);  
    }
 
-   #else
+   #elif !defined(BOOST_INTERPROCESS_RVALUE_PAIR)
 
    template<class Convertible>
    static void construct(node_type *ptr, Convertible &&value)
@@ -167,19 +167,18 @@ struct rbtree_node
 
       new((void*)ptr) hack_node_t(value);  
    }
-
    #endif
 };
 
 }//namespace detail {
-
+#if !defined(BOOST_INTERPROCESS_RVALUE_REFERENCE) || !defined(BOOST_INTERPROCESS_RVALUE_PAIR)
 template<class T, class VoidPointer>
 struct has_own_construct_from_it
    < boost::interprocess::detail::rbtree_node<T, VoidPointer> >
 {
    static const bool value = true;
 };
-
+#endif
 namespace detail {
 
 template<class A, class ValueCompare>
