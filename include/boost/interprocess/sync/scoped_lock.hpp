@@ -122,15 +122,16 @@ class scoped_lock
    //!   to thisscoped_lock with no blocking. If the scop scoped_lock does not
    //!   own the mutex, then neither will this scoped_lock. Only a moved
    //!   scoped_lock's will match this signature. An non-moved scoped_lock
-   //!   can be moved with the expression: "move(lock);". This
+   //!   can be moved with the expression: "detail::move_impl(lock);". This
    //!   constructor does not alter the state of the mutex, only potentially
    //!   who owns it.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   explicit scoped_lock(detail::moved_object<scoped_lock<Mutex> > scop)
+   scoped_lock(detail::moved_object<scoped_lock<Mutex> > scop)
       : mp_mutex(0), m_locked(scop.get().owns())
    {  mp_mutex = scop.get().release(); }
    #else
-   explicit scoped_lock(scoped_lock<Mutex> &&scop)
+
+   scoped_lock(scoped_lock &&scop)
       : mp_mutex(0), m_locked(scop.owns())
    {  mp_mutex = scop.release(); }
    #endif
@@ -144,11 +145,11 @@ class scoped_lock
    //!   unlocking upgr. If upgr is unlocked, then this scoped_lock will be
    //!   unlocked as well. Only a moved upgradable_lock's will match this
    //!   signature. An non-moved upgradable_lock can be moved with
-   //!   the expression: "move(lock);" This constructor may block if
+   //!   the expression: "detail::move_impl(lock);" This constructor may block if
    //!   other threads hold a sharable_lock on this mutex (sharable_lock's can
    //!   share ownership with an upgradable_lock).
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   explicit scoped_lock(detail::moved_object<upgradable_lock<Mutex> > upgr)
+   scoped_lock(detail::moved_object<upgradable_lock<Mutex> > upgr)
       : mp_mutex(0), m_locked(false)
    {
       upgradable_lock<mutex_type> &u_lock = upgr.get();
@@ -159,7 +160,7 @@ class scoped_lock
       mp_mutex = u_lock.release();
    }
    #else
-   explicit scoped_lock(upgradable_lock<Mutex> &&upgr)
+   scoped_lock(upgradable_lock<Mutex> &&upgr)
       : mp_mutex(0), m_locked(false)
    {
       upgradable_lock<mutex_type> &u_lock = upgr;
@@ -326,7 +327,7 @@ class scoped_lock
    //!   mutex after the assignment (and scop will not), but the mutex's lock
    //!   count will be decremented by one.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   scoped_lock &operator=(detail::moved_object<scoped_lock<Mutex> > scop)
+   scoped_lock &operator=(detail::moved_object<scoped_lock> scop)
    {  
       if(this->owns())
          this->unlock();
@@ -335,7 +336,7 @@ class scoped_lock
       return *this;
    }
    #else
-   scoped_lock &operator=(scoped_lock<Mutex> &&scop)
+   scoped_lock &operator=(scoped_lock &&scop)
    {  
       if(this->owns())
          this->unlock();

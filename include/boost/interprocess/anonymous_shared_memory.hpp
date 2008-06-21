@@ -42,7 +42,13 @@ namespace detail{
    class raw_mapped_region_creator
    {
       public:
-      static move_return<mapped_region> create_posix_mapped_region(void *address, offset_t offset, std::size_t size)
+      static
+         #ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
+         mapped_region
+         #else
+         move_return<mapped_region>
+         #endif
+         create_posix_mapped_region(void *address, offset_t offset, std::size_t size)
       {
          mapped_region region;
          region.m_base = address;
@@ -61,7 +67,13 @@ namespace detail{
 //!Otherwise the operating system will choose the mapping address.
 //!The function returns a mapped_region holding that segment or throws
 //!interprocess_exception if the function fails.
-static detail::move_return<mapped_region> anonymous_shared_memory(std::size_t size, void *address = 0)
+static
+#ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
+mapped_region
+#else
+detail::move_return<mapped_region>
+#endif
+anonymous_shared_memory(std::size_t size, void *address = 0)
 #if (!defined(BOOST_WINDOWS)) || defined(BOOST_DISABLE_WIN32)
 {
    int flags;
@@ -104,7 +116,7 @@ static detail::move_return<mapped_region> anonymous_shared_memory(std::size_t si
 {
    windows_shared_memory anonymous_mapping(create_only, 0, read_write, size);
    mapped_region region(anonymous_mapping, read_write, 0, size, address);
-   return detail::move_return<mapped_region>(region);
+   return region;
 }
 
 #endif

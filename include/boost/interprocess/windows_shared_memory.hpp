@@ -104,7 +104,7 @@ class windows_shared_memory
    #else
    windows_shared_memory &operator=(windows_shared_memory &&moved)
    {  
-      windows_shared_memory tmp(move(moved));
+      windows_shared_memory tmp(detail::move_impl(moved));
       this->swap(tmp);
       return *this;  
    }

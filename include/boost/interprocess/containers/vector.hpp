@@ -288,7 +288,7 @@ struct vector_alloc_holder
       (void)limit_size;
       (void)reuse;
       if(!(command & allocate_new))
-         return std::pair<pointer, bool>(0, 0);
+         return std::pair<pointer, bool>(pointer(0), 0);
       received_size = preferred_size;
       return std::make_pair(this->alloc().allocate(received_size), false);
    }
@@ -491,7 +491,7 @@ class vector : private detail::vector_alloc_holder<A>
    {  this->swap(mx.get());   }
    #else
    vector(vector<T, A> && mx) 
-      :  base_t(mx)
+      :  base_t(detail::move_impl(mx))
    {  this->swap(mx);   }
    #endif
 
@@ -890,11 +890,11 @@ class vector : private detail::vector_alloc_holder<A>
    {
       if (this->members_.m_size < this->members_.m_capacity){
          //There is more memory, just construct a new object at the end
-         new((void*)detail::get_pointer(this->members_.m_start + this->members_.m_size))value_type(move(mx));
+         new((void*)detail::get_pointer(this->members_.m_start + this->members_.m_size))value_type(detail::move_impl(mx));
          ++this->members_.m_size;
       }
       else{
-         this->insert(this->end(), move(mx));
+         this->insert(this->end(), detail::move_impl(mx));
       }
    }
    #endif
@@ -1719,8 +1719,9 @@ class vector : private detail::vector_alloc_holder<A>
          //Backup old buffer data
          size_type old_offset    = old_start - detail::get_pointer(ret.first);
          size_type first_count   = min_value(n, old_offset);
-         FwdIt mid = boost::interprocess::n_uninitialized_copy_n
+         boost::interprocess::uninitialized_copy_n
             (first, first_count, detail::get_pointer(ret.first));
+         FwdIt mid = first + first_count;
 
          if(old_offset > n){
             //All old elements will be destroyed by "old_values_destroyer" 
@@ -1734,12 +1735,13 @@ class vector : private detail::vector_alloc_holder<A>
             this->members_.m_size   = first_count + old_size;
             //Now overwrite the old values
             size_type second_count = min_value(old_size, n - first_count);
-            mid = copy_n(mid, second_count, old_start);
+            copy_n(mid, second_count, old_start);
+            mid += second_count;
             
             //Check if we still have to append elements in the
             //uninitialized end
             if(second_count == old_size){
-               boost::interprocess::n_uninitialized_copy_n
+               boost::interprocess::uninitialized_copy_n
                   ( mid
                   , n - first_count - second_count
                   , old_start + old_size); 

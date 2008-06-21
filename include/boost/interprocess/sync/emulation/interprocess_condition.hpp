@@ -9,7 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-
+#include <boost/interprocess/detail/move.hpp>
 namespace boost {
 namespace interprocess {
 
@@ -94,11 +94,11 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
       InternalLock lock;
       if(tout_enabled){
          InternalLock dummy(m_enter_mut, abs_time);
-         lock = move(dummy);
+         lock = detail::move_impl(dummy);
       }
       else{
          InternalLock dummy(m_enter_mut);
-         lock = move(dummy);
+         lock = detail::move_impl(dummy);
       }
 
       if(!lock)
@@ -161,11 +161,11 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
          InternalLock lock;
          if(tout_enabled){
             InternalLock dummy(m_check_mut, abs_time);
-            lock = move(dummy);
+            lock = detail::move_impl(dummy);
          }
          else{
             InternalLock dummy(m_check_mut);
-            lock = move(dummy);
+            lock = detail::move_impl(dummy);
          }
 
          if(!lock)

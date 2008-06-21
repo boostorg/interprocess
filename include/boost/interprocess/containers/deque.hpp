@@ -580,7 +580,7 @@ class deque : protected deque_base<T, Alloc>
    {  this->swap(mx.get());   }
    #else
    deque(deque &&x) 
-      :  Base(x))
+      :  Base(detail::move_impl(x))
    {  this->swap(x);   }
    #endif
 
@@ -679,11 +679,11 @@ class deque : protected deque_base<T, Alloc>
    void push_back(value_type &&mt) 
    {
       if (this->members_.m_finish.m_cur != this->members_.m_finish.m_last - 1) {
-         new((void*)detail::get_pointer(this->members_.m_finish.m_cur))value_type(move(mt));
+         new((void*)detail::get_pointer(this->members_.m_finish.m_cur))value_type(detail::move_impl(mt));
          ++this->members_.m_finish.m_cur;
       }
       else
-         this->priv_push_back_aux(move(mt));
+         this->priv_push_back_aux(detail::move_impl(mt));
    }
    #endif
 
@@ -711,11 +711,11 @@ class deque : protected deque_base<T, Alloc>
    void push_front(value_type &&mt)
    {
       if (this->members_.m_start.m_cur != this->members_.m_start.m_first) {
-         new((void*)(detail::get_pointer(this->members_.m_start.m_cur)- 1))value_type(move(mt));
+         new((void*)(detail::get_pointer(this->members_.m_start.m_cur)- 1))value_type(detail::move_impl(mt));
          --this->members_.m_start.m_cur;
       }
       else
-         this->priv_push_front_aux(move(mt));
+         this->priv_push_front_aux(detail::move_impl(mt));
    }
    #endif
 
@@ -777,17 +777,17 @@ class deque : protected deque_base<T, Alloc>
    iterator insert(iterator position, value_type &&mx) 
    {
       if (position.m_cur == this->members_.m_start.m_cur) {
-         this->push_front(move(mx));
+         this->push_front(detail::move_impl(mx));
          return this->members_.m_start;
       }
       else if (position.m_cur == this->members_.m_finish.m_cur) {
-         this->push_back(move(mx));
+         this->push_back(detail::move_impl(mx));
          iterator tmp = this->members_.m_finish;
          --tmp;
          return tmp;
       }
       else {
-         return this->priv_insert_aux(position, move(mx));
+         return this->priv_insert_aux(position, detail::move_impl(mx));
       }
    }
    #endif
@@ -824,13 +824,13 @@ class deque : protected deque_base<T, Alloc>
          this->priv_reserve_elements_at_back(new_size);
 
          while(n--){
-            //T default_constructed = move(T());
+            //T default_constructed = detail::move_impl(T());
             T default_constructed;
 /*            if(boost::is_scalar<T>::value){
                //Value initialization
                new(&default_constructed)T();
             }*/
-            this->push_back(move(default_constructed));
+            this->push_back(detail::move_impl(default_constructed));
          }
       }
    }
@@ -1251,7 +1251,7 @@ class deque : protected deque_base<T, Alloc>
       this->priv_reserve_map_at_back();
       *(this->members_.m_finish.m_node + 1) = this->priv_allocate_node();
       BOOST_TRY {
-         new((void*)detail::get_pointer(this->members_.m_finish.m_cur))value_type(move(mt));
+         new((void*)detail::get_pointer(this->members_.m_finish.m_cur))value_type(detail::move_impl(mt));
          this->members_.m_finish.priv_set_node(this->members_.m_finish.m_node + 1);
          this->members_.m_finish.m_cur = this->members_.m_finish.m_first;
       }
@@ -1306,7 +1306,7 @@ class deque : protected deque_base<T, Alloc>
       BOOST_TRY {
          this->members_.m_start.priv_set_node(this->members_.m_start.m_node - 1);
          this->members_.m_start.m_cur = this->members_.m_start.m_last - 1;
-         new((void*)detail::get_pointer(this->members_.m_start.m_cur))value_type(move(mt));
+         new((void*)detail::get_pointer(this->members_.m_start.m_cur))value_type(detail::move_impl(mt));
       }
       BOOST_CATCH(...){
          ++this->members_.m_start;

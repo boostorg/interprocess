@@ -664,7 +664,7 @@ inline std::pair<void*, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlign
                         void *reuse_ptr, std::size_t sizeof_object)
 {
    if(!sizeof_object)
-      return std::pair<void *, bool>(0, 0);
+      return std::pair<void *, bool>((void *)0, 0);
    if(command & try_shrink_in_place){
       bool success = algo_impl_t::try_shrink
          ( this, reuse_ptr, limit_objects*sizeof_object
@@ -930,7 +930,7 @@ std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>:
    received_size = 0;
 
    if(limit_size > preferred_size)
-      return return_type(0, false);
+      return return_type((void*)0, false);
 
    //Number of units to request (including block_ctrl header)
    std::size_t preferred_units = priv_get_total_units(preferred_size);
@@ -969,7 +969,7 @@ std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>:
          (command, limit_size, preferred_size, received_size, reuse_ptr, false, backwards_multiple), true);
    }
 
-   return return_type(0, false);
+   return return_type((void*)0, false);
 }
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>

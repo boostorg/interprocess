@@ -57,6 +57,9 @@ class basic_managed_shared_memory
 
    basic_managed_shared_memory *get_this_pointer()
    {  return this;   }
+
+   private:
+   typedef typename base_t::char_ptr_holder_t   char_ptr_holder_t;
    /// @endcond
 
    public: //functions
@@ -104,6 +107,17 @@ class basic_managed_shared_memory
                                 const void *addr = 0)
       : base_t()
       , base2_t(open_only, name, copy_on_write, addr, 
+                create_open_func_t(get_this_pointer(), 
+                detail::DoOpen))
+   {}
+
+   //!Connects to a created shared memory and its segment manager.
+   //!in read-only mode.
+   //!This can throw.
+   basic_managed_shared_memory (open_read_only_t, const char* name, 
+                                const void *addr = 0)
+      : base_t()
+      , base2_t(open_only, name, read_only, addr, 
                 create_open_func_t(get_this_pointer(), 
                 detail::DoOpen))
    {}
@@ -168,6 +182,24 @@ class basic_managed_shared_memory
       return base_t::template shrink_to_fit
          <basic_managed_shared_memory>(filename);
    }
+
+   /// @cond
+
+   //!Tries to find a previous named allocation address. Returns a memory
+   //!buffer and the object count. If not found returned pointer is 0.
+   //!Never throws.
+   template <class T>
+   std::pair<T*, std::size_t> find  (char_ptr_holder_t name)
+   {
+      if(base2_t::get_mapped_region().get_mode() == read_only){
+         return base_t::template find_no_lock<T>(name);
+      }
+      else{
+         return base_t::template find<T>(name);
+      }
+   }
+
+   /// @endcond
 };
 
 ///@cond

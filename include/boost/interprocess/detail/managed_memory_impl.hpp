@@ -94,6 +94,8 @@ class basic_managed_memory_impl
 
    /// @cond
 
+   typedef typename 
+           segment_manager::char_ptr_holder_t         char_ptr_holder_t;
    //Experimental. Don't use.
 
    typedef typename segment_manager::multiallocation_iterator    multiallocation_iterator;
@@ -105,9 +107,6 @@ class basic_managed_memory_impl
    private:
    typedef basic_managed_memory_impl
                <CharType, MemoryAlgorithm, IndexType, Offset> self_t;
-   typedef typename 
-           segment_manager::char_ptr_holder_t         char_ptr_holder_t;
-
    protected:
    template<class ManagedMemory>
    static bool grow(const char *filename, std::size_t extra_bytes)
@@ -686,6 +685,15 @@ class basic_managed_memory_impl
    typename deleter<T>::type
       get_deleter()
    {   return mp_header->get_deleter<T>(); }
+
+   /// @cond
+   //!Tries to find a previous named allocation address. Returns a memory
+   //!buffer and the object count. If not found returned pointer is 0.
+   //!Never throws.
+   template <class T>
+   std::pair<T*, std::size_t> find_no_lock  (char_ptr_holder_t name)
+   {   return mp_header->template find_no_lock<T>(name); }
+   /// @endcond
 
    protected:
    //!Swaps the segment manager's managed by this managed memory segment.

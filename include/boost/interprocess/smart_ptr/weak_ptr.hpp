@@ -200,7 +200,10 @@ class weak_ptr
    
    template<class Y>
    void _internal_assign(const detail::shared_count<Y, A, D> & pn2)
-   {  m_pn = pn2;   }
+   {
+
+      m_pn = pn2;
+   }
 
    private:
 

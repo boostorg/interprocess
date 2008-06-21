@@ -57,6 +57,9 @@ class basic_managed_windows_shared_memory
 
    basic_managed_windows_shared_memory *get_this_pointer()
    {  return this;   }
+
+   private:
+   typedef typename base_t::char_ptr_holder_t   char_ptr_holder_t;
    /// @endcond
 
    public: //functions
@@ -90,8 +93,8 @@ class basic_managed_windows_shared_memory
 
    //!Connects to a created shared memory and its segment manager.
    //!This can throw.
-   basic_managed_windows_shared_memory (open_only_t open_only, const char* name, 
-                              const void *addr = 0)
+   basic_managed_windows_shared_memory
+      (open_only_t open_only, const char* name, const void *addr = 0)
       : m_wshm(open_only, name, read_write, addr, 
                 create_open_func_t(get_this_pointer(), 
                 detail::DoOpen))
@@ -100,11 +103,20 @@ class basic_managed_windows_shared_memory
    //!Connects to a created shared memory and its segment manager
    //!in copy_on_write mode.
    //!This can throw.
-   basic_managed_windows_shared_memory (open_copy_on_write_t, const char* name, 
-                              const void *addr = 0)
+   basic_managed_windows_shared_memory
+      (open_copy_on_write_t, const char* name, const void *addr = 0)
       : m_wshm(open_only, name, copy_on_write, addr, 
-                create_open_func_t(get_this_pointer(), 
-                detail::DoOpen))
+                create_open_func_t(get_this_pointer(), detail::DoOpen))
+   {}
+
+   //!Connects to a created shared memory and its segment manager
+   //!in read-only mode.
+   //!This can throw.
+   basic_managed_windows_shared_memory
+      (open_read_only_t, const char* name, const void *addr = 0)
+      : base_t()
+      , m_wshm(open_only, name, read_only, addr, 
+                create_open_func_t(get_this_pointer(), detail::DoOpen))
    {}
 
    //!Moves the ownership of "moved"'s managed memory to *this.
@@ -146,6 +158,21 @@ class basic_managed_windows_shared_memory
       m_wshm.swap(other.m_wshm);
    }
    /// @cond
+
+   //!Tries to find a previous named allocation address. Returns a memory
+   //!buffer and the object count. If not found returned pointer is 0.
+   //!Never throws.
+   template <class T>
+   std::pair<T*, std::size_t> find  (char_ptr_holder_t name)
+   {
+      if(m_wshm.get_mapped_region().get_mode() == read_only){
+         return base_t::template find_no_lock<T>(name);
+      }
+      else{
+         return base_t::template find<T>(name);
+      }
+   }
+
    private:
    detail::managed_open_or_create_impl<windows_shared_memory, false> m_wshm;
    /// @endcond

@@ -69,7 +69,7 @@ class adaptive_pool_base
    struct node_pool
    {
       typedef detail::shared_adaptive_node_pool
-      < SegmentManager, sizeof(T), NodesPerBlock, MaxFreeBlocks, OverheadPercent> type;
+      < SegmentManager, sizeof_value<T>::value, NodesPerBlock, MaxFreeBlocks, OverheadPercent> type;
 
       static type *get(void *p)
       {  return static_cast<type*>(p);  }

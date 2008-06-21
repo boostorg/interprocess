@@ -32,6 +32,8 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
+#include <boost/interprocess/detail/move.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
 #include <cstddef>   //std::size_t
 #include <string>    //char_traits
 #include <new>       //std::nothrow
@@ -292,7 +294,7 @@ class segment_manager_base
       block_header_t *ctrl_data = block_header_t::block_header_from_value(object, table.size, table.alignment);
 
       //-------------------------------
-      //boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      //scoped_lock<rmutex> guard(m_header);
       //-------------------------------
 
       if(ctrl_data->allocation_type() != anonymous_type){
@@ -423,10 +425,10 @@ class segment_manager
       void *ret;
 
       if(name == reinterpret_cast<const CharType*>(-1)){
-         ret = priv_generic_find<char> (typeid(T).name(), m_header.m_unique_index, table, size, is_intrusive_t());
+         ret = priv_generic_find<char> (typeid(T).name(), m_header.m_unique_index, table, size, is_intrusive_t(), true);
       }
       else{
-         ret = priv_generic_find<CharType> (name, m_header.m_named_index, table, size, is_intrusive_t());
+         ret = priv_generic_find<CharType> (name, m_header.m_named_index, table, size, is_intrusive_t(), true);
       }
       return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
    }
@@ -439,7 +441,7 @@ class segment_manager
    {
       detail::placement_destroy<T> table;
       std::size_t size;
-      void *ret = priv_generic_find<char>(name, m_header.m_unique_index, table, size, is_intrusive_t()); 
+      void *ret = priv_generic_find<char>(name, m_header.m_unique_index, table, size, is_intrusive_t(), true); 
       return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
    }
 
@@ -502,7 +504,7 @@ class segment_manager
    //!executing the object function call*/
    template <class Func>
    void atomic_func(Func &f)
-   {  boost::interprocess::scoped_lock<rmutex> guard(m_header);  f();  }
+   {  scoped_lock<rmutex> guard(m_header);  f();  }
 
    //!Destroys a previously created unique instance.
    //!Returns false if the object was not present.
@@ -559,7 +561,7 @@ class segment_manager
    void reserve_named_objects(std::size_t num)
    {  
       //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      scoped_lock<rmutex> guard(m_header);
       //-------------------------------
       m_header.m_named_index.reserve(num);  
    }
@@ -570,7 +572,7 @@ class segment_manager
    void reserve_unique_objects(std::size_t num)
    {  
       //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      scoped_lock<rmutex> guard(m_header);
       //-------------------------------
       m_header.m_unique_index.reserve(num);
    }
@@ -580,7 +582,7 @@ class segment_manager
    void shrink_to_fit_indexes()
    {  
       //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      scoped_lock<rmutex> guard(m_header);
       //-------------------------------
       m_header.m_named_index.shrink_to_fit();  
       m_header.m_unique_index.shrink_to_fit();  
@@ -591,7 +593,7 @@ class segment_manager
    std::size_t get_num_named_objects()
    {  
       //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      scoped_lock<rmutex> guard(m_header);
       //-------------------------------
       return m_header.m_named_index.size();  
    }
@@ -601,7 +603,7 @@ class segment_manager
    std::size_t get_num_unique_objects()
    {  
       //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      scoped_lock<rmutex> guard(m_header);
       //-------------------------------
       return m_header.m_unique_index.size();  
    }
@@ -686,6 +688,39 @@ class segment_manager
    {
       return static_cast<T*>
          (priv_generic_construct(name, num, try2find, dothrow, table));
+   }
+
+   //!Tries to find a previous named allocation. Returns the address
+   //!and the object count. On failure the first member of the
+   //!returned pair is 0.
+   template <class T>
+   std::pair<T*, std::size_t> find_no_lock  (const CharType* name)
+   {  
+      //The name can't be null, no anonymous object can be found by name
+      assert(name != 0);
+      detail::placement_destroy<T> table;
+      std::size_t size;
+      void *ret;
+
+      if(name == reinterpret_cast<const CharType*>(-1)){
+         ret = priv_generic_find<char> (typeid(T).name(), m_header.m_unique_index, table, size, is_intrusive_t(), false);
+      }
+      else{
+         ret = priv_generic_find<CharType> (name, m_header.m_named_index, table, size, is_intrusive_t(), false);
+      }
+      return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
+   }
+
+   //!Tries to find a previous unique allocation. Returns the address
+   //!and the object count. On failure the first member of the
+   //!returned pair is 0.
+   template <class T>
+   std::pair<T*, std::size_t> find_no_lock (const detail::unique_instance_t* name)
+   {
+      detail::placement_destroy<T> table;
+      std::size_t size;
+      void *ret = priv_generic_find<char>(name, m_header.m_unique_index, table, size, is_intrusive_t(), false); 
+      return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
    }
 
    private:
@@ -790,7 +825,8 @@ class segment_manager
        IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
        detail::in_place_interface &table,
        std::size_t &length,
-       detail::true_ is_intrusive)
+       detail::true_ is_intrusive,
+       bool use_lock)
    {
       (void)is_intrusive;
       typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >         index_type;
@@ -798,7 +834,7 @@ class segment_manager
       typedef typename index_type::iterator           index_it;
 
       //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      scoped_lock<rmutex> guard(priv_get_lock(use_lock));
       //-------------------------------
       //Find name in index
       detail::intrusive_compare_key<CharT> key
@@ -829,7 +865,8 @@ class segment_manager
        IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
        detail::in_place_interface &table,
        std::size_t &length,
-       detail::false_ is_intrusive)
+       detail::false_ is_intrusive,
+       bool use_lock)
    {
       (void)is_intrusive;
       typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >      index_type;
@@ -837,7 +874,7 @@ class segment_manager
       typedef typename index_type::iterator        index_it;
 
       //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      scoped_lock<rmutex> guard(priv_get_lock(use_lock));
       //-------------------------------
       //Find name in index
       index_it it = index.find(key_type(name, std::char_traits<CharT>::length(name)));
@@ -900,7 +937,7 @@ class segment_manager
       typedef typename index_type::value_type         intrusive_value_type;
       
       //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      scoped_lock<rmutex> guard(m_header);
       //-------------------------------
       //Find name in index
       detail::intrusive_compare_key<CharT> key
@@ -950,7 +987,7 @@ class segment_manager
       typedef typename index_type::key_type              key_type;
 
       //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      scoped_lock<rmutex> guard(m_header);
       //-------------------------------
       //Try to find the name in the index
       index_it it = index.find(key_type (name, 
@@ -1038,7 +1075,7 @@ class segment_manager
       typedef std::pair<index_it, bool>                  index_ib;
 
       //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      scoped_lock<rmutex> guard(m_header);
       //-------------------------------
       //Insert the node. This can throw.
       //First, we want to know if the key is already present before
@@ -1164,7 +1201,7 @@ class segment_manager
       typedef std::pair<index_it, bool>                  index_ib;
 
       //-------------------------------
-      boost::interprocess::scoped_lock<rmutex> guard(m_header);
+      scoped_lock<rmutex> guard(m_header);
       //-------------------------------
       //Insert the node. This can throw.
       //First, we want to know if the key is already present before
@@ -1271,6 +1308,20 @@ class segment_manager
    {  return this;  }
 
    typedef typename MemoryAlgorithm::mutex_family::recursive_mutex_type   rmutex;
+
+   #ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
+   scoped_lock<rmutex>
+   #else
+   detail::move_return<scoped_lock<rmutex> >
+   #endif
+      priv_get_lock(bool use_lock)
+   {
+      scoped_lock<rmutex> local(m_header, defer_lock);
+      if(use_lock){
+         local.lock();
+      }
+      return local;
+   }
 
    //!This struct includes needed data and derives from
    //!rmutex to allow EBO when using null interprocess_mutex

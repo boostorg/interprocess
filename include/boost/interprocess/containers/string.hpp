@@ -281,7 +281,7 @@ class basic_string_base
       (void)limit_size;
       (void)reuse;
       if(!(command & allocate_new))
-         return std::pair<pointer, bool>(0, 0);
+         return std::pair<pointer, bool>(pointer(0), 0);
       received_size = preferred_size;
       return std::make_pair(this->alloc().allocate(received_size), false);
    }
@@ -551,11 +551,11 @@ class basic_string
    //! <b>Complexity</b>: Constant.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_string(const detail::moved_object<basic_string>& s) 
-      : base_t(move((base_t&)s.get()))
+      : base_t(detail::move_impl((base_t&)s.get()))
    {}
    #else
    basic_string(basic_string && s) 
-      : base_t(move((base_t&)s))
+      : base_t(detail::move_impl((base_t&)s))
    {}
    #endif
 
@@ -1940,7 +1940,7 @@ operator+(basic_string<CharT,Traits,A> && mx,
           const basic_string<CharT,Traits,A>& y)
 {
    mx += y;
-   return move(mx);
+   return detail::move_impl(mx);
 }
 #endif
 
@@ -1994,7 +1994,7 @@ operator+(const CharT* s,
           basic_string<CharT,Traits,A> && my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
-	return move(my.get().replace(size_type(0), size_type(0), s));
+	return detail::move_impl(my.get().replace(size_type(0), size_type(0), s));
 }
 #endif
 
@@ -2061,7 +2061,7 @@ operator+(basic_string<CharT,Traits,A> && mx,
           const CharT* s)
 {
    mx += s;
-   return move(mx);
+   return detail::move_impl(mx);
 }
 #endif
 
@@ -2093,7 +2093,7 @@ basic_string<CharT,Traits,A> &&
 operator+(basic_string<CharT,Traits,A> && mx, const CharT c)
 {
    mx += c;
-   return move(mx);
+   return detail::move_impl(mx);
 }
 #endif
 

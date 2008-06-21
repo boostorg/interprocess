@@ -70,14 +70,6 @@ class flat_map
 {
    /// @cond
    private:
-   //This is the real tree stored here. It's based on a movable pair
-   typedef detail::flat_tree<Key, 
-                           detail::pair<Key, T>, 
-                           detail::select1st< detail::pair<Key, T> >, 
-                           Pred, 
-                           typename Alloc::template
-                              rebind<detail::pair<Key, T> >::other> impl_tree_t;
-
    //This is the tree that we should store if pair was movable
    typedef detail::flat_tree<Key, 
                            std::pair<Key, T>, 
@@ -85,7 +77,18 @@ class flat_map
                            Pred, 
                            Alloc> tree_t;
 
-//   tree_t m_flat_tree;  // flat tree representing flat_map
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+   //This is the real tree stored here. It's based on a movable pair
+   typedef detail::flat_tree<Key, 
+                           detail::pair<Key, T>, 
+                           detail::select1st< detail::pair<Key, T> >, 
+                           Pred, 
+                           typename Alloc::template
+                              rebind<detail::pair<Key, T> >::other> impl_tree_t;
+   #else
+   typedef tree_t    impl_tree_t;
+   #endif   
+
    impl_tree_t m_flat_tree;  // flat tree representing flat_map
 
    typedef typename impl_tree_t::value_type             impl_value_type;
@@ -101,19 +104,23 @@ class flat_map
    typedef typename impl_tree_t::allocator_type         impl_allocator_type;
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    typedef detail::moved_object<impl_value_type>        impl_moved_value_type;
-   #else
-   typedef impl_value_type&&                            impl_moved_value_type;
    #endif
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class D, class S>
    static D &force(const S &s)
-   {  return *const_cast<D*>((reinterpret_cast<const D*>(&s))); }
+   {  return *((D*)(void*)(const void*)(&s)); }
+   #else
+   //For rvalue-aware compilers, just forward
+   template<class Type>
+   static const Type &force(const Type &t)
+   {  return t; }
 
-   #ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   template<class D, class S>
-   static D &&force(S &&s)
-   {  return reinterpret_cast<D&&>(s);   }
+   template<class Type>
+   static Type &force(Type &t)
+   {  return t; }
    #endif
+
    /// @endcond
 
    public:
@@ -168,11 +175,11 @@ class flat_map
    //! <b>Postcondition</b>: x is emptied.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_map(const detail::moved_object<flat_map<Key,T,Pred,Alloc> >& x) 
-      : m_flat_tree(move(x.get().m_flat_tree)) {}
+      : m_flat_tree(detail::move_impl(x.get().m_flat_tree)) {}
 
    #else
    flat_map(flat_map<Key,T,Pred,Alloc> && x) 
-      : m_flat_tree(move(x.m_flat_tree)) {}
+      : m_flat_tree(detail::move_impl(x.m_flat_tree)) {}
    #endif
 
    //! <b>Effects</b>: Makes *this a copy of x.
@@ -189,10 +196,10 @@ class flat_map
    //! <b>Postcondition</b>: x is emptied.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_map<Key,T,Pred,Alloc>& operator=(const detail::moved_object<flat_map<Key, T, Pred, Alloc> >& mx)
-      {  m_flat_tree = move(mx.get().m_flat_tree);   return *this;  }
+      {  m_flat_tree = detail::move_impl(mx.get().m_flat_tree);   return *this;  }
    #else
    flat_map<Key,T,Pred,Alloc>& operator=(flat_map<Key, T, Pred, Alloc> && mx)
-      {  m_flat_tree = move(mx.m_flat_tree);   return *this;  }
+      {  m_flat_tree = detail::move_impl(mx.m_flat_tree);   return *this;  }
    #endif
 
    //! <b>Effects</b>: Returns the comparison object out
@@ -315,7 +322,7 @@ class flat_map
       { return m_flat_tree.max_size(); }
 
    //! Effects: If there is no key equivalent to x in the flat_map, inserts 
-   //! value_type(move(x), T()) into the flat_map (the key is move-constructed)
+   //! value_type(detail::move_impl(x), T()) into the flat_map (the key is move-constructed)
    //! 
    //! Returns: A reference to the mapped_type corresponding to x in *this.
    //! 
@@ -342,7 +349,7 @@ class flat_map
       iterator i = lower_bound(k);
       // i->first is greater than or equivalent to k.
       if (i == end() || key_comp()(k, (*i).first))
-         i = insert(i, value_type(k, move(T())));
+         i = insert(i, value_type(k, detail::move_impl(T())));
       return (*i).second;
    }
    #else
@@ -358,7 +365,7 @@ class flat_map
       iterator i = lower_bound(k);
       // i->first is greater than or equivalent to k.
       if (i == end() || key_comp()(k, (*i).first))
-         i = insert(i, value_type(forward<key_type>(k), move(T())));
+         i = insert(i, value_type(detail::forward_impl<key_type>(k), detail::move_impl(T())));
       return (*i).second;
    }
    #endif
@@ -418,8 +425,7 @@ class flat_map
          m_flat_tree.insert_unique(force<impl_moved_value_type>(x))); }
    #else
    std::pair<iterator,bool> insert(value_type &&x) 
-      { return force<std::pair<iterator,bool> >(
-         m_flat_tree.insert_unique(force<impl_moved_value_type>(move(x)))); }
+   {  return m_flat_tree.insert_unique(detail::move_impl(x)); }
    #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container if and only if there is 
@@ -452,8 +458,7 @@ class flat_map
          m_flat_tree.insert_unique(force<impl_iterator>(position), force<impl_moved_value_type>(x))); }
    #else
    iterator insert(iterator position, value_type &&x)
-      { return force<iterator>(
-         m_flat_tree.insert_unique(force<impl_iterator>(position), force<impl_moved_value_type>(move(x)))); }
+   { return m_flat_tree.insert_unique(position, detail::move_impl(x)); }
    #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.
@@ -715,6 +720,12 @@ class flat_multimap
 {
    /// @cond
    private:
+   typedef detail::flat_tree<Key, 
+                           std::pair<Key, T>, 
+                           detail::select1st< std::pair<Key, T> >, 
+                           Pred, 
+                           Alloc> tree_t;
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    //This is the real tree stored here. It's based on a movable pair
    typedef detail::flat_tree<Key, 
                            detail::pair<Key, T>, 
@@ -722,13 +733,10 @@ class flat_multimap
                            Pred, 
                            typename Alloc::template
                               rebind<detail::pair<Key, T> >::other> impl_tree_t;
+   #else
+   typedef tree_t    impl_tree_t;
+   #endif   
 
-   typedef detail::flat_tree<Key, 
-                           std::pair<Key, T>, 
-                           detail::select1st< std::pair<Key, T> >, 
-                           Pred, 
-                           Alloc> tree_t;
-//   tree_t m_flat_tree;  // flat tree representing flat_multimap
    impl_tree_t m_flat_tree;  // flat tree representing flat_map
 
    typedef typename impl_tree_t::value_type             impl_value_type;
@@ -744,18 +752,21 @@ class flat_multimap
    typedef typename impl_tree_t::allocator_type         impl_allocator_type;
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    typedef detail::moved_object<impl_value_type>        impl_moved_value_type;
-   #else
-   typedef impl_value_type&&                            impl_moved_value_type;
    #endif
 
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class D, class S>
    static D &force(const S &s)
    {  return *const_cast<D*>((reinterpret_cast<const D*>(&s))); }
+   #else
+   //For rvalue-aware compilers, just forward
+   template<class Type>
+   static const Type &force(const Type &t)
+   {  return t; }
 
-   #ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   template<class D, class S>
-   static D &&force(S &&s)
-   {  return reinterpret_cast<D&&>(s);   }
+   template<class Type>
+   static Type &force(Type &t)
+   {  return t; }
    #endif
    /// @endcond
 
@@ -812,10 +823,10 @@ class flat_multimap
    //! <b>Postcondition</b>: x is emptied.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_multimap(const detail::moved_object<flat_multimap<Key,T,Pred,Alloc> >& x) 
-      : m_flat_tree(move(x.get().m_flat_tree)) { }
+      : m_flat_tree(detail::move_impl(x.get().m_flat_tree)) { }
    #else
    flat_multimap(flat_multimap<Key,T,Pred,Alloc> && x) 
-      : m_flat_tree(move(x.m_flat_tree)) { }
+      : m_flat_tree(detail::move_impl(x.m_flat_tree)) { }
    #endif
 
    //! <b>Effects</b>: Makes *this a copy of x.
@@ -831,11 +842,11 @@ class flat_multimap
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_multimap<Key,T,Pred,Alloc>&
    operator=(const detail::moved_object<flat_multimap<Key,T,Pred,Alloc> >& mx) 
-      {  m_flat_tree = move(mx.get().m_flat_tree);   return *this;  }
+      {  m_flat_tree = detail::move_impl(mx.get().m_flat_tree);   return *this;  }
    #else
    flat_multimap<Key,T,Pred,Alloc>&
    operator=(flat_multimap<Key,T,Pred,Alloc> && mx) 
-      {  m_flat_tree = move(mx.m_flat_tree);   return *this;  }
+      {  m_flat_tree = detail::move_impl(mx.m_flat_tree);   return *this;  }
    #endif
 
    //! <b>Effects</b>: Returns the comparison object out
@@ -1002,7 +1013,7 @@ class flat_multimap
       { return force<iterator>(m_flat_tree.insert_equal(force<impl_moved_value_type>(x))); }
    #else
    iterator insert(value_type &&x) 
-      { return force<iterator>(m_flat_tree.insert_equal(force<impl_moved_value_type>(move(x)))); }
+      { return m_flat_tree.insert_equal(detail::move_impl(x)); }
    #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container.
@@ -1035,7 +1046,7 @@ class flat_multimap
       { return force<iterator>(m_flat_tree.insert_equal(force<impl_iterator>(position), force<impl_moved_value_type>(x))); }
    #else
    iterator insert(iterator position, value_type &&x) 
-      { return force<iterator>(m_flat_tree.insert_equal(force<impl_iterator>(position), force<impl_moved_value_type>(move(x)))); }
+      { return m_flat_tree.insert_equal(force<impl_iterator>(position), detail::move_impl(x)); }
    #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.

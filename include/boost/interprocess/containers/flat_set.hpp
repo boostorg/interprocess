@@ -117,10 +117,10 @@ class flat_set
    //! <b>Postcondition</b>: x is emptied.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_set(const detail::moved_object<flat_set<T,Pred,Alloc> >& mx) 
-      : m_flat_tree(move(mx.get().m_flat_tree)) {}
+      : m_flat_tree(detail::move_impl(mx.get().m_flat_tree)) {}
    #else
    flat_set(flat_set<T,Pred,Alloc> && mx) 
-      : m_flat_tree(move(mx.m_flat_tree)) {}
+      : m_flat_tree(detail::move_impl(mx.m_flat_tree)) {}
    #endif
 
    //! <b>Effects</b>: Makes *this a copy of x.
@@ -134,11 +134,11 @@ class flat_set
    //! <b>Complexity</b>: Linear in x.size().
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_set<T,Pred,Alloc>& operator=(const detail::moved_object<flat_set<T, Pred, Alloc> > &mx)
-      {  m_flat_tree = move(mx.get().m_flat_tree);   return *this;  }
+      {  m_flat_tree = detail::move_impl(mx.get().m_flat_tree);   return *this;  }
 
    #else
    flat_set<T,Pred,Alloc>& operator=(flat_set<T, Pred, Alloc> &&mx)
-      {  m_flat_tree = move(mx.m_flat_tree);   return *this;  }
+      {  m_flat_tree = detail::move_impl(mx.m_flat_tree);   return *this;  }
 
    #endif
 
@@ -314,7 +314,7 @@ class flat_set
       {  return m_flat_tree.insert_unique(x);  }
    #else
    std::pair<iterator,bool> insert(value_type && x) 
-      {  return m_flat_tree.insert_unique(move(x));  }
+      {  return m_flat_tree.insert_unique(detail::move_impl(x));  }
    #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container if and only if there is 
@@ -345,7 +345,7 @@ class flat_set
       {  return m_flat_tree.insert_unique(position, x); }
    #else
    iterator insert(iterator position, value_type && x) 
-      {  return m_flat_tree.insert_unique(position, move(x)); }
+      {  return m_flat_tree.insert_unique(position, detail::move_impl(x)); }
    #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.
@@ -633,10 +633,10 @@ class flat_multiset
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_multiset(const detail::moved_object<flat_multiset<T,Pred,Alloc> >& x) 
-      : m_flat_tree(move(x.get().m_flat_tree)) {}
+      : m_flat_tree(detail::move_impl(x.get().m_flat_tree)) {}
    #else
    flat_multiset(flat_multiset<T,Pred,Alloc> && x) 
-      : m_flat_tree(move(x.m_flat_tree)) {}
+      : m_flat_tree(detail::move_impl(x.m_flat_tree)) {}
    #endif
 
    flat_multiset<T,Pred,Alloc>& operator=(const flat_multiset<T,Pred,Alloc>& x) 
@@ -644,10 +644,10 @@ class flat_multiset
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_multiset<T,Pred,Alloc>& operator=(const detail::moved_object<flat_multiset<T,Pred,Alloc> >& mx) 
-      {  m_flat_tree = move(mx.get().m_flat_tree);   return *this;  }
+      {  m_flat_tree = detail::move_impl(mx.get().m_flat_tree);   return *this;  }
    #else
    flat_multiset<T,Pred,Alloc>& operator=(flat_multiset<T,Pred,Alloc> && mx) 
-      {  m_flat_tree = move(mx.m_flat_tree);   return *this;  }
+      {  m_flat_tree = detail::move_impl(mx.m_flat_tree);   return *this;  }
    #endif
 
    //! <b>Effects</b>: Returns the comparison object out
@@ -814,7 +814,7 @@ class flat_multiset
       {  return m_flat_tree.insert_equal(x);   }
    #else
    iterator insert(value_type && x) 
-      {  return m_flat_tree.insert_equal(move(x));   }
+      {  return m_flat_tree.insert_equal(detail::move_impl(x));   }
    #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container.
@@ -845,7 +845,7 @@ class flat_multiset
       {  return m_flat_tree.insert_equal(position, x);  }
    #else
    iterator insert(iterator position, value_type && x) 
-      {  return m_flat_tree.insert_equal(position, move(x));  }
+      {  return m_flat_tree.insert_equal(position, detail::move_impl(x));  }
    #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.

@@ -72,7 +72,7 @@ class file_wrapper
    #else
    file_wrapper &operator=(file_wrapper &&moved)
    {  
-      file_wrapper tmp(move(moved));
+      file_wrapper tmp(detail::move_impl(moved));
       this->swap(tmp);
       return *this;  
    }

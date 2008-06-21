@@ -87,7 +87,7 @@ struct slist_node
    #else
    template<class Convertible>
    slist_node(Convertible &&value)
-      : m_data(forward<Convertible>(value)){}
+      : m_data(detail::forward_impl<Convertible>(value)){}
    #endif
 
    T m_data;
@@ -321,7 +321,7 @@ class slist
    {}
 
 //   explicit slist(size_type n)
-//      :  AllocHolder(move(allocator_type()))
+//      :  AllocHolder(detail::move_impl(allocator_type()))
 //   { this->resize(n); }
 
    //! <b>Effects</b>: Constructs a list that will use a copy of allocator a
@@ -367,11 +367,11 @@ class slist
    //! <b>Complexity</b>: Constant.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    slist(const detail::moved_object<slist> &x)
-      : AllocHolder(move((AllocHolder&)x.get()))
+      : AllocHolder(detail::move_impl((AllocHolder&)x.get()))
    {}
    #else
    slist(slist &&x)
-      : AllocHolder(move((AllocHolder&)x))
+      : AllocHolder(detail::move_impl((AllocHolder&)x))
    {}
    #endif
 
@@ -594,7 +594,7 @@ class slist
    {  this->icont().push_front(*this->create_node(x));  }
    #else
    void push_front(T && x)
-   {  this->icont().push_front(*this->create_node(move(x)));  }
+   {  this->icont().push_front(*this->create_node(detail::move_impl(x)));  }
    #endif
 
    //! <b>Effects</b>: Removes the first element from the list.
@@ -659,7 +659,7 @@ class slist
    {  return iterator(this->icont().insert_after(prev_pos.get(), *this->create_node(x))); }
    #else
    iterator insert_after(iterator prev_pos, value_type && x) 
-   {  return iterator(this->icont().insert_after(prev_pos.get(), *this->create_node(move(x)))); }
+   {  return iterator(this->icont().insert_after(prev_pos.get(), *this->create_node(detail::move_impl(x)))); }
    #endif
 
    //! <b>Requires</b>: prev_pos must be a valid iterator of *this.
@@ -717,7 +717,7 @@ class slist
    {  return this->insert_after(previous(p), x); }
    #else
    iterator insert(iterator p, value_type && x) 
-   {  return this->insert_after(previous(p), move(x)); }
+   {  return this->insert_after(previous(p), detail::move_impl(x)); }
    #endif
 
    //! <b>Requires</b>: p must be a valid iterator of *this.

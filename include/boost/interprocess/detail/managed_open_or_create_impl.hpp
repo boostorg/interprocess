@@ -176,7 +176,7 @@ class managed_open_or_create_impl
    #else
    managed_open_or_create_impl &operator=(managed_open_or_create_impl &&moved)
    {  
-      managed_open_or_create_impl tmp(move(moved));
+      managed_open_or_create_impl tmp(detail::move_impl(moved));
       this->swap(tmp);
       return *this;  
    }
@@ -208,6 +208,10 @@ class managed_open_or_create_impl
 
    bool flush()
    {  return m_mapped_region.flush();  }
+
+
+   const mapped_region &get_mapped_region() const
+   {  return m_mapped_region;  }
 
    private:
 

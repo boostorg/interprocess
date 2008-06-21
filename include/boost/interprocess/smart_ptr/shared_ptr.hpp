@@ -24,6 +24,7 @@
 #include <boost/assert.hpp>
 #include <boost/interprocess/smart_ptr/detail/shared_count.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
@@ -47,19 +48,21 @@ namespace detail{
 
 template<class T, class VoidAllocator, class Deleter>
 inline void sp_enable_shared_from_this
-  (shared_count<T, VoidAllocator, Deleter> const & pn,
-   const typename pointer_to_other <typename shared_count<T, VoidAllocator, Deleter>::pointer, 
-                                    enable_shared_from_this<T, VoidAllocator, Deleter> >::type &pe,
-   const typename shared_count<T, VoidAllocator, Deleter>::pointer &px)
+  (shared_count<T, VoidAllocator, Deleter> const & pn
+  ,enable_shared_from_this<T, VoidAllocator, Deleter> *pe
+  ,T *ptr)
+   
 {
-    if(pe != 0)
+   (void)ptr;
+   if(pe != 0){
       pe->_internal_weak_this._internal_assign(pn);
+   }
 }
-/*
+
 template<class T, class VoidAllocator, class Deleter>
 inline void sp_enable_shared_from_this(shared_count<T, VoidAllocator, Deleter> const &, ...)
 {}
-*/
+
 } // namespace detail
 
 //!shared_ptr stores a pointer to a dynamically allocated object. 
@@ -122,8 +125,16 @@ class shared_ptr
       typedef typename detail::pointer_to_other<pointer, T>::type ParameterPointer;
       BOOST_STATIC_ASSERT((detail::is_same<pointer, ParameterPointer>::value) ||
                           (detail::is_pointer<pointer>::value));
-      //detail::sp_enable_shared_from_this( m_pn, p, p ); 
+      detail::sp_enable_shared_from_this<T, VoidAllocator, Deleter>( m_pn, detail::get_pointer(p), detail::get_pointer(p) ); 
    }
+
+
+   //!Constructs a shared_ptr that shares ownership with r and stores p.
+   //!Postconditions: get() == p && use_count() == r.use_count().
+   //!Throws: nothing.
+   shared_ptr(const shared_ptr &other, const pointer &p)
+      :  m_pn(other.m_pn, p)
+   {}
 
    //!If r is empty, constructs an empty shared_ptr. Otherwise, constructs 
    //!a shared_ptr that shares ownership with r. Never throws.
@@ -138,6 +149,19 @@ class shared_ptr
    explicit shared_ptr(weak_ptr<Y, VoidAllocator, Deleter> const & r)
       :  m_pn(r.m_pn) // may throw
    {}
+
+   //!Move-Constructs a shared_ptr that takes ownership of other resource and
+   //!other is put in default-constructed state.
+   //!Throws: nothing.
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+   explicit shared_ptr(detail::moved_object<shared_ptr> other)
+      :  m_pn()
+   {  this->swap(other.get());   }
+   #else
+   explicit shared_ptr(shared_ptr &&other)
+      :  m_pn()
+   {  this->swap(other);   }
+   #endif
 
    /// @cond
    template<class Y>
@@ -172,6 +196,22 @@ class shared_ptr
       return *this;
    }
 
+   //!Move-assignment. Equivalent to shared_ptr(other).swap(*this).
+   //!Never throws
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+   shared_ptr & operator=(detail::moved_object<shared_ptr> other) // never throws
+   {
+      this_type(other).swap(*this);
+      return *this;
+   }
+   #else
+   shared_ptr & operator=(shared_ptr &&other) // never throws
+   {
+      this_type(other).swap(*this);
+      return *this;
+   }
+   #endif
+
    //!This is equivalent to:
    //!this_type().swap(*this);
    void reset()
@@ -190,6 +230,12 @@ class shared_ptr
       BOOST_STATIC_ASSERT((detail::is_same<pointer, ParameterPointer>::value) ||
                           (detail::is_pointer<Pointer>::value));
       this_type(p, a, d).swap(*this);  
+   }
+
+   template<class Y>
+   void reset(shared_ptr<Y, VoidAllocator, Deleter> const & r, const pointer &p)
+   {
+      this_type(r, p).swap(*this);
    }
 
    //!Returns a reference to the
@@ -333,6 +379,18 @@ typename detail::pointer_to_other<shared_ptr<T, VoidAllocator, Deleter>, Deleter
    get_deleter(shared_ptr<T, VoidAllocator, Deleter> const & p)
 {  return static_cast<Deleter *>(p._internal_get_deleter(typeid(Deleter)));   }
 */
+
+/// @cond
+
+//!This class has move constructor
+template <class T, class VA, class D>
+struct is_movable<boost::interprocess::shared_ptr<T, VA, D> >
+{
+   enum {   value = true };
+};
+
+/// @endcond
+
 } // namespace interprocess
 
 /// @cond

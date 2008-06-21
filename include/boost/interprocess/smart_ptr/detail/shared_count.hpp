@@ -73,6 +73,11 @@ class shared_count
    {}
 
    template <class Ptr>
+   shared_count(const shared_count &other_shared_count, const Ptr &p)
+      :  m_px(p), m_pi(other_shared_count.m_pi)
+   {}
+
+   template <class Ptr>
    shared_count(const Ptr &p, const VoidAllocator &a, Deleter d)
       :  m_px(p), m_pi(0)
    {

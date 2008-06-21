@@ -142,7 +142,7 @@ class unique_ptr
    //!
    //!After the construction, u no longer owns a pointer.
    //![ Note: The deleter constructor can be implemented with
-   //!std::forward<D>. -end note ]
+   //!std::detail::forward_impl<D>. -end note ]
    //!
    //!Postconditions: get() == value u.get() had before the construction.
    //!get_deleter() returns a reference to the internally stored deleter which
@@ -152,11 +152,11 @@ class unique_ptr
    //!Throws: nothing.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    unique_ptr(detail::moved_object<unique_ptr> u)
-      : ptr_(u.get().release(), move(u.get().get_deleter()))
+      : ptr_(u.get().release(), detail::move_impl(u.get().get_deleter()))
    {}
    #else
    unique_ptr(unique_ptr &&u)
-      : ptr_(u.release(), forward<D>(u.get_deleter()))
+      : ptr_(u.release(), detail::forward_impl<D>(u.get_deleter()))
    {}
    #endif
 
@@ -192,12 +192,12 @@ class unique_ptr
             ,
             nat
             >::type = nat())
-      : ptr_(const_cast<unique_ptr<U,E>&>(u.get()).release(), move(u.get().get_deleter()))
+      : ptr_(const_cast<unique_ptr<U,E>&>(u.get()).release(), detail::move_impl(u.get().get_deleter()))
    {}
    #else
    template <class U, class E>
    unique_ptr(unique_ptr<U, E> && u,
-      typename boost::enable_if_c<
+      typename detail::enable_if_c<
             detail::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
             detail::is_convertible<E, D>::value &&
             (
@@ -207,7 +207,7 @@ class unique_ptr
             ,
             nat
             >::type = nat())
-      : ptr_(const_cast<unique_ptr<U,E>&>(u).release(), forward<D>(u.get_deleter()))
+      : ptr_(const_cast<unique_ptr<U,E>&>(u).release(), detail::forward_impl<D>(u.get_deleter()))
    {}
    #endif
 
@@ -234,14 +234,14 @@ class unique_ptr
    unique_ptr& operator=(detail::moved_object<unique_ptr> u)
    {
       reset(u.get().release());
-      ptr_.second() = move(u.get().get_deleter());
+      ptr_.second() = detail::move_impl(u.get().get_deleter());
       return *this;
    }
    #else
-   unique_ptr(unique_ptr && u)
+   unique_ptr& operator=(unique_ptr && u)
    {
       reset(u.release());
-      ptr_.second() = move(u.get_deleter());
+      ptr_.second() = detail::move_impl(u.get_deleter());
       return *this;
    }
    #endif
@@ -265,14 +265,14 @@ class unique_ptr
    unique_ptr& operator=(detail::moved_object<unique_ptr<U, E> > mu)
    {
       reset(mu.get().release());
-      ptr_.second() = move(mu.get().get_deleter());
+      ptr_.second() = detail::move_impl(mu.get().get_deleter());
       return *this;
    }
    #else
-   unique_ptr(unique_ptr<U, E> && u)
+   unique_ptr& operator=(unique_ptr<U, E> && u)
    {
       reset(u.release());
-      ptr_.second() = move(u.get_deleter());
+      ptr_.second() = detail::move_impl(u.get_deleter());
       return *this;
    }
    #endif
@@ -597,9 +597,13 @@ struct managed_unique_ptr
 //!with boost::interproces::deleter from a pointer
 //!of type T that has been allocated in the passed managed segment
 template<class T, class ManagedMemory>
+#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 inline typename detail::return_type
    <typename managed_unique_ptr<T, ManagedMemory>::type
    >::type 
+#else
+typename managed_unique_ptr<T, ManagedMemory>::type
+#endif
    make_managed_unique_ptr(T *constructed_object, ManagedMemory &managed_memory)
 {
    typename managed_unique_ptr<T, ManagedMemory>::type to_return

@@ -117,7 +117,7 @@ class basic_managed_multi_shared_memory
             shmem_list_t::value_type &m_impl = *mp_frontend->m_shmem_list.rbegin();
             return result_type(m_impl.get_real_address(), m_impl.get_real_size()-1);
          }
-         return result_type(0, 0);  
+         return result_type((void *)0, 0);  
       }
 
       virtual bool update_segments ()
@@ -174,8 +174,8 @@ class basic_managed_multi_shared_memory
          //Check if this is the master segment
          if(!m_segment_number){
             //Create or open the Interprocess machinery
-            if(impl_done = created ? 
-               mp_frontend->create_impl(addr, size) : mp_frontend->open_impl(addr, size)){
+            if((impl_done = created ? 
+               mp_frontend->create_impl(addr, size) : mp_frontend->open_impl(addr, size))){
                return true;
             }
          }
@@ -315,21 +315,21 @@ class basic_managed_multi_shared_memory
             case create_open_func::DoCreate:
             {
                managed_impl shm(create_only, name, size, read_write, addr, func);
-               mshm = move(shm);
+               mshm = detail::move_impl(shm);
             }
             break;
 
             case create_open_func::DoOpen:
             {
                managed_impl shm(open_only, name,read_write, addr, func);
-               mshm = move(shm);
+               mshm = detail::move_impl(shm);
             }
             break;
 
             case create_open_func::DoOpenOrCreate:
             {
                managed_impl shm(open_or_create, name, size, read_write, addr, func);
-               mshm = move(shm);
+               mshm = detail::move_impl(shm);
             }
             break;
 
@@ -339,7 +339,7 @@ class basic_managed_multi_shared_memory
          }
 
          //This can throw.
-         m_shmem_list.push_back(move(mshm));
+         m_shmem_list.push_back(detail::move_impl(mshm));
          return true;
       }
       BOOST_CATCH(const std::bad_alloc&){

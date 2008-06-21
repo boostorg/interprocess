@@ -117,6 +117,7 @@ template <class T>
 struct identity 
 //   : public std::unary_function<T,T> 
 {
+   typedef T type;
    const T& operator()(const T& x) const 
    { return x; }
 };

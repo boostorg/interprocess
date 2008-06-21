@@ -66,7 +66,7 @@ class node_allocator_base
    struct node_pool
    {
       typedef detail::shared_node_pool
-      < SegmentManager, sizeof(T), NodesPerBlock> type;
+      < SegmentManager, sizeof_value<T>::value, NodesPerBlock> type;
 
       static type *get(void *p)
       {  return static_cast<type*>(p);  }

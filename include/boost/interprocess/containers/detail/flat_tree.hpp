@@ -135,11 +135,11 @@ class flat_tree
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_tree(const detail::moved_object<flat_tree> &x)
-      :  m_data(move(x.get().m_data))
+      :  m_data(detail::move_impl(x.get().m_data))
    { }
    #else
    flat_tree(flat_tree &&x)
-      :  m_data(move(x.m_data))
+      :  m_data(detail::move_impl(x.m_data))
    { }
    #endif
 
@@ -151,10 +151,10 @@ class flat_tree
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    flat_tree&  operator=(const detail::moved_object<flat_tree>& mx)
-   {  m_data = move(mx.get().m_data); return *this;  }
+   {  m_data = detail::move_impl(mx.get().m_data); return *this;  }
    #else
    flat_tree&  operator=(flat_tree &&mx)
-   {  m_data = move(mx.m_data); return *this;  }
+   {  m_data = detail::move_impl(mx.m_data); return *this;  }
    #endif
 
    public:    
@@ -250,7 +250,7 @@ class flat_tree
       insert_commit_data data;
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(mval, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, move(mval));
+         ret.first = priv_insert_commit(data, detail::move_impl(mval));
       }
       return ret;
    }
@@ -275,7 +275,7 @@ class flat_tree
    iterator insert_equal(value_type && mval)
    {
       iterator i = this->upper_bound(KeyOfValue()(mval));
-      i = this->m_data.m_vect.insert(i, move(mval));
+      i = this->m_data.m_vect.insert(i, detail::move_impl(mval));
       return i;
    }
    #endif
@@ -306,7 +306,7 @@ class flat_tree
       insert_commit_data data;
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(pos, mval, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, move(mval));
+         ret.first = priv_insert_commit(data, detail::move_impl(mval));
       }
       return ret.first;
    }
@@ -331,7 +331,7 @@ class flat_tree
    {
       insert_commit_data data;
       priv_insert_equal_prepare(pos, mval, data);
-      return priv_insert_commit(data, move(mval));
+      return priv_insert_commit(data, detail::move_impl(mval));
    }
    #endif
 
@@ -547,7 +547,7 @@ class flat_tree
    template<class Convertible>
    iterator priv_insert_commit
       (insert_commit_data &commit_data, Convertible &&convertible)
-   {  return this->m_data.m_vect.insert(commit_data.position, forward<Convertible>(convertible));   }
+   {  return this->m_data.m_vect.insert(commit_data.position, detail::forward_impl<Convertible>(convertible));   }
    #endif
 
    template <class RanIt>

@@ -67,7 +67,7 @@ class private_adaptive_pool_base
       , MaxFreeBlocks, OverheadPercent>                  self_t;
    typedef detail::private_adaptive_node_pool
       <SegmentManager
-      , sizeof(T)
+      , sizeof_value<T>::value
       , NodesPerBlock
       , MaxFreeBlocks
       , OverheadPercent
@@ -113,7 +113,7 @@ class private_adaptive_pool_base
    {
       typedef detail::private_adaptive_node_pool
       <SegmentManager
-      , sizeof(T)
+      , sizeof_value<T>::value
       , NodesPerBlock
       , MaxFreeBlocks
       , OverheadPercent

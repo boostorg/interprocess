@@ -16,7 +16,8 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_MATH_FUNCTIONS_HPP
 #define BOOST_INTERPROCESS_DETAIL_MATH_FUNCTIONS_HPP
 
-#include <climits>
+#include <boost/static_assert.hpp>	//BOOST_STATIC_ASSERT
+#include <climits>	                //CHAR_BIT
 
 namespace boost {
 namespace interprocess {

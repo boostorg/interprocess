@@ -79,7 +79,7 @@ class file_mapping
    #else
    file_mapping &operator=(file_mapping &&moved)
    {  
-      file_mapping tmp(move(moved));
+      file_mapping tmp(detail::move_impl(moved));
       this->swap(tmp);
       return *this;  
    }
@@ -179,6 +179,22 @@ struct is_movable<file_mapping>
 };
 
 ///@endcond
+
+//!A class that stores the name of a a file
+//!and call std::remove(name) in its destructor
+//!Useful to remove temporary files in the presence
+//!of exceptions
+class remove_file_on_destroy
+{
+   const char * m_name;
+   public:
+   remove_file_on_destroy(const char *name)
+      :  m_name(name)
+   {}
+
+   ~remove_file_on_destroy()
+   {  std::remove(m_name);  }
+};
 
 }  //namespace interprocess {
 }  //namespace boost {

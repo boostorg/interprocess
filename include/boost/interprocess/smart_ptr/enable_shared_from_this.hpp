@@ -60,7 +60,6 @@ class enable_shared_from_this
       return p;
    }
 
-   private:
    /// @cond
    typedef T element_type;
    mutable weak_ptr<element_type, A, D> _internal_weak_this;

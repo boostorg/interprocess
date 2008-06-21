@@ -13,6 +13,8 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 
+#undef BOOST_DISABLE_WIN32
+
 #if !(defined BOOST_WINDOWS) || (defined BOOST_DISABLE_WIN32)
 
    #include <unistd.h>

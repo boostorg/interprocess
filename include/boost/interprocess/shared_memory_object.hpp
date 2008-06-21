@@ -99,7 +99,7 @@ class shared_memory_object
    #else
    shared_memory_object &operator=(shared_memory_object &&moved)
    {  
-      shared_memory_object tmp(move(moved));
+      shared_memory_object tmp(detail::move_impl(moved));
       this->swap(tmp);
       return *this;  
    }
@@ -354,6 +354,22 @@ struct is_movable<shared_memory_object>
 };
 
 ///@endcond
+
+//!A class that stores the name of a shared memory
+//!and calls shared_memory_object::remove(name) in its destructor
+//!Useful to remove temporary shared memory objects in the presence
+//!of exceptions
+class remove_shared_memory_on_destroy
+{
+   const char * m_name;
+   public:
+   remove_shared_memory_on_destroy(const char *name)
+      :  m_name(name)
+   {}
+
+   ~remove_shared_memory_on_destroy()
+   {  shared_memory_object::remove(m_name);  }
+};
 
 }  //namespace interprocess {
 }  //namespace boost {

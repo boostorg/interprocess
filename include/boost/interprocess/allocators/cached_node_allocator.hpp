@@ -22,6 +22,7 @@
 #include <boost/interprocess/allocators/detail/node_pool.hpp>
 #include <boost/interprocess/allocators/detail/allocator_common.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/allocators/detail/node_tools.hpp>
 #include <cstddef>
@@ -46,7 +47,7 @@ class cached_node_allocator_v1
          < T
          , detail::shared_node_pool
             < SegmentManager
-            , sizeof(T)
+            , sizeof_value<T>::value
             , NodesPerBlock
             >
          , 1>
@@ -56,7 +57,7 @@ class cached_node_allocator_v1
          < T
          , detail::shared_node_pool
             < SegmentManager
-            , sizeof(T)
+            , sizeof_value<T>::value
             , NodesPerBlock
             >
          , 1> base_t;
@@ -95,7 +96,7 @@ class cached_node_allocator
          < T
          , detail::shared_node_pool
             < SegmentManager
-            , sizeof(T)
+            , sizeof_value<T>::value
             , NodesPerBlock
             >
          , 2>
@@ -108,7 +109,7 @@ class cached_node_allocator
          < T
          , detail::shared_node_pool
             < SegmentManager
-            , sizeof(T)
+            , sizeof_value<T>::value
             , NodesPerBlock
             >
          , 2> base_t;

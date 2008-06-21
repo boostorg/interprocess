@@ -109,7 +109,7 @@ struct rbtree_node
    #else
    template<class Convertible>
    rbtree_node(Convertible &&conv)
-      : m_data(forward<Convertible>(conv)){}
+      : m_data(detail::forward_impl<Convertible>(conv)){}
    #endif
 
    rbtree_node &operator=(const rbtree_node &other)
@@ -153,7 +153,7 @@ struct rbtree_node
 
    template<class Convertible>
    static void construct(node_type *ptr, Convertible &&value)
-   {  new(ptr) node_type(forward<Convertible>(value));  }
+   {  new(ptr) node_type(detail::forward_impl<Convertible>(value));  }
 
    template<class Convertible1, class Convertible2>
    static void construct(node_type *ptr, 
@@ -578,7 +578,7 @@ class rbtree
    iterator insert_unique_commit
       (MovableConvertible && mv, insert_commit_data &data)
    {
-      NodePtr tmp = AllocHolder::create_node(forward<MovableConvertible>(mv));
+      NodePtr tmp = AllocHolder::create_node(detail::forward_impl<MovableConvertible>(mv));
       iiterator it(this->icont().insert_unique_commit(*tmp, data));
       return iterator(it);
    }
@@ -618,7 +618,7 @@ class rbtree
       if(!ret.second)
          return ret;
       return std::pair<iterator,bool>
-         (this->insert_unique_commit(forward<MovableConvertible>(mv), data), true);
+         (this->insert_unique_commit(detail::forward_impl<MovableConvertible>(mv), data), true);
    }
    #endif
 
@@ -654,7 +654,7 @@ class rbtree
          this->insert_unique_check(hint, KeyOfValue()(mv), data);
       if(!ret.second)
          return ret.first;
-      return this->insert_unique_commit(forward<MovableConvertible>(mv), data);
+      return this->insert_unique_commit(detail::forward_impl<MovableConvertible>(mv), data);
    }
    #endif
 
@@ -691,7 +691,7 @@ class rbtree
    template<class MovableConvertible>
    iterator insert_equal(MovableConvertible &&mv)
    {
-      NodePtr p(AllocHolder::create_node(forward<MovableConvertible>(mv)));
+      NodePtr p(AllocHolder::create_node(detail::forward_impl<MovableConvertible>(mv)));
       return iterator(this->icont().insert_equal(this->icont().end(), *p));
    }
    #endif
@@ -713,7 +713,7 @@ class rbtree
    template<class MovableConvertible>
    iterator insert_equal(const_iterator hint, MovableConvertible &&mv)
    {
-      NodePtr p(AllocHolder::create_node(move(mv)));
+      NodePtr p(AllocHolder::create_node(detail::move_impl(mv)));
       return iterator(this->icont().insert_equal(hint.get(), *p));
    }
    #endif

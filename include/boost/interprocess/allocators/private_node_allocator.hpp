@@ -63,7 +63,7 @@ class private_node_allocator_base
       < Version, T, SegmentManager, NodesPerBlock>       self_t;
    typedef detail::private_node_pool
       <SegmentManager
-      , sizeof(T)
+      , sizeof_value<T>::value
       , NodesPerBlock
       > node_pool_t;
 
@@ -106,7 +106,7 @@ class private_node_allocator_base
    {
       typedef detail::private_node_pool
       <SegmentManager
-      , sizeof(T)
+      , sizeof_value<T>::value
       , NodesPerBlock
       > type;
 
