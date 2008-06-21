@@ -331,7 +331,7 @@ class private_node_pool_impl
 
    //!Deprecated, use purge_blocks
    void purge_chunks()
-   {  this->purge_blocks()(); }
+   {  this->purge_blocks(); }
 
    private:
    //!Returns a reference to the block hook placed in the end of the block
