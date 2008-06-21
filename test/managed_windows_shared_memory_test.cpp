@@ -113,6 +113,15 @@ int main ()
                   return -1;
             }
          }
+         {
+            //Map preexisting shmem again in copy-on-write
+            managed_windows_shared_memory shmem(open_read_only, MemName);
+
+            //Check vector is still there
+            MyVect *shmem_vect = shmem.find<MyVect>("MyVector").first;
+            if(!shmem_vect)
+               return -1;
+         }
       
          //Destroy and check it is not present
          w_shm_new.destroy_ptr(w_shm_vect);
@@ -121,9 +130,9 @@ int main ()
 
          //Now test move semantics
          managed_windows_shared_memory original(open_only, MemName);
-         managed_windows_shared_memory move_ctor(move(original));
+         managed_windows_shared_memory move_ctor(detail::move_impl(original));
          managed_windows_shared_memory move_assign;
-         move_assign = move(move_ctor);
+         move_assign = detail::move_impl(move_ctor);
       }
    }
 

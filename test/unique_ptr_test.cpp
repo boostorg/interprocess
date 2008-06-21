@@ -70,14 +70,14 @@ int main()
 
       //Test some copy constructors
       my_unique_ptr_class my_ptr3(0, segment.get_deleter<MyClass>());
-      my_unique_ptr_class my_ptr4(move(my_ptr3));
+      my_unique_ptr_class my_ptr4(detail::move_impl(my_ptr3));
 
       //Construct a list and fill
       MyList list(segment.get_segment_manager());
 
       //Insert from my_unique_ptr_class
-      list.push_front(move(my_ptr));
-      list.push_back(move(my_ptr2));
+      list.push_front(detail::move_impl(my_ptr));
+      list.push_back(detail::move_impl(my_ptr2));
 
       //Check pointers
       assert(my_ptr.get() == 0);
@@ -85,9 +85,9 @@ int main()
       assert(list.begin()->get() == ptr1);
       assert(list.rbegin()->get() == ptr2);
    
-      //MyList list2(move(list));
-      //list2.swap(move(MyList(segment.get_segment_manager())));
-      //list.swap(move(MyList(segment.get_segment_manager())));
+      //MyList list2(detail::move_impl(list));
+      //list2.swap(detail::move_impl(MyList(segment.get_segment_manager())));
+      //list.swap(detail::move_impl(MyList(segment.get_segment_manager())));
 
       assert(list.begin()->get() == ptr1);
       assert(list.rbegin()->get() == ptr2);
@@ -97,8 +97,8 @@ int main()
       MySet set(set_less_t(), segment.get_segment_manager());
 
       //Insert in set from list passing ownership
-      set.insert(move(*list.begin()));
-      set.insert(move(*list.rbegin()));
+      set.insert(detail::move_impl(*list.begin()));
+      set.insert(detail::move_impl(*list.rbegin()));
 
       //Check pointers
       assert(list.begin()->get() == 0);
@@ -120,12 +120,12 @@ int main()
 
       //Insert from my_unique_ptr_class
       if(ptr1 < ptr2){
-         vector.insert(vector.begin(), move(*set.begin()));
-         vector.insert(vector.end(),   move(*set.rbegin()));
+         vector.insert(vector.begin(), detail::move_impl(*set.begin()));
+         vector.insert(vector.end(),   detail::move_impl(*set.rbegin()));
       }
       else{
-         vector.insert(vector.begin(), move(*set.rbegin()));
-         vector.insert(vector.end(),   move(*set.begin()));
+         vector.insert(vector.begin(), detail::move_impl(*set.rbegin()));
+         vector.insert(vector.end(),   detail::move_impl(*set.begin()));
       }
 
       //Check pointers
@@ -134,14 +134,14 @@ int main()
       assert(vector.begin()->get() == ptr1);
       assert(vector.rbegin()->get() == ptr2);
 
-      MyVector vector2(move(vector));
+      MyVector vector2(detail::move_impl(vector));
       vector2.swap(vector);
 
       assert(vector.begin()->get() == ptr1);
       assert(vector.rbegin()->get() == ptr2);
 
       my_unique_ptr_class a(0, segment.get_deleter<MyClass>()), b(0, segment.get_deleter<MyClass>());
-      a = move(b);
+      a = detail::move_impl(b);
    }
    shared_memory_object::remove(process_name.c_str());
    return 0;

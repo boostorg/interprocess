@@ -76,9 +76,9 @@ int main ()
          std::memset(shm1.get_user_address(), 0, shm1.get_user_size());
 
          //Now test move semantics
-         shared_memory move_ctor(move(shm1));
+         shared_memory move_ctor(detail::move_impl(shm1));
          shared_memory move_assign;
-         move_assign = move(move_ctor);
+         move_assign = detail::move_impl(move_ctor);
       }
    }
    catch(std::exception &ex){

@@ -76,9 +76,9 @@ int main ()
       std::memset(file1.get_user_address(), 0, file1.get_user_size());
 
       //Now test move semantics
-      mapped_file move_ctor(move(file1));
+      mapped_file move_ctor(detail::move_impl(file1));
       mapped_file move_assign;
-      move_assign = move(move_ctor);
+      move_assign = detail::move_impl(move_ctor);
    }
    std::remove(FileName);
    return 0;

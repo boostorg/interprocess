@@ -48,18 +48,18 @@ bool copyable_only(V1 *shmvector, V2 *stdvector, detail::true_type)
    {
    IntType move_me(1);
    stdvector->insert(stdvector->begin()+size/2, 50, 1);
-   shmvector->insert(shmvector->begin()+size/2, 50, move(move_me));
+   shmvector->insert(shmvector->begin()+size/2, 50, detail::move_impl(move_me));
    if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
    }
    {
    IntType move_me(2);
-   shmvector->assign(shmvector->size()/2, move(move_me));
+   shmvector->assign(shmvector->size()/2, detail::move_impl(move_me));
    stdvector->assign(stdvector->size()/2, 2);
    if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
    }
    {
    IntType move_me(3);
-   shmvector->assign(shmvector->size()*3-1, move(move_me));
+   shmvector->assign(shmvector->size()*3-1, detail::move_impl(move_me));
    stdvector->assign(stdvector->size()*3-1, 3);
    if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
    }
@@ -109,7 +109,7 @@ int vector_test()
 
          for(int i = 0; i < max; ++i){
             IntType new_int(i);
-            shmvector->insert(shmvector->end(), move(new_int));
+            shmvector->insert(shmvector->end(), detail::move_impl(new_int));
             stdvector->insert(stdvector->end(), i);
          }
          if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
@@ -131,7 +131,7 @@ int vector_test()
             IntType aux_vect[50];
             for(int i = 0; i < 50; ++i){
                IntType new_int(-1);
-               aux_vect[i] = move(new_int);
+               aux_vect[i] = detail::move_impl(new_int);
             }
             int aux_vect2[50];
             for(int i = 0; i < 50; ++i){
@@ -154,7 +154,7 @@ int vector_test()
             IntType aux_vect[50];
             for(int i = 0; i < 50; ++i){
                IntType new_int(-1);
-               aux_vect[i] = move(new_int);
+               aux_vect[i] = detail::move_impl(new_int);
             }
             int aux_vect2[50];
             for(int i = 0; i < 50; ++i){
@@ -172,7 +172,7 @@ int vector_test()
          if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 
          IntType push_back_this(1);
-         shmvector->push_back(move(push_back_this));
+         shmvector->push_back(detail::move_impl(push_back_this));
          stdvector->push_back(int(1));
          if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 
@@ -187,7 +187,7 @@ int vector_test()
 
          for(int i = 0; i < max; ++i){
             IntType insert_this(i);
-            shmvector->insert(shmvector->begin(), move(insert_this));
+            shmvector->insert(shmvector->begin(), detail::move_impl(insert_this));
             stdvector->insert(stdvector->begin(), i);
          }
          if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;

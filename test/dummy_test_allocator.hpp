@@ -115,7 +115,7 @@ class dummy_test_allocator
                          size_type, 
                          size_type,
                          size_type &, const pointer & = 0)
-   {  return std::pair<pointer, bool>(0, true); }
+   {  return std::pair<pointer, bool>(pointer(0), true); }
 
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold.

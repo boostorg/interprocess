@@ -114,6 +114,15 @@ int main ()
       }
    }
    {
+      //Map preexisting shmem again in copy-on-write
+      managed_shared_memory shmem(open_read_only, ShmemName);
+
+      //Check vector is still there
+      MyVect *shmem_vect = shmem.find<MyVect>("MyVector").first;
+      if(!shmem_vect)
+         return -1;
+   }
+   {
       std::size_t old_free_memory;
       {
          //Map preexisting shmem again in memory
@@ -190,9 +199,9 @@ int main ()
       {
          //Now test move semantics
          managed_shared_memory original(open_only, ShmemName);
-         managed_shared_memory move_ctor(move(original));
+         managed_shared_memory move_ctor(detail::move_impl(original));
          managed_shared_memory move_assign;
-         move_assign = move(move_ctor);
+         move_assign = detail::move_impl(move_ctor);
       }
    }
 

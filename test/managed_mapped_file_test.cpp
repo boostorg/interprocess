@@ -118,6 +118,15 @@ int main ()
       }
    }
    {
+      //Map preexisting file again in copy-on-write
+      managed_mapped_file mfile(open_read_only, FileName);
+
+      //Check vector is still there
+      MyVect *mfile_vect = mfile.find<MyVect>("MyVector").first;
+      if(!mfile_vect)
+         return -1;
+   }
+   {
       std::size_t old_free_memory;
       {
          //Map preexisting file again in memory
@@ -194,9 +203,9 @@ int main ()
       {
          //Now test move semantics
          managed_mapped_file original(open_only, FileName);
-         managed_mapped_file move_ctor(move(original));
+         managed_mapped_file move_ctor(detail::move_impl(original));
          managed_mapped_file move_assign;
-         move_assign = move(move_ctor);
+         move_assign = detail::move_impl(move_ctor);
       }
    }
 

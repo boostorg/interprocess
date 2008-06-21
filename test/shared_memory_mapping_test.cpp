@@ -139,9 +139,9 @@ int main ()
       {
          //Now test move semantics
          shared_memory_object mapping(open_only, test::get_process_id_name(), read_write);
-         shared_memory_object move_ctor(move(mapping));
+         shared_memory_object move_ctor(detail::move_impl(mapping));
          shared_memory_object move_assign;
-         move_assign = move(move_ctor);
+         move_assign = detail::move_impl(move_ctor);
       }
    }
    catch(std::exception &exc){

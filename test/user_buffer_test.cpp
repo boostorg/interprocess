@@ -65,13 +65,13 @@ int main ()
    //Test move semantics
    {
       wmanaged_external_buffer user_default;
-      wmanaged_external_buffer temp_external(move(user_buffer));
-      user_default = move(temp_external);
-      user_buffer  = move(user_default);
+      wmanaged_external_buffer temp_external(detail::move_impl(user_buffer));
+      user_default = detail::move_impl(temp_external);
+      user_buffer  = detail::move_impl(user_default);
       wmanaged_heap_memory heap_default;
-      wmanaged_heap_memory temp_heap(move(heap_buffer));
-      heap_default = move(temp_heap);
-      heap_buffer  = move(heap_default);
+      wmanaged_heap_memory temp_heap(detail::move_impl(heap_buffer));
+      heap_default = detail::move_impl(temp_heap);
+      heap_buffer  = detail::move_impl(heap_default);
    }
 
    //Initialize memory

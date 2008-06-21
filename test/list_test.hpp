@@ -36,7 +36,7 @@ struct push_data_function
       typedef typename MyShmList::value_type IntType;
       for(int i = 0; i < max; ++i){
          IntType move_me(i);
-         shmlist->push_back(move(move_me));
+         shmlist->push_back(detail::move_impl(move_me));
          stdlist->push_back(i);
       }
       if(!CheckEqualContainers(shmlist, stdlist))
@@ -54,7 +54,7 @@ struct push_data_function<false>
       typedef typename MyShmList::value_type IntType;
       for(int i = 0; i < max; ++i){
          IntType move_me(i);
-         shmlist->push_front(move(move_me));
+         shmlist->push_front(detail::move_impl(move_me));
          stdlist->push_front(i);
       }
       if(!CheckEqualContainers(shmlist, stdlist))
@@ -136,7 +136,7 @@ int list_test (bool copied_allocators_equal = true)
          IntType aux_vect[50];
          for(int i = 0; i < 50; ++i){
             IntType move_me(-1);
-            aux_vect[i] = move(move_me);
+            aux_vect[i] = detail::move_impl(move_me);
          }
          int aux_vect2[50];
          for(int i = 0; i < 50; ++i){
@@ -166,7 +166,7 @@ int list_test (bool copied_allocators_equal = true)
          IntType aux_vect[50];
          for(int i = 0; i < 50; ++i){
             IntType move_me(-1);
-            aux_vect[i] = move(move_me);
+            aux_vect[i] = detail::move_impl(move_me);
          }
          int aux_vect2[50];
          for(int i = 0; i < 50; ++i){

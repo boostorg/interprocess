@@ -32,6 +32,8 @@ typedef detail::adaptive_pool_v1
 //Explicit instantiations to catch compilation errors
 template class adaptive_pool<int, managed_shared_memory::segment_manager>;
 template class detail::adaptive_pool_v1<int, managed_shared_memory::segment_manager>;
+template class adaptive_pool<void, managed_shared_memory::segment_manager>;
+template class detail::adaptive_pool_v1<void, managed_shared_memory::segment_manager>;
 
 //Alias list types
 typedef list<int, shmem_node_allocator_t>    MyShmList;

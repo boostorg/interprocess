@@ -32,6 +32,8 @@ typedef detail::cached_node_allocator_v1
 //Explicit instantiations to catch compilation errors
 template class cached_node_allocator<int, managed_shared_memory::segment_manager>;
 template class detail::cached_node_allocator_v1<int, managed_shared_memory::segment_manager>;
+template class cached_node_allocator<void, managed_shared_memory::segment_manager>;
+template class detail::cached_node_allocator_v1<void, managed_shared_memory::segment_manager>;
 
 //Alias list types
 typedef list<int, cached_node_allocator_t>    MyShmList;

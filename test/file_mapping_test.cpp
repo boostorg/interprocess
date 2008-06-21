@@ -125,9 +125,9 @@ int main ()
       {
          //Now test move semantics
          file_mapping mapping(test::get_process_id_name(), read_only);
-         file_mapping move_ctor(move(mapping));
+         file_mapping move_ctor(detail::move_impl(mapping));
          file_mapping move_assign;
-         move_assign = move(move_ctor);
+         move_assign = detail::move_impl(move_ctor);
       }
    }
    catch(std::exception &exc){
