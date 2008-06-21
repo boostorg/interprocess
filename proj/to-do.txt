@@ -40,3 +40,5 @@
 -> add private_read_only to mapped_region to support MAP_PRIVATE plus PROT_READ
 
 -> add contiguous_elements option to burst allocation
+
+-> Completely erase is_movable in code and tests for compilers with rvalue reference
