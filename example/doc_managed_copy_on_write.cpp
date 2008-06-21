@@ -12,6 +12,7 @@
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <fstream> //std::fstream
 #include <cstdio>  //std::remove
+#include <iterator>//std::distance
 
 int main()
 {
@@ -20,8 +21,10 @@ int main()
    //Try to erase any previous managed segment with the same name
    std::remove("MyManagedFile");
    std::remove("MyManagedFile2");
+   remove_file_on_destroy destroyer1("MyManagedFile");
+   remove_file_on_destroy destroyer2("MyManagedFile2");
 
-   try{
+   {
       //Create an named integer in a managed mapped file
       managed_mapped_file managed_file(create_only, "MyManagedFile", 65536);
       managed_file.construct<int>("MyInt")(0u);
@@ -43,7 +46,7 @@ int main()
          throw int(0);
 
       {  //Dump the modified copy on write segment to a file
-         std::fstream file("MyManagedFile2", std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
+         std::fstream file("MyManagedFile2", std::ios_base::out | std::ios_base::binary);
          if(!file)
             throw int(0);
          file.write((const char *)managed_file_cow.get_address(), managed_file_cow.get_size());
@@ -54,13 +57,19 @@ int main()
       if(managed_file_cow2.find<int>("MyInt").first && !managed_file_cow2.find<int>("MyInt2").first)
          throw int(0);
    }
-   catch(...){
-      std::remove("MyManagedFile");
-      std::remove("MyManagedFile2");
-      throw;
+   {
+      //Now create a read-only version
+      managed_mapped_file managed_file_ro(open_read_only, "MyManagedFile");
+      
+      //Check the original is intact
+      if(!managed_file_ro.find<int>("MyInt").first && managed_file_ro.find<int>("MyInt2").first)
+         throw int(0);
+
+      //Check the number of named objects using the iterators
+      if(std::distance(managed_file_ro.named_begin(),  managed_file_ro.named_end())  != 1 &&
+         std::distance(managed_file_ro.unique_begin(), managed_file_ro.unique_end()) != 0 )
+         throw int(0);
    }
-   std::remove("MyManagedFile");
-   std::remove("MyManagedFile2");
    return 0;
 }
 //]

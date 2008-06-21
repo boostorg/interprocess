@@ -24,24 +24,10 @@
 -> Add default algorithm and index types. The user does not need to know how are
    they implemented.
 
--> Add private mapping to managed classes.
-
--> Add unique_ptr documentation.
-
 -> Pass max size check in allocation to node pools
-
--> Add atomic_func explanation in docs
-
--> Once shrink to fit indexes is implemented test all memory has been deallocated
-   in tests to detect leaks/implementation failures.
-
--> Improve allocate_many functions to allocate all the nodes forming a singly
-   linked list of nodes.
 
 -> Use in-place expansion capabilities to shrink_to_fit and reserve functions
    from iunordered_index.
-
--> Optimize copy_n with std::copy in vector. Revise other functions to improve optimizations
 
 -> Keep an eye on container iterator constness issue to bring Interprocess containers up-to-date.
 
@@ -50,10 +36,6 @@
 -> Improve unique_ptr test to test move assignment and other goodies like assigment from null
 
 -> barrier_test fails on MacOS X on PowerPC.
-
--> void allocator instantiations fail.
-
--> Read-only managed classes. They should avoid internal locking and map memory as read-only
 
 -> add private_read_only to mapped_region to support MAP_PRIVATE plus PROT_READ
 

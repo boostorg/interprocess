@@ -33,13 +33,13 @@ int main ()
          }
       }
       std::cout << "Test successful!" << std::endl;
-      shared_memory_object::remove("shared_memory");
    }
    catch(interprocess_exception &ex){
       std::cout << "Unexpected exception: " << ex.what() << std::endl;
       shared_memory_object::remove("shared_memory");
       return 1;
    }
+   shared_memory_object::remove("shared_memory");
    return 0;
 }
 //]
