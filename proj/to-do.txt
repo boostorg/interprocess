@@ -42,3 +42,5 @@
 -> add contiguous_elements option to burst allocation
 
 -> Completely erase is_movable in code and tests for compilers with rvalue reference
+
+-> named_xxx classes and file lock should be movable
