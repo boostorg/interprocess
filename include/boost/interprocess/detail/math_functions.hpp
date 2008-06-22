@@ -17,6 +17,7 @@
 #define BOOST_INTERPROCESS_DETAIL_MATH_FUNCTIONS_HPP
 
 #include <climits>
+#include <boost/static_assert.hpp>
 
 namespace boost {
 namespace interprocess {
