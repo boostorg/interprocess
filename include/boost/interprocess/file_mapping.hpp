@@ -160,6 +160,8 @@ inline file_mapping::file_mapping
    m_mode = mode;
 }
 
+///@cond
+
 inline void file_mapping::priv_close()
 {
    if(m_handle != detail::invalid_file()){
@@ -168,7 +170,6 @@ inline void file_mapping::priv_close()
    }
 }
 
-///@cond
 
 //!Trait class to detect if a type is
 //!movable

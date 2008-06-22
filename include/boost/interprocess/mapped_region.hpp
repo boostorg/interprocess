@@ -152,6 +152,8 @@ class mapped_region
    /// @endcond
 };
 
+///@cond
+
 inline void swap(mapped_region &x, mapped_region &y)
 {  x.swap(y);  }
 
@@ -555,8 +557,6 @@ inline void mapped_region::swap(mapped_region &other)
    detail::do_swap(this->m_file_mapping_hnd, other.m_file_mapping_hnd);
    #endif
 }
-
-/// @cond
 
 //!No-op functor
 struct null_mapped_region_function

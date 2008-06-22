@@ -152,6 +152,8 @@ class shared_memory_object
    /// @endcond
 };
 
+/// @cond
+
 inline shared_memory_object::shared_memory_object() 
    :  m_handle(file_handle_t(detail::invalid_file()))
 {}
@@ -342,8 +344,6 @@ inline void shared_memory_object::priv_close()
 }
 
 #endif
-
-///@cond
 
 //!Trait class to detect if a type is
 //!movable

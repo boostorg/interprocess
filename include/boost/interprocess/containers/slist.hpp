@@ -1426,7 +1426,8 @@ struct has_trivial_destructor_after_move<slist<T, A> >
 // Specialization of insert_iterator so that insertions will be constant
 // time rather than linear time.
 
-//iG
+///@cond
+
 //Ummm, I don't like to define things in namespace std, but 
 //there is no other way
 namespace std {
@@ -1464,7 +1465,7 @@ class insert_iterator<boost::interprocess::slist<T, A> >
 
 }  //namespace std;
 
-
+///@endcond
 
 #include <boost/interprocess/detail/config_end.hpp>
 

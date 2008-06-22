@@ -143,6 +143,8 @@ class windows_shared_memory
    /// @endcond
 };
 
+/// @cond
+
 inline windows_shared_memory::windows_shared_memory() 
    :  m_handle(0)
 {}
@@ -234,8 +236,6 @@ inline void windows_shared_memory::priv_close()
       m_handle = 0;
    }
 }
-
-///@cond
 
 //!Trait class to detect if a type is
 //!movable

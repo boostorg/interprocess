@@ -352,6 +352,8 @@ class rbtree_best_fit
    static const std::size_t PayloadPerAllocation = AllocatedCtrlBytes - UsableByPreviousChunk;
 };
 
+/// @cond
+
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
 inline std::size_t rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>
    ::priv_first_block_offset(const void *this_ptr, std::size_t extra_hdr_bytes)
@@ -1331,6 +1333,8 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_deallocate(vo
    }
    priv_mark_as_free_block(block_to_insert);
 }
+
+/// @endcond
 
 }  //namespace interprocess {
 }  //namespace boost {

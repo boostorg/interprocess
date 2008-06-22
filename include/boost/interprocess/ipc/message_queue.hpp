@@ -368,7 +368,6 @@ class initialization_func_t
 };
 
 }  //namespace detail {
-/// @endcond
 
 inline message_queue::~message_queue()
 {}
@@ -610,6 +609,8 @@ inline std::size_t message_queue::get_num_msg()
 
 inline bool message_queue::remove(const char *name)
 {  return shared_memory_object::remove(name);  }
+
+/// @endcond
 
 }} //namespace boost{  namespace interprocess{
 

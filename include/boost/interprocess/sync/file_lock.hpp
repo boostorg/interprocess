@@ -32,6 +32,8 @@ namespace interprocess {
 //!A file lock, is a mutual exclusion utility similar to a mutex using a
 //!file. A file lock has sharable and exclusive locking capabilities and
 //!can be used with scoped_lock and sharable_lock classes.
+//!A file lock can't guarantee synchronization between threads of the same
+//!process so just use file locks to synchronize threads from different processes.
 class file_lock
 {
    /// @cond

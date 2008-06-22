@@ -520,8 +520,9 @@ class basic_string
    /// @endcond
 
    public:                         // Constructor, destructor, assignment.
-
+   /// @cond
    struct reserve_t {};
+   /// @endcond
 
    basic_string(reserve_t, std::size_t n,
                const allocator_type& a = allocator_type())

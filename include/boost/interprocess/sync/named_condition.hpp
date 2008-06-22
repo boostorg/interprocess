@@ -40,6 +40,9 @@ namespace interprocess {
 namespace detail{ class interprocess_tester; }
 /// @endcond
 
+//! A global condition variable that can be created by name.
+//! This condition variable is designed to work with named_mutex and
+//! can't be placed in shared memory or memory mapped files.
 class named_condition
 {
    /// @cond
@@ -182,6 +185,8 @@ class named_condition
    typedef detail::named_creation_functor<condition_holder> construct_func_t;
    /// @endcond
 };
+
+/// @cond
 
 inline named_condition::~named_condition()
 {}
@@ -328,6 +333,8 @@ inline bool named_condition::timed_wait
 
 inline bool named_condition::remove(const char *name)
 {  return shared_memory_object::remove(name); }
+
+/// @endcond
 
 }  //namespace interprocess
 }  //namespace boost

@@ -50,6 +50,8 @@ namespace interprocess {
 
 class named_condition;
 
+//!This class is a condition variable that can be placed in shared memory or
+//!memory mapped files.
 class interprocess_condition
 {
    /// @cond
