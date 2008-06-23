@@ -44,7 +44,16 @@ int test_expand_bwd()
 
    if(!test::test_all_expand_bwd<int_vector>())
       return 1;
+/*
+   //First raw volatile ints
+   typedef test::expand_bwd_test_allocator<volatile int>
+      volatile_int_allocator_type;
+   typedef vector<volatile int, volatile_int_allocator_type>
+      volatile_int_vector;
 
+   if(!test::test_all_expand_bwd<volatile_int_vector>())
+      return 1;
+*/
    //Now user defined wrapped int
    typedef test::expand_bwd_test_allocator<test::int_holder>
       int_holder_allocator_type;
@@ -72,6 +81,9 @@ int main()
    typedef allocator<int, managed_shared_memory::segment_manager> ShmemAllocator;
    typedef vector<int, ShmemAllocator> MyVector;
 
+   //typedef allocator<volatile int, managed_shared_memory::segment_manager> ShmemVolatileAllocator;
+   //typedef vector<volatile int, ShmemVolatileAllocator> MyVolatileVector;
+
    typedef allocator<test::movable_int, managed_shared_memory::segment_manager> ShmemMoveAllocator;
    typedef vector<test::movable_int, ShmemMoveAllocator> MyMoveVector;
 
@@ -80,6 +92,9 @@ int main()
 
    if(test::vector_test<managed_shared_memory, MyVector>())
       return 1;
+
+   //if(test::vector_test<managed_shared_memory, MyVolatileVector>())
+      //return 1;
 
    if(test::vector_test<managed_shared_memory, MyMoveVector>())
       return 1;

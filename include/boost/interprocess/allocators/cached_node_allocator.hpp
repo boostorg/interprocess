@@ -22,6 +22,7 @@
 #include <boost/interprocess/allocators/detail/node_pool.hpp>
 #include <boost/interprocess/allocators/detail/allocator_common.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/allocators/detail/node_tools.hpp>
 #include <cstddef>
@@ -39,15 +40,15 @@ namespace detail {
 
 template < class T
          , class SegmentManager
-         , std::size_t NodesPerChunk = 64
+         , std::size_t NodesPerBlock = 64
          >
 class cached_node_allocator_v1
    :  public detail::cached_allocator_impl
          < T
          , detail::shared_node_pool
             < SegmentManager
-            , sizeof(T)
-            , NodesPerChunk
+            , sizeof_value<T>::value
+            , NodesPerBlock
             >
          , 1>
 {
@@ -56,8 +57,8 @@ class cached_node_allocator_v1
          < T
          , detail::shared_node_pool
             < SegmentManager
-            , sizeof(T)
-            , NodesPerChunk
+            , sizeof_value<T>::value
+            , NodesPerBlock
             >
          , 1> base_t;
 
@@ -65,7 +66,7 @@ class cached_node_allocator_v1
    struct rebind
    {  
       typedef cached_node_allocator_v1
-         <T2, SegmentManager, NodesPerChunk>  other;
+         <T2, SegmentManager, NodesPerBlock>  other;
    };
 
    cached_node_allocator_v1(SegmentManager *segment_mngr,
@@ -76,7 +77,7 @@ class cached_node_allocator_v1
    template<class T2>
    cached_node_allocator_v1
       (const cached_node_allocator_v1
-         <T2, SegmentManager, NodesPerChunk> &other)
+         <T2, SegmentManager, NodesPerBlock> &other)
       : base_t(other)
    {}
 };
@@ -87,7 +88,7 @@ class cached_node_allocator_v1
 
 template < class T
          , class SegmentManager
-         , std::size_t NodesPerChunk
+         , std::size_t NodesPerBlock
          >
 class cached_node_allocator
    /// @cond
@@ -95,8 +96,8 @@ class cached_node_allocator
          < T
          , detail::shared_node_pool
             < SegmentManager
-            , sizeof(T)
-            , NodesPerChunk
+            , sizeof_value<T>::value
+            , NodesPerBlock
             >
          , 2>
    /// @endcond
@@ -108,8 +109,8 @@ class cached_node_allocator
          < T
          , detail::shared_node_pool
             < SegmentManager
-            , sizeof(T)
-            , NodesPerChunk
+            , sizeof_value<T>::value
+            , NodesPerBlock
             >
          , 2> base_t;
 
@@ -119,7 +120,7 @@ class cached_node_allocator
    template<class T2>
    struct rebind
    {  
-      typedef cached_node_allocator<T2, SegmentManager, NodesPerChunk>  other;
+      typedef cached_node_allocator<T2, SegmentManager, NodesPerBlock>  other;
    };
 
    cached_node_allocator(SegmentManager *segment_mngr,
@@ -129,7 +130,7 @@ class cached_node_allocator
 
    template<class T2>
    cached_node_allocator
-      (const cached_node_allocator<T2, SegmentManager, NodesPerChunk> &other)
+      (const cached_node_allocator<T2, SegmentManager, NodesPerBlock> &other)
       : base_t(other)
    {}
 
@@ -181,7 +182,7 @@ class cached_node_allocator
    //!Can throw boost::interprocess::bad_alloc
    template<class T2>
    cached_node_allocator
-      (const cached_node_allocator<T2, SegmentManager, NodesPerChunk> &other);
+      (const cached_node_allocator<T2, SegmentManager, NodesPerBlock> &other);
 
    //!Destructor, removes node_pool_t from memory
    //!if its reference count reaches to zero. Never throws
@@ -207,9 +208,9 @@ class cached_node_allocator
    //!Never throws
    void deallocate(const pointer &ptr, size_type count);
 
-   //!Deallocates all free chunks
+   //!Deallocates all free blocks
    //!of the pool
-   void deallocate_free_chunks();
+   void deallocate_free_blocks();
 
    //!Swaps allocators. Does not throw. If each allocator is placed in a
    //!different memory segment, the result is undefined.
@@ -225,7 +226,7 @@ class cached_node_allocator
 
    //!Default construct an object. 
    //!Throws if T's default constructor throws
-   void construct(const pointer &ptr);
+   void construct(const pointer &ptr, const_reference v);
 
    //!Destroys object. Throws if object's
    //!destructor throws
@@ -242,7 +243,7 @@ class cached_node_allocator
                          size_type preferred_size,
                          size_type &received_size, const pointer &reuse = 0);
 
-   //!Allocates many elements of size elem_size in a contiguous chunk
+   //!Allocates many elements of size elem_size in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -251,11 +252,11 @@ class cached_node_allocator
    multiallocation_iterator allocate_many(size_type elem_size, std::size_t num_elements);
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
-   //!contiguous chunk
+   //!contiguous block
    //!of memory. The elements must be deallocated
    multiallocation_iterator allocate_many(const size_type *elem_sizes, size_type n_elements);
 
-   //!Allocates many elements of size elem_size in a contiguous chunk
+   //!Allocates many elements of size elem_size in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -268,7 +269,7 @@ class cached_node_allocator
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate_one();
 
-   //!Allocates many elements of size == 1 in a contiguous chunk
+   //!Allocates many elements of size == 1 in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -281,7 +282,7 @@ class cached_node_allocator
    //!with other functions different from allocate_one(). Never throws
    void deallocate_one(const pointer &p);
 
-   //!Allocates many elements of size == 1 in a contiguous chunk
+   //!Allocates many elements of size == 1 in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -302,15 +303,15 @@ class cached_node_allocator
 
 //!Equality test for same type
 //!of cached_node_allocator
-template<class T, class S, std::size_t NodesPerChunk> inline
-bool operator==(const cached_node_allocator<T, S, NodesPerChunk> &alloc1, 
-                const cached_node_allocator<T, S, NodesPerChunk> &alloc2);
+template<class T, class S, std::size_t NPC> inline
+bool operator==(const cached_node_allocator<T, S, NPC> &alloc1, 
+                const cached_node_allocator<T, S, NPC> &alloc2);
 
 //!Inequality test for same type
 //!of cached_node_allocator
-template<class T, class S, std::size_t NodesPerChunk> inline
-bool operator!=(const cached_node_allocator<T, S, NodesPerChunk> &alloc1, 
-                const cached_node_allocator<T, S, NodesPerChunk> &alloc2);
+template<class T, class S, std::size_t NPC> inline
+bool operator!=(const cached_node_allocator<T, S, NPC> &alloc1, 
+                const cached_node_allocator<T, S, NPC> &alloc2);
 
 #endif
 

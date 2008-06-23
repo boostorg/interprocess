@@ -58,6 +58,15 @@ separate compilation. However, the subset used by [*Boost.Interprocess] does
 not need any separate compilation so the user can define `BOOST_DATE_TIME_NO_LIB`
 to avoid Boost from trying to automatically link the [*Boost.DateTime].
 
+In POSIX systems, [*Boost.Interprocess] uses pthread system calls to implement
+classes like mutexes, condition variables, etc... In some operating systems,
+these POSIX calls are implemented in separate libraries that are not automatically
+linked by the compiler. For example, in some Linux systems POSIX pthread functions
+are implemented in `librt.a` library, so you might need to add that library
+when linking an executable or shared library that uses [*Boost.Interprocess].
+If you obtain linking errors related to those pthread functions, please revise
+your system's documentation to know which library implements them.
+
 [endsect]
 
 [section:tested_compilers Tested compilers]
@@ -161,6 +170,9 @@ also the comparison functor when an allocator is passed in the constructor:
 
 [import ../example/doc_map.cpp]
 [doc_map]
+
+For a more advanced example including containers of containers, see the section
+[link interprocess.allocators_containers.containers_explained.containers_of_containers Containers of containers].
 
 [endsect]
 
@@ -550,6 +562,30 @@ but this does not mean that it [*will] fail if it's in use. Just the same
 behavior as the standard C (stdio.h) `int remove(const char *path)` function.
 
 [endsect]
+
+[section:anonymous_shared_memory Anonymous shared memory for UNIX systems]
+
+Creating a shared memory segment and mapping it can be a bit tedious when several
+processes are involved. When processes are related via `fork()` operating system 
+call in UNIX sytems a simpler method is available using anonymous shared memory.
+
+This feature has been implemented in UNIX systems mapping the device `\dev\zero` or
+just using the `MAP_ANONYMOUS` in a POSIX conformant `mmap` system call.
+
+This feature is wrapped in [*Boost.Interprocess] using the `anonymous_shared_memory()`
+function, which returns a `mapped_region` object holding an anonymous shared memory
+segment that can be shared by related processes.
+
+Here's is an example:
+
+[import ../example/doc_anonymous_shared_memory.cpp]
+[doc_anonymous_shared_memory]
+
+Once the segment is created, a `fork()` call can
+be used so that `region` is used to communicate two related processes.
+
+[endsect]
+
 
 [section:windows_shared_memory Native windows shared memory]
 
@@ -1298,7 +1334,7 @@ All the mutex types from [*Boost.Interprocess] implement the following operation
 [blurb ['[*void lock()]]]
 
 [*Effects:]
- The calling thread tries to obtain ownership of the mutex, and if another thread has ownership of the mutex, it waits until it can obtain the ownership. If a thread takes ownership of the mutex the mutex must be unlocked by the same mutex. If the mutex supports recursive locking, the mutex must be unlocked the same number of times it is locked.
+ The calling thread tries to obtain ownership of the mutex, and if another thread has ownership of the mutex, it waits until it can obtain the ownership. If a thread takes ownership of the mutex the mutex must be unlocked by the same thread. If the mutex supports recursive locking, the mutex must be unlocked the same number of times it is locked.
 
 [*Throws:] *interprocess_exception* on error.
 
@@ -2129,7 +2165,8 @@ more features and operations, see their reference for more informations
 
 [section:lock_conversions Lock Transfers Through Move Semantics]
 
-[blurb [*Interprocess uses its own move semantics emulation code. 
+[blurb [*Interprocess uses its own move semantics emulation code for compilers
+that don't support rvalues references. 
 This is a temporary solution until a Boost move semantics library is accepted.]]
 
 Scoped locks and similar utilities offer simple resource management possibilities,
@@ -3063,6 +3100,8 @@ To use a managed shared memory, you must include the following header:
    //
    managed_shared_memory segment      (open_only,       "MySharedMemory");//Shared memory object name[c++]
 
+[c++]
+
    //1.  If the segment was previously created
    //    equivalent to "open_only".
    //2.  Otherwise, equivalent to "open_only" (size is ignored)
@@ -3519,6 +3558,36 @@ Here is an example showing this functionality:
 
 [endsect]
 
+[section:managed_memory_segment_atomic_func Executing an object function atomically]
+
+Sometimes the programmer must execute some code, and needs to execute it with the
+guarantee that no other process or thread will create or destroy any named, unique
+or anonymous object while executing the functor. A user might want to create several
+named objects and initialize them, but those objects should be available for the rest of processes
+at once.
+
+To achieve this, the programmer can use the `atomic_func()` function offered by
+managed classes:
+
+[c++]
+
+   //This object function will create several named objects
+   create_several_objects_func func(/**/);
+
+   //While executing the function, no other process will be
+   //able to create or destroy objects
+   managed_memory.atomic_func(func);
+
+
+Note that `atomic_func` does not prevent other processes from allocating raw memory
+or executing member functions for already constructed objects (e.g.: another process
+might be pushing elements into a vector placed in the segment). The atomic function
+only blocks named, unique and anonymous creation, search and destruction
+(concurrent calls to `construct<>`, `find<>`, `find_or_construct<>`, `destroy<>`...)
+from other processes.
+
+[endsect]
+
 [endsect]
 
 [section:managed_memory_segment_advanced_features Managed Memory Segment Advanced Features]
@@ -3855,7 +3924,7 @@ contain any of these values: `expand_fwd`, `expand_bwd`.
 *  If the parameter `command` only contains the value `expand_bwd` (with optional
    additional `nothrow_allocation`), the allocator will try to increase the size of
    the memory block referenced by pointer `reuse_ptr` only moving the start of the
-   block to a returned new position new_ptr. If it's not possible, it will try to
+   block to a returned new position `new_ptr`. If it's not possible, it will try to
    move the start of the block as much as possible as long as this results in
    `size(new_ptr) >= limit_size`. Success is reported only if this results in
    `limit_size <= size(new_ptr)`.
@@ -3863,7 +3932,7 @@ contain any of these values: `expand_fwd`, `expand_bwd`.
 *  If the parameter `command` only contains the value `allocate_new` (with optional
    additional `nothrow_allocation`), the allocator will try to allocate memory for
    `preferred_size` objects. If it's not possible it will try to allocate memory for
-   at least limit_size` objects.
+   at least `limit_size` objects.
 
 *  If the parameter `command` only contains a combination of `expand_fwd` and
    `allocate_new`, (with optional additional `nothrow_allocation`) the allocator will
@@ -3918,8 +3987,8 @@ contain any of these values: `expand_fwd`, `expand_bwd`.
 *  If the user chooses `char` as template argument and a backwards expansion is
    performed, although properly aligned, the returned buffer might not be 
    suitable because the distance between the new beginning and the old beginning
-   might not multiple of the type the user wants to construct, because due to internal
-   restriction the expansion can be slightly bigger than the requested. [*When
+   might not multiple of the type the user wants to construct, since due to internal
+   restrictions the expansion can be slightly bigger than the requested bytes. [*When
    performing backwards expansion, if you have already constructed objects in the
    old buffer, make sure to specify correctly the type.]
 
@@ -3932,6 +4001,43 @@ Here is an small example that shows the use of `allocation_command`:
 performance gains. It's specially useful when programming vector-like data
 structures where the programmer can minimize both the number of allocation
 requests and the memory waste.
+
+[endsect]
+
+[section:copy_on_write_read_only Opening managed shared memory and mapped files with Copy On Write or Read Only modes]
+
+When mapping a memory segment based on shared memory or files, there is an option to
+open them using [*open_copy_on_write] option. This option is similar to `open_only` but
+every change the programmer does with this managed segment is kept private to this process
+and is not translated to the underlying device (shared memory or file).
+
+The underlying shared memory or file is opened as read-only so several processes can
+share an initial managed segment and make private changes to it. If many processes
+open a managed segment in copy on write mode and not modified pages from the managed
+segment will be shared between all those processes, with considerable memory savings.
+
+Opening managed shared memory and mapped files with [*open_read_only] maps the the
+underlying device in memory with [*read-only] attributes. This means that any attempt
+to write that memory, either creating objects or locking any mutex might result in an
+page-fault error (and thus, program termination) from the OS. Read-only mode opens
+the underlying device (shared memory, file...) in read-only mode and
+can result in considerable memory savings if several processes just want to process
+a managed memory segment without modifying it. Read-only mode operations are limited:
+
+*  Read-only mode must be used only from managed classes. If the programmer obtains
+   the segment manager and tries to use it directly it might result in an access violation.
+   The reason for this is that the segment manager is placed in the underlying device
+   and does not nothing about the mode it's been mapped in memory.
+
+*  Only const member functions from managed segments should be used.
+
+*  Additionally, the `find<>` member function avoids using internal locks and can be
+   used to look for named and unique objects.
+
+Here's an example that shows the use of these two open modes:
+
+[import ../example/doc_managed_copy_on_write.cpp]
+[doc_managed_copy_on_write]
 
 [endsect]
 
@@ -4930,6 +5036,56 @@ Boost.Interprocess containers:
 
 [import ../example/doc_move_containers.cpp]
 [doc_move_containers]
+
+[endsect]
+
+[section:containers_of_containers Containers of containers]
+
+When creating containers of containers, each container needs an allocator.
+To avoid using several allocators with complex type definitions, we can take
+advantage of the type erasure provided by void allocators and the ability
+to implicitly convert void allocators in allocators that allocate other types.
+
+Here we have an example that builds a map in shared memory. Key is a string
+and the mapped type is a class that stores several containers:
+
+[import ../example/doc_complex_map.cpp]
+[doc_complex_map]
+
+[endsect]
+
+[endsect]
+
+[section:additional_containers Boost containers compatible with Boost.Interprocess]
+
+As mentioned, container developers might need to change their implementation to make them
+compatible with Boost.Interprocess, because implementation usually ignore allocators with
+smart pointers. Hopefully several Boost containers are compatible with [*Interprocess].
+
+[section:unordered Boost unordered containers]
+
+[*Boost.Unordered] containers are compatible with Interprocess, so programmers can store
+hash containers in shared memory and memory mapped files. Here's an small example storing
+`unordered_map` in shared memory:
+
+[import ../example/doc_unordered_map.cpp]
+[doc_unordered_map]
+
+[endsect]
+
+[section:multi_index Boost.MultiIndex containers]
+
+The widely used [*Boost.MultiIndex] library is compatible with [*Boost.Interprocess] so
+we can construct pretty good databases in shared memory. Constructing databases in shared
+memory is a bit tougher than in normal memory, usually because those databases contain strings
+and those strings need to be placed in shared memory. Shared memory strings require
+an allocator in their constructors so this usually makes object insertion a bit more
+complicated.
+
+Here's is an example that shows how to put a multi index container in shared memory:
+
+[import ../example/doc_multi_index.cpp]
+[doc_multi_index]
 
 [endsect]
 
@@ -6262,7 +6418,7 @@ will manage the index. `segment_manager` will define interesting internal types 
 For example, the index type `flat_map_index` based in `boost::interprocess::flat_map` 
 is just defined as:
 
-[import ../../../boost/interprocess/indexes/flat_map_index.hpp]
+[import ../../boost/interprocess/indexes/flat_map_index.hpp]
 [flat_map_index]
 
 
@@ -6384,6 +6540,18 @@ warranty.
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_36_00 Boost 1.36 Release]
+
+*  Added anonymous shared memory for UNIX systems.
+*  Fixed erroneous `void` return types from `flat_map::erase()` functions.
+*  Fixed missing move semantics on managed memory classes.
+*  Added copy_on_write and open_read_only options for shared memory and mapped file managed classes.
+*  [*ABI breaking]: Added to `mapped_region` the mode used to create it.
+*  Corrected instantiation errors in void allocators.
+*  `shared_ptr` is movable and supports aliasing.
+
+[endsect]
 
 [section:release_notes_boost_1_35_00 Boost 1.35 Release]
 
@@ -6651,20 +6819,6 @@ datagram oriented PF_UNIX-like mechanism in C++. And for very fast inter-process
 remote calls Solaris doors is an interesting alternative to implement for C++.
 But the work to implement PF_UNIX-like sockets and doors would be huge 
 (and it might be difficult in a user-level library). Any network expert volunteer?
-
-[endsect]
-
-[section:future_containers Unordered associative containers and other containers]
-
-We should be able to construct boost::unordered_xxx family in managed memory segments,
-so that there is no code duplication in boost. So [*Boost.Interprocess] should cooperate
-with boost container developers instead of duplicating effort writing it's own containers.
-
-A very interesting project is making [*boost::multi_index] compatible with
-[*Boost.Interprocess] ready for shared memory. This could be a good basis for memory
-mapped data-bases. The work to achieve this, however, can be huge. It would be
-interesting a collaboration with [*Intrusive] library to achieve shared memory
-intrusive containers.
 
 [endsect]
 

@@ -23,9 +23,6 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 
-//!\file
-//!Describes a named shared memory object allocation user class. 
-
 namespace boost {
 
 namespace interprocess {
@@ -58,10 +55,11 @@ class basic_managed_shared_memory
 
    typedef detail::create_open_func<base_t>        create_open_func_t;
 
-   basic_managed_shared_memory();
-
    basic_managed_shared_memory *get_this_pointer()
    {  return this;   }
+
+   private:
+   typedef typename base_t::char_ptr_holder_t   char_ptr_holder_t;
    /// @endcond
 
    public: //functions
@@ -73,6 +71,11 @@ class basic_managed_shared_memory
    //!the open constructor overload. To erase the resource from the system
    //!use remove().
    ~basic_managed_shared_memory()
+   {}
+
+   //!Default constructor. Does nothing.
+   //!Useful in combination with move semantics
+   basic_managed_shared_memory()
    {}
 
    //!Creates shared memory and creates and places the segment manager. 
@@ -97,10 +100,32 @@ class basic_managed_shared_memory
                 detail::DoOpenOrCreate))
    {}
 
-   //!Connects to a created shared memory and it's the segment manager.
-   //!Never throws.
+   //!Connects to a created shared memory and its segment manager.
+   //!in copy_on_write mode.
+   //!This can throw.
+   basic_managed_shared_memory (open_copy_on_write_t, const char* name, 
+                                const void *addr = 0)
+      : base_t()
+      , base2_t(open_only, name, copy_on_write, addr, 
+                create_open_func_t(get_this_pointer(), 
+                detail::DoOpen))
+   {}
+
+   //!Connects to a created shared memory and its segment manager.
+   //!in read-only mode.
+   //!This can throw.
+   basic_managed_shared_memory (open_read_only_t, const char* name, 
+                                const void *addr = 0)
+      : base_t()
+      , base2_t(open_only, name, read_only, addr, 
+                create_open_func_t(get_this_pointer(), 
+                detail::DoOpen))
+   {}
+
+   //!Connects to a created shared memory and its segment manager.
+   //!This can throw.
    basic_managed_shared_memory (open_only_t open_only, const char* name, 
-                              const void *addr = 0)
+                                const void *addr = 0)
       : base_t()
       , base2_t(open_only, name, read_write, addr, 
                 create_open_func_t(get_this_pointer(), 
@@ -111,7 +136,7 @@ class basic_managed_shared_memory
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_shared_memory
-      (detail::moved_object<basic_managed_shared_memory> &moved)
+      (detail::moved_object<basic_managed_shared_memory> moved)
    {  this->swap(moved.get());   }
    #else
    basic_managed_shared_memory(basic_managed_shared_memory &&moved)
@@ -122,7 +147,7 @@ class basic_managed_shared_memory
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    basic_managed_shared_memory &operator=
-      (detail::moved_object<basic_managed_shared_memory> &moved)
+      (detail::moved_object<basic_managed_shared_memory> moved)
    {  this->swap(moved.get());   return *this;  }
    #else
    basic_managed_shared_memory &operator=(basic_managed_shared_memory &&moved)
@@ -157,7 +182,44 @@ class basic_managed_shared_memory
       return base_t::template shrink_to_fit
          <basic_managed_shared_memory>(filename);
    }
+
+   /// @cond
+
+   //!Tries to find a previous named allocation address. Returns a memory
+   //!buffer and the object count. If not found returned pointer is 0.
+   //!Never throws.
+   template <class T>
+   std::pair<T*, std::size_t> find  (char_ptr_holder_t name)
+   {
+      if(base2_t::get_mapped_region().get_mode() == read_only){
+         return base_t::template find_no_lock<T>(name);
+      }
+      else{
+         return base_t::template find<T>(name);
+      }
+   }
+
+   /// @endcond
 };
+
+///@cond
+
+//!Trait class to detect if a type is
+//!movable
+template
+      <
+         class CharType, 
+         class AllocationAlgorithm, 
+         template<class IndexConfig> class IndexType
+      >
+struct is_movable<basic_managed_shared_memory
+   <CharType,  AllocationAlgorithm, IndexType>
+>
+{
+   static const bool value = true;
+};
+
+///@endcond
 
 }  //namespace interprocess {
 }  //namespace boost {

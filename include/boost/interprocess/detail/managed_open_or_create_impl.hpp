@@ -21,6 +21,7 @@
 #include <boost/interprocess/detail/interprocess_tester.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/interprocess/detail/move.hpp>
 #include <boost/cstdint.hpp>
 
 namespace boost {
@@ -36,7 +37,6 @@ template<class DeviceAbstraction, bool FileBased = true>
 class managed_open_or_create_impl
 {
    //Non-copyable
-   managed_open_or_create_impl();
    managed_open_or_create_impl(const managed_open_or_create_impl &);
    managed_open_or_create_impl &operator=(const managed_open_or_create_impl &);
 
@@ -55,6 +55,9 @@ class managed_open_or_create_impl
          detail::ct_rounded_size
             < sizeof(boost::uint32_t)
             , detail::alignment_of<detail::max_align>::value>::value;
+
+   managed_open_or_create_impl()
+   {}
 
    managed_open_or_create_impl(create_only_t, 
                  const char *name,
@@ -151,29 +154,29 @@ class managed_open_or_create_impl
          , construct_func);
    }
 
+
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   managed_open_or_create_impl
-      (detail::moved_object<managed_open_or_create_impl> &moved)
+   managed_open_or_create_impl(detail::moved_object<managed_open_or_create_impl> moved)
    {  this->swap(moved.get());   }
    #else
-   managed_open_or_create_impl
-      (managed_open_or_create_impl &&moved)
+   managed_open_or_create_impl(managed_open_or_create_impl &&moved)
    {  this->swap(moved);   }
    #endif
 
+   //!Move assignment. If *this owns a memory mapped region, it will be
+   //!destroyed and it will take ownership of "other"'s memory mapped region.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   managed_open_or_create_impl &operator=
-      (detail::moved_object<managed_open_or_create_impl> &moved)
+   managed_open_or_create_impl &operator=(detail::moved_object<managed_open_or_create_impl> moved)
    {  
       managed_open_or_create_impl tmp(moved);
       this->swap(tmp);
       return *this;  
    }
+
    #else
-   managed_open_or_create_impl &operator=
-      (managed_open_or_create_impl &&moved)
+   managed_open_or_create_impl &operator=(managed_open_or_create_impl &&moved)
    {  
-      managed_open_or_create_impl tmp(move(moved));
+      managed_open_or_create_impl tmp(detail::move_impl(moved));
       this->swap(tmp);
       return *this;  
    }
@@ -205,6 +208,10 @@ class managed_open_or_create_impl
 
    bool flush()
    {  return m_mapped_region.flush();  }
+
+
+   const mapped_region &get_mapped_region() const
+   {  return m_mapped_region;  }
 
    private:
 
@@ -276,16 +283,30 @@ class managed_open_or_create_impl
       (void)mode;
       error_info err;
       bool created = false;
+      bool ronly   = false;
+      bool cow     = false;
       DeviceAbstraction dev;
 
       if(type != detail::DoOpen && size < ManagedOpenOrCreateUserOffset){
          throw interprocess_exception(error_info(size_error));
       }
 
-      if(type == detail::DoOpen){
+      if(type == detail::DoOpen && mode == read_write){
          DeviceAbstraction tmp(open_only, m_name.c_str(), read_write);
          tmp.swap(dev);
          created = false;
+      }
+      else if(type == detail::DoOpen && mode == read_only){
+         DeviceAbstraction tmp(open_only, m_name.c_str(), read_only);
+         tmp.swap(dev);
+         created = false;
+         ronly   = true;
+      }
+      else if(type == detail::DoOpen && mode == copy_on_write){
+         DeviceAbstraction tmp(open_only, m_name.c_str(), read_only);
+         tmp.swap(dev);
+         created = false;
+         cow     = true;
       }
       else if(type == detail::DoCreate){
          create_device<FileBased>(dev, m_name.c_str(), size, file_like_t());
@@ -379,7 +400,7 @@ class managed_open_or_create_impl
             }
          }
 
-         mapped_region  region(dev, read_write, 0, 0, addr);
+         mapped_region  region(dev, ronly ? read_only : (cow ? copy_on_write : read_write), 0, 0, addr);
 
          boost::uint32_t *patomic_word = static_cast<boost::uint32_t*>(region.get_address());
          boost::uint32_t value = detail::atomic_read32(patomic_word);
@@ -392,7 +413,9 @@ class managed_open_or_create_impl
          if(value != InitializedSegment)
             throw interprocess_exception(error_info(corrupted_error));
 
-         construct_func((char*)region.get_address() + ManagedOpenOrCreateUserOffset, region.get_size(), false);
+         construct_func( (char*)region.get_address() + ManagedOpenOrCreateUserOffset
+                        , region.get_size() - ManagedOpenOrCreateUserOffset
+                        , false);
          //All ok, just move resources to the external mapped region
          m_mapped_region.swap(region);
       }
@@ -413,6 +436,21 @@ inline void swap(managed_open_or_create_impl<DeviceAbstraction> &x
 {  x.swap(y);  }
 
 }  //namespace detail {
+
+
+///@cond
+
+//!Trait class to detect if a type is
+//!movable
+template<class DeviceAbstraction>
+
+struct is_movable<detail::managed_open_or_create_impl<DeviceAbstraction> >
+{
+   enum {  value = true };
+};
+
+///@endcond
+
 }  //namespace interprocess {
 }  //namespace boost {
 

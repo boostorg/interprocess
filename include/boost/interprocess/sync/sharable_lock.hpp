@@ -127,14 +127,14 @@ class sharable_lock
    //!   sharable_lock with no blocking. If the upgr sharable_lock does not own the mutex, then
    //!   neither will this sharable_lock. Only a moved sharable_lock's will match this
    //!   signature. An non-moved sharable_lock can be moved with the expression:
-   //!   "move(lock);". This constructor does not alter the state of the mutex,
+   //!   "detail::move_impl(lock);". This constructor does not alter the state of the mutex,
    //!   only potentially who owns it.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   explicit sharable_lock(detail::moved_object<sharable_lock<mutex_type> > upgr)
+   sharable_lock(detail::moved_object<sharable_lock<mutex_type> > upgr)
       : mp_mutex(0), m_locked(upgr.get().owns())
    {  mp_mutex = upgr.get().release(); }
    #else
-   explicit sharable_lock(sharable_lock<mutex_type> &&upgr)
+   sharable_lock(sharable_lock<mutex_type> &&upgr)
       : mp_mutex(0), m_locked(upgr.owns())
    {  mp_mutex = upgr.release(); }
    #endif
@@ -147,9 +147,9 @@ class sharable_lock
    //!Notes: If upgr is locked, this constructor will lock this sharable_lock while
    //!   unlocking upgr. Only a moved sharable_lock's will match this
    //!   signature. An non-moved upgradable_lock can be moved with the expression:
-   //!   "move(lock);".*/
+   //!   "detail::move_impl(lock);".*/
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   explicit sharable_lock(detail::moved_object<upgradable_lock<mutex_type> > upgr)
+   sharable_lock(detail::moved_object<upgradable_lock<mutex_type> > upgr)
       : mp_mutex(0), m_locked(false)
    {
       upgradable_lock<mutex_type> &u_lock = upgr.get();
@@ -160,7 +160,7 @@ class sharable_lock
       mp_mutex = u_lock.release();
    }
    #else
-   explicit sharable_lock(upgradable_lock<mutex_type> &&upgr)
+   sharable_lock(upgradable_lock<mutex_type> &&upgr)
       : mp_mutex(0), m_locked(false)
    {
       upgradable_lock<mutex_type> &u_lock = upgr;
@@ -181,9 +181,9 @@ class sharable_lock
    //!   to a sharable-ownership of this sharable_lock. 
    //!   Only a moved scoped_lock's will match this
    //!   signature. An non-moved scoped_lock can be moved with the expression:
-   //!   "move(lock);".*/
+   //!   "detail::move_impl(lock);".*/
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   explicit sharable_lock(detail::moved_object<scoped_lock<mutex_type> > scop)
+   sharable_lock(detail::moved_object<scoped_lock<mutex_type> > scop)
       : mp_mutex(0), m_locked(false)
    {
       scoped_lock<mutex_type> &e_lock = scop.get();
@@ -194,7 +194,7 @@ class sharable_lock
       mp_mutex = e_lock.release();
    }
    #else
-   explicit sharable_lock(scoped_lock<mutex_type> &&scop)
+   sharable_lock(scoped_lock<mutex_type> &&scop)
       : mp_mutex(0), m_locked(false)
    {
       scoped_lock<mutex_type> &e_lock = scop;

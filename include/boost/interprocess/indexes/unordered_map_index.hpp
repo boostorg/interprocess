@@ -27,6 +27,8 @@
 namespace boost {
 namespace interprocess {
 
+///@cond
+
 //!Helper class to define typedefs from
 //!IndexTraits
 template <class MapConfig>
@@ -54,6 +56,8 @@ struct unordered_map_index_aux
    typedef unordered_map<key_type,  mapped_type, hasher,
                          key_equal, allocator_type>      index_t;
 };
+
+///@endcond
 
 //!Index type based in unordered_map. Just derives from unordered_map and
 //!defines the interface needed by managed memory segments

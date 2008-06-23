@@ -7,7 +7,6 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/indexes/iset_index.hpp>
 #include "named_allocation_test_template.hpp"

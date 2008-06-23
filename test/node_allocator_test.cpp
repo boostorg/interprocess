@@ -11,6 +11,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/list.hpp>
+#include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/allocators/node_allocator.hpp>
 #include "print_container.hpp"
 #include "dummy_test_allocator.hpp"
@@ -30,6 +31,8 @@ typedef detail::node_allocator_v1
 //Explicit instantiations to catch compilation errors
 template class node_allocator<int, managed_shared_memory::segment_manager>;
 template class detail::node_allocator_v1<int, managed_shared_memory::segment_manager>;
+template class node_allocator<void, managed_shared_memory::segment_manager>;
+template class detail::node_allocator_v1<void, managed_shared_memory::segment_manager>;
 
 //Alias list types
 typedef list<int, shmem_node_allocator_t>    MyShmList;

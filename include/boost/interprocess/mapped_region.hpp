@@ -45,6 +45,8 @@ namespace interprocess {
 
 /// @cond
 namespace detail{ class interprocess_tester; }
+namespace detail{ class raw_mapped_region_creator; }
+
 /// @endcond
 
 //!The mapped_region class represents a portion or region created from a
@@ -107,6 +109,10 @@ class mapped_region
    //!mapped memory. Never throws.
    offset_t    get_offset() const;
 
+   //!Returns the mode of the mapping used to contruct the mapped file.
+   //!Never throws.
+   mode_t get_mode() const;
+
    //!Flushes to the disk a byte range within the mapped memory. 
    //!Never throws
    bool flush(std::size_t mapping_offset = 0, std::size_t numbytes = 0);
@@ -135,14 +141,18 @@ class mapped_region
    std::size_t       m_size;
    offset_t          m_offset;
    offset_t          m_extra_offset;
+   mode_t            m_mode;
    #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
    file_handle_t          m_file_mapping_hnd;
    #endif
 
    friend class detail::interprocess_tester;
+   friend class detail::raw_mapped_region_creator;
    void dont_close_on_destruction();
    /// @endcond
 };
+
+///@cond
 
 inline void swap(mapped_region &x, mapped_region &y)
 {  x.swap(y);  }
@@ -161,8 +171,11 @@ inline mapped_region::~mapped_region()
 inline std::size_t mapped_region::get_size()  const  
 {  return m_size; }
 
-inline offset_t  mapped_region::get_offset()  const  
+inline offset_t mapped_region::get_offset()  const  
 {  return m_offset;   }
+
+inline mode_t mapped_region::get_mode()  const  
+{  return m_mode;   }
 
 inline void*    mapped_region::get_address()  const  
 {  return m_base; }
@@ -170,7 +183,7 @@ inline void*    mapped_region::get_address()  const
 #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
 inline mapped_region::mapped_region()
-   :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0)
+   :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0), m_mode(read_only)
    ,  m_file_mapping_hnd(detail::invalid_file())
 {}
 
@@ -178,12 +191,14 @@ inline mapped_region::mapped_region()
 inline mapped_region::mapped_region(detail::moved_object<mapped_region> other)
    :  m_base(0), m_size(0), m_offset(0)
    ,  m_extra_offset(0)
+   ,  m_mode(read_only)
    ,  m_file_mapping_hnd(detail::invalid_file())
 {  this->swap(other.get());   }
 #else
 inline mapped_region::mapped_region(mapped_region &&other)
    :  m_base(0), m_size(0), m_offset(0)
    ,  m_extra_offset(0)
+   ,  m_mode(read_only)
    ,  m_file_mapping_hnd(detail::invalid_file())
 {  this->swap(other);   }
 #endif
@@ -203,7 +218,7 @@ inline mapped_region::mapped_region
    ,offset_t offset
    ,std::size_t size
    ,const void *address)
-   :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0)
+   :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0), m_mode(mode)
    ,  m_file_mapping_hnd(detail::invalid_file())
 {
    mapping_handle_t mhandle = mapping.get_mapping_handle();
@@ -362,9 +377,9 @@ inline void mapped_region::priv_close()
       m_base = 0;
    }
    #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
-      if(m_file_mapping_hnd){
+      if(m_file_mapping_hnd != detail::invalid_file()){
          winapi::close_handle(m_file_mapping_hnd);
-         m_file_mapping_hnd = 0;
+         m_file_mapping_hnd = detail::invalid_file();
       }
    #endif
 }
@@ -375,16 +390,16 @@ inline void mapped_region::dont_close_on_destruction()
 #else    //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
 
 inline mapped_region::mapped_region()
-   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0)
+   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0), m_mode(read_only)
 {}
 
 #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
 inline mapped_region::mapped_region(detail::moved_object<mapped_region> other)
-   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0)
+   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0), m_mode(read_only)
 {  this->swap(other.get());   }
 #else
 inline mapped_region::mapped_region(mapped_region &&other)
-   :  m_base(MAP_FAILED), m_size(0), m_offset(0)
+   :  m_base(MAP_FAILED), m_size(0), m_offset(0), m_mode(read_only)
    ,  m_extra_offset(0)
 {  this->swap(other);   }
 #endif
@@ -400,7 +415,7 @@ inline mapped_region::mapped_region
    offset_t offset,
    std::size_t size,
    const void *address)
-   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0)
+   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0), m_mode(mode)
 {
    if(size == 0){
 //      offset_t filesize = lseek64
@@ -441,7 +456,7 @@ inline mapped_region::mapped_region
       break;
 
       case copy_on_write:
-         prot  |= PROT_READ;
+         prot  |= (PROT_WRITE | PROT_READ);
          flags |= MAP_PRIVATE;
       break;
    
@@ -537,18 +552,25 @@ inline void mapped_region::swap(mapped_region &other)
    detail::do_swap(this->m_size, other.m_size);
    detail::do_swap(this->m_offset, other.m_offset);
    detail::do_swap(this->m_extra_offset,     other.m_extra_offset);
+   detail::do_swap(this->m_mode,     other.m_mode);
    #if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
    detail::do_swap(this->m_file_mapping_hnd, other.m_file_mapping_hnd);
    #endif
 }
-
-/// @cond
 
 //!No-op functor
 struct null_mapped_region_function
 {
    bool operator()(void *, std::size_t , bool) const
       {   return true;   }
+};
+
+//!Trait class to detect if a type is
+//!movable
+template<>
+struct is_movable<mapped_region>
+{
+   enum {  value = true };
 };
 /// @endcond
 

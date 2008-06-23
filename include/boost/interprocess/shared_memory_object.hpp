@@ -76,10 +76,12 @@ class shared_memory_object
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    shared_memory_object
-      (detail::moved_object<shared_memory_object> &moved)
+      (const detail::moved_object<shared_memory_object> moved)
+      :  m_handle(file_handle_t(detail::invalid_file()))
    {  this->swap(moved.get());   }
    #else
    shared_memory_object(shared_memory_object &&moved)
+      :  m_handle(file_handle_t(detail::invalid_file()))
    {  this->swap(moved);   }
    #endif
 
@@ -88,7 +90,7 @@ class shared_memory_object
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    shared_memory_object &operator=
-      (detail::moved_object<shared_memory_object> &moved)
+      (detail::moved_object<shared_memory_object> moved)
    {  
       shared_memory_object tmp(moved);
       this->swap(tmp);
@@ -97,7 +99,7 @@ class shared_memory_object
    #else
    shared_memory_object &operator=(shared_memory_object &&moved)
    {  
-      shared_memory_object tmp(move(moved));
+      shared_memory_object tmp(detail::move_impl(moved));
       this->swap(tmp);
       return *this;  
    }
@@ -149,6 +151,8 @@ class shared_memory_object
    std::string    m_filename;
    /// @endcond
 };
+
+/// @cond
 
 inline shared_memory_object::shared_memory_object() 
    :  m_handle(file_handle_t(detail::invalid_file()))
@@ -340,6 +344,32 @@ inline void shared_memory_object::priv_close()
 }
 
 #endif
+
+//!Trait class to detect if a type is
+//!movable
+template<>
+struct is_movable<shared_memory_object>
+{
+   enum {  value = true };
+};
+
+///@endcond
+
+//!A class that stores the name of a shared memory
+//!and calls shared_memory_object::remove(name) in its destructor
+//!Useful to remove temporary shared memory objects in the presence
+//!of exceptions
+class remove_shared_memory_on_destroy
+{
+   const char * m_name;
+   public:
+   remove_shared_memory_on_destroy(const char *name)
+      :  m_name(name)
+   {}
+
+   ~remove_shared_memory_on_destroy()
+   {  shared_memory_object::remove(m_name);  }
+};
 
 }  //namespace interprocess {
 }  //namespace boost {

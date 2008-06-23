@@ -108,6 +108,8 @@ class named_recursive_mutex
    /// @endcond
 };
 
+/// @cond
+
 inline named_recursive_mutex::~named_recursive_mutex()
 {}
 
@@ -158,6 +160,8 @@ inline bool named_recursive_mutex::timed_lock(const boost::posix_time::ptime &ab
 
 inline bool named_recursive_mutex::remove(const char *name)
 {  return shared_memory_object::remove(name); }
+
+/// @endcond
 
 }  //namespace interprocess {
 }  //namespace boost {

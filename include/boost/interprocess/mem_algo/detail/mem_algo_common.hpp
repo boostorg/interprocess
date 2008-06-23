@@ -23,6 +23,8 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/iterators.hpp>
+#include <boost/interprocess/detail/math_functions.hpp>
+#include <boost/interprocess/detail/utilities.hpp>
 #include <boost/assert.hpp>
 #include <boost/static_assert.hpp>
 
@@ -281,6 +283,101 @@ class memory_algorithm_common
       return this_type::priv_allocate_many(memory_algo, &elem_bytes, n_elements, 0);
    }
 
+   static bool calculate_lcm_and_needs_backwards_lcmed
+      (std::size_t backwards_multiple, std::size_t received_size, std::size_t size_to_achieve,
+      std::size_t &lcm_out, std::size_t &needs_backwards_lcmed_out)
+   {
+      // Now calculate lcm
+      std::size_t max = backwards_multiple;
+      std::size_t min = Alignment;
+      std::size_t needs_backwards;
+      std::size_t needs_backwards_lcmed;
+      std::size_t lcm;
+      std::size_t current_forward;
+      //Swap if necessary
+      if(max < min){
+         std::size_t tmp = min;
+         min = max;
+         max = tmp;
+      }
+      //Check if it's power of two
+      if((backwards_multiple & (backwards_multiple-1)) == 0){
+         if(0 != (size_to_achieve & ((backwards_multiple-1)))){
+            return false;
+         }
+
+         lcm = max;
+         //If we want to use minbytes data to get a buffer between maxbytes
+         //and minbytes if maxbytes can't be achieved, calculate the 
+         //biggest of all possibilities
+         current_forward = detail::get_truncated_size_po2(received_size, backwards_multiple);
+         needs_backwards = size_to_achieve - current_forward;
+         assert((needs_backwards % backwards_multiple) == 0);
+         needs_backwards_lcmed = detail::get_rounded_size_po2(needs_backwards, lcm);
+         lcm_out = lcm;
+         needs_backwards_lcmed_out = needs_backwards_lcmed;
+         return true;
+      }
+      //Check if it's multiple of alignment
+      else if((backwards_multiple & (Alignment - 1u)) == 0){
+         lcm = backwards_multiple;
+         current_forward = detail::get_truncated_size(received_size, backwards_multiple);
+         //No need to round needs_backwards because backwards_multiple == lcm
+         needs_backwards_lcmed = needs_backwards = size_to_achieve - current_forward;
+         assert((needs_backwards_lcmed & (Alignment - 1u)) == 0);
+         lcm_out = lcm;
+         needs_backwards_lcmed_out = needs_backwards_lcmed;
+         return true;
+      }
+      //Check if it's multiple of the half of the alignmment
+      else if((backwards_multiple & ((Alignment/2u) - 1u)) == 0){
+         lcm = backwards_multiple*2u;
+         current_forward = detail::get_truncated_size(received_size, backwards_multiple);
+         needs_backwards_lcmed = needs_backwards = size_to_achieve - current_forward;
+         if(0 != (needs_backwards_lcmed & (Alignment-1)))
+         //while(0 != (needs_backwards_lcmed & (Alignment-1)))
+            needs_backwards_lcmed += backwards_multiple;
+         assert((needs_backwards_lcmed % lcm) == 0);
+         lcm_out = lcm;
+         needs_backwards_lcmed_out = needs_backwards_lcmed;
+         return true;
+      }
+      //Check if it's multiple of the half of the alignmment
+      else if((backwards_multiple & ((Alignment/4u) - 1u)) == 0){
+         std::size_t remainder;
+         lcm = backwards_multiple*4u;
+         current_forward = detail::get_truncated_size(received_size, backwards_multiple);
+         needs_backwards_lcmed = needs_backwards = size_to_achieve - current_forward;
+         //while(0 != (needs_backwards_lcmed & (Alignment-1)))
+            //needs_backwards_lcmed += backwards_multiple;
+         if(0 != (remainder = ((needs_backwards_lcmed & (Alignment-1))>>(Alignment/8u)))){
+            if(backwards_multiple & Alignment/2u){
+               needs_backwards_lcmed += (remainder)*backwards_multiple;
+            }
+            else{
+               needs_backwards_lcmed += (4-remainder)*backwards_multiple;
+            }
+         }
+         assert((needs_backwards_lcmed % lcm) == 0);
+         lcm_out = lcm;
+         needs_backwards_lcmed_out = needs_backwards_lcmed;
+         return true;
+      }
+      else{
+         lcm = detail::lcm(max, min);
+      }
+      //If we want to use minbytes data to get a buffer between maxbytes
+      //and minbytes if maxbytes can't be achieved, calculate the 
+      //biggest of all possibilities
+      current_forward = detail::get_truncated_size(received_size, backwards_multiple);
+      needs_backwards = size_to_achieve - current_forward;
+      assert((needs_backwards % backwards_multiple) == 0);
+      needs_backwards_lcmed = detail::get_rounded_size(needs_backwards, lcm);
+      lcm_out = lcm;
+      needs_backwards_lcmed_out = needs_backwards_lcmed;
+      return true;
+   }
+
    static multiallocation_iterator allocate_many
       ( MemoryAlgorithm *memory_algo
       , const std::size_t *elem_sizes
@@ -309,13 +406,13 @@ class memory_algorithm_common
       if(nbytes > UsableByPreviousChunk)
          nbytes -= UsableByPreviousChunk;
       
-      //We can find a aligned portion if we allocate a chunk that has alignment
+      //We can find a aligned portion if we allocate a block that has alignment
       //nbytes + alignment bytes or more.
       std::size_t minimum_allocation = max_value
          (nbytes + alignment, std::size_t(MinBlockUnits*Alignment));
-      //Since we will split that chunk, we must request a bit more memory
+      //Since we will split that block, we must request a bit more memory
       //if the alignment is near the beginning of the buffer, because otherwise,
-      //there is no space for a new chunk before the alignment.
+      //there is no space for a new block before the alignment.
       // 
       //            ____ Aligned here
       //           |
@@ -390,7 +487,7 @@ class memory_algorithm_common
       // | MBU +more | ACB | (3) | BCU |
       //  -----------------------------------------------------
       //This size will be the minimum size to be able to create a
-      //new chunk in the end.
+      //new block in the end.
       const std::size_t second_min_units = max_value(std::size_t(MinBlockUnits),
                         ceil_units(nbytes) + AllocatedCtrlUnits );
 

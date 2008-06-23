@@ -352,6 +352,8 @@ class rbtree_best_fit
    static const std::size_t PayloadPerAllocation = AllocatedCtrlBytes - UsableByPreviousChunk;
 };
 
+/// @cond
+
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
 inline std::size_t rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>
    ::priv_first_block_offset(const void *this_ptr, std::size_t extra_hdr_bytes)
@@ -651,7 +653,7 @@ inline std::pair<T*, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignmen
                         T *reuse_ptr)
 {
    std::pair<void*, bool> ret = priv_allocation_command
-      (command, limit_size, preferred_size, received_size, reuse_ptr, sizeof(T));
+      (command, limit_size, preferred_size, received_size, (void*)reuse_ptr, sizeof(T));
 
    BOOST_ASSERT(0 == ((std::size_t)ret.first % detail::alignment_of<T>::value));
    return std::pair<T *, bool>(static_cast<T*>(ret.first), ret.second);
@@ -664,7 +666,7 @@ inline std::pair<void*, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlign
                         void *reuse_ptr, std::size_t sizeof_object)
 {
    if(!sizeof_object)
-      return std::pair<void *, bool>(0, 0);
+      return std::pair<void *, bool>((void *)0, 0);
    if(command & try_shrink_in_place){
       bool success = algo_impl_t::try_shrink
          ( this, reuse_ptr, limit_objects*sizeof_object
@@ -776,25 +778,15 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
       assert(prev_block->m_size == reuse->m_prev_size);
       algo_impl_t::assert_alignment(prev_block);
 
-      //Let's calculate the number of extra bytes of data before the current
-      //block's begin. The value is a multiple of backwards_multiple
-      std::size_t needs_backwards = preferred_size - 
-         detail::get_truncated_size(received_size, backwards_multiple);
-
-      const std::size_t lcm = detail::lcm(max_value(backwards_multiple, (std::size_t)Alignment)
-                                         ,min_value(backwards_multiple, (std::size_t)Alignment));
-
-      //If we want to use min_size data to get a buffer between preferred_size
-      //and min_size if preferred_size can't be achieved, calculate the 
-      //biggest of all possibilities
-      if(!only_preferred_backwards){
-         needs_backwards = min_size - detail::get_truncated_size(received_size, backwards_multiple);
+      std::size_t needs_backwards_aligned;
+      std::size_t lcm;
+      if(!algo_impl_t::calculate_lcm_and_needs_backwards_lcmed
+         ( backwards_multiple
+         , received_size
+         , only_preferred_backwards ? preferred_size : min_size
+         , lcm, needs_backwards_aligned)){
+         return 0;
       }
-
-      assert((needs_backwards % backwards_multiple) == 0);
-
-      const std::size_t needs_backwards_aligned = 
-         detail::get_rounded_size(needs_backwards, lcm);
 
       //Check if previous block has enough size
       if(std::size_t(prev_block->m_size*Alignment) >= needs_backwards_aligned){
@@ -822,7 +814,7 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
             assert(prev_block->m_size >= BlockCtrlUnits);
             priv_mark_as_free_block(prev_block);
 
-            //Update the old previous block in the free chunks tree
+            //Update the old previous block in the free blocks tree
             //If the new size fulfills tree invariants do nothing,
             //otherwise erase() + insert()
             {
@@ -857,10 +849,8 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
             m_header.m_imultiset.erase(Imultiset::s_iterator_to(*prev_block));
 
             //Just merge the whole previous block
-            needs_backwards = detail::get_truncated_size
-               (prev_block->m_size*Alignment, backwards_multiple);
-            //received_size = received_size/backwards_multiple*backwards_multiple + needs_backwards;
-            received_size = received_size + needs_backwards;
+            //prev_block->m_size*Alignment is multiple of lcm (and backwards_multiple)
+            received_size = received_size + prev_block->m_size*Alignment;
 
             m_header.m_allocated += prev_block->m_size*Alignment;
             //Now update sizes
@@ -942,7 +932,7 @@ std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>:
    received_size = 0;
 
    if(limit_size > preferred_size)
-      return return_type(0, false);
+      return return_type((void*)0, false);
 
    //Number of units to request (including block_ctrl header)
    std::size_t preferred_units = priv_get_total_units(preferred_size);
@@ -981,7 +971,7 @@ std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>:
          (command, limit_size, preferred_size, received_size, reuse_ptr, false, backwards_multiple), true);
    }
 
-   return return_type(0, false);
+   return return_type((void*)0, false);
 }
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
@@ -1070,12 +1060,12 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
       assert(next_block->m_size == priv_next_block(next_block)->m_prev_size);
       const std::size_t rem_units = merged_units - intended_units;
 
-      //Check if we we need to update the old next block in the free chunks tree
+      //Check if we we need to update the old next block in the free blocks tree
       //If the new size fulfills tree invariants, we just need to replace the node
       //(the block start has been displaced), otherwise erase() + insert().
       //
-      //This fixup must be done in two parts, because the new next chunk might
-      //overwrite the tree hook of the old next chunk. So we first erase the
+      //This fixup must be done in two parts, because the new next block might
+      //overwrite the tree hook of the old next block. So we first erase the
       //old if needed and we'll insert the new one after creating the new next
       imultiset_iterator old_next_block_it(Imultiset::s_iterator_to(*next_block));
       const bool size_invariants_broken = 
@@ -1304,7 +1294,7 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_deallocate(vo
    bool merge_with_prev    = !priv_is_prev_allocated(block);
    bool merge_with_next    = !priv_is_allocated_block(next_block);
 
-   //Merge logic. First just update block sizes, then fix free chunks tree
+   //Merge logic. First just update block sizes, then fix free blocks tree
    if(merge_with_prev || merge_with_next){
       //Merge if the previous is free
       if(merge_with_prev){
@@ -1344,10 +1334,11 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_deallocate(vo
    priv_mark_as_free_block(block_to_insert);
 }
 
+/// @endcond
+
 }  //namespace interprocess {
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_INTERPROCESS_MEM_ALGO_RBTREE_BEST_FIT_HPP
-

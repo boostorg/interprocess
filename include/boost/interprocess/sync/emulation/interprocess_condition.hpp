@@ -9,7 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-
+#include <boost/interprocess/detail/move.hpp>
 namespace boost {
 namespace interprocess {
 
@@ -86,11 +86,23 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
       if(now >= abs_time) return false;
    }
 
+   typedef boost::interprocess::scoped_lock<interprocess_mutex> InternalLock;
    //The enter interprocess_mutex guarantees that while executing a notification, 
    //no other thread can execute the do_timed_wait method. 
    {
       //---------------------------------------------------------------
-      boost::interprocess::scoped_lock<interprocess_mutex> lock(m_enter_mut);
+      InternalLock lock;
+      if(tout_enabled){
+         InternalLock dummy(m_enter_mut, abs_time);
+         lock = detail::move_impl(dummy);
+      }
+      else{
+         InternalLock dummy(m_enter_mut);
+         lock = detail::move_impl(dummy);
+      }
+
+      if(!lock)
+         return false;
       //---------------------------------------------------------------
       //We increment the waiting thread count protected so that it will be
       //always constant when another thread enters the notification logic.
@@ -146,7 +158,18 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
          //Notification occurred, we will lock the checking interprocess_mutex so that
          //if a notify_one notification occurs, only one thread can exit
         //---------------------------------------------------------------
-         boost::interprocess::scoped_lock<interprocess_mutex> lock(m_check_mut);
+         InternalLock lock;
+         if(tout_enabled){
+            InternalLock dummy(m_check_mut, abs_time);
+            lock = detail::move_impl(dummy);
+         }
+         else{
+            InternalLock dummy(m_check_mut);
+            lock = detail::move_impl(dummy);
+         }
+
+         if(!lock)
+            return false;
          //---------------------------------------------------------------
          boost::uint32_t result = detail::atomic_cas32
                         ((boost::uint32_t*)&m_command, SLEEP, NOTIFY_ONE);

@@ -12,7 +12,6 @@
 #include <ios> //std::streamoff
 #include <fstream>   //std::ofstream, std::ifstream
 #include <iostream>
-#include <ios>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include <memory>    //std::auto_ptr
@@ -122,6 +121,13 @@ int main ()
                return 1;
             }
          }
+      }
+      {
+         //Now test move semantics
+         file_mapping mapping(test::get_process_id_name(), read_only);
+         file_mapping move_ctor(detail::move_impl(mapping));
+         file_mapping move_assign;
+         move_assign = detail::move_impl(move_ctor);
       }
    }
    catch(std::exception &exc){

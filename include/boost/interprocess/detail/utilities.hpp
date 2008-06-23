@@ -373,11 +373,24 @@ inline std::size_t get_rounded_size(std::size_t orig_size, std::size_t round_to)
    return ((orig_size-1)/round_to+1)*round_to;
 }
 
+//Truncates "orig_size" to a multiple of "multiple" bytes.
 inline std::size_t get_truncated_size(std::size_t orig_size, std::size_t multiple)
 {
    return orig_size/multiple*multiple;
 }
- 
+
+//Rounds "orig_size" by excess to round_to bytes. round_to must be power of two
+inline std::size_t get_rounded_size_po2(std::size_t orig_size, std::size_t round_to)
+{
+   return ((orig_size-1)&(~(round_to-1))) + round_to;
+}
+
+//Truncates "orig_size" to a multiple of "multiple" bytes. multiple must be power of two
+inline std::size_t get_truncated_size_po2(std::size_t orig_size, std::size_t multiple)
+{
+   return (orig_size & (~(multiple-1)));
+}
+
 template <std::size_t OrigSize, std::size_t RoundTo>
 struct ct_rounded_size
 {
@@ -513,61 +526,61 @@ struct pair
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class D, class S>
    pair(const detail::moved_object<std::pair<D, S> >& p)
-      : first(move(p.get().first)), second(move(p.get().second))
+      : first(detail::move_impl(p.get().first)), second(detail::move_impl(p.get().second))
    {}
    #else
    template <class D, class S>
    pair(std::pair<D, S> && p)
-      : first(move(p.first)), second(move(p.second))
+      : first(detail::move_impl(p.first)), second(detail::move_impl(p.second))
    {}
    #endif
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class D, class S>
    pair(const detail::moved_object<pair<D, S> >& p)
-      : first(move(p.get().first)), second(move(p.get().second))
+      : first(detail::move_impl(p.get().first)), second(detail::move_impl(p.get().second))
    {}
    #else
    template <class D, class S>
    pair(pair<D, S> && p)
-      : first(move(p.first)), second(move(p.second))
+      : first(detail::move_impl(p.first)), second(detail::move_impl(p.second))
    {}
    #endif
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class U, class V>
    pair(const detail::moved_object<U> &x, const detail::moved_object<V> &y)
-      : first(move(x.get())), second(move(y.get()))
+      : first(detail::move_impl(x.get())), second(detail::move_impl(y.get()))
    {}
    #else
    template <class U, class V>
    pair(U &&x, V &&y)
-      : first(move(x)), second(move(y))
+      : first(detail::move_impl(x)), second(detail::move_impl(y))
    {}
    #endif
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    pair(const detail::moved_object<pair> &p)
-      : first(move(p.get().first)), second(move(p.get().second))
+      : first(detail::move_impl(p.get().first)), second(detail::move_impl(p.get().second))
    {}
    #else
    pair(pair &&p)
-      : first(move(p.first)), second(move(p.second))
+      : first(detail::move_impl(p.first)), second(detail::move_impl(p.second))
    {}
    #endif
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    pair& operator=(const detail::moved_object<pair> &p)
    {
-      first  = move(p.get().first);
-      second = move(p.get().second);
+      first  = detail::move_impl(p.get().first);
+      second = detail::move_impl(p.get().second);
       return *this;
    }
    #else
    pair& operator=(pair &&p)
    {
-      first  = move(p.first);
-      second = move(p.second);
+      first  = detail::move_impl(p.first);
+      second = detail::move_impl(p.second);
       return *this;
    }
    #endif
@@ -583,16 +596,16 @@ struct pair
    template <class D, class S>
    pair& operator=(const detail::moved_object<std::pair<D, S> > &p)
    {
-      first  = move(p.get().first);
-      second = move(p.get().second);
+      first  = detail::move_impl(p.get().first);
+      second = detail::move_impl(p.get().second);
       return *this;
    }
    #else
    template <class D, class S>
    pair& operator=(std::pair<D, S> &&p)
    {
-      first  = move(p.first);
-      second = move(p.second);
+      first  = detail::move_impl(p.first);
+      second = detail::move_impl(p.second);
       return *this;
    }
    #endif
@@ -753,6 +766,54 @@ addressof(T& v)
   return reinterpret_cast<T*>(
        &const_cast<char&>(reinterpret_cast<const volatile char &>(v)));
 }
+
+//Anti-exception node eraser
+template<class Cont>
+class value_eraser
+{
+   public:
+   value_eraser(Cont & cont, typename Cont::iterator it) 
+      : m_cont(cont), m_index_it(it), m_erase(true){}
+   ~value_eraser()  
+   {  if(m_erase) m_cont.erase(m_index_it);  }
+
+   void release() {  m_erase = false;  }
+
+   private:
+   Cont                   &m_cont;
+   typename Cont::iterator m_index_it;
+   bool                    m_erase;
+};
+
+template <class T>
+struct sizeof_value
+{
+   static const std::size_t value = sizeof(T);
+};
+
+template <>
+struct sizeof_value<void>
+{
+   static const std::size_t value = sizeof(void*);
+};
+
+template <>
+struct sizeof_value<const void>
+{
+   static const std::size_t value = sizeof(void*);
+};
+
+template <>
+struct sizeof_value<volatile void>
+{
+   static const std::size_t value = sizeof(void*);
+};
+
+template <>
+struct sizeof_value<const volatile void>
+{
+   static const std::size_t value = sizeof(void*);
+};
 
 }  //namespace interprocess { 
 }  //namespace boost {

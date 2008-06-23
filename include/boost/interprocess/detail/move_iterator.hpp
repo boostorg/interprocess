@@ -53,7 +53,7 @@ class move_iterator
 
    reference operator*() const
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   {  return move(*m_it);  }
+   {  return detail::move_impl(*m_it);  }
    #else
    {  return *m_it;  }
    #endif
@@ -86,7 +86,7 @@ class move_iterator
    {  m_it -= n; return *this;   }
 
    reference operator[](difference_type n) const
-   {  return move(m_it[n]);   }
+   {  return detail::move_impl(m_it[n]);   }
 
    private:
    It m_it;

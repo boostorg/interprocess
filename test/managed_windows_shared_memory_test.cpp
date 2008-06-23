@@ -72,20 +72,68 @@ int main ()
       //Construct a vector in the shared memory
       w_shm_vect = w_shm.construct<MyVect> ("MyVector") (myallocator);
 
-      //Map preexisting segment again in memory
-      managed_windows_shared_memory w_shm_new(open_only, MemName);
+      {
+         //Map preexisting segment again in memory
+         managed_windows_shared_memory w_shm_new(open_only, MemName);
 
-      //Check vector is still there
-      w_shm_vect = w_shm_new.find<MyVect>("MyVector").first;
-      if(!w_shm_vect)
-         return -1;
+         //Check vector is still there
+         w_shm_vect = w_shm_new.find<MyVect>("MyVector").first;
+         if(!w_shm_vect)
+            return -1;
 
-      if(w_shm_new.get_size() != w_shm.get_size())
-         return 1;
-      //Destroy and check it is not present
-      w_shm_new.destroy_ptr(w_shm_vect);
-      if(0 != w_shm_new.find<MyVect>("MyVector").first)
-         return 1;
+         if(w_shm_new.get_size() != w_shm.get_size())
+            return 1;
+
+         {
+            {
+               //Map preexisting shmem again in copy-on-write
+               managed_windows_shared_memory shmem(open_copy_on_write, MemName);
+
+               //Check vector is still there
+               MyVect *shmem_vect = shmem.find<MyVect>("MyVector").first;
+               if(!shmem_vect)
+                  return -1;
+
+               //Erase vector
+               shmem.destroy_ptr(shmem_vect);
+
+               //Make sure vector is erased
+               shmem_vect = shmem.find<MyVect>("MyVector").first;
+               if(shmem_vect)
+                  return -1;
+            }
+            //Now check vector is still in the s
+            {
+               //Map preexisting shmem again in copy-on-write
+               managed_windows_shared_memory shmem(open_copy_on_write, MemName);
+
+               //Check vector is still there
+               MyVect *shmem_vect = shmem.find<MyVect>("MyVector").first;
+               if(!shmem_vect)
+                  return -1;
+            }
+         }
+         {
+            //Map preexisting shmem again in copy-on-write
+            managed_windows_shared_memory shmem(open_read_only, MemName);
+
+            //Check vector is still there
+            MyVect *shmem_vect = shmem.find<MyVect>("MyVector").first;
+            if(!shmem_vect)
+               return -1;
+         }
+      
+         //Destroy and check it is not present
+         w_shm_new.destroy_ptr(w_shm_vect);
+         if(0 != w_shm_new.find<MyVect>("MyVector").first)
+            return 1;
+
+         //Now test move semantics
+         managed_windows_shared_memory original(open_only, MemName);
+         managed_windows_shared_memory move_ctor(detail::move_impl(original));
+         managed_windows_shared_memory move_assign;
+         move_assign = detail::move_impl(move_ctor);
+      }
    }
 
    return 0;

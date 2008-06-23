@@ -84,7 +84,44 @@ int main ()
       if(!shmem_vect)
          return -1;
    }
+   {
+      {
+         //Map preexisting shmem again in copy-on-write
+         managed_shared_memory shmem(open_copy_on_write, ShmemName);
 
+         //Check vector is still there
+         MyVect *shmem_vect = shmem.find<MyVect>("MyVector").first;
+         if(!shmem_vect)
+            return -1;
+
+         //Erase vector
+         shmem.destroy_ptr(shmem_vect);
+
+         //Make sure vector is erased
+         shmem_vect = shmem.find<MyVect>("MyVector").first;
+         if(shmem_vect)
+            return -1;
+      }
+      //Now check vector is still in the shmem
+      {
+         //Map preexisting shmem again in copy-on-write
+         managed_shared_memory shmem(open_copy_on_write, ShmemName);
+
+         //Check vector is still there
+         MyVect *shmem_vect = shmem.find<MyVect>("MyVector").first;
+         if(!shmem_vect)
+            return -1;
+      }
+   }
+   {
+      //Map preexisting shmem again in copy-on-write
+      managed_shared_memory shmem(open_read_only, ShmemName);
+
+      //Check vector is still there
+      MyVect *shmem_vect = shmem.find<MyVect>("MyVector").first;
+      if(!shmem_vect)
+         return -1;
+   }
    {
       std::size_t old_free_memory;
       {
@@ -158,6 +195,13 @@ int main ()
          final_shmem_size = shmem.get_size();
          if(next_shmem_size <= final_shmem_size)
             return -1;
+      }
+      {
+         //Now test move semantics
+         managed_shared_memory original(open_only, ShmemName);
+         managed_shared_memory move_ctor(detail::move_impl(original));
+         managed_shared_memory move_assign;
+         move_assign = detail::move_impl(move_ctor);
       }
    }
 

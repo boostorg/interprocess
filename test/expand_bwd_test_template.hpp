@@ -15,6 +15,7 @@
 #include <vector>
 #include "expand_bwd_test_allocator.hpp"
 #include <algorithm>
+#include <boost/type_traits/remove_volatile.hpp>
 
 namespace boost { namespace interprocess { namespace test {
 
@@ -107,7 +108,8 @@ template<class VectorWithExpandBwdAllocator>
 bool test_insert_with_expand_bwd()
 {
    typedef typename VectorWithExpandBwdAllocator::value_type value_type;
-   typedef std::vector<value_type> Vect;
+   typedef typename boost::remove_volatile<value_type>::type non_volatile_value_type;
+   typedef std::vector<non_volatile_value_type> Vect;
    const int MemorySize = 1000;
 
    //Distance old and new buffer
@@ -131,37 +133,42 @@ bool test_insert_with_expand_bwd()
 
    for(int iteration = 0; iteration < Iterations; ++iteration)
    {
-      Vect memory;
-      memory.resize(MemorySize);
+      value_type *memory = new value_type[MemorySize];
+      try {
+         std::vector<non_volatile_value_type> initial_data;
+         initial_data.resize(InitialSize[iteration]);
+         for(int i = 0; i < InitialSize[iteration]; ++i){
+            initial_data[i] = i;
+         }
 
-      Vect initial_data;
-      initial_data.resize(InitialSize[iteration]);
-      for(int i = 0; i < InitialSize[iteration]; ++i){
-         initial_data[i] = value_type(i);
-      }
+         Vect data_to_insert;
+         data_to_insert.resize(InsertSize[iteration]);
+         for(int i = 0; i < InsertSize[iteration]; ++i){
+            data_to_insert[i] = -i;
+         }
 
-      Vect data_to_insert;
-      data_to_insert.resize(InsertSize[iteration]);
-      for(int i = 0; i < InsertSize[iteration]; ++i){
-         data_to_insert[i] = value_type(-i);
+         expand_bwd_test_allocator<value_type> alloc
+            ((value_type*)&memory[0], MemorySize, Offset[iteration]);
+         VectorWithExpandBwdAllocator vector(alloc);
+         vector.insert( vector.begin()
+                     , initial_data.begin(), initial_data.end());
+         vector.insert( vector.begin() + Position[iteration]
+                     , data_to_insert.begin(), data_to_insert.end());
+         initial_data.insert(initial_data.begin() + Position[iteration]
+                           , data_to_insert.begin(), data_to_insert.end());
+         //Now check that values are equal
+         if(!CheckEqualVector(vector, initial_data)){
+            std::cout << "test_assign_with_expand_bwd::CheckEqualVector failed." << std::endl 
+                     << "   Class: " << typeid(VectorWithExpandBwdAllocator).name() << std::endl
+                     << "   Iteration: " << iteration << std::endl;
+            return false;
+         }
       }
-
-      expand_bwd_test_allocator<value_type> alloc
-         (&memory[0], memory.size(), Offset[iteration]);
-      VectorWithExpandBwdAllocator vector(alloc);
-      vector.insert( vector.begin()
-                   , initial_data.begin(), initial_data.end());
-      vector.insert( vector.begin() + Position[iteration]
-                   , data_to_insert.begin(), data_to_insert.end());
-      initial_data.insert(initial_data.begin() + Position[iteration]
-                         , data_to_insert.begin(), data_to_insert.end());
-      //Now check that values are equal
-      if(!CheckEqualVector(vector, initial_data)){
-         std::cout << "test_assign_with_expand_bwd::CheckEqualVector failed." << std::endl 
-                   << "   Class: " << typeid(VectorWithExpandBwdAllocator).name() << std::endl
-                   << "   Iteration: " << iteration << std::endl;
-         return false;
+      catch(...){
+         delete []((non_volatile_value_type*)memory);
+         throw;
       }
+      delete []((non_volatile_value_type*)memory);
    }
 
    return true;
@@ -173,7 +180,8 @@ template<class VectorWithExpandBwdAllocator>
 bool test_assign_with_expand_bwd()
 {
    typedef typename VectorWithExpandBwdAllocator::value_type value_type;
-   typedef std::vector<value_type> Vect;
+   typedef typename boost::remove_volatile<value_type>::type non_volatile_value_type;
+   typedef std::vector<non_volatile_value_type> Vect;
    const int MemorySize = 200;
 
    const int Offset[]      = { 50, 50, 50};
@@ -183,41 +191,46 @@ bool test_assign_with_expand_bwd()
 
    for(int iteration = 0; iteration <Iterations; ++iteration)
    {
-      Vect memory;
-      memory.resize(MemorySize);
+      value_type *memory = new value_type[MemorySize];
+      try {
+         //Create initial data
+         std::vector<non_volatile_value_type> initial_data;
+         initial_data.resize(InitialSize[iteration]);
+         for(int i = 0; i < InitialSize[iteration]; ++i){
+            initial_data[i] = i;
+         }
 
-      //Create initial data
-      Vect initial_data;
-      initial_data.resize(InitialSize[iteration]);
-      for(int i = 0; i < InitialSize[iteration]; ++i){
-         initial_data[i] = i;
+         //Create data to assign
+         std::vector<non_volatile_value_type> data_to_assign;
+         data_to_assign.resize(AssignSize[iteration]);
+         for(int i = 0; i < AssignSize[iteration]; ++i){
+            data_to_assign[i] = -i;
+         }
+
+         //Insert initial data to the vector to test
+         expand_bwd_test_allocator<value_type> alloc
+            (&memory[0], MemorySize, Offset[iteration]);
+         VectorWithExpandBwdAllocator vector(alloc);
+         vector.insert( vector.begin()
+                     , initial_data.begin(), initial_data.end());
+
+         //Assign data 
+         vector.assign(data_to_assign.begin(), data_to_assign.end());
+         initial_data.assign(data_to_assign.begin(), data_to_assign.end());
+
+         //Now check that values are equal
+         if(!CheckEqualVector(vector, initial_data)){
+            std::cout << "test_assign_with_expand_bwd::CheckEqualVector failed." << std::endl 
+                     << "   Class: " << typeid(VectorWithExpandBwdAllocator).name() << std::endl
+                     << "   Iteration: " << iteration << std::endl;
+            return false;
+         }
       }
-
-      //Create data to assign
-      Vect data_to_assign;
-      data_to_assign.resize(AssignSize[iteration]);
-      for(int i = 0; i < AssignSize[iteration]; ++i){
-         data_to_assign[i] = -i;
+      catch(...){
+         delete []((typename boost::remove_volatile<value_type>::type*)memory);
+         throw;
       }
-
-      //Insert initial data to the vector to test
-      expand_bwd_test_allocator<value_type> alloc
-         (&memory[0], memory.size(), Offset[iteration]);
-      VectorWithExpandBwdAllocator vector(alloc);
-      vector.insert( vector.begin()
-                   , initial_data.begin(), initial_data.end());
-
-      //Assign data 
-      vector.assign(data_to_assign.begin(), data_to_assign.end());
-      initial_data.assign(data_to_assign.begin(), data_to_assign.end());
-
-      //Now check that values are equal
-      if(!CheckEqualVector(vector, initial_data)){
-         std::cout << "test_assign_with_expand_bwd::CheckEqualVector failed." << std::endl 
-                   << "   Class: " << typeid(VectorWithExpandBwdAllocator).name() << std::endl
-                   << "   Iteration: " << iteration << std::endl;
-         return false;
-      }
+      delete []((typename boost::remove_volatile<value_type>::type*)memory);
    }
 
    return true;

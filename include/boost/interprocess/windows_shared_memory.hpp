@@ -83,7 +83,7 @@ class windows_shared_memory
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    windows_shared_memory
-      (detail::moved_object<windows_shared_memory> &moved)
+      (detail::moved_object<windows_shared_memory> moved)
    {  this->swap(moved.get());   }
    #else
    windows_shared_memory(windows_shared_memory &&moved)
@@ -95,7 +95,7 @@ class windows_shared_memory
    //!Does not throw
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    windows_shared_memory &operator=
-      (detail::moved_object<windows_shared_memory> &moved)
+      (detail::moved_object<windows_shared_memory> moved)
    {  
       windows_shared_memory tmp(moved);
       this->swap(tmp);
@@ -104,7 +104,7 @@ class windows_shared_memory
    #else
    windows_shared_memory &operator=(windows_shared_memory &&moved)
    {  
-      windows_shared_memory tmp(move(moved));
+      windows_shared_memory tmp(detail::move_impl(moved));
       this->swap(tmp);
       return *this;  
    }
@@ -143,6 +143,8 @@ class windows_shared_memory
    /// @endcond
 };
 
+/// @cond
+
 inline windows_shared_memory::windows_shared_memory() 
    :  m_handle(0)
 {}
@@ -169,7 +171,7 @@ inline mode_t windows_shared_memory::get_mode() const
 inline bool windows_shared_memory::priv_open_or_create
    (detail::create_enum_t type, const char *filename, mode_t mode, std::size_t size)
 {
-   m_name = filename;
+   m_name = filename ? filename : "";
 
    unsigned long file_map_access = 0;
    unsigned long map_access = 0;
@@ -234,6 +236,16 @@ inline void windows_shared_memory::priv_close()
       m_handle = 0;
    }
 }
+
+//!Trait class to detect if a type is
+//!movable
+template<>
+struct is_movable<windows_shared_memory>
+{
+   static const bool value = true;
+};
+
+///@endcond
 
 }  //namespace interprocess {
 }  //namespace boost {

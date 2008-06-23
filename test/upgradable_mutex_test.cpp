@@ -35,135 +35,135 @@ int main ()
       //Conversions to scoped_lock
       {
          scoped_lock<Mutex>      lock(mut);
-         scoped_lock<Mutex>      e_lock(move(lock));
-         lock.swap(move(e_lock));
+         scoped_lock<Mutex>      e_lock(detail::move_impl(lock));
+         lock.swap(detail::move_impl(e_lock));
       }
       {
          scoped_lock<Mutex>      lock(mut);
          scoped_lock<Mutex>      e_lock(mut2);
-         e_lock = move(lock);
+         e_lock = detail::move_impl(lock);
       }
       {
          upgradable_lock<Mutex>  u_lock(mut);
          //This calls unlock_upgradable_and_lock()
-         scoped_lock<Mutex>      e_lock(move(u_lock));
+         scoped_lock<Mutex>      e_lock(detail::move_impl(u_lock));
       }
       {
          upgradable_lock<Mutex>  u_lock(mut);
          //This calls unlock_upgradable_and_lock()
          scoped_lock<Mutex>      e_lock(mut2);
-         scoped_lock<Mutex>      moved(move(u_lock));
-         e_lock = move(moved);
+         scoped_lock<Mutex>      moved(detail::move_impl(u_lock));
+         e_lock = detail::move_impl(moved);
       }
       {
          upgradable_lock<Mutex>  u_lock(mut);
          //This calls try_unlock_upgradable_and_lock()
-         scoped_lock<Mutex>      e_lock(move(u_lock), try_to_lock);
+         scoped_lock<Mutex>      e_lock(detail::move_impl(u_lock), try_to_lock);
       }
       {
          upgradable_lock<Mutex>  u_lock(mut);
          //This calls try_unlock_upgradable_and_lock()
          scoped_lock<Mutex>      e_lock(mut2);
-         scoped_lock<Mutex>      moved(move(u_lock), try_to_lock);
-         e_lock = move(moved);
+         scoped_lock<Mutex>      moved(detail::move_impl(u_lock), try_to_lock);
+         e_lock = detail::move_impl(moved);
       }
       {
          boost::posix_time::ptime t = test::delay(100);
          upgradable_lock<Mutex>  u_lock(mut);
          //This calls timed_unlock_upgradable_and_lock()
-         scoped_lock<Mutex>      e_lock(move(u_lock), t);
+         scoped_lock<Mutex>      e_lock(detail::move_impl(u_lock), t);
       }
       {
          boost::posix_time::ptime t = test::delay(100);
          upgradable_lock<Mutex>  u_lock(mut);
          //This calls timed_unlock_upgradable_and_lock()
          scoped_lock<Mutex>      e_lock(mut2);
-         scoped_lock<Mutex>      moved(move(u_lock), t);
-         e_lock = move(moved);
+         scoped_lock<Mutex>      moved(detail::move_impl(u_lock), t);
+         e_lock = detail::move_impl(moved);
       }
       {
          sharable_lock<Mutex>    s_lock(mut);
          //This calls try_unlock_sharable_and_lock()
-         scoped_lock<Mutex>      e_lock(move(s_lock), try_to_lock);
+         scoped_lock<Mutex>      e_lock(detail::move_impl(s_lock), try_to_lock);
       }
       {
          sharable_lock<Mutex>    s_lock(mut);
          //This calls try_unlock_sharable_and_lock()
          scoped_lock<Mutex>      e_lock(mut2);
-         scoped_lock<Mutex>      moved(move(s_lock), try_to_lock);
-         e_lock = move(moved);
+         scoped_lock<Mutex>      moved(detail::move_impl(s_lock), try_to_lock);
+         e_lock = detail::move_impl(moved);
       }
       //Conversions to upgradable_lock
       {
          upgradable_lock<Mutex>  lock(mut);
-         upgradable_lock<Mutex>  u_lock(move(lock));
-         lock.swap(move(u_lock));
+         upgradable_lock<Mutex>  u_lock(detail::move_impl(lock));
+         lock.swap(detail::move_impl(u_lock));
       }
       {
          upgradable_lock<Mutex>  lock(mut);
          upgradable_lock<Mutex>  u_lock(mut2);
-         upgradable_lock<Mutex>  moved(move(lock));
-         u_lock = move(moved);
+         upgradable_lock<Mutex>  moved(detail::move_impl(lock));
+         u_lock = detail::move_impl(moved);
       }
       {
          sharable_lock<Mutex>    s_lock(mut);
          //This calls unlock_sharable_and_lock_upgradable()
-         upgradable_lock<Mutex>  u_lock(move(s_lock), try_to_lock);
+         upgradable_lock<Mutex>  u_lock(detail::move_impl(s_lock), try_to_lock);
       }
       {
          sharable_lock<Mutex>    s_lock(mut);
          //This calls unlock_sharable_and_lock_upgradable()
          upgradable_lock<Mutex>  u_lock(mut2);
-         upgradable_lock<Mutex>  moved(move(s_lock), try_to_lock);
-         u_lock = move(moved);
+         upgradable_lock<Mutex>  moved(detail::move_impl(s_lock), try_to_lock);
+         u_lock = detail::move_impl(moved);
       }
       {
          scoped_lock<Mutex>      e_lock(mut);
          //This calls unlock_and_lock_upgradable()
-         upgradable_lock<Mutex>  u_lock(move(e_lock));
+         upgradable_lock<Mutex>  u_lock(detail::move_impl(e_lock));
       }
       {
          scoped_lock<Mutex>      e_lock(mut);
          //This calls unlock_and_lock_upgradable()
          upgradable_lock<Mutex>  u_lock(mut2);
-         upgradable_lock<Mutex>  moved(move(e_lock));
-         u_lock = move(moved);
+         upgradable_lock<Mutex>  moved(detail::move_impl(e_lock));
+         u_lock = detail::move_impl(moved);
       }
       //Conversions to sharable_lock
       {
          sharable_lock<Mutex>    lock(mut);
-         sharable_lock<Mutex>    s_lock(move(lock));
-         lock.swap(move(s_lock));
+         sharable_lock<Mutex>    s_lock(detail::move_impl(lock));
+         lock.swap(detail::move_impl(s_lock));
       }
       {
          sharable_lock<Mutex>    lock(mut);
          sharable_lock<Mutex>    s_lock(mut2);
-         sharable_lock<Mutex>    moved(move(lock));
-         s_lock = move(moved);
+         sharable_lock<Mutex>    moved(detail::move_impl(lock));
+         s_lock = detail::move_impl(moved);
       }
       {
          upgradable_lock<Mutex>  u_lock(mut);
          //This calls unlock_upgradable_and_lock_sharable()
-         sharable_lock<Mutex>    s_lock(move(u_lock));
+         sharable_lock<Mutex>    s_lock(detail::move_impl(u_lock));
       }
       {
          upgradable_lock<Mutex>  u_lock(mut);
          //This calls unlock_upgradable_and_lock_sharable()
          sharable_lock<Mutex>    s_lock(mut2);
-         sharable_lock<Mutex>    moved(move(u_lock));
-         s_lock = move(moved);
+         sharable_lock<Mutex>    moved(detail::move_impl(u_lock));
+         s_lock = detail::move_impl(moved);
       }
       {
          scoped_lock<Mutex>      e_lock(mut);
          //This calls unlock_and_lock_sharable()
-         sharable_lock<Mutex>    s_lock(move(e_lock));
+         sharable_lock<Mutex>    s_lock(detail::move_impl(e_lock));
       }
       {
          scoped_lock<Mutex>      e_lock(mut);
          //This calls unlock_and_lock_sharable()
          sharable_lock<Mutex>    s_lock(mut2);
-         sharable_lock<Mutex>    moved(move(e_lock));
-         s_lock = move(moved);
+         sharable_lock<Mutex>    moved(detail::move_impl(e_lock));
+         s_lock = detail::move_impl(moved);
       }
    }
 

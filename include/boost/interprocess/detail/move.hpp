@@ -17,6 +17,8 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/interprocess_fwd.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 
 //!\file
 //!Describes a function and a type to emulate move semantics.
@@ -79,7 +81,7 @@ class move_return
    public:
    typedef T type;
 
-   move_return(T& returned)
+   move_return(const T& returned)
       : m_moved(moved_object<T>(returned))
    {}
 
@@ -106,15 +108,24 @@ struct return_type
 namespace boost {
 namespace interprocess {
 
+namespace detail{
+
 //!A function that converts an object to a moved object so that 
 //!it can match a function taking a detail::moved_object object.
 template<class Object>
-typename detail::move_type<Object>::type move
-   (const Object &object)
+typename detail::move_type<Object>::type move_impl(const Object &object)
 {  
    typedef typename detail::move_type<Object>::type type;
    return type(object);   
 }
+
+}  //namespace detail {
+
+//!A function that converts an object to a moved object so that 
+//!it can match a function taking a detail::moved_object object.
+template<class Object>
+typename detail::move_type<Object>::type move(const Object &object)
+{     return detail::move_impl(object);  }
 
 }  //namespace interprocess {
 }  //namespace boost {
@@ -126,15 +137,20 @@ typename detail::move_type<Object>::type move
 namespace boost {
 namespace interprocess {
 
+namespace detail {
+
 template <class T>
-inline typename detail::remove_reference<T>::type&&
-move(T&& t)
+inline typename detail::remove_reference<T>::type&& move_impl(T&& t)
 {  return t;   }
 
 template <class T>
-inline 
-T&&
-forward(typename identity<T>::type&& t)
+inline T&& forward_impl(typename detail::identity<T>::type&& t)
+{  return t;   }
+
+}  //namespace detail {
+
+template <class T>
+inline typename detail::remove_reference<T>::type&& move(T&& t)
 {  return t;   }
 
 }  //namespace interprocess {

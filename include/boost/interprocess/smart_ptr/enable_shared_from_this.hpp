@@ -27,6 +27,10 @@
 namespace boost{
 namespace interprocess{
 
+//!This class is used as a base class that allows a shared_ptr to the current
+//!object to be obtained from within a member function.
+//!enable_shared_from_this defines two member functions called shared_from_this
+//!that return a shared_ptr<T> and shared_ptr<T const>, depending on constness, to this.
 template<class T, class A, class D>
 class enable_shared_from_this
 {
@@ -60,7 +64,6 @@ class enable_shared_from_this
       return p;
    }
 
-   private:
    /// @cond
    typedef T element_type;
    mutable weak_ptr<element_type, A, D> _internal_weak_this;

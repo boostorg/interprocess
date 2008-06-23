@@ -266,6 +266,8 @@ class interprocess_upgradable_mutex
    /// @endcond
 };
 
+/// @cond
+
 template <int Dummy>
 const unsigned interprocess_upgradable_mutex::base_constants_t<Dummy>::max_readers;
 
@@ -633,8 +635,9 @@ inline bool interprocess_upgradable_mutex::try_unlock_sharable_and_lock_upgradab
    return true;
 }
 
-}  //namespace interprocess {
+/// @endcond
 
+}  //namespace interprocess {
 }  //namespace boost {
 
 

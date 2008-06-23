@@ -16,6 +16,9 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_MATH_FUNCTIONS_HPP
 #define BOOST_INTERPROCESS_DETAIL_MATH_FUNCTIONS_HPP
 
+#include <climits>
+#include <boost/static_assert.hpp>
+
 namespace boost {
 namespace interprocess {
 namespace detail {
@@ -78,6 +81,26 @@ inline Integer upper_power_of_2(const Integer & A)
       power_of_2 <<= 1;
    }
    return power_of_2;
+}
+
+//This function uses binary search to discover the
+//highest set bit of the integer
+inline std::size_t floor_log2 (std::size_t x)
+{
+   const std::size_t Bits = sizeof(std::size_t)*CHAR_BIT;
+   const bool Size_t_Bits_Power_2= !(Bits & (Bits-1));
+   BOOST_STATIC_ASSERT(((Size_t_Bits_Power_2)== true));
+
+   std::size_t n = x;
+   std::size_t log2 = 0;
+   
+   for(std::size_t shift = Bits >> 1; shift; shift >>= 1){
+      std::size_t tmp = n >> shift;
+      if (tmp)
+   	   log2 += shift, n = tmp;
+   }
+
+   return log2;
 }
 
 } // namespace detail

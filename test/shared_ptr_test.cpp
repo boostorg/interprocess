@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Peter Dimov 2002-2005.
-// (C) Copyright Ion Gaztanaga 2006-2007.
+// (C) Copyright Peter Dimov 2002-2005, 2007.
+// (C) Copyright Ion Gaztanaga 2006-2008.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -168,6 +168,8 @@ int string_shared_ptr_vector_insertion_test()
          //Now fill a shared memory vector of shared_ptrs to a string
          string_shared_ptr_vector_t my_sharedptr_vector(string_shared_ptr_allocator);
          my_sharedptr_vector.insert(my_sharedptr_vector.begin(), NumElements, string_shared_ptr);
+         //Insert in the middle to test movability
+         my_sharedptr_vector.insert(my_sharedptr_vector.begin() + my_sharedptr_vector.size()/2, NumElements, string_shared_ptr);
          //Now check the shared count is the objects contained in the
          //vector plus string_shared_ptr
          if(string_shared_ptr.use_count() != static_cast<long>(my_sharedptr_vector.size()+1)){
@@ -536,6 +538,81 @@ int basic_shared_ptr_test()
    return boost::report_errors();
 }
 
+struct alias_tester
+{
+    int v_;
+
+    explicit alias_tester( int v ): v_( v )
+    {
+    }
+
+    ~alias_tester()
+    {
+        v_ = 0;
+    }
+};
+
+void test_alias()
+{
+   typedef allocator<void, managed_shared_memory::segment_manager>
+      v_allocator_t;
+
+   typedef deleter<alias_tester, managed_shared_memory::segment_manager>
+      alias_tester_deleter_t;
+
+   typedef deleter<int, managed_shared_memory::segment_manager>
+      int_deleter_t;
+
+   typedef shared_ptr<alias_tester, v_allocator_t, alias_tester_deleter_t> alias_tester_shared_ptr;
+
+   typedef shared_ptr<int, v_allocator_t, int_deleter_t> int_shared_ptr;
+   typedef shared_ptr<const int, v_allocator_t, int_deleter_t> const_int_shared_ptr;
+   typedef shared_ptr<volatile int, v_allocator_t, int_deleter_t> volatile_int_shared_ptr;
+
+   std::string process_name;
+   test::get_process_id_name(process_name);
+
+   shared_memory_object::remove(process_name.c_str());
+   {
+      managed_shared_memory shmem(create_only, process_name.c_str(), 10000);
+
+      {
+         int m = 0;
+         int_shared_ptr p;
+         int_shared_ptr p2( p, &m );
+
+         BOOST_TEST( detail::get_pointer(p2.get()) == &m );
+         BOOST_TEST( p2? true: false );
+         BOOST_TEST( !!p2 );
+         BOOST_TEST( p2.use_count() == p.use_count() );
+         BOOST_TEST( !( p < p2 ) && !( p2 < p ) );
+
+         p2.reset( p, (int*)0 );
+
+         BOOST_TEST( p2.get() == 0 );
+
+         BOOST_TEST( p2? false: true );
+         BOOST_TEST( !p2 );
+         BOOST_TEST( p2.use_count() == p.use_count() );
+         BOOST_TEST( !( p < p2 ) && !( p2 < p ) );
+      }
+
+      {
+         int m = 0;
+         int_shared_ptr p(make_managed_shared_ptr
+            (shmem.construct<int>(anonymous_instance)(), shmem));
+         const_int_shared_ptr p2( p, &m );
+
+         BOOST_TEST( detail::get_pointer(p2.get()) == &m );
+         BOOST_TEST( p2? true: false );
+         BOOST_TEST( !!p2 );
+         BOOST_TEST( p2.use_count() == p.use_count() );
+         BOOST_TEST( !( p < p2 ) && !( p2 < p ) );
+      }
+   }
+   shared_memory_object::remove(process_name.c_str());
+}
+
 
 int main()
 {
@@ -547,6 +624,8 @@ int main()
 
    if(0 != basic_shared_ptr_test())
       return 1;
+
+   test_alias();
 
    return 0;
 }

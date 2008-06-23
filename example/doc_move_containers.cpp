@@ -53,7 +53,7 @@ int main ()
          //In the following line, no string copy-constructor will be called.
          //"move_me"'s contents will be transferred to the string created in
          //the vector
-         myshmvector->push_back(move(move_me));
+         myshmvector->push_back(boost::interprocess::move(move_me));
 
          //The source string is in default constructed state
          assert(move_me.empty());
@@ -69,7 +69,7 @@ int main ()
       //No string copy-constructor or assignments will be called, but
       //move constructors and move-assignments. No memory allocation 
       //function will be called in this operations!!
-      myshmvector->insert(myshmvector->begin(), move(string_to_compare));
+      myshmvector->insert(myshmvector->begin(), boost::interprocess::move(string_to_compare));
 
       //Destroy vector. This will free all strings that the vector contains
       shm.destroy_ptr(myshmvector);

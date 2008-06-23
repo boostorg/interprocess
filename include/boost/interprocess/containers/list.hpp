@@ -93,7 +93,7 @@ struct list_node
    #else
    template<class Convertible>
    list_node(Convertible &&conv)
-      : m_data(forward<Convertible>(conv))
+      : m_data(detail::forward_impl<Convertible>(conv))
    {}
    #endif
 
@@ -323,7 +323,7 @@ class list
    {}
 
 //   list(size_type n)
-//      : AllocHolder(move(allocator_type()))
+//      : AllocHolder(detail::move_impl(allocator_type()))
 //   {  this->resize(n);  }
 
    //! <b>Effects</b>: Constructs a list that will use a copy of allocator a
@@ -355,11 +355,11 @@ class list
    //! <b>Complexity</b>: Constant.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    list(const detail::moved_object<list> &x)
-      : AllocHolder(move((AllocHolder&)x.get()))
+      : AllocHolder(detail::move_impl((AllocHolder&)x.get()))
    {}
    #else
    list(list &&x)
-      : AllocHolder(move((AllocHolder&)x))
+      : AllocHolder(detail::move_impl((AllocHolder&)x))
    {}
    #endif
 
@@ -518,7 +518,7 @@ class list
    {  this->insert(this->begin(), x);  }
    #else
    void push_front(T &&x)   
-   {  this->insert(this->begin(), move(x));  }
+   {  this->insert(this->begin(), detail::move_impl(x));  }
    #endif
 
    //! <b>Effects</b>: Removes the last element from the list.
@@ -539,7 +539,7 @@ class list
    {  this->insert(this->end(), x);    }
    #else
    void push_back (T &&x)   
-   {  this->insert(this->end(), move(x));    }
+   {  this->insert(this->end(), detail::move_impl(x));    }
    #endif
 
    //! <b>Effects</b>: Removes the first element from the list.
@@ -610,7 +610,7 @@ class list
    //! <b>Complexity</b>: Linear to the difference between size() and new_size.
    void resize(size_type new_size, const T& x)
    {
-      iterator i = this->begin(), iend = this->end();
+      iterator iend = this->end();
       size_type len = this->size();
       
       if(len > new_size){
@@ -633,15 +633,26 @@ class list
    //! <b>Complexity</b>: Linear to the difference between size() and new_size.
    void resize(size_type new_size)
    {
-      iterator i = this->begin(), iend = this->end();
+      iterator iend = this->end();
       size_type len = this->size();
       
       if(len > new_size){
          size_type to_erase = len - new_size;
-         while(to_erase--){
-            --iend;
+         iterator ifirst;
+         if(to_erase < len/2u){
+            ifirst = iend;
+            while(to_erase--){
+               --ifirst;
+            }
          }
-         this->erase(iend, this->end());
+         else{
+            ifirst = this->begin();
+            size_type to_skip = len - to_erase;
+            while(to_skip--){
+               ++ifirst;
+            }
+         }
+         this->erase(ifirst, iend);
       }
       else{
          this->priv_create_and_insert_nodes(this->end(), new_size - len);
@@ -763,7 +774,7 @@ class list
    #else
    iterator insert(iterator p, T &&x) 
    {
-      NodePtr tmp = AllocHolder::create_node(move(x));
+      NodePtr tmp = AllocHolder::create_node(detail::move_impl(x));
       return iterator(this->icont().insert(p.get(), *tmp));
    }
    #endif

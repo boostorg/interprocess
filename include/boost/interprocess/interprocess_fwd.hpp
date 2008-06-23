@@ -120,26 +120,26 @@ class sharable_lock;
 template<class T, class SegmentManager>
 class allocator;
 
-template<class T, class SegmentManager, std::size_t NodesPerChunk = 64>
+template<class T, class SegmentManager, std::size_t NodesPerBlock = 64>
 class node_allocator;
 
-template<class T, class SegmentManager, std::size_t NodesPerChunk = 64>
+template<class T, class SegmentManager, std::size_t NodesPerBlock = 64>
 class private_node_allocator;
 
-template<class T, class SegmentManager, std::size_t NodesPerChunk = 64>
+template<class T, class SegmentManager, std::size_t NodesPerBlock = 64>
 class cached_node_allocator;
 
-template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeChunks = 2
+template<class T, class SegmentManager, std::size_t NodesPerBlock = 64, std::size_t MaxFreeBlocks = 2
          , unsigned char OverheadPercent = 5
 >
 class adaptive_pool;
 
-template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeChunks = 2
+template<class T, class SegmentManager, std::size_t NodesPerBlock = 64, std::size_t MaxFreeBlocks = 2
          , unsigned char OverheadPercent = 5
 >
 class private_adaptive_pool;
 
-template<class T, class SegmentManager, std::size_t NodesPerChunk = 64, std::size_t MaxFreeChunks = 2
+template<class T, class SegmentManager, std::size_t NodesPerBlock = 64, std::size_t MaxFreeBlocks = 2
          , unsigned char OverheadPercent = 5
 >
 class cached_adaptive_pool;

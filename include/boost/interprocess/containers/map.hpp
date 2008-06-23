@@ -8,7 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// This file comes from SGI's stl_map/stl_multimap files. Modified by Ion Gazta�ga 2004.
+// This file comes from SGI's stl_map/stl_multimap files. Modified by Ion Gaztanaga.
 // Renaming, isolating and porting to generic algorithms. Pointer typedef 
 // set to allocator::pointer to allow placing it in shared memory.
 //
@@ -166,11 +166,11 @@ class map
    //! <b>Postcondition</b>: x is emptied.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    map(const detail::moved_object<map<Key,T,Pred,Alloc> >& x) 
-      : m_tree(move(x.get().m_tree))
+      : m_tree(detail::move_impl(x.get().m_tree))
    {}
    #else
    map(map<Key,T,Pred,Alloc> &&x) 
-      : m_tree(move(x.m_tree))
+      : m_tree(detail::move_impl(x.m_tree))
    {}
    #endif
 
@@ -185,10 +185,10 @@ class map
    //! <b>Complexity</b>: Constant.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    map<Key,T,Pred,Alloc>& operator=(const detail::moved_object<map<Key,T,Pred,Alloc> >& x)
-   {  m_tree = move(x.get().m_tree);   return *this;  }
+   {  m_tree = detail::move_impl(x.get().m_tree);   return *this;  }
    #else
    map<Key,T,Pred,Alloc>& operator=(map<Key,T,Pred,Alloc> &&x)
-   {  m_tree = move(x.m_tree);   return *this;  }
+   {  m_tree = detail::move_impl(x.m_tree);   return *this;  }
    #endif
 
    //! <b>Effects</b>: Returns the comparison object out
@@ -206,7 +206,7 @@ class map
    { return value_compare(m_tree.key_comp()); }
 
    //! <b>Effects</b>: Returns a copy of the Allocator that
-   //!   was passed to the objects constructor.
+   //!   was passed to the object's constructor.
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
@@ -322,14 +322,14 @@ class map
       iterator i = lower_bound(k);
       // i->first is greater than or equivalent to k.
       if (i == end() || key_comp()(k, (*i).first)){
-         value_type val(k, move(T()));
-         i = insert(i, move(val));
+         value_type val(k, detail::move_impl(T()));
+         i = insert(i, detail::move_impl(val));
       }
       return (*i).second;
    }
 
    //! Effects: If there is no key equivalent to x in the map, inserts 
-   //! value_type(move(x), T()) into the map (the key is move-constructed)
+   //! value_type(detail::move_impl(x), T()) into the map (the key is move-constructed)
    //! 
    //! Returns: A reference to the mapped_type corresponding to x in *this.
    //! 
@@ -342,8 +342,8 @@ class map
       iterator i = lower_bound(k);
       // i->first is greater than or equivalent to k.
       if (i == end() || key_comp()(k, (*i).first)){
-         value_type val(k, move(T()));
-         i = insert(i, move(val));
+         value_type val(k, detail::move_impl(T()));
+         i = insert(i, detail::move_impl(val));
       }
       return (*i).second;
    }
@@ -355,8 +355,8 @@ class map
       iterator i = lower_bound(k);
       // i->first is greater than or equivalent to k.
       if (i == end() || key_comp()(k, (*i).first)){
-         value_type val(move(k), move(T()));
-         i = insert(i, move(val));
+         value_type val(detail::move_impl(k), detail::move_impl(T()));
+         i = insert(i, detail::move_impl(val));
       }
       return (*i).second;
    }
@@ -364,7 +364,7 @@ class map
 
 /*
    //! Effects: If there is no key equivalent to x in the map, inserts 
-   //! value_type(move(x), T()) into the map (the key is move-constructed)
+   //! value_type(detail::move_impl(x), T()) into the map (the key is move-constructed)
    //! 
    //! Returns: A reference to the mapped_type corresponding to x in *this.
    //! 
@@ -379,8 +379,8 @@ class map
       iterator i = lower_bound(k);
       // i->first is greater than or equivalent to k.
       if (i == end() || key_comp()(k, (*i).first)){
-         value_type val(k, move(T()));
-         i = insert(i, move(val));
+         value_type val(k, detail::move_impl(T()));
+         i = insert(i, detail::move_impl(val));
       }
       return (*i).second;
    }
@@ -449,7 +449,7 @@ class map
    { return m_tree.insert_unique(x); }
    #else
    std::pair<iterator,bool> insert(std::pair<key_type, mapped_type> &&x) 
-   { return m_tree.insert_unique(move(x)); }
+   { return m_tree.insert_unique(detail::move_impl(x)); }
    #endif
 
    //! <b>Effects</b>: Move constructs a new value from x if and only if there is 
@@ -465,7 +465,7 @@ class map
    { return m_tree.insert_unique(x); }
    #else
    std::pair<iterator,bool> insert(value_type &&x) 
-   { return m_tree.insert_unique(move(x)); }
+   { return m_tree.insert_unique(detail::move_impl(x)); }
    #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container if and only if there is 
@@ -494,7 +494,7 @@ class map
    { return m_tree.insert_unique(position, x); }
    #else
    iterator insert(iterator position, std::pair<key_type, mapped_type> &&x)
-   { return m_tree.insert_unique(position, move(x)); }
+   { return m_tree.insert_unique(position, detail::move_impl(x)); }
    #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container.
@@ -517,7 +517,7 @@ class map
    { return m_tree.insert_unique(position, x); }
    #else
    iterator insert(iterator position, value_type &&x)
-   { return m_tree.insert_unique(position, move(x)); }
+   { return m_tree.insert_unique(position, detail::move_impl(x)); }
    #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.
@@ -813,11 +813,11 @@ class multimap
    //! <b>Postcondition</b>: x is emptied.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    multimap(const detail::moved_object<multimap<Key,T,Pred,Alloc> >& x) 
-      : m_tree(move(x.get().m_tree))
+      : m_tree(detail::move_impl(x.get().m_tree))
    {}
    #else
    multimap(multimap<Key,T,Pred,Alloc> && x) 
-      : m_tree(move(x.m_tree))
+      : m_tree(detail::move_impl(x.m_tree))
    {}
    #endif
 
@@ -834,11 +834,11 @@ class multimap
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    multimap<Key,T,Pred,Alloc>&
    operator=(const detail::moved_object<multimap<Key,T,Pred,Alloc> >& x) 
-   {  m_tree = move(x.get().m_tree);   return *this;  }
+   {  m_tree = detail::move_impl(x.get().m_tree);   return *this;  }
    #else
    multimap<Key,T,Pred,Alloc>&
    operator=(multimap<Key,T,Pred,Alloc> && x) 
-   {  m_tree = move(x.m_tree);   return *this;  }
+   {  m_tree = detail::move_impl(x.m_tree);   return *this;  }
    #endif
 
    //! <b>Effects</b>: Returns the comparison object out
@@ -856,7 +856,7 @@ class multimap
    { return value_compare(m_tree.key_comp()); }
 
    //! <b>Effects</b>: Returns a copy of the Allocator that
-   //!   was passed to the objects constructor.
+   //!   was passed to the object's constructor.
    //! 
    //! <b>Complexity</b>: Constant.
    allocator_type get_allocator() const 
@@ -1006,7 +1006,7 @@ class multimap
    { return m_tree.insert_equal(x); }
    #else
    iterator insert(std::pair<key_type, mapped_type> && x) 
-   { return m_tree.insert_equal(move(x)); }
+   { return m_tree.insert_equal(detail::move_impl(x)); }
    #endif
 
    //! <b>Effects</b>: Inserts a copy of x in the container.
@@ -1044,7 +1044,7 @@ class multimap
    { return m_tree.insert_equal(position, x); }
    #else
    iterator insert(iterator position, std::pair<key_type, mapped_type> && x)
-   { return m_tree.insert_equal(position, move(x)); }
+   { return m_tree.insert_equal(position, detail::move_impl(x)); }
    #endif
 
    //! <b>Requires</b>: i, j are not iterators into *this.

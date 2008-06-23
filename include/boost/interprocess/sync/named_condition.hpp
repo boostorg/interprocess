@@ -40,6 +40,9 @@ namespace interprocess {
 namespace detail{ class interprocess_tester; }
 /// @endcond
 
+//! A global condition variable that can be created by name.
+//! This condition variable is designed to work with named_mutex and
+//! can't be placed in shared memory or memory mapped files.
 class named_condition
 {
    /// @cond
@@ -146,21 +149,30 @@ class named_condition
    template <class Lock>
    void do_wait(Lock& lock)
    {  
-      lock_inverter<Lock> inverted_lock(lock);
-      //unlock internal first to avoid deadlock with near simultaneous waits
-      scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);
+      //lock internal before unlocking external to avoid race with a notifier
       scoped_lock<interprocess_mutex>     internal_lock(*this->mutex());
-      this->condition()->wait(internal_lock);
+      lock_inverter<Lock> inverted_lock(lock);
+      scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);
+
+      //unlock internal first to avoid deadlock with near simultaneous waits
+      scoped_lock<interprocess_mutex>     internal_unlock;
+      internal_lock.swap(internal_unlock);
+      this->condition()->wait(internal_unlock);
    }
 
    template <class Lock>
    bool do_timed_wait(Lock& lock, const boost::posix_time::ptime &abs_time)
    {
-      //unlock internal first to avoid deadlock with near simultaneous waits
-      lock_inverter<Lock> inverted_lock(lock);
-      scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);
-      scoped_lock<interprocess_mutex>     internal_lock(*this->mutex());
-      return this->condition()->timed_wait(internal_lock, abs_time);
+      //lock internal before unlocking external to avoid race with a notifier  
+      scoped_lock<interprocess_mutex>     internal_lock(*this->mutex(), abs_time);  
+      if(!internal_lock) return false;
+      lock_inverter<Lock> inverted_lock(lock);  
+      scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);  
+
+      //unlock internal first to avoid deadlock with near simultaneous waits  
+      scoped_lock<interprocess_mutex>     internal_unlock;  
+      internal_lock.swap(internal_unlock);  
+      return this->condition()->timed_wait(internal_unlock, abs_time);  
    }
    #endif
 
@@ -173,6 +185,8 @@ class named_condition
    typedef detail::named_creation_functor<condition_holder> construct_func_t;
    /// @endcond
 };
+
+/// @cond
 
 inline named_condition::~named_condition()
 {}
@@ -319,6 +333,8 @@ inline bool named_condition::timed_wait
 
 inline bool named_condition::remove(const char *name)
 {  return shared_memory_object::remove(name); }
+
+/// @endcond
 
 }  //namespace interprocess
 }  //namespace boost

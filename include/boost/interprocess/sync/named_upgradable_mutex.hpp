@@ -233,6 +233,8 @@ class named_upgradable_mutex
    /// @endcond
 };
 
+/// @cond
+
 inline named_upgradable_mutex::~named_upgradable_mutex()
 {}
 
@@ -339,8 +341,9 @@ inline bool named_upgradable_mutex::try_unlock_sharable_and_lock_upgradable()
 inline bool named_upgradable_mutex::remove(const char *name)
 {  return shared_memory_object::remove(name); }
 
-}  //namespace interprocess {
+/// @endcond
 
+}  //namespace interprocess {
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>

@@ -48,14 +48,16 @@ namespace interprocess {
 template<class T, class SegmentManager>
 class allocator 
 {
+   public:
+   //Segment manager
+   typedef SegmentManager                                segment_manager;
+   typedef typename SegmentManager::void_pointer         void_pointer;
+
    /// @cond
    private:
 
    //Self type
    typedef allocator<T, SegmentManager>   self_t;
-
-   //Segment manager
-   typedef SegmentManager                 segment_manager;
 
    //Pointer to void
    typedef typename segment_manager::void_pointer  aux_pointer_t;
@@ -106,8 +108,6 @@ class allocator
       <typename SegmentManager::
          multiallocation_chain
       , T>                                      multiallocation_chain;
-//   typedef typename SegmentManager::
-//      multiallocation_chain                     multiallocation_chain;
 
    /// @endcond
 
@@ -153,7 +153,7 @@ class allocator
    //!Deallocates memory previously allocated.
    //!Never throws
    void deallocate(const pointer &ptr, size_type)
-   {  mp_mngr->deallocate(detail::get_pointer(ptr));  }
+   {  mp_mngr->deallocate((void*)detail::get_pointer(ptr));  }
 
    //!Returns the number of elements that could be allocated.
    //!Never throws
@@ -183,7 +183,7 @@ class allocator
          (command, limit_size, preferred_size, received_size, detail::get_pointer(reuse));
    }
 
-   //!Allocates many elements of size elem_size in a contiguous chunk
+   //!Allocates many elements of size elem_size in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -196,7 +196,7 @@ class allocator
    }
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
-   //!contiguous chunk
+   //!contiguous block
    //!of memory. The elements must be deallocated
    multiallocation_iterator allocate_many(const size_type *elem_sizes, size_type n_elements)
    {
@@ -204,7 +204,7 @@ class allocator
          (mp_mngr->allocate_many(elem_sizes, n_elements, sizeof(T)));
    }
 
-   //!Allocates many elements of size elem_size in a contiguous chunk
+   //!Allocates many elements of size elem_size in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -219,7 +219,7 @@ class allocator
    pointer allocate_one()
    {  return this->allocate(1);  }
 
-   //!Allocates many elements of size == 1 in a contiguous chunk
+   //!Allocates many elements of size == 1 in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -234,7 +234,7 @@ class allocator
    void deallocate_one(const pointer &p)
    {  return this->deallocate(p, 1);  }
 
-   //!Allocates many elements of size == 1 in a contiguous chunk
+   //!Allocates many elements of size == 1 in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
    //!the preferred and maximum number is
    //!preferred_elements. The number of actually allocated elements is
@@ -253,10 +253,15 @@ class allocator
    const_pointer address(const_reference value) const
    {  return const_pointer(boost::addressof(value));  }
 
+   //!Copy construct an object
+   //!Throws if T's copy constructor throws
+   void construct(const pointer &ptr, const_reference v)
+   {  new((void*)detail::get_pointer(ptr)) value_type(v);  }
+
    //!Default construct an object. 
    //!Throws if T's default constructor throws
    void construct(const pointer &ptr)
-   {  new(detail::get_pointer(ptr)) value_type;  }
+   {  new((void*)detail::get_pointer(ptr)) value_type;  }
 
    //!Destroys object. Throws if object's
    //!destructor throws

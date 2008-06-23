@@ -88,11 +88,11 @@ struct node_alloc_holder
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    node_alloc_holder(const detail::moved_object<node_alloc_holder> &other)
-      : members_(move(other.get().node_alloc()))
+      : members_(detail::move_impl(other.get().node_alloc()))
    {  this->swap(other.get());  }
    #else
    node_alloc_holder(node_alloc_holder &&other)
-      : members_(move(other.node_alloc()))
+      : members_(detail::move_impl(other.node_alloc()))
    {  this->swap(other);  }
    #endif
 
@@ -145,15 +145,15 @@ struct node_alloc_holder
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
    static void construct(const NodePtr &ptr, const Convertible &value)
-   {  new(detail::get_pointer(ptr)) Node(value);  }
+   {  new((void*)detail::get_pointer(ptr)) Node(value);  }
    #else
    template<class Convertible>
    static void construct(const NodePtr &ptr, Convertible &&value)
-   {  new(detail::get_pointer(ptr)) Node(forward<Convertible>(value));  }
+   {  new((void*)detail::get_pointer(ptr)) Node(detail::forward_impl<Convertible>(value));  }
    #endif
 
    static void construct(const NodePtr &ptr)
-   {  new(detail::get_pointer(ptr)) Node();  }
+   {  new((void*)detail::get_pointer(ptr)) Node();  }
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible1, class Convertible2>
@@ -169,9 +169,9 @@ struct node_alloc_holder
       new(static_cast<hook_type*>(nodeptr))hook_type();
       //Now construct pair members_holder
       value_type *valueptr = &nodeptr->m_data;
-      new((void*)&valueptr->first) first_type(move(value.get().first));
+      new((void*)&valueptr->first) first_type(detail::move_impl(value.get().first));
       BOOST_TRY{
-         new((void*)&valueptr->second) second_type(move(value.get().second));
+         new((void*)&valueptr->second) second_type(detail::move_impl(value.get().second));
       }
       BOOST_CATCH(...){
          valueptr->first.~first_type();
@@ -194,9 +194,9 @@ struct node_alloc_holder
       new(static_cast<hook_type*>(nodeptr))hook_type();
       //Now construct pair members_holder
       value_type *valueptr = &nodeptr->m_data;
-      new((void*)&valueptr->first) first_type(move(value.first));
+      new((void*)&valueptr->first) first_type(detail::move_impl(value.first));
       BOOST_TRY{
-         new((void*)&valueptr->second) second_type(move(value.second));
+         new((void*)&valueptr->second) second_type(detail::move_impl(value.second));
       }
       BOOST_CATCH(...){
          valueptr->first.~first_type();
@@ -226,7 +226,7 @@ struct node_alloc_holder
    {
       NodePtr p = this->allocate_one();
       Deallocator node_deallocator(p, this->node_alloc());
-      self_t::construct(p, forward<Convertible>(x));
+      self_t::construct(p, detail::forward_impl<Convertible>(x));
       node_deallocator.release();
       return (p);
    }
@@ -275,7 +275,7 @@ struct node_alloc_holder
    {
       typedef typename NodeAlloc::multiallocation_iterator multiallocation_iterator;
 
-      //Try to allocate memory in a single chunk
+      //Try to allocate memory in a single block
       multiallocation_iterator itbeg =
          this->node_alloc().allocate_individual(n), itend, itold;
       int constructed = 0;

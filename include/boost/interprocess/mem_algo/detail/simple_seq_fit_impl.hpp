@@ -564,7 +564,7 @@ inline std::pair<T*, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
                         T *reuse_ptr)
 {
    std::pair<void*, bool> ret = priv_allocation_command
-      (command, limit_size, preferred_size, received_size, reuse_ptr, sizeof(T));
+      (command, limit_size, preferred_size, received_size, (void*)reuse_ptr, sizeof(T));
 
    BOOST_ASSERT(0 == ((std::size_t)ret.first % detail::alignment_of<T>::value));
    return std::pair<T *, bool>(static_cast<T*>(ret.first), ret.second);
@@ -577,7 +577,7 @@ inline std::pair<void*, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
                         void *reuse_ptr, std::size_t sizeof_object)
 {
    if(!sizeof_object)
-      return std::pair<void *, bool>(0, 0);
+      return std::pair<void *, bool>((void*)0, 0);
    if(command & try_shrink_in_place){
       bool success = algo_impl_t::try_shrink
          ( this, reuse_ptr, limit_objects*sizeof_object
@@ -596,7 +596,7 @@ inline std::pair<void*, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
                        void *reuse_ptr, std::size_t sizeof_object)
 {
    command &= ~expand_bwd;
-   if(!command)   return std::pair<void *, bool>(0, false);
+   if(!command)   return std::pair<void *, bool>((void*)0, false);
 
    std::pair<void*, bool> ret;
    std::size_t max_count = m_header.m_size/sizeof_object;
@@ -769,7 +769,7 @@ std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
    received_size = 0;
 
    if(limit_size > preferred_size)
-      return return_type(0, false);
+      return return_type((void*)0, false);
 
    //Number of units to request (including block_ctrl header)
    std::size_t nunits = detail::get_rounded_size(preferred_size, Alignment)/Alignment + BlockCtrlUnits;
@@ -819,7 +819,7 @@ std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
       if(biggest_block){
          std::size_t limit_units = detail::get_rounded_size(limit_size, Alignment)/Alignment + BlockCtrlUnits;
          if(biggest_block->m_size < limit_units)
-            return return_type(0, false);
+            return return_type((void*)0, false);
 
          received_size = biggest_block->m_size*Alignment - BlockCtrlUnits;
          void *ret = this->priv_check_and_allocate
@@ -836,7 +836,7 @@ std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
       algo_impl_t::assert_alignment(ret.first);
       return ret;
    }
-   return return_type(0, false);
+   return return_type((void*)0, false);
 }
 
 template<class MutexFamily, class VoidPointer> inline
@@ -888,13 +888,13 @@ inline
    }
 
    if(prev_block == root || !prev_block->m_next)
-      return prev_pair_t(0, 0);
+      return prev_pair_t((block_ctrl*)0, (block_ctrl*)0);
 
    //Check if the previous block is in the managed segment
    std::size_t distance = (detail::char_ptr_cast(prev_block) - detail::char_ptr_cast(this))/Alignment;
    if(distance >= (m_header.m_size/Alignment)){
       //"previous_block" does not exist so we can't expand "block"
-      return prev_pair_t(0, 0);
+      return prev_pair_t((block_ctrl*)0, (block_ctrl*)0);
    }
    return prev_pair_t(prev_2_block, prev_block);
 }
