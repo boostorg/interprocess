@@ -1042,7 +1042,7 @@ class vector : private detail::vector_alloc_holder<A>
       T *pos = detail::get_pointer(position.get_ptr());
       T *beg = detail::get_pointer(this->members_.m_start);
 
-		std::copy(assign_move_it(pos + 1), assign_move_it(beg + this->members_.m_size), pos);
+      std::copy(assign_move_it(pos + 1), assign_move_it(beg + this->members_.m_size), pos);
       --this->members_.m_size;
       //Destroy last element
       base_t::destroy(detail::get_pointer(this->members_.m_start) + this->members_.m_size);
@@ -1056,12 +1056,12 @@ class vector : private detail::vector_alloc_holder<A>
    //! <b>Complexity</b>: Linear to the distance between first and last.
    iterator erase(const_iterator first, const_iterator last) 
    {
-		if (first != last){	// worth doing, copy down over hole
+      if (first != last){   // worth doing, copy down over hole
          T* end_pos = detail::get_pointer(this->members_.m_start) + this->members_.m_size;
          T* ptr = detail::get_pointer(std::copy
             (assign_move_it(detail::get_pointer(last.get_ptr()))
             ,assign_move_it(end_pos)
-				,detail::get_pointer(first.get_ptr())
+            ,detail::get_pointer(first.get_ptr())
             ));
          size_type destroyed = (end_pos - ptr);
          this->destroy_n(ptr, destroyed);
@@ -1310,8 +1310,8 @@ class vector : private detail::vector_alloc_holder<A>
       //Destroy and deallocate old elements
       //If there is allocated memory, destroy and deallocate
       if(this->members_.m_start != 0){
-		   if(!base_t::trivial_dctr_after_move)
-			   this->destroy_n(detail::get_pointer(this->members_.m_start), this->members_.m_size); 
+         if(!base_t::trivial_dctr_after_move)
+            this->destroy_n(detail::get_pointer(this->members_.m_start), this->members_.m_size); 
          this->alloc().deallocate(this->members_.m_start, this->members_.m_capacity);
       }
       this->members_.m_start     = new_start;
@@ -1702,7 +1702,7 @@ class vector : private detail::vector_alloc_holder<A>
          scoped_alloc.release();
          //Destroy and deallocate old buffer
          if(this->members_.m_start != 0){
-			   this->destroy_n(detail::get_pointer(this->members_.m_start), this->members_.m_size); 
+            this->destroy_n(detail::get_pointer(this->members_.m_start), this->members_.m_size); 
             this->alloc().deallocate(this->members_.m_start, this->members_.m_capacity);
          }
          this->members_.m_start     = ret.first;
