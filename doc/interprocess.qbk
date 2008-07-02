@@ -6418,7 +6418,7 @@ will manage the index. `segment_manager` will define interesting internal types 
 For example, the index type `flat_map_index` based in `boost::interprocess::flat_map` 
 is just defined as:
 
-[import ../../boost/interprocess/indexes/flat_map_index.hpp]
+[import ../../../boost/interprocess/indexes/flat_map_index.hpp]
 [flat_map_index]
 
 
