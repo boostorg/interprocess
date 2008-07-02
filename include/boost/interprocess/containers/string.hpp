@@ -1952,7 +1952,7 @@ operator+(const basic_string<CharT,Traits,A>& x,
           const detail::moved_object<basic_string<CharT,Traits,A> >& my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
-	return my.get().replace(size_type(0), size_type(0), x);
+   return my.get().replace(size_type(0), size_type(0), x);
 }
 #else
 template <class CharT, class Traits, class A>
@@ -1961,7 +1961,7 @@ operator+(const basic_string<CharT,Traits,A>& x,
           basic_string<CharT,Traits,A> && my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
-	return my.replace(size_type(0), size_type(0), x);
+   return my.replace(size_type(0), size_type(0), x);
 }
 #endif
 
@@ -1986,7 +1986,7 @@ operator+(const CharT* s,
           const detail::moved_object<basic_string<CharT,Traits,A> >& my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
-	return my.get().replace(size_type(0), size_type(0), s);
+   return my.get().replace(size_type(0), size_type(0), s);
 }
 #else
 template <class CharT, class Traits, class A>
@@ -1995,7 +1995,7 @@ operator+(const CharT* s,
           basic_string<CharT,Traits,A> && my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
-	return detail::move_impl(my.get().replace(size_type(0), size_type(0), s));
+   return detail::move_impl(my.get().replace(size_type(0), size_type(0), s));
 }
 #endif
 
@@ -2019,7 +2019,7 @@ operator+(CharT c,
           const detail::moved_object<basic_string<CharT,Traits,A> >& my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
-	return my.get().replace(size_type(0), size_type(0), &c, &c + 1);
+   return my.get().replace(size_type(0), size_type(0), &c, &c + 1);
 }
 #else
 template <class CharT, class Traits, class A>
@@ -2028,7 +2028,7 @@ operator+(CharT c,
           basic_string<CharT,Traits,A> && my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
-	return my.replace(size_type(0), size_type(0), &c, &c + 1);
+   return my.replace(size_type(0), size_type(0), &c, &c + 1);
 }
 #endif
 

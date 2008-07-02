@@ -97,7 +97,7 @@ inline std::size_t floor_log2 (std::size_t x)
    for(std::size_t shift = Bits >> 1; shift; shift >>= 1){
       std::size_t tmp = n >> shift;
       if (tmp)
-   	   log2 += shift, n = tmp;
+         log2 += shift, n = tmp;
    }
 
    return log2;

@@ -121,7 +121,7 @@ template<class T> inline
 T *copy_n_dispatch(const T *first, typename std::iterator_traits<const T*>::difference_type length, T *dest, detail::bool_<true>)
 {
    std::size_t size = length*sizeof(T);
-	return ((T*)std::memmove(dest, first, size)) + size;
+   return ((T*)std::memmove(dest, first, size)) + size;
 }
 
 template<class InIt, class OutIt> inline
@@ -165,7 +165,7 @@ template<class T> inline
 T *uninitialized_copy_n_dispatch(const T *first, typename std::iterator_traits<const T*>::difference_type length, T *dest, detail::bool_<true>)
 {
    std::size_t size = length*sizeof(T);
-	return ((T*)std::memmove(dest, first, size)) + size;
+   return ((T*)std::memmove(dest, first, size)) + size;
 }
 
 template<class InIt, class FwdIt> inline
