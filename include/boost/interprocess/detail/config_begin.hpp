@@ -40,4 +40,8 @@
    #pragma warning (disable : 4786) // identifier truncated in debug info
    #pragma warning (disable : 4996) // "function": was declared deprecated
    #pragma warning (disable : 4197) // top-level volatile in cast is ignored
+   #pragma warning (disable : 4541) // 'typeid' used on polymorphic type 'boost::exception'
+                                    //    with /GR-; unpredictable behavior may result
+   #pragma warning (disable : 4673) //  throwing '' the following types will not be considered at the catch site
+   #pragma warning (disable : 4671) //  the copy constructor is inaccessible
 #endif

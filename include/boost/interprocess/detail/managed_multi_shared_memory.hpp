@@ -117,7 +117,7 @@ class basic_managed_multi_shared_memory
             shmem_list_t::value_type &m_impl = *mp_frontend->m_shmem_list.rbegin();
             return result_type(m_impl.get_real_address(), m_impl.get_real_size()-1);
          }
-         return result_type((void *)0, 0);  
+         return result_type(static_cast<void *>(0), 0);  
       }
 
       virtual bool update_segments ()
@@ -169,7 +169,7 @@ class basic_managed_multi_shared_memory
          //segment id = 0 of this group
          void_pointer::insert_mapping
             ( group
-            , (char*)addr - managed_impl::ManagedOpenOrCreateUserOffset
+            , static_cast<char*>(addr) - managed_impl::ManagedOpenOrCreateUserOffset
             , size + managed_impl::ManagedOpenOrCreateUserOffset);
          //Check if this is the master segment
          if(!m_segment_number){

@@ -93,12 +93,12 @@ anonymous_shared_memory(std::size_t size, void *address = 0)
    #endif
 
 
-   address = mmap( (void*)address
-                    , size
-                    , PROT_READ|PROT_WRITE
-                    , flags
-                    , fd
-                    , 0);
+   address = mmap( address
+                  , size
+                  , PROT_READ|PROT_WRITE
+                  , flags
+                  , fd
+                  , 0);
 
    if(address == MAP_FAILED){
       if(fd != -1)   

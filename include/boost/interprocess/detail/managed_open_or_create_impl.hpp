@@ -189,13 +189,13 @@ class managed_open_or_create_impl
    {  return m_mapped_region.get_size() - ManagedOpenOrCreateUserOffset; }
 
    void *get_user_address()  const
-   {  return (char*)m_mapped_region.get_address() + ManagedOpenOrCreateUserOffset;  }
+   {  return static_cast<char*>(m_mapped_region.get_address()) + ManagedOpenOrCreateUserOffset;  }
 
    std::size_t get_real_size()  const
    {  return m_mapped_region.get_size(); }
 
    void *get_real_address()  const
-   {  return (char*)m_mapped_region.get_address();  }
+   {  return m_mapped_region.get_address();  }
 
    void swap(managed_open_or_create_impl &other)
    {
@@ -360,7 +360,7 @@ class managed_open_or_create_impl
             if(previous == UninitializedSegment){
                try{
                   write_whole_device<FileBased>(dev, size, file_like_t());
-                  construct_func((char*)region.get_address() + ManagedOpenOrCreateUserOffset, size - ManagedOpenOrCreateUserOffset, true);
+                  construct_func(static_cast<char*>(region.get_address()) + ManagedOpenOrCreateUserOffset, size - ManagedOpenOrCreateUserOffset, true);
                   //All ok, just move resources to the external mapped region
                   m_mapped_region.swap(region);
                }
@@ -413,7 +413,7 @@ class managed_open_or_create_impl
          if(value != InitializedSegment)
             throw interprocess_exception(error_info(corrupted_error));
 
-         construct_func( (char*)region.get_address() + ManagedOpenOrCreateUserOffset
+         construct_func( static_cast<char*>(region.get_address()) + ManagedOpenOrCreateUserOffset
                         , region.get_size() - ManagedOpenOrCreateUserOffset
                         , false);
          //All ok, just move resources to the external mapped region

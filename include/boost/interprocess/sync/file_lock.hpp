@@ -205,6 +205,10 @@ inline bool file_lock::try_lock()
 
 inline bool file_lock::timed_lock(const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->lock();
+      return true;
+   }
    bool result;
    if(!this->timed_acquire_file_lock(m_file_hnd, result, abs_time)){
       error_info err(system_error_code());
@@ -241,6 +245,10 @@ inline bool file_lock::try_lock_sharable()
 
 inline bool file_lock::timed_lock_sharable(const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->lock_sharable();
+      return true;
+   }
    bool result;
    if(!this->timed_acquire_file_lock_sharable(m_file_hnd, result, abs_time)){
       error_info err(system_error_code());

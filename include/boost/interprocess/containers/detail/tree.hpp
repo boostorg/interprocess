@@ -52,7 +52,11 @@
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/interprocess/containers/detail/node_alloc_holder.hpp>
 #include <boost/intrusive/rbtree.hpp>
+#ifndef BOOST_INTERPROCESS_PERFECT_FORWARDING
+#include <boost/interprocess/detail/preprocessor.hpp>
+#endif
 
+#include <utility>   //std::pair
 #include <iterator>
 #include <algorithm>
 
@@ -84,42 +88,89 @@ struct value_compare_impl
    {  return key_compare::operator()(KeyOfValue()(a), KeyOfValue()(b)); }
 };
 
-template <class T, class VoidPointer>
-struct rbtree_node
-   :  public bi::make_set_base_hook
-         < bi::void_pointer<VoidPointer>
-         , bi::link_mode<bi::normal_link>
-         , bi::optimize_size<true>
-         >::type
+template<class VoidPointer>
+struct rbtree_hook
 {
    typedef typename bi::make_set_base_hook
       < bi::void_pointer<VoidPointer>
       , bi::link_mode<bi::normal_link>
       , bi::optimize_size<true>
-      >::type   hook_type;
+      >::type  type;
+};
+
+template<class T>
+struct rbtree_type
+{
+   typedef T type;
+};
+
+template<class T1, class T2>
+struct rbtree_type< std::pair<T1, T2> >
+{
+   typedef detail::pair<T1, T2> type;
+};
+
+template <class T, class VoidPointer>
+struct rbtree_node
+   :  public rbtree_hook<VoidPointer>::type
+{
+   typedef typename rbtree_hook<VoidPointer>::type hook_type;
 
    typedef T value_type;
+   typedef typename rbtree_type<T>::type internal_type;
 
    typedef rbtree_node<T, VoidPointer> node_type;
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   template<class Convertible>
-   rbtree_node(const Convertible &conv)
-      : m_data(conv){}
-   #else
-   template<class Convertible>
-   rbtree_node(Convertible &&conv)
-      : m_data(detail::forward_impl<Convertible>(conv)){}
-   #endif
+   #ifndef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   rbtree_node()
+      : m_data()
+   {}
+
+   #define BOOST_PP_LOCAL_MACRO(n)                                                           \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                \
+   rbtree_node(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                        \
+      : m_data(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _))                     \
+   {}                                                                                        \
+   //!
+   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+   #include BOOST_PP_LOCAL_ITERATE()
+
+   #else //#ifndef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   template<class ...Args>
+   rbtree_node(Args &&...args)
+      : m_data(detail::forward_impl<Args>(args)...)
+   {}
+   #endif//#ifndef BOOST_INTERPROCESS_PERFECT_FORWARDING
 
    rbtree_node &operator=(const rbtree_node &other)
    {  do_assign(other.m_data);   return *this;  }
 
-   T m_data;
-   private:   
+   T &get_data()
+   {
+      T* ptr = reinterpret_cast<T*>(&this->m_data);
+      return *ptr;
+   }
+
+   const T &get_data() const
+   {
+      const T* ptr = reinterpret_cast<const T*>(&this->m_data);
+      return *ptr;
+   }
+
+   private:
+   internal_type m_data;
 
    template<class A, class B>
    void do_assign(const std::pair<const A, B> &p)
+   {
+      const_cast<A&>(m_data.first) = p.first;
+      m_data.second  = p.second;
+   }
+
+   template<class A, class B>
+   void do_assign(const detail::pair<const A, B> &p)
    {
       const_cast<A&>(m_data.first) = p.first;
       m_data.second  = p.second;
@@ -130,44 +181,15 @@ struct rbtree_node
    {  m_data = v; }
 
    public:
+   template<class Convertible>
+
+   static void construct(node_type *ptr
    #if !defined(BOOST_INTERPROCESS_RVALUE_REFERENCE)
-
-   template<class Convertible>
-   static void construct(node_type *ptr, const Convertible &value)
-   {  new(ptr) node_type(value);  }
-
-   template<class Convertible1, class Convertible2>
-   static void construct(node_type *ptr, 
-                         const detail::moved_object<std::pair<Convertible1, Convertible2> > &value)
-   {  
-      //std::pair is not movable so we define our own type and overwrite it
-      typedef detail::pair<typename node_type::value_type::first_type
-                          ,typename node_type::value_type::second_type> hack_pair_t;
-
-      typedef rbtree_node<hack_pair_t, VoidPointer>  hack_node_t;
-
-      new((void*)ptr) hack_node_t(value);  
-   }
-
-   #elif !defined(BOOST_INTERPROCESS_RVALUE_PAIR)
-
-   template<class Convertible>
-   static void construct(node_type *ptr, Convertible &&value)
-   {  new(ptr) node_type(detail::forward_impl<Convertible>(value));  }
-
-   template<class Convertible1, class Convertible2>
-   static void construct(node_type *ptr, 
-                         std::pair<Convertible1, Convertible2> &&value)
-   {  
-      //std::pair is not movable so we define our own type and overwrite it
-      typedef detail::pair<typename node_type::value_type::first_type
-                          ,typename node_type::value_type::second_type> hack_pair_t;
-
-      typedef rbtree_node<hack_pair_t, VoidPointer>  hack_node_t;
-
-      new((void*)ptr) hack_node_t(value);  
-   }
+   , const Convertible &value)
+   #else
+   , Convertible &&value)
    #endif
+   {  new(ptr) node_type(detail::forward_impl<Convertible>(value));  }
 };
 
 }//namespace detail {
@@ -193,7 +215,7 @@ struct intrusive_rbtree_type
    typedef typename bi::make_rbtree
       <node_type
       ,bi::compare<node_compare_type>
-      ,bi::base_hook<typename node_type::hook_type>
+      ,bi::base_hook<typename rbtree_hook<void_pointer>::type>
       ,bi::constant_time_size<true>
       ,bi::size_type<typename A::size_type>
       >::type                                      container_type;
@@ -302,11 +324,11 @@ class rbtree
       
       template<class KeyType>
       bool operator()(const Node &n, const KeyType &k) const
-      {  return KeyValueCompare::operator()(n.m_data, k);  }
+      {  return KeyValueCompare::operator()(n.get_data(), k);  }
 
       template<class KeyType>
       bool operator()(const KeyType &k, const Node &n) const
-      {  return KeyValueCompare::operator()(k, n.m_data);  }
+      {  return KeyValueCompare::operator()(k, n.get_data());  }
    };
 
    typedef key_node_compare<value_compare>  KeyNodeCompare;
@@ -341,10 +363,10 @@ class rbtree
 
       //Pointer like operators
       const_reference operator*()  const 
-      { return  m_it->m_data;  }
+      { return  m_it->get_data();  }
 
       const_pointer   operator->() const 
-      { return  const_pointer(&m_it->m_data); }
+      { return  const_pointer(&m_it->get_data()); }
 
       //Increment / Decrement
       const_iterator& operator++()       
@@ -387,8 +409,8 @@ class rbtree
       iterator(){}
 
       //Pointer like operators
-      reference operator*()  const {  return  this->m_it->m_data;  }
-      pointer   operator->() const {  return  pointer(&this->m_it->m_data);  }
+      reference operator*()  const {  return  this->m_it->get_data();  }
+      pointer   operator->() const {  return  pointer(&this->m_it->get_data());  }
 
       //Increment / Decrement
       iterator& operator++()  
@@ -495,25 +517,59 @@ class rbtree
    { return iterator(this->icont().begin()); }
 
    const_iterator begin() const
-   {  return const_iterator(this->non_const_icont().begin());   }
+   {  return this->cbegin();  }
 
    iterator end()
    {  return iterator(this->icont().end());  }
 
    const_iterator end() const
-   {  return const_iterator(this->non_const_icont().end());  }
+   {  return this->cend();  }
 
    reverse_iterator rbegin()
    {  return reverse_iterator(end());  }
 
    const_reverse_iterator rbegin() const
-   {  return const_reverse_iterator(end());  }
+   {  return this->crbegin();  }
 
    reverse_iterator rend()
    {  return reverse_iterator(begin());   }
 
    const_reverse_iterator rend() const
-   {  return const_reverse_iterator(begin());   }
+   {  return this->crend();   }
+
+   //! <b>Effects</b>: Returns a const_iterator to the first element contained in the container.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_iterator cbegin() const 
+   { return const_iterator(this->non_const_icont().begin()); }
+
+   //! <b>Effects</b>: Returns a const_iterator to the end of the container.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_iterator cend() const 
+   { return const_iterator(this->non_const_icont().end()); }
+
+   //! <b>Effects</b>: Returns a const_reverse_iterator pointing to the beginning 
+   //! of the reversed container. 
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_reverse_iterator crbegin() const 
+   { return const_reverse_iterator(cend()); } 
+
+   //! <b>Effects</b>: Returns a const_reverse_iterator pointing to the end
+   //! of the reversed container. 
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_reverse_iterator crend() const 
+   { return const_reverse_iterator(cbegin()); }
 
    bool empty() const 
    {  return !this->size();  }
@@ -621,6 +677,113 @@ class rbtree
    }
    #endif
 
+   private:
+   iterator emplace_unique_impl(NodePtr p)
+   {
+      value_type &v = p->get_data();
+      insert_commit_data data;
+      std::pair<iterator,bool> ret =
+         this->insert_unique_check(KeyOfValue()(v), data);
+      if(!ret.second){
+         Destroyer(this->node_alloc())(p);
+         return ret.first;
+      }
+      return iterator(iiterator(this->icont().insert_unique_commit(*p, data)));
+   }
+
+   iterator emplace_unique_hint_impl(const_iterator hint, NodePtr p)
+   {
+      value_type &v = p->get_data();
+      insert_commit_data data;
+      std::pair<iterator,bool> ret =
+         this->insert_unique_check(hint, KeyOfValue()(v), data);
+      if(!ret.second){
+         Destroyer(this->node_alloc())(p);
+         return ret.first;
+      }
+      return iterator(iiterator(this->icont().insert_unique_commit(*p, data)));
+   }
+
+   public:
+
+   #ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   template <class... Args>
+   iterator emplace_unique(Args&&... args)
+   {  return this->emplace_unique_impl(AllocHolder::create_node(detail::forward_impl<Args>(args)...));   }
+
+   template <class... Args>
+   iterator emplace_hint_unique(const_iterator hint, Args&&... args)
+   {  return this->emplace_unique_hint_impl(hint, AllocHolder::create_node(detail::forward_impl<Args>(args)...));   }
+
+   template <class... Args>
+   iterator emplace_equal(Args&&... args)
+   {
+      NodePtr p(AllocHolder::create_node(detail::forward_impl<Args>(args)...));
+      return iterator(this->icont().insert_equal(this->icont().end(), *p));
+   }
+
+   template <class... Args>
+   iterator emplace_hint_equal(const_iterator hint, Args&&... args)
+   {
+      NodePtr p(AllocHolder::create_node(detail::forward_impl<Args>(args)...));
+      return iterator(this->icont().insert_equal(hint.get(), *p));
+   }
+
+   #else //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   iterator emplace_unique()
+   {  return this->emplace_unique_impl(AllocHolder::create_node());   }
+
+   iterator emplace_hint_unique(const_iterator hint)
+   {  return this->emplace_unique_hint_impl(hint, AllocHolder::create_node());   }
+
+   iterator emplace_equal()
+   {
+      NodePtr p(AllocHolder::create_node());
+      return iterator(this->icont().insert_equal(this->icont().end(), *p));
+   }
+
+   iterator emplace_hint_equal(const_iterator hint)
+   {
+      NodePtr p(AllocHolder::create_node());
+      return iterator(this->icont().insert_equal(hint.get(), *p));
+   }
+
+   #define BOOST_PP_LOCAL_MACRO(n)                                                                          \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                               \
+   iterator emplace_unique(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                           \
+   {                                                                                                        \
+      return this->emplace_unique_impl                                                                      \
+         (AllocHolder::create_node(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _)));              \
+   }                                                                                                        \
+                                                                                                            \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                               \
+   iterator emplace_hint_unique(const_iterator hint, BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _)) \
+   {                                                                                                        \
+      return this->emplace_unique_hint_impl                                                                 \
+         (hint, AllocHolder::create_node(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _)));        \
+   }                                                                                                        \
+                                                                                                            \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                               \
+   iterator emplace_equal(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                            \
+   {                                                                                                        \
+      NodePtr p(AllocHolder::create_node(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _)));        \
+      return iterator(this->icont().insert_equal(this->icont().end(), *p));                                 \
+   }                                                                                                        \
+                                                                                                            \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                               \
+   iterator emplace_hint_equal(const_iterator hint, BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))  \
+   {                                                                                                        \
+      NodePtr p(AllocHolder::create_node(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _)));        \
+      return iterator(this->icont().insert_equal(hint.get(), *p));                                          \
+   }                                                                                                        \
+   //!
+   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+   #include BOOST_PP_LOCAL_ITERATE()
+
+   #endif   //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
    iterator insert_unique(const_iterator hint, const value_type& v)
    {
       insert_commit_data data;
@@ -663,7 +826,7 @@ class rbtree
       if(this->empty()){
          //Insert with end hint, to achieve linear
          //complexity if [first, last) is ordered
-         iterator end(this->end());
+         const_iterator end(this->end());
          for( ; first != last; ++first)
             this->insert_unique(end, *first);
       }
@@ -722,7 +885,7 @@ class rbtree
    {
       //Insert with end hint, to achieve linear
       //complexity if [first, last) is ordered
-      iterator end(this->end());
+      const_iterator end(this->cend());
       for( ; first != last; ++first)
          this->insert_equal(end, *first);
    }
@@ -815,7 +978,6 @@ class rbtree
    class insertion_functor
    {
       Icont &icont_;
-      typename Icont::iterator pos_;
 
       public:
       insertion_functor(Icont &icont)
@@ -823,7 +985,7 @@ class rbtree
       {}
 
       void operator()(Node &n)
-      {  this->icont_.insert_equal(this->icont_.end(), n); }
+      {  this->icont_.insert_equal(this->icont_.cend(), n); }
    };
 
 

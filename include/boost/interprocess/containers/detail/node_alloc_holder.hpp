@@ -54,7 +54,7 @@ struct node_compare
    {  return static_cast<const ValueCompare &>(*this);  }
 
    bool operator()(const Node &a, const Node &b) const
-   {  return ValueCompare::operator()(a.m_data, b.m_data);  }
+   {  return ValueCompare::operator()(a.get_data(), b.get_data());  }
 };
 
 template<class A, class ICont>
@@ -143,22 +143,8 @@ struct node_alloc_holder
    {  this->node_alloc().deallocate_one(p);   }
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   template<class Convertible>
-   static void construct(const NodePtr &ptr, const Convertible &value)
-   {  new((void*)detail::get_pointer(ptr)) Node(value);  }
-   #else
-   template<class Convertible>
-   static void construct(const NodePtr &ptr, Convertible &&value)
-   {  new((void*)detail::get_pointer(ptr)) Node(detail::forward_impl<Convertible>(value));  }
-   #endif
-
-   static void construct(const NodePtr &ptr)
-   {  new((void*)detail::get_pointer(ptr)) Node();  }
-
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible1, class Convertible2>
-   static void construct(const NodePtr &ptr, 
-                         const detail::moved_object<std::pair<Convertible1, Convertible2> > &value)
+   static void construct(const NodePtr &ptr, const detail::moved_object<std::pair<Convertible1, Convertible2> > &value)
    {
       typedef typename Node::hook_type                hook_type;
       typedef typename Node::value_type::first_type   first_type;
@@ -168,7 +154,7 @@ struct node_alloc_holder
       //Hook constructor does not throw
       new(static_cast<hook_type*>(nodeptr))hook_type();
       //Now construct pair members_holder
-      value_type *valueptr = &nodeptr->m_data;
+      value_type *valueptr = &nodeptr->get_data();
       new((void*)&valueptr->first) first_type(detail::move_impl(value.get().first));
       BOOST_TRY{
          new((void*)&valueptr->second) second_type(detail::move_impl(value.get().second));
@@ -182,8 +168,7 @@ struct node_alloc_holder
    }
    #else
    template<class Convertible1, class Convertible2>
-   static void construct(const NodePtr &ptr, 
-                         std::pair<Convertible1, Convertible2> &&value)
+   static void construct(const NodePtr &ptr, std::pair<Convertible1, Convertible2> &&value)
    {  
       typedef typename Node::hook_type                hook_type;
       typedef typename Node::value_type::first_type   first_type;
@@ -193,7 +178,7 @@ struct node_alloc_holder
       //Hook constructor does not throw
       new(static_cast<hook_type*>(nodeptr))hook_type();
       //Now construct pair members_holder
-      value_type *valueptr = &nodeptr->m_data;
+      value_type *valueptr = &nodeptr->get_data();
       new((void*)&valueptr->first) first_type(detail::move_impl(value.first));
       BOOST_TRY{
          new((void*)&valueptr->second) second_type(detail::move_impl(value.second));
@@ -210,27 +195,75 @@ struct node_alloc_holder
    static void destroy(const NodePtr &ptr)
    {  detail::get_pointer(ptr)->~Node();  }
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   template<class Convertible>
-   NodePtr create_node(const Convertible& x)
-   {
-      NodePtr p = this->allocate_one();
-      Deallocator node_deallocator(p, this->node_alloc());
-      self_t::construct(p, x);
-      node_deallocator.release();
-      return (p);
-   }
+
+   #ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
+   Deallocator
    #else
-   template<class Convertible>
-   NodePtr create_node(Convertible &&x)
+   move_return<Deallocator>
+   #endif
+   create_node_and_deallocator()
    {
       NodePtr p = this->allocate_one();
       Deallocator node_deallocator(p, this->node_alloc());
-      self_t::construct(p, detail::forward_impl<Convertible>(x));
+      return node_deallocator;
+   }
+
+   #ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   template<class ...Args>
+   static void construct(const NodePtr &ptr, Args &&...args)
+   {  new((void*)detail::get_pointer(ptr)) Node(detail::forward_impl<Args>(args)...);  }
+
+   template<class ...Args>
+   NodePtr create_node(Args &&...args)
+   {
+      NodePtr p = this->allocate_one();
+      Deallocator node_deallocator(p, this->node_alloc());
+      self_t::construct(p, detail::forward_impl<Args>(args)...);
       node_deallocator.release();
       return (p);
    }
-   #endif
+
+   #else //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   static void construct(const NodePtr &ptr)
+   {  new((void*)detail::get_pointer(ptr)) Node();  }
+
+   NodePtr create_node()
+   {
+      NodePtr p = this->allocate_one();
+      Deallocator node_deallocator(p, this->node_alloc());
+      self_t::construct(p);
+      node_deallocator.release();
+      return (p);
+   }
+
+   #define BOOST_PP_LOCAL_MACRO(n)                                                           \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                \
+   void construct(const NodePtr &ptr, BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _)) \
+   {                                                                                         \
+      new((void*)detail::get_pointer(ptr))                                                   \
+      Node(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));                        \
+   }                                                                                         \
+   //!
+   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+   #include BOOST_PP_LOCAL_ITERATE()
+
+   #define BOOST_PP_LOCAL_MACRO(n)                                                        \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                             \
+   NodePtr create_node(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))             \
+   {                                                                                      \
+      NodePtr p = this->allocate_one();                                                   \
+      Deallocator node_deallocator(p, this->node_alloc());                                \
+      self_t::construct(p, BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));     \
+      node_deallocator.release();                                                         \
+      return (p);                                                                         \
+   }                                                                                      \
+   //!
+   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+   #include BOOST_PP_LOCAL_ITERATE()
+
+   #endif   //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
 
    template<class It>
    NodePtr create_node_from_it(It it)
@@ -238,15 +271,6 @@ struct node_alloc_holder
       NodePtr p = this->allocate_one();
       Deallocator node_deallocator(p, this->node_alloc());
       ::boost::interprocess::construct_in_place(detail::get_pointer(p), it);
-      node_deallocator.release();
-      return (p);
-   }
-
-   NodePtr create_node()
-   {
-      NodePtr p = this->allocate_one();
-      Deallocator node_deallocator(p, this->node_alloc());
-      self_t::construct(p);
       node_deallocator.release();
       return (p);
    }
@@ -339,7 +363,7 @@ struct node_alloc_holder
       {}
 
       NodePtr operator()(const Node &other) const
-      {  return m_holder.create_node(other.m_data);  }
+      {  return m_holder.create_node(other.get_data());  }
 
       node_alloc_holder &m_holder;
    };

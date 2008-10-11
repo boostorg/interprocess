@@ -71,7 +71,7 @@ inline void fill_system_message(int sys_err_code, std::string &str)
       0,
       sys_err_code,
       winapi::make_lang_id(winapi::lang_neutral, winapi::sublang_default), // Default language
-      (char *) &lpMsgBuf,
+      reinterpret_cast<char *>(&lpMsgBuf),
       0,
       0 
    );

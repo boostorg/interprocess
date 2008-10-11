@@ -593,7 +593,7 @@ struct managed_unique_ptr
    > type;
 };
 
-//!Returns an instance of the a unique pointer constructed
+//!Returns an instance of a unique pointer constructed
 //!with boost::interproces::deleter from a pointer
 //!of type T that has been allocated in the passed managed segment
 template<class T, class ManagedMemory>

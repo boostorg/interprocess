@@ -530,6 +530,58 @@ class map
    void insert(InputIterator first, InputIterator last) 
    {  m_tree.insert_unique(first, last);  }
 
+   #ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   //! <b>Effects</b>: Inserts an object of type T constructed with
+   //!   std::forward<Args>(args)... in the container if and only if there is 
+   //!   no element in the container with an equivalent key.
+   //!   p is a hint pointing to where the insert should start to search.
+   //!
+   //! <b>Returns</b>: An iterator pointing to the element with key equivalent
+   //!   to the key of x.
+   //!
+   //! <b>Complexity</b>: Logarithmic in general, but amortized constant if t
+   //!   is inserted right before p.
+   template <class... Args>
+   iterator emplace(Args&&... args)
+   {  return m_tree.emplace_unique(detail::forward_impl<Args>(args)...); }
+
+   //! <b>Effects</b>: Inserts an object of type T constructed with
+   //!   std::forward<Args>(args)... in the container if and only if there is 
+   //!   no element in the container with an equivalent key.
+   //!   p is a hint pointing to where the insert should start to search.
+   //!
+   //! <b>Returns</b>: An iterator pointing to the element with key equivalent
+   //!   to the key of x.
+   //!
+   //! <b>Complexity</b>: Logarithmic in general, but amortized constant if t
+   //!   is inserted right before p.
+   template <class... Args>
+   iterator emplace_hint(const_iterator hint, Args&&... args)
+   {  return m_tree.emplace_hint_unique(hint, detail::forward_impl<Args>(args)...); }
+
+   #else //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   iterator emplace()
+   {  return m_tree.emplace_unique(); }
+
+   iterator emplace_hint(const_iterator hint)
+   {  return m_tree.emplace_hint_unique(hint); }
+
+   #define BOOST_PP_LOCAL_MACRO(n)                                                                       \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                            \
+   iterator emplace(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                               \
+   {  return m_tree.emplace_unique(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _)); }          \
+                                                                                                         \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                            \
+   iterator emplace_hint(const_iterator hint, BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))     \
+   {  return m_tree.emplace_hint_unique(hint, BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));}\
+   //!
+   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+   #include BOOST_PP_LOCAL_ITERATE()
+
+   #endif   //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
    //! <b>Effects</b>: Erases the element pointed to by position.
    //!
    //! <b>Returns</b>: Returns an iterator pointing to the element immediately
@@ -1055,6 +1107,56 @@ class multimap
    template <class InputIterator>
    void insert(InputIterator first, InputIterator last) 
    {  m_tree.insert_equal(first, last); }
+
+   #ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   //! <b>Effects</b>: Inserts an object of type T constructed with
+   //!   std::forward<Args>(args)... in the container.
+   //!   p is a hint pointing to where the insert should start to search.
+   //!
+   //! <b>Returns</b>: An iterator pointing to the element with key equivalent
+   //!   to the key of x.
+   //!
+   //! <b>Complexity</b>: Logarithmic in general, but amortized constant if t
+   //!   is inserted right before p.
+   template <class... Args>
+   iterator emplace(Args&&... args)
+   {  return m_tree.emplace_equal(detail::forward_impl<Args>(args)...); }
+
+   //! <b>Effects</b>: Inserts an object of type T constructed with
+   //!   std::forward<Args>(args)... in the container.
+   //!   p is a hint pointing to where the insert should start to search.
+   //!
+   //! <b>Returns</b>: An iterator pointing to the element with key equivalent
+   //!   to the key of x.
+   //!
+   //! <b>Complexity</b>: Logarithmic in general, but amortized constant if t
+   //!   is inserted right before p.
+   template <class... Args>
+   iterator emplace_hint(const_iterator hint, Args&&... args)
+   {  return m_tree.emplace_hint_equal(hint, detail::forward_impl<Args>(args)...); }
+
+   #else //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   iterator emplace()
+   {  return m_tree.emplace_equal(); }
+
+   iterator emplace_hint(const_iterator hint)
+   {  return m_tree.emplace_hint_equal(hint); }
+
+   #define BOOST_PP_LOCAL_MACRO(n)                                                                       \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                            \
+   iterator emplace(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                               \
+   {  return m_tree.emplace_equal(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _)); }           \
+                                                                                                         \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                            \
+   iterator emplace_hint(const_iterator hint, BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))     \
+   {  return m_tree.emplace_hint_equal(hint, BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _)); }\
+   //!
+   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+   #include BOOST_PP_LOCAL_ITERATE()
+
+   #endif   //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
 
    //! <b>Effects</b>: Erases the element pointed to by position.
    //!

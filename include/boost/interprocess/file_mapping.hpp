@@ -181,7 +181,7 @@ struct is_movable<file_mapping>
 
 ///@endcond
 
-//!A class that stores the name of a a file
+//!A class that stores the name of a file
 //!and call std::remove(name) in its destructor
 //!Useful to remove temporary files in the presence
 //!of exceptions

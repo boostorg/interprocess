@@ -88,13 +88,13 @@ class simple_seq_fit_impl
       static block_ctrl *get_block_from_addr(void *addr)
       {
          return reinterpret_cast<block_ctrl*>
-                     (detail::char_ptr_cast(addr) - BlockCtrlBytes);
+            (reinterpret_cast<char*>(addr) - BlockCtrlBytes);
       }
 
       void *get_addr() const
       {
          return reinterpret_cast<block_ctrl*>
-                     (detail::char_ptr_cast(this) + BlockCtrlBytes);
+            (reinterpret_cast<const char*>(this) + BlockCtrlBytes);
       }
 
    };
@@ -235,7 +235,7 @@ inline simple_seq_fit_impl<MutexFamily, VoidPointer>::
    //Initialize pointers
    std::size_t block1_off  = detail::get_rounded_size(sizeof(*this)+extra_hdr_bytes, Alignment);
    m_header.m_root.m_next  = reinterpret_cast<block_ctrl*>
-                              (detail::char_ptr_cast(this) + block1_off);
+                              (reinterpret_cast<char*>(this) + block1_off);
    m_header.m_root.m_next->m_size  = (size - block1_off)/Alignment;
    m_header.m_root.m_next->m_next  = &m_header.m_root;
 }
@@ -264,12 +264,12 @@ inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::grow(std::size_t extr
 
    //We'll create a new free block with extra_size bytes
    block_ctrl *new_block = reinterpret_cast<block_ctrl*>
-                              (detail::char_ptr_cast(this) + old_end);
+                              (reinterpret_cast<char*>(this) + old_end);
 
    new_block->m_next = 0;
    new_block->m_size = (m_header.m_size - old_end)/Alignment;
    m_header.m_allocated += new_block->m_size*Alignment;
-   this->priv_deallocate(detail::char_ptr_cast(new_block) + BlockCtrlBytes);
+   this->priv_deallocate(reinterpret_cast<char*>(new_block) + BlockCtrlBytes);
 }
 
 template<class MutexFamily, class VoidPointer>
@@ -286,7 +286,7 @@ inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_add_segment(void
    //Simulate this block was previously allocated
    m_header.m_allocated   += new_block->m_size*Alignment; 
    //Return block and insert it in the free block list
-   this->priv_deallocate(detail::char_ptr_cast(new_block) + BlockCtrlBytes);
+   this->priv_deallocate(reinterpret_cast<char*>(new_block) + BlockCtrlBytes);
 }
 
 template<class MutexFamily, class VoidPointer>
@@ -324,7 +324,7 @@ inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::clear_free_memory()
    //Iterate through all free portions
    do{
       //Just clear user the memory part reserved for the user      
-      std::memset( detail::char_ptr_cast(block) + BlockCtrlBytes
+      std::memset( reinterpret_cast<char*>(block) + BlockCtrlBytes
                  , 0
                  , block->m_size*Alignment - BlockCtrlBytes);
       block = detail::get_pointer(block->m_next);
@@ -412,7 +412,7 @@ inline std::size_t simple_seq_fit_impl<MutexFamily, VoidPointer>::
    //to be modified
    //Obtain the real size of the block
    block_ctrl *block = reinterpret_cast<block_ctrl*>
-                        (detail::char_ptr_cast(ptr) - BlockCtrlBytes);
+                        (reinterpret_cast<char*>(ptr) - BlockCtrlBytes);
    return block->m_size*Alignment - BlockCtrlBytes;
 }
 
@@ -505,7 +505,7 @@ void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
          //We need a minimum size to split the previous one
          if((prev->get_user_bytes() - needs_backwards) > 2*BlockCtrlBytes){
             block_ctrl *new_block = reinterpret_cast<block_ctrl *>
-               (detail::char_ptr_cast(reuse) - needs_backwards - BlockCtrlBytes);
+               (reinterpret_cast<char*>(reuse) - needs_backwards - BlockCtrlBytes);
             new_block->m_next = 0;
             new_block->m_size = 
                BlockCtrlSize + (needs_backwards + extra_forward)/Alignment;
@@ -615,10 +615,10 @@ inline typename simple_seq_fit_impl<MutexFamily, VoidPointer>::block_ctrl *
 {
    //Take the address where the next block should go
    block_ctrl *next_block = reinterpret_cast<block_ctrl*>
-      (detail::char_ptr_cast(ptr) + ptr->m_size*Alignment);
+      (reinterpret_cast<char*>(ptr) + ptr->m_size*Alignment);
 
    //Check if the adjacent block is in the managed segment
-   std::size_t distance = (detail::char_ptr_cast(next_block) - detail::char_ptr_cast(this))/Alignment;
+   std::size_t distance = (reinterpret_cast<char*>(next_block) - reinterpret_cast<char*>(this))/Alignment;
    if(distance >= (m_header.m_size/Alignment)){
       //"next_block" does not exist so we can't expand "block"
       return 0;
@@ -643,8 +643,8 @@ inline
    block_ctrl *root           = &m_header.m_root;
    block_ctrl *prev_2_block   = root;
    block_ctrl *prev_block = detail::get_pointer(root->m_next);
-   while((detail::char_ptr_cast(prev_block) + prev_block->m_size*Alignment)
-            != (detail::char_ptr_cast(ptr))
+   while((reinterpret_cast<char*>(prev_block) + prev_block->m_size*Alignment)
+            != (reinterpret_cast<char*>(ptr))
          && prev_block != root){
       prev_2_block = prev_block;
       prev_block = detail::get_pointer(prev_block->m_next);
@@ -654,7 +654,7 @@ inline
       return prev_pair_t(0, 0);
 
    //Check if the previous block is in the managed segment
-   std::size_t distance = (detail::char_ptr_cast(prev_block) - detail::char_ptr_cast(this))/Alignment;
+   std::size_t distance = (reinterpret_cast<char*>(prev_block) - reinterpret_cast<char*>(this))/Alignment;
    if(distance >= (m_header.m_size/Alignment)){
       //"previous_block" does not exist so we can't expand "block"
       return prev_pair_t(0, 0);
@@ -672,7 +672,7 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
 {
    //Obtain the real size of the block
    block_ctrl *block = reinterpret_cast<block_ctrl*>
-                        (detail::char_ptr_cast(ptr) - BlockCtrlBytes);
+                        (reinterpret_cast<char*>(ptr) - BlockCtrlBytes);
    std::size_t old_block_size = block->m_size;
 
    //All used blocks' next is marked with 0 so check it
@@ -747,7 +747,7 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
 {
    //Obtain the real size of the block
    block_ctrl *block = reinterpret_cast<block_ctrl*>
-                        (detail::char_ptr_cast(ptr) - BlockCtrlBytes);
+                        (reinterpret_cast<char*>(ptr) - BlockCtrlBytes);
    std::size_t block_size = block->m_size;
 
    //All used blocks' next is marked with 0 so check it
@@ -785,14 +785,14 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
 
    //We create the new block
    block = reinterpret_cast<block_ctrl*>
-               (detail::char_ptr_cast(block) + block->m_size*Alignment);
+               (reinterpret_cast<char*>(block) + block->m_size*Alignment);
 
    //Write control data to simulate this new block was previously allocated
    block->m_next = 0;
    block->m_size = data_size - preferred_size;
 
    //Now deallocate the new block to insert it in the free list
-   this->priv_deallocate(detail::char_ptr_cast(block)+BlockCtrlBytes);
+   this->priv_deallocate(reinterpret_cast<char*>(block)+BlockCtrlBytes);
    return true;   
 }
 
@@ -820,30 +820,28 @@ inline void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
    else if ((((std::size_t)(buffer)) % alignment) == 0)
       return buffer;
 
-   char *aligned_portion = (char*)
-      ((std::size_t)((char*)buffer + alignment - 1) & -alignment);
+   char *aligned_portion = reinterpret_cast<char*>
+      (reinterpret_cast<std::size_t>(static_cast<char*>(buffer) + alignment - 1) & -alignment);
 
-   char *pos = ((aligned_portion - (char*)buffer) >= (MinBlockSize*Alignment)) ? 
+   char *pos = ((aligned_portion - reinterpret_cast<char*>(buffer)) >= (MinBlockSize*Alignment)) ? 
       aligned_portion : (aligned_portion + alignment);
 
-
    block_ctrl *first = reinterpret_cast<block_ctrl*>
-                           (detail::char_ptr_cast(buffer) - BlockCtrlBytes);
+                           (reinterpret_cast<char*>(buffer) - BlockCtrlBytes);
 
-   block_ctrl *second = reinterpret_cast<block_ctrl*>
-                           (detail::char_ptr_cast(pos) - BlockCtrlBytes);
+   block_ctrl *second = reinterpret_cast<block_ctrl*>(pos - BlockCtrlBytes);
 
    std::size_t old_size = first->m_size;
 
-   first->m_size  = ((char*)second - (char*)first)/Alignment;
+   first->m_size  = (reinterpret_cast<char*>(second) - reinterpret_cast<char*>(first))/Alignment;
    second->m_size = old_size - first->m_size;
 
    //Write control data to simulate this new block was previously allocated
    second->m_next = 0;
 
    //Now deallocate the new block to insert it in the free list
-   this->priv_deallocate(detail::char_ptr_cast(first) + BlockCtrlBytes);
-   return detail::char_ptr_cast(second) + BlockCtrlBytes;
+   this->priv_deallocate(reinterpret_cast<char*>(first) + BlockCtrlBytes);
+   return reinterpret_cast<char*>(second) + BlockCtrlBytes;
 }
 
 template<class MutexFamily, class VoidPointer> inline
@@ -863,7 +861,7 @@ void* simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_check_and_allocate
       std::size_t total_size = block->m_size;
       block->m_size  = nunits;
       block_ctrl *new_block = reinterpret_cast<block_ctrl*>
-                     (detail::char_ptr_cast(block) + Alignment*nunits);
+                     (reinterpret_cast<char*>(block) + Alignment*nunits);
       new_block->m_size  = total_size - nunits;
       new_block->m_next  = block->m_next;
       prev->m_next = new_block;
@@ -884,9 +882,9 @@ void* simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_check_and_allocate
       //Mark the block as allocated
       block->m_next = 0;
       //Check alignment
-      assert(((detail::char_ptr_cast(block) - detail::char_ptr_cast(this))
+      assert(((reinterpret_cast<char*>(block) - reinterpret_cast<char*>(this))
                % Alignment) == 0 );
-      return detail::char_ptr_cast(block)+BlockCtrlBytes;
+      return reinterpret_cast<char*>(block) + BlockCtrlBytes;
    }
    return 0;
 }
@@ -913,13 +911,13 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_deallocate(void* addr)
    block_ctrl_ptr prev  = &m_header.m_root;
    block_ctrl_ptr pos   = m_header.m_root.m_next;
    block_ctrl_ptr block = reinterpret_cast<block_ctrl*>
-                           (detail::char_ptr_cast(addr) - BlockCtrlBytes);
+                           (reinterpret_cast<char*>(addr) - BlockCtrlBytes);
 
    //All used blocks' next is marked with 0 so check it
    assert(block->m_next == 0);
 
    //Check if alignment and block size are right
-   assert((detail::char_ptr_cast(addr) - detail::char_ptr_cast(this))
+   assert((reinterpret_cast<char*>(addr) - reinterpret_cast<char*>(this))
             % Alignment == 0 );
 
    std::size_t total_size = Alignment*block->m_size;
@@ -938,9 +936,9 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_deallocate(void* addr)
    }
 
    //Try to combine with upper block
-   if ((detail::char_ptr_cast(detail::get_pointer(block))
+   if ((reinterpret_cast<char*>(detail::get_pointer(block))
             + Alignment*block->m_size) == 
-        detail::char_ptr_cast(detail::get_pointer(pos))){
+        reinterpret_cast<char*>(detail::get_pointer(pos))){
 
       block->m_size += pos->m_size;
       block->m_next  = pos->m_next;
@@ -950,9 +948,9 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_deallocate(void* addr)
    }
 
    //Try to combine with lower block
-   if ((detail::char_ptr_cast(detail::get_pointer(prev))
+   if ((reinterpret_cast<char*>(detail::get_pointer(prev))
             + Alignment*prev->m_size) == 
-        detail::char_ptr_cast(detail::get_pointer(block))){
+        reinterpret_cast<char*>(detail::get_pointer(block))){
       prev->m_size += block->m_size;
       prev->m_next  = block->m_next;
    }

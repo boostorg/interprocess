@@ -119,6 +119,18 @@ typename detail::move_type<Object>::type move_impl(const Object &object)
    return type(object);   
 }
 
+template <class T>
+inline const T& forward_impl(const T &t)
+{  return t;   }
+
+template <class T>
+inline T& forward_impl(T &t)
+{  return t;   }
+
+template <class T>
+inline detail::moved_object<T> forward_impl(detail::moved_object<T> &t)
+{  return t;   }
+
 }  //namespace detail {
 
 //!A function that converts an object to a moved object so that 

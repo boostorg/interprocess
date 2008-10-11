@@ -41,7 +41,7 @@ namespace detail{
 //!must be deferred.
 static const detail::defer_lock_type      defer_lock      = detail::defer_lock_type();
 
-//!An object indicating that the a try_lock()
+//!An object indicating that a try_lock()
 //!operation must be executed.
 static const detail::try_to_lock_type     try_to_lock    = detail::try_to_lock_type();
 

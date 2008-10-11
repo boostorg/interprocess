@@ -32,7 +32,13 @@ inline bool interprocess_semaphore::try_wait()
 {  return m_sem.try_wait();   }
 
 inline bool interprocess_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
-{  return m_sem.timed_wait(abs_time);   }
+{
+   if(abs_time == boost::posix_time::pos_infin){
+      this->wait();
+      return true;
+   }
+   return m_sem.timed_wait(abs_time);
+}
 /*
 inline int interprocess_semaphore::get_count() const
 {  return m_sem.get_count();  }

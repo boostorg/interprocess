@@ -28,6 +28,9 @@
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/iterators.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
+#ifndef BOOST_INTERPROCESS_PERFECT_FORWARDING
+#include <boost/interprocess/detail/preprocessor.hpp>
+#endif
 #include <utility>
 #include <algorithm>
 
@@ -115,6 +118,9 @@ struct scoped_deallocator
    void priv_deallocate(allocator_v2)
    {  m_alloc.deallocate_one(m_ptr); }
 
+   scoped_deallocator(const scoped_deallocator &);
+   scoped_deallocator& operator=(const scoped_deallocator &);
+
    public:
    pointer     m_ptr;
    Allocator&  m_alloc;
@@ -125,9 +131,35 @@ struct scoped_deallocator
    ~scoped_deallocator()
    {  if (m_ptr)priv_deallocate(alloc_version());  }
 
+   #ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
+   scoped_deallocator(scoped_deallocator &&o)
+      :  m_ptr(o.m_ptr), m_alloc(o.m_alloc)
+   {
+   #else
+   scoped_deallocator(moved_object<scoped_deallocator> mo)
+      :  m_ptr(mo.get().m_ptr), m_alloc(mo.get().m_alloc)
+   {
+      scoped_deallocator &o = mo.get();
+   #endif
+      o.release();
+   }
+
+   pointer get() const
+   {  return m_ptr;  }
+
    void release()
    {  m_ptr = 0; }
 };
+
+}  //namespace detail {
+
+template <class Allocator>
+struct is_movable<boost::interprocess::detail::scoped_deallocator<Allocator> >
+{
+   static const bool value = true;
+};
+
+namespace detail {
 
 //!A deleter for scoped_ptr that deallocates the memory
 //!allocated for an array of objects using a STL allocator.
@@ -353,20 +385,6 @@ struct multiallocation_destroy_dealloc
    {  m_itbeg = multiallocation_iterator(); }
 };
 
-//!Forces a cast from any pointer to char *pointer
-template<class T>
-inline char* char_ptr_cast(T *ptr)
-{
-   //This is nasty, but we like it a lot!
-   return (char*)(ptr);
-}
-
-inline char* char_ptr_cast()
-{
-   //This is nasty, but we like it a lot!
-   return (char*)(0);
-}
-
 //Rounds "orig_size" by excess to round_to bytes
 inline std::size_t get_rounded_size(std::size_t orig_size, std::size_t round_to)
 {
@@ -510,17 +528,16 @@ struct pair
    T1 first;
    T2 second;
 
-   pair()
-      : first(), second()
-   {}
-
-   pair(const T1& x, const T2& y)
-      : first(x), second(y)
-   {}
-
+   //std::pair compatibility
    template <class D, class S>
    pair(const std::pair<D, S>& p)
       : first(p.first), second(p.second)
+   {}
+
+   //To resolve ambiguity with the variadic constructor of 1 argument
+   //and the previous constructor
+   pair(std::pair<T1, T2>& x)
+      : first(x.first), second(x.second)
    {}
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
@@ -531,6 +548,30 @@ struct pair
    #else
    template <class D, class S>
    pair(std::pair<D, S> && p)
+      : first(detail::move_impl(p.first)), second(detail::move_impl(p.second))
+   {}
+   #endif
+
+   pair()
+      : first(), second()
+   {}
+
+   pair(const pair<T1, T2>& x)
+      : first(x.first), second(x.second)
+   {}
+
+   //To resolve ambiguity with the variadic constructor of 1 argument
+   //and the copy constructor
+   pair(pair<T1, T2>& x)
+      : first(x.first), second(x.second)
+   {}
+
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+   pair(const detail::moved_object<pair<T1, T2> >& p)
+      : first(detail::move_impl(p.get().first)), second(detail::move_impl(p.get().second))
+   {}
+   #else
+   pair(pair<T1, T2> && p)
       : first(detail::move_impl(p.first)), second(detail::move_impl(p.second))
    {}
    #endif
@@ -547,37 +588,42 @@ struct pair
    {}
    #endif
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   template <class U, class V>
-   pair(const detail::moved_object<U> &x, const detail::moved_object<V> &y)
-      : first(detail::move_impl(x.get())), second(detail::move_impl(y.get()))
+   #ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   template<class U, class ...Args>
+   pair(U &&u, Args &&... args)
+      : first(detail::forward_impl<U>(u))
+      , second(detail::forward_impl<Args>(args)...)
    {}
+
    #else
-   template <class U, class V>
-   pair(U &&x, V &&y)
-      : first(detail::move_impl(x)), second(detail::move_impl(y))
-   {}
+
+   template<class U>
+   pair(BOOST_INTERPROCESS_PARAM(U, u))
+      : first(detail::forward_impl<U>(u))
+   {}                                                                     
+
+   #define BOOST_PP_LOCAL_MACRO(n)                                                              \
+   template<class U, BOOST_PP_ENUM_PARAMS(n, class P)>                                          \
+   pair(BOOST_INTERPROCESS_PARAM(U, u)                                                          \
+       ,BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                                  \
+      : first(detail::forward_impl<U>(u))                                                       \
+      , second(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _))                        \
+   {}                                                                                           \
+   //!
+   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+   #include BOOST_PP_LOCAL_ITERATE()
    #endif
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   pair(const detail::moved_object<pair> &p)
-      : first(detail::move_impl(p.get().first)), second(detail::move_impl(p.get().second))
-   {}
-   #else
-   pair(pair &&p)
-      : first(detail::move_impl(p.first)), second(detail::move_impl(p.second))
-   {}
-   #endif
-
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   pair& operator=(const detail::moved_object<pair> &p)
+   pair& operator=(const detail::moved_object<pair<T1, T2> > &p)
    {
       first  = detail::move_impl(p.get().first);
       second = detail::move_impl(p.get().second);
       return *this;
    }
    #else
-   pair& operator=(pair &&p)
+   pair& operator=(pair<T1, T2> &&p)
    {
       first  = detail::move_impl(p.first);
       second = detail::move_impl(p.second);
@@ -585,12 +631,21 @@ struct pair
    }
    #endif
 
-   pair& operator=(const pair &p)
+   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
+   pair& operator=(const detail::moved_object<std::pair<T1, T2> > &p)
    {
-      first  = p.first;
-      second = p.second;
+      first  = detail::move_impl(p.get().first);
+      second = detail::move_impl(p.get().second);
       return *this;
    }
+   #else
+   pair& operator=(std::pair<T1, T2> &&p)
+   {
+      first  = detail::move_impl(p.first);
+      second = detail::move_impl(p.second);
+      return *this;
+   }
+   #endif
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class D, class S>
@@ -735,6 +790,16 @@ class multiallocation_chain_adaptor
 
    std::size_t size() const
    {  return chain_.size(); }
+};
+
+template<class T>
+struct value_init
+{
+   value_init()
+      : m_t()
+   {}
+
+   T m_t;
 };
 
 }  //namespace detail {

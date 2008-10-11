@@ -305,7 +305,7 @@ class segment_manager_base
       //Call destructors and free memory
       //Build scoped ptr to avoid leaks with destructor exception
       std::size_t destroyed = 0;
-      table.destroy_n((void*)object, ctrl_data->m_value_bytes/table.size, destroyed);
+      table.destroy_n(const_cast<void*>(object), ctrl_data->m_value_bytes/table.size, destroyed);
       this->deallocate(ctrl_data);
    }
    /// @endcond
@@ -410,40 +410,38 @@ class segment_manager
    segment_manager(std::size_t size)
       :  Base(size, priv_get_reserved_bytes())
       ,  m_header(static_cast<Base*>(get_this_pointer()))
-   {  (void) anonymous_instance;   (void) unique_instance;   }
+   {
+      (void) anonymous_instance;   (void) unique_instance;
+      assert(static_cast<const void*>(this) == static_cast<const void*>(static_cast<Base*>(this)));
+   }
 
    //!Tries to find a previous named allocation. Returns the address
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
    std::pair<T*, std::size_t> find  (const CharType* name)
-   {  
-      //The name can't be null, no anonymous object can be found by name
-      assert(name != 0);
-      detail::placement_destroy<T> table;
-      std::size_t size;
-      void *ret;
-
-      if(name == reinterpret_cast<const CharType*>(-1)){
-         ret = priv_generic_find<char> (typeid(T).name(), m_header.m_unique_index, table, size, is_intrusive_t(), true);
-      }
-      else{
-         ret = priv_generic_find<CharType> (name, m_header.m_named_index, table, size, is_intrusive_t(), true);
-      }
-      return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
-   }
+   {  return this->priv_find_impl<T>(name, true);  }
 
    //!Tries to find a previous unique allocation. Returns the address
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
    std::pair<T*, std::size_t> find (const detail::unique_instance_t* name)
-   {
-      detail::placement_destroy<T> table;
-      std::size_t size;
-      void *ret = priv_generic_find<char>(name, m_header.m_unique_index, table, size, is_intrusive_t(), true); 
-      return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
-   }
+   {  return this->priv_find_impl<T>(name, true);  }
+
+   //!Tries to find a previous named allocation. Returns the address
+   //!and the object count. On failure the first member of the
+   //!returned pair is 0. This search is not mutex-protected!
+   template <class T>
+   std::pair<T*, std::size_t> find_no_lock  (const CharType* name)
+   {  return this->priv_find_impl<T>(name, false);  }
+
+   //!Tries to find a previous unique allocation. Returns the address
+   //!and the object count. On failure the first member of the
+   //!returned pair is 0. This search is not mutex-protected!
+   template <class T>
+   std::pair<T*, std::size_t> find_no_lock (const detail::unique_instance_t* name)
+   {  return this->priv_find_impl<T>(name, false);  }
 
    //!Returns throwing "construct" proxy
    //!object
@@ -690,11 +688,12 @@ class segment_manager
          (priv_generic_construct(name, num, try2find, dothrow, table));
    }
 
+   private:
    //!Tries to find a previous named allocation. Returns the address
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
-   std::pair<T*, std::size_t> find_no_lock  (const CharType* name)
+   std::pair<T*, std::size_t> priv_find_impl (const CharType* name, bool lock)
    {  
       //The name can't be null, no anonymous object can be found by name
       assert(name != 0);
@@ -703,10 +702,10 @@ class segment_manager
       void *ret;
 
       if(name == reinterpret_cast<const CharType*>(-1)){
-         ret = priv_generic_find<char> (typeid(T).name(), m_header.m_unique_index, table, size, is_intrusive_t(), false);
+         ret = priv_generic_find<char> (typeid(T).name(), m_header.m_unique_index, table, size, is_intrusive_t(), lock);
       }
       else{
-         ret = priv_generic_find<CharType> (name, m_header.m_named_index, table, size, is_intrusive_t(), false);
+         ret = priv_generic_find<CharType> (name, m_header.m_named_index, table, size, is_intrusive_t(), lock);
       }
       return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
    }
@@ -715,15 +714,14 @@ class segment_manager
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
-   std::pair<T*, std::size_t> find_no_lock (const detail::unique_instance_t* name)
+   std::pair<T*, std::size_t> priv_find__impl (const detail::unique_instance_t* name, bool lock)
    {
       detail::placement_destroy<T> table;
       std::size_t size;
-      void *ret = priv_generic_find<char>(name, m_header.m_unique_index, table, size, is_intrusive_t(), false); 
+      void *ret = priv_generic_find<char>(name, m_header.m_unique_index, table, size, is_intrusive_t(), lock); 
       return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
    }
 
-   private:
    void *priv_generic_construct(const CharType *name, 
                          std::size_t num, 
                          bool try2find, 
@@ -815,8 +813,7 @@ class segment_manager
    {
       //Get the number of bytes until the end of (*this)
       //beginning in the end of the Base base.
-      return   (detail::char_ptr_cast((segment_manager*)0) + sizeof(segment_manager))   -
-               (detail::char_ptr_cast(static_cast<Base*>((segment_manager*)0)) + sizeof(Base));
+      return sizeof(segment_manager) - sizeof(Base);
    }
 
    template <class CharT>
@@ -1014,7 +1011,7 @@ class segment_manager
       //Get allocation parameters
       block_header_t *ctrl_data = reinterpret_cast<block_header_t*>
                                  (detail::get_pointer(it->second.m_ptr));
-      char *stored_name       = detail::char_ptr_cast(it->first.name());
+      char *stored_name       = static_cast<char*>(static_cast<void*>(const_cast<CharT*>(it->first.name())));
       (void)stored_name;
 
       //Check if the distance between the name pointer and the memory pointer 
@@ -1024,7 +1021,7 @@ class segment_manager
 
       //Sanity check
       assert((ctrl_data->m_value_bytes % table.size) == 0);
-      assert((void*)stored_name == ctrl_data->template name<CharT>());
+      assert(static_cast<void*>(stored_name) == static_cast<void*>(ctrl_data->template name<CharT>()));
       assert(sizeof(CharT) == ctrl_data->sizeof_char());
 
       //Erase node from index
@@ -1113,7 +1110,12 @@ class segment_manager
          if(try2find){
             return it->get_block_header()->value();
          }
-         return 0;
+         if(dothrow){
+            throw interprocess_exception(already_exists_error);
+         }
+         else{
+            return 0;
+         }
       }
 
       //Allocates buffer for name + data, this can throw (it hurts)
@@ -1153,22 +1155,23 @@ class segment_manager
       }
       BOOST_CATCH_END
 
-      //Initialize the node value_eraser to erase inserted node
-      //if something goes wrong
-      value_eraser<index_type> v_eraser(index, it);
-      
       //Avoid constructions if constructor is trivial
       //Build scoped ptr to avoid leaks with constructor exception
       detail::mem_algo_deallocator<segment_manager_base_type> mem
          (buffer_ptr, *static_cast<segment_manager_base_type*>(this));
 
+      //Initialize the node value_eraser to erase inserted node
+      //if something goes wrong. This will be executed *before*
+      //the memory allocation as the intrusive value is built in that
+      //memory
+      value_eraser<index_type> v_eraser(index, it);
+      
       //Construct array, this can throw
       detail::array_construct(ptr, num, table);
 
-      //All constructors successful, we don't want to release memory
-      mem.release();
-      //Release node v_eraser since construction was successful
+      //Release rollbacks since construction was successful
       v_eraser.release();
+      mem.release();
       return ptr;
    }
 
@@ -1216,8 +1219,7 @@ class segment_manager
       //the key (which is a smart pointer) to an equivalent one
       index_ib insert_ret;
       BOOST_TRY{
-         insert_ret = index.insert(value_type(key_type (name, namelen), 
-                                                      mapped_type(0)));
+         insert_ret = index.insert(value_type(key_type (name, namelen), mapped_type(0)));
       }
       //Ignore exceptions
       BOOST_CATCH(...){

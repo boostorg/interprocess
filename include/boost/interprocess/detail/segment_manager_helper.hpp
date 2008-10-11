@@ -123,8 +123,8 @@ struct block_header
    template<class CharType>
    CharType *name() const
    {  
-      return reinterpret_cast<CharType*>
-      (detail::char_ptr_cast(this) + name_offset());
+      return const_cast<CharType*>(reinterpret_cast<const CharType*>
+         (reinterpret_cast<const char*>(this) + name_offset()));
    }
 
    std::size_t name_length() const
@@ -137,7 +137,7 @@ struct block_header
 
    void *value() const
    {
-      return detail::char_ptr_cast(this) + value_offset();
+      return const_cast<char*>((reinterpret_cast<const char*>(this) + value_offset()));
    }
 
    std::size_t value_offset() const
@@ -169,8 +169,9 @@ struct block_header
    static block_header *block_header_from_value(const void *value, std::size_t sz, std::size_t algn)
    {  
       block_header * hdr = 
-         reinterpret_cast<block_header*>(detail::char_ptr_cast(value) - 
-         get_rounded_size(sizeof(block_header), algn));
+         const_cast<block_header*>
+            (reinterpret_cast<const block_header*>(reinterpret_cast<const char*>(value) - 
+               get_rounded_size(sizeof(block_header), algn)));
       (void)sz;
       //Some sanity checks
       assert(hdr->m_value_alignment == algn);
@@ -182,8 +183,8 @@ struct block_header
    static block_header *from_first_header(Header *header)
    {  
       block_header * hdr = 
-         reinterpret_cast<block_header*>(detail::char_ptr_cast(header) + 
-         get_rounded_size(sizeof(Header), detail::alignment_of<block_header>::value));
+         reinterpret_cast<block_header*>(reinterpret_cast<char*>(header) + 
+            get_rounded_size(sizeof(Header), detail::alignment_of<block_header>::value));
       //Some sanity checks
       return hdr;
    }
@@ -192,7 +193,7 @@ struct block_header
    static Header *to_first_header(block_header *bheader)
    {  
       Header * hdr = 
-         reinterpret_cast<Header*>(detail::char_ptr_cast(bheader) - 
+         reinterpret_cast<Header*>(reinterpret_cast<char*>(bheader) - 
          get_rounded_size(sizeof(Header), detail::alignment_of<block_header>::value));
       //Some sanity checks
       return hdr;
@@ -269,8 +270,9 @@ struct intrusive_value_type_impl
 
    block_header *get_block_header() const
    {
-      return (block_header *)(detail::char_ptr_cast(this) +
-         get_rounded_size(sizeof(*this), BlockHdrAlignment));
+      return const_cast<block_header*>
+         (reinterpret_cast<const block_header *>(reinterpret_cast<const char*>(this) +
+            get_rounded_size(sizeof(*this), BlockHdrAlignment)));
    }
 
    bool operator <(const intrusive_value_type_impl<Hook, CharType> & other) const
@@ -281,7 +283,7 @@ struct intrusive_value_type_impl
 
    static intrusive_value_type_impl *get_intrusive_value_type(block_header *hdr)
    {
-      return (intrusive_value_type_impl *)(detail::char_ptr_cast(hdr) -
+      return reinterpret_cast<intrusive_value_type_impl *>(reinterpret_cast<char*>(hdr) -
          get_rounded_size(sizeof(intrusive_value_type_impl), BlockHdrAlignment));
    }
 
@@ -304,11 +306,11 @@ class char_ptr_holder
    {}
 
    char_ptr_holder(const detail::anonymous_instance_t *) 
-      : m_name((CharType*)0)
+      : m_name(static_cast<CharType*>(0))
    {}
 
    char_ptr_holder(const detail::unique_instance_t *) 
-      : m_name((CharType*)-1)
+      : m_name(reinterpret_cast<CharType*>(-1))
    {}
 
    operator const CharType *()
@@ -380,7 +382,7 @@ struct index_data
    index_data(void *ptr) : m_ptr(ptr){}
 
    void *value() const
-   {  return (void*)detail::get_pointer(m_ptr);  }
+   {  return static_cast<void>(detail::get_pointer(m_ptr));  }
 };
 
 template<class MemoryAlgorithm>

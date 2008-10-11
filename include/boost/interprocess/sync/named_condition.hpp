@@ -259,6 +259,10 @@ template <typename L>
 inline bool named_condition::timed_wait
    (L& lock, const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->wait(lock);
+      return true;
+   }
    if (!lock)
       throw lock_exception();
    return this->do_timed_wait(lock, abs_time);
@@ -268,6 +272,10 @@ template <typename L, typename Pr>
 inline bool named_condition::timed_wait
    (L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->wait(lock, pred);
+      return true;
+   }
    if (!lock)
       throw lock_exception();
 
@@ -309,6 +317,10 @@ template <typename L>
 inline bool named_condition::timed_wait
    (L& lock, const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->wait(lock);
+      return true;
+   }
    if (!lock)
       throw lock_exception();
    return this->condition()->do_timed_wait(abs_time, *lock.mutex()->mutex());
@@ -318,6 +330,10 @@ template <typename L, typename Pr>
 inline bool named_condition::timed_wait
    (L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->wait(lock, pred);
+      return true;
+   }
    if (!lock)
       throw lock_exception();
 

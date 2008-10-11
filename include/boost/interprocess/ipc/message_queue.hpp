@@ -52,7 +52,7 @@ class message_queue
 
    //!Creates a process shared message queue with name "name". For this message queue,
    //!the maximum number of messages will be "max_num_msg" and the maximum message size
-   //!will be "max_msg_size".
+   //!will be "max_msg_size". Throws on error and if the queue was previously created.
    message_queue(create_only_t create_only,
                  const char *name, 
                  std::size_t max_num_msg, 
@@ -62,15 +62,15 @@ class message_queue
    //!If the queue is created, the maximum number of messages will be "max_num_msg" 
    //!and the maximum message size will be "max_msg_size". If queue was previously 
    //!created the queue will be opened and "max_num_msg" and "max_msg_size" parameters
-   //!are ignored.
+   //!are ignored. Throws on error.
    message_queue(open_or_create_t open_or_create,
                  const char *name, 
                  std::size_t max_num_msg, 
                  std::size_t max_msg_size);
 
    //!Opens a previously created process shared message queue with name "name". 
-   //!If the was not previously created or there are no free resources, the 
-   //!function returns false.
+   //!If the was not previously created or there are no free resources, 
+   //!throws an error.
    message_queue(open_only_t open_only,
                  const char *name);
 
@@ -302,11 +302,11 @@ class mq_hdr_t
 
       //Pointer to the index
       msg_hdr_ptr_t *index =  reinterpret_cast<msg_hdr_ptr_t*>
-                                 (detail::char_ptr_cast(this)+r_hdr_size);
+                                 (reinterpret_cast<char*>(this)+r_hdr_size);
 
       //Pointer to the first message header
       detail::msg_hdr_t *msg_hdr   =  reinterpret_cast<detail::msg_hdr_t*>
-                                 (detail::char_ptr_cast(this)+r_hdr_size+r_index_size);  
+                                 (reinterpret_cast<char*>(this)+r_hdr_size+r_index_size);  
 
       //Initialize the pointer to the index
       mp_index             = index;
@@ -315,7 +315,7 @@ class mq_hdr_t
       for(std::size_t i = 0; i < m_max_num_msg; ++i){
          index[i] = msg_hdr;
          msg_hdr  = reinterpret_cast<detail::msg_hdr_t*>
-                        (detail::char_ptr_cast(msg_hdr)+r_max_msg_size);
+                        (reinterpret_cast<char*>(msg_hdr)+r_max_msg_size);
       }
    }
 
@@ -385,7 +385,7 @@ inline message_queue::message_queue(create_only_t create_only,
               name, 
               get_mem_size(max_msg_size, max_num_msg),
               read_write,
-              (void*)0,
+              static_cast<void*>(0),
               //Prepare initialization functor
               detail::initialization_func_t (max_num_msg, max_msg_size))
 {}
@@ -399,7 +399,7 @@ inline message_queue::message_queue(open_or_create_t open_or_create,
               name, 
               get_mem_size(max_msg_size, max_num_msg),
               read_write,
-              (void*)0,
+              static_cast<void*>(0),
               //Prepare initialization functor
               detail::initialization_func_t (max_num_msg, max_msg_size))
 {}
@@ -410,7 +410,7 @@ inline message_queue::message_queue(open_only_t open_only,
    :  m_shmem(open_only, 
               name,
               read_write,
-              (void*)0,
+              static_cast<void*>(0),
               //Prepare initialization functor
               detail::initialization_func_t ())
 {}
@@ -426,7 +426,13 @@ inline bool message_queue::try_send
 inline bool message_queue::timed_send
    (const void *buffer, std::size_t buffer_size
    ,unsigned int priority, const boost::posix_time::ptime &abs_time)
-{  return this->do_send(timed, buffer, buffer_size, priority, abs_time); }
+{
+   if(abs_time == boost::posix_time::pos_infin){
+      this->send(buffer, buffer_size, priority);
+      return true;
+   }
+   return this->do_send(timed, buffer, buffer_size, priority, abs_time);
+}
 
 inline bool message_queue::do_send(block_t block,
                                 const void *buffer,      std::size_t buffer_size, 
@@ -508,7 +514,13 @@ inline bool
    message_queue::timed_receive(void *buffer,              std::size_t buffer_size, 
                                 std::size_t &recvd_size,   unsigned int &priority,
                                 const boost::posix_time::ptime &abs_time)
-{  return this->do_receive(timed, buffer, buffer_size, recvd_size, priority, abs_time); }
+{
+   if(abs_time == boost::posix_time::pos_infin){
+      this->receive(buffer, buffer_size, recvd_size, priority);
+      return true;
+   }
+   return this->do_receive(timed, buffer, buffer_size, recvd_size, priority, abs_time);
+}
 
 inline bool
    message_queue::do_receive(block_t block,

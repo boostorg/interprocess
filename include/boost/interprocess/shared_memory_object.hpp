@@ -220,6 +220,7 @@ inline bool shared_memory_object::priv_open_or_create
       throw interprocess_exception(err);
    }
 
+   //detail::delete_file_on_reboot_if_possible(shmfile.c_str());
    m_mode = mode;
    return true;
 }

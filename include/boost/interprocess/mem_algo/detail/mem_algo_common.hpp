@@ -95,7 +95,7 @@ class basic_multiallocation_iterator
    { return !operator== (other); }
 
    reference operator*() const
-   {  return *((char*)detail::get_pointer(next_alloc_.next_)); }
+   {  return *reinterpret_cast<char*>(detail::get_pointer(next_alloc_.next_)); }
 
    operator unspecified_bool_type() const  
    {  return next_alloc_.next_? &basic_multiallocation_iterator::unspecified_bool_type_func : 0;   }
@@ -112,6 +112,9 @@ class basic_multiallocation_iterator
       tmp_mem->next_ = 0;
       return it;
    }
+
+   multi_allocation_next<VoidPointer> &get_multi_allocation_next()
+   {  return *next_alloc_.next_;  }
 
    private:
    multi_allocation_next<VoidPointer> next_alloc_;
@@ -170,7 +173,7 @@ class basic_multiallocation_chain
          this->last_mem_ = tmp_mem;
       }
       else{
-         next_impl_t * old_first = (next_impl_t*)(&*this->it_);
+         next_impl_t * old_first = &this->it_.get_multi_allocation_next();
          tmp_mem->next_          = old_first;
          this->it_ = basic_multiallocation_iterator<VoidPointer>(tmp_mem);
       }
@@ -197,7 +200,7 @@ class basic_multiallocation_chain
       }
       else{
          static_cast<next_impl_t*>(detail::get_pointer(this->last_mem_))->next_
-            = (next_impl_t*)&*other_chain.it_;
+            = &other_chain.it_.get_multi_allocation_next();
          this->last_mem_ = other_chain.last_mem_;
          this->num_mem_ += other_chain.num_mem_;
       }
@@ -438,8 +441,8 @@ class memory_algorithm_common
             max_value(ceil_units(nbytes) + AllocatedCtrlUnits, std::size_t(MinBlockUnits));
          //We can create a new block in the end of the segment
          if(old_size >= (first_min_units + MinBlockUnits)){
-            //block_ctrl *second =  new((char*)first + Alignment*first_min_units) block_ctrl;
-            block_ctrl *second =  (block_ctrl *)((char*)first + Alignment*first_min_units);
+            block_ctrl *second =  reinterpret_cast<block_ctrl *>
+               (reinterpret_cast<char*>(first) + Alignment*first_min_units);
             first->m_size  = first_min_units;
             second->m_size = old_size - first->m_size;
             BOOST_ASSERT(second->m_size >= MinBlockUnits);
@@ -458,8 +461,8 @@ class memory_algorithm_common
       //  -----------------------------------------------------
       // | MBU +more | ACB |
       //  -----------------------------------------------------
-      char *pos = (char*)
-         ((std::size_t)((char*)buffer +
+      char *pos = reinterpret_cast<char*>
+         (reinterpret_cast<std::size_t>(static_cast<char*>(buffer) +
             //This is the minimum size of (2)
             (MinBlockUnits*Alignment - AllocatedCtrlBytes) +
             //This is the next MBU for the aligned memory
@@ -470,12 +473,13 @@ class memory_algorithm_common
       //Now obtain the address of the blocks
       block_ctrl *first  = memory_algo->priv_get_block(buffer);
       block_ctrl *second = memory_algo->priv_get_block(pos);
-      assert(pos <= ((char*)first + first->m_size*Alignment));
+      assert(pos <= (reinterpret_cast<char*>(first) + first->m_size*Alignment));
       assert(first->m_size >= 2*MinBlockUnits);
-      assert((pos + MinBlockUnits*Alignment - AllocatedCtrlBytes + nbytes*Alignment/Alignment) <= ((char*)first + first->m_size*Alignment));
+      assert((pos + MinBlockUnits*Alignment - AllocatedCtrlBytes + nbytes*Alignment/Alignment) <=
+             (reinterpret_cast<char*>(first) + first->m_size*Alignment));
       //Set the new size of the first block
       std::size_t old_size = first->m_size;
-      first->m_size  = ((char*)second - (char*)first)/Alignment;
+      first->m_size  = (reinterpret_cast<char*>(second) - reinterpret_cast<char*>(first))/Alignment;
       memory_algo->priv_mark_new_allocated_block(first);
 
       //Now check if we can create a new buffer in the end
@@ -494,7 +498,7 @@ class memory_algorithm_common
       //Check if we can create a new block (of size MinBlockUnits) in the end of the segment
       if((old_size - first->m_size) >= (second_min_units + MinBlockUnits)){
          //Now obtain the address of the end block
-         block_ctrl *third = new ((char*)second + Alignment*second_min_units)block_ctrl;
+         block_ctrl *third = new (reinterpret_cast<char*>(second) + Alignment*second_min_units)block_ctrl;
          second->m_size = second_min_units;
          third->m_size  = old_size - first->m_size - second->m_size;
          BOOST_ASSERT(third->m_size >= MinBlockUnits);
@@ -591,10 +595,8 @@ class memory_algorithm_common
       BOOST_ASSERT(block->m_size >= BlockCtrlUnits);
 
       //We create the new block
-//      block_ctrl *new_block = new(reinterpret_cast<block_ctrl*>
-//                  (detail::char_ptr_cast(block) + block->m_size*Alignment)) block_ctrl;
       block_ctrl *new_block = reinterpret_cast<block_ctrl*>
-                  (detail::char_ptr_cast(block) + block->m_size*Alignment);
+                  (reinterpret_cast<char*>(block) + block->m_size*Alignment);
       //Write control data to simulate this new block was previously allocated
       //and deallocate it
       new_block->m_size = old_block_units - block->m_size;
@@ -650,7 +652,7 @@ class memory_algorithm_common
 
          block_ctrl *block = memory_algo->priv_get_block(ret.first);
          std::size_t received_units = block->m_size;
-         char *block_address = (char*)block;
+         char *block_address = reinterpret_cast<char*>(block);
 
          std::size_t total_used_units = 0;
 //         block_ctrl *prev_block = 0;
@@ -663,10 +665,7 @@ class memory_algorithm_common
                break;
             total_request_units -= elem_units;
             //This is the position where the new block must be created
-//            if(prev_block)
-//               memory_algo->priv_mark_new_allocated_block(prev_block);
-            block_ctrl *new_block = (block_ctrl *)(block_address);
-//             block_ctrl *new_block = new(block_address)block_ctrl;
+            block_ctrl *new_block = reinterpret_cast<block_ctrl *>(block_address);
             assert_alignment(new_block);
 
             //The last block should take all the remaining space

@@ -109,7 +109,7 @@ class mapped_region
    //!mapped memory. Never throws.
    offset_t    get_offset() const;
 
-   //!Returns the mode of the mapping used to contruct the mapped file.
+   //!Returns the mode of the mapping used to construct the mapped file.
    //!Never throws.
    mode_t get_mode() const;
 
@@ -327,7 +327,7 @@ inline mapped_region::mapped_region
                                 foffset_high,
                                 foffset_low, 
                                 m_size ? static_cast<std::size_t>(m_extra_offset + m_size) : 0, 
-                                (void*)address);
+                                const_cast<void*>(address));
 
    if(!mhandle.is_shm){
       //For files we don't need the file mapping anymore
@@ -482,8 +482,7 @@ inline mapped_region::mapped_region
    }
 
    //Map it to the address space
-//   m_base   = mmap64( (void*)address
-   m_base   = mmap  ( (void*)address
+   m_base   = mmap  ( const_cast<void*>(address)
                     , static_cast<std::size_t>(m_extra_offset + m_size)
                     , prot
                     , flags
@@ -498,13 +497,13 @@ inline mapped_region::mapped_region
    }
 
    //Calculate new base for the user
-   void *old_base = m_base;
+   const void *old_base = m_base;
    m_base = static_cast<char*>(m_base) + m_extra_offset;
    m_offset = offset;
    m_size   = size;
 
    //Check for fixed mapping error
-   if(address && (old_base != (void*)address)){
+   if(address && (old_base != address)){
       error_info err = system_error_code();
       this->priv_close();
       throw interprocess_exception(err);

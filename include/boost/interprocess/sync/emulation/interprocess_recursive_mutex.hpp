@@ -75,6 +75,10 @@ inline bool interprocess_recursive_mutex::try_lock()
 
 inline bool interprocess_recursive_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->lock();
+      return true;
+   }
    detail::OS_thread_id_t th_id = detail::get_current_thread_id();
    if(detail::equal_thread_id(th_id, m_nOwner)) {  // we own it
       if((unsigned int)(m_nLockCount+1) == 0){

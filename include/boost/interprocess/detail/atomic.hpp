@@ -60,13 +60,13 @@ namespace detail{
 //! "mem": pointer to the atomic value
 //! Returns the old value pointed to by mem
 inline boost::uint32_t atomic_dec32(volatile boost::uint32_t *mem)
-{  return winapi::interlocked_decrement((volatile long*)mem) + 1;  }
+{  return winapi::interlocked_decrement(reinterpret_cast<volatile long*>(mem)) + 1;  }
 
 //! Atomically increment an apr_uint32_t by 1
 //! "mem": pointer to the object
 //! Returns the old value pointed to by mem
 inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
-{  return winapi::interlocked_increment((volatile long*)mem)-1;  }
+{  return winapi::interlocked_increment(reinterpret_cast<volatile long*>(mem))-1;  }
 
 //! Atomically read an boost::uint32_t from memory
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
@@ -76,7 +76,7 @@ inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
 //! "mem": pointer to the object
 //! "param": val value that the object will assume
 inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
-{  winapi::interlocked_exchange((volatile long*)mem, val);  }
+{  winapi::interlocked_exchange(reinterpret_cast<volatile long*>(mem), val);  }
 
 //! Compare an boost::uint32_t's value with "cmp".
 //! If they are the same swap the value with "with"
@@ -86,7 +86,7 @@ inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
 //! Returns the old value of *mem
 inline boost::uint32_t atomic_cas32
    (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
-{  return winapi::interlocked_compare_exchange((volatile long*)mem, with, cmp);  }
+{  return winapi::interlocked_compare_exchange(reinterpret_cast<volatile long*>(mem), with, cmp);  }
 
 }  //namespace detail{
 }  //namespace interprocess{

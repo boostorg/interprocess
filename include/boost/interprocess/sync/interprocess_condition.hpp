@@ -26,7 +26,7 @@
 #include <boost/limits.hpp>
 #include <cassert>
 
-#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+#if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)
    #include <pthread.h>
    #include <errno.h>   
    #include <boost/interprocess/sync/posix/pthread_helpers.hpp>
@@ -107,9 +107,12 @@ class interprocess_condition
    template <typename L>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time)
    {
+      if(abs_time == boost::posix_time::pos_infin){
+         this->wait(lock);
+         return true;
+      }
       if (!lock)
             throw lock_exception();
-
       return do_timed_wait(abs_time, *lock.mutex());
    }
 
@@ -119,9 +122,12 @@ class interprocess_condition
    template <typename L, typename Pr>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
    {
+      if(abs_time == boost::posix_time::pos_infin){
+         this->wait(lock, pred);
+         return true;
+      }
       if (!lock)
             throw lock_exception();
-
       while (!pred()){
          if (!do_timed_wait(abs_time, *lock.mutex()))
             return pred();

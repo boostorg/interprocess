@@ -63,6 +63,13 @@ static const unsigned long file_map_write       = section_map_write;
 static const unsigned long file_map_read        = section_map_read;
 static const unsigned long file_map_all_access  = section_all_access;
 
+static const unsigned long movefile_copy_allowed            = 0x02;
+static const unsigned long movefile_delay_until_reboot      = 0x04;
+static const unsigned long movefile_replace_existing        = 0x01;
+static const unsigned long movefile_write_through           = 0x08;
+static const unsigned long movefile_create_hardlink         = 0x10;
+static const unsigned long movefile_fail_if_not_trackable   = 0x20;
+
 static const unsigned long file_share_read      = 0x00000001;
 static const unsigned long file_share_write     = 0x00000002;
 static const unsigned long file_share_delete    = 0x00000004;
@@ -95,7 +102,7 @@ static const unsigned long format_message_max_width_mask
 static const unsigned long lang_neutral         = (unsigned long)0x00;
 static const unsigned long sublang_default      = (unsigned long)0x01;
 static const unsigned long invalid_file_size    = (unsigned long)0xFFFFFFFF;
-static       void * const  invalid_handle_value = (void*)(long*)-1;
+static       void * const  invalid_handle_value = (void*)(long)(-1);
 static const unsigned long create_new        = 1;
 static const unsigned long create_always     = 2;
 static const unsigned long open_existing     = 3;
@@ -228,6 +235,7 @@ extern "C" __declspec(dllimport) void * __stdcall MapViewOfFileEx (void *, unsig
 extern "C" __declspec(dllimport) void * __stdcall OpenFileMappingA (unsigned long, int, const char *);
 extern "C" __declspec(dllimport) void * __stdcall CreateFileA (const char *, unsigned long, unsigned long, struct interprocess_security_attributes*, unsigned long, unsigned long, void *);
 extern "C" __declspec(dllimport) int __stdcall    DeleteFileA (const char *);
+extern "C" __declspec(dllimport) int __stdcall    MoveFileExA (const char *, const char *, unsigned long);
 extern "C" __declspec(dllimport) void __stdcall GetSystemInfo (struct system_info *);
 extern "C" __declspec(dllimport) int __stdcall FlushViewOfFile (void *, std::size_t);
 extern "C" __declspec(dllimport) int __stdcall GetFileSizeEx (void *, __int64 *size);
@@ -361,6 +369,9 @@ static inline void *create_file(const char *name, unsigned long access, unsigned
 static inline bool delete_file(const char *name)
 {  return 0 != DeleteFileA(name);  }
 
+static inline bool move_file_ex(const char *source_filename, const char *destination_filename, unsigned long flags)
+{  return 0 != MoveFileExA(source_filename, destination_filename, flags);  }
+
 static inline void get_system_info(system_info *info)
 {  GetSystemInfo(info); }
 
@@ -401,10 +412,10 @@ static inline long interlocked_compare_exchange(long volatile *addr, long val1, 
 {  return BOOST_INTERLOCKED_COMPARE_EXCHANGE(addr, val1, val2);  }
 
 static inline long interlocked_exchange_add(long volatile* addend, long value)
-{  return BOOST_INTERLOCKED_EXCHANGE_ADD((long*)addend, value);  }
+{  return BOOST_INTERLOCKED_EXCHANGE_ADD(const_cast<long*>(addend), value);  }
 
 static inline long interlocked_exchange(long volatile* addend, long value)
-{  return BOOST_INTERLOCKED_EXCHANGE((long*)addend, value);  }
+{  return BOOST_INTERLOCKED_EXCHANGE(const_cast<long*>(addend), value);  }
 
 }  //namespace winapi 
 }  //namespace interprocess

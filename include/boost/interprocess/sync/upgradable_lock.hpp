@@ -43,12 +43,12 @@ class sharable_lock;
 //!upgradable_lock is meant to carry out the tasks for read-locking, unlocking,
 //!try-read-locking and timed-read-locking (recursive or not) for the Mutex.
 //!Additionally the upgradable_lock can transfer ownership to a scoped_lock
-//!using trasfer_lock syntax. The Mutex need not supply all of the functionality.
+//!using transfer_lock syntax. The Mutex need not supply all of the functionality.
 //!If the client of upgradable_lock<Mutex> does not use functionality which the
 //!Mutex does not supply, no harm is done. Mutex ownership can be shared among
 //!read_locks, and a single upgradable_lock. upgradable_lock does not support
 //!copy semantics. However upgradable_lock supports ownership transfer from
-//!a upgradable_locks or scoped_locks via trasfer_lock syntax.
+//!a upgradable_locks or scoped_locks via transfer_lock syntax.
 template <class UpgradableMutex>
 class upgradable_lock
 {
