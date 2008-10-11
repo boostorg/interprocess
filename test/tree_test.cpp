@@ -22,6 +22,7 @@
 #include "dummy_test_allocator.hpp"
 #include "set_test.hpp"
 #include "map_test.hpp"
+#include "emplace_test.hpp"
 
 ///////////////////////////////////////////////////////////////////
 //                                                               //
@@ -32,7 +33,7 @@
 ///////////////////////////////////////////////////////////////////
 
 using namespace boost::interprocess;
-
+/*
 //Explicit instantiation to detect compilation errors
 template class boost::interprocess::set
    <test::movable_and_copyable_int
@@ -57,7 +58,7 @@ template class boost::interprocess::multimap
    ,std::less<test::movable_and_copyable_int>
    ,test::dummy_test_allocator<std::pair<const test::movable_and_copyable_int
                                         ,test::movable_and_copyable_int> > >;
-
+*/
 //Customize managed_shared_memory class
 typedef basic_managed_shared_memory
    <char,
@@ -66,7 +67,7 @@ typedef basic_managed_shared_memory
    > my_managed_shared_memory;
 
 //We will work with narrow characters for shared memory objects
-//Alias a integer node allocator type
+//Alias an integer node allocator type
 typedef allocator<int, my_managed_shared_memory::segment_manager>   
    shmem_allocator_t;
 typedef allocator<std::pair<const int, int>, my_managed_shared_memory::segment_manager>   
@@ -119,9 +120,54 @@ typedef multimap<test::movable_and_copyable_int
                 ,test::movable_and_copyable_int
                 ,std::less<test::movable_and_copyable_int>
                 ,shmem_move_copy_node_pair_allocator_t>        MyMoveCopyShmMultiMap;
+//Test recursive structures
+class recursive_set
+{
+public:
+   int id_;
+   set<recursive_set> set_;
+   friend bool operator< (const recursive_set &a, const recursive_set &b)
+   {  return a.id_ < b.id_;   }
+};
+
+class recursive_map
+{
+   public:
+   int id_;
+   map<recursive_map, recursive_map> map_;
+   friend bool operator< (const recursive_map &a, const recursive_map &b)
+   {  return a.id_ < b.id_;   }
+};
+
+//Test recursive structures
+class recursive_multiset
+{
+public:
+   int id_;
+   multiset<recursive_multiset> multiset_;
+   friend bool operator< (const recursive_multiset &a, const recursive_multiset &b)
+   {  return a.id_ < b.id_;   }
+};
+
+class recursive_multimap
+{
+public:
+   int id_;
+   multimap<recursive_multimap, recursive_multimap> multimap_;
+   friend bool operator< (const recursive_multimap &a, const recursive_multimap &b)
+   {  return a.id_ < b.id_;   }
+};
 
 int main ()
 {
+   //Recursive container instantiation
+   {
+      set<recursive_set> set_;
+      multiset<recursive_multiset> multiset_;
+      map<recursive_map, recursive_map> map_;
+      multimap<recursive_multimap, recursive_multimap> multimap_;
+   }
+
    using namespace boost::interprocess::detail;
 
    if(0 != test::set_test<my_managed_shared_memory
@@ -188,6 +234,16 @@ int main ()
       return 1;
    }
 
+   const test::EmplaceOptions SetOptions = (test::EmplaceOptions)(test::EMPLACE_HINT | test::EMPLACE_ASSOC);
+   if(!boost::interprocess::test::test_emplace<set<test::EmplaceInt>, SetOptions>())
+      return 1;
+   if(!boost::interprocess::test::test_emplace<multiset<test::EmplaceInt>, SetOptions>())
+      return 1;
+   const test::EmplaceOptions MapOptions = (test::EmplaceOptions)(test::EMPLACE_HINT_PAIR | test::EMPLACE_ASSOC_PAIR);
+   if(!boost::interprocess::test::test_emplace<map<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
+      return 1;
+   if(!boost::interprocess::test::test_emplace<multimap<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
+      return 1;
    return 0;
 }
 

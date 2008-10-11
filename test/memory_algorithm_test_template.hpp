@@ -108,7 +108,7 @@ bool test_allocation_shrink(Allocator &a)
       std::size_t received_size;
       if(a.template allocation_command<char>
          ( shrink_in_place | nothrow_allocation, i*2
-         , i, received_size, (char*)buffers[i]).first){
+         , i, received_size, static_cast<char*>(buffers[i])).first){
          if(received_size > std::size_t(i*2)){
             return false;
          }
@@ -160,7 +160,7 @@ bool test_allocation_expand(Allocator &a)
 
       while(a.template allocation_command<char>
          ( expand_fwd | nothrow_allocation, min_size
-         , preferred_size, received_size, (char*)buffers[i]).first){
+         , preferred_size, received_size, static_cast<char*>(buffers[i])).first){
          //Check received size is bigger than minimum
          if(received_size < min_size){
             return false;
@@ -215,7 +215,7 @@ bool test_allocation_shrink_and_expand(Allocator &a)
       std::size_t received_size;
       if(a.template allocation_command<char>
          ( shrink_in_place | nothrow_allocation, received_sizes[i]
-         , i, received_size, (char*)buffers[i]).first){
+         , i, received_size, static_cast<char*>(buffers[i])).first){
          if(received_size > std::size_t(received_sizes[i])){
             return false;
          }
@@ -234,7 +234,7 @@ bool test_allocation_shrink_and_expand(Allocator &a)
       std::size_t request_size = received_sizes[i];
       if(a.template allocation_command<char>
          ( expand_fwd | nothrow_allocation, request_size
-         , request_size, received_size, (char*)buffers[i]).first){
+         , request_size, received_size, static_cast<char*>(buffers[i])).first){
          if(received_size != received_sizes[i]){
             return false;
          }
@@ -299,7 +299,7 @@ bool test_allocation_deallocation_expand(Allocator &a)
 
          while(a.template allocation_command<char>
             ( expand_fwd | nothrow_allocation, min_size
-            , preferred_size, received_size, (char*)buffers[i]).first){
+            , preferred_size, received_size, static_cast<char*>(buffers[i])).first){
             //Check received size is bigger than minimum
             if(received_size < min_size){
                return false;
@@ -312,8 +312,8 @@ bool test_allocation_deallocation_expand(Allocator &a)
    }
    
    //Now erase null values from the vector
-   buffers.erase(std::remove(buffers.begin(), buffers.end(), (void*)0)
-                ,buffers.end());
+   buffers.erase( std::remove(buffers.begin(), buffers.end(), static_cast<void*>(0))
+                , buffers.end());
 
    //Deallocate it in non sequential order
    for(int j = 0, max = (int)buffers.size()
@@ -369,7 +369,7 @@ bool test_allocation_with_reuse(Allocator &a)
          std::size_t prf_size = (received_size + (i+1)*2);
          std::pair<void*, bool> ret = a.raw_allocation_command
             ( expand_bwd | nothrow_allocation, min_size
-            , prf_size, received_size, (char*)ptr, sizeof_object);
+            , prf_size, received_size, static_cast<char*>(ptr), sizeof_object);
          if(!ret.first)
             break;
          //If we have memory, this must be a buffer reuse
@@ -511,7 +511,7 @@ bool test_clear_free_memory(Allocator &a)
    //Test allocated memory is zero
    for(int i = 0, max = buffers.size(); i < max; ++i){
       for(int j = 0; j < i; ++j){
-         if(((char*)buffers[i])[j])    return false;
+         if(static_cast<char*>(buffers[i])[j])    return false;
       }
    }
 

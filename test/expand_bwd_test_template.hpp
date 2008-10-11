@@ -148,7 +148,7 @@ bool test_insert_with_expand_bwd()
          }
 
          expand_bwd_test_allocator<value_type> alloc
-            ((value_type*)&memory[0], MemorySize, Offset[iteration]);
+            (&memory[0], MemorySize, Offset[iteration]);
          VectorWithExpandBwdAllocator vector(alloc);
          vector.insert( vector.begin()
                      , initial_data.begin(), initial_data.end());
@@ -165,10 +165,10 @@ bool test_insert_with_expand_bwd()
          }
       }
       catch(...){
-         delete []((non_volatile_value_type*)memory);
+         delete [](const_cast<non_volatile_value_type*>(memory));
          throw;
       }
-      delete []((non_volatile_value_type*)memory);
+      delete [](const_cast<non_volatile_value_type*>(memory));
    }
 
    return true;
@@ -227,10 +227,10 @@ bool test_assign_with_expand_bwd()
          }
       }
       catch(...){
-         delete []((typename boost::remove_volatile<value_type>::type*)memory);
+         delete [](const_cast<typename boost::remove_volatile<value_type>::type*>(memory));
          throw;
       }
-      delete []((typename boost::remove_volatile<value_type>::type*)memory);
+      delete [](const_cast<typename boost::remove_volatile<value_type>::type*>(memory));
    }
 
    return true;

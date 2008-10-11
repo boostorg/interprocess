@@ -16,6 +16,7 @@
 #include "dummy_test_allocator.hpp"
 #include "list_test.hpp"
 #include "movable_int.hpp"
+#include "emplace_test.hpp"
 
 using namespace boost::interprocess;
 
@@ -35,8 +36,21 @@ typedef list<test::movable_int, ShmemMoveAllocator> MyMoveList;
 typedef allocator<test::movable_and_copyable_int, managed_shared_memory::segment_manager> ShmemCopyMoveAllocator;
 typedef list<test::movable_and_copyable_int, ShmemCopyMoveAllocator> MyCopyMoveList;
 
+class recursive_list
+{
+public:
+   int id_;
+   list<recursive_list> list_;
+};
+
+void recursive_list_test()//Test for recursive types
+{
+   list<recursive_list> recursive_list_list;
+}
+
 int main ()
 {
+   recursive_list_test();
    if(test::list_test<managed_shared_memory, MyList, true>())
       return 1;
 
@@ -47,6 +61,11 @@ int main ()
       return 1;
 
    if(test::list_test<managed_shared_memory, MyCopyMoveList, true>())
+      return 1;
+
+   const test::EmplaceOptions Options = (test::EmplaceOptions)(test::EMPLACE_BACK | test::EMPLACE_FRONT | test::EMPLACE_BEFORE);
+
+   if(!boost::interprocess::test::test_emplace<list<test::EmplaceInt>, Options>())
       return 1;
 
    return 0;

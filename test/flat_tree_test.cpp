@@ -20,6 +20,7 @@
 #include "movable_int.hpp"
 #include "set_test.hpp"
 #include "map_test.hpp"
+#include "emplace_test.hpp"
 
 /////////////////////////////////////////////////////////////////
 //                                                               
@@ -30,7 +31,7 @@
 /////////////////////////////////////////////////////////////////
 
 using namespace boost::interprocess;
-
+/*
 //Explicit instantiation to detect compilation errors
 template class boost::interprocess::flat_set
    <test::movable_and_copyable_int
@@ -55,7 +56,7 @@ template class boost::interprocess::flat_multimap
    ,std::less<test::movable_and_copyable_int>
    ,test::dummy_test_allocator<std::pair<test::movable_and_copyable_int
                                         ,test::movable_and_copyable_int> > >;
-
+*/
 //Customize managed_shared_memory class
 typedef basic_managed_shared_memory
    <char,
@@ -112,9 +113,29 @@ typedef flat_multimap<test::movable_and_copyable_int, test::movable_and_copyable
                 ,std::less<test::movable_and_copyable_int>
                 ,shmem_move_copy_pair_allocator_t>                        MyMoveCopyShmMultiMap;
 
+//Test recursive structures
+class recursive_flat_set
+{
+public:
+   int id_;
+   flat_set<recursive_flat_set> flat_set_;
+   friend bool operator< (const recursive_flat_set &a, const recursive_flat_set &b)
+   {  return a.id_ < b.id_;   }
+};
+
+class recursive_flat_map
+{
+public:
+   int id_;
+   flat_map<recursive_flat_map, recursive_flat_map> map_;
+   friend bool operator< (const recursive_flat_map &a, const recursive_flat_map &b)
+   {  return a.id_ < b.id_;   }
+};
+
 int main()
 {
    using namespace boost::interprocess::test;
+
    if (0 != set_test<my_managed_shared_memory
                   ,MyShmSet
                   ,MyStdSet
@@ -186,6 +207,19 @@ int main()
       return 1;
    }
 
+   #if !defined(__GNUC__) || (__GNUC__ < 4) || (__GNUC_MINOR__ < 3)
+   const test::EmplaceOptions SetOptions = (test::EmplaceOptions)(test::EMPLACE_HINT | test::EMPLACE_ASSOC);
+   const test::EmplaceOptions MapOptions = (test::EmplaceOptions)(test::EMPLACE_HINT_PAIR | test::EMPLACE_ASSOC_PAIR);
+
+   if(!boost::interprocess::test::test_emplace<flat_map<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
+      return 1;
+   if(!boost::interprocess::test::test_emplace<flat_multimap<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
+      return 1;
+   if(!boost::interprocess::test::test_emplace<flat_set<test::EmplaceInt>, SetOptions>())
+      return 1;
+   if(!boost::interprocess::test::test_emplace<flat_multiset<test::EmplaceInt>, SetOptions>())
+      return 1;
+   #endif   //!defined(__GNUC__)
    return 0;
 }
 

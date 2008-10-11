@@ -21,7 +21,7 @@
 
 using namespace boost::interprocess;
 
-//Alias a integer node allocator type
+//Alias an integer node allocator type
 typedef cached_node_allocator
    <int, managed_shared_memory::segment_manager>
    cached_node_allocator_t;

@@ -29,7 +29,7 @@ int main()
       void *ptr = managed_shm.allocate_aligned(100, Alignment);
 
       //Check alignment
-      assert(((char*)ptr-(char*)0) % Alignment == 0);
+      assert((static_cast<char*>(ptr)-static_cast<char*>(0)) % Alignment == 0);
 
       //Deallocate it
       managed_shm.deallocate(ptr);
@@ -38,7 +38,7 @@ int main()
       ptr = managed_shm.allocate_aligned(100, Alignment, std::nothrow);
 
       //Check alignment
-      assert(((char*)ptr-(char*)0) % Alignment == 0);
+      assert((static_cast<char*>(ptr)-static_cast<char*>(0)) % Alignment == 0);
 
       //Deallocate it
       managed_shm.deallocate(ptr);
@@ -53,7 +53,7 @@ int main()
          (3*Alignment - managed_shared_memory::PayloadPerAllocation, Alignment);
 
       //Check alignment
-      assert(((char*)ptr-(char*)0) % Alignment == 0);
+      assert((static_cast<char*>(ptr)-static_cast<char*>(0)) % Alignment == 0);
 
       //Deallocate it
       managed_shm.deallocate(ptr);

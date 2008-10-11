@@ -198,7 +198,7 @@ int main ()
    std::size_t heap_list_size = heaplist->size();
 
    //Copy heap buffer to another 
-   const char *insert_beg = detail::char_ptr_cast(heap_buffer.get_address());
+   const char *insert_beg = static_cast<char*>(heap_buffer.get_address());
    const char *insert_end = insert_beg + heap_buffer.get_size();
    std::vector<char> grow_copy (insert_beg, insert_end);
 

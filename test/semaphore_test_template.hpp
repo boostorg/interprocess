@@ -146,7 +146,7 @@ struct test_recursive_lock
 template<typename P>
 void wait_and_sleep(void *arg, P &sm)
 {
-   data<P> *pdata = (data<P> *) arg;
+   data<P> *pdata = static_cast<data<P>*>(arg);
    boost::interprocess::scoped_lock<P> l(sm);
    boost::thread::sleep(xsecs(3*BaseSeconds));
    ++shared_val;
@@ -156,7 +156,7 @@ void wait_and_sleep(void *arg, P &sm)
 template<typename P>
 void try_wait_and_sleep(void *arg, P &sm)
 {
-   data<P> *pdata = (data<P> *) arg;
+   data<P> *pdata = static_cast<data<P>*>(arg);
    boost::interprocess::scoped_lock<P> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
       boost::thread::sleep(xsecs(3*BaseSeconds));
@@ -168,7 +168,7 @@ void try_wait_and_sleep(void *arg, P &sm)
 template<typename P>
 void timed_wait_and_sleep(void *arg, P &sm)
 {
-   data<P> *pdata = (data<P> *) arg;
+   data<P> *pdata = static_cast<data<P>*>(arg);
    boost::posix_time::ptime pt(delay(pdata->m_secs));
    boost::interprocess::scoped_lock<P> 
       l (sm, boost::interprocess::defer_lock);

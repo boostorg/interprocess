@@ -52,6 +52,9 @@ class movable_int
    {  this->m_int = mmi.m_int;   mmi.m_int = 0;  return *this;  }
    #endif
 
+   movable_int & operator= (int i)
+   {  this->m_int = i;  return *this;  }
+
    bool operator ==(const movable_int &mi) const
    {  return this->m_int == mi.m_int;   }
 
@@ -122,6 +125,9 @@ class movable_and_copyable_int
    movable_and_copyable_int & operator= (movable_and_copyable_int &&mmi)
    {  this->m_int = mmi.m_int;   mmi.m_int = 0;    return *this;  }
    #endif
+
+   movable_and_copyable_int & operator= (int i)
+   {  this->m_int = i;  return *this;  }
 
    bool operator ==(const movable_and_copyable_int &mi) const
    {  return this->m_int == mi.m_int;   }

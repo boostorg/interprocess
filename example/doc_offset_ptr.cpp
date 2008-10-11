@@ -25,7 +25,7 @@ struct list_node
 int main ()
 {
    //Destroy any previous shared memory with the name to be used.
-   //Create an special shared memory from which we can
+   //Create a special shared memory from which we can
    //allocate buffers of raw memory.
    shared_memory_object::remove("MySharedMemory");
    try{

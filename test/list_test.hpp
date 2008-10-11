@@ -88,7 +88,6 @@ struct pop_back_function<false>
    }
 };
 
-
 template<class ManagedSharedMemory
         ,class MyShmList
         ,bool  DoublyLinked>

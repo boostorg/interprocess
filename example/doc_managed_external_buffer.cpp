@@ -30,7 +30,7 @@ int main()
    //We optimize resources to create 100 named objects in the static buffer
    objects_in_static_memory.reserve_named_objects(100);
 
-   //Alias a integer node allocator type
+   //Alias an integer node allocator type
    //This allocator will allocate memory inside the static buffer
    typedef allocator<int, wmanaged_external_buffer::segment_manager>
       allocator_t;

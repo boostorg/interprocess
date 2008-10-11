@@ -362,6 +362,9 @@
 			Name="Detail"
 			Filter="">
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\advanced_insert_int.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\algorithms.hpp">
 			</File>
 			<File
@@ -392,10 +395,16 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\interprocess_tester.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\intersegment_ptr.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\iterators.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\managed_memory_impl.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\managed_multi_shared_memory.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\managed_open_or_create_impl.hpp">
@@ -416,6 +425,9 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\mpl.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\multi_segment_services.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\named_proxy.hpp">
 			</File>
 			<File
@@ -431,6 +443,9 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\posix_time_types_wrk.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\preprocessor.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\ptime_wrk.hpp">
 			</File>
 			<File
@@ -444,6 +459,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\utilities.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\variadic_templates_tools.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\version_type.hpp">
@@ -525,6 +543,9 @@
 			</File>
 			<File
 				RelativePath="..\..\test\dummy_test_allocator.hpp">
+			</File>
+			<File
+				RelativePath="..\..\test\emplace_test.hpp">
 			</File>
 			<File
 				RelativePath="..\..\test\expand_bwd_test_allocator.hpp">
