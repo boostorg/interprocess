@@ -587,7 +587,7 @@ void test_alias()
          BOOST_TEST( p2.use_count() == p.use_count() );
          BOOST_TEST( !( p < p2 ) && !( p2 < p ) );
 
-         p2.reset( p, (int*)0 );
+         p2.reset( p, static_cast<int*>(0) );
 
          BOOST_TEST( p2.get() == 0 );
 

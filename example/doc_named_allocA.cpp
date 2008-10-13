@@ -19,7 +19,7 @@ int main ()
    typedef std::pair<double, int> MyType;
 
    try{
-      //An special shared memory where we can
+      //A special shared memory where we can
       //construct objects associated with a name.
       //First remove any old shared memory of the same name, create 
       //the shared memory segment and initialize needed resources

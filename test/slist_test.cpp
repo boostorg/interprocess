@@ -16,6 +16,7 @@
 #include "dummy_test_allocator.hpp"
 #include "list_test.hpp"
 #include "movable_int.hpp"
+#include "emplace_test.hpp"
 
 using namespace boost::interprocess;
 
@@ -26,18 +27,48 @@ template class boost::interprocess::slist<test::movable_and_copyable_int,
 typedef allocator<int, managed_shared_memory::segment_manager> ShmemAllocator;
 typedef slist<int, ShmemAllocator> MyList;
 
+typedef allocator<volatile int, managed_shared_memory::segment_manager> ShmemVolatileAllocator;
+typedef slist<volatile int, ShmemVolatileAllocator> MyVolatileList;
+
 typedef allocator<test::movable_int, managed_shared_memory::segment_manager> ShmemMoveAllocator;
 typedef slist<test::movable_int, ShmemMoveAllocator> MyMoveList;
 
 typedef allocator<test::movable_and_copyable_int, managed_shared_memory::segment_manager> ShmemCopyMoveAllocator;
 typedef slist<test::movable_and_copyable_int, ShmemCopyMoveAllocator> MyCopyMoveList;
 
+class recursive_slist
+{
+public:
+   int id_;
+   slist<recursive_slist> slist_;
+};
+
+void recursive_slist_test()//Test for recursive types
+{
+   slist<recursive_slist> recursive_list_list;
+}
+
 int main ()
 {
+   recursive_slist_test();
+
    if(test::list_test<managed_shared_memory, MyList, false>())
       return 1;
 
    if(test::list_test<managed_shared_memory, MyMoveList, false>())
+      return 1;
+
+   if(test::list_test<managed_shared_memory, MyCopyMoveList, false>())
+      return 1;
+
+   if(test::list_test<managed_shared_memory, MyVolatileList, false>())
+      return 1;
+
+   const test::EmplaceOptions Options = (test::EmplaceOptions)
+      (test::EMPLACE_FRONT | test::EMPLACE_AFTER | test::EMPLACE_BEFORE  | test::EMPLACE_AFTER);
+
+   if(!boost::interprocess::test::test_emplace
+      < slist<test::EmplaceInt>, Options>())
       return 1;
 
    return 0;

@@ -459,12 +459,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_complex_map", "doc_comp
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "named_construct_test", "named_construct_test.vcproj", "{5183C8CE-F2E1-3620-237A-B765C9896390}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
 		Release = Release
-	EndGlobalSection
-	GlobalSection(ProjectDependencies) = postSolution
 	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
 		{5CE18C83-6025-36FE-A4F7-BA09176D3A11}.Debug.ActiveCfg = Debug|Win32
@@ -927,6 +929,10 @@ Global
 		{5C19CF83-4FB7-8219-8F6D-3BA9D2715A22}.Debug.Build.0 = Debug|Win32
 		{5C19CF83-4FB7-8219-8F6D-3BA9D2715A22}.Release.ActiveCfg = Release|Win32
 		{5C19CF83-4FB7-8219-8F6D-3BA9D2715A22}.Release.Build.0 = Release|Win32
+		{5183C8CE-F2E1-3620-237A-B765C9896390}.Debug.ActiveCfg = Debug|Win32
+		{5183C8CE-F2E1-3620-237A-B765C9896390}.Debug.Build.0 = Debug|Win32
+		{5183C8CE-F2E1-3620-237A-B765C9896390}.Release.ActiveCfg = Release|Win32
+		{5183C8CE-F2E1-3620-237A-B765C9896390}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

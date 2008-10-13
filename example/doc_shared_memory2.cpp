@@ -17,6 +17,7 @@
 int main ()
 {
    using namespace boost::interprocess;
+   shared_memory_object::remove("shared_memory");
    try{
       //Open already created shared memory object.
       shared_memory_object shm (open_only, "shared_memory", read_only);

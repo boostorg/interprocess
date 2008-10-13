@@ -38,7 +38,7 @@ namespace boost { namespace interprocess { namespace test {
 template<typename SM>
 void plain_exclusive(void *arg, SM &sm)
 {
-   data<SM> *pdata = (data<SM> *) arg;
+   data<SM> *pdata = static_cast<data<SM>*>(arg);
    boost::interprocess::scoped_lock<SM> l(sm);
    boost::thread::sleep(xsecs(3*BaseSeconds));
    shared_val += 10;
@@ -48,7 +48,7 @@ void plain_exclusive(void *arg, SM &sm)
 template<typename SM>
 void plain_shared(void *arg, SM &sm)
 {
-   data<SM> *pdata = (data<SM> *) arg;
+   data<SM> *pdata = static_cast<data<SM>*>(arg);
    boost::interprocess::sharable_lock<SM> l(sm);
    if(pdata->m_secs){
       boost::thread::sleep(xsecs(pdata->m_secs*BaseSeconds));
@@ -59,7 +59,7 @@ void plain_shared(void *arg, SM &sm)
 template<typename SM>
 void try_exclusive(void *arg, SM &sm)
 {
-   data<SM> *pdata = (data<SM> *) arg;
+   data<SM> *pdata = static_cast<data<SM>*>(arg);
    boost::interprocess::scoped_lock<SM> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
       boost::thread::sleep(xsecs(3*BaseSeconds));
@@ -71,7 +71,7 @@ void try_exclusive(void *arg, SM &sm)
 template<typename SM>
 void try_shared(void *arg, SM &sm)
 {
-   data<SM> *pdata = (data<SM> *) arg;
+   data<SM> *pdata = static_cast<data<SM>*>(arg);
    boost::interprocess::sharable_lock<SM> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
       if(pdata->m_secs){
@@ -84,7 +84,7 @@ void try_shared(void *arg, SM &sm)
 template<typename SM>
 void timed_exclusive(void *arg, SM &sm)
 {
-   data<SM> *pdata = (data<SM> *) arg;
+   data<SM> *pdata = static_cast<data<SM>*>(arg);
    boost::posix_time::ptime pt(delay(pdata->m_secs));
    boost::interprocess::scoped_lock<SM> 
       l (sm, boost::interprocess::defer_lock);
@@ -98,7 +98,7 @@ void timed_exclusive(void *arg, SM &sm)
 template<typename SM>
 void timed_shared(void *arg, SM &sm)
 {
-   data<SM> *pdata = (data<SM> *) arg;
+   data<SM> *pdata = static_cast<data<SM>*>(arg);
    boost::posix_time::ptime pt(delay(pdata->m_secs));
    boost::interprocess::sharable_lock<SM> 
       l(sm, boost::interprocess::defer_lock);
@@ -143,11 +143,11 @@ void test_plain_sharable_mutex()
       // Reader one launches, "clearly" after writer two, and "clearly"
       //   while writer 1 still holds the lock
       boost::thread::sleep(xsecs(1*BaseSeconds));
-      boost::thread tr1(thread_adapter<SM>(plain_shared,&s1, *pm3));
-      boost::thread tr2(thread_adapter<SM>(plain_shared,&s2, *pm4));
+      boost::thread thr1(thread_adapter<SM>(plain_shared,&s1, *pm3));
+      boost::thread thr2(thread_adapter<SM>(plain_shared,&s2, *pm4));
 
-      tr2.join();
-      tr1.join();
+      thr2.join();
+      thr1.join();
       tw2.join();
       tw1.join();
 
@@ -177,8 +177,8 @@ void test_plain_sharable_mutex()
       data<SM> e2(2);
 
       //We launch 2 readers, that will block for 3*BaseTime seconds
-      boost::thread tr1(thread_adapter<SM>(plain_shared,&s1,*pm1));
-      boost::thread tr2(thread_adapter<SM>(plain_shared,&s2,*pm2));
+      boost::thread thr1(thread_adapter<SM>(plain_shared,&s1,*pm1));
+      boost::thread thr2(thread_adapter<SM>(plain_shared,&s2,*pm2));
 
       //Make sure they try to hold the sharable lock
       boost::thread::sleep(xsecs(1*BaseSeconds));
@@ -187,8 +187,8 @@ void test_plain_sharable_mutex()
       boost::thread tw1(thread_adapter<SM>(plain_exclusive,&e1,*pm3));
       boost::thread tw2(thread_adapter<SM>(plain_exclusive,&e2,*pm4));
 
-      tr2.join();
-      tr1.join();
+      thr2.join();
+      thr1.join();
       tw2.join();
       tw1.join();
 
@@ -229,13 +229,13 @@ void test_try_sharable_mutex()
    // Reader one launches, "clearly" after writer #1 holds the lock
    //   and before it releases the lock.
    boost::thread::sleep(xsecs(1*BaseSeconds));
-   boost::thread tr1(thread_adapter<SM>(try_shared,&s1,*pm2));
+   boost::thread thr1(thread_adapter<SM>(try_shared,&s1,*pm2));
 
    // Writer two launches in the same timeframe.
    boost::thread tw2(thread_adapter<SM>(try_exclusive,&e2,*pm3));
 
    tw2.join();
-   tr1.join();
+   thr1.join();
    tw1.join();
 
    assert(e1.m_value == 10);
@@ -281,12 +281,12 @@ void test_timed_sharable_mutex()
    //   to get the lock.  2nd reader will wait 3*BaseSeconds seconds, and will get
    //   the lock.
 
-   boost::thread tr1(thread_adapter<SM>(timed_shared,&s1,*pm3));
-   boost::thread tr2(thread_adapter<SM>(timed_shared,&s2,*pm4));
+   boost::thread thr1(thread_adapter<SM>(timed_shared,&s1,*pm3));
+   boost::thread thr2(thread_adapter<SM>(timed_shared,&s2,*pm4));
 
    tw1.join();
-   tr1.join();
-   tr2.join();
+   thr1.join();
+   thr2.join();
    tw2.join();
 
    assert(e1.m_value == 10);

@@ -16,7 +16,7 @@ int main ()
 {
    using namespace boost::interprocess;
 
-   //An special shared memory from which we are
+   //A special shared memory from which we are
    //able to allocate raw memory buffers.
    //First remove any old shared memory of the same name, create 
    //the shared memory segment and initialize needed resources

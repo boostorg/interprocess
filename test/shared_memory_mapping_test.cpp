@@ -72,7 +72,7 @@ int main ()
          mapped_region region(mapping, read_write, 0, FileSize/2, 0);
          mapped_region region2(mapping, read_write, FileSize/2, FileSize - FileSize/2, 0);
 
-         unsigned char *checker = (unsigned char*)region.get_address();
+         unsigned char *checker = static_cast<unsigned char*>(region.get_address());
          //Check pattern
          for(std::size_t i = 0
             ;i < FileSize/2
@@ -83,7 +83,7 @@ int main ()
          }
 
          //Check second half
-         checker = (unsigned char *)region2.get_address();
+         checker = static_cast<unsigned char *>(region2.get_address());
 
          //Check pattern
          for(std::size_t i = FileSize/2

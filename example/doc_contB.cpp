@@ -19,7 +19,7 @@ int main ()
 {
    using namespace boost::interprocess;
    try{
-      //An special shared memory where we can
+      //A special shared memory where we can
       //construct objects associated with a name.
       //Connect to the already created shared memory segment
       //and initialize needed resources

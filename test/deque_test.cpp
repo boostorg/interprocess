@@ -14,6 +14,7 @@
 #include <deque>
 #include <iostream>
 #include <functional>
+#include <list>
 
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/deque.hpp>
@@ -31,14 +32,15 @@
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <string>
 #include "get_process_id_name.hpp"
+#include "emplace_test.hpp"
 
-//***************************************************************//
+///////////////////////////////////////////////////////////////////
 //                                                               //
 //  This example repeats the same operations with std::deque and //
 //  shmem_deque using the node allocator                         //
 //  and compares the values of both containers                   //
 //                                                               //
-//***************************************************************//
+///////////////////////////////////////////////////////////////////
 
 using namespace boost::interprocess;
 
@@ -63,23 +65,64 @@ bool copyable_only(V1 *shmdeque, V2 *stddeque, detail::true_type)
    shmdeque->insert(shmdeque->end(), 50, 1);
    if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
    {
-   IntType move_me(1);
-   stddeque->insert(stddeque->begin()+size/2, 50, 1);
-   shmdeque->insert(shmdeque->begin()+size/2, 50, detail::move_impl(move_me));
-   if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+      IntType move_me(1);
+      stddeque->insert(stddeque->begin()+size/2, 50, 1);
+      shmdeque->insert(shmdeque->begin()+size/2, 50, detail::move_impl(move_me));
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
    }
    {
-   IntType move_me(2);
-   shmdeque->assign(shmdeque->size()/2, detail::move_impl(move_me));
-   stddeque->assign(stddeque->size()/2, 2);
-   if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+      IntType move_me(2);
+      shmdeque->assign(shmdeque->size()/2, detail::move_impl(move_me));
+      stddeque->assign(stddeque->size()/2, 2);
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
    }
+   {
+      IntType move_me(1);
+      stddeque->clear();
+      shmdeque->clear();
+      stddeque->insert(stddeque->begin(), 50, 1);
+      shmdeque->insert(shmdeque->begin(), 50, detail::move_impl(move_me));
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+      stddeque->insert(stddeque->begin()+20, 50, 1);
+      shmdeque->insert(shmdeque->begin()+20, 50, detail::move_impl(move_me));
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+      stddeque->insert(stddeque->begin()+20, 20, 1);
+      shmdeque->insert(shmdeque->begin()+20, 20, detail::move_impl(move_me));
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+   }
+   {
+      IntType move_me(1);
+      stddeque->clear();
+      shmdeque->clear();
+      stddeque->insert(stddeque->end(), 50, 1);
+      shmdeque->insert(shmdeque->end(), 50, detail::move_impl(move_me));
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+      stddeque->insert(stddeque->end()-20, 50, 1);
+      shmdeque->insert(shmdeque->end()-20, 50, detail::move_impl(move_me));
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+      stddeque->insert(stddeque->end()-20, 20, 1);
+      shmdeque->insert(shmdeque->end()-20, 20, detail::move_impl(move_me));
+      if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+   }
+
    return true;
 }
+
+//Test recursive structures
+class recursive_deque
+{
+public:
+   int id_;
+   deque<recursive_deque> deque_;
+};
 
 template<class IntType, template<class T, class SegmentManager> class AllocatorType >
 bool do_test()
 {
+   //Test for recursive types
+   {
+      deque<recursive_deque> recursive_deque_deque;
+   }
    //Customize managed_shared_memory class
    typedef basic_managed_shared_memory
       <char,
@@ -118,23 +161,43 @@ bool do_test()
       try{
          //Compare several shared memory deque operations with std::deque
          int i;
-         for(i = 0; i < max; ++i){
+         for(i = 0; i < max*100; ++i){
             IntType move_me(i);
             shmdeque->insert(shmdeque->end(), detail::move_impl(move_me));
             stddeque->insert(stddeque->end(), i);
          }
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+
+         shmdeque->clear();
+         stddeque->clear();
+
+         for(i = 0; i < max*100; ++i){
+            IntType move_me(i);
+            shmdeque->push_back(detail::move_impl(move_me));
+            stddeque->push_back(i);
+         }
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+
+         shmdeque->clear();
+         stddeque->clear();
+
+         for(i = 0; i < max*100; ++i){
+            IntType move_me(i);
+            shmdeque->push_front(detail::move_impl(move_me));
+            stddeque->push_front(i);
+         }
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
 
          typename MyShmDeque::iterator it;
          typename MyShmDeque::const_iterator cit = it;
 
          shmdeque->erase(shmdeque->begin()++);
          stddeque->erase(stddeque->begin()++);
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
 
          shmdeque->erase(shmdeque->begin());
          stddeque->erase(stddeque->begin());
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
 
          {
             //Initialize values
@@ -185,21 +248,40 @@ bool do_test()
          shmdeque->erase(shmdeque->begin());
          stddeque->erase(stddeque->begin());
 
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
 
          for(i = 0; i < max; ++i){
             IntType move_me(i);
             shmdeque->insert(shmdeque->begin(), detail::move_impl(move_me));
             stddeque->insert(stddeque->begin(), i);
          }
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
+
+         //Test insertion from list
+         {
+            std::list<int> l(50, int(1));
+            shmdeque->insert(shmdeque->begin(), l.begin(), l.end());
+            stddeque->insert(stddeque->begin(), l.begin(), l.end());
+            if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+            shmdeque->assign(l.begin(), l.end());
+            stddeque->assign(l.begin(), l.end());
+            if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;
+         }
+
+         shmdeque->resize(100);
+         stddeque->resize(100);
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;         
+
+         shmdeque->resize(200);
+         stddeque->resize(200);
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;         
 
          segment.template destroy<MyShmDeque>("MyShmDeque");
          delete stddeque;
          segment.shrink_to_fit_indexes();
 
          if(!segment.all_memory_deallocated())
-            return 1;
+            return false;
       }
       catch(std::exception &ex){
          std::cout << ex.what() << std::endl;
@@ -225,6 +307,12 @@ int main ()
       return 1;
 
    if(!do_test<int, test::allocator_v1>())
+      return 1;
+
+   const test::EmplaceOptions Options = (test::EmplaceOptions)(test::EMPLACE_BACK | test::EMPLACE_FRONT | test::EMPLACE_BEFORE);
+
+   if(!boost::interprocess::test::test_emplace
+      < deque<test::EmplaceInt>, Options>())
       return 1;
 
    return 0;

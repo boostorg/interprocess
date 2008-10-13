@@ -22,7 +22,7 @@
 using namespace boost::interprocess;
 
 //We will work with wide characters for shared memory objects
-//Alias a integer node allocator type
+//Alias an integer node allocator type
 typedef node_allocator
    <int, managed_shared_memory::segment_manager> shmem_node_allocator_t;
 typedef detail::node_allocator_v1

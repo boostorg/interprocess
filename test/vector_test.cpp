@@ -76,8 +76,21 @@ int test_expand_bwd()
    return 0;
 }
 
+class recursive_vector
+{
+   public:
+   int id_;
+   vector<recursive_vector> vector_;
+};
+
+void recursive_vector_test()//Test for recursive types
+{
+   vector<recursive_vector> recursive_vector_vector;
+}
+
 int main()
 {
+   recursive_vector_test();
    typedef allocator<int, managed_shared_memory::segment_manager> ShmemAllocator;
    typedef vector<int, ShmemAllocator> MyVector;
 
@@ -103,6 +116,11 @@ int main()
       return 1;
 
    if(test_expand_bwd())
+      return 1;
+
+   const test::EmplaceOptions Options = (test::EmplaceOptions)(test::EMPLACE_BACK | test::EMPLACE_BEFORE);
+   if(!boost::interprocess::test::test_emplace
+      < vector<test::EmplaceInt>, Options>())
       return 1;
 
    return 0;

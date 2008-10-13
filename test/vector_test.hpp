@@ -14,6 +14,7 @@
 #include <vector>
 #include <iostream>
 #include <functional>
+#include <list>
 
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/move_iterator.hpp>
@@ -24,6 +25,7 @@
 #include <string>
 #include <vector>
 #include "get_process_id_name.hpp"
+#include "emplace_test.hpp"
 
 namespace boost{
 namespace interprocess{
@@ -46,22 +48,22 @@ bool copyable_only(V1 *shmvector, V2 *stdvector, detail::true_type)
    if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
 
    {
-   IntType move_me(1);
-   stdvector->insert(stdvector->begin()+size/2, 50, 1);
-   shmvector->insert(shmvector->begin()+size/2, 50, detail::move_impl(move_me));
-   if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+      IntType move_me(1);
+      stdvector->insert(stdvector->begin()+size/2, 50, 1);
+      shmvector->insert(shmvector->begin()+size/2, 50, detail::move_impl(move_me));
+      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
    }
    {
-   IntType move_me(2);
-   shmvector->assign(shmvector->size()/2, detail::move_impl(move_me));
-   stdvector->assign(stdvector->size()/2, 2);
-   if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+      IntType move_me(2);
+      shmvector->assign(shmvector->size()/2, detail::move_impl(move_me));
+      stdvector->assign(stdvector->size()/2, 2);
+      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
    }
    {
-   IntType move_me(3);
-   shmvector->assign(shmvector->size()*3-1, detail::move_impl(move_me));
-   stdvector->assign(stdvector->size()*3-1, 3);
-   if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
+      IntType move_me(3);
+      shmvector->assign(shmvector->size()*3-1, detail::move_impl(move_me));
+      stdvector->assign(stdvector->size()*3-1, 3);
+      if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
    }
    return true;
 }
@@ -191,6 +193,17 @@ int vector_test()
             stdvector->insert(stdvector->begin(), i);
          }
          if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
+
+         //Test insertion from list
+         {
+            std::list<int> l(50, int(1));
+            shmvector->insert(shmvector->begin(), l.begin(), l.end());
+            stdvector->insert(stdvector->begin(), l.begin(), l.end());
+            if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
+            shmvector->assign(l.begin(), l.end());
+            stdvector->assign(l.begin(), l.end());
+            if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
+         }
 
          delete stdvector;
          segment.template destroy<MyShmVector>("MyShmVector");

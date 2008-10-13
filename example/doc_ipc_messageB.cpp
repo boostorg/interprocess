@@ -17,7 +17,7 @@ int main ()
    using namespace boost::interprocess;
 
    try{
-      //An special shared memory from which we are
+      //A special shared memory from which we are
       //able to allocate raw memory buffers.
       //Connect to the already created shared memory segment
       //and initialize needed resources

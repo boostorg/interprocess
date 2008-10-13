@@ -20,7 +20,7 @@ using namespace boost::interprocess;
 
 int main ()
 {
-   const int FileSize          = 65536;
+   const int FileSize          = 65536*10;
    const char *const FileName = test::get_process_id_name();
 
    //STL compatible allocator object for memory-mapped file
@@ -42,6 +42,7 @@ int main ()
       //Let's allocate some memory 
       for(i = 0; i < max; ++i){
          array[i] = mfile.allocate(i+1);
+         std::cout << i << ' ';
       }
 
       //Deallocate allocated memory
