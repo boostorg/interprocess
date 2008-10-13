@@ -30,7 +30,7 @@
 #include <boost/interprocess/allocators/detail/node_tools.hpp>
 #include <boost/interprocess/allocators/detail/allocator_common.hpp>
 #include <cstddef>
-#include <cmath>
+#include <boost/config/no_tr1/cmath.hpp>
 #include <cassert>
 
 //!\file
