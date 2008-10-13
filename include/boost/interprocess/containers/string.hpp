@@ -50,6 +50,8 @@
 #include <memory>
 #include <algorithm>
 #include <iosfwd>
+#include <istream>
+#include <ostream>
 #include <ios>
 #include <locale>
 #include <cstddef>

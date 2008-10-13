@@ -63,6 +63,10 @@ inline bool interprocess_mutex::try_lock()
 
 inline bool interprocess_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->lock();
+      return true;
+   }
    #ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
 
    timespec ts = detail::ptime_to_timespec(abs_time);

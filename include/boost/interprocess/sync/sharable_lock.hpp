@@ -48,7 +48,7 @@ class upgradable_lock;
 //!the Mutex does not supply, no harm is done. Mutex ownership can be shared among
 //!sharable_locks, and a single upgradable_lock. sharable_lock does not support
 //!copy semantics. But sharable_lock supports ownership transfer from an sharable_lock,
-//!upgradable_lock and scoped_lock via trasfer_lock syntax.*/
+//!upgradable_lock and scoped_lock via transfer_lock syntax.*/
 template <class SharableMutex>
 class sharable_lock
 {

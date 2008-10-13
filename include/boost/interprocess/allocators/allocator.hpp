@@ -147,7 +147,7 @@ class allocator
       (void)hint;
       if(count > this->max_size())
          throw bad_alloc();
-      return pointer((value_type*)mp_mngr->allocate(count*sizeof(T)));
+      return pointer(static_cast<value_type*>(mp_mngr->allocate(count*sizeof(T))));
    }
 
    //!Deallocates memory previously allocated.

@@ -21,8 +21,8 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
-#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED &&\
-    defined BOOST_INTERPROCESS_POSIX_SEMAPHORES
+#if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && \
+   (defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES))
    #include <fcntl.h>      //O_CREAT, O_*... 
    #include <unistd.h>     //close
    #include <string>       //std::string

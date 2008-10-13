@@ -410,14 +410,14 @@ class private_adaptive_node_pool_impl
          (void)free_nodes;
          assert(free_nodes == mp_impl->m_real_num_node);
          assert(0 == to_deallocate->hdr_offset);
-         hdr_offset_holder *hdr_off_holder = mp_impl->priv_first_subblock_from_block((block_info_t*)detail::get_pointer(to_deallocate));
+         hdr_offset_holder *hdr_off_holder = mp_impl->priv_first_subblock_from_block(detail::get_pointer(to_deallocate));
          mp_impl->mp_segment_mngr_base->deallocate(hdr_off_holder);
       }
       const private_adaptive_node_pool_impl *mp_impl;
    };
 
    //This macro will activate invariant checking. Slow, but helpful for debugging the code.
-   #define BOOST_INTERPROCESS_ADAPTIVE_NODE_POOL_CHECK_INVARIANTS
+   //#define BOOST_INTERPROCESS_ADAPTIVE_NODE_POOL_CHECK_INVARIANTS
    void priv_invariants()
    #ifdef BOOST_INTERPROCESS_ADAPTIVE_NODE_POOL_CHECK_INVARIANTS
    #undef BOOST_INTERPROCESS_ADAPTIVE_NODE_POOL_CHECK_INVARIANTS
@@ -463,10 +463,10 @@ class private_adaptive_node_pool_impl
       for(; it != itend; ++it){
          hdr_offset_holder *hdr_off_holder = priv_first_subblock_from_block(&*it);
          for(std::size_t i = 0, max = m_num_subblocks; i < max; ++i){
-            assert(hdr_off_holder->hdr_offset == std::size_t((char*)&*it- (char*)hdr_off_holder));
+            assert(hdr_off_holder->hdr_offset == std::size_t(reinterpret_cast<char*>(&*it)- reinterpret_cast<char*>(hdr_off_holder)));
             assert(0 == ((std::size_t)hdr_off_holder & (m_real_block_alignment - 1)));
             assert(0 == (hdr_off_holder->hdr_offset & (m_real_block_alignment - 1)));
-            hdr_off_holder = (hdr_offset_holder *)((char*)hdr_off_holder + m_real_block_alignment);
+            hdr_off_holder = reinterpret_cast<hdr_offset_holder *>(reinterpret_cast<char*>(hdr_off_holder) + m_real_block_alignment);
          }
       }
       }
@@ -498,19 +498,20 @@ class private_adaptive_node_pool_impl
    block_info_t *priv_block_from_node(void *node) const
    {
       hdr_offset_holder *hdr_off_holder =
-         (hdr_offset_holder*)((std::size_t)node & std::size_t(~(m_real_block_alignment - 1)));
+         reinterpret_cast<hdr_offset_holder*>((std::size_t)node & std::size_t(~(m_real_block_alignment - 1)));
       assert(0 == ((std::size_t)hdr_off_holder & (m_real_block_alignment - 1)));
       assert(0 == (hdr_off_holder->hdr_offset & (m_real_block_alignment - 1)));
-      block_info_t *block = (block_info_t *)(((char*)hdr_off_holder) + hdr_off_holder->hdr_offset);
+      block_info_t *block = reinterpret_cast<block_info_t *>
+         (reinterpret_cast<char*>(hdr_off_holder) + hdr_off_holder->hdr_offset);
       assert(block->hdr_offset == 0);
       return block;
    }
 
    hdr_offset_holder *priv_first_subblock_from_block(block_info_t *block) const
    {
-      hdr_offset_holder *hdr_off_holder = (hdr_offset_holder*)
-            (((char*)block) - (m_num_subblocks-1)*m_real_block_alignment);
-      assert(hdr_off_holder->hdr_offset == std::size_t((char*)block - (char*)hdr_off_holder));
+      hdr_offset_holder *hdr_off_holder = reinterpret_cast<hdr_offset_holder*>
+            (reinterpret_cast<char*>(block) - (m_num_subblocks-1)*m_real_block_alignment);
+      assert(hdr_off_holder->hdr_offset == std::size_t(reinterpret_cast<char*>(block) - reinterpret_cast<char*>(hdr_off_holder)));
       assert(0 == ((std::size_t)hdr_off_holder & (m_real_block_alignment - 1)));
       assert(0 == (hdr_off_holder->hdr_offset & (m_real_block_alignment - 1)));
       return hdr_off_holder;
@@ -526,7 +527,7 @@ class private_adaptive_node_pool_impl
       for(std::size_t i = 0; i != n; ++i){
          //We allocate a new NodeBlock and put it the last
          //element of the tree
-         char *mem_address = detail::char_ptr_cast
+         char *mem_address = static_cast<char*>
             (mp_segment_mngr_base->allocate_aligned(real_block_size, m_real_block_alignment));
          if(!mem_address)   throw std::bad_alloc();
          ++m_totally_free_blocks;

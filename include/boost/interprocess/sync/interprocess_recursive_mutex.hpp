@@ -36,7 +36,8 @@
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <cassert>
 
-#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED && defined BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES
+#if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && \
+   (defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && defined (BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES))
    #include <pthread.h>
    #include <errno.h>   
    #include <boost/interprocess/sync/posix/pthread_helpers.hpp>

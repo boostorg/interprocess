@@ -52,6 +52,10 @@ inline bool interprocess_semaphore::try_wait()
 
 inline bool interprocess_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->wait();
+      return true;
+   }
    scoped_lock<interprocess_mutex> lock(m_mut);
    while(m_count == 0){
       if(!m_cond.timed_wait(lock, abs_time))

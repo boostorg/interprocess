@@ -322,6 +322,10 @@ inline bool interprocess_upgradable_mutex::try_lock()
 inline bool interprocess_upgradable_mutex::timed_lock
    (const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->lock();
+      return true;
+   }
    scoped_lock_t lock(m_mut, abs_time);
    if(!lock.owns())   return false;
 
@@ -399,6 +403,10 @@ inline bool interprocess_upgradable_mutex::try_lock_upgradable()
 inline bool interprocess_upgradable_mutex::timed_lock_upgradable
    (const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->lock_upgradable();
+      return true;
+   }
    scoped_lock_t lock(m_mut, abs_time);
    if(!lock.owns())   return false;
 
@@ -471,6 +479,10 @@ inline bool interprocess_upgradable_mutex::try_lock_sharable()
 inline bool interprocess_upgradable_mutex::timed_lock_sharable
    (const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->lock_sharable();
+      return true;
+   }
    scoped_lock_t lock(m_mut, abs_time);
    if(!lock.owns())   return false;
 

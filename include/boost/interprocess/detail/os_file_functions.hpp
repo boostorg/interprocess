@@ -101,6 +101,9 @@ inline file_handle_t open_existing_file
 inline bool delete_file(const char *name)
 {  return winapi::delete_file(name);   }
 
+inline bool delete_file_on_reboot_if_possible(const char *filename)
+{  return winapi::move_file_ex(filename, 0, winapi::movefile_delay_until_reboot);  }
+
 inline bool truncate_file (file_handle_t hnd, std::size_t size)
 {  
    if(!winapi::set_file_pointer_ex(hnd, size, 0, winapi::file_begin)){
@@ -260,6 +263,12 @@ inline file_handle_t open_existing_file
 inline bool delete_file(const char *name)
 {  return ::unlink(name) == 0;   }
 
+
+inline bool delete_file_on_reboot_if_possible(const char *)
+{  //Function not implemented in POSIX functions
+   return false;
+}
+
 inline bool truncate_file (file_handle_t hnd, std::size_t size)
 {  return 0 == ::ftruncate(hnd, size);   }
 
@@ -274,11 +283,11 @@ inline bool get_file_size(file_handle_t hnd, offset_t &size)
 }
 
 inline bool set_file_pointer(file_handle_t hnd, offset_t off, file_pos_t pos)
-{  return off == lseek(hnd, off, (int)pos); }
+{  return off == ::lseek(hnd, off, (int)pos); }
 
 inline bool get_file_pointer(file_handle_t hnd, offset_t &off)
 {  
-   off = lseek(hnd, 0, SEEK_CUR);
+   off = ::lseek(hnd, 0, SEEK_CUR);
    return off != ((off_t)-1);
 }
 

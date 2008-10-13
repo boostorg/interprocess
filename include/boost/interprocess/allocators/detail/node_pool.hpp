@@ -96,7 +96,7 @@ class private_node_pool_impl
       if (m_freelist.empty())
          priv_alloc_block();
       //We take the first free node
-      node_t *n = (node_t*)&m_freelist.front();
+      node_t *n = &m_freelist.front();
       m_freelist.pop_front();
       ++m_allocated;
       return n;
@@ -292,13 +292,13 @@ class private_node_pool_impl
       :  std::unary_function<typename free_nodes_t::value_type, bool>
    {
       is_between(const void *addr, std::size_t size)
-         :  beg_((const char *)addr), end_(beg_+size)
+         :  beg_(static_cast<const char *>(addr)), end_(beg_+size)
       {}
       
       bool operator()(typename free_nodes_t::const_reference v) const
       {
-         return (beg_ <= (const char *)&v && 
-                 end_ >  (const char *)&v);
+         return (beg_ <= reinterpret_cast<const char *>(&v) && 
+                 end_ >  reinterpret_cast<const char *>(&v));
       }
       private:
       const char *      beg_;
@@ -312,7 +312,7 @@ class private_node_pool_impl
       //element in the free Node list
       std::size_t blocksize = 
          detail::get_rounded_size(m_real_node_size*m_nodes_per_block, alignment_of<node_t>::value);
-      char *pNode = detail::char_ptr_cast
+      char *pNode = reinterpret_cast<char*>
          (mp_segment_mngr_base->allocate(blocksize + sizeof(node_t)));
       if(!pNode)  throw bad_alloc();
       char *pBlock = pNode;
@@ -337,14 +337,13 @@ class private_node_pool_impl
    //!Returns a reference to the block hook placed in the end of the block
    static inline node_t & get_block_hook (void *block, std::size_t blocksize)
    {  
-      return *static_cast<node_t*>(
-               static_cast<void*>((detail::char_ptr_cast(block) + blocksize)));  
+      return *reinterpret_cast<node_t*>(reinterpret_cast<char*>(block) + blocksize);  
    }
 
    //!Returns the starting address of the block reference to the block hook placed in the end of the block
    inline void *get_block_from_hook (node_t *hook, std::size_t blocksize)
    {  
-      return static_cast<void*>((detail::char_ptr_cast(hook) - blocksize));  
+      return (reinterpret_cast<char*>(hook) - blocksize);
    }
 
    private:

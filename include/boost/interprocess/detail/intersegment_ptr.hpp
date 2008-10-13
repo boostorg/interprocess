@@ -128,13 +128,13 @@ struct intersegment_base
    {
       const std::size_t mask = ~(align - 1);
       std::size_t beg = this->members.relative.beg;
-      return (void*)((((std::size_t)this) & mask) - (beg << align_bits));
+      return reinterpret_cast<void*>((((std::size_t)this) & mask) - (beg << align_bits));
    }
 
    void relative_set_begin_from_base(void *addr)
    {
-      assert(addr < (void*)this);
-      std::size_t off = (char*)this - (char*)addr;
+      assert(addr < static_cast<void*>(this));
+      std::size_t off = reinterpret_cast<char*>(this) - reinterpret_cast<char*>(addr);
       members.relative.beg = off >> align_bits;
    }
 
@@ -222,7 +222,7 @@ struct flat_map_intersegment
    typedef flat_map_intersegment<Mutex>   self_t;
 
    void set_from_pointer(const volatile void *ptr)
-   {  this->set_from_pointer((const void *)ptr);  }
+   {  this->set_from_pointer(const_cast<const void *>(ptr));  }
 
    //!Obtains the address pointed
    //!by the object
@@ -233,7 +233,7 @@ struct flat_map_intersegment
       }
       switch(this->get_mode()){
          case is_relative:
-            return (char*)this + members.relative.off;
+            return const_cast<char*>(reinterpret_cast<const char*>(this)) + members.relative.off;
          break;
          case is_segmented:
             {
@@ -241,7 +241,7 @@ struct flat_map_intersegment
             std::size_t offset;
             void *this_base;
             get_segment_info_and_offset(this, segment_info, offset, this_base);
-            char *base  = (char*)segment_info.group->address_of(this->members.segmented.segment);
+            char *base  = static_cast<char*>(segment_info.group->address_of(this->members.segmented.segment));
             return base + this->members.segmented.off;
             }
          break;
@@ -259,7 +259,7 @@ struct flat_map_intersegment
    //!This only works with two basic_intersegment_ptr pointing
    //!to the same segment. Otherwise undefined
    std::ptrdiff_t diff(const self_t &other) const
-   {  return (char*)this->get_pointer() - (char*)other.get_pointer();   }
+   {  return static_cast<char*>(this->get_pointer()) - static_cast<char*>(other.get_pointer());   }
 
    //!Returns true if both point to
    //!the same object
@@ -291,14 +291,14 @@ struct flat_map_intersegment
 
       std::size_t mode = this->get_mode();
       if(mode == is_in_stack){
-         members.direct.addr = (void*)ptr;
+         members.direct.addr = const_cast<void*>(ptr);
          return;
       }
       if(mode == is_relative){
-         char *beg_addr = (char*)this->relative_calculate_begin_addr();
+         char *beg_addr = static_cast<char*>(this->relative_calculate_begin_addr());
          std::size_t seg_size = this->relative_size();
          if(ptr >= beg_addr && ptr < (beg_addr + seg_size)){
-            members.relative.off = (char*)ptr - (char*)this;
+            members.relative.off = static_cast<const char*>(ptr) - reinterpret_cast<const char*>(this);
             return;
          }
       }
@@ -312,21 +312,22 @@ struct flat_map_intersegment
    
       if(!this_info.group){
          this->set_mode(is_in_stack);
-         this->members.direct.addr = (void*)ptr;
+         this->members.direct.addr = const_cast<void*>(ptr);
       }
       else{
          get_segment_info_and_offset(ptr, ptr_info, ptr_offset, ptr_base);      
 
          if(ptr_info.group != this_info.group){
             this->set_mode(is_pointee_outside);
-            this->members.direct.addr = (void*)ptr;
+            this->members.direct.addr =  const_cast<void*>(ptr);
          }
          else if(ptr_info.id == this_info.id){
             this->set_mode(is_relative);
-            members.relative.off = ((char*)ptr - (char*)this);
+            members.relative.off = (static_cast<const char*>(ptr) - reinterpret_cast<const char*>(this));
             this->relative_set_begin_from_base(this_base);
             std::size_t pow, frc;
             std::size_t s = calculate_size(this_info.size, pow, frc);
+            (void)s;
             assert(this_info.size == s);
             this->members.relative.pow = pow;
             this->members.relative.frc = frc;
@@ -350,14 +351,14 @@ struct flat_map_intersegment
    //!offset
    void inc_offset(std::ptrdiff_t bytes)
    {
-      this->set_from_pointer((char*)this->get_pointer()+bytes);
+      this->set_from_pointer(static_cast<char*>(this->get_pointer()) + bytes);
    }
 
    //!Decrements internal
    //!offset
    void dec_offset(std::ptrdiff_t bytes)
    {
-      this->set_from_pointer((char*)this->get_pointer()-bytes);
+      this->set_from_pointer(static_cast<char*>(this->get_pointer()) - bytes);
    }
 
    //////////////////////////////////////
@@ -471,7 +472,7 @@ struct flat_map_intersegment
       base = 0;
       if(s_map.m_ptr_to_segment_info.empty()){
          segment = segment_info_t();
-         offset  = detail::char_ptr_cast(ptr) - detail::char_ptr_cast();
+         offset  = reinterpret_cast<const char*>(ptr) - static_cast<const char*>(0);
          return;
       }
       //Find the first base address greater than ptr
@@ -479,22 +480,22 @@ struct flat_map_intersegment
          = s_map.m_ptr_to_segment_info.upper_bound(ptr);
       if(it == s_map.m_ptr_to_segment_info.begin()){
          segment = segment_info_t();
-         offset  = detail::char_ptr_cast(ptr) - detail::char_ptr_cast();
+         offset  = reinterpret_cast<const char*>(ptr) - static_cast<const char *>(0);
       }
       //Go to the previous one
       --it;
-      char *      segment_base = detail::char_ptr_cast(it->first);
+      char *      segment_base = const_cast<char*>(reinterpret_cast<const char*>(it->first));
       std::size_t segment_size = it->second.size;
       
-      if(segment_base <= detail::char_ptr_cast(ptr) &&
-         (segment_base + segment_size) >= detail::char_ptr_cast(ptr)){
+      if(segment_base <= reinterpret_cast<const char*>(ptr) &&
+         (segment_base + segment_size) >= reinterpret_cast<const char*>(ptr)){
          segment = it->second;
-         offset  = detail::char_ptr_cast(ptr) - segment_base;
+         offset  = reinterpret_cast<const char*>(ptr) - segment_base;
          base = segment_base;
       }
       else{
          segment = segment_info_t();
-         offset  = detail::char_ptr_cast(ptr) - detail::char_ptr_cast();
+         offset  = reinterpret_cast<const char*>(ptr) - static_cast<const char*>(0);
       }
    }
 
@@ -535,6 +536,7 @@ struct flat_map_intersegment
          void *addr = group_id->address_of(group_id->get_size()-1);
          group_id->pop_back();
          std::size_t erased = s_map.m_ptr_to_segment_info.erase(addr);
+         (void)erased;
          assert(erased);
          return true;
       }
@@ -635,21 +637,6 @@ class intersegment_ptr : public flat_map_intersegment<interprocess_mutex>
    template<class U>
    intersegment_ptr(const intersegment_ptr<U> &r, detail::static_cast_tag)
    {  base_t::set_from_pointer(static_cast<T*>(r.get())); }
-/*
-   {  
-      if(r.is_null()){
-         base_t::set_from_pointer(0);
-      }
-      else{
-         //Some dirty tricks to safe segment operations.
-         //Calculate pointer adjustment and adjust offset.
-         pointer ptr = reinterpret_cast<pointer>(this);
-         std::ptrdiff_t difference = detail::char_ptr_cast(static_cast<T*>(ptr)) -
-                                     detail::char_ptr_cast(ptr);
-         base_t::set_from_other(r);
-         base_t::inc_offset(difference*sizeof(T));
-      }
-   }*/
 
    //!Emulates const_cast operator.
    //!Never throws.
@@ -672,7 +659,7 @@ class intersegment_ptr : public flat_map_intersegment<interprocess_mutex>
    //!Obtains raw pointer from offset.
    //!Never throws.
    pointer get()const
-   {  return (pointer)base_t::get_pointer();   }
+   {  return static_cast<pointer>(base_t::get_pointer());   }
 
    //!Pointer-like -> operator. It can return 0 pointer.
    //!Never throws.
@@ -1001,11 +988,11 @@ void *get_pointer() const
       return raw_address();
    }
    else if(this->is_relative()){
-      return ((char*)this) + this->relative_pointee_offset();
+      return (const_cast<char*>(reinterpret_cast<const char*>(this))) + this->relative_pointee_offset();
    }
    else{
       group_manager *m     = get_segment_group_manager(addr);
-      char *base  = (char*)m->get_id_address(this->segmented_id());
+      char *base  = static_cast<char*>(m->get_id_address(this->segmented_id()));
       return base + this->segmented_offset();
    }
 }
@@ -1039,7 +1026,7 @@ void set_from_pointer(const void *ptr)
       else if(ptr_info.segment_id == this_info.segment_id){
          set_relative();
          this->relative_size  (ptr_info.size);
-         this->relative_offset((char*)ptr - (char*)this);
+         this->relative_offset(static_cast<const char*>(ptr) - reinterpret_cast<const char*>(this));
          this->relative_start (ptr_info.base);
       }
    }

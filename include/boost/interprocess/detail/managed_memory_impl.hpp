@@ -225,7 +225,7 @@ class basic_managed_memory_impl
 
    //!Returns the base address of the memory in this process. Never throws.
    void *   get_address   () const
-   {   return (char*)mp_header - Offset; }
+   {   return reinterpret_cast<char*>(mp_header) - Offset; }
 
    //!Returns the size of memory segment. Never throws.
    std::size_t   get_size   () const
@@ -255,21 +255,21 @@ class basic_managed_memory_impl
    //!The address must belong to the memory segment. Never throws.
    handle_t get_handle_from_address   (const void *ptr) const
    {
-      return detail::char_ptr_cast(ptr) - 
-             detail::char_ptr_cast(this->get_address());  
+      return reinterpret_cast<const char*>(ptr) - 
+             reinterpret_cast<const char*>(this->get_address());  
    }
 
    //!Returns true if the address belongs to the managed memory segment
    bool belongs_to_segment (const void *ptr) const
    {  
       return ptr >= this->get_address() && 
-             ptr <  (detail::char_ptr_cast(ptr) + this->get_size());
+             ptr <  (reinterpret_cast<const char*>(ptr) + this->get_size());
    }
 
    //!Transforms previously obtained offset into an absolute address in the 
    //!process space of the current process. Never throws.*/
    void *    get_address_from_handle (handle_t offset) const
-   {  return detail::char_ptr_cast(this->get_address()) + offset; }
+   {  return reinterpret_cast<char*>(this->get_address()) + offset; }
 
    //!Searches for nbytes of free memory in the segment, marks the
    //!memory as used and return the pointer to the memory. If no 

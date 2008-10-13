@@ -175,25 +175,37 @@ class flat_tree
    { return this->m_data.m_vect.begin(); }
 
    const_iterator begin() const 
+   { return this->cbegin(); }
+
+   const_iterator cbegin() const 
    { return this->m_data.m_vect.begin(); }
 
    iterator end() 
    { return this->m_data.m_vect.end(); }
 
    const_iterator end() const 
+   { return this->cend(); }
+
+   const_iterator cend() const 
    { return this->m_data.m_vect.end(); }
 
    reverse_iterator rbegin() 
    { return reverse_iterator(this->end()); }
 
    const_reverse_iterator rbegin() const 
-   {  return const_reverse_iterator(this->end());  }
+   {  return this->crbegin();  }
+
+   const_reverse_iterator crbegin() const 
+   {  return const_reverse_iterator(this->cend());  }
 
    reverse_iterator rend() 
    { return reverse_iterator(this->begin()); }
 
    const_reverse_iterator rend() const 
-   { return const_reverse_iterator(this->begin()); } 
+   { return this->crend(); } 
+
+   const_reverse_iterator crend() const 
+   { return const_reverse_iterator(this->cbegin()); } 
 
    bool empty() const 
    { return this->m_data.m_vect.empty(); }
@@ -237,24 +249,18 @@ class flat_tree
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    std::pair<iterator,bool> insert_unique(const detail::moved_object<value_type>& mval)
    {
-      insert_commit_data data;
-      std::pair<iterator,bool> ret = priv_insert_unique_prepare(mval.get(), data);
-      if(ret.second){
-         ret.first = priv_insert_commit(data, mval);
-      }
-      return ret;
-   }
+      value_type &val = mval.get();
    #else
-   std::pair<iterator,bool> insert_unique(value_type && mval)
+   std::pair<iterator,bool> insert_unique(value_type && val)
    {
+   #endif
       insert_commit_data data;
-      std::pair<iterator,bool> ret = priv_insert_unique_prepare(mval, data);
+      std::pair<iterator,bool> ret = priv_insert_unique_prepare(val, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, detail::move_impl(mval));
+         ret.first = priv_insert_commit(data, detail::move_impl(val));
       }
       return ret;
    }
-   #endif
 
 
    iterator insert_equal(const value_type& val)
@@ -350,6 +356,146 @@ class flat_tree
       priv_insert_equal(first, last, ItCat());
    }
 
+   #ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   template <class... Args>
+   iterator emplace_unique(Args&&... args)
+   {
+      value_type val(detail::forward_impl<Args>(args)...);
+      insert_commit_data data;
+      std::pair<iterator,bool> ret =
+         priv_insert_unique_prepare(val, data);
+      if(ret.second){
+         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));
+      }
+      return ret.first;
+   }
+
+   template <class... Args>
+   iterator emplace_hint_unique(const_iterator hint, Args&&... args)
+   {
+      value_type val(detail::forward_impl<Args>(args)...);
+      insert_commit_data data;
+      std::pair<iterator,bool> ret = priv_insert_unique_prepare(hint, val, data);
+      if(ret.second){
+         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));
+      }
+      return ret.first;
+   }
+
+   template <class... Args>
+   iterator emplace_equal(Args&&... args)
+   {
+      value_type val(detail::forward_impl<Args>(args)...);
+      iterator i = this->upper_bound(KeyOfValue()(val));
+      i = this->m_data.m_vect.insert(i, detail::move_impl<value_type>(val));
+      return i;
+   }
+
+   template <class... Args>
+   iterator emplace_hint_equal(const_iterator hint, Args&&... args)
+   {
+      value_type val(detail::forward_impl<Args>(args)...);
+      insert_commit_data data;
+      priv_insert_equal_prepare(hint, val, data);
+      return priv_insert_commit(data, detail::move_impl<value_type>(val));
+   }
+
+   #else //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   iterator emplace_unique()
+   {
+      detail::value_init<value_type> vval;
+      value_type &val = vval.m_t;
+      insert_commit_data data;
+      std::pair<iterator,bool> ret =
+         priv_insert_unique_prepare(val, data);
+      if(ret.second){
+         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));
+      }
+      return ret.first;
+   }
+
+   iterator emplace_hint_unique(const_iterator hint)
+   {
+      detail::value_init<value_type> vval;
+      value_type &val = vval.m_t;
+      insert_commit_data data;
+      std::pair<iterator,bool> ret = priv_insert_unique_prepare(hint, val, data);
+      if(ret.second){
+         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));
+      }
+      return ret.first;
+   }
+
+   iterator emplace_equal()
+   {
+      detail::value_init<value_type> vval;
+      value_type &val = vval.m_t;
+      iterator i = this->upper_bound(KeyOfValue()(val));
+      i = this->m_data.m_vect.insert(i, detail::move_impl<value_type>(val));
+      return i;
+   }
+
+   iterator emplace_hint_equal(const_iterator hint)
+   {
+      detail::value_init<value_type> vval;
+      value_type &val = vval.m_t;
+      insert_commit_data data;
+      priv_insert_equal_prepare(hint, val, data);
+      return priv_insert_commit(data, detail::move_impl<value_type>(val));
+   }
+
+   #define BOOST_PP_LOCAL_MACRO(n)                                                        \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                             \
+   iterator emplace_unique(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))         \
+   {                                                                                      \
+      value_type val(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));           \
+      insert_commit_data data;                                                            \
+      std::pair<iterator,bool> ret = priv_insert_unique_prepare(val, data);               \
+      if(ret.second){                                                                     \
+         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));        \
+      }                                                                                   \
+      return ret.first;                                                                   \
+   }                                                                                      \
+                                                                                          \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                             \
+   iterator emplace_hint_unique(const_iterator hint,                                      \
+      BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                              \
+   {                                                                                      \
+      value_type val(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));           \
+      insert_commit_data data;                                                            \
+      std::pair<iterator,bool> ret = priv_insert_unique_prepare(hint, val, data);         \
+      if(ret.second){                                                                     \
+         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));        \
+      }                                                                                   \
+      return ret.first;                                                                   \
+   }                                                                                      \
+                                                                                          \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                             \
+   iterator emplace_equal(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))          \
+   {                                                                                      \
+      value_type val(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));           \
+      iterator i = this->upper_bound(KeyOfValue()(val));                                  \
+      i = this->m_data.m_vect.insert(i, detail::move_impl<value_type>(val));              \
+      return i;                                                                           \
+   }                                                                                      \
+                                                                                          \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                             \
+   iterator emplace_hint_equal(const_iterator hint,                                       \
+      BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                              \
+   {                                                                                      \
+      value_type val(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));           \
+      insert_commit_data data;                                                            \
+      priv_insert_equal_prepare(hint, val, data);                                         \
+      return priv_insert_commit(data, detail::move_impl<value_type>(val));                \
+   }                                                                                      \
+   //!
+   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+   #include BOOST_PP_LOCAL_ITERATE()
+
+   #endif   //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
    iterator erase(const_iterator position)
    {  return this->m_data.m_vect.erase(position);  }
 
@@ -435,14 +581,13 @@ class flat_tree
    private:
    struct insert_commit_data
    {
-      iterator position;
+      const_iterator position;
    };
 
    // insert/erase
    void priv_insert_equal_prepare
-      (const_iterator p, const value_type& val, insert_commit_data &data)
+      (const_iterator pos, const value_type& val, insert_commit_data &data)
    {
-      iterator &pos = (iterator &)(const_iterator &)p;
       // N1780
       //   To insert val at pos:
       //   if pos == end || val <= *pos
@@ -456,13 +601,13 @@ class flat_tree
       //      insert val before lower_bound(val)
       const value_compare &value_comp = this->m_data;
 
-      if(pos == this->end() || !value_comp(*pos, val)){
-         if (pos == this->begin() || !value_comp(val, pos[-1])){
+      if(pos == this->cend() || !value_comp(*pos, val)){
+         if (pos == this->cbegin() || !value_comp(val, pos[-1])){
             data.position = pos;
          }
          else{
             data.position = 
-               this->priv_upper_bound(this->begin(), pos, KeyOfValue()(val));
+               this->priv_upper_bound(this->cbegin(), pos, KeyOfValue()(val));
          }
       }
       //Works, but increases code complexity
@@ -471,17 +616,17 @@ class flat_tree
       //}
       else{
          data.position = 
-            this->priv_lower_bound(pos, this->end(), KeyOfValue()(val));
+            this->priv_lower_bound(pos, this->cend(), KeyOfValue()(val));
       }
    }
 
    std::pair<iterator,bool> priv_insert_unique_prepare
-      (iterator beg, iterator end, const value_type& val, insert_commit_data &commit_data)
+      (const_iterator beg, const_iterator end, const value_type& val, insert_commit_data &commit_data)
    {
       const value_compare &value_comp  = this->m_data;
       commit_data.position = this->priv_lower_bound(beg, end, KeyOfValue()(val));
       return std::pair<iterator,bool>
-         ( commit_data.position
+         ( *reinterpret_cast<iterator*>(&commit_data.position)
          , commit_data.position == end || value_comp(val, *commit_data.position));
    }
 
@@ -490,9 +635,8 @@ class flat_tree
    {  return priv_insert_unique_prepare(this->begin(), this->end(), val, commit_data);   }
 
    std::pair<iterator,bool> priv_insert_unique_prepare
-      (const_iterator p, const value_type& val, insert_commit_data &commit_data)
+      (const_iterator pos, const value_type& val, insert_commit_data &commit_data)
    {
-      iterator &pos = (iterator &)(const_iterator &)p;
       //N1780. Props to Howard Hinnant!
       //To insert val at pos:
       //if pos == end || val <= *pos
@@ -506,17 +650,17 @@ class flat_tree
       //   insert val before lower_bound(val)
       const value_compare &value_comp = this->m_data;
 
-      if(pos == this->end() || value_comp(val, *pos)){
-         if(pos != this->begin() && !value_comp(val, pos[-1])){
+      if(pos == this->cend() || value_comp(val, *pos)){
+         if(pos != this->cbegin() && !value_comp(val, pos[-1])){
             if(value_comp(pos[-1], val)){
-               commit_data.position = iterator(pos);
-               return std::pair<iterator,bool>(pos, true);
+               commit_data.position = pos;
+               return std::pair<iterator,bool>(*reinterpret_cast<iterator*>(&pos), true);
             }
             else{
-               return std::pair<iterator,bool>(pos, false);
+               return std::pair<iterator,bool>(*reinterpret_cast<iterator*>(&pos), false);
             }
          }
-         return this->priv_insert_unique_prepare(this->begin(), pos, val, commit_data);
+         return this->priv_insert_unique_prepare(this->cbegin(), pos, val, commit_data);
       }
 
       // Works, but increases code complexity

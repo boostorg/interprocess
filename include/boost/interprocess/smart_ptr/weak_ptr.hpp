@@ -236,7 +236,7 @@ struct managed_weak_ptr
    > type;
 };
 
-//!Returns an instance of the a weak pointer constructed
+//!Returns an instance of a weak pointer constructed
 //!with the default allocator and deleter from a pointer
 //!of type T that has been allocated in the passed managed segment
 template<class T, class ManagedMemory>

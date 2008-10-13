@@ -49,7 +49,6 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/detail/version_type.hpp>
 #include <boost/interprocess/detail/move.hpp>
@@ -59,6 +58,11 @@
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/intrusive/list.hpp>
 #include <boost/interprocess/containers/detail/node_alloc_holder.hpp>
+
+#ifndef BOOST_INTERPROCESS_PERFECT_FORWARDING
+//Preprocessor library to emulate perfect forwarding
+#include <boost/interprocess/detail/preprocessor.hpp> 
+#endif
 
 #include <iterator>
 #include <utility>
@@ -73,29 +77,40 @@ namespace interprocess {
 /// @cond
 namespace detail {
 
-template <class T, class VoidPointer>
-struct list_node
-   :  public bi::make_list_base_hook
-         <bi::void_pointer<VoidPointer>, bi::link_mode<bi::normal_link> >::type
+template<class VoidPointer>
+struct list_hook
 {
    typedef typename bi::make_list_base_hook
-         <bi::void_pointer<VoidPointer>, bi::link_mode<bi::normal_link> >::type hook_type;
+      <bi::void_pointer<VoidPointer>, bi::link_mode<bi::normal_link> >::type type;
+};
+
+template <class T, class VoidPointer>
+struct list_node
+   :  public list_hook<VoidPointer>::type
+{
+
+   #ifndef BOOST_INTERPROCESS_PERFECT_FORWARDING
 
    list_node()
       : m_data()
    {}
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   template<class Convertible>
-   list_node(const Convertible &conv)
-      : m_data(conv)
+   #define BOOST_PP_LOCAL_MACRO(n)                                                           \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                \
+   list_node(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                          \
+      : m_data(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _))                     \
+   {}                                                                                        \
+   //!
+   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+   #include BOOST_PP_LOCAL_ITERATE()
+
+   #else //#ifndef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   template<class ...Args>
+   list_node(Args &&...args)
+      : m_data(detail::forward_impl<Args>(args)...)
    {}
-   #else
-   template<class Convertible>
-   list_node(Convertible &&conv)
-      : m_data(detail::forward_impl<Convertible>(conv))
-   {}
-   #endif
+   #endif//#ifndef BOOST_INTERPROCESS_PERFECT_FORWARDING
 
    T m_data;
 };
@@ -110,7 +125,7 @@ struct intrusive_list_type
          <value_type, void_pointer>             node_type;
    typedef typename bi::make_list
       < node_type
-      , bi::base_hook<typename node_type::hook_type>
+      , bi::base_hook<typename list_hook<void_pointer>::type>
       , bi::constant_time_size<true>
       , bi::size_type<typename A::size_type>
       >::type                                   container_type;
@@ -335,7 +350,7 @@ class list
    //! <b>Complexity</b>: Linear to n.
    list(size_type n, const T& value = T(), const A& a = A())
       : AllocHolder(a)
-   {  this->insert(begin(), n, value);  }
+   {  this->insert(this->cbegin(), n, value);  }
 
    //! <b>Effects</b>: Copy constructs a list.
    //!
@@ -346,7 +361,7 @@ class list
    //! <b>Complexity</b>: Linear to the elements x contains.
    list(const list& x) 
       : AllocHolder(x)
-   {  this->insert(begin(), x.begin(), x.end());   }
+   {  this->insert(this->cbegin(), x.begin(), x.end());   }
 
    //! <b>Effects</b>: Move constructor. Moves mx's resources to *this.
    //!
@@ -373,7 +388,7 @@ class list
    template <class InpIt>
    list(InpIt first, InpIt last, const A &a = A())
       : AllocHolder(a)
-   {  insert(begin(), first, last);  }
+   {  this->insert(this->cbegin(), first, last);  }
 
    //! <b>Effects</b>: Destroys the list. All stored values are destroyed
    //!   and used memory is deallocated.
@@ -420,7 +435,7 @@ class list
    //! 
    //! <b>Complexity</b>: Constant.
    const_iterator begin() const
-   {  return const_iterator(this->non_const_icont().begin());   }
+   {  return this->cbegin();   }
 
    //! <b>Effects</b>: Returns an iterator to the end of the list.
    //! 
@@ -436,7 +451,7 @@ class list
    //! 
    //! <b>Complexity</b>: Constant.
    const_iterator end() const
-   {  return const_iterator(this->non_const_icont().end());  }
+   {  return this->cend();  }
 
    //! <b>Effects</b>: Returns a reverse_iterator pointing to the beginning 
    //! of the reversed list. 
@@ -454,7 +469,7 @@ class list
    //! 
    //! <b>Complexity</b>: Constant.
    const_reverse_iterator rbegin() const
-   {  return const_reverse_iterator(end());  }
+   {  return this->crbegin();  }
 
    //! <b>Effects</b>: Returns a reverse_iterator pointing to the end
    //! of the reversed list. 
@@ -472,7 +487,41 @@ class list
    //! 
    //! <b>Complexity</b>: Constant.
    const_reverse_iterator rend() const
-   {  return const_reverse_iterator(begin());   }
+   {  return this->crend();   }
+
+   //! <b>Effects</b>: Returns a const_iterator to the first element contained in the list.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_iterator cbegin() const
+   {  return const_iterator(this->non_const_icont().begin());   }
+
+   //! <b>Effects</b>: Returns a const_iterator to the end of the list.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_iterator cend() const
+   {  return const_iterator(this->non_const_icont().end());  }
+
+   //! <b>Effects</b>: Returns a const_reverse_iterator pointing to the beginning 
+   //! of the reversed list. 
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_reverse_iterator crbegin() const
+   {  return const_reverse_iterator(this->cend());  }
+
+   //! <b>Effects</b>: Returns a const_reverse_iterator pointing to the end
+   //! of the reversed list. 
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   const_reverse_iterator crend() const
+   {  return const_reverse_iterator(this->cbegin());   }
 
    //! <b>Effects</b>: Returns true if the list contains no elements.
    //! 
@@ -505,7 +554,7 @@ class list
    //!
    //! <b>Complexity</b>: Amortized constant time.
    void push_front(const T& x)   
-   {  this->insert(this->begin(), x);  }
+   {  this->insert(this->cbegin(), x);  }
 
    //! <b>Effects</b>: Constructs a new element in the beginning of the list
    //!   and moves the resources of t to this new element.
@@ -515,10 +564,10 @@ class list
    //! <b>Complexity</b>: Amortized constant time.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void push_front(const detail::moved_object<T>& x)   
-   {  this->insert(this->begin(), x);  }
+   {  this->insert(this->cbegin(), x);  }
    #else
    void push_front(T &&x)   
-   {  this->insert(this->begin(), detail::move_impl(x));  }
+   {  this->insert(this->cbegin(), detail::move_impl(x));  }
    #endif
 
    //! <b>Effects</b>: Removes the last element from the list.
@@ -527,7 +576,7 @@ class list
    //!
    //! <b>Complexity</b>: Amortized constant time.
    void push_back (const T& x)   
-   {  this->insert(this->end(), x);    }
+   {  this->insert(this->cend(), x);    }
 
    //! <b>Effects</b>: Removes the first element from the list.
    //!
@@ -536,10 +585,10 @@ class list
    //! <b>Complexity</b>: Amortized constant time.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void push_back (const detail::moved_object<T>& x)   
-   {  this->insert(this->end(), x);    }
+   {  this->insert(this->cend(), x);    }
    #else
    void push_back (T &&x)   
-   {  this->insert(this->end(), detail::move_impl(x));    }
+   {  this->insert(this->cend(), detail::move_impl(x));    }
    #endif
 
    //! <b>Effects</b>: Removes the first element from the list.
@@ -548,7 +597,7 @@ class list
    //!
    //! <b>Complexity</b>: Amortized constant time.
    void pop_front()              
-   {  this->erase(this->begin());      }
+   {  this->erase(this->cbegin());      }
 
    //! <b>Effects</b>: Removes the last element from the list.
    //!
@@ -556,7 +605,7 @@ class list
    //!
    //! <b>Complexity</b>: Amortized constant time.
    void pop_back()               
-   {  iterator tmp = this->end(); this->erase(--tmp);  }
+   {  const_iterator tmp = this->cend(); this->erase(--tmp);  }
 
    //! <b>Requires</b>: !empty()
    //!
@@ -610,7 +659,7 @@ class list
    //! <b>Complexity</b>: Linear to the difference between size() and new_size.
    void resize(size_type new_size, const T& x)
    {
-      iterator iend = this->end();
+      const_iterator iend = this->cend();
       size_type len = this->size();
       
       if(len > new_size){
@@ -618,7 +667,7 @@ class list
          while(to_erase--){
             --iend;
          }
-         this->erase(iend, this->end());
+         this->erase(iend, this->cend());
       }
       else{
          this->priv_create_and_insert_nodes(iend, new_size - len, x);
@@ -633,12 +682,12 @@ class list
    //! <b>Complexity</b>: Linear to the difference between size() and new_size.
    void resize(size_type new_size)
    {
-      iterator iend = this->end();
+      const_iterator iend = this->end();
       size_type len = this->size();
       
       if(len > new_size){
          size_type to_erase = len - new_size;
-         iterator ifirst;
+         const_iterator ifirst;
          if(to_erase < len/2u){
             ifirst = iend;
             while(to_erase--){
@@ -655,7 +704,7 @@ class list
          this->erase(ifirst, iend);
       }
       else{
-         this->priv_create_and_insert_nodes(this->end(), new_size - len);
+         this->priv_create_and_insert_nodes(this->cend(), new_size - len);
       }
    }
 
@@ -726,7 +775,7 @@ class list
    //! <b>Throws</b>: If memory allocation throws or T's copy constructor throws.
    //!
    //! <b>Complexity</b>: Linear to n.
-   void insert(iterator p, size_type n, const T& x)
+   void insert(const_iterator p, size_type n, const T& x)
    { this->priv_create_and_insert_nodes(p, n, x); }
 
    //! <b>Requires</b>: p must be a valid iterator of *this.
@@ -738,7 +787,7 @@ class list
    //!
    //! <b>Complexity</b>: Linear to std::distance [first, last).
    template <class InpIt>
-   void insert(iterator p, InpIt first, InpIt last) 
+   void insert(const_iterator p, InpIt first, InpIt last) 
    {
       const bool aux_boolean = detail::is_convertible<InpIt, std::size_t>::value;
       typedef detail::bool_<aux_boolean> Result;
@@ -752,7 +801,7 @@ class list
    //! <b>Throws</b>: If memory allocation throws or x's copy constructor throws.
    //!
    //! <b>Complexity</b>: Amortized constant time.
-   iterator insert(iterator p, const T& x) 
+   iterator insert(const_iterator p, const T& x) 
    {
       NodePtr tmp = AllocHolder::create_node(x);
       return iterator(this->icont().insert(p.get(), *tmp));
@@ -766,18 +815,108 @@ class list
    //!
    //! <b>Complexity</b>: Amortized constant time.
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   iterator insert(iterator p, const detail::moved_object<T>& x) 
+   iterator insert(const_iterator p, const detail::moved_object<T>& x) 
    {
       NodePtr tmp = AllocHolder::create_node(x);
       return iterator(this->icont().insert(p.get(), *tmp));
    }
    #else
-   iterator insert(iterator p, T &&x) 
+   iterator insert(const_iterator p, T &&x) 
    {
       NodePtr tmp = AllocHolder::create_node(detail::move_impl(x));
       return iterator(this->icont().insert(p.get(), *tmp));
    }
    #endif
+
+   #ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   //! <b>Effects</b>: Inserts an object of type T constructed with
+   //!   std::forward<Args>(args)... in the end of the list.
+   //!
+   //! <b>Throws</b>: If memory allocation throws or
+   //!   T's in-place constructor throws.
+   //!
+   //! <b>Complexity</b>: Constant
+   template <class... Args>
+   void emplace_back(Args&&... args)
+   {
+      this->emplace(this->cend(), detail::forward_impl<Args>(args)...);
+   }
+
+   //! <b>Effects</b>: Inserts an object of type T constructed with
+   //!   std::forward<Args>(args)... in the beginning of the list.
+   //!
+   //! <b>Throws</b>: If memory allocation throws or
+   //!   T's in-place constructor throws.
+   //!
+   //! <b>Complexity</b>: Constant
+   template <class... Args>
+   void emplace_front(Args&&... args)
+   {
+      this->emplace(this->cbegin(), detail::forward_impl<Args>(args)...);
+   }
+
+   //! <b>Effects</b>: Inserts an object of type T constructed with
+   //!   std::forward<Args>(args)... before p.
+   //!
+   //! <b>Throws</b>: If memory allocation throws or
+   //!   T's in-place constructor throws.
+   //!
+   //! <b>Complexity</b>: Constant
+   template <class... Args>
+   iterator emplace(const_iterator p, Args&&... args)
+   {
+      typename AllocHolder::Deallocator d(AllocHolder::create_node_and_deallocator());
+      new ((void*)detail::get_pointer(d.get())) Node(detail::forward_impl<Args>(args)...);
+      NodePtr node = d.get();
+      d.release();
+      return iterator(this->icont().insert(p.get(), *node));
+   }
+
+   #else //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+   //0 args
+   void emplace_back()
+   {  this->emplace(this->cend());  }
+
+   void emplace_front()
+   {  this->emplace(this->cbegin());   }
+
+   iterator emplace(const_iterator p)
+   {
+      typename AllocHolder::Deallocator d(AllocHolder::create_node_and_deallocator());
+      new ((void*)detail::get_pointer(d.get())) Node();
+      NodePtr node = d.get();
+      d.release();
+      return iterator(this->icont().insert(p.get(), *node));
+   }
+
+   #define BOOST_PP_LOCAL_MACRO(n)                                                              \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                   \
+   void emplace_back(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                     \
+   {                                                                                            \
+      this->emplace(this->cend(), BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));    \
+   }                                                                                            \
+                                                                                                \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                   \
+   void emplace_front(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                    \
+   {  this->emplace(this->cbegin(), BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));} \
+                                                                                                \
+   template<BOOST_PP_ENUM_PARAMS(n, class P)>                                                   \
+   iterator emplace(const_iterator p, BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))    \
+   {                                                                                            \
+      typename AllocHolder::Deallocator d(AllocHolder::create_node_and_deallocator());          \
+      new ((void*)detail::get_pointer(d.get()))                                                 \
+         Node(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));                        \
+      NodePtr node = d.get();                                                                   \
+      d.release();                                                                              \
+      return iterator(this->icont().insert(p.get(), *node));                                    \
+   }                                                                                            \
+   //!
+   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+   #include BOOST_PP_LOCAL_ITERATE()
+
+   #endif   //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
 
    //! <b>Requires</b>: p must be a valid iterator of *this.
    //!
@@ -786,7 +925,7 @@ class list
    //! <b>Throws</b>: Nothing.
    //!
    //! <b>Complexity</b>: Amortized constant time.
-   iterator erase(iterator p) 
+   iterator erase(const_iterator p) 
    {  return iterator(this->icont().erase_and_dispose(p.get(), Destroyer(this->node_alloc()))); }
 
    //! <b>Requires</b>: first and last must be valid iterator to elements in *this.
@@ -796,7 +935,7 @@ class list
    //! <b>Throws</b>: Nothing.
    //!
    //! <b>Complexity</b>: Linear to the distance between first and last.
-   iterator erase(iterator first, iterator last)
+   iterator erase(const_iterator first, const_iterator last)
    {  return iterator(AllocHolder::erase_range(first.get(), last.get(), alloc_version())); }
 
    //! <b>Effects</b>: Assigns the n copies of val to *this.
@@ -861,7 +1000,7 @@ class list
    //! 
    //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
    //!   list. Iterators of this list and all the references are not invalidated.
-   void splice(iterator p, ThisType &x, iterator i) 
+   void splice(const_iterator p, ThisType &x, const_iterator i) 
    {
       if((NodeAlloc&)*this == (NodeAlloc&)x){
          this->icont().splice(p.get(), x.icont(), i.get());
@@ -871,7 +1010,7 @@ class list
       }
    }
 
-//   void splice(iterator p, const detail::moved_object<ThisType> &x, iterator i) 
+//   void splice(const_iterator p, const detail::moved_object<ThisType> &x, const_iterator i) 
 //   {  this->splice(p, x.get(), i);  }
 
    //! <b>Requires</b>: p must point to an element contained
@@ -887,7 +1026,7 @@ class list
    //! 
    //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
    //!   list. Iterators of this list and all the references are not invalidated.
-   void splice(iterator p, ThisType &x, iterator first, iterator last) 
+   void splice(const_iterator p, ThisType &x, const_iterator first, const_iterator last) 
    {
       if((NodeAlloc&)*this == (NodeAlloc&)x){
          this->icont().splice(p.get(), x.icont(), first.get(), last.get());
@@ -897,7 +1036,7 @@ class list
       }
    }
 
-//   void splice(iterator p, detail::moved_object<ThisType> &x, iterator first, iterator last) 
+//   void splice(const_iterator p, detail::moved_object<ThisType> &x, const_iterator first, const_iterator last) 
 //   {  return this->splice(p, x.get(), first, last);   }
 
    //! <b>Requires</b>: p must point to an element contained
@@ -914,7 +1053,7 @@ class list
    //! 
    //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
    //!   list. Iterators of this list and all the references are not invalidated.
-   void splice(iterator p, ThisType &x, iterator first, iterator last, size_type n) 
+   void splice(const_iterator p, ThisType &x, const_iterator first, const_iterator last, size_type n) 
    {
       if((NodeAlloc&)*this == (NodeAlloc&)x){
          this->icont().splice(p.get(), x.icont(), first.get(), last.get(), n);
@@ -924,7 +1063,7 @@ class list
       }
    }
 
-//   void splice(iterator p, detail::moved_object<ThisType> &x, iterator first, iterator last, size_type n) 
+//   void splice(const_iterator p, detail::moved_object<ThisType> &x, const_iterator first, const_iterator last, size_type n) 
 //   {  return this->splice(p, x.get(), first, last, n);   }
 
    //! <b>Effects</b>: Reverses the order of elements in the list. 
@@ -1128,10 +1267,10 @@ class list
    class insertion_functor
    {
       Icont &icont_;
-      typename Icont::iterator pos_;
+      typename Icont::const_iterator pos_;
 
       public:
-      insertion_functor(Icont &icont, typename Icont::iterator pos)
+      insertion_functor(Icont &icont, typename Icont::const_iterator pos)
          :  icont_(icont), pos_(pos)
       {}
 
@@ -1165,13 +1304,13 @@ class list
 
    //Dispatch to detect iterator range or integer overloads
    template <class InputIter>
-   void priv_insert_dispatch(iterator p,
+   void priv_insert_dispatch(const_iterator p,
                              InputIter first, InputIter last,
                              detail::false_)
    {  this->priv_create_and_insert_nodes(p, first, last);   }
 
    template<class Integer>
-   void priv_insert_dispatch(iterator p, Integer n, Integer x, detail::true_) 
+   void priv_insert_dispatch(const_iterator p, Integer n, Integer x, detail::true_) 
    {  this->insert(p, (size_type)n, x);  }
 
    void priv_fill_assign(size_type n, const T& val) 
@@ -1181,10 +1320,10 @@ class list
       for ( ; i != iend && n > 0; ++i, --n)
          *i = val;
       if (n > 0){
-         this->priv_create_and_insert_nodes(this->end(), n, val);
+         this->priv_create_and_insert_nodes(this->cend(), n, val);
       }
       else{
-         this->erase(i, end());
+         this->erase(i, cend());
       }
    }
 
@@ -1193,8 +1332,7 @@ class list
    {  this->priv_fill_assign((size_type) n, (T) val); }
 
    template <class InputIter>
-   void priv_assign_dispatch(InputIter first2, InputIter last2,
-                                       detail::false_)
+   void priv_assign_dispatch(InputIter first2, InputIter last2, detail::false_)
    {
       iterator first1   = this->begin();
       iterator last1    = this->end();

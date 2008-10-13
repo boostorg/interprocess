@@ -73,7 +73,6 @@ inline void construct_in_place(T *dest, default_construct_iterator<U, D>)
    new((void*)dest)T();
 }
 
-
 template<class InIt, class OutIt>
 struct optimize_assign
 {
@@ -108,7 +107,6 @@ struct optimize_copy<T*, T*>
    :  public optimize_copy<const T*, T*>
 {};
 
-
 template<class InIt, class OutIt> inline
 OutIt copy_n_dispatch(InIt first, typename std::iterator_traits<InIt>::difference_type length, OutIt dest, detail::bool_<false>)
 {
@@ -121,7 +119,7 @@ template<class T> inline
 T *copy_n_dispatch(const T *first, typename std::iterator_traits<const T*>::difference_type length, T *dest, detail::bool_<true>)
 {
    std::size_t size = length*sizeof(T);
-   return ((T*)std::memmove(dest, first, size)) + size;
+   return (static_cast<T*>(std::memmove(dest, first, size))) + size;
 }
 
 template<class InIt, class OutIt> inline
@@ -159,13 +157,11 @@ FwdIt uninitialized_copy_n_dispatch
    BOOST_CATCH_END
    return dest;
 }
-
-
 template<class T> inline
 T *uninitialized_copy_n_dispatch(const T *first, typename std::iterator_traits<const T*>::difference_type length, T *dest, detail::bool_<true>)
 {
    std::size_t size = length*sizeof(T);
-   return ((T*)std::memmove(dest, first, size)) + size;
+   return (static_cast<T*>(std::memmove(dest, first, size))) + size;
 }
 
 template<class InIt, class FwdIt> inline
@@ -177,7 +173,6 @@ FwdIt uninitialized_copy_n
    const bool do_optimized_copy = optimize_copy<InIt, FwdIt>::value;
    return uninitialized_copy_n_dispatch(first, count, dest, detail::bool_<do_optimized_copy>());
 }
-
 
 // uninitialized_copy_copy
 // Copies [first1, last1) into [result, result + (last1 - first1)), and
@@ -194,7 +189,7 @@ FwdIt uninitialized_copy_copy
    }
    BOOST_CATCH(...){
       for(;result != mid; ++result){
-         result->~value_type();
+         detail::get_pointer(&*result)->~value_type();
       }
       BOOST_RETHROW
    }

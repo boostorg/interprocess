@@ -391,6 +391,11 @@ template <class T
          ,class A = std::allocator<T> >
 class vector;
 
+//vector class
+template <class T
+,class A = std::allocator<T> >
+class deque;
+
 //list class
 template <class T
          ,class A = std::allocator<T> >
