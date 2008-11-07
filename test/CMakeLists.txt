@@ -1,3 +1,6 @@
+boost_additional_test_dependencies(interprocess BOOST_DEPENDS test thread date_time multi_index)
+
+
 file(GLOB INTERPROCESS_TESTS *.cpp)
 foreach(TEST ${INTERPROCESS_TESTS})
   get_filename_component(TEST ${TEST} NAME_WE)
