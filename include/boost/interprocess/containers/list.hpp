@@ -1283,9 +1283,11 @@ class list
    void priv_create_and_insert_nodes
       (const_iterator pos, FwdIterator beg, FwdIterator end, allocator_v2, std::forward_iterator_tag)
    {
-      //Optimized allocation and construction
-      this->allocate_many_and_construct
-         (beg, std::distance(beg, end), insertion_functor(this->icont(), pos.get()));
+      if(beg != end){
+         //Optimized allocation and construction
+         this->allocate_many_and_construct
+            (beg, std::distance(beg, end), insertion_functor(this->icont(), pos.get()));
+      }
    }
 
    //Default constructed version
