@@ -42,7 +42,6 @@ int main ()
       //Let's allocate some memory 
       for(i = 0; i < max; ++i){
          array[i] = mfile.allocate(i+1);
-         std::cout << i << ' ';
       }
 
       //Deallocate allocated memory
