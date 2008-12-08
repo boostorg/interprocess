@@ -557,10 +557,11 @@ inline bool
 
             case timed :
                do{
-                  if(!p_hdr->m_cond_recv.timed_wait(lock, abs_time))
+                  if(!p_hdr->m_cond_recv.timed_wait(lock, abs_time)){
                      if(p_hdr->is_empty())
                         return false;
                      break;
+                  }
                }
                while (p_hdr->is_empty());
             break;
