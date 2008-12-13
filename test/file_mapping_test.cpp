@@ -128,6 +128,8 @@ int main ()
          file_mapping move_ctor(detail::move_impl(mapping));
          file_mapping move_assign;
          move_assign = detail::move_impl(move_ctor);
+         mapping.swap(detail::move_impl(move_assign));
+         mapping.swap(move_assign);
       }
    }
    catch(std::exception &exc){

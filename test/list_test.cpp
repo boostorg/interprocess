@@ -51,6 +51,15 @@ void recursive_list_test()//Test for recursive types
 int main ()
 {
    recursive_list_test();
+   {
+      //Now test move semantics
+      list<recursive_list> original;
+      list<recursive_list> move_ctor(detail::move_impl(original));
+      list<recursive_list> move_assign;
+      move_assign = detail::move_impl(move_ctor);
+      move_assign.swap(detail::move_impl(original));
+      move_assign.swap(original);
+   }
    if(test::list_test<managed_shared_memory, MyList, true>())
       return 1;
 

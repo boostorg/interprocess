@@ -56,6 +56,25 @@ int main ()
    const int memsize       = 65536/size_aligner*size_aligner;
    static detail::max_align static_buffer[memsize/size_aligner];
 
+   {
+      //Now test move semantics
+      managed_heap_memory original(memsize);
+      managed_heap_memory move_ctor(detail::move_impl(original));
+      managed_heap_memory move_assign;
+      move_assign = detail::move_impl(move_ctor);
+      original.swap(detail::move_impl(move_assign));
+      original.swap(move_assign);
+   }
+   {
+      //Now test move semantics
+      managed_external_buffer original(create_only, static_buffer, memsize);
+      managed_external_buffer move_ctor(detail::move_impl(original));
+      managed_external_buffer move_assign;
+      move_assign = detail::move_impl(move_ctor);
+      original.swap(detail::move_impl(move_assign));
+      original.swap(move_assign);
+   }
+
    //Named new capable user mem allocator
    wmanaged_external_buffer user_buffer(create_only, static_buffer, memsize);
 

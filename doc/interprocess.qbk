@@ -1,5 +1,5 @@
 [/
- / Copyright (c) 2007 Ion Gaztanaga
+ / Copyright (c) 2007-2008 Ion Gaztanaga
  /
  / Distributed under the Boost Software License, Version 1.0. (See accompanying
  / file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -8,7 +8,7 @@
 [library Boost.Interprocess
     [quickbook 1.3]
     [authors [Gazta&ntilde;aga, Ion]]
-    [copyright 2005- 2007 Ion Gazta&ntilde;aga]
+    [copyright 2005- 2008 Ion Gazta&ntilde;aga]
     [id interprocess]
     [dirname interprocess]
     [purpose Interprocess communication utilities]
@@ -1516,11 +1516,11 @@ In the previous example, a mutex is used to ['lock] but we can't use it to
 can do two things:
 
 *  [*wait]: The thread is blocked until some other thread notifies that it can
-   continue because the condition that lead to waiting has disapeared.
+   continue because the condition that lead to waiting has disappeared.
 
 *  [*notify]: The thread sends a signal to one blocked thread or to all blocked
    threads to tell them that they the condition that provoked their wait has
-   disapeared.
+   disappeared.
 
 Waiting in a condition variable is always associated with a mutex. 
 The mutex must be locked prior to waiting on the condition. When waiting
@@ -2178,7 +2178,7 @@ These operations can be managed more effectively using [*lock transfer operation
 A lock transfer operations explicitly indicates that a mutex owned by a lock is
 transferred to another lock executing atomic unlocking plus locking operations.
 
-[section:lock_trnasfer_simple_transfer Simple Lock Transfer]
+[section:lock_transfer_simple_transfer Simple Lock Transfer]
 
 Imagine that a thread modifies some data in the beginning but after that, it has to 
 just read it in a long time. The code can acquire the exclusive lock, modify the data
@@ -3668,10 +3668,10 @@ corrupted.
 As mentioned, the managed segment stores the information about named and unique
 objects in two indexes. Depending on the type of those indexes, the index must
 reallocate some auxiliary structures when new named or unique allocations are made.
-For some indexes, if the user knows how many maned or unique objects is going to
-create it's possible to preallocate some structures to obtain much better
-performance (if the index is an ordered vector it can  preallocate memory to avoid
-reallocations, if the index is a hash structure it can preallocate the bucket array...).
+For some indexes, if the user knows how many named or unique objects are going to
+be created it's possible to preallocate some structures to obtain much better
+performance. (If the index is an ordered vector it can  preallocate memory to avoid
+reallocations. If the index is a hash structure it can preallocate the bucket array).
 
 The following functions reserve memory to make the subsequent allocation of
 named or unique objects more efficient. These functions are only useful for
@@ -5671,7 +5671,7 @@ including creating containers of such objects:
 [section:basic_guidelines Basic guidelines]
 
 When building [*Boost.Interprocess] architecture, I took some basic guidelines that can be
-resumed in these points:
+summarized by these points:
 
 *  [*Boost.Interprocess] should be portable at least in UNIX and Windows systems. That
    means unifying not only interfaces but also behaviour. This is why
@@ -6540,6 +6540,16 @@ warranty.
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_38_00 Boost 1.38 Release]
+
+*  Updated documentation to show rvalue-references funcions instead of emulation functions.
+*  More non-copyable classes are now movable.
+*  Move-constructor and assignments now leave moved object in default-constructed state
+   instead of just swapping contents.
+*  Several bugfixes (#2391, #2431, #1390, #2570, #2528).
+
+[endsect]
 
 [section:release_notes_boost_1_37_00 Boost 1.37 Release]
 

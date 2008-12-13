@@ -158,6 +158,18 @@ public:
    {  return a.id_ < b.id_;   }
 };
 
+template<class C>
+void test_move_semantics()
+{
+   //Now test move semantics
+   C original;
+   C move_ctor(detail::move_impl(original));
+   C move_assign;
+   move_assign = detail::move_impl(move_ctor);
+   move_assign.swap(detail::move_impl(original));
+   move_assign.swap(original);
+}
+
 int main ()
 {
    //Recursive container instantiation
@@ -166,6 +178,13 @@ int main ()
       multiset<recursive_multiset> multiset_;
       map<recursive_map, recursive_map> map_;
       multimap<recursive_multimap, recursive_multimap> multimap_;
+   }
+   //Now test move semantics
+   {
+      test_move_semantics<set<recursive_set> >();
+      test_move_semantics<multiset<recursive_multiset> >();
+      test_move_semantics<map<recursive_map, recursive_map> >();
+      test_move_semantics<multimap<recursive_multimap, recursive_multimap> >();
    }
 
    using namespace boost::interprocess::detail;

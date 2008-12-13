@@ -52,3 +52,19 @@
 ->find a way to pass security attributes to shared memory
 
 ->Explain in docs that shared memory can't be used between different users in windows
+
+-> Implement vector with memcpy/memmove for trivially copyable types.
+
+-> Update all swap() calls to work with rvalues in all classes
+
+-> correct swap overloads for the documentation so that just appears a single rvalue swap
+
+-> correct splice()/merg overloads for the documentation so that just appears a single rvalue splice
+
+-> flat_xxx constructors are not documented
+
+-> operator >> eta antzekoek moved_value behar dute 
+
+-> make file_lock movable
+
+-> Add cmath workaround for Boost < 1.37
