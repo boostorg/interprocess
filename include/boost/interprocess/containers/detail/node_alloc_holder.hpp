@@ -87,7 +87,7 @@ struct node_alloc_holder
    {}
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   node_alloc_holder(const detail::moved_object<node_alloc_holder> &other)
+   node_alloc_holder(detail::moved_object<node_alloc_holder> other)
       : members_(detail::move_impl(other.get().node_alloc()))
    {  this->swap(other.get());  }
    #else
@@ -103,7 +103,7 @@ struct node_alloc_holder
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Pred>
-   node_alloc_holder(const detail::moved_object<ValAlloc> &a, const Pred &c) 
+   node_alloc_holder(detail::moved_object<ValAlloc> a, const Pred &c) 
       : members_(a.get(), typename ICont::value_compare(c))
    {}
    #else
@@ -119,7 +119,7 @@ struct node_alloc_holder
    {}
 
    ~node_alloc_holder()
-   {}
+   {  this->clear(alloc_version()); }
 
    size_type max_size() const
    {  return this->node_alloc().max_size();  }
@@ -144,7 +144,7 @@ struct node_alloc_holder
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible1, class Convertible2>
-   static void construct(const NodePtr &ptr, const detail::moved_object<std::pair<Convertible1, Convertible2> > &value)
+   static void construct(const NodePtr &ptr, detail::moved_object<std::pair<Convertible1, Convertible2> > value)
    {
       typedef typename Node::hook_type                hook_type;
       typedef typename Node::value_type::first_type   first_type;
@@ -326,6 +326,7 @@ struct node_alloc_holder
          BOOST_CATCH_END
       }
       return beg;
+
    }
 
    void clear(allocator_v1)
