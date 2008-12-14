@@ -553,7 +553,12 @@ const std::size_t mapped_region::page_size_holder<dummy>::PageSize
    = mapped_region::page_size_holder<dummy>::get_page_size();
 
 inline std::size_t mapped_region::get_page_size()
-{  return page_size_holder<0>::PageSize; }
+{
+   if(!page_size_holder<0>::PageSize)
+      return page_size_holder<0>::get_page_size();
+   else
+      return page_size_holder<0>::PageSize;
+}
 
 #if !defined(BOOST_INTERPROCESS_RVALUE_REFERENCE) && !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 inline void mapped_region::swap(mapped_region &other)
