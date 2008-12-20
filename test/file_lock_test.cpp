@@ -49,7 +49,16 @@ int main ()
       {
       scoped_lock<file_lock> sl(flock, test::delay(1));
       }
-   }
+   }/*
+   {
+      //Now test move semantics
+      file_lock mapping(test::get_process_id_name());
+      file_lock move_ctor(detail::move_impl(mapping));
+      file_lock move_assign;
+      move_assign = detail::move_impl(move_ctor);
+      mapping.swap(detail::move_impl(move_assign));
+      mapping.swap(move_assign);
+   }*/
 
    //test::test_all_lock<file_lock_lock_test_wrapper>();
    //test::test_all_mutex<false, file_lock_lock_test_wrapper>();

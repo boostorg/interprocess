@@ -123,6 +123,17 @@ bool do_test()
    {
       deque<recursive_deque> recursive_deque_deque;
    }
+
+   {
+      //Now test move semantics
+      deque<recursive_deque> original;
+      deque<recursive_deque> move_ctor(detail::move_impl(original));
+      deque<recursive_deque> move_assign;
+      move_assign = detail::move_impl(move_ctor);
+      move_assign.swap(detail::move_impl(original));
+      move_assign.swap(original);
+   }
+
    //Customize managed_shared_memory class
    typedef basic_managed_shared_memory
       <char,

@@ -42,7 +42,6 @@ int main ()
       //Let's allocate some memory 
       for(i = 0; i < max; ++i){
          array[i] = mfile.allocate(i+1);
-         std::cout << i << ' ';
       }
 
       //Deallocate allocated memory
@@ -207,6 +206,8 @@ int main ()
          managed_mapped_file move_ctor(detail::move_impl(original));
          managed_mapped_file move_assign;
          move_assign = detail::move_impl(move_ctor);
+         move_assign.swap(detail::move_impl(original));
+         move_assign.swap(original);
       }
    }
 

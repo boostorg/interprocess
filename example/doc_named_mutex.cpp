@@ -12,6 +12,7 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <fstream>
+#include <iostream>
 
 int main ()
 {

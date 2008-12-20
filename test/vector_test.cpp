@@ -91,6 +91,15 @@ void recursive_vector_test()//Test for recursive types
 int main()
 {
    recursive_vector_test();
+   {
+      //Now test move semantics
+      vector<recursive_vector> original;
+      vector<recursive_vector> move_ctor(detail::move_impl(original));
+      vector<recursive_vector> move_assign;
+      move_assign = detail::move_impl(move_ctor);
+      move_assign.swap(detail::move_impl(original));
+      move_assign.swap(original);
+   }
    typedef allocator<int, managed_shared_memory::segment_manager> ShmemAllocator;
    typedef vector<int, ShmemAllocator> MyVector;
 

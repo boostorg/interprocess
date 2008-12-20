@@ -35,7 +35,7 @@ class movable_int
    {}
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   movable_int(const detail::moved_object<movable_int> &mmi)
+   movable_int(detail::moved_object<movable_int> mmi)
       :  m_int(mmi.get().m_int)
    {  mmi.get().m_int = 0; }
    #else
@@ -45,7 +45,7 @@ class movable_int
    #endif
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   movable_int & operator= (const detail::moved_object<movable_int> &mmi)
+   movable_int & operator= (detail::moved_object<movable_int> mmi)
    {  this->m_int = mmi.get().m_int;   mmi.get().m_int = 0;  return *this;  }
    #else
    movable_int & operator= (movable_int &&mmi)
@@ -109,7 +109,7 @@ class movable_and_copyable_int
    {  this->m_int = mi.m_int;    return *this;  }
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   movable_and_copyable_int(const detail::moved_object<movable_and_copyable_int> &mmi)
+   movable_and_copyable_int(detail::moved_object<movable_and_copyable_int> mmi)
       :  m_int(mmi.get().m_int)
    {  mmi.get().m_int = 0; }
    #else
@@ -119,7 +119,7 @@ class movable_and_copyable_int
    #endif
 
    #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   movable_and_copyable_int & operator= (const detail::moved_object<movable_and_copyable_int> &mmi)
+   movable_and_copyable_int & operator= (detail::moved_object<movable_and_copyable_int> mmi)
    {  this->m_int = mmi.get().m_int;   mmi.get().m_int = 0;    return *this;  }
    #else
    movable_and_copyable_int & operator= (movable_and_copyable_int &&mmi)
