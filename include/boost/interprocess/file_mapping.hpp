@@ -141,9 +141,9 @@ inline const char *file_mapping::get_name() const
 {  return m_filename.c_str(); }
 
 #if !defined(BOOST_INTERPROCESS_RVALUE_REFERENCE) && !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
-void file_mapping::swap(file_mapping &other)
+inline void file_mapping::swap(file_mapping &other)
 #else
-void file_mapping::swap(file_mapping &&other)
+inline void file_mapping::swap(file_mapping &&other)
 #endif
 {  
    std::swap(m_handle, other.m_handle);
