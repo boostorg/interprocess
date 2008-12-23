@@ -8,40 +8,32 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef BOOST_INTERPROCESS_PTR_WRKRND_HPP
-#define BOOST_INTERPROCESS_PTR_WRKRND_HPP
+#ifndef BOOST_INTERPROCESS_DETAIL_WORKAROUND_HPP
+#define BOOST_INTERPROCESS_DETAIL_WORKAROUND_HPP
 
 #include <boost/interprocess/detail/config_begin.hpp>
-
-#undef BOOST_DISABLE_WIN32
 
 #if !(defined BOOST_WINDOWS) || (defined BOOST_DISABLE_WIN32)
 
    #include <unistd.h>
 
-   #if defined(_POSIX_THREAD_PROCESS_SHARED)
-   # if !((_XOPEN_VERSION >= 600) && (_POSIX_THREAD_PROCESS_SHARED - 0 <= 0))
+   #if ((_POSIX_THREAD_PROCESS_SHARED - 0) > 0)
    //Cygwin defines _POSIX_THREAD_PROCESS_SHARED but does not implement it.
    //Mac Os X >= Leopard defines _POSIX_THREAD_PROCESS_SHARED but does not seems to work.
    #  if !defined(__CYGWIN__) && !defined(__APPLE__)
    #  define BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
    #  endif
-   # endif
-   #endif 
-
-   #if defined(_POSIX_BARRIERS)
-   # if !((_XOPEN_VERSION >= 600) && (_POSIX_BARRIERS - 0 <= 0))
+   #endif
+	   
+   #if ((_POSIX_BARRIERS - 0) > 0)
    # define BOOST_INTERPROCESS_POSIX_BARRIERS
    # endif
-   #endif 
 
-   #if defined(_POSIX_SEMAPHORES)
-   # if !((_XOPEN_VERSION >= 600) && (_POSIX_SEMAPHORES - 0 <= 0))
+   #if ((_POSIX_SEMAPHORES - 0) > 0)
    # define BOOST_INTERPROCESS_POSIX_SEMAPHORES
    #  if defined(__CYGWIN__)
       #define BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK
    #  endif
-   # endif
    #endif 
 
    #if ((defined _V6_ILP32_OFFBIG)  &&(_V6_ILP32_OFFBIG   - 0 > 0)) ||\
@@ -56,10 +48,8 @@
    #else
    #endif
 
-   #if defined(_POSIX_SHARED_MEMORY_OBJECTS)
-   # if !((_XOPEN_VERSION >= 600) && (_POSIX_SHARED_MEMORY_OBJECTS - 0 <= 0))
+   #if ((_POSIX_SHARED_MEMORY_OBJECTS - 0) > 0)
    # define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
-   # endif
    #else
    # if defined(__vms)
    #  if __CRTL_VER >= 70200000
@@ -68,28 +58,26 @@
    # endif 
    #endif
 
-   #if defined(_POSIX_TIMEOUTS)
-   # if !((_XOPEN_VERSION >= 600) && (_POSIX_TIMEOUTS - 0 <= 0))
+   #if ((_POSIX_TIMEOUTS - 0) > 0)
    # define BOOST_INTERPROCESS_POSIX_TIMEOUTS
-   # endif
    #endif 
 
+   //Some systems have filesystem-based resources, so the
+   //portable "/shmname" format does not work due to permission issues
+   //For those systems we need to form a path to a temporary directory:
+   //          hp-ux               tru64               vms               freebsd
+   #if defined(__hpux) || defined(__osf__) || defined(__vms) || defined(__FreeBSD__)
+   #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_RESOURCES
+   #endif
+
    #ifdef BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
-      //Some systems have filesystem-based shared memory, so the
-      //portable "/shmname" format does not work due to permission issues
-      //For those systems we need to form a path to a temporary directory:
-      //          hp-ux               tru64               vms
-      #if defined(__hpux) || defined(__osf__) || defined(__vms)
+      #if defined(BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_RESOURCES)
       #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
       #endif
    #endif
 
    #ifdef BOOST_INTERPROCESS_POSIX_SEMAPHORES
-      //Some systems have filesystem-based shared memory, so the
-      //portable "/semname" format does not work due to permission issues
-      //For those systems we need to form a path to a temporary directory:
-      //          hp-ux               tru64               vms
-      #if defined(__hpux) || defined(__osf__) || defined(__vms)
+      #if defined(BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_RESOURCES)
       #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SEMAPHORES
       #endif
    #endif
@@ -136,4 +124,4 @@
 
 #include <boost/interprocess/detail/config_end.hpp>
 
-#endif   //#ifndef BOOST_INTERPROCESS_PTR_WRKRND_HPP
+#endif   //#ifndef BOOST_INTERPROCESS_DETAIL_WORKAROUND_HPP
