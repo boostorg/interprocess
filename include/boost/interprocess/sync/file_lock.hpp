@@ -110,7 +110,7 @@ class file_lock
    #endif
    {
       file_handle_t tmp = m_file_hnd;
-      other.m_file_hnd = other.m_file_hnd;
+      m_file_hnd = other.m_file_hnd;
       other.m_file_hnd = tmp;
    }
    
