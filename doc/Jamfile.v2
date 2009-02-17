@@ -43,4 +43,5 @@ boostbook standalone
         <xsl:param>chunk.first.sections=1
         <xsl:param>chunk.section.depth=2
         <dependency>autodoc
+        <format>pdf:<xsl:param>boost.url.prefix=http://www.boost.org/doc/libs/release/doc/html
    ;
