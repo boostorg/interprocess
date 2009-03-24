@@ -25,6 +25,10 @@
 #include <string>
 #include "get_process_id_name.hpp"
 
+
+#include <boost/interprocess/sync/upgradable_lock.hpp>
+#include <boost/interprocess/sync/interprocess_upgradable_mutex.hpp>
+
 using namespace boost::interprocess;
 
 class base_class
@@ -613,7 +617,6 @@ void test_alias()
    shared_memory_object::remove(process_name.c_str());
 }
 
-
 int main()
 {
    if(0 != simple_test())
@@ -626,8 +629,7 @@ int main()
       return 1;
 
    test_alias();
-
-   return 0;
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
+

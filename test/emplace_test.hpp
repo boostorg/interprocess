@@ -29,27 +29,18 @@ class EmplaceInt
    EmplaceInt& operator=(const EmplaceInt &o);
 
    public:
+   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(EmplaceInt)
+
    EmplaceInt(int a = 0, int b = 0, int c = 0, int d = 0, int e = 0)
       : a_(a), b_(b), c_(c), d_(d), e_(e)
    {}
 
-   #ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   EmplaceInt(EmplaceInt &&o)
+   EmplaceInt(BOOST_INTERPROCESS_RV_REF(EmplaceInt) o)
       : a_(o.a_), b_(o.b_), c_(o.c_), d_(o.d_), e_(o.e_)
-   #else
-   EmplaceInt(detail::moved_object<EmplaceInt> mo)
-      : a_(mo.get().a_), b_(mo.get().b_), c_(mo.get().c_), d_(mo.get().d_), e_(mo.get().e_)
-   #endif
    {}
 
-   #ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   EmplaceInt& operator=(EmplaceInt &&o)
+   EmplaceInt& operator=(BOOST_INTERPROCESS_RV_REF(EmplaceInt) o)
    {
-   #else
-   EmplaceInt& operator=(detail::moved_object<EmplaceInt> mo)
-   {
-      EmplaceInt &o = mo.get();
-   #endif
       this->a_ = o.a_;
       this->b_ = o.b_;
       this->c_ = o.c_;
@@ -92,12 +83,6 @@ class EmplaceInt
 
 
 }  //namespace test {
-
-template<>
-struct is_movable<test::EmplaceInt>
-{
-   static const bool value = true;
-};
 
 namespace test {
 

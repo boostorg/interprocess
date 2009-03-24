@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_node_allocator.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{7AED1580-4A95-7643-A066-625BFB21B49B}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

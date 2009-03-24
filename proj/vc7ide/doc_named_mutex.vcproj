@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_named_mutex.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{91338150-57CA-4674-85A6-6216EFEF5BFB}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

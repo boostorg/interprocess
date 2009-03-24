@@ -19,12 +19,23 @@ rule test_all
 {
    local all_rules = ;
 
-   for local fileb in [ glob *.cpp ]
+   for local fileb in [ glob comp*.cpp ]
    {
       all_rules += [ link $(fileb) /boost/thread//boost_thread
       :  # additional args
       :  # test-files
       :  # requirements
+      ] ;
+   }
+
+   for local fileb in [ glob doc_*.cpp ]
+   {
+      all_rules += [ run $(fileb) /boost/thread//boost_thread
+      :  # additional args
+      :  # test-files
+      :  # requirements
+        <toolset>acc:<linkflags>-lrt
+        <toolset>acc-pa_risc:<linkflags>-lrt
       ] ;
    }
 

@@ -19,10 +19,10 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
-#include <boost/interprocess/allocators/allocation_type.hpp>
+#include <boost/interprocess/containers/allocation_type.hpp>
 #include <boost/assert.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/version_type.hpp>
+#include <boost/interprocess/containers/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <memory>
 #include <algorithm>
@@ -64,7 +64,7 @@ class expand_bwd_test_allocator
    typedef std::size_t                          size_type;
    typedef std::ptrdiff_t                       difference_type;
 
-   typedef detail::version_type<expand_bwd_test_allocator, 2>   version;
+   typedef boost::interprocess::version_type<expand_bwd_test_allocator, 2>   version;
 
    template<class T2>
    struct rebind
@@ -118,14 +118,14 @@ class expand_bwd_test_allocator
    //Experimental version 2 expand_bwd_test_allocator functions
 
    std::pair<pointer, bool>
-      allocation_command(allocation_type command,
+      allocation_command(boost::interprocess::allocation_type command,
                          size_type limit_size, 
                          size_type preferred_size,
                          size_type &received_size, const pointer &reuse = 0)
    {
       (void)preferred_size;   (void)reuse;   (void)command;
       //This allocator only expands backwards!
-      assert(m_allocations == 0 || (command & expand_bwd));
+      assert(m_allocations == 0 || (command & boost::interprocess::expand_bwd));
       
       received_size = limit_size;
 

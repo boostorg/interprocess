@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_bufferstream.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{94323380-C57A-4764-A066-625FBE585BFB}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

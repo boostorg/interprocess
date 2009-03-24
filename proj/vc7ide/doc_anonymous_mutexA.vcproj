@@ -124,13 +124,8 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4BE712F1-C98A-4537-12A0-72D752FFA2A2}">
 			<File
-				RelativePath="..\..\example\doc_anonymous_mutexA.cpp">
+				RelativePath="..\..\example\comp_doc_anonymous_mutexA.cpp">
 			</File>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{91243380-C57A-4764-A856-625FEF585BFB}">
 		</Filter>
 	</Files>
 	<Globals>

@@ -17,7 +17,7 @@
 #include <new>
 #include <utility>
 #include <cstring>   //std::memset
-#include <cstdio>    //std::remove
+#include <boost/interprocess/containers/vector.hpp>
 
 namespace boost { namespace interprocess { namespace test {
 
@@ -107,7 +107,7 @@ bool test_allocation_shrink(Allocator &a)
       ; ++i){
       std::size_t received_size;
       if(a.template allocation_command<char>
-         ( shrink_in_place | nothrow_allocation, i*2
+         ( boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, i*2
          , i, received_size, static_cast<char*>(buffers[i])).first){
          if(received_size > std::size_t(i*2)){
             return false;
@@ -159,7 +159,7 @@ bool test_allocation_expand(Allocator &a)
       preferred_size = min_size > preferred_size ? min_size : preferred_size;
 
       while(a.template allocation_command<char>
-         ( expand_fwd | nothrow_allocation, min_size
+         ( boost::interprocess::expand_fwd | boost::interprocess::nothrow_allocation, min_size
          , preferred_size, received_size, static_cast<char*>(buffers[i])).first){
          //Check received size is bigger than minimum
          if(received_size < min_size){
@@ -197,10 +197,10 @@ bool test_allocation_shrink_and_expand(Allocator &a)
    for(int i = 0; true; ++i){
       std::size_t received_size;
       void *ptr = a.template allocation_command<char>
-         ( allocate_new | nothrow_allocation, i, i*2, received_size).first;
+         ( boost::interprocess::allocate_new | boost::interprocess::nothrow_allocation, i, i*2, received_size).first;
       if(!ptr){
          ptr = a.template allocation_command<char>
-            ( allocate_new | nothrow_allocation, 1, i*2, received_size).first;
+            ( boost::interprocess::allocate_new | boost::interprocess::nothrow_allocation, 1, i*2, received_size).first;
          if(!ptr)
             break;
       }
@@ -214,7 +214,7 @@ bool test_allocation_shrink_and_expand(Allocator &a)
       ; ++i){
       std::size_t received_size;
       if(a.template allocation_command<char>
-         ( shrink_in_place | nothrow_allocation, received_sizes[i]
+         ( boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, received_sizes[i]
          , i, received_size, static_cast<char*>(buffers[i])).first){
          if(received_size > std::size_t(received_sizes[i])){
             return false;
@@ -233,7 +233,7 @@ bool test_allocation_shrink_and_expand(Allocator &a)
       std::size_t received_size;
       std::size_t request_size = received_sizes[i];
       if(a.template allocation_command<char>
-         ( expand_fwd | nothrow_allocation, request_size
+         ( boost::interprocess::expand_fwd | boost::interprocess::nothrow_allocation, request_size
          , request_size, received_size, static_cast<char*>(buffers[i])).first){
          if(received_size != received_sizes[i]){
             return false;
@@ -298,7 +298,7 @@ bool test_allocation_deallocation_expand(Allocator &a)
          preferred_size = min_size > preferred_size ? min_size : preferred_size;
 
          while(a.template allocation_command<char>
-            ( expand_fwd | nothrow_allocation, min_size
+            ( boost::interprocess::expand_fwd | boost::interprocess::nothrow_allocation, min_size
             , preferred_size, received_size, static_cast<char*>(buffers[i])).first){
             //Check received size is bigger than minimum
             if(received_size < min_size){
@@ -368,7 +368,7 @@ bool test_allocation_with_reuse(Allocator &a)
          std::size_t min_size = (received_size + 1);
          std::size_t prf_size = (received_size + (i+1)*2);
          std::pair<void*, bool> ret = a.raw_allocation_command
-            ( expand_bwd | nothrow_allocation, min_size
+            ( boost::interprocess::expand_bwd | boost::interprocess::nothrow_allocation, min_size
             , prf_size, received_size, static_cast<char*>(ptr), sizeof_object);
          if(!ret.first)
             break;
@@ -631,7 +631,6 @@ bool test_grow_shrink_to_fit(Allocator &a)
 template<class Allocator>
 bool test_many_equal_allocation(Allocator &a)
 {
-   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
    for( deallocation_type t = DirectDeallocation
       ; t != EndDeallocationType
       ; t = (deallocation_type)((int)t + 1)){
@@ -665,16 +664,17 @@ bool test_many_equal_allocation(Allocator &a)
       if(!a.check_sanity())
          return false;
 
+      typedef typename Allocator::multiallocation_chain multiallocation_chain;
       std::vector<void*> buffers;
       for(int i = 0; true; ++i){
-         multiallocation_iterator it = a.allocate_many(i+1, (i+1)*2, std::nothrow);
-         if(!it)
+         multiallocation_chain chain(a.allocate_many(i+1, (i+1)*2, std::nothrow));
+         if(chain.empty())
             break;
-         multiallocation_iterator itend;
 
-         std::size_t n = 0;
-         for(; it != itend; ++n){
-            buffers.push_back(&*it++);
+         std::size_t n = chain.size();
+         while(!chain.empty()){
+            buffers.push_back(detail::get_pointer(chain.front()));
+            chain.pop_front();
          }
          if(n != std::size_t((i+1)*2))
             return false;
@@ -740,7 +740,7 @@ bool test_many_equal_allocation(Allocator &a)
 template<class Allocator>
 bool test_many_different_allocation(Allocator &a)
 {
-   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
+   typedef typename Allocator::multiallocation_chain multiallocation_chain;
    const std::size_t ArraySize = 11;
    std::size_t requested_sizes[ArraySize];
    for(std::size_t i = 0; i < ArraySize; ++i){
@@ -777,13 +777,13 @@ bool test_many_different_allocation(Allocator &a)
 
       std::vector<void*> buffers;
       for(int i = 0; true; ++i){
-         multiallocation_iterator it = a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow);
-         if(!it)
+         multiallocation_chain chain(a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow));
+         if(chain.empty())
             break;
-         multiallocation_iterator itend;
-         std::size_t n = 0;
-         for(; it != itend; ++n){
-            buffers.push_back(&*it++);
+         std::size_t n = chain.size();
+         while(!chain.empty()){
+            buffers.push_back(detail::get_pointer(chain.front()));
+            chain.pop_front();
          }
          if(n != ArraySize)
             return false;
@@ -846,9 +846,9 @@ bool test_many_different_allocation(Allocator &a)
 template<class Allocator>
 bool test_many_deallocation(Allocator &a)
 {
-   typedef typename Allocator::multiallocation_iterator multiallocation_iterator;
+   typedef typename Allocator::multiallocation_chain multiallocation_chain;
    const std::size_t ArraySize = 11;
-   std::vector<multiallocation_iterator> buffers;
+   vector<multiallocation_chain> buffers;
    std::size_t requested_sizes[ArraySize];
    for(std::size_t i = 0; i < ArraySize; ++i){
       requested_sizes[i] = 4*i;
@@ -857,13 +857,13 @@ bool test_many_deallocation(Allocator &a)
 
    {
       for(int i = 0; true; ++i){
-         multiallocation_iterator it = a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow);
-         if(!it)
+         multiallocation_chain chain = a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow);
+         if(chain.empty())
             break;
-         buffers.push_back(it);
+         buffers.push_back(boost::interprocess::move(chain));
       }
       for(int i = 0, max = (int)buffers.size(); i != max; ++i){
-         a.deallocate_many(buffers[i]);
+         a.deallocate_many(boost::interprocess::move(buffers[i]));
       }
       buffers.clear();
       bool ok = free_memory == a.get_free_memory() && 
@@ -873,13 +873,13 @@ bool test_many_deallocation(Allocator &a)
 
    {
       for(int i = 0; true; ++i){
-         multiallocation_iterator it = a.allocate_many(i*4, ArraySize, std::nothrow);
-         if(!it)
+         multiallocation_chain chain(a.allocate_many(i*4, ArraySize, std::nothrow));
+         if(chain.empty())
             break;
-         buffers.push_back(it);
+         buffers.push_back(boost::interprocess::move(chain));
       }
       for(int i = 0, max = (int)buffers.size(); i != max; ++i){
-         a.deallocate_many(buffers[i]);
+         a.deallocate_many(boost::interprocess::move(buffers[i]));
       }
       buffers.clear();
 

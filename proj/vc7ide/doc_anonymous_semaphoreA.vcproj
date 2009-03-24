@@ -124,13 +124,8 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4BEFCAB1-8AC0-3B5C-AF1B-9522D75AFFA2}">
 			<File
-				RelativePath="..\..\example\doc_anonymous_semaphoreA.cpp">
+				RelativePath="..\..\example\comp_doc_anonymous_semaphoreA.cpp">
 			</File>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{918033FA-7644-7A5C-AFB8-62FB5FA585CB}">
 		</Filter>
 	</Files>
 	<Globals>

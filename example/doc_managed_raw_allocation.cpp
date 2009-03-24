@@ -15,29 +15,28 @@ int main()
 {
    using namespace boost::interprocess;
 
+   //Remove shared memory on construction and destruction
+   struct shm_destroy
+   {
+      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   } remover;
+
    //Managed memory segment that allocates portions of a shared memory
    //segment with the default management algorithm
-   shared_memory_object::remove("MyManagedShm");
-   try{
-      managed_shared_memory managed_shm(create_only, "MyManagedShm", 65536);
+   managed_shared_memory managed_shm(create_only, "MySharedMemory", 65536);
 
-      //Allocate 100 bytes of memory from segment, throwing version
-      void *ptr = managed_shm.allocate(100);
+   //Allocate 100 bytes of memory from segment, throwing version
+   void *ptr = managed_shm.allocate(100);
 
-      //Deallocate it
-      managed_shm.deallocate(ptr);
+   //Deallocate it
+   managed_shm.deallocate(ptr);
 
-      //Non throwing version
-      ptr = managed_shm.allocate(100, std::nothrow);
+   //Non throwing version
+   ptr = managed_shm.allocate(100, std::nothrow);
 
-      //Deallocate it
-      managed_shm.deallocate(ptr);
-   }
-   catch(...){
-      shared_memory_object::remove("MyManagedShm");
-      throw;
-   }
-   shared_memory_object::remove("MyManagedShm");
+   //Deallocate it
+   managed_shm.deallocate(ptr);
    return 0;
 }
 //]

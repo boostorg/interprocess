@@ -16,73 +16,71 @@ int main()
 {
    using namespace boost::interprocess;
 
+   //Remove shared memory on construction and destruction
+   struct shm_destroy
+   {
+      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   } remover;
+
    //Managed memory segment that allocates portions of a shared memory
    //segment with the default management algorithm
-   shared_memory_object::remove("MyManagedShm");
+   managed_shared_memory managed_shm(create_only, "MySharedMemory", 10000*sizeof(std::size_t));
 
-   try{
-      managed_shared_memory managed_shm(create_only, "MyManagedShm", 10000*sizeof(std::size_t));
+   //Allocate at least 100 bytes, 1000 bytes if possible
+   std::size_t received_size, min_size = 100, preferred_size = 1000;
+   std::size_t *ptr = managed_shm.allocation_command<std::size_t>
+      (boost::interprocess::allocate_new, min_size, preferred_size, received_size).first;
 
-      //Allocate at least 100 bytes, 1000 bytes if possible
-      std::size_t received_size, min_size = 100, preferred_size = 1000;
-      std::size_t *ptr = managed_shm.allocation_command<std::size_t>
-         (allocate_new, min_size, preferred_size, received_size).first;
+   //Received size must be bigger than min_size
+   assert(received_size >= min_size);
 
-      //Received size must be bigger than min_size
-      assert(received_size >= min_size);
+   //Get free memory
+   std::size_t free_memory_after_allocation = managed_shm.get_free_memory();
 
-      //Get free memory
-      std::size_t free_memory_after_allocation = managed_shm.get_free_memory();
+   //Now write the data
+   for(std::size_t i = 0; i < received_size; ++i) ptr[i] = i;
 
-      //Now write the data
-      for(std::size_t i = 0; i < received_size; ++i) ptr[i] = i;
+   //Now try to triplicate the buffer. We won't admit an expansion
+   //lower to the double of the original buffer.
+   //This "should" be successful since no other class is allocating
+   //memory from the segment
+   std::size_t expanded_size;
+   std::pair<std::size_t *, bool> ret = managed_shm.allocation_command
+      (boost::interprocess::expand_fwd, received_size*2, received_size*3, expanded_size, ptr);
 
-      //Now try to triplicate the buffer. We won't admit an expansion
-      //lower to the double of the original buffer.
-      //This "should" be successful since no other class is allocating
-      //memory from the segment
-      std::size_t expanded_size;
-      std::pair<std::size_t *, bool> ret = managed_shm.allocation_command
-         (expand_fwd, received_size*2, received_size*3, expanded_size, ptr);
+   //Check invariants
+   assert(ret.second == true);
+   assert(ret.first == ptr);
+   assert(expanded_size >= received_size*2);
 
-      //Check invariants
-      assert(ret.second == true);
-      assert(ret.first == ptr);
-      assert(expanded_size >= received_size*2);
+   //Get free memory and compare
+   std::size_t free_memory_after_expansion = managed_shm.get_free_memory();
+   assert(free_memory_after_expansion < free_memory_after_allocation);
 
-      //Get free memory and compare
-      std::size_t free_memory_after_expansion = managed_shm.get_free_memory();
-      assert(free_memory_after_expansion < free_memory_after_allocation);
+   //Write new values
+   for(std::size_t i = received_size; i < expanded_size; ++i)  ptr[i] = i;
 
-      //Write new values
-      for(std::size_t i = received_size; i < expanded_size; ++i)  ptr[i] = i;
+   //Try to shrink approximately to min_size, but the new size
+   //should be smaller than min_size*2.
+   //This "should" be successful since no other class is allocating
+   //memory from the segment
+   std::size_t shrunk_size;
+   ret = managed_shm.allocation_command
+      (boost::interprocess::shrink_in_place, min_size*2, min_size, shrunk_size, ptr);
 
-      //Try to shrink approximately to min_size, but the new size
-      //should be smaller than min_size*2.
-      //This "should" be successful since no other class is allocating
-      //memory from the segment
-      std::size_t shrunk_size;
-      ret = managed_shm.allocation_command
-         (shrink_in_place, min_size*2, min_size, shrunk_size, ptr);
+   //Check invariants
+   assert(ret.second == true);
+   assert(ret.first == ptr);
+   assert(shrunk_size <= min_size*2);
+   assert(shrunk_size >= min_size);
 
-      //Check invariants
-      assert(ret.second == true);
-      assert(ret.first == ptr);
-      assert(shrunk_size <= min_size*2);
-      assert(shrunk_size >= min_size);
+   //Get free memory and compare
+   std::size_t free_memory_after_shrinking = managed_shm.get_free_memory();
+   assert(free_memory_after_shrinking > free_memory_after_expansion);
 
-      //Get free memory and compare
-      std::size_t free_memory_after_shrinking = managed_shm.get_free_memory();
-      assert(free_memory_after_shrinking > free_memory_after_expansion);
-
-      //Deallocate the buffer
-      managed_shm.deallocate(ptr);
-   }
-   catch(...){
-      shared_memory_object::remove("MyManagedShm");
-      throw;
-   }
-   shared_memory_object::remove("MyManagedShm");
+   //Deallocate the buffer
+   managed_shm.deallocate(ptr);
    return 0;
 }
 //]

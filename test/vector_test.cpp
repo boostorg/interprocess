@@ -44,16 +44,7 @@ int test_expand_bwd()
 
    if(!test::test_all_expand_bwd<int_vector>())
       return 1;
-/*
-   //First raw volatile ints
-   typedef test::expand_bwd_test_allocator<volatile int>
-      volatile_int_allocator_type;
-   typedef vector<volatile int, volatile_int_allocator_type>
-      volatile_int_vector;
 
-   if(!test::test_all_expand_bwd<volatile_int_vector>())
-      return 1;
-*/
    //Now user defined wrapped int
    typedef test::expand_bwd_test_allocator<test::int_holder>
       int_holder_allocator_type;
@@ -94,17 +85,16 @@ int main()
    {
       //Now test move semantics
       vector<recursive_vector> original;
-      vector<recursive_vector> move_ctor(detail::move_impl(original));
+      vector<recursive_vector> move_ctor(boost::interprocess::move(original));
       vector<recursive_vector> move_assign;
-      move_assign = detail::move_impl(move_ctor);
-      move_assign.swap(detail::move_impl(original));
+      move_assign = boost::interprocess::move(move_ctor);
       move_assign.swap(original);
    }
    typedef allocator<int, managed_shared_memory::segment_manager> ShmemAllocator;
    typedef vector<int, ShmemAllocator> MyVector;
 
-   //typedef allocator<volatile int, managed_shared_memory::segment_manager> ShmemVolatileAllocator;
-   //typedef vector<volatile int, ShmemVolatileAllocator> MyVolatileVector;
+   typedef test::allocator_v1<int, managed_shared_memory::segment_manager> ShmemV1Allocator;
+   typedef vector<int, ShmemV1Allocator> MyV1Vector;
 
    typedef allocator<test::movable_int, managed_shared_memory::segment_manager> ShmemMoveAllocator;
    typedef vector<test::movable_int, ShmemMoveAllocator> MyMoveVector;
@@ -115,8 +105,8 @@ int main()
    if(test::vector_test<managed_shared_memory, MyVector>())
       return 1;
 
-   //if(test::vector_test<managed_shared_memory, MyVolatileVector>())
-      //return 1;
+   if(test::vector_test<managed_shared_memory, MyV1Vector>())
+      return 1;
 
    if(test::vector_test<managed_shared_memory, MyMoveVector>())
       return 1;

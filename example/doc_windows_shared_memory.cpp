@@ -8,41 +8,61 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 
-#ifdef BOOST_WINDOWS
+#ifdef BOOST_INTERPROCESS_WINDOWS
+
 //[doc_windows_shared_memory
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/mapped_region.hpp>
-#include <iostream>
 #include <cstring>
+#include <cstdlib>
+#include <string>
 
-int main ()
+int main(int argc, char *argv[])
 {
    using namespace boost::interprocess;
-   try{
+
+   if(argc == 1){  //Parent process
       //Create a native windows shared memory object.
-      windows_shared_memory shm (create_only, "shared_memory", read_write, 1000);
+      windows_shared_memory shm (create_only, "MySharedMemory", read_write, 1000);
 
       //Map the whole shared memory in this process
       mapped_region region(shm, read_write);
 
       //Write all the memory to 1
-      std::memset(region.get_address(), 1, 1000);
+      std::memset(region.get_address(), 1, region.get_size());
 
-      //Launch the client process and wait until finishes...
-      //...
+      //Launch child process
+      std::string s(argv[0]); s += " child";
+      if(0 != std::system(s.c_str()))
+         return 1;
+      //windows_shared_memory is destroyed when the last attached process dies...
    }
-   catch(interprocess_exception &ex){
-      std::cout << ex.what() << std::endl;
-      return 1;
+   else{
+      //Open already created shared memory object.
+      windows_shared_memory shm (open_only, "MySharedMemory", read_only);
+
+      //Map the whole shared memory in this process
+      mapped_region region(shm, read_only);
+
+      //Check that memory was initialized to 1
+      char *mem = static_cast<char*>(region.get_address());
+      for(std::size_t i = 0; i < region.get_size(); ++i)
+         if(*mem++ != 1)
+            return 1;   //Error checking memory
+      return 0;
    }
    return 0;
 }
 //]
-#else //#ifdef BOOST_WINDOWS
+
+#else //BOOST_INTERPROCESS_WINDOWS
+
 int main()
-{  return 0;   }
-#endif//#ifdef BOOST_WINDOWS
+{
+   return 0;
+}
+
+#endif //BOOST_INTERPROCESS_WINDOWS
 
 #include <boost/interprocess/detail/config_end.hpp>

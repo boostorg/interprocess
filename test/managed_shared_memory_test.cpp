@@ -199,10 +199,9 @@ int main ()
       {
          //Now test move semantics
          managed_shared_memory original(open_only, ShmemName);
-         managed_shared_memory move_ctor(detail::move_impl(original));
+         managed_shared_memory move_ctor(boost::interprocess::move(original));
          managed_shared_memory move_assign;
-         move_assign = detail::move_impl(move_ctor);
-         move_assign.swap(detail::move_impl(original));
+         move_assign = boost::interprocess::move(move_ctor);
          move_assign.swap(original);
       }
    }

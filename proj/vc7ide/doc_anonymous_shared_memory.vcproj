@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_anonymous_shared_memory.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{95431998-8EB8-9BCA-44D0-ECD5A7BE2B52}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

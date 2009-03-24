@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="windows_shared_memory_test"
-	ProjectGUID="{E385C28C-0691-4FA7-F48E-935BA0D06310}"
+	ProjectGUID="{E35C288C-F48E-6914-4FA7-5BA006383C10}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -35,7 +35,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/shared_memory_test_d.exe"
+				OutputFile="$(OutDir)/windows_shared_memory_test_d.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"

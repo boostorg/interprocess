@@ -21,48 +21,49 @@ class MyClass
 int main()
 {
    using namespace boost::interprocess;
-   try{
-      {  //Remove old shared memory if present
-         shared_memory_object::remove("MyManagedShm");
-         //Create a managed shared memory
-         managed_shared_memory shm(create_only, "MyManagedShm", 1000);
-         //Check size
-         assert(shm.get_size() == 1000);
-         //Construct a named object
-         MyClass *myclass = shm.construct<MyClass>("MyClass")();
-         //The managed segment is unmapped here
-      }
-      {
-         //Now that the segment is not mapped grow it adding extra 500 bytes
-         managed_shared_memory::grow("MyManagedShm", 500);
-         //Map it again
-         managed_shared_memory shm(open_only, "MyManagedShm");
-         //Check size
-         assert(shm.get_size() == 1500);
-         //Check "MyClass" is still there
-         MyClass *myclass = shm.find<MyClass>("MyClass").first;
-         assert(myclass != 0);
-         //The managed segment is unmapped here
-      }
-      {
-         //Now minimize the size of the segment
-         managed_shared_memory::shrink_to_fit("MyManagedShm");
-         //Map it again
-         managed_shared_memory shm(open_only, "MyManagedShm");
-         //Check size
-         assert(shm.get_size() < 1000);
-         //Check "MyClass" is still there
-         MyClass *myclass = shm.find<MyClass>("MyClass").first;
-         assert(myclass != 0);
-         //The managed segment is unmapped here
-      }
+   //Remove shared memory on construction and destruction
+   struct shm_destroy
+   {
+      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   } remover;
+
+   {
+      //Create a managed shared memory
+      managed_shared_memory shm(create_only, "MySharedMemory", 1000);
+      //Check size
+      assert(shm.get_size() == 1000);
+      //Construct a named object
+      MyClass *myclass = shm.construct<MyClass>("MyClass")();
+      //The managed segment is unmapped here
+      //<-
+      (void)myclass;
+      //->
    }
-   catch(...){
-      shared_memory_object::remove("MyManagedShm");
-      throw;
+   {
+      //Now that the segment is not mapped grow it adding extra 500 bytes
+      managed_shared_memory::grow("MySharedMemory", 500);
+      //Map it again
+      managed_shared_memory shm(open_only, "MySharedMemory");
+      //Check size
+      assert(shm.get_size() == 1500);
+      //Check "MyClass" is still there
+      MyClass *myclass = shm.find<MyClass>("MyClass").first;
+      assert(myclass != 0);
+      //The managed segment is unmapped here
    }
-   //Remove the managed segment
-   shared_memory_object::remove("MyManagedShm");
+   {
+      //Now minimize the size of the segment
+      managed_shared_memory::shrink_to_fit("MySharedMemory");
+      //Map it again
+      managed_shared_memory shm(open_only, "MySharedMemory");
+      //Check size
+      assert(shm.get_size() < 1000);
+      //Check "MyClass" is still there
+      MyClass *myclass = shm.find<MyClass>("MyClass").first;
+      assert(myclass != 0);
+      //The managed segment is unmapped here
+   }
    return 0;
 }
 //]

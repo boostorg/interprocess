@@ -124,13 +124,8 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{AB712FE1-92E5-7543-12A0-74522FFA12A2}">
 			<File
-				RelativePath="..\..\example\doc_named_conditionB.cpp">
+				RelativePath="..\..\example\comp_doc_named_conditionB.cpp">
 			</File>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{91815530-7C5B-6744-5A86-62EF51EEFBFB}">
 		</Filter>
 	</Files>
 	<Globals>

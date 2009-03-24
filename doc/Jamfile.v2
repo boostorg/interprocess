@@ -25,8 +25,15 @@ doxygen autodoc
         <doxygen:param>EXTRACT_ALL=NO
         <doxygen:param>HIDE_UNDOC_MEMBERS=YES
         <doxygen:param>EXTRACT_PRIVATE=NO
+        <doxygen:param>ENABLE_PREPROCESSING=YES
         <doxygen:param>EXPAND_ONLY_PREDEF=YES
-        <doxygen:param>PREDEFINED=BOOST_INTERPROCESS_DOXYGEN_INVOKED
+        <doxygen:param>MACRO_EXPANSION=YES
+        <doxygen:param>"PREDEFINED=\"BOOST_INTERPROCESS_DOXYGEN_INVOKED\" \\
+                                   \"BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(a)= \" \\
+                                   \"BOOST_INTERPROCESS_RV_REF(a)=a &&\" \\
+                                   \"BOOST_INTERPROCESS_RV_REF_2_TEMPL_ARGS(a)=a &&\" \\
+                                   \"BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(a)=a &&\" \\
+                                   \"BOOST_INTERPROCESS_FWD_REF(a)=a &&\""
         <xsl:param>"boost.doxygen.reftitle=Boost.Interprocess Reference"
    ;
 

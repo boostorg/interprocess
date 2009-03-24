@@ -39,7 +39,7 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/doc_windows_shared_memory2.pdb"
+				ProgramDatabaseFile="$(OutDir)/doc_windows_shared_memoryB.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 				FixedBaseAddress="1"/>
@@ -86,7 +86,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/doc_windows_shared_memory2.exe"
+				OutputFile="$(OutDir)/doc_windows_shared_memoryB.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
@@ -124,13 +124,8 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{437F71DF-CA9B-6637-0366-3E52D735BAFF}">
 			<File
-				RelativePath="..\..\example\doc_windows_shared_memory2.cpp">
+				RelativePath="..\..\example\comp_doc_windows_shared_memoryB.cpp">
 			</File>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{49819248-6ABD-4E40-B98E-6AC2EFB21B26}">
 		</Filter>
 	</Files>
 	<Globals>

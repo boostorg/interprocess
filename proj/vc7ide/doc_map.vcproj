@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_map.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{95918340-89BD-9E04-8B4C-6242E76FBEFB}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

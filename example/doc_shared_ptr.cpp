@@ -16,7 +16,6 @@
 #include <boost/interprocess/smart_ptr/shared_ptr.hpp>
 #include <boost/interprocess/smart_ptr/weak_ptr.hpp>
 #include <cassert>
-#include <cstdio>    //std::remove
 
 using namespace boost::interprocess;
 
@@ -47,7 +46,7 @@ struct shared_ptr_owner
 int main ()
 {
    //Destroy any previous file with the name to be used.
-   std::remove("MyMappedFile");
+   file_mapping::remove("MyMappedFile");
    {
       managed_mapped_file file(create_only, "MyMappedFile", 4096);
 
@@ -114,7 +113,7 @@ int main ()
       //The reference count will be deallocated when all weak pointers
       //disappear. After that, the file is unmapped.
    }
-   std::remove("MyMappedFile");
+   file_mapping::remove("MyMappedFile");
    return 0;
 }
 //]

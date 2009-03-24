@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_where_allocate.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93295380-89BD-4b04-88EB-6225BE5faBFB}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

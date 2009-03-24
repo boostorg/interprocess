@@ -61,30 +61,27 @@ typedef bmi::multi_index_container<
 
 int main ()
 {
-   //Erase previous shared memory with the name
-   shared_memory_object::remove("MySharedMemory");
+   //Remove shared memory on construction and destruction
+   struct shm_destroy
+   {
+      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   } remover;
 
-   try{
-      //Create shared memory
-      managed_shared_memory segment(create_only,"MySharedMemory", 65536);
+   //Create shared memory
+   managed_shared_memory segment(create_only,"MySharedMemory", 65536);
 
-      //Construct the multi_index in shared memory
-      employee_set *es = segment.construct<employee_set>
-         ("My MultiIndex Container")            //Container's name in shared memory
-         ( employee_set::ctor_args_list()
-         , segment.get_allocator<employee>());  //Ctor parameters
+   //Construct the multi_index in shared memory
+   employee_set *es = segment.construct<employee_set>
+      ("My MultiIndex Container")            //Container's name in shared memory
+      ( employee_set::ctor_args_list()
+      , segment.get_allocator<employee>());  //Ctor parameters
 
-      //Now insert elements
-      char_allocator ca(segment.get_allocator<char>());
-      es->insert(employee(0,31, "Joe", ca));
-      es->insert(employee(1,27, "Robert", ca));
-      es->insert(employee(2,40, "John", ca));
-   }
-   catch(...){
-      shared_memory_object::remove("MySharedMemory");
-      throw;
-   }
-   shared_memory_object::remove("MySharedMemory");
+   //Now insert elements
+   char_allocator ca(segment.get_allocator<char>());
+   es->insert(employee(0,31, "Joe", ca));
+   es->insert(employee(1,27, "Robert", ca));
+   es->insert(employee(2,40, "John", ca));
    return 0;
 }
 //]

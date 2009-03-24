@@ -124,13 +124,8 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{412EC7F1-45A7-98CA-A012-7952A2D2AFF2}">
 			<File
-				RelativePath="..\..\example\doc_message_queueB.cpp">
+				RelativePath="..\..\example\comp_doc_message_queueB.cpp">
 			</File>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{92437370-6244-D57A-A856-645251825CDB}">
 		</Filter>
 	</Files>
 	<Globals>

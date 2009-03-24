@@ -19,7 +19,6 @@
 #include <functional>
 #include "print_container.hpp"
 #include <boost/interprocess/detail/move.hpp>
-#include <boost/interprocess/detail/move_iterator.hpp>
 #include <string>
 #include "get_process_id_name.hpp"
 
@@ -36,7 +35,7 @@ struct push_data_function
       typedef typename MyShmList::value_type IntType;
       for(int i = 0; i < max; ++i){
          IntType move_me(i);
-         shmlist->push_back(detail::move_impl(move_me));
+         shmlist->push_back(boost::interprocess::move(move_me));
          stdlist->push_back(i);
       }
       if(!CheckEqualContainers(shmlist, stdlist))
@@ -54,7 +53,7 @@ struct push_data_function<false>
       typedef typename MyShmList::value_type IntType;
       for(int i = 0; i < max; ++i){
          IntType move_me(i);
-         shmlist->push_front(detail::move_impl(move_me));
+         shmlist->push_front(boost::interprocess::move(move_me));
          stdlist->push_front(i);
       }
       if(!CheckEqualContainers(shmlist, stdlist))
@@ -113,6 +112,7 @@ int list_test (bool copied_allocators_equal = true)
       MyShmList *shmlist = segment.template construct<MyShmList>("MyList")
                               (segment.get_segment_manager());
 
+
       MyStdList *stdlist = new MyStdList;
 
       if(push_data_t::execute(max, shmlist, stdlist)){
@@ -135,14 +135,14 @@ int list_test (bool copied_allocators_equal = true)
          IntType aux_vect[50];
          for(int i = 0; i < 50; ++i){
             IntType move_me(-1);
-            aux_vect[i] = detail::move_impl(move_me);
+            aux_vect[i] = boost::interprocess::move(move_me);
          }
          int aux_vect2[50];
          for(int i = 0; i < 50; ++i){
             aux_vect2[i] = -1;
          }
-         shmlist->assign(detail::make_move_iterator(&aux_vect[0])
-                        ,detail::make_move_iterator(&aux_vect[50]));
+         shmlist->assign(boost::interprocess::make_move_iterator(&aux_vect[0])
+                        ,boost::interprocess::make_move_iterator(&aux_vect[50]));
          stdlist->assign(&aux_vect2[0], &aux_vect2[50]);
          if(!CheckEqualContainers(shmlist, stdlist)) return 1;
       }
@@ -165,15 +165,15 @@ int list_test (bool copied_allocators_equal = true)
          IntType aux_vect[50];
          for(int i = 0; i < 50; ++i){
             IntType move_me(-1);
-            aux_vect[i] = detail::move_impl(move_me);
+            aux_vect[i] = boost::interprocess::move(move_me);
          }
          int aux_vect2[50];
          for(int i = 0; i < 50; ++i){
             aux_vect2[i] = -1;
          }
          shmlist->insert(shmlist->begin()
-                        ,detail::make_move_iterator(&aux_vect[0])
-                        ,detail::make_move_iterator(&aux_vect[50]));
+                        ,boost::interprocess::make_move_iterator(&aux_vect[0])
+                        ,boost::interprocess::make_move_iterator(&aux_vect[50]));
          stdlist->insert(stdlist->begin(), &aux_vect2[0], &aux_vect2[50]);
       }
 

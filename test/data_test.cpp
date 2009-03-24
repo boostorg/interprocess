@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <functional>
 #include <string>
-#include <cstdio>    //std::remove
 #include "print_container.hpp"
 #include "get_process_id_name.hpp"
 
@@ -29,8 +28,6 @@ int main ()
    std::string process_name;
    test::get_process_id_name(process_name);
    const char *const shMemName = process_name.c_str();
-   std::string filename (test::get_process_id_name());
-   filename += "_file";
 
    try{
    shared_memory_object::remove(shMemName);
@@ -90,12 +87,9 @@ int main ()
       res = (0 == segment.find<MyVect>(allocName).first);
       if(!res)
          return 1;
-
-      std::remove(filename.c_str());
    }
    }
    catch(...){
-      std::remove(filename.c_str());
       shared_memory_object::remove(shMemName);
       throw;
    }

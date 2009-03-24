@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_managed_aligned_allocation.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{57613F38-DC8B-43D1-8EB8-E53642BF23FB}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

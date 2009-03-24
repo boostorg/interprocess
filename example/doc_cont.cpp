@@ -17,48 +17,47 @@
 int main ()
 {
    using namespace boost::interprocess;
-   shared_memory_object::remove("MySharedMemory");
-   try{
-      //A managed shared memory where we can construct objects
-      //associated with a c-string
-      managed_shared_memory segment(create_only,
-                                    "MySharedMemory",  //segment name
-                                    65536);
+   //Remove shared memory on construction and destruction
+   struct shm_destroy
+   {
+      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   } remover;
 
-      //Alias an STL-like allocator of ints that allocates ints from the segment
-      typedef allocator<int, managed_shared_memory::segment_manager> 
-         ShmemAllocator;
+   //A managed shared memory where we can construct objects
+   //associated with a c-string
+   managed_shared_memory segment(create_only,
+                                 "MySharedMemory",  //segment name
+                                 65536);
 
-      //Alias a vector that uses the previous STL-like allocator
-      typedef vector<int, ShmemAllocator> MyVector;
+   //Alias an STL-like allocator of ints that allocates ints from the segment
+   typedef allocator<int, managed_shared_memory::segment_manager> 
+      ShmemAllocator;
 
-      int initVal[]        = {0, 1, 2, 3, 4, 5, 6 };
-      const int *begVal    = initVal;
-      const int *endVal    = initVal + sizeof(initVal)/sizeof(initVal[0]);
+   //Alias a vector that uses the previous STL-like allocator
+   typedef vector<int, ShmemAllocator> MyVector;
 
-      //Initialize the STL-like allocator
-      const ShmemAllocator alloc_inst (segment.get_segment_manager());
+   int initVal[]        = {0, 1, 2, 3, 4, 5, 6 };
+   const int *begVal    = initVal;
+   const int *endVal    = initVal + sizeof(initVal)/sizeof(initVal[0]);
 
-      //Construct the vector in the shared memory segment with the STL-like allocator 
-      //from a range of iterators
-      MyVector *myvector = 
-         segment.construct<MyVector>
-            ("MyVector")/*object name*/
-            (begVal     /*first ctor parameter*/,
-            endVal     /*second ctor parameter*/, 
-            alloc_inst /*third ctor parameter*/); 
+   //Initialize the STL-like allocator
+   const ShmemAllocator alloc_inst (segment.get_segment_manager());
 
-      //Use vector as your want
-      std::sort(myvector->rbegin(), myvector->rend());
-      // . . .
-      //When done, destroy and delete vector from the segment
-      segment.destroy<MyVector>("MyVector");
-   }
-   catch(...){
-      shared_memory_object::remove("MySharedMemory");
-      throw;
-   }
-   shared_memory_object::remove("MySharedMemory");
+   //Construct the vector in the shared memory segment with the STL-like allocator 
+   //from a range of iterators
+   MyVector *myvector = 
+      segment.construct<MyVector>
+         ("MyVector")/*object name*/
+         (begVal     /*first ctor parameter*/,
+         endVal     /*second ctor parameter*/, 
+         alloc_inst /*third ctor parameter*/); 
+
+   //Use vector as your want
+   std::sort(myvector->rbegin(), myvector->rend());
+   // . . .
+   //When done, destroy and delete vector from the segment
+   segment.destroy<MyVector>("MyVector");
    return 0;
 }
 //]
