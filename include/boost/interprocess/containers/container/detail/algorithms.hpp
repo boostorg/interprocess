@@ -68,13 +68,13 @@ inline void construct_in_place(T* dest, InpIt source)
 #else
 template<class T, class InpIt>
 inline void construct_in_place(T* dest, InpIt source)
-{     new((void*)dest)T(*source);   }
+{     ::new((void*)dest)T(*source);   }
 #endif
 
 template<class T, class U, class D>
 inline void construct_in_place(T *dest, default_construct_iterator<U, D>)
 {
-   new((void*)dest)T();
+   ::new((void*)dest)T();
 }
 
 template<class T, class U, class E>

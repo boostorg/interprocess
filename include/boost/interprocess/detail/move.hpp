@@ -185,8 +185,6 @@ typename disable_if<boost::interprocess::move_detail::is_rv<T>, const T &>::type
 #define BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(TYPE)\
    operator boost::interprocess::rv<TYPE>&() \
    {  return static_cast<boost::interprocess::rv<TYPE>& >(*this);   }\
-   operator const boost::interprocess::rv<TYPE>&() \
-   {  return static_cast<const boost::interprocess::rv<TYPE>& >(*this);   }\
 //
 
 

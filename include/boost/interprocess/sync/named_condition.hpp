@@ -153,7 +153,7 @@ class named_condition
    void do_wait(Lock& lock)
    {
       //named_condition only works with named_mutex
-      BOOST_STATIC_ASSERT((detail::is_same<typename Lock::mutex_type, named_mutex>::value == true));
+      BOOST_STATIC_ASSERT((detail::is_convertible<typename Lock::mutex_type&, named_mutex&>::value == true));
       
       //lock internal before unlocking external to avoid race with a notifier
       scoped_lock<interprocess_mutex>     internal_lock(*this->mutex());
@@ -170,7 +170,7 @@ class named_condition
    bool do_timed_wait(Lock& lock, const boost::posix_time::ptime &abs_time)
    {
       //named_condition only works with named_mutex
-      BOOST_STATIC_ASSERT((detail::is_same<typename Lock::mutex_type, named_mutex>::value == true));
+      BOOST_STATIC_ASSERT((detail::is_convertible<typename Lock::mutex_type&, named_mutex&>::value == true));
       //lock internal before unlocking external to avoid race with a notifier  
       scoped_lock<interprocess_mutex>     internal_lock(*this->mutex(), abs_time);  
       if(!internal_lock) return false;

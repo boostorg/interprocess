@@ -213,6 +213,7 @@ struct node_type
    #ifndef BOOST_CONTAINERS_PERFECT_FORWARDING
 
    node_type()
+      : value()
    {}
 
    #define BOOST_PP_LOCAL_MACRO(n)                                      \
