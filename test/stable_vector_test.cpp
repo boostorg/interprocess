@@ -19,6 +19,7 @@
 #include <boost/interprocess/containers/stable_vector.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include "allocator_v1.hpp"
+#include "heap_allocator_v1.hpp"
 #include "check_equal_containers.hpp"
 #include "movable_int.hpp"
 #include "expand_bwd_test_allocator.hpp"
@@ -61,6 +62,9 @@ int main()
    typedef test::allocator_v1<int, managed_shared_memory::segment_manager> ShmemV1Allocator;
    typedef stable_vector<int, ShmemV1Allocator> MyV1Vector;
 
+   typedef test::heap_allocator_v1<int, managed_shared_memory::segment_manager> ShmemHeapV1Allocator;
+   typedef stable_vector<int, ShmemHeapV1Allocator> MyHeapV1Vector;
+
    typedef allocator<test::movable_int, managed_shared_memory::segment_manager> ShmemMoveAllocator;
    typedef stable_vector<test::movable_int, ShmemMoveAllocator> MyMoveVector;
 
@@ -71,6 +75,9 @@ int main()
       return 1;
 
    if(test::vector_test<managed_shared_memory, MyV1Vector>())
+      return 1;
+
+   if(test::vector_test<managed_shared_memory, MyHeapV1Vector>())
       return 1;
 
    if(test::vector_test<managed_shared_memory, MyMoveVector>())
