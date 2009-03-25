@@ -6525,6 +6525,12 @@ warranty.
 *  Shared memory in windows has now kernel lifetime instead of filesystem lifetime: shared
    memory will disappear when the system reboots.
 *  Updated move semantics.
+*  Fixed bugs
+  [@https://svn.boost.org/trac/boost/ticket/2722 #2722],
+  [@https://svn.boost.org/trac/boost/ticket/2729 #2729],
+  [@https://svn.boost.org/trac/boost/ticket/2766 #2766],
+  [@https://svn.boost.org/trac/boost/ticket/1390 #1390],
+  [@https://svn.boost.org/trac/boost/ticket/2589 #2589],
 
 [endsect]
 
@@ -6534,7 +6540,12 @@ warranty.
 *  More non-copyable classes are now movable.
 *  Move-constructor and assignments now leave moved object in default-constructed state
    instead of just swapping contents.
-*  Several bugfixes (#2391, #2431, #1390, #2570, #2528).
+*  Several bugfixes (
+  [@https://svn.boost.org/trac/boost/ticket/2391 #2391],
+  [@https://svn.boost.org/trac/boost/ticket/2431 #2431],
+  [@https://svn.boost.org/trac/boost/ticket/1390 #1390],
+  [@https://svn.boost.org/trac/boost/ticket/2570 #2570],
+  [@https://svn.boost.org/trac/boost/ticket/2528 #2528].
 
 [endsect]
 
