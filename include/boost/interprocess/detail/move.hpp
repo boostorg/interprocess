@@ -133,7 +133,7 @@ typename boost::disable_if<is_movable<T>, T&>::type move(T& x)
 template <class T>
 typename enable_if<is_movable<T>, rv<T>&>::type move(T& x)
 {
-   return static_cast<rv<T>& >(x);
+   return reinterpret_cast<rv<T>& >(x);
 }
 
 template <class T>
@@ -184,7 +184,7 @@ typename disable_if<boost::interprocess::move_detail::is_rv<T>, const T &>::type
 //////////////////////////////////////////////////////////////////////////////
 #define BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(TYPE)\
    operator boost::interprocess::rv<TYPE>&() \
-   {  return static_cast<boost::interprocess::rv<TYPE>& >(*this);   }\
+   {  return reinterpret_cast<boost::interprocess::rv<TYPE>& >(*this);   }\
 //
 
 
