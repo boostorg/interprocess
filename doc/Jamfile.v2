@@ -31,7 +31,7 @@ doxygen autodoc
         <doxygen:param>"PREDEFINED=\"BOOST_INTERPROCESS_DOXYGEN_INVOKED\" \\
                                    \"BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(a)= \" \\
                                    \"BOOST_INTERPROCESS_RV_REF(a)=a &&\" \\
-                                   \"BOOST_INTERPROCESS_RV_REF_2_TEMPL_ARGS(a)=a &&\" \\
+                                   \"BOOST_INTERPROCESS_RV_REF_2_TEMPL_ARGS(a,b,c)=a &&\" \\
                                    \"BOOST_INTERPROCESS_RV_REF_3_TEMPL_ARGS(a)=a &&\" \\
                                    \"BOOST_INTERPROCESS_FWD_REF(a)=a &&\""
         <xsl:param>"boost.doxygen.reftitle=Boost.Interprocess Reference"
