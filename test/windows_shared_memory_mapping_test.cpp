@@ -10,7 +10,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 
-#ifdef BOOST_WINDOWS
+#ifdef BOOST_INTERPROCESS_WINDOWS
 
 #include <fstream>
 #include <iostream>

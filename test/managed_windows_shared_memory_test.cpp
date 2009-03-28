@@ -9,8 +9,9 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
+#include <boost/interprocess/detail/workaround.hpp>
 
-#ifdef BOOST_WINDOWS
+#ifdef BOOST_INTERPROCESS_WINDOWS
 
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/vector.hpp>
@@ -130,9 +131,9 @@ int main ()
 
          //Now test move semantics
          managed_windows_shared_memory original(open_only, MemName);
-         managed_windows_shared_memory move_ctor(detail::move_impl(original));
+         managed_windows_shared_memory move_ctor(boost::interprocess::move(original));
          managed_windows_shared_memory move_assign;
-         move_assign = detail::move_impl(move_ctor);
+         move_assign = boost::interprocess::move(move_ctor);
       }
    }
 

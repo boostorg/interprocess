@@ -62,7 +62,7 @@ typedef basic_managed_shared_memory
    <char,
     //simple_seq_fit<mutex_family>,
     rbtree_best_fit<mutex_family>,
-    flat_map_index
+    iset_index
    > my_managed_shared_memory;
 
 //Alias allocator type
@@ -132,9 +132,48 @@ public:
    {  return a.id_ < b.id_;   }
 };
 
+//Test recursive structures
+class recursive_flat_multiset
+{
+public:
+   int id_;
+   flat_multiset<recursive_flat_multiset> flat_set_;
+   friend bool operator< (const recursive_flat_multiset &a, const recursive_flat_set &b)
+   {  return a.id_ < b.id_;   }
+};
+
+class recursive_flat_multimap
+{
+public:
+   int id_;
+   flat_map<recursive_flat_multimap, recursive_flat_multimap> map_;
+   friend bool operator< (const recursive_flat_multimap &a, const recursive_flat_multimap &b)
+   {  return a.id_ < b.id_;   }
+};
+
+template<class C>
+void test_move()
+{
+   //Now test move semantics
+   C original;
+   C move_ctor(boost::interprocess::move(original));
+   C move_assign;
+   move_assign = boost::interprocess::move(move_ctor);
+   move_assign.swap(original);
+}
+
 int main()
 {
    using namespace boost::interprocess::test;
+
+   //Now test move semantics
+   {
+      test_move<flat_set<recursive_flat_set> >();
+      test_move<flat_multiset<recursive_flat_multiset> >();
+      test_move<flat_map<recursive_flat_map, recursive_flat_map> >();
+      test_move<flat_multimap<recursive_flat_multimap, recursive_flat_multimap> >();
+   }
+
 
    if (0 != set_test<my_managed_shared_memory
                   ,MyShmSet
@@ -207,7 +246,7 @@ int main()
       return 1;
    }
 
-   #if !defined(__GNUC__) || (__GNUC__ < 4) || (__GNUC_MINOR__ < 3)
+   //#if !defined(__GNUC__) || (__GNUC__ < 4) || (__GNUC_MINOR__ < 3)
    const test::EmplaceOptions SetOptions = (test::EmplaceOptions)(test::EMPLACE_HINT | test::EMPLACE_ASSOC);
    const test::EmplaceOptions MapOptions = (test::EmplaceOptions)(test::EMPLACE_HINT_PAIR | test::EMPLACE_ASSOC_PAIR);
 
@@ -219,8 +258,9 @@ int main()
       return 1;
    if(!boost::interprocess::test::test_emplace<flat_multiset<test::EmplaceInt>, SetOptions>())
       return 1;
-   #endif   //!defined(__GNUC__)
+   //#endif   //!defined(__GNUC__)
    return 0;
+
 }
 
 #include <boost/interprocess/detail/config_end.hpp>

@@ -13,6 +13,7 @@
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <fstream>
 #include <iostream>
+#include <cstdio>
 
 int main ()
 {
@@ -37,10 +38,12 @@ int main ()
    }
    catch(interprocess_exception &ex){
       named_mutex::remove("fstream_named_mutex");
+      std::remove("file_name");
       std::cout << ex.what() << std::endl;
       return 1;
    }
    named_mutex::remove("fstream_named_mutex");
+   std::remove("file_name");
    return 0;
 }
 //]

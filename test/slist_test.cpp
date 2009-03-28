@@ -7,7 +7,6 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/slist.hpp>
@@ -54,10 +53,9 @@ int main ()
    {
       //Now test move semantics
       slist<recursive_slist> original;
-      slist<recursive_slist> move_ctor(detail::move_impl(original));
+      slist<recursive_slist> move_ctor(boost::interprocess::move(original));
       slist<recursive_slist> move_assign;
-      move_assign = detail::move_impl(move_ctor);
-      move_assign.swap(detail::move_impl(original));
+      move_assign = boost::interprocess::move(move_ctor);
       move_assign.swap(original);
    }
 
@@ -79,8 +77,7 @@ int main ()
    if(!boost::interprocess::test::test_emplace
       < slist<test::EmplaceInt>, Options>())
       return 1;
-
-   return 0;
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
+

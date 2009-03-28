@@ -31,13 +31,14 @@ struct eraser
    }
 };
 
+typedef detail::managed_open_or_create_impl<shared_memory_object> shared_memory;
+
 //This wrapper is necessary to have a common constructor
 //in generic named_creation_template functions
 class shared_memory_creation_test_wrapper
    : public eraser
-   , public detail::managed_open_or_create_impl<shared_memory_object>
+   , public shared_memory
 {
-   typedef detail::managed_open_or_create_impl<shared_memory_object> shared_memory;
 
    public:
    shared_memory_creation_test_wrapper(create_only_t)
@@ -56,8 +57,6 @@ class shared_memory_creation_test_wrapper
 
 int main ()
 {
-   typedef detail::managed_open_or_create_impl<shared_memory_object> shared_memory;
-
    try{
       shared_memory_object::remove(ShmName);
       test::test_named_creation<shared_memory_creation_test_wrapper>();
@@ -76,9 +75,9 @@ int main ()
          std::memset(shm1.get_user_address(), 0, shm1.get_user_size());
 
          //Now test move semantics
-         shared_memory move_ctor(detail::move_impl(shm1));
+         shared_memory move_ctor(boost::interprocess::move(shm1));
          shared_memory move_assign;
-         move_assign = detail::move_impl(move_ctor);
+         move_assign = boost::interprocess::move(move_ctor);
       }
    }
    catch(std::exception &ex){

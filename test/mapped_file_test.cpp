@@ -12,6 +12,7 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/detail/file_wrapper.hpp>
+#include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include "named_creation_template.hpp"
 #include <cstdio>
@@ -29,7 +30,7 @@ struct file_destroyer
    ~file_destroyer()
    {
       //The last destructor will destroy the file
-      std::remove(FileName);  
+      file_mapping::remove(FileName);  
    }
 };
 
@@ -60,7 +61,7 @@ int main ()
 {
    typedef boost::interprocess::detail::managed_open_or_create_impl
       <boost::interprocess::detail::file_wrapper> mapped_file;
-   std::remove(FileName);
+   file_mapping::remove(FileName);
    test::test_named_creation<mapped_file_creation_test_wrapper>();
 
    //Create and get name, size and address
@@ -76,11 +77,11 @@ int main ()
       std::memset(file1.get_user_address(), 0, file1.get_user_size());
 
       //Now test move semantics
-      mapped_file move_ctor(detail::move_impl(file1));
+      mapped_file move_ctor(boost::interprocess::move(file1));
       mapped_file move_assign;
-      move_assign = detail::move_impl(move_ctor);
+      move_assign = boost::interprocess::move(move_ctor);
    }
-   std::remove(FileName);
+   file_mapping::remove(FileName);
    return 0;
 }
 

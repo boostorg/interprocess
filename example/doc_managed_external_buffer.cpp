@@ -43,7 +43,9 @@ int main()
    //be stored in the static_buffer!
    MyBufferList *list = objects_in_static_memory.construct<MyBufferList>(L"MyList")
                            (objects_in_static_memory.get_segment_manager());
-
+   //<-
+   (void)list;
+   //->
    //Since the allocation algorithm from wmanaged_external_buffer uses relative
    //pointers and all the pointers constructed int the static memory point
    //to objects in the same segment,  we can create another static buffer

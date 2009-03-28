@@ -19,6 +19,12 @@
 
 using namespace boost::interprocess;
 
+shared_memory_object get_shared_memory_mapping()
+{
+   shared_memory_object sh;
+   return shared_memory_object(boost::interprocess::move(sh));
+}
+
 int main ()
 {
    try{
@@ -139,9 +145,10 @@ int main ()
       {
          //Now test move semantics
          shared_memory_object mapping(open_only, test::get_process_id_name(), read_write);
-         shared_memory_object move_ctor(detail::move_impl(mapping));
+         shared_memory_object move_ctor(boost::interprocess::move(mapping));
          shared_memory_object move_assign;
-         move_assign = detail::move_impl(move_ctor);
+         move_assign = boost::interprocess::move(move_ctor);
+         shared_memory_object ret(get_shared_memory_mapping());
       }
    }
    catch(std::exception &exc){
@@ -152,5 +159,3 @@ int main ()
    shared_memory_object::remove(test::get_process_id_name());
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

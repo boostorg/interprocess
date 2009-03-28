@@ -52,28 +52,31 @@ typedef map< char_string, complex_data
 
 int main ()
 {
-   shared_memory_object::remove("MySharedMemory");
-   remove_shared_memory_on_destroy remove_on_destroy("MySharedMemory");
+   //Remove shared memory on construction and destruction
+   struct shm_destroy
    {
-      //Create shared memory
-      managed_shared_memory segment(create_only,"MySharedMemory", 65536);
+      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   } remover;
 
-      //An allocator convertible to any allocator<T, segment_manager_t> type
-      void_allocator alloc_inst (segment.get_segment_manager());
+   //Create shared memory
+   managed_shared_memory segment(create_only,"MySharedMemory", 65536);
 
-      //Construct the shared memory map and fill it
-      complex_map_type *mymap = segment.construct<complex_map_type>
-         //(object name), (first ctor parameter, second ctor parameter)
-            ("MyMap")(std::less<char_string>(), alloc_inst);
+   //An allocator convertible to any allocator<T, segment_manager_t> type
+   void_allocator alloc_inst (segment.get_segment_manager());
 
-      for(int i = 0; i < 100; ++i){
-         //Both key(string) and value(complex_data) need an allocator in their constructors
-         char_string  key_object(alloc_inst);
-         complex_data mapped_object(i, "default_name", alloc_inst);
-         map_value_type value(key_object, mapped_object);
-         //Modify values and insert them in the map
-         mymap->insert(value);
-      }
+   //Construct the shared memory map and fill it
+   complex_map_type *mymap = segment.construct<complex_map_type>
+      //(object name), (first ctor parameter, second ctor parameter)
+         ("MyMap")(std::less<char_string>(), alloc_inst);
+
+   for(int i = 0; i < 100; ++i){
+      //Both key(string) and value(complex_data) need an allocator in their constructors
+      char_string  key_object(alloc_inst);
+      complex_data mapped_object(i, "default_name", alloc_inst);
+      map_value_type value(key_object, mapped_object);
+      //Modify values and insert them in the map
+      mymap->insert(value);
    }
    return 0;
 }

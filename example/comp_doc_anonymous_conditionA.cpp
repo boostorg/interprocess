@@ -8,31 +8,35 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 #include <boost/interprocess/detail/config_begin.hpp>
-//[doc_anonymous_upgradable_mutexA
+//[doc_anonymous_conditionA
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
-#include "doc_upgradable_mutex_shared_data.hpp"
 #include <iostream>
 #include <cstdio>
+#include "doc_anonymous_condition_shared_data.hpp"
 
 using namespace boost::interprocess;
 
 int main ()
 {
+
+   //Erase previous shared memory and schedule erasure on exit
+   struct shm_destroy
+   {
+      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   } remover;
+
+   //Create a shared memory object.
+   shared_memory_object shm
+      (create_only               //only create
+      ,"MySharedMemory"           //name
+      ,read_write                //read-write mode
+      );
    try{
-      //Erase previous shared memory
-      shared_memory_object::remove("shared_memory");
-
-      //Create a shared memory object.
-      shared_memory_object shm
-         (create_only               //only create
-         ,"shared_memory"           //name
-         ,read_write   //read-write mode
-         );
-
       //Set size
-      shm.truncate(sizeof(shared_data));
+      shm.truncate(sizeof(trace_queue));
 
       //Map the whole shared memory in this process
       mapped_region region
@@ -44,34 +48,31 @@ int main ()
       void * addr       = region.get_address();
 
       //Construct the shared structure in memory
-      shared_data * data = new (addr) shared_data;
+      trace_queue * data = new (addr) trace_queue;
 
-      //Write some logs
-      for(int i = 0; i < shared_data::NumItems; ++i){
-         //Lock the upgradable_mutex
-         scoped_lock<interprocess_upgradable_mutex> lock(data->upgradable_mutex);
-         std::sprintf(data->items[(data->current_line++) % shared_data::NumItems]
-                  ,"%s_%d", "process_a", i);
-         if(i == (shared_data::NumItems-1))
-            data->end_a = true;
-         //Mutex is released here
-      }
+      const int NumMsg = 100;
 
-      //Wait until the other process ends
-      while(1){
-         scoped_lock<interprocess_upgradable_mutex> lock(data->upgradable_mutex);
-         if(data->end_b)
-            break;
+      for(int i = 0; i < NumMsg; ++i){
+         scoped_lock<interprocess_mutex> lock(data->mutex);
+         if(data->message_in){
+            data->cond_full.wait(lock);
+         }
+         if(i == (NumMsg-1))
+            std::sprintf(data->items, "%s", "last message");
+         else
+            std::sprintf(data->items, "%s_%d", "my_trace", i);
+
+         //Notify to the other process that there is a message
+         data->cond_empty.notify_one();
+
+         //Mark message buffer as full
+         data->message_in = true;
       }
    }
    catch(interprocess_exception &ex){
-      shared_memory_object::remove("shared_memory");
       std::cout << ex.what() << std::endl;
       return 1;
    }
-
-   //Erase shared memory
-   shared_memory_object::remove("shared_memory");
 
    return 0;
 }

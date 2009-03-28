@@ -18,10 +18,12 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
+#include <boost/pointer_to_other.hpp>
+
 #include <boost/interprocess/interprocess_fwd.hpp>
-#include <boost/interprocess/allocators/allocation_type.hpp>
+#include <boost/interprocess/containers/allocation_type.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/version_type.hpp>
+#include <boost/interprocess/containers/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <memory>
 #include <algorithm>
@@ -49,10 +51,10 @@ class allocator_v1
    typedef typename segment_manager::void_pointer  aux_pointer_t;
 
    typedef typename 
-      detail::pointer_to_other
+      boost::pointer_to_other
          <aux_pointer_t, const void>::type   cvoid_ptr;
 
-   typedef typename detail::pointer_to_other
+   typedef typename boost::pointer_to_other
       <cvoid_ptr, segment_manager>::type     alloc_ptr_t;
 
    template<class T2, class SegmentManager2>
@@ -64,9 +66,9 @@ class allocator_v1
 
  public:
    typedef T                                    value_type;
-   typedef typename detail::pointer_to_other
+   typedef typename boost::pointer_to_other
       <cvoid_ptr, T>::type                      pointer;
-   typedef typename detail::
+   typedef typename boost::
       pointer_to_other<pointer, const T>::type  const_pointer;
    typedef typename detail::add_reference
                      <value_type>::type         reference;

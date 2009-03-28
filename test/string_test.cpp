@@ -127,7 +127,7 @@ int string_test()
          std::sprintf(buffer, "%i", i);
          auxShmString += buffer;
          auxStdString += buffer;
-         shmStringVect->push_back(detail::move_impl(auxShmString));
+         shmStringVect->push_back(boost::interprocess::move(auxShmString));
          stdStringVect->push_back(auxStdString);
       }
 
@@ -157,7 +157,7 @@ int string_test()
          std::sprintf(buffer, "%i", i);
          auxShmString += buffer;
          auxStdString += buffer;
-         shmStringVect->insert(shmStringVect->begin(), detail::move_impl(auxShmString));
+         shmStringVect->insert(shmStringVect->begin(), boost::interprocess::move(auxShmString));
          stdStringVect->insert(stdStringVect->begin(), auxStdString);
       }
 

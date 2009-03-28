@@ -29,45 +29,44 @@ int main ()
       MyShmStringVector;
 
    //Open shared memory
-   shared_memory_object::remove("myshm");
-   try{
-      managed_shared_memory shm(create_only, "myshm", 10000);
+   //Remove shared memory on construction and destruction
+   struct shm_destroy
+   {
+      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   } remover;
 
-      //Create allocators
-      CharAllocator     charallocator  (shm.get_segment_manager());
-      StringAllocator   stringallocator(shm.get_segment_manager());
+   managed_shared_memory shm(create_only, "MySharedMemory", 10000);
 
-      //This string is in only in this process (the pointer pointing to the
-      //buffer that will hold the text is not in shared memory). 
-      //But the buffer that will hold "this is my text" is allocated from 
-      //shared memory
-      MyShmString mystring(charallocator);
-      mystring = "this is my text";
+   //Create allocators
+   CharAllocator     charallocator  (shm.get_segment_manager());
+   StringAllocator   stringallocator(shm.get_segment_manager());
 
-      //This vector is only in this process (the pointer pointing to the
-      //buffer that will hold the MyShmString-s is not in shared memory). 
-      //But the buffer that will hold 10 MyShmString-s is allocated from 
-      //shared memory using StringAllocator. Since strings use a shared 
-      //memory allocator (CharAllocator) the 10 buffers that hold 
-      //"this is my text" text are also in shared memory.
-      MyShmStringVector myvector(stringallocator);
-      myvector.insert(myvector.begin(), 10, mystring);
+   //This string is in only in this process (the pointer pointing to the
+   //buffer that will hold the text is not in shared memory). 
+   //But the buffer that will hold "this is my text" is allocated from 
+   //shared memory
+   MyShmString mystring(charallocator);
+   mystring = "this is my text";
 
-      //This vector is fully constructed in shared memory. All pointers
-      //buffers are constructed in the same shared memory segment
-      //This vector can be safely accessed from other processes.
-      MyShmStringVector *myshmvector = 
-         shm.construct<MyShmStringVector>("myshmvector")(stringallocator);
-      myshmvector->insert(myshmvector->begin(), 10, mystring);
+   //This vector is only in this process (the pointer pointing to the
+   //buffer that will hold the MyShmString-s is not in shared memory). 
+   //But the buffer that will hold 10 MyShmString-s is allocated from 
+   //shared memory using StringAllocator. Since strings use a shared 
+   //memory allocator (CharAllocator) the 10 buffers that hold 
+   //"this is my text" text are also in shared memory.
+   MyShmStringVector myvector(stringallocator);
+   myvector.insert(myvector.begin(), 10, mystring);
 
-      //Destroy vector. This will free all strings that the vector contains
-      shm.destroy_ptr(myshmvector);
-   }
-   catch(...){
-      shared_memory_object::remove("myshm");
-      throw;
-   }
-   shared_memory_object::remove("myshm");
+   //This vector is fully constructed in shared memory. All pointers
+   //buffers are constructed in the same shared memory segment
+   //This vector can be safely accessed from other processes.
+   MyShmStringVector *myshmvector = 
+      shm.construct<MyShmStringVector>("myshmvector")(stringallocator);
+   myshmvector->insert(myshmvector->begin(), 10, mystring);
+
+   //Destroy vector. This will free all strings that the vector contains
+   shm.destroy_ptr(myshmvector);
    return 0;
 }
 //]

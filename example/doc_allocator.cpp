@@ -18,7 +18,12 @@ using namespace boost::interprocess;
 
 int main ()
 {
-   shared_memory_object::remove("MySharedMemory");
+   //Remove shared memory on construction and destruction
+   struct shm_destroy
+   {
+      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   } remover;
 
    //Create shared memory
    managed_shared_memory segment(create_only, 

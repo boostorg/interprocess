@@ -11,7 +11,6 @@
 //[doc_managed_copy_on_write
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <fstream> //std::fstream
-#include <cstdio>  //std::remove
 #include <iterator>//std::distance
 
 int main()
@@ -19,8 +18,8 @@ int main()
    using namespace boost::interprocess;
 
    //Try to erase any previous managed segment with the same name
-   std::remove("MyManagedFile");
-   std::remove("MyManagedFile2");
+   file_mapping::remove("MyManagedFile");
+   file_mapping::remove("MyManagedFile2");
    remove_file_on_destroy destroyer1("MyManagedFile");
    remove_file_on_destroy destroyer2("MyManagedFile2");
 

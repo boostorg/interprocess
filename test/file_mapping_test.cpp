@@ -16,11 +16,16 @@
 #include <boost/interprocess/mapped_region.hpp>
 #include <memory>    //std::auto_ptr
 #include <stdexcept> //std::exception
-#include <cstdio>    //std::remove
 #include <cstddef>   //std::size_t
 #include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
+
+file_mapping get_file_mapping()
+{
+   file_mapping f;
+   return file_mapping(boost::interprocess::move(f));
+}
 
 int main ()
 {
@@ -125,19 +130,19 @@ int main ()
       {
          //Now test move semantics
          file_mapping mapping(test::get_process_id_name(), read_only);
-         file_mapping move_ctor(detail::move_impl(mapping));
+         file_mapping move_ctor(boost::interprocess::move(mapping));
          file_mapping move_assign;
-         move_assign = detail::move_impl(move_ctor);
-         mapping.swap(detail::move_impl(move_assign));
+         move_assign = boost::interprocess::move(move_ctor);
          mapping.swap(move_assign);
+         file_mapping ret(get_file_mapping());
       }
    }
    catch(std::exception &exc){
-      std::remove(test::get_process_id_name());
+      file_mapping::remove(test::get_process_id_name());
       std::cout << "Unhandled exception: " << exc.what() << std::endl;
       throw;
    }
-   std::remove(test::get_process_id_name());
+   file_mapping::remove(test::get_process_id_name());
    return 0;
 }
 

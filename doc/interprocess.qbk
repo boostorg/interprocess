@@ -94,13 +94,8 @@ You can just allocate a portion of a shared memory segment, copy the
 message to that buffer, send the offset of that portion of shared 
 memory to another process, and you are done. Let's see the example:
 
-[import ../example/doc_ipc_messageA.cpp]
-[doc_ipc_messageA]
-
-In receiver process one just could write the following lines:
-
-[import ../example/doc_ipc_messageB.cpp]
-[doc_ipc_messageB]
+[import ../example/doc_ipc_message.cpp]
+[doc_ipc_message]
 
 [endsect]
 
@@ -108,15 +103,10 @@ In receiver process one just could write the following lines:
 
 You want to create objects in a shared memory segment, giving a string name to them so that 
 any other process can find, use and delete them from the segment when the objects are not 
-needed anymore. Just write in one process:
+needed anymore. Example:
 
-[import ../example/doc_named_allocA.cpp]
-[doc_named_allocA]
-
-In other process execute the following:
-
-[import ../example/doc_named_allocB.cpp]
-[doc_named_allocB]
+[import ../example/doc_named_alloc.cpp]
+[doc_named_alloc]
 
 [endsect]
 
@@ -148,16 +138,19 @@ list, map, so you can avoid these manual data structures just like with standard
 mapped files. For example, we can construct STL-like containers in shared memory.
 To do this, we just need to create a special (managed) shared memory segment,
 declare a [*Boost.Interprocess] allocator and construct the vector in shared memory
-just if it was any other object. Just execute this first process:
+just if it was any other object.
 
-[import ../example/doc_contA.cpp]
-[doc_contA]
+The class that allows this complex structures in shared memory is called
+[classref boost::interprocess::managed_shared_memory] and it's easy to use.
+Just execute this example without arguments:
 
-After this process is executed we can search the constructed vector and use it with
-STL algorithms:
+[import ../example/doc_spawn_vector.cpp]
+[doc_spawn_vector]
 
-[import ../example/doc_contB.cpp]
-[doc_contB]
+The parent process will create an special shared memory class that allows easy construction
+of many complex data structures associated with a name. The parent process executes the same
+program with an additional argument so the child process opens the shared memory and uses
+the vector and erases it.
 
 [endsect]
 
@@ -498,15 +491,10 @@ For more details regarding `mapped_region` see the
 Let's see a simple example of shared memory use. A server process creates a
 shared memory object, maps it and initializes all the bytes to a value. After that, 
 a client process opens the shared memory, maps it, and checks
-that the data is correctly initialized. This is the server process:
+that the data is correctly initialized:
 
 [import ../example/doc_shared_memory.cpp]
 [doc_shared_memory]
-
-Now the client process:
-
-[import ../example/doc_shared_memory2.cpp]
-[doc_shared_memory2]
 
 [endsect]
 
@@ -521,12 +509,11 @@ POSIX:
    defined by POSIX (see [link interprocess.sharedmemorybetweenprocesses.sharedmemory.windows_shared_memory
    Native windows shared memory] section for more information).
 
-*  Some UNIX systems don't support shared memory objects at all. MacOS is
-   one of these operating systems.
+*  Some UNIX systems don't fully support POSIX shared memory objects at all.
 
 In those platforms, shared memory is emulated with mapped files created
 in the temporary files directory. Because of this emulation, shared memory
-has filesystem lifetime in those systems.
+has filesystem lifetime in some of those systems.
 
 [endsect]
 
@@ -554,12 +541,9 @@ the name will subsequently cause the creation of a
 shared memory object of this name exists (that is, trying to open an object
 with that name will fail and an object of the same name can be created again).
 
-In Windows operating systems, the function fails if the object is being used,
-so a programmer can't consider the UNIX behavior as the portable behavior:
-
-`shared_memory_object::remove` [*can] fail if the shared memory is still in use,
-but this does not mean that it [*will] fail if it's in use. Just the same
-behavior as the standard C (stdio.h) `int remove(const char *path)` function.
+In Windows operating systems, current version supports an usually acceptable emulation
+of the UNIX unlink behaviour: the file is randomly renamed and marked as to be deleted when
+the last open handle is closed.
 
 [endsect]
 
@@ -585,7 +569,6 @@ Once the segment is created, a `fork()` call can
 be used so that `region` is used to communicate two related processes.
 
 [endsect]
-
 
 [section:windows_shared_memory Native windows shared memory]
 
@@ -624,19 +607,12 @@ shared memory object, maps it and initializes all the bytes to a value. After th
 a client process opens the shared memory, maps it, and checks
 that the data is correctly initialized. Take in care that [*if the server exits before
 the client connects to the shared memory the client connection will fail], because
-the shared memory segment is destroyed when no processes are attached to the memory.
+the shared memory segment is destroyed when no proces is attached to the memory.
 
 This is the server process:
 
 [import ../example/doc_windows_shared_memory.cpp]
 [doc_windows_shared_memory]
-
-Now, before destroying the
-[classref boost::interprocess::windows_shared_memory windows_shared memory]
-object, launch the client process:
-
-[import ../example/doc_windows_shared_memory2.cpp]
-[doc_windows_shared_memory2]
 
 As we can see, native windows shared memory needs synchronization to make sure
 that the shared memory won't be destroyed before the client is launched.
@@ -801,15 +777,10 @@ Let's reproduce the same example described in the shared memory section, using
 memory mapped files. A server process creates a shared
 memory segment, maps it and initializes all the bytes to a value. After that, 
 a client process opens the shared memory, maps it, and checks
-that the data is correctly initialized. This is the server process:
+that the data is correctly initialized::
 
 [import ../example/doc_file_mapping.cpp]
 [doc_file_mapping]
-
-Now the client process:
-
-[import ../example/doc_file_mapping2.cpp]
-[doc_file_mapping2]
 
 [endsect]
 
@@ -1478,17 +1449,17 @@ will write a flag when ends writing the traces
 This is the process main process. Creates the shared memory, constructs 
 the cyclic buffer and start writing traces:
 
-[import ../example/doc_anonymous_mutexA.cpp]
+[import ../example/comp_doc_anonymous_mutexA.cpp]
 [doc_anonymous_mutexA]
 
 The second process opens the shared memory, obtains access to the cyclic buffer
 and starts writing traces:
 
-[import ../example/doc_anonymous_mutexB.cpp]
+[import ../example/comp_doc_anonymous_mutexB.cpp]
 [doc_anonymous_mutexB]
 
-As we can see, a mutex is useful to protect data but not to notify to another process
-an event. For this, we need a condition variable, as we will see in the next section.
+As we can see, a mutex is useful to protect data but not to notify an event to another
+process. For this, we need a condition variable, as we will see in the next section.
 
 [endsect]
 
@@ -1583,13 +1554,13 @@ This is the process main process. Creates the shared memory, places there
 the buffer and starts writing messages one by one until it writes "last message"
 to indicate that there are no more messages to print:
 
-[import ../example/doc_anonymous_conditionA.cpp]
+[import ../example/comp_doc_anonymous_conditionA.cpp]
 [doc_anonymous_conditionA]
 
 The second process opens the shared memory and prints each message
 until the "last message" message is received:
 
-[import ../example/doc_anonymous_conditionB.cpp]
+[import ../example/comp_doc_anonymous_conditionB.cpp]
 [doc_anonymous_conditionB]
 
 With condition variables, a process can block if it can't continue the work,
@@ -1665,13 +1636,13 @@ This is the process main process. Creates the shared memory, places there
 the integer array and starts integers one by one, blocking if the array 
 is full:
 
-[import ../example/doc_anonymous_semaphoreA.cpp]
+[import ../example/comp_doc_anonymous_semaphoreA.cpp]
 [doc_anonymous_semaphoreA]
 
 The second process opens the shared memory and copies the received integers
 to it's own buffer:
 
-[import ../example/doc_anonymous_semaphoreB.cpp]
+[import ../example/comp_doc_anonymous_semaphoreB.cpp]
 [doc_anonymous_semaphoreB]
 
 The same interprocess communication can be achieved with a condition variables 
@@ -2152,11 +2123,11 @@ more features and operations, see their reference for more informations
 
 [/section:upgradable_mutexes_example Anonymous Upgradable Mutex Example]
 
-[/import ../example/doc_anonymous_upgradable_mutexA.cpp]
+[/import ../example/comp_doc_anonymous_upgradable_mutexA.cpp]
 [/doc_anonymous_upgradable_mutexA]
 
 
-[/import ../example/doc_anonymous_upgradable_mutexB.cpp]
+[/import ../example/comp_doc_anonymous_upgradable_mutexB.cpp]
 [/doc_anonymous_upgradable_mutexB]
 
 [/endsect]
@@ -2722,7 +2693,7 @@ objects are created pointing to the same file, no synchronization is guaranteed.
 POSIX, when two file descriptors are used to lock a file if a descriptor is closed,
 all file locks set by the calling process are cleared.
 
-To sum up, if you plan to use file locking in your processes, use the following
+To sum up, if you plan to use portable file locking in your processes, use the following
 restrictions:
 
 *  [*For each file, use a single `file_lock` object per process.]
@@ -2867,12 +2838,12 @@ In the following example, the first process creates the message queue, and write
 an array of integers on it. The other process just reads the array and checks that
 the sequence number is correct. This is the first process:
 
-[import ../example/doc_message_queueA.cpp]
+[import ../example/comp_doc_message_queueA.cpp]
 [doc_message_queueA]
 
 This is the second process:
 
-[import ../example/doc_message_queueB.cpp]
+[import ../example/comp_doc_message_queueB.cpp]
 [doc_message_queueB]
 
 To know more about this class and all its operations, please see the
@@ -3246,10 +3217,15 @@ To use a managed mapped file, you must include the following header:
    managed_mapped_file mfile      (open_or_create,      "MyMappedFile",   //Mapped file name      65536);           //Mapped file size
 When the `managed_mapped_file` object is destroyed, the file is
 automatically unmapped, and all the resources are freed. To remove
-the file from the filesystem you can use standard C `std::remove` 
-or [*Boost.Filesystem]'s `remove()` functions. File removing might fail
+the file from the filesystem you could use standard C `std::remove` 
+or [*Boost.Filesystem]'s `remove()` functions, but file removing might fail
 if any process still has the file mapped in memory or the file is open 
 by any process.
+
+To obtain a more portable behaviour, use `file_mapping::remove(const char *)` operation, which
+will remove the file even if it's being mapped. However, removal will fail in some OS systems if
+the file (eg. by C++ file streams) and no delete share permission was granted to the file. But in
+most common cases `file_mapping::remove` is portable enough.
 
 [endsect]
 
@@ -3871,20 +3847,20 @@ Here is the declaration of the function:
 
 [c++]
 
-   enum allocation_type
+   enum boost::interprocess::allocation_type
    {
       //Bitwise OR (|) combinable values
-      allocate_new        = ...,
-      expand_fwd          = ...,
-      expand_bwd          = ...,
-      shrink_in_place     = ...,
-      nothrow_allocation  = ...
+      boost::interprocess::allocate_new        = ...,
+      boost::interprocess::expand_fwd          = ...,
+      boost::interprocess::expand_bwd          = ...,
+      boost::interprocess::shrink_in_place     = ...,
+      boost::interprocess::nothrow_allocation  = ...
    };
 
 
    template<class T>
    std::pair<T *, bool>
-      allocation_command( allocation_type command
+      allocation_command( boost::interprocess::allocation_type command
                         , std::size_t limit_size
                         , std::size_t preferred_size
                         , std::size_t &received_size
@@ -3893,66 +3869,66 @@ Here is the declaration of the function:
 
 [*Preconditions for the function]:
 
-*  If the parameter command contains the value `shrink_in_place` it can't
-contain any of these values: `expand_fwd`, `expand_bwd`.
+*  If the parameter command contains the value `boost::interprocess::shrink_in_place` it can't
+contain any of these values: `boost::interprocess::expand_fwd`, `boost::interprocess::expand_bwd`.
 
-*  If the parameter command contains `expand_fwd` or `expand_bwd`, the parameter
+*  If the parameter command contains `boost::interprocess::expand_fwd` or `boost::interprocess::expand_bwd`, the parameter
    `reuse_ptr` must be non-null and returned by a previous allocation function.
 
-*  If the parameter command contains the value `shrink_in_place`, the parameter 
+*  If the parameter command contains the value `boost::interprocess::shrink_in_place`, the parameter 
    `limit_size` must be equal or greater than the parameter `preferred_size`.
 
-*  If the parameter `command` contains any of these values: `expand_fwd` or `expand_bwd`,
+*  If the parameter `command` contains any of these values: `boost::interprocess::expand_fwd` or `boost::interprocess::expand_bwd`,
    the parameter `limit_size` must be equal or less than the parameter `preferred_size`.
 
 [*Which are the effects of this function:]
 
-*  If the parameter command contains the value `shrink_in_place`, the function
+*  If the parameter command contains the value `boost::interprocess::shrink_in_place`, the function
    will try to reduce the size of the memory block referenced by pointer `reuse_ptr`
    to the value `preferred_size` moving only the end of the block.
    If it's not possible, it will try to reduce the size of the memory block as
    much as possible as long as this results in `size(p) <= limit_size`. Success
    is reported only if this results in `preferred_size <= size(p)` and `size(p) <= limit_size`.
 
-*  If the parameter `command` only contains the value `expand_fwd` (with optional
-   additional `nothrow_allocation`), the allocator will try to increase the size of the
+*  If the parameter `command` only contains the value `boost::interprocess::expand_fwd` (with optional
+   additional `boost::interprocess::nothrow_allocation`), the allocator will try to increase the size of the
    memory block referenced by pointer reuse moving only the end of the block to the
    value `preferred_size`. If it's not possible, it will try to increase the size
    of the memory block as much as possible as long as this results in
    `size(p) >= limit_size`. Success is reported only if this results in `limit_size <= size(p)`.
 
-*  If the parameter `command` only contains the value `expand_bwd` (with optional
-   additional `nothrow_allocation`), the allocator will try to increase the size of
+*  If the parameter `command` only contains the value `boost::interprocess::expand_bwd` (with optional
+   additional `boost::interprocess::nothrow_allocation`), the allocator will try to increase the size of
    the memory block referenced by pointer `reuse_ptr` only moving the start of the
    block to a returned new position `new_ptr`. If it's not possible, it will try to
    move the start of the block as much as possible as long as this results in
    `size(new_ptr) >= limit_size`. Success is reported only if this results in
    `limit_size <= size(new_ptr)`.
 
-*  If the parameter `command` only contains the value `allocate_new` (with optional
-   additional `nothrow_allocation`), the allocator will try to allocate memory for
+*  If the parameter `command` only contains the value `boost::interprocess::allocate_new` (with optional
+   additional `boost::interprocess::nothrow_allocation`), the allocator will try to allocate memory for
    `preferred_size` objects. If it's not possible it will try to allocate memory for
    at least `limit_size` objects.
 
-*  If the parameter `command` only contains a combination of `expand_fwd` and
-   `allocate_new`, (with optional additional `nothrow_allocation`) the allocator will
+*  If the parameter `command` only contains a combination of `boost::interprocess::expand_fwd` and
+   `boost::interprocess::allocate_new`, (with optional additional `boost::interprocess::nothrow_allocation`) the allocator will
    try first the forward expansion. If this fails, it would try a new allocation.
 
-*  If the parameter `command` only contains a combination of `expand_bwd` and
-   `allocate_new` (with optional additional `nothrow_allocation`), the allocator will
+*  If the parameter `command` only contains a combination of `boost::interprocess::expand_bwd` and
+   `boost::interprocess::allocate_new` (with optional additional `boost::interprocess::nothrow_allocation`), the allocator will
    try first to obtain `preferred_size` objects using both methods if necessary.
    If this fails, it will try to obtain `limit_size` objects using both methods if
    necessary.
 
-*  If the parameter `command` only contains a combination of `expand_fwd` and
-   `expand_bwd` (with optional additional `nothrow_allocation`), the allocator will
+*  If the parameter `command` only contains a combination of `boost::interprocess::expand_fwd` and
+   `boost::interprocess::expand_bwd` (with optional additional `boost::interprocess::nothrow_allocation`), the allocator will
    try first forward expansion. If this fails it will try to obtain preferred_size
    objects using backwards expansion or a combination of forward and backwards expansion.
    If this fails, it will try to obtain `limit_size` objects using both methods if
    necessary.
 
 *  If the parameter `command` only contains a combination of allocation_new,
-   `expand_fwd` and `expand_bwd`, (with optional additional `nothrow_allocation`)
+   `boost::interprocess::expand_fwd` and `boost::interprocess::expand_bwd`, (with optional additional `boost::interprocess::nothrow_allocation`)
    the allocator will try first forward expansion. If this fails it will try to obtain
    preferred_size objects using new allocation, backwards expansion or a combination of
    forward and backwards expansion. If this fails, it will try to obtain `limit_size`
@@ -3967,13 +3943,13 @@ contain any of these values: `expand_fwd`, `expand_bwd`.
 *  The allocator is unable to allocate/expand/shrink the memory or there is an
    error in preconditions
 
-*  The parameter command does not contain `nothrow_allocation`.
+*  The parameter command does not contain `boost::interprocess::nothrow_allocation`.
 
 [*This function returns:]
 
 *  The address of the allocated memory or the new address of the expanded memory
    as the first member of the pair. If the parameter command contains
-   `nothrow_allocation` the first member will be 0
+   `boost::interprocess::nothrow_allocation` the first member will be 0
    if the allocation/expansion fails or there is an error in preconditions.
 
 *  The second member of the pair will be false if the memory has been allocated,
@@ -5018,7 +4994,7 @@ Let's see an example:
 
 [endsect]
 
-[section:containers_and_move_semantics Move semantics in Interprocess containers]
+[section:containers_and_move Move semantics in Interprocess containers]
 
 [*Boost.Interprocess] containers support move semantics, which means that the contents
 of a container can be moved from a container two another one, without any copying. The
@@ -5030,7 +5006,7 @@ objects in the container, avoiding unnecessary copies.
 
 
 To transfer the contents of a container to another one, use 
-`boost::interprocess::move()` function, as shown in the example. For more details
+`boost::move()` function, as shown in the example. For more details
 about functions supporting move-semantics, see the reference section of
 Boost.Interprocess containers:
 
@@ -6541,13 +6517,35 @@ warranty.
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_39_00 Boost 1.39 Release]
+
+*  Added experimental `stable_vector` container.
+*  `shared_memory_object::remove` has now POSIX `unlink` semantics and
+   `file_mapping::remove` was added to obtain POSIX `unlink` semantics with mapped files.
+*  Shared memory in windows has now kernel lifetime instead of filesystem lifetime: shared
+   memory will disappear when the system reboots.
+*  Updated move semantics.
+*  Fixed bugs
+  [@https://svn.boost.org/trac/boost/ticket/2722 #2722],
+  [@https://svn.boost.org/trac/boost/ticket/2729 #2729],
+  [@https://svn.boost.org/trac/boost/ticket/2766 #2766],
+  [@https://svn.boost.org/trac/boost/ticket/1390 #1390],
+  [@https://svn.boost.org/trac/boost/ticket/2589 #2589],
+
+[endsect]
+
 [section:release_notes_boost_1_38_00 Boost 1.38 Release]
 
 *  Updated documentation to show rvalue-references funcions instead of emulation functions.
 *  More non-copyable classes are now movable.
 *  Move-constructor and assignments now leave moved object in default-constructed state
    instead of just swapping contents.
-*  Several bugfixes (#2391, #2431, #1390, #2570, #2528).
+*  Several bugfixes (
+  [@https://svn.boost.org/trac/boost/ticket/2391 #2391],
+  [@https://svn.boost.org/trac/boost/ticket/2431 #2431],
+  [@https://svn.boost.org/trac/boost/ticket/1390 #1390],
+  [@https://svn.boost.org/trac/boost/ticket/2570 #2570],
+  [@https://svn.boost.org/trac/boost/ticket/2528 #2528].
 
 [endsect]
 

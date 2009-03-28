@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_managed_raw_allocation.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{3FE55338-8DCB-4D41-EB98-EA32F42724FB}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

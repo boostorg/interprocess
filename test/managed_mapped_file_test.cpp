@@ -31,7 +31,7 @@ int main ()
 
    {
       //Remove the file it is already created
-      std::remove(FileName);
+      file_mapping::remove(FileName);
 
       const int max              = 100;
       void *array[max];
@@ -52,7 +52,7 @@ int main ()
 
    {
       //Remove the file it is already created
-      std::remove(FileName);
+      file_mapping::remove(FileName);
 
       //Named allocate capable memory mapped file managed memory class
       managed_mapped_file mfile(create_only, FileName, FileSize);
@@ -203,15 +203,14 @@ int main ()
       {
          //Now test move semantics
          managed_mapped_file original(open_only, FileName);
-         managed_mapped_file move_ctor(detail::move_impl(original));
+         managed_mapped_file move_ctor(boost::interprocess::move(original));
          managed_mapped_file move_assign;
-         move_assign = detail::move_impl(move_ctor);
-         move_assign.swap(detail::move_impl(original));
+         move_assign = boost::interprocess::move(move_ctor);
          move_assign.swap(original);
       }
    }
 
-   std::remove(FileName);
+   file_mapping::remove(FileName);
    return 0;
 }
 

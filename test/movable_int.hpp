@@ -21,10 +21,11 @@ namespace test {
 
 class movable_int
 {
-   movable_int(const movable_int&);
-   movable_int &operator= (const movable_int&);
+   movable_int(movable_int&);
+   movable_int &operator= (movable_int&);
 
    public:
+   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(movable_int)
 
    movable_int()
       :  m_int(0)
@@ -34,23 +35,12 @@ class movable_int
       :  m_int(a)
    {}
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   movable_int(detail::moved_object<movable_int> mmi)
-      :  m_int(mmi.get().m_int)
-   {  mmi.get().m_int = 0; }
-   #else
-   movable_int(movable_int &&mmi)
+   movable_int(BOOST_INTERPROCESS_RV_REF(movable_int) mmi)
       :  m_int(mmi.m_int)
    {  mmi.m_int = 0; }
-   #endif
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   movable_int & operator= (detail::moved_object<movable_int> mmi)
-   {  this->m_int = mmi.get().m_int;   mmi.get().m_int = 0;  return *this;  }
-   #else
-   movable_int & operator= (movable_int &&mmi)
+   movable_int & operator= (BOOST_INTERPROCESS_RV_REF(movable_int) mmi)
    {  this->m_int = mmi.m_int;   mmi.m_int = 0;  return *this;  }
-   #endif
 
    movable_int & operator= (int i)
    {  this->m_int = i;  return *this;  }
@@ -92,6 +82,7 @@ std::basic_ostream<E, T> & operator<<
 class movable_and_copyable_int
 {
    public:
+   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(movable_and_copyable_int)
 
    movable_and_copyable_int()
       :  m_int(0)
@@ -108,23 +99,12 @@ class movable_and_copyable_int
    movable_and_copyable_int &operator= (const movable_and_copyable_int& mi)
    {  this->m_int = mi.m_int;    return *this;  }
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   movable_and_copyable_int(detail::moved_object<movable_and_copyable_int> mmi)
-      :  m_int(mmi.get().m_int)
-   {  mmi.get().m_int = 0; }
-   #else
-   movable_and_copyable_int(movable_and_copyable_int &&mmi)
+   movable_and_copyable_int(BOOST_INTERPROCESS_RV_REF(movable_and_copyable_int) mmi)
       :  m_int(mmi.m_int)
    {  mmi.m_int = 0; }
-   #endif
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   movable_and_copyable_int & operator= (detail::moved_object<movable_and_copyable_int> mmi)
-   {  this->m_int = mmi.get().m_int;   mmi.get().m_int = 0;    return *this;  }
-   #else
-   movable_and_copyable_int & operator= (movable_and_copyable_int &&mmi)
+   movable_and_copyable_int & operator= (BOOST_INTERPROCESS_RV_REF(movable_and_copyable_int) mmi)
    {  this->m_int = mmi.m_int;   mmi.m_int = 0;    return *this;  }
-   #endif
 
    movable_and_copyable_int & operator= (int i)
    {  this->m_int = i;  return *this;  }
@@ -166,26 +146,6 @@ std::basic_ostream<E, T> & operator<<
 }  //namespace test {
 }  //namespace interprocess {
 }  //namespace boost {
-
-namespace boost{
-namespace interprocess{
-
-template<>
-struct is_movable<test::movable_int>
-{
-   public:
-   enum {   value = true   };
-};
-
-template<>
-struct is_movable<test::movable_and_copyable_int>
-{
-   public:
-   enum {   value = true   };
-};
-
-}  //namespace interprocess{
-}  //namespace boost{
 
 #include <boost/interprocess/detail/config_end.hpp>
 

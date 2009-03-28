@@ -13,35 +13,36 @@
 #include <boost/interprocess/mapped_region.hpp>
 #include <iostream>
 #include <fstream>
+#include <string>
+#include <vector>
 #include <cstring>
 #include <cstddef>
-#include <cstdio>    //std::remove
+#include <cstdlib>
 
-int main ()
+int main(int argc, char *argv[])
 {
    using namespace boost::interprocess;
-   try{
-      //Create a file
-      std::filebuf fbuf;
-      fbuf.open("file.bin", std::ios_base::in | std::ios_base::out 
-                           | std::ios_base::trunc | std::ios_base::binary); 
+   const std::size_t FileSize = 10000;
+   if(argc == 1){ //Parent process executes this
+      {  //Create a file
+         std::filebuf fbuf;
+         fbuf.open("file.bin", std::ios_base::in | std::ios_base::out 
+                              | std::ios_base::trunc | std::ios_base::binary); 
+         //Set the size
+         fbuf.pubseekoff(FileSize-1, std::ios_base::beg);
+         fbuf.sputc(0);
+      }
+      //Remove file on exit
+      struct file_remove 
+      {
+         ~file_remove (){  file_mapping::remove("file.bin"); }
+      } destroy_on_exit;
 
-      //Set the size
-      fbuf.pubseekoff(9999, std::ios_base::beg);
-      fbuf.sputc(0);
-      fbuf.close();
-
-      //Create a file mapping.
+      //Create a file mapping
       file_mapping m_file("file.bin", read_write);
 
-      //Map the whole file in this process
-      mapped_region region
-         (m_file                    //What to map
-         ,read_write //Map it as read-write
-         );
-
-      if(region.get_size() != 10000)
-         return 1;
+      //Map the whole file with read-write permissions in this process
+      mapped_region region(m_file, read_write);
 
       //Get the address of the mapped region
       void * addr       = region.get_address();
@@ -50,12 +51,42 @@ int main ()
       //Write all the memory to 1
       std::memset(addr, 1, size);
 
+      //Launch child process
+      std::string s(argv[0]); s += " child";
+      if(0 != std::system(s.c_str()))
+         return 1;
    }
-   catch(interprocess_exception &ex){
-      std::remove("file.bin");
-      std::cout << ex.what() << std::endl;
-      return 1;
+   else{  //Child process executes this
+      {  //Open the file mapping and map it as read-only
+         file_mapping m_file ("file.bin", read_only);
+         mapped_region region(m_file, read_only);
+
+         //Get the address of the mapped region
+         void * addr       = region.get_address();
+         std::size_t size  = region.get_size();
+
+         //Check that memory was initialized to 1
+         const char *mem = static_cast<char*>(addr);
+         for(std::size_t i = 0; i < size; ++i)
+            if(*mem++ != 1)
+               return 1;   //Error checking memory
+      }
+      {  //Now test it reading the file
+         std::filebuf fbuf;
+         fbuf.open("file.bin", std::ios_base::in | std::ios_base::binary); 
+
+         //Read it to memory
+         std::vector<char> vect(FileSize, 0);
+         fbuf.sgetn(&vect[0], std::streamsize(vect.size()));
+
+         //Check that memory was initialized to 1
+         const char *mem = static_cast<char*>(&vect[0]);
+         for(std::size_t i = 0; i < FileSize; ++i)
+            if(*mem++ != 1)
+               return 1;   //Error checking memory
+      }
    }
+
    return 0;
 }
 //]

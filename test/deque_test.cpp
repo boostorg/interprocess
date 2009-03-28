@@ -26,7 +26,6 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include "allocator_v1.hpp"
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/detail/move_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
@@ -67,12 +66,12 @@ bool copyable_only(V1 *shmdeque, V2 *stddeque, detail::true_type)
    {
       IntType move_me(1);
       stddeque->insert(stddeque->begin()+size/2, 50, 1);
-      shmdeque->insert(shmdeque->begin()+size/2, 50, detail::move_impl(move_me));
+      shmdeque->insert(shmdeque->begin()+size/2, 50, boost::interprocess::move(move_me));
       if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
    }
    {
       IntType move_me(2);
-      shmdeque->assign(shmdeque->size()/2, detail::move_impl(move_me));
+      shmdeque->assign(shmdeque->size()/2, boost::interprocess::move(move_me));
       stddeque->assign(stddeque->size()/2, 2);
       if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
    }
@@ -81,13 +80,13 @@ bool copyable_only(V1 *shmdeque, V2 *stddeque, detail::true_type)
       stddeque->clear();
       shmdeque->clear();
       stddeque->insert(stddeque->begin(), 50, 1);
-      shmdeque->insert(shmdeque->begin(), 50, detail::move_impl(move_me));
+      shmdeque->insert(shmdeque->begin(), 50, boost::interprocess::move(move_me));
       if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
       stddeque->insert(stddeque->begin()+20, 50, 1);
-      shmdeque->insert(shmdeque->begin()+20, 50, detail::move_impl(move_me));
+      shmdeque->insert(shmdeque->begin()+20, 50, boost::interprocess::move(move_me));
       if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
       stddeque->insert(stddeque->begin()+20, 20, 1);
-      shmdeque->insert(shmdeque->begin()+20, 20, detail::move_impl(move_me));
+      shmdeque->insert(shmdeque->begin()+20, 20, boost::interprocess::move(move_me));
       if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
    }
    {
@@ -95,13 +94,13 @@ bool copyable_only(V1 *shmdeque, V2 *stddeque, detail::true_type)
       stddeque->clear();
       shmdeque->clear();
       stddeque->insert(stddeque->end(), 50, 1);
-      shmdeque->insert(shmdeque->end(), 50, detail::move_impl(move_me));
+      shmdeque->insert(shmdeque->end(), 50, boost::interprocess::move(move_me));
       if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
       stddeque->insert(stddeque->end()-20, 50, 1);
-      shmdeque->insert(shmdeque->end()-20, 50, detail::move_impl(move_me));
+      shmdeque->insert(shmdeque->end()-20, 50, boost::interprocess::move(move_me));
       if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
       stddeque->insert(stddeque->end()-20, 20, 1);
-      shmdeque->insert(shmdeque->end()-20, 20, detail::move_impl(move_me));
+      shmdeque->insert(shmdeque->end()-20, 20, boost::interprocess::move(move_me));
       if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
    }
 
@@ -127,10 +126,9 @@ bool do_test()
    {
       //Now test move semantics
       deque<recursive_deque> original;
-      deque<recursive_deque> move_ctor(detail::move_impl(original));
+      deque<recursive_deque> move_ctor(boost::interprocess::move(original));
       deque<recursive_deque> move_assign;
-      move_assign = detail::move_impl(move_ctor);
-      move_assign.swap(detail::move_impl(original));
+      move_assign = boost::interprocess::move(move_ctor);
       move_assign.swap(original);
    }
 
@@ -174,7 +172,7 @@ bool do_test()
          int i;
          for(i = 0; i < max*100; ++i){
             IntType move_me(i);
-            shmdeque->insert(shmdeque->end(), detail::move_impl(move_me));
+            shmdeque->insert(shmdeque->end(), boost::interprocess::move(move_me));
             stddeque->insert(stddeque->end(), i);
          }
          if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
@@ -184,7 +182,7 @@ bool do_test()
 
          for(i = 0; i < max*100; ++i){
             IntType move_me(i);
-            shmdeque->push_back(detail::move_impl(move_me));
+            shmdeque->push_back(boost::interprocess::move(move_me));
             stddeque->push_back(i);
          }
          if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
@@ -194,7 +192,7 @@ bool do_test()
 
          for(i = 0; i < max*100; ++i){
             IntType move_me(i);
-            shmdeque->push_front(detail::move_impl(move_me));
+            shmdeque->push_front(boost::interprocess::move(move_me));
             stddeque->push_front(i);
          }
          if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
@@ -215,7 +213,7 @@ bool do_test()
             IntType aux_vect[50];
             for(int i = 0; i < 50; ++i){
                IntType move_me (-1);
-               aux_vect[i] = detail::move_impl(move_me);
+               aux_vect[i] = boost::interprocess::move(move_me);
             }
             int aux_vect2[50];
             for(int i = 0; i < 50; ++i){
@@ -223,8 +221,8 @@ bool do_test()
             }
 
             shmdeque->insert(shmdeque->end()
-                              ,detail::make_move_iterator(&aux_vect[0])
-                              ,detail::make_move_iterator(aux_vect + 50));
+                              ,boost::interprocess::make_move_iterator(&aux_vect[0])
+                              ,boost::interprocess::make_move_iterator(aux_vect + 50));
             stddeque->insert(stddeque->end(), aux_vect2, aux_vect2 + 50);
             if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
 
@@ -238,21 +236,21 @@ bool do_test()
             IntType aux_vect[50];
             for(int i = 0; i < 50; ++i){
                IntType move_me(-1);
-               aux_vect[i] = detail::move_impl(move_me);
+               aux_vect[i] = boost::interprocess::move(move_me);
             }
             int aux_vect2[50];
             for(int i = 0; i < 50; ++i){
                aux_vect2[i] = -1;
             }
             shmdeque->insert(shmdeque->begin()
-                              ,detail::make_move_iterator(&aux_vect[0])
-                              ,detail::make_move_iterator(aux_vect + 50));
+                              ,boost::interprocess::make_move_iterator(&aux_vect[0])
+                              ,boost::interprocess::make_move_iterator(aux_vect + 50));
             stddeque->insert(stddeque->begin(), aux_vect2, aux_vect2 + 50);
             if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
          }
 
          if(!copyable_only(shmdeque, stddeque
-                        ,detail::bool_<!is_movable<IntType>::value>())){
+                        ,detail::bool_<!boost::interprocess::is_movable<IntType>::value>())){
             return false;
          }
 
@@ -263,7 +261,7 @@ bool do_test()
 
          for(i = 0; i < max; ++i){
             IntType move_me(i);
-            shmdeque->insert(shmdeque->begin(), detail::move_impl(move_me));
+            shmdeque->insert(shmdeque->begin(), boost::interprocess::move(move_me));
             stddeque->insert(stddeque->begin(), i);
          }
          if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;

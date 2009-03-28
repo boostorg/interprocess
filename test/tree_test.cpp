@@ -7,7 +7,6 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <set>
 #include <boost/interprocess/managed_shared_memory.hpp>
@@ -33,32 +32,7 @@
 ///////////////////////////////////////////////////////////////////
 
 using namespace boost::interprocess;
-/*
-//Explicit instantiation to detect compilation errors
-template class boost::interprocess::set
-   <test::movable_and_copyable_int
-   ,std::less<test::movable_and_copyable_int>
-   ,test::dummy_test_allocator<test::movable_and_copyable_int> >;
 
-template class boost::interprocess::map
-   <test::movable_and_copyable_int
-   ,test::movable_and_copyable_int
-   ,std::less<test::movable_and_copyable_int>
-   ,test::dummy_test_allocator<std::pair<const test::movable_and_copyable_int
-                                        ,test::movable_and_copyable_int> > >;
-
-template class boost::interprocess::multiset
-   <test::movable_and_copyable_int
-   ,std::less<test::movable_and_copyable_int>
-   ,test::dummy_test_allocator<test::movable_and_copyable_int> >;
-
-template class boost::interprocess::multimap
-   <test::movable_and_copyable_int
-   ,test::movable_and_copyable_int
-   ,std::less<test::movable_and_copyable_int>
-   ,test::dummy_test_allocator<std::pair<const test::movable_and_copyable_int
-                                        ,test::movable_and_copyable_int> > >;
-*/
 //Customize managed_shared_memory class
 typedef basic_managed_shared_memory
    <char,
@@ -159,14 +133,13 @@ public:
 };
 
 template<class C>
-void test_move_semantics()
+void test_move()
 {
    //Now test move semantics
    C original;
-   C move_ctor(detail::move_impl(original));
+   C move_ctor(boost::interprocess::move(original));
    C move_assign;
-   move_assign = detail::move_impl(move_ctor);
-   move_assign.swap(detail::move_impl(original));
+   move_assign = boost::interprocess::move(move_ctor);
    move_assign.swap(original);
 }
 
@@ -181,10 +154,10 @@ int main ()
    }
    //Now test move semantics
    {
-      test_move_semantics<set<recursive_set> >();
-      test_move_semantics<multiset<recursive_multiset> >();
-      test_move_semantics<map<recursive_map, recursive_map> >();
-      test_move_semantics<multimap<recursive_multimap, recursive_multimap> >();
+      test_move<set<recursive_set> >();
+      test_move<multiset<recursive_multiset> >();
+      test_move<map<recursive_map, recursive_map> >();
+      test_move<multimap<recursive_multimap, recursive_multimap> >();
    }
 
    using namespace boost::interprocess::detail;
@@ -220,6 +193,7 @@ int main ()
                         ,MyStdMultiSet>()){
       return 1;
    }
+
 
    if (0 != test::map_test<my_managed_shared_memory
                   ,MyShmMap
@@ -263,6 +237,7 @@ int main ()
       return 1;
    if(!boost::interprocess::test::test_emplace<multimap<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
       return 1;
+
    return 0;
 }
 

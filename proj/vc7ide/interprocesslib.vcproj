@@ -120,24 +120,14 @@
 				RelativePath="..\..\..\..\boost\interprocess\containers\slist.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\containers\stable_vector.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\containers\string.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\containers\vector.hpp">
 			</File>
-			<Filter
-				Name="detail"
-				Filter="">
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\detail\flat_tree.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\detail\node_alloc_holder.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\detail\tree.hpp">
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Allocators"
@@ -346,6 +336,9 @@
 				RelativePath="..\..\..\..\boost\interprocess\managed_windows_shared_memory.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\managed_xsi_shared_memory.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\mapped_region.hpp">
 			</File>
 			<File
@@ -362,16 +355,7 @@
 			Name="Detail"
 			Filter="">
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\advanced_insert_int.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\algorithms.hpp">
-			</File>
-			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\atomic.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\basic_segment_manager.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\cast_tags.hpp">
@@ -386,9 +370,6 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\file_wrapper.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\gcd_lcm.hpp">
-			</File>
-			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\in_place_interface.hpp">
 			</File>
 			<File
@@ -396,9 +377,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\intersegment_ptr.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\iterators.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\managed_memory_impl.hpp">
@@ -417,9 +395,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\move.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\move_iterator.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\mpl.hpp">
@@ -455,6 +430,9 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\tmp_dir_helpers.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\transform_iterator.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\type_traits.hpp">
 			</File>
 			<File
@@ -462,9 +440,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\variadic_templates_tools.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\version_type.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\win32_api.hpp">

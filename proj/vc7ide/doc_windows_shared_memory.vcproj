@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_windows_shared_memory.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93908538-DA9B-4D30-B88E-E5A22B4252FB}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

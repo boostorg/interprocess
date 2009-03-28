@@ -11,7 +11,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#ifdef BOOST_WINDOWS
+#ifdef BOOST_INTERPROCESS_WINDOWS
 
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
@@ -32,16 +32,14 @@ static const char *name_initialization_routine()
 }
 
 static const std::size_t ShmSize = 1000;
+typedef detail::managed_open_or_create_impl
+   <windows_shared_memory, false> windows_shared_memory_t;
 
 //This wrapper is necessary to have a common constructor
 //in generic named_creation_template functions
 class shared_memory_creation_test_wrapper
-   : public detail::managed_open_or_create_impl
-      <windows_shared_memory, false>
+   : public windows_shared_memory_t
 {
-   typedef detail::managed_open_or_create_impl
-      <windows_shared_memory, false> windows_shared_memory_t;
-
    public:
    shared_memory_creation_test_wrapper(create_only_t)
       :  windows_shared_memory_t(create_only, name_initialization_routine(), ShmSize)
@@ -59,8 +57,6 @@ class shared_memory_creation_test_wrapper
 
 int main ()
 {
-   typedef detail::managed_open_or_create_impl<windows_shared_memory, false> windows_shared_memory_t;
-
    try{
       test::test_named_creation<shared_memory_creation_test_wrapper>();
    }
@@ -79,6 +75,6 @@ int main()
    return 0;
 }
 
-#endif   //#ifdef BOOST_WINDOWS
+#endif   //#ifdef BOOST_INTERPROCESS_WINDOWS
 
 #include <boost/interprocess/detail/config_end.hpp>

@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="doc_named_allocA"
+	Name="doc_named_alloc"
 	ProjectGUID="{58CCE183-6092-48FE-A4F7-BA0D3A792645}"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -13,7 +13,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="../../Bin/Win32/Debug"
-			IntermediateDirectory="Debug/doc_named_allocA"
+			IntermediateDirectory="Debug/doc_named_alloc"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -35,11 +35,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/doc_named_allocA_d.exe"
+				OutputFile="$(OutDir)/doc_named_alloc_d.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/doc_named_allocA.pdb"
+				ProgramDatabaseFile="$(OutDir)/doc_named_alloc.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 				FixedBaseAddress="1"/>
@@ -67,7 +67,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="../../Bin/Win32/Release"
-			IntermediateDirectory="Release/doc_named_allocA"
+			IntermediateDirectory="Release/doc_named_alloc"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -86,7 +86,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/doc_named_allocA.exe"
+				OutputFile="$(OutDir)/doc_named_alloc.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
@@ -124,13 +124,8 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\example\doc_named_allocA.cpp">
+				RelativePath="..\..\example\doc_named_alloc.cpp">
 			</File>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 		</Filter>
 	</Files>
 	<Globals>

@@ -23,7 +23,7 @@ int main ()
    //Create a shared memory object.
    shared_memory_object shm
       (open_only                    //only create
-      ,"shared_memory"              //name
+      ,"MySharedMemory"              //name
       ,read_write                   //read-write mode
       );
 
@@ -61,13 +61,10 @@ int main ()
       while(!end_loop);
    }
    catch(interprocess_exception &ex){
-      shared_memory_object::remove("shared_memory");
       std::cout << ex.what() << std::endl;
       return 1;
    }
 
-   //Erase shared memory
-   shared_memory_object::remove("shared_memory");
    return 0;
 }
 //]

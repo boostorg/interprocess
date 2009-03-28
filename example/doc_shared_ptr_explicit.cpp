@@ -31,8 +31,13 @@ typedef shared_ptr<MyType, void_allocator_type, deleter_type> my_shared_ptr;
 
 int main ()
 {
-   //Destroy any previous segment with the name to be used.
-   shared_memory_object::remove("MySharedMemory");
+   //Remove shared memory on construction and destruction
+   struct shm_destroy
+   {
+      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   } remover;
+
    managed_shared_memory segment(create_only, "MySharedMemory", 4096);
    
    //Create a shared pointer in shared memory
@@ -49,7 +54,6 @@ int main ()
    //Destroy "shared ptr". "object to share" will be automatically destroyed
    segment.destroy_ptr(&shared_ptr_instance);
 
-   shared_memory_object::remove("MySharedMemory");
    return 0;
 }
 //]

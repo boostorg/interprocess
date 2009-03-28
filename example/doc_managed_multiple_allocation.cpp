@@ -10,69 +10,59 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 //[doc_managed_multiple_allocation
 #include <boost/interprocess/managed_shared_memory.hpp>
+#include <boost/interprocess/detail/move.hpp> //boost::interprocess::move
 #include <cassert>//assert
 #include <cstring>//std::memset
 #include <new>    //std::nothrow
 #include <vector> //std::vector
 
+
 int main()
 {
    using namespace boost::interprocess;
-   typedef managed_shared_memory::multiallocation_iterator multiallocation_iterator;
+   typedef managed_shared_memory::multiallocation_chain multiallocation_chain;
 
-   //Try to erase any previous managed segment with the same name
-   shared_memory_object::remove("MyManagedShm");
+   //Remove shared memory on construction and destruction
+   struct shm_destroy
+   {
+      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   } remover;
 
-   try{
-      managed_shared_memory managed_shm(create_only, "MyManagedShm", 65536);
+   managed_shared_memory managed_shm(create_only, "MySharedMemory", 65536);
 
-      //Allocate 16 elements of 100 bytes in a single call. Non-throwing version.
-      multiallocation_iterator beg_it = managed_shm.allocate_many(100, 16, std::nothrow);
+   //Allocate 16 elements of 100 bytes in a single call. Non-throwing version.
+   multiallocation_chain chain(managed_shm.allocate_many(100, 16, std::nothrow));
 
-      //To check for an error, we can use a boolean expression
-      //or compare it with a default constructed iterator
-      assert(!beg_it == (beg_it == multiallocation_iterator()));
-      
-      //Check if the memory allocation was successful
-      if(!beg_it)  return 1;
+   //Check if the memory allocation was successful
+   if(chain.empty()) return 1;
 
-      //Allocated buffers
-      std::vector<char*> allocated_buffers;
+   //Allocated buffers
+   std::vector<void*> allocated_buffers;
 
-      //Initialize our data
-      for( multiallocation_iterator it = beg_it, end_it; it != end_it; ){
-         allocated_buffers.push_back(&*it);
-         //The iterator must be incremented before overwriting memory
-         //because otherwise, the iterator is invalidated.
-         std::memset(&*it++, 0, 100);
-      }
-
-      //Now deallocate
-      while(!allocated_buffers.empty()){
-         managed_shm.deallocate(allocated_buffers.back());
-         allocated_buffers.pop_back();
-      }
-
-      //Allocate 10 buffers of different sizes in a single call. Throwing version
-      std::size_t sizes[10];
-      for(std::size_t i = 0; i < 10; ++i)
-         sizes[i] = i*3;
-
-      beg_it  = managed_shm.allocate_many(sizes, 10);
-
-      //Iterate each allocated buffer and deallocate
-      //The "end" condition can be also checked with operator!
-      for(multiallocation_iterator it = beg_it; it;){
-         //The iterator must be incremented before overwriting memory
-         //because otherwise, the iterator is invalidated.
-         managed_shm.deallocate(&*it++);
-      }
+   //Initialize our data
+   while(!chain.empty()){
+      void *buf = chain.front();
+      chain.pop_front();
+      allocated_buffers.push_back(buf);
+      //The iterator must be incremented before overwriting memory
+      //because otherwise, the iterator is invalidated.
+      std::memset(buf, 0, 100);
    }
-   catch(...){
-      shared_memory_object::remove("MyManagedShm");
-      throw;
+
+   //Now deallocate
+   while(!allocated_buffers.empty()){
+      managed_shm.deallocate(allocated_buffers.back());
+      allocated_buffers.pop_back();
    }
-   shared_memory_object::remove("MyManagedShm");
+
+   //Allocate 10 buffers of different sizes in a single call. Throwing version
+   std::size_t sizes[10];
+   for(std::size_t i = 0; i < 10; ++i)
+      sizes[i] = i*3;
+
+   chain = managed_shm.allocate_many(sizes, 10);
+   managed_shm.deallocate_many(boost::interprocess::move(chain));
    return 0;
 }
 //]

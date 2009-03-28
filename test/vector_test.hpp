@@ -17,8 +17,8 @@
 #include <list>
 
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/detail/move_iterator.hpp>
 #include <boost/interprocess/detail/move.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 #include "print_container.hpp"
 #include "check_equal_containers.hpp"
 #include "movable_int.hpp"
@@ -32,14 +32,14 @@ namespace interprocess{
 namespace test{
 
 template<class V1, class V2>
-bool copyable_only(V1 *, V2 *, detail::false_type)
+bool copyable_only(V1 *, V2 *, boost::interprocess::detail::false_type)
 {
    return true;
 }
 
 //Function to check if both sets are equal
 template<class V1, class V2>
-bool copyable_only(V1 *shmvector, V2 *stdvector, detail::true_type)
+bool copyable_only(V1 *shmvector, V2 *stdvector, boost::interprocess::detail::true_type)
 {
    typedef typename V1::value_type IntType;
    std::size_t size = shmvector->size();
@@ -50,18 +50,18 @@ bool copyable_only(V1 *shmvector, V2 *stdvector, detail::true_type)
    {
       IntType move_me(1);
       stdvector->insert(stdvector->begin()+size/2, 50, 1);
-      shmvector->insert(shmvector->begin()+size/2, 50, detail::move_impl(move_me));
+      shmvector->insert(shmvector->begin()+size/2, 50, boost::interprocess::move(move_me));
       if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
    }
    {
       IntType move_me(2);
-      shmvector->assign(shmvector->size()/2, detail::move_impl(move_me));
+      shmvector->assign(shmvector->size()/2, boost::interprocess::move(move_me));
       stdvector->assign(stdvector->size()/2, 2);
       if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
    }
    {
       IntType move_me(3);
-      shmvector->assign(shmvector->size()*3-1, detail::move_impl(move_me));
+      shmvector->assign(shmvector->size()*3-1, boost::interprocess::move(move_me));
       stdvector->assign(stdvector->size()*3-1, 3);
       if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
    }
@@ -111,8 +111,9 @@ int vector_test()
 
          for(int i = 0; i < max; ++i){
             IntType new_int(i);
-            shmvector->insert(shmvector->end(), detail::move_impl(new_int));
+            shmvector->insert(shmvector->end(), boost::interprocess::move(new_int));
             stdvector->insert(stdvector->end(), i);
+            if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
          }
          if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 
@@ -133,7 +134,8 @@ int vector_test()
             IntType aux_vect[50];
             for(int i = 0; i < 50; ++i){
                IntType new_int(-1);
-               aux_vect[i] = detail::move_impl(new_int);
+               BOOST_STATIC_ASSERT((boost::interprocess::is_movable<boost::interprocess::test::movable_int>::value == true));
+               aux_vect[i] = boost::interprocess::move(new_int);
             }
             int aux_vect2[50];
             for(int i = 0; i < 50; ++i){
@@ -141,8 +143,8 @@ int vector_test()
             }
 
             shmvector->insert(shmvector->end()
-                              ,detail::make_move_iterator(&aux_vect[0])
-                              ,detail::make_move_iterator(aux_vect + 50));
+                              ,boost::interprocess::make_move_iterator(&aux_vect[0])
+                              ,boost::interprocess::make_move_iterator(aux_vect + 50));
             stdvector->insert(stdvector->end(), aux_vect2, aux_vect2 + 50);
             if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 
@@ -156,15 +158,15 @@ int vector_test()
             IntType aux_vect[50];
             for(int i = 0; i < 50; ++i){
                IntType new_int(-1);
-               aux_vect[i] = detail::move_impl(new_int);
+               aux_vect[i] = boost::interprocess::move(new_int);
             }
             int aux_vect2[50];
             for(int i = 0; i < 50; ++i){
                aux_vect2[i] = -1;
             }
             shmvector->insert(shmvector->begin()
-                              ,detail::make_move_iterator(&aux_vect[0])
-                              ,detail::make_move_iterator(aux_vect + 50));
+                              ,boost::interprocess::make_move_iterator(&aux_vect[0])
+                              ,boost::interprocess::make_move_iterator(aux_vect + 50));
             stdvector->insert(stdvector->begin(), aux_vect2, aux_vect2 + 50);
             if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
          }
@@ -174,7 +176,7 @@ int vector_test()
          if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 
          IntType push_back_this(1);
-         shmvector->push_back(detail::move_impl(push_back_this));
+         shmvector->push_back(boost::interprocess::move(push_back_this));
          stdvector->push_back(int(1));
          if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 
@@ -189,7 +191,7 @@ int vector_test()
 
          for(int i = 0; i < max; ++i){
             IntType insert_this(i);
-            shmvector->insert(shmvector->begin(), detail::move_impl(insert_this));
+            shmvector->insert(shmvector->begin(), boost::interprocess::move(insert_this));
             stdvector->insert(stdvector->begin(), i);
          }
          if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
@@ -204,6 +206,18 @@ int vector_test()
             stdvector->assign(l.begin(), l.end());
             if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
          }
+/*
+         std::size_t cap = shmvector->capacity();
+         shmvector->reserve(cap*2);
+         stdvector->reserve(cap*2);
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
+         shmvector->resize(0);
+         stdvector->resize(0);
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
+         shmvector->resize(cap*2);
+         stdvector->resize(cap*2);
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
+*/
 
          delete stdvector;
          segment.template destroy<MyShmVector>("MyShmVector");

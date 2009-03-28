@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_move_containers.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{942CA380-C57A-16A6-4764-625A25BD78FB}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

@@ -59,19 +59,17 @@ int main ()
    {
       //Now test move semantics
       managed_heap_memory original(memsize);
-      managed_heap_memory move_ctor(detail::move_impl(original));
+      managed_heap_memory move_ctor(boost::interprocess::move(original));
       managed_heap_memory move_assign;
-      move_assign = detail::move_impl(move_ctor);
-      original.swap(detail::move_impl(move_assign));
+      move_assign = boost::interprocess::move(move_ctor);
       original.swap(move_assign);
    }
    {
       //Now test move semantics
       managed_external_buffer original(create_only, static_buffer, memsize);
-      managed_external_buffer move_ctor(detail::move_impl(original));
+      managed_external_buffer move_ctor(boost::interprocess::move(original));
       managed_external_buffer move_assign;
-      move_assign = detail::move_impl(move_ctor);
-      original.swap(detail::move_impl(move_assign));
+      move_assign = boost::interprocess::move(move_ctor);
       original.swap(move_assign);
    }
 
@@ -84,13 +82,13 @@ int main ()
    //Test move semantics
    {
       wmanaged_external_buffer user_default;
-      wmanaged_external_buffer temp_external(detail::move_impl(user_buffer));
-      user_default = detail::move_impl(temp_external);
-      user_buffer  = detail::move_impl(user_default);
+      wmanaged_external_buffer temp_external(boost::interprocess::move(user_buffer));
+      user_default = boost::interprocess::move(temp_external);
+      user_buffer  = boost::interprocess::move(user_default);
       wmanaged_heap_memory heap_default;
-      wmanaged_heap_memory temp_heap(detail::move_impl(heap_buffer));
-      heap_default = detail::move_impl(temp_heap);
-      heap_buffer  = detail::move_impl(heap_default);
+      wmanaged_heap_memory temp_heap(boost::interprocess::move(heap_buffer));
+      heap_default = boost::interprocess::move(temp_heap);
+      heap_buffer  = boost::interprocess::move(heap_default);
    }
 
    //Initialize memory

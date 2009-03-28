@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="doc_contA"
-	ProjectGUID="{58CCE183-6092-48FE-A4F7-BA0D3A792652}"
+	Name="stable_vector_test"
+	ProjectGUID="{5E11C8D3-FA52-760A-84FE-943A6BA05A21}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -13,7 +13,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="../../Bin/Win32/Debug"
-			IntermediateDirectory="Debug/doc_contA"
+			IntermediateDirectory="Debug/stable_vector_test"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -35,11 +35,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/doc_contA_d.exe"
+				OutputFile="$(OutDir)/stable_vector_test_d.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/doc_contA.pdb"
+				ProgramDatabaseFile="$(OutDir)/stable_vector_test.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 				FixedBaseAddress="1"/>
@@ -67,7 +67,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="../../Bin/Win32/Release"
-			IntermediateDirectory="Release/doc_contA"
+			IntermediateDirectory="Release/stable_vector_test"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -86,7 +86,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/doc_contA.exe"
+				OutputFile="$(OutDir)/stable_vector_test.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
@@ -122,15 +122,10 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{37BC807F-2451-A306-7AC5-7A35A32A22DF}">
 			<File
-				RelativePath="..\..\example\doc_contA.cpp">
+				RelativePath="..\..\test\stable_vector_test.cpp">
 			</File>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 		</Filter>
 	</Files>
 	<Globals>

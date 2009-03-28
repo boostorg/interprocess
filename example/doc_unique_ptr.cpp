@@ -18,7 +18,6 @@
 #include <boost/interprocess/containers/list.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <cassert>
-#include <cstdio>    //std::remove
 
 using namespace boost::interprocess;
 
@@ -49,7 +48,7 @@ typedef list
 int main ()
 {
    //Destroy any previous file with the name to be used.
-   std::remove("MyMappedFile");
+   file_mapping::remove("MyMappedFile");
    {
       managed_mapped_file file(create_only, "MyMappedFile", 65536);
 
@@ -72,9 +71,8 @@ int main ()
 
       //Now insert all values
       for(int i = 0; i < 100; ++i){
-         unique_vector->push_back(
-            make_managed_unique_ptr(file.construct<MyType>(anonymous_instance)(i), file)
-            );
+         unique_ptr_type p(make_managed_unique_ptr(file.construct<MyType>(anonymous_instance)(i), file));
+         unique_vector->push_back(boost::interprocess::move(p));
          assert(unique_vector->back()->number_ == i);
       }
       
@@ -84,7 +82,7 @@ int main ()
    
       //Pass ownership of all values to the list
       for(int i = 99; !unique_vector->empty(); --i){
-         unique_list->push_front(move(unique_vector->back()));
+         unique_list->push_front(boost::interprocess::move(unique_vector->back()));
          //The unique ptr of the vector is now empty...
          assert(unique_vector->back() == 0);
          unique_vector->pop_back();
@@ -114,7 +112,7 @@ int main ()
       //Now destroy the list. All elements will be automatically deallocated.
       file.destroy_ptr(unique_list);
    }
-   std::remove("MyMappedFile");
+   file_mapping::remove("MyMappedFile");
    return 0;
 }
 //]

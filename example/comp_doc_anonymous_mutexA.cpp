@@ -21,13 +21,17 @@ using namespace boost::interprocess;
 int main ()
 {
    try{
-      //Erase previous shared memory
-      shared_memory_object::remove("shared_memory");
+      //Remove shared memory on construction and destruction
+      struct shm_destroy
+      {
+         shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
+         ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+      } remover;
 
       //Create a shared memory object.
       shared_memory_object shm
          (create_only               //only create
-         ,"shared_memory"           //name
+         ,"MySharedMemory"          //name
          ,read_write   //read-write mode
          );
 
@@ -65,12 +69,9 @@ int main ()
       }
    }
    catch(interprocess_exception &ex){
-      shared_memory_object::remove("shared_memory");
       std::cout << ex.what() << std::endl;
       return 1;
    }
-   //Erase shared memory
-   shared_memory_object::remove("shared_memory");
    return 0;
 }
 //]

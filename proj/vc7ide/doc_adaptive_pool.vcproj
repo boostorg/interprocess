@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_adaptive_pool.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{7D15CE80-A945-7643-19A6-6BB4B2F13597}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

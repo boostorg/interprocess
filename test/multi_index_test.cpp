@@ -28,8 +28,8 @@
 using namespace boost::interprocess;
 namespace bmi = boost::multi_index;
 
-typedef managed_shared_memory::allocator<char>::type              char_allocator;
-typedef basic_string<char, std::char_traits<char>, char_allocator>shm_string;
+typedef managed_shared_memory::allocator<char>::type                 char_allocator;
+typedef basic_string<char, std::char_traits<char>, char_allocator>   shm_string;
 
 //Data to insert in shared memory
 struct employee
@@ -75,33 +75,7 @@ template class bmi::multi_index_container<
       <bmi::tag<age>, BOOST_MULTI_INDEX_MEMBER(employee,int,age)> >,
   adaptive_pool<employee,managed_shared_memory::segment_manager>
 >;
-/*
-// Explicit instantiations to catch compile-time errors
-template class bmi::multi_index_container<
-  employee,
-  bmi::indexed_by<
-    bmi::ordered_unique
-      <bmi::tag<id>,  BOOST_MULTI_INDEX_MEMBER(employee,int,id)>,
-    bmi::ordered_non_unique<
-      bmi::tag<name>,BOOST_MULTI_INDEX_MEMBER(employee,shm_string,name)>,
-    bmi::ordered_non_unique
-      <bmi::tag<age>, BOOST_MULTI_INDEX_MEMBER(employee,int,age)> >,
-  cached_adaptive_pool<employee,managed_shared_memory::segment_manager>
->;
 
-// Explicit instantiations to catch compile-time errors
-template class bmi::multi_index_container<
-  employee,
-  bmi::indexed_by<
-    bmi::ordered_unique
-      <bmi::tag<id>,  BOOST_MULTI_INDEX_MEMBER(employee,int,id)>,
-    bmi::ordered_non_unique<
-      bmi::tag<name>,BOOST_MULTI_INDEX_MEMBER(employee,shm_string,name)>,
-    bmi::ordered_non_unique
-      <bmi::tag<age>, BOOST_MULTI_INDEX_MEMBER(employee,int,age)> >,
-  private_adaptive_pool<employee,managed_shared_memory::segment_manager>
->;
-*/
 // Explicit instantiations to catch compile-time errors
 template class bmi::multi_index_container<
   employee,
@@ -114,33 +88,7 @@ template class bmi::multi_index_container<
       <bmi::tag<age>, BOOST_MULTI_INDEX_MEMBER(employee,int,age)> >,
   node_allocator<employee,managed_shared_memory::segment_manager>
 >;
-/*
-// Explicit instantiations to catch compile-time errors
-template class bmi::multi_index_container<
-  employee,
-  bmi::indexed_by<
-    bmi::ordered_unique
-      <bmi::tag<id>,  BOOST_MULTI_INDEX_MEMBER(employee,int,id)>,
-    bmi::ordered_non_unique<
-      bmi::tag<name>,BOOST_MULTI_INDEX_MEMBER(employee,shm_string,name)>,
-    bmi::ordered_non_unique
-      <bmi::tag<age>, BOOST_MULTI_INDEX_MEMBER(employee,int,age)> >,
-  cached_node_allocator<employee,managed_shared_memory::segment_manager>
->;
 
-// Explicit instantiations to catch compile-time errors
-template class bmi::multi_index_container<
-  employee,
-  bmi::indexed_by<
-    bmi::ordered_unique
-      <bmi::tag<id>,  BOOST_MULTI_INDEX_MEMBER(employee,int,id)>,
-    bmi::ordered_non_unique<
-      bmi::tag<name>,BOOST_MULTI_INDEX_MEMBER(employee,shm_string,name)>,
-    bmi::ordered_non_unique
-      <bmi::tag<age>, BOOST_MULTI_INDEX_MEMBER(employee,int,age)> >,
-  private_node_allocator<employee,managed_shared_memory::segment_manager>
->;
-*/
 int main ()
 {
    return 0;

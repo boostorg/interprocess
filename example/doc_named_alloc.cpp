@@ -9,24 +9,28 @@
 //////////////////////////////////////////////////////////////////////////////
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-//[doc_named_allocA
+//[doc_named_alloc
 #include <boost/interprocess/managed_shared_memory.hpp>
+#include <cstdlib> //std::system
+#include <cstddef>
+#include <cassert>
 #include <utility>
 
-int main ()
+int main(int argc, char *argv[])
 {
    using namespace boost::interprocess;
    typedef std::pair<double, int> MyType;
 
-   try{
-      //A special shared memory where we can
-      //construct objects associated with a name.
-      //First remove any old shared memory of the same name, create 
-      //the shared memory segment and initialize needed resources
-      shared_memory_object::remove("MySharedMemory");
-      managed_shared_memory segment
-         //create       segment name    segment size
-         (create_only, "MySharedMemory", 65536);
+   if(argc == 1){  //Parent process
+      //Remove shared memory on construction and destruction
+      struct shm_remove 
+      {
+         shm_remove() {  shared_memory_object::remove("MySharedMemory"); }
+         ~shm_remove(){  shared_memory_object::remove("MySharedMemory"); }
+      } remover;
+
+      //Construct managed shared memory
+      managed_shared_memory segment(create_only, "MySharedMemory", 65536);
 
       //Create an object of MyType initialized to {0.0, 0}
       MyType *instance = segment.construct<MyType>
@@ -49,12 +53,50 @@ int main ()
          [3]                        //number of elements
          ( &float_initializer[0]    //Iterator for the 1st ctor argument
          , &int_initializer[0]);    //Iterator for the 2nd ctor argument
+
+      //Launch child process
+      std::string s(argv[0]); s += " child";
+      if(0 != std::system(s.c_str()))
+         return 1;
+
+      //<-
+      (void)instance;
+      (void)array;
+      (void)array_it;
+      //->
+
+      //Check child has destroyed all objects
+      if(segment.find<MyType>("MyType array").first ||
+         segment.find<MyType>("MyType instance").first ||
+         segment.find<MyType>("MyType array from it").first)
+         return 1;
    }
-   catch(...){
-      shared_memory_object::remove("MySharedMemory");
-      throw;
+   else{
+      //Open managed shared memory
+      managed_shared_memory segment(open_only, "MySharedMemory");
+
+      std::pair<MyType*, std::size_t> res;
+
+      //Find the array
+      res = segment.find<MyType> ("MyType array");   
+      //Length should be 10
+      if(res.second != 10) return 1;
+
+      //Find the object
+      res = segment.find<MyType> ("MyType instance");   
+      //Length should be 1
+      if(res.second != 1) return 1;
+
+      //Find the array constructed from iterators
+      res = segment.find<MyType> ("MyType array from it");
+      //Length should be 3
+      if(res.second != 3) return 1;
+
+      //We're done, delete all the objects
+      segment.destroy<MyType>("MyType array");
+      segment.destroy<MyType>("MyType instance");
+      segment.destroy<MyType>("MyType array from it");
    }
-   shared_memory_object::remove("MySharedMemory");
    return 0;
 }
 //]

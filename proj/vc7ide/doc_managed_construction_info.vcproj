@@ -127,11 +127,6 @@
 				RelativePath="..\..\example\doc_managed_construction_info.cpp">
 			</File>
 		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{55274F38-8C8B-D461-55EB-E53642BF23FB}">
-		</Filter>
 	</Files>
 	<Globals>
 	</Globals>
