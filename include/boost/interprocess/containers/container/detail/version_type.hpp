@@ -4,7 +4,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/container for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -13,22 +13,22 @@
 //////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef BOOST_INTERPROCESS_DETAIL_VERSION_TYPE_HPP
-#define BOOST_INTERPROCESS_DETAIL_VERSION_TYPE_HPP
+#ifndef BOOST_CONTAINERS_DETAIL_VERSION_TYPE_HPP
+#define BOOST_CONTAINERS_DETAIL_VERSION_TYPE_HPP
 
-#include <boost/interprocess/detail/mpl.hpp>
-#include <boost/interprocess/detail/type_traits.hpp>
+#include <boost/interprocess/containers/container/detail/mpl.hpp>
+#include <boost/interprocess/containers/container/detail/type_traits.hpp>
 
 
 namespace boost{
-namespace interprocess{
-namespace detail{
+namespace interprocess_container {
+namespace containers_detail {
 
 //using namespace boost;
 
 template <class T, unsigned V>
 struct version_type
-    : public detail::integral_constant<unsigned, V>
+    : public containers_detail::integral_constant<unsigned, V>
 {
     typedef T type;
 
@@ -38,7 +38,7 @@ struct version_type
 namespace impl{
 
 template <class T, 
-          bool = detail::is_convertible<version_type<T, 0>, typename T::version>::value>
+          bool = containers_detail::is_convertible<version_type<T, 0>, typename T::version>::value>
 struct extract_version
 {
    static const unsigned value = 1;
@@ -78,12 +78,12 @@ struct version<T, true>
 
 template <class T>
 struct version
-   : public detail::integral_constant<unsigned, impl::version<T>::value>
+   : public containers_detail::integral_constant<unsigned, impl::version<T>::value>
 {
 };
 
-}  //namespace detail{
-}  //namespace interprocess{
+}  //namespace containers_detail {
+}  //namespace interprocess_container {
 }  //namespace boost{
 
-#endif   //#define BOOST_INTERPROCESS_DETAIL_VERSION_TYPE_HPP
+#endif   //#define BOOST_CONTAINERS_DETAIL_VERSION_TYPE_HPP

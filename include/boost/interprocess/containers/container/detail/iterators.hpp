@@ -7,27 +7,31 @@
 // (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/container for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef BOOST_INTERPROCESS_DETAIL_ITERATORS_HPP
-#define BOOST_INTERPROCESS_DETAIL_ITERATORS_HPP
+#ifndef BOOST_CONTAINERS_DETAIL_ITERATORS_HPP
+#define BOOST_CONTAINERS_DETAIL_ITERATORS_HPP
 
 #if (defined _MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
 #endif
 
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/containers/container/detail/config_begin.hpp>
+#include <boost/interprocess/containers/container/detail/workaround.hpp>
+#include <boost/interprocess/detail/move.hpp>
 
-#include <boost/interprocess/interprocess_fwd.hpp>
+#ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
+#include <boost/interprocess/containers/container/detail/variadic_templates_tools.hpp>
+#else
+#include <boost/interprocess/containers/container/detail/preprocessor.hpp>
+#endif
 
 #include <iterator>
-#include <boost/interprocess/detail/type_traits.hpp>
 
 namespace boost {
-namespace interprocess { 
+namespace interprocess_container { 
 
 template <class T, class Difference = std::ptrdiff_t>
 class constant_iterator
@@ -324,152 +328,165 @@ class repeat_iterator
    {  return m_num - other.m_num;   }
 };
 
-template <class PseudoReference>
-struct operator_arrow_proxy
+template <class T, class E>
+class emplace_iterator
+  : public std::iterator
+      <std::random_access_iterator_tag, T, std::ptrdiff_t, const T*, const T &>
 {
-   operator_arrow_proxy(const PseudoReference &px)
-      :  m_value(px)
-   {}
+   typedef emplace_iterator this_type;
 
-   PseudoReference* operator->() const { return &m_value; }
-   // This function is needed for MWCW and BCC, which won't call operator->
-   // again automatically per 13.3.1.2 para 8
-//   operator T*() const { return &m_value; }
-   mutable PseudoReference m_value;
-};
-
-template <class T>
-struct operator_arrow_proxy<T&>
-{
-   operator_arrow_proxy(T &px)
-      :  m_value(px)
-   {}
-
-   T* operator->() const { return &m_value; }
-   // This function is needed for MWCW and BCC, which won't call operator->
-   // again automatically per 13.3.1.2 para 8
-//   operator T*() const { return &m_value; }
-   mutable T &m_value;
-};
-
-template <class Iterator, class UnaryFunction>
-class transform_iterator
-   : public UnaryFunction
-   , public std::iterator
-      < typename Iterator::iterator_category
-      , typename detail::remove_reference<typename UnaryFunction::result_type>::type
-      , typename Iterator::difference_type
-      , operator_arrow_proxy<typename UnaryFunction::result_type>
-      , typename UnaryFunction::result_type>
-{
    public:
-   explicit transform_iterator(const Iterator &it, const UnaryFunction &f = UnaryFunction())
-      :  UnaryFunction(f), m_it(it)
-   {}
+   explicit emplace_iterator(E&e)
+      :  m_num(1), m_pe(&e){}
 
-   explicit transform_iterator()
-      :  UnaryFunction(), m_it()
-   {}
+   emplace_iterator()
+      :  m_num(0), m_pe(0){}
 
-   //Constructors
-   transform_iterator& operator++() 
+   this_type& operator++() 
    { increment();   return *this;   }
-
-   transform_iterator operator++(int)
+   
+   this_type operator++(int)
    {
-      transform_iterator result (*this);
+      this_type result (*this);
       increment();
       return result;
    }
 
-   friend bool operator== (const transform_iterator& i, const transform_iterator& i2)
+   friend bool operator== (const this_type& i, const this_type& i2)
    { return i.equal(i2); }
 
-   friend bool operator!= (const transform_iterator& i, const transform_iterator& i2)
+   friend bool operator!= (const this_type& i, const this_type& i2)
    { return !(i == i2); }
 
-/*
-   friend bool operator> (const transform_iterator& i, const transform_iterator& i2)
+   friend bool operator< (const this_type& i, const this_type& i2)
+   { return i.less(i2); }
+
+   friend bool operator> (const this_type& i, const this_type& i2)
    { return i2 < i; }
 
-   friend bool operator<= (const transform_iterator& i, const transform_iterator& i2)
+   friend bool operator<= (const this_type& i, const this_type& i2)
    { return !(i > i2); }
 
-   friend bool operator>= (const transform_iterator& i, const transform_iterator& i2)
+   friend bool operator>= (const this_type& i, const this_type& i2)
    { return !(i < i2); }
-*/
-   friend typename Iterator::difference_type operator- (const transform_iterator& i, const transform_iterator& i2)
+
+   friend std::ptrdiff_t operator- (const this_type& i, const this_type& i2)
    { return i2.distance_to(i); }
 
    //Arithmetic
-   transform_iterator& operator+=(typename Iterator::difference_type off)
+   this_type& operator+=(std::ptrdiff_t off)
    {  this->advance(off); return *this;   }
 
-   transform_iterator operator+(typename Iterator::difference_type off) const
+   this_type operator+(std::ptrdiff_t off) const
    {
-      transform_iterator other(*this);
+      this_type other(*this);
       other.advance(off);
       return other;
    }
 
-   friend transform_iterator operator+(typename Iterator::difference_type off, const transform_iterator& right)
+   friend this_type operator+(std::ptrdiff_t off, const this_type& right)
    {  return right + off; }
 
-   transform_iterator& operator-=(typename Iterator::difference_type off)
+   this_type& operator-=(std::ptrdiff_t off)
    {  this->advance(-off); return *this;   }
 
-   transform_iterator operator-(typename Iterator::difference_type off) const
+   this_type operator-(std::ptrdiff_t off) const
    {  return *this + (-off);  }
 
-   typename UnaryFunction::result_type operator*() const
+   const T& operator*() const
    { return dereference(); }
 
-   operator_arrow_proxy<typename UnaryFunction::result_type>
-      operator->() const
-   { return operator_arrow_proxy<typename UnaryFunction::result_type>(dereference());  }
+   const T* operator->() const
+   { return &(dereference()); }
 
-   Iterator & base()
-   {  return m_it;   }
-
-   const Iterator & base() const
-   {  return m_it;   }
+   void construct_in_place(T* ptr)
+   {  (*m_pe)(ptr);  }
 
    private:
-   Iterator m_it;
+   std::ptrdiff_t m_num;
+   E *            m_pe;
 
    void increment()
-   { ++m_it; }
+   { --m_num; }
 
    void decrement()
-   { --m_it; }
+   { ++m_num; }
 
-   bool equal(const transform_iterator &other) const
-   {  return m_it == other.m_it;   }
+   bool equal(const this_type &other) const
+   {  return m_num == other.m_num;   }
 
-   bool less(const transform_iterator &other) const
-   {  return other.m_it < m_it;   }
+   bool less(const this_type &other) const
+   {  return other.m_num < m_num;   }
 
-   typename UnaryFunction::result_type dereference() const
-   { return UnaryFunction::operator()(*m_it); }
+   const T & dereference() const
+   { 
+      static T dummy;
+      return dummy;
+   }
 
-   void advance(typename Iterator::difference_type n)
-   {  std::advance(m_it, n); }
+   void advance(std::ptrdiff_t n)
+   {  m_num -= n; }
 
-   typename Iterator::difference_type distance_to(const transform_iterator &other)const
-   {  return std::distance(other.m_it, m_it); }
+   std::ptrdiff_t distance_to(const this_type &other)const
+   {  return m_num - other.m_num;   }
 };
 
-template <class Iterator, class UnaryFunc>
-transform_iterator<Iterator, UnaryFunc>
-make_transform_iterator(Iterator it, UnaryFunc fun)
-{
-   return transform_iterator<Iterator, UnaryFunc>(it, fun);
-}
+#ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 
-}  //namespace interprocess { 
+template<class T, class ...Args>
+struct emplace_functor
+{
+   typedef typename containers_detail::build_number_seq<sizeof...(Args)>::type index_tuple_t;
+
+   emplace_functor(Args&&... args)
+      : args_(args...)
+   {}
+
+   void operator()(T *ptr)
+   {  emplace_functor::inplace_impl(ptr, index_tuple_t());  }
+
+   template<int ...IdxPack>
+   void inplace_impl(T* ptr, const containers_detail::index_tuple<IdxPack...>&)
+   {  ::new(ptr) T(boost::interprocess::forward<Args>(containers_detail::get<IdxPack>(args_))...); }
+
+   containers_detail::tuple<Args&&...> args_;
+};
+
+#else
+
+template<class T>
+struct emplace_functor
+{
+   emplace_functor()
+   {}
+   void operator()(T *ptr)
+   {  new(ptr) T();  }
+};
+
+#define BOOST_PP_LOCAL_MACRO(n)                                                        \
+   template <class T, BOOST_PP_ENUM_PARAMS(n, class P) >                               \
+   struct BOOST_PP_CAT(BOOST_PP_CAT(emplace_functor, n), arg)                          \
+   {                                                                                   \
+      BOOST_PP_CAT(BOOST_PP_CAT(emplace_functor, n), arg)                              \
+         ( BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_LIST, _) )                       \
+      :  BOOST_PP_ENUM(n, BOOST_CONTAINERS_AUX_PARAM_INIT, _) {}                       \
+                                                                                       \
+      void operator()(T *ptr)                                                          \
+      {                                                                                \
+         new(ptr)T (BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_MEMBER_FORWARD, _));          \
+      }                                                                                \
+      BOOST_PP_REPEAT(n, BOOST_CONTAINERS_AUX_PARAM_DEFINE, _)                         \
+   };                                                                                  \
+   //!
+#define BOOST_PP_LOCAL_LIMITS (1, BOOST_CONTAINERS_MAX_CONSTRUCTOR_PARAMETERS)
+#include BOOST_PP_LOCAL_ITERATE()
+
+#endif
+
+}  //namespace interprocess_container { 
 }  //namespace boost {
 
-#include <boost/interprocess/detail/config_end.hpp>
+#include <boost/interprocess/containers/container/detail/config_end.hpp>
 
-#endif   //#ifndef BOOST_INTERPROCESS_DETAIL_ITERATORS_HPP
+#endif   //#ifndef BOOST_CONTAINERS_DETAIL_ITERATORS_HPP
 

@@ -4,7 +4,7 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/container for documentation.
 //
 ////////////////////////////////////////////////////////////////////////////////
 // The Loki Library
@@ -25,35 +25,40 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef BOOST_INTERPROCESS_FLAT_TREE_HPP
-#define BOOST_INTERPROCESS_FLAT_TREE_HPP
+#ifndef BOOST_CONTAINERS_FLAT_TREE_HPP
+#define BOOST_CONTAINERS_FLAT_TREE_HPP
 
 #if (defined _MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
 #endif
 
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/containers/container/detail/config_begin.hpp>
+#include <boost/interprocess/containers/container/detail/workaround.hpp>
 
-#include <boost/interprocess/containers/vector.hpp>
-#include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/move.hpp>
-#include <boost/type_traits/has_trivial_destructor.hpp>
 #include <algorithm>
 #include <functional>
 #include <utility>
 
+#include <boost/type_traits/has_trivial_destructor.hpp>
+#include <boost/interprocess/detail/move.hpp>
+
+#include <boost/interprocess/containers/container/detail/utilities.hpp>
+#include <boost/interprocess/containers/container/detail/pair.hpp>
+#include <boost/interprocess/containers/container/vector.hpp>
+#include <boost/interprocess/containers/container/detail/value_init.hpp>
+#include <boost/interprocess/containers/container/detail/destroyers.hpp>
+
 namespace boost {
 
-namespace interprocess {
+namespace interprocess_container {
 
-namespace detail {
+namespace containers_detail {
 
 template <class Key, class Value, class KeyOfValue, 
           class Compare, class Alloc>
 class flat_tree
 {
-   typedef boost::interprocess::vector<Value, Alloc>  vector_t;
+   typedef boost::interprocess_container::vector<Value, Alloc>  vector_t;
    typedef Alloc                                      allocator_t;
 
    public:
@@ -105,6 +110,7 @@ class flat_tree
    Data m_data;
 
    public:
+   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(flat_tree)
 
    typedef typename vector_t::value_type              value_type;
    typedef typename vector_t::pointer                 pointer;
@@ -133,15 +139,9 @@ class flat_tree
       :  m_data(x.m_data, x.m_data.m_vect)
    { }
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   flat_tree(detail::moved_object<flat_tree> x)
-      :  m_data(detail::move_impl(x.get().m_data))
+   flat_tree(BOOST_INTERPROCESS_RV_REF(flat_tree) x)
+      :  m_data(boost::interprocess::move(x.m_data))
    { }
-   #else
-   flat_tree(flat_tree &&x)
-      :  m_data(detail::move_impl(x.m_data))
-   { }
-   #endif
 
    ~flat_tree()
    { }
@@ -149,13 +149,8 @@ class flat_tree
    flat_tree&  operator=(const flat_tree& x)
    {  m_data = x.m_data;   return *this;  }
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   flat_tree&  operator=(detail::moved_object<flat_tree> mx)
-   {  m_data = detail::move_impl(mx.get().m_data); return *this;  }
-   #else
-   flat_tree&  operator=(flat_tree &&mx)
-   {  m_data = detail::move_impl(mx.m_data); return *this;  }
-   #endif
+   flat_tree&  operator=(BOOST_INTERPROCESS_RV_REF(flat_tree) mx)
+   {  m_data = boost::interprocess::move(mx.m_data); return *this;  }
 
    public:    
    // accessors:
@@ -220,19 +215,11 @@ class flat_tree
    {
       value_compare& mycomp    = this->m_data;
       value_compare& othercomp = other.m_data;
-      detail::do_swap(mycomp, othercomp);
+      containers_detail::do_swap(mycomp, othercomp);
       vector_t & myvect    = this->m_data.m_vect;
       vector_t & othervect = other.m_data.m_vect;
       myvect.swap(othervect);
    }
-
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   void swap(detail::moved_object<flat_tree> other)
-   {  this->swap(other.get());   }
-   #else
-   void swap(flat_tree &&other) 
-   {  this->swap(other);   }
-   #endif
 
    public:
    // insert/erase
@@ -246,18 +233,12 @@ class flat_tree
       return ret;
    }
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   std::pair<iterator,bool> insert_unique(detail::moved_object<value_type> mval)
+   std::pair<iterator,bool> insert_unique(BOOST_INTERPROCESS_RV_REF(value_type) val)
    {
-      value_type &val = mval.get();
-   #else
-   std::pair<iterator,bool> insert_unique(value_type && val)
-   {
-   #endif
       insert_commit_data data;
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(val, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, detail::move_impl(val));
+         ret.first = priv_insert_commit(data, boost::interprocess::move(val));
       }
       return ret;
    }
@@ -270,21 +251,12 @@ class flat_tree
       return i;
    }
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   iterator insert_equal(detail::moved_object<value_type> mval)
-   {
-      iterator i = this->upper_bound(KeyOfValue()(mval.get()));
-      i = this->m_data.m_vect.insert(i, mval);
-      return i;
-   }
-   #else
-   iterator insert_equal(value_type && mval)
+   iterator insert_equal(BOOST_INTERPROCESS_RV_REF(value_type) mval)
    {
       iterator i = this->upper_bound(KeyOfValue()(mval));
-      i = this->m_data.m_vect.insert(i, detail::move_impl(mval));
+      i = this->m_data.m_vect.insert(i, boost::interprocess::move(mval));
       return i;
    }
-   #endif
 
    iterator insert_unique(const_iterator pos, const value_type& val)
    {
@@ -296,27 +268,15 @@ class flat_tree
       return ret.first;
    }
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   iterator insert_unique(const_iterator pos, detail::moved_object<value_type> mval)
-   {
-      insert_commit_data data;
-      std::pair<iterator,bool> ret = priv_insert_unique_prepare(pos, mval.get(), data);
-      if(ret.second){
-         ret.first = priv_insert_commit(data, mval);
-      }
-      return ret.first;
-   }
-   #else
-   iterator insert_unique(const_iterator pos, value_type&&mval)
+   iterator insert_unique(const_iterator pos, BOOST_INTERPROCESS_RV_REF(value_type) mval)
    {
       insert_commit_data data;
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(pos, mval, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, detail::move_impl(mval));
+         ret.first = priv_insert_commit(data, boost::interprocess::move(mval));
       }
       return ret.first;
    }
-   #endif
 
    iterator insert_equal(const_iterator pos, const value_type& val)
    {
@@ -325,21 +285,12 @@ class flat_tree
       return priv_insert_commit(data, val);
    }
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   iterator insert_equal(const_iterator pos, detail::moved_object<value_type> mval)
-   {
-      insert_commit_data data;
-      priv_insert_equal_prepare(pos, mval.get(), data);
-      return priv_insert_commit(data, mval);
-   }
-   #else
-   iterator insert_equal(const_iterator pos, value_type && mval)
+   iterator insert_equal(const_iterator pos, BOOST_INTERPROCESS_RV_REF(value_type) mval)
    {
       insert_commit_data data;
       priv_insert_equal_prepare(pos, mval, data);
-      return priv_insert_commit(data, detail::move_impl(mval));
+      return priv_insert_commit(data, boost::interprocess::move(mval));
    }
-   #endif
 
    template <class InIt>
    void insert_unique(InIt first, InIt last)
@@ -356,17 +307,17 @@ class flat_tree
       priv_insert_equal(first, last, ItCat());
    }
 
-   #ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+   #ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 
    template <class... Args>
    iterator emplace_unique(Args&&... args)
    {
-      value_type val(detail::forward_impl<Args>(args)...);
+      value_type val(boost::interprocess::forward<Args>(args)...);
       insert_commit_data data;
       std::pair<iterator,bool> ret =
          priv_insert_unique_prepare(val, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));
+         ret.first = priv_insert_commit(data, boost::interprocess::move<value_type>(val));
       }
       return ret.first;
    }
@@ -374,11 +325,11 @@ class flat_tree
    template <class... Args>
    iterator emplace_hint_unique(const_iterator hint, Args&&... args)
    {
-      value_type val(detail::forward_impl<Args>(args)...);
+      value_type val(boost::interprocess::forward<Args>(args)...);
       insert_commit_data data;
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(hint, val, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));
+         ret.first = priv_insert_commit(data, boost::interprocess::move<value_type>(val));
       }
       return ret.first;
    }
@@ -386,115 +337,115 @@ class flat_tree
    template <class... Args>
    iterator emplace_equal(Args&&... args)
    {
-      value_type val(detail::forward_impl<Args>(args)...);
+      value_type val(boost::interprocess::forward<Args>(args)...);
       iterator i = this->upper_bound(KeyOfValue()(val));
-      i = this->m_data.m_vect.insert(i, detail::move_impl<value_type>(val));
+      i = this->m_data.m_vect.insert(i, boost::interprocess::move<value_type>(val));
       return i;
    }
 
    template <class... Args>
    iterator emplace_hint_equal(const_iterator hint, Args&&... args)
    {
-      value_type val(detail::forward_impl<Args>(args)...);
+      value_type val(boost::interprocess::forward<Args>(args)...);
       insert_commit_data data;
       priv_insert_equal_prepare(hint, val, data);
-      return priv_insert_commit(data, detail::move_impl<value_type>(val));
+      return priv_insert_commit(data, boost::interprocess::move<value_type>(val));
    }
 
-   #else //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+   #else //#ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 
    iterator emplace_unique()
    {
-      detail::value_init<value_type> vval;
+      containers_detail::value_init<value_type> vval;
       value_type &val = vval.m_t;
       insert_commit_data data;
       std::pair<iterator,bool> ret =
          priv_insert_unique_prepare(val, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));
+         ret.first = priv_insert_commit(data, boost::interprocess::move<value_type>(val));
       }
       return ret.first;
    }
 
    iterator emplace_hint_unique(const_iterator hint)
    {
-      detail::value_init<value_type> vval;
+      containers_detail::value_init<value_type> vval;
       value_type &val = vval.m_t;
       insert_commit_data data;
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(hint, val, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));
+         ret.first = priv_insert_commit(data, boost::interprocess::move<value_type>(val));
       }
       return ret.first;
    }
 
    iterator emplace_equal()
    {
-      detail::value_init<value_type> vval;
+      containers_detail::value_init<value_type> vval;
       value_type &val = vval.m_t;
       iterator i = this->upper_bound(KeyOfValue()(val));
-      i = this->m_data.m_vect.insert(i, detail::move_impl<value_type>(val));
+      i = this->m_data.m_vect.insert(i, boost::interprocess::move<value_type>(val));
       return i;
    }
 
    iterator emplace_hint_equal(const_iterator hint)
    {
-      detail::value_init<value_type> vval;
+      containers_detail::value_init<value_type> vval;
       value_type &val = vval.m_t;
       insert_commit_data data;
       priv_insert_equal_prepare(hint, val, data);
-      return priv_insert_commit(data, detail::move_impl<value_type>(val));
+      return priv_insert_commit(data, boost::interprocess::move<value_type>(val));
    }
 
    #define BOOST_PP_LOCAL_MACRO(n)                                                        \
    template<BOOST_PP_ENUM_PARAMS(n, class P)>                                             \
-   iterator emplace_unique(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))         \
+   iterator emplace_unique(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_LIST, _))         \
    {                                                                                      \
-      value_type val(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));           \
+      value_type val(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_FORWARD, _));           \
       insert_commit_data data;                                                            \
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(val, data);               \
       if(ret.second){                                                                     \
-         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));        \
+         ret.first = priv_insert_commit(data, boost::interprocess::move<value_type>(val));        \
       }                                                                                   \
       return ret.first;                                                                   \
    }                                                                                      \
                                                                                           \
    template<BOOST_PP_ENUM_PARAMS(n, class P)>                                             \
    iterator emplace_hint_unique(const_iterator hint,                                      \
-      BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                              \
+      BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_LIST, _))                              \
    {                                                                                      \
-      value_type val(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));           \
+      value_type val(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_FORWARD, _));           \
       insert_commit_data data;                                                            \
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(hint, val, data);         \
       if(ret.second){                                                                     \
-         ret.first = priv_insert_commit(data, detail::move_impl<value_type>(val));        \
+         ret.first = priv_insert_commit(data, boost::interprocess::move<value_type>(val));        \
       }                                                                                   \
       return ret.first;                                                                   \
    }                                                                                      \
                                                                                           \
    template<BOOST_PP_ENUM_PARAMS(n, class P)>                                             \
-   iterator emplace_equal(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))          \
+   iterator emplace_equal(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_LIST, _))          \
    {                                                                                      \
-      value_type val(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));           \
+      value_type val(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_FORWARD, _));           \
       iterator i = this->upper_bound(KeyOfValue()(val));                                  \
-      i = this->m_data.m_vect.insert(i, detail::move_impl<value_type>(val));              \
+      i = this->m_data.m_vect.insert(i, boost::interprocess::move<value_type>(val));              \
       return i;                                                                           \
    }                                                                                      \
                                                                                           \
    template<BOOST_PP_ENUM_PARAMS(n, class P)>                                             \
    iterator emplace_hint_equal(const_iterator hint,                                       \
-      BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _))                              \
+      BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_LIST, _))                              \
    {                                                                                      \
-      value_type val(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_FORWARD, _));           \
+      value_type val(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_FORWARD, _));           \
       insert_commit_data data;                                                            \
       priv_insert_equal_prepare(hint, val, data);                                         \
-      return priv_insert_commit(data, detail::move_impl<value_type>(val));                \
+      return priv_insert_commit(data, boost::interprocess::move<value_type>(val));                \
    }                                                                                      \
    //!
-   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+   #define BOOST_PP_LOCAL_LIMITS (1, BOOST_CONTAINERS_MAX_CONSTRUCTOR_PARAMETERS)
    #include BOOST_PP_LOCAL_ITERATE()
 
-   #endif   //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+   #endif   //#ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 
    iterator erase(const_iterator position)
    {  return this->m_data.m_vect.erase(position);  }
@@ -682,17 +633,14 @@ class flat_tree
       }
    }
 
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template<class Convertible>
    iterator priv_insert_commit
-      (insert_commit_data &commit_data, const Convertible &convertible)
-   {  return this->m_data.m_vect.insert(commit_data.position, convertible);   }
-   #else
-   template<class Convertible>
-   iterator priv_insert_commit
-      (insert_commit_data &commit_data, Convertible &&convertible)
-   {  return this->m_data.m_vect.insert(commit_data.position, detail::forward_impl<Convertible>(convertible));   }
-   #endif
+      (insert_commit_data &commit_data, BOOST_INTERPROCESS_FWD_REF(Convertible) convertible)
+   {
+      return this->m_data.m_vect.insert
+         ( commit_data.position
+         , boost::interprocess::forward<Convertible>(convertible));
+   }
 
    template <class RanIt>
    RanIt priv_lower_bound(RanIt first, RanIt last,
@@ -865,23 +813,25 @@ swap(flat_tree<Key,Value,KeyOfValue,Compare,Alloc>& x,
      flat_tree<Key,Value,KeyOfValue,Compare,Alloc>& y)
    {  x.swap(y);  }
 
-}  //namespace detail {
+}  //namespace containers_detail {
+
+}  //namespace interprocess_container {
+
+namespace interprocess {
 
 //!has_trivial_destructor_after_move<> == true_type
 //!specialization for optimizations
 template <class K, class V, class KOV, 
-          class C, class A>
-struct has_trivial_destructor_after_move<detail::flat_tree<K, V, KOV, C, A> >
+class C, class A>
+struct has_trivial_destructor_after_move<boost::interprocess_container::containers_detail::flat_tree<K, V, KOV, C, A> >
 {
-   enum {   value = 
-             has_trivial_destructor<A>::value &&
-             has_trivial_destructor<C>::value  };
+   static const bool value = has_trivial_destructor<A>::value && has_trivial_destructor<C>::value;
 };
 
 }  //namespace interprocess {
 
 }  //namespace boost {
 
-#include <boost/interprocess/detail/config_end.hpp>
+#include <boost/interprocess/containers/container/detail/config_end.hpp>
 
-#endif // BOOST_INTERPROCESS_FLAT_TREE_HPP
+#endif // BOOST_CONTAINERS_FLAT_TREE_HPP

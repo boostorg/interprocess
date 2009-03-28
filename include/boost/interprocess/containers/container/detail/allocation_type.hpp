@@ -4,22 +4,22 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/container for documentation.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef BOOST_INTERPROCESS_TYPE_COMMAND_HPP
-#define BOOST_INTERPROCESS_TYPE_COMMAND_HPP
+#ifndef BOOST_CONTAINERS_ALLOCATION_TYPE_HPP
+#define BOOST_CONTAINERS_ALLOCATION_TYPE_HPP
 
 #if (defined _MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
 #endif
 
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/containers/container/detail/config_begin.hpp>
+#include <boost/interprocess/containers/container/detail/workaround.hpp>
 
 namespace boost {
-namespace interprocess {
+namespace interprocess_container {
 
 /// @cond
 enum allocation_type_v
@@ -46,10 +46,9 @@ static const allocation_type try_shrink_in_place= (allocation_type)try_shrink_in
 static const allocation_type nothrow_allocation = (allocation_type)nothrow_allocation_v;
 static const allocation_type zero_memory        = (allocation_type)zero_memory_v;
 
-}  //namespace interprocess {
+}  //namespace interprocess_container {
 }  //namespace boost {
 
-#include <boost/interprocess/detail/config_end.hpp>
+#include <boost/interprocess/containers/container/detail/config_end.hpp>
 
-#endif   //BOOST_INTERPROCESS_TYPE_COMMAND_HPP
-
+#endif   //BOOST_CONTAINERS_ALLOCATION_TYPE_HPP

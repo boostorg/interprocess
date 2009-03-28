@@ -4,26 +4,26 @@
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// See http://www.boost.org/libs/interprocess for documentation.
+// See http://www.boost.org/libs/container for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef BOOST_INTERPROCESS_ADVANCED_INSERT_INT_HPP
-#define BOOST_INTERPROCESS_ADVANCED_INSERT_INT_HPP
+#ifndef BOOST_CONTAINERS_ADVANCED_INSERT_INT_HPP
+#define BOOST_CONTAINERS_ADVANCED_INSERT_INT_HPP
 
 #if (defined _MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
 #endif
 
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/containers/container/detail/config_begin.hpp>
+#include <boost/interprocess/containers/container/detail/workaround.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <iterator>  //std::iterator_traits
 #include <algorithm> //std::copy, std::uninitialized_copy
 #include <new>       //placement new
 #include <cassert>
 
-namespace boost { namespace interprocess { namespace detail {
+namespace boost { namespace interprocess_container { namespace containers_detail {
 
 //This class will be interface for operations dependent on FwdIt types used advanced_insert_aux_impl
 template<class T, class Iterator>
@@ -51,21 +51,21 @@ struct advanced_insert_aux_proxy
    {}
 
    virtual void copy_all_to(Iterator p)
-   {  *std::copy(first_, last_, p);  }
+   {  std::copy(first_, last_, p);  }
 
    virtual void uninitialized_copy_all_to(Iterator p)
-   {  std::uninitialized_copy(first_, last_, p);  }
+   {  boost::interprocess::uninitialized_copy_or_move(first_, last_, p);  }
 
    virtual void uninitialized_copy_some_and_update(Iterator pos, difference_type division_count, bool first_n)
    {
       FwdIt mid = first_;
       std::advance(mid, division_count);
       if(first_n){
-         std::uninitialized_copy(first_, mid, pos);
+         boost::interprocess::uninitialized_copy_or_move(first_, mid, pos);
          first_ = mid;
       }
       else{
-         std::uninitialized_copy(mid, last_, pos);
+         boost::interprocess::uninitialized_copy_or_move(mid, last_, pos);
          last_ = mid;
       }
    }
@@ -104,12 +104,12 @@ struct default_construct_aux_proxy
       SizeType i = 0;
       try{
          for(; i < n; ++i, ++p){
-            new(detail::get_pointer(&*p))T();
+            new(containers_detail::get_pointer(&*p))T();
          }
       }
       catch(...){
          while(i--){
-            detail::get_pointer(&*orig_p++)->~T();
+            containers_detail::get_pointer(&*orig_p++)->~T();
          }
          throw;
       }
@@ -159,18 +159,18 @@ struct default_construct_aux_proxy
    SizeType count_;
 };
 
-}}}   //namespace boost { namespace interprocess { namespace detail {
+}}}   //namespace boost { namespace interprocess_container { namespace containers_detail {
 
-#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+#ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 
-#include <boost/interprocess/detail/variadic_templates_tools.hpp>
+#include <boost/interprocess/containers/container/detail/variadic_templates_tools.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <typeinfo>
 //#include <iostream> //For debugging purposes
 
 namespace boost {
-namespace interprocess { 
-namespace detail {
+namespace interprocess_container { 
+namespace containers_detail {
 
 //This class template will adapt each FwIt types to advanced_insert_aux_int
 template<class T, class Iterator, class ...Args>
@@ -204,8 +204,8 @@ struct advanced_insert_aux_emplace
    void priv_copy_all_to(const index_tuple<IdxPack...>&, Iterator p)
    {
       if(!used_){
-         T object(detail::forward_impl<Args>(get<IdxPack>(args_))...);
-         *p = detail::move_impl(object);
+         T object(boost::interprocess::forward<Args>(get<IdxPack>(args_))...);
+         *p = boost::interprocess::move(object);
          used_ = true;
       }
    }
@@ -214,7 +214,7 @@ struct advanced_insert_aux_emplace
    void priv_uninitialized_copy_all_to(const index_tuple<IdxPack...>&, Iterator p)
    {
       if(!used_){
-         new(detail::get_pointer(&*p))T(detail::forward_impl<Args>(get<IdxPack>(args_))...);
+         new(containers_detail::get_pointer(&*p))T(boost::interprocess::forward<Args>(get<IdxPack>(args_))...);
          used_ = true;
       }
    }
@@ -225,7 +225,7 @@ struct advanced_insert_aux_emplace
       assert(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
-            new(detail::get_pointer(&*p))T(detail::forward_impl<Args>(get<IdxPack>(args_))...);
+            new(containers_detail::get_pointer(&*p))T(boost::interprocess::forward<Args>(get<IdxPack>(args_))...);
             used_ = true;
          }
       }
@@ -237,8 +237,8 @@ struct advanced_insert_aux_emplace
       assert(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
-            T object(detail::forward_impl<Args>(get<IdxPack>(args_))...);
-            *p = detail::move_impl(object);
+            T object(boost::interprocess::forward<Args>(get<IdxPack>(args_))...);
+            *p = boost::interprocess::move(object);
             used_ = true;
          }
       }
@@ -247,25 +247,16 @@ struct advanced_insert_aux_emplace
    bool used_;
 };
 
-}}}   //namespace boost { namespace interprocess { namespace detail {
+}}}   //namespace boost { namespace interprocess_container { namespace containers_detail {
 
-#else //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+#else //#ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 
-#include <boost/interprocess/detail/preprocessor.hpp> 
+#include <boost/interprocess/containers/container/detail/preprocessor.hpp> 
+#include <boost/interprocess/containers/container/detail/value_init.hpp>
 
 namespace boost {
-namespace interprocess { 
-namespace detail {
-
-template<class T>
-struct value_init_helper
-{
-   value_init_helper()
-      : m_t()
-   {}
-
-   T m_t;
-};
+namespace interprocess_container { 
+namespace containers_detail {
 
 //This class template will adapt each FwIt types to advanced_insert_aux_int
 template<class T, class Iterator>
@@ -283,8 +274,8 @@ struct advanced_insert_aux_emplace
    virtual void copy_all_to(Iterator p)
    {
       if(!used_){
-         value_init_helper<T>v;
-         *p = detail::move_impl(v.m_t);
+         value_init<T>v;
+         *p = boost::interprocess::move(v.m_t);
          used_ = true;
       }
    }
@@ -292,7 +283,7 @@ struct advanced_insert_aux_emplace
    virtual void uninitialized_copy_all_to(Iterator p)
    {
       if(!used_){
-         new(detail::get_pointer(&*p))T();
+         new(containers_detail::get_pointer(&*p))T();
          used_ = true;
       }
    }
@@ -302,7 +293,7 @@ struct advanced_insert_aux_emplace
       assert(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
-            new(detail::get_pointer(&*p))T();
+            new(containers_detail::get_pointer(&*p))T();
             used_ = true;
          }
       }
@@ -313,8 +304,8 @@ struct advanced_insert_aux_emplace
       assert(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
-            value_init_helper<T>v;
-            *p = detail::move_impl(v.m_t);
+            value_init<T>v;
+            *p = boost::interprocess::move(v.m_t);
             used_ = true;
          }
       }
@@ -331,14 +322,14 @@ struct advanced_insert_aux_emplace
       typedef typename advanced_insert_aux_int<T, Iterator>::difference_type difference_type;  \
                                                                                        \
       BOOST_PP_CAT(BOOST_PP_CAT(advanced_insert_aux_emplace, n), arg)                    \
-         ( BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_PARAM_LIST, _) )                    \
-         : used_(false), BOOST_PP_ENUM(n, BOOST_INTERPROCESS_AUX_PARAM_INIT, _) {}     \
+         ( BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_LIST, _) )          \
+         : used_(false), BOOST_PP_ENUM(n, BOOST_CONTAINERS_AUX_PARAM_INIT, _) {}     \
                                                                                        \
       virtual void copy_all_to(Iterator p)                                             \
       {                                                                                \
          if(!used_){                                                                   \
-            T v(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_MEMBER_FORWARD, _));            \
-            *p = detail::move_impl(v);                                                 \
+            T v(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_MEMBER_FORWARD, _));            \
+            *p = boost::interprocess::move(v);                                                 \
             used_ = true;                                                              \
          }                                                                             \
       }                                                                                \
@@ -346,8 +337,8 @@ struct advanced_insert_aux_emplace
       virtual void uninitialized_copy_all_to(Iterator p)                               \
       {                                                                                \
          if(!used_){                                                                   \
-            new(detail::get_pointer(&*p))T                                             \
-               (BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_MEMBER_FORWARD, _));            \
+            new(containers_detail::get_pointer(&*p))T                                             \
+               (BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_MEMBER_FORWARD, _));            \
             used_ = true;                                                              \
          }                                                                             \
       }                                                                                \
@@ -358,8 +349,8 @@ struct advanced_insert_aux_emplace
          assert(division_count <=1);                                                   \
          if((first_n && division_count == 1) || (!first_n && division_count == 0)){    \
             if(!used_){                                                                \
-               new(detail::get_pointer(&*p))T                                          \
-                  (BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_MEMBER_FORWARD, _));         \
+               new(containers_detail::get_pointer(&*p))T                                          \
+                  (BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_MEMBER_FORWARD, _));         \
                used_ = true;                                                           \
             }                                                                          \
          }                                                                             \
@@ -371,25 +362,25 @@ struct advanced_insert_aux_emplace
          assert(division_count <=1);                                                   \
          if((first_n && division_count == 1) || (!first_n && division_count == 0)){    \
             if(!used_){                                                                \
-               T v(BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_MEMBER_FORWARD, _));         \
-               *p = detail::move_impl(v);                                              \
+               T v(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_MEMBER_FORWARD, _));         \
+               *p = boost::interprocess::move(v);                                              \
                used_ = true;                                                           \
             }                                                                          \
          }                                                                             \
       }                                                                                \
                                                                                        \
       bool used_;                                                                      \
-      BOOST_PP_REPEAT(n, BOOST_INTERPROCESS_AUX_PARAM_DEFINE, _)                       \
+      BOOST_PP_REPEAT(n, BOOST_CONTAINERS_AUX_PARAM_DEFINE, _)                       \
    };                                                                                  \
 //!
 
-#define BOOST_PP_LOCAL_LIMITS (1, BOOST_INTERPROCESS_MAX_CONSTRUCTOR_PARAMETERS)
+#define BOOST_PP_LOCAL_LIMITS (1, BOOST_CONTAINERS_MAX_CONSTRUCTOR_PARAMETERS)
 #include BOOST_PP_LOCAL_ITERATE()
 
-}}}   //namespace boost { namespace interprocess { namespace detail {
+}}}   //namespace boost { namespace interprocess_container { namespace containers_detail {
 
-#endif   //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+#endif   //#ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 
-#include <boost/interprocess/detail/config_end.hpp>
+#include <boost/interprocess/containers/container/detail/config_end.hpp>
 
-#endif //#ifndef BOOST_INTERPROCESS_ADVANCED_INSERT_INT_HPP
+#endif //#ifndef BOOST_CONTAINERS_ADVANCED_INSERT_INT_HPP
