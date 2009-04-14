@@ -14,6 +14,9 @@
 #include <cstring>
 #include <cstdlib>
 #include <string>
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 int main(int argc, char *argv[])
 {
@@ -23,12 +26,29 @@ int main(int argc, char *argv[])
       //Remove shared memory on construction and destruction
       struct shm_remove 
       {
-         shm_remove() {  shared_memory_object::remove("MySharedMemory"); }
-         ~shm_remove(){  shared_memory_object::remove("MySharedMemory"); }
+      //<-
+      #if 1
+         shm_remove() { shared_memory_object::remove(test::get_process_id_name()); }
+         ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()); }
+      #else
+      //->
+         shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+         ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
+      //<-
+      #endif
+      //->
       } remover;
 
       //Create a shared memory object.
+      //<-
+      #if 1
+      shared_memory_object shm (create_only, test::get_process_id_name(), read_write);
+      #else
+      //->
       shared_memory_object shm (create_only, "MySharedMemory", read_write);
+      //<-
+      #endif
+      //->
 
       //Set size
       shm.truncate(1000);
@@ -40,13 +60,24 @@ int main(int argc, char *argv[])
       std::memset(region.get_address(), 1, region.get_size());
 
       //Launch child process
-      std::string s(argv[0]); s += " child";
+      std::string s(argv[0]); s += " child ";
+      //<-
+      s += test::get_process_id_name();
+      //->
       if(0 != std::system(s.c_str()))
          return 1;
    }
    else{
       //Open already created shared memory object.
+      //<-
+      #if 1
+      shared_memory_object shm (open_only, argv[2], read_only);
+      #else
+      //->
       shared_memory_object shm (open_only, "MySharedMemory", read_only);
+      //<-
+      #endif
+      //->
 
       //Map the whole shared memory in this process
       mapped_region region(shm, read_only);

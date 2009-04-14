@@ -16,6 +16,9 @@
 #include <boost/interprocess/smart_ptr/shared_ptr.hpp>
 #include <boost/interprocess/smart_ptr/weak_ptr.hpp>
 #include <cassert>
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 using namespace boost::interprocess;
 
@@ -46,9 +49,30 @@ struct shared_ptr_owner
 int main ()
 {
    //Destroy any previous file with the name to be used.
-   file_mapping::remove("MyMappedFile");
+   struct file_remove 
    {
+   //<-
+   #if 1
+      file_remove() { file_mapping::remove(test::get_process_id_name()); }
+      ~file_remove(){ file_mapping::remove(test::get_process_id_name()); }
+   #else
+   //->
+      file_remove() { file_mapping::remove("MyMappedFile"); }
+      ~file_remove(){ file_mapping::remove("MyMappedFile"); }
+   //<-
+   #endif
+   //->
+   } remover;
+   {
+      //<-
+      #if 1
+      managed_mapped_file file(create_only, test::get_process_id_name(), 4096);
+      #else
+      //->
       managed_mapped_file file(create_only, "MyMappedFile", 4096);
+      //<-
+      #endif
+      //->
 
       //Construct the shared type in the file and
       //pass ownership to this local shared pointer
@@ -77,7 +101,16 @@ int main ()
    }
    {
       //Reopen the mapped file and find again all owners
+      //<-
+      #if 1
+      managed_mapped_file file(open_only, test::get_process_id_name());
+      #else
+      //->
       managed_mapped_file file(open_only, "MyMappedFile");
+      //<-
+      #endif
+      //->
+
       shared_ptr_owner *owner1 = file.find<shared_ptr_owner>("owner1").first;
       shared_ptr_owner *owner2 = file.find<shared_ptr_owner>("owner2").first;
       assert(owner1 && owner2);
@@ -113,7 +146,6 @@ int main ()
       //The reference count will be deallocated when all weak pointers
       //disappear. After that, the file is unmapped.
    }
-   file_mapping::remove("MyMappedFile");
    return 0;
 }
 //]

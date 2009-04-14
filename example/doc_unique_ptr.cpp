@@ -18,6 +18,9 @@
 #include <boost/interprocess/containers/list.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <cassert>
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 using namespace boost::interprocess;
 
@@ -48,9 +51,30 @@ typedef list
 int main ()
 {
    //Destroy any previous file with the name to be used.
-   file_mapping::remove("MyMappedFile");
+   struct file_remove 
    {
+   //<-
+   #if 1
+      file_remove() { file_mapping::remove(test::get_process_id_name()); }
+      ~file_remove(){ file_mapping::remove(test::get_process_id_name()); }
+   #else
+   //->
+      file_remove() { file_mapping::remove("MyMappedFile"); }
+      ~file_remove(){ file_mapping::remove("MyMappedFile"); }
+   //<-
+   #endif
+   //->
+   } remover;
+   {
+      //<-
+      #if 1
+      managed_mapped_file file(create_only, test::get_process_id_name(), 65536);
+      #else
+      //->
       managed_mapped_file file(create_only, "MyMappedFile", 65536);
+      //<-
+      #endif
+      //->
 
       //Construct an object in the file and
       //pass ownership to this local unique pointer
@@ -98,7 +122,16 @@ int main ()
    }
    {
       //Reopen the mapped file and find again the list
+      //<-
+      #if 1
+      managed_mapped_file file(open_only, test::get_process_id_name());
+      #else
+      //->
       managed_mapped_file file(open_only, "MyMappedFile");
+      //<-
+      #endif
+      //->
+
       unique_ptr_list_t   *unique_list =
          file.find<unique_ptr_list_t>("unique list").first;
       assert(unique_list);
@@ -112,7 +145,6 @@ int main ()
       //Now destroy the list. All elements will be automatically deallocated.
       file.destroy_ptr(unique_list);
    }
-   file_mapping::remove("MyMappedFile");
    return 0;
 }
 //]

@@ -17,6 +17,9 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 using namespace boost::interprocess;
 namespace bmi = boost::multi_index;
@@ -62,14 +65,31 @@ typedef bmi::multi_index_container<
 int main ()
 {
    //Remove shared memory on construction and destruction
-   struct shm_destroy
+   struct shm_remove
    {
-      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
-      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   //<-
+   #if 1
+      shm_remove() { shared_memory_object::remove(test::get_process_id_name()); }
+      ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()); }
+   #else
+   //->
+      shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
+   //<-
+   #endif
+   //->
    } remover;
 
    //Create shared memory
+   //<-
+   #if 1
+   managed_shared_memory segment(create_only,test::get_process_id_name(), 65536);
+   #else
+   //->
    managed_shared_memory segment(create_only,"MySharedMemory", 65536);
+   //<-
+   #endif
+   //->
 
    //Construct the multi_index in shared memory
    employee_set *es = segment.construct<employee_set>

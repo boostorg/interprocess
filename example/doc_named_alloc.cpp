@@ -15,6 +15,9 @@
 #include <cstddef>
 #include <cassert>
 #include <utility>
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 int main(int argc, char *argv[])
 {
@@ -25,12 +28,29 @@ int main(int argc, char *argv[])
       //Remove shared memory on construction and destruction
       struct shm_remove 
       {
-         shm_remove() {  shared_memory_object::remove("MySharedMemory"); }
-         ~shm_remove(){  shared_memory_object::remove("MySharedMemory"); }
+      //<-
+      #if 1
+         shm_remove() { shared_memory_object::remove(test::get_process_id_name()); }
+         ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()); }
+      #else
+      //->
+         shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+         ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
+      //<-
+      #endif
+      //->
       } remover;
 
       //Construct managed shared memory
+      //<-
+      #if 1
+      managed_shared_memory segment(create_only, test::get_process_id_name(), 65536);
+      #else
+      //->
       managed_shared_memory segment(create_only, "MySharedMemory", 65536);
+      //<-
+      #endif
+      //->
 
       //Create an object of MyType initialized to {0.0, 0}
       MyType *instance = segment.construct<MyType>
@@ -55,7 +75,10 @@ int main(int argc, char *argv[])
          , &int_initializer[0]);    //Iterator for the 2nd ctor argument
 
       //Launch child process
-      std::string s(argv[0]); s += " child";
+      std::string s(argv[0]); s += " child ";
+      //<-
+      s += test::get_process_id_name();
+      //->
       if(0 != std::system(s.c_str()))
          return 1;
 
@@ -73,7 +96,15 @@ int main(int argc, char *argv[])
    }
    else{
       //Open managed shared memory
+      //<-
+      #if 1
+      managed_shared_memory segment(open_only, argv[2]);
+      #else
+      //->
       managed_shared_memory segment(open_only, "MySharedMemory");
+      //<-
+      #endif
+      //->
 
       std::pair<MyType*, std::size_t> res;
 

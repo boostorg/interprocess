@@ -21,10 +21,10 @@ int main ()
    using namespace boost::interprocess;
 
    //Remove shared memory on construction and destruction
-   struct shm_destroy
+   struct shm_remove
    {
-      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
-      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+      shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
    } remover;
 
    //Shared memory front-end that is able to construct objects

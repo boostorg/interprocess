@@ -17,6 +17,9 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <cassert>
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 using namespace boost::interprocess;
 
@@ -32,13 +35,30 @@ typedef shared_ptr<MyType, void_allocator_type, deleter_type> my_shared_ptr;
 int main ()
 {
    //Remove shared memory on construction and destruction
-   struct shm_destroy
+   struct shm_remove
    {
-      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
-      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   //<-
+   #if 1
+      shm_remove() { shared_memory_object::remove(test::get_process_id_name()); }
+      ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()); }
+   #else
+   //->
+      shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
+   //<-
+   #endif
+   //->
    } remover;
 
+   //<-
+   #if 1
+   managed_shared_memory segment(create_only, test::get_process_id_name(), 4096);
+   #else
+   //->
    managed_shared_memory segment(create_only, "MySharedMemory", 4096);
+   //<-
+   #endif
+   //->
    
    //Create a shared pointer in shared memory
    //pointing to a newly created object in the segment
