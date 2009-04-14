@@ -677,16 +677,12 @@ class stable_vector
          }
          //Now fill pool if data is not enough
          if((n - size) > this->internal_data.pool_size){
-            this->add_to_pool((n - size) - this->internal_data.pool_size, alloc_version());
+            this->add_to_pool((n - size) - this->internal_data.pool_size);
          }
       }
    }
 
-   template<class AllocatorVersion>
-   void clear_pool(AllocatorVersion,
-                  typename boost::interprocess_container::containers_detail::enable_if_c
-                     <boost::interprocess_container::containers_detail::is_same<AllocatorVersion, allocator_v1>
-                        ::value>::type * = 0)
+   void clear_pool(allocator_v1)
    {
       if(!impl.empty() && impl.back()){
          void_ptr &p1 = *(impl.end()-2);
@@ -703,11 +699,7 @@ class stable_vector
       }
    }
 
-   template<class AllocatorVersion>
-   void clear_pool(AllocatorVersion,
-      typename boost::interprocess_container::containers_detail::enable_if_c
-         <boost::interprocess_container::containers_detail::is_same<AllocatorVersion, allocator_v2>
-            ::value>::type * = 0)
+   void clear_pool(allocator_v2)
    {
 
       if(!impl.empty() && impl.back()){
@@ -725,11 +717,12 @@ class stable_vector
       this->clear_pool(alloc_version());
    }
 
-   template<class AllocatorVersion>
-   void add_to_pool(size_type n, AllocatorVersion,
-      typename boost::interprocess_container::containers_detail::enable_if_c
-         <boost::interprocess_container::containers_detail::is_same<AllocatorVersion, allocator_v1>
-            ::value>::type * = 0)
+   void add_to_pool(size_type n)
+   {
+      this->add_to_pool(n, alloc_version());
+   }
+
+   void add_to_pool(size_type n, allocator_v1)
    {
       size_type remaining = n;
       while(remaining--){
@@ -737,11 +730,7 @@ class stable_vector
       }
    }
 
-   template<class AllocatorVersion>
-   void add_to_pool(size_type n, AllocatorVersion,
-      typename boost::interprocess_container::containers_detail::enable_if_c
-         <boost::interprocess_container::containers_detail::is_same<AllocatorVersion, allocator_v2>
-            ::value>::type * = 0)
+   void add_to_pool(size_type n, allocator_v2)
    {
       void_ptr &p1 = *(impl.end()-2);
       void_ptr &p2 = impl.back();
