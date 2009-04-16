@@ -15,6 +15,9 @@
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <cassert>
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 int main ()
 {
@@ -31,11 +34,28 @@ int main ()
    //Remove shared memory on construction and destruction
    struct shm_remove
    {
+   //<-
+   #if 1
+      shm_remove() { shared_memory_object::remove(test::get_process_id_name()); }
+      ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()); }
+   #else 
+   //->
       shm_remove() { shared_memory_object::remove("MySharedMemory"); }
       ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
+   //<-
+   #endif
+   //->
    } remover;
 
+   //<-
+   #if 1
+   managed_shared_memory shm(create_only, test::get_process_id_name(), 65536);
+   #else
+   //->
    managed_shared_memory shm(create_only, "MySharedMemory", 10000);
+   //<-
+   #endif
+   //->
 
    //Create allocators
    CharAllocator     charallocator  (shm.get_segment_manager());

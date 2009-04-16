@@ -17,6 +17,9 @@
 #include <cstring>
 #include <cstdlib>
 #include <string>
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 int main(int argc, char *argv[])
 {

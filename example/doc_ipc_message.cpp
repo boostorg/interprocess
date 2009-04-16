@@ -9,7 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-//[run_ipc_message
+//[doc_ipc_message
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <cstdlib> //std::system
 #include <sstream>
