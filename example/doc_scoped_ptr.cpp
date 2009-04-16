@@ -12,6 +12,9 @@
 //[doc_scoped_ptr
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 using namespace boost::interprocess;
 
@@ -48,13 +51,30 @@ int main ()
 {
    //Create shared memory
    //Remove shared memory on construction and destruction
-   struct shm_destroy
+   struct shm_remove
    {
-      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
-      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   //<-
+   #if 1
+      shm_remove() { shared_memory_object::remove(test::get_process_id_name()); }
+      ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()); }
+   #else
+   //->
+      shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
+   //<-
+   #endif
+   //->
    } remover;
 
+   //<-
+   #if 1
+   managed_shared_memory shmem(create_only, test::get_process_id_name(), 10000);
+   #else
+   //->
    managed_shared_memory shmem(create_only, "MySharedMemory", 10000);
+   //<-
+   #endif
+   //->
 
    //In the first try, there will be no exceptions
    //in the second try we will throw an exception

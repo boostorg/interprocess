@@ -18,6 +18,9 @@
 #include <cstring>
 #include <cstddef>
 #include <cstdlib>
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 int main(int argc, char *argv[])
 {
@@ -26,8 +29,17 @@ int main(int argc, char *argv[])
    if(argc == 1){ //Parent process executes this
       {  //Create a file
          std::filebuf fbuf;
+      //<-
+      #if 1
+         fbuf.open(test::get_process_id_name(), std::ios_base::in | std::ios_base::out 
+                              | std::ios_base::trunc | std::ios_base::binary); 
+      #else
+      //->
          fbuf.open("file.bin", std::ios_base::in | std::ios_base::out 
                               | std::ios_base::trunc | std::ios_base::binary); 
+      //<-
+      #endif
+      //->
          //Set the size
          fbuf.pubseekoff(FileSize-1, std::ios_base::beg);
          fbuf.sputc(0);
@@ -35,11 +47,27 @@ int main(int argc, char *argv[])
       //Remove file on exit
       struct file_remove 
       {
+      //<-
+      #if 1
+         ~file_remove (){  file_mapping::remove(test::get_process_id_name()); }
+      #else
+      //->
          ~file_remove (){  file_mapping::remove("file.bin"); }
+      //<-
+      #endif
+      //->
       } destroy_on_exit;
 
       //Create a file mapping
+      //<-
+      #if 1
+      file_mapping m_file(test::get_process_id_name(), read_write);
+      #else
+      //->
       file_mapping m_file("file.bin", read_write);
+      //<-
+      #endif
+      //->
 
       //Map the whole file with read-write permissions in this process
       mapped_region region(m_file, read_write);
@@ -52,13 +80,25 @@ int main(int argc, char *argv[])
       std::memset(addr, 1, size);
 
       //Launch child process
-      std::string s(argv[0]); s += " child";
+      std::string s(argv[0]); s += " child ";
+      //<-
+      s += test::get_process_id_name();
+      //->
       if(0 != std::system(s.c_str()))
          return 1;
    }
    else{  //Child process executes this
       {  //Open the file mapping and map it as read-only
-         file_mapping m_file ("file.bin", read_only);
+         //<-
+         #if 1
+         file_mapping m_file(argv[2], read_only);
+         #else
+         //->
+         file_mapping m_file("file.bin", read_only);
+         //<-
+         #endif
+         //->
+
          mapped_region region(m_file, read_only);
 
          //Get the address of the mapped region
@@ -73,7 +113,15 @@ int main(int argc, char *argv[])
       }
       {  //Now test it reading the file
          std::filebuf fbuf;
+         //<-
+         #if 1
+         fbuf.open(argv[2], std::ios_base::in | std::ios_base::binary); 
+         #else
+         //->
          fbuf.open("file.bin", std::ios_base::in | std::ios_base::binary); 
+         //<-
+         #endif
+         //->
 
          //Read it to memory
          std::vector<char> vect(FileSize, 0);

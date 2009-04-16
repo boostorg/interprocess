@@ -9,12 +9,15 @@
 //////////////////////////////////////////////////////////////////////////////
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-//[run_doc_spawn_vector
+//[doc_spawn_vector
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <string>
 #include <cstdlib> //std::system
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 using namespace boost::interprocess;
 
@@ -33,12 +36,29 @@ int main(int argc, char *argv[])
       //Remove shared memory on construction and destruction
       struct shm_remove 
       {
-         shm_remove() {  shared_memory_object::remove("MySharedMemory"); }
-         ~shm_remove(){  shared_memory_object::remove("MySharedMemory"); }
+      //<-
+      #if 1
+         shm_remove() { shared_memory_object::remove(test::get_process_id_name()); }
+         ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()); }
+      #else
+      //->
+         shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+         ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
+      //<-
+      #endif
+      //->
       } remover;
 
       //Create a new segment with given name and size
-      managed_shared_memory segment(create_only ,"MySharedMemory", 65536);
+      //<-
+      #if 1
+      managed_shared_memory segment(create_only, test::get_process_id_name(), 65536);
+      #else
+      //->
+      managed_shared_memory segment(create_only, "MySharedMemory", 65536);
+      //<-
+      #endif
+      //->
 
       //Initialize shared memory STL-compatible allocator
       const ShmemAllocator alloc_inst (segment.get_segment_manager());
@@ -50,7 +70,10 @@ int main(int argc, char *argv[])
          myvector->push_back(i);
 
       //Launch child process
-      std::string s(argv[0]); s += " child";
+      std::string s(argv[0]); s += " child ";
+      //<-
+      s += test::get_process_id_name();
+      //->
       if(0 != std::system(s.c_str()))
          return 1;
 
@@ -60,7 +83,15 @@ int main(int argc, char *argv[])
    }
    else{ //Child process
       //Open the managed segment
+      //<-
+      #if 1
+      managed_shared_memory segment(open_only, argv[2]);
+      #else
+      //->
       managed_shared_memory segment(open_only, "MySharedMemory");  
+      //<-
+      #endif
+      //->
 
       //Find the vector using the c-string name
       MyVector *myvector = segment.find<MyVector>("MyVector").first;

@@ -22,10 +22,10 @@ int main ()
 {
 
    //Erase previous shared memory and schedule erasure on exit
-   struct shm_destroy
+   struct shm_remove
    {
-      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
-      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+      shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
    } remover;
 
    //Create a shared memory object.

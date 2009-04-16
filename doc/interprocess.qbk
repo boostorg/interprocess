@@ -3058,7 +3058,11 @@ To use a managed shared memory, you must include the following header:
    //    to implement managed features.
    //!!  If anything fails, throws interprocess_exception
    //
-   managed_shared_memory segment      (create_only,       "MySharedMemory", //Shared memory object name      65536);           //Shared memory object size in bytes
+   managed_shared_memory segment      ( create_only
+                                      , "MySharedMemory" //Shared memory object name
+                                      , 65536);          //Shared memory object size in bytes
+
+
 [c++]
 
    //1.  Opens a shared memory object
@@ -3069,7 +3073,8 @@ To use a managed shared memory, you must include the following header:
    //    to implement managed features.
    //!!  If anything fails, throws interprocess_exception
    //
-   managed_shared_memory segment      (open_only,       "MySharedMemory");//Shared memory object name[c++]
+   managed_shared_memory segment      (open_only,       "MySharedMemory");//Shared memory object name
+
 
 [c++]
 
@@ -3078,7 +3083,11 @@ To use a managed shared memory, you must include the following header:
    //2.  Otherwise, equivalent to "open_only" (size is ignored)
    //!!  If anything fails, throws interprocess_exception
    //
-   managed_shared_memory segment      (open_or_create,       "MySharedMemory", //Shared memory object name      65536);           //Shared memory object size in bytes
+   managed_shared_memory segment      ( open_or_create
+                                      , "MySharedMemory" //Shared memory object name
+                                      , 65536);          //Shared memory object size in bytes
+
+
 When the `managed_shared_memory` object is destroyed, the shared memory
 object is automatically unmapped, and all the resources are freed. To remove
 the shared memory object from the system you must use the `shared_memory_object::remove`

@@ -15,7 +15,9 @@
 #include <cstring>//std::memset
 #include <new>    //std::nothrow
 #include <vector> //std::vector
-
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 int main()
 {
@@ -23,13 +25,30 @@ int main()
    typedef managed_shared_memory::multiallocation_chain multiallocation_chain;
 
    //Remove shared memory on construction and destruction
-   struct shm_destroy
+   struct shm_remove
    {
-      shm_destroy() { shared_memory_object::remove("MySharedMemory"); }
-      ~shm_destroy(){ shared_memory_object::remove("MySharedMemory"); }
+   //<-
+   #if 1
+      shm_remove() { shared_memory_object::remove(test::get_process_id_name()); }
+      ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()); }
+   #else
+   //->
+      shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
+   //<-
+   #endif
+   //->
    } remover;
 
-   managed_shared_memory managed_shm(create_only, "MySharedMemory", 65536);
+   //<-
+   #if 1
+   managed_shared_memory managed_shm(create_only,test::get_process_id_name(), 65536);
+   #else
+   //->
+   managed_shared_memory managed_shm(create_only,"MySharedMemory", 65536);
+   //<-
+   #endif
+   //->
 
    //Allocate 16 elements of 100 bytes in a single call. Non-throwing version.
    multiallocation_chain chain(managed_shm.allocate_many(100, 16, std::nothrow));
