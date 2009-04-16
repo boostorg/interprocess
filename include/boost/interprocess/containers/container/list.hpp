@@ -112,6 +112,10 @@ struct list_node
 
    #else //#ifndef BOOST_CONTAINERS_PERFECT_FORWARDING
 
+   list_node()
+      : m_data()
+   {}
+
    template<class ...Args>
    list_node(Args &&...args)
       : m_data(boost::interprocess::forward<Args>(args)...)

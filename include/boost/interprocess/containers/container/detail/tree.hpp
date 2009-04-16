@@ -146,6 +146,10 @@ struct rbtree_node
 
    #else //#ifndef BOOST_CONTAINERS_PERFECT_FORWARDING
 
+   rbtree_node()
+      : m_data()
+   {}
+
    template<class ...Args>
    rbtree_node(Args &&...args)
       : m_data(boost::interprocess::forward<Args>(args)...)

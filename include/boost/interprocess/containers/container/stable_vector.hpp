@@ -227,6 +227,10 @@ struct node_type
 
    #else //#ifndef BOOST_CONTAINERS_PERFECT_FORWARDING
 
+   node_type()
+      : value()
+   {}
+
    template<class ...Args>
    node_type(Args &&...args)
       : value(boost::interprocess::forward<Args>(args)...)
