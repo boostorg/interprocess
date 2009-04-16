@@ -46,8 +46,8 @@
    #  if defined(__CYGWIN__)
       #define BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK
    #  endif
-   #elif defined(__APPLE__)
-   # define BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES   
+   //#elif defined(__APPLE__)
+   //# define BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES   
    #endif 
 
    #if ((defined _V6_ILP32_OFFBIG)  &&(_V6_ILP32_OFFBIG   - 0 > 0)) ||\

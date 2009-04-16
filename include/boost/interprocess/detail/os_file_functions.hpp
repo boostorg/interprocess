@@ -24,6 +24,8 @@
 #     include <sys/types.h>
 #     include <sys/stat.h>
 #     include <errno.h>
+#     include <cstdio>
+#     include <dirent.h>
 #  else
 #    error Unknown platform
 #  endif
@@ -437,10 +439,61 @@ inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
    return (acquired = true);
 }
 
-
-
 inline bool release_file_lock_sharable(file_handle_t hnd)
 {  return release_file_lock(hnd);   }
+
+inline bool delete_subdirectories_recursive
+   (const std::string &refcstrRootDirectory, const char *dont_delete_this)
+{
+   DIR *d = opendir(refcstrRootDirectory.c_str());
+   if(!d) {
+      return false;
+   }
+
+   struct dir_close
+   {
+      DIR *d_;
+      dir_close(DIR *d) : d_(d) {}
+      ~dir_close() { ::closedir(d_); }
+   } dc(d); (void)dc;
+
+   struct ::dirent *de;
+   struct ::stat st;
+   std::string fn;
+
+   while((de=::readdir(d))) {
+      if( de->d_name[0] == '.' && ( de->d_name[1] == '\0'
+            || (de->d_name[1] == '.' && de->d_name[2] == '\0' )) ){
+         continue;
+      }
+      if(dont_delete_this && std::strcmp(dont_delete_this, de->d_name) == 0){  
+         continue;
+      }
+      fn = refcstrRootDirectory;
+      fn += '/';
+      fn += de->d_name;
+
+      if(std::remove(fn.c_str())) {
+         if(::stat(fn.c_str(), & st)) {
+            return false;
+         }
+         if(S_ISDIR(st.st_mode)) {
+            if(!delete_subdirectories_recursive(fn, 0) ){
+               return false;
+            }
+         } else {
+            return false;
+         }
+      }
+   }
+   return std::remove(refcstrRootDirectory.c_str()) ? false : true;
+}
+
+//This function erases all the subdirectories of a directory except the one pointed by "dont_delete_this"
+inline bool delete_subdirectories(const std::string &refcstrRootDirectory, const char *dont_delete_this)
+{
+   return delete_subdirectories_recursive(refcstrRootDirectory, dont_delete_this );
+}
 
 #endif   //#if (defined BOOST_INTERPROCESS_WINDOWS)
 
