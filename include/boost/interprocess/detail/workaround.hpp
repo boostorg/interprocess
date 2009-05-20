@@ -36,7 +36,7 @@
    #  define BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
    #  endif
    #endif
-	   
+   
    #if ((_POSIX_BARRIERS - 0) > 0)
    # define BOOST_INTERPROCESS_POSIX_BARRIERS
    # endif

@@ -247,12 +247,9 @@ inline mapped_region::mapped_region
             error_info err(winapi::get_last_error());
             throw interprocess_exception(err);
          }
-         #ifdef max
-         #undef max
-         #endif
 
          if(static_cast<unsigned __int64>(total_size) > 
-            std::numeric_limits<std::size_t>::max()){
+            (std::numeric_limits<std::size_t>::max)()){
             error_info err(size_error);
             throw interprocess_exception(err);
          }

@@ -263,12 +263,12 @@ class iterator
    friend class iterator<T, const T, typename boost::pointer_to_other<Pointer, T>::type>;
 
    public:
-	typedef std::random_access_iterator_tag   iterator_category;
-	typedef Value                             value_type;
-	typedef typename std::iterator_traits
+   typedef std::random_access_iterator_tag   iterator_category;
+   typedef Value                             value_type;
+   typedef typename std::iterator_traits
       <Pointer>::difference_type             difference_type;
-	typedef Pointer                           pointer;
-	typedef Value &                           reference;
+   typedef Pointer                           pointer;
+   typedef Value &                           reference;
 
    iterator()
    {}
