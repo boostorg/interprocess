@@ -23,10 +23,6 @@
 #include <string>
 #include "get_process_id_name.hpp"
 
-#ifdef max
-#undef max
-#endif
-
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //  This example tests the process shared message queue.                      //
@@ -60,7 +56,7 @@ bool test_priority_order()
          mq1.send(&tstamp, sizeof(tstamp), (unsigned int)(i%10));
       }
 
-      unsigned int priority_prev = std::numeric_limits<unsigned int>::max();
+      unsigned int priority_prev = (std::numeric_limits<unsigned int>::max)();
       std::size_t  tstamp_prev = 0;
 
       //Receive all messages and test those are ordered
