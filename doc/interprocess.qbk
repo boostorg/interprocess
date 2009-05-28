@@ -512,8 +512,16 @@ POSIX:
 *  Some UNIX systems don't fully support POSIX shared memory objects at all.
 
 In those platforms, shared memory is emulated with mapped files created
-in the temporary files directory. Because of this emulation, shared memory
-has filesystem lifetime in some of those systems.
+in a "boost_interprocess" folder created in a temporary files directory.
+In Windows platforms, if "Common AppData" key is present
+in the registry, "boost_interprocess" folder is created in that directory
+(in XP usually "C:\Documents and Settings\All Users\Application Data" and
+in Vista "C:\ProgramData").
+For Windows platforms without that registry key and Unix systems, shared memory is
+created in the system temporary files directory ("/tmp" or similar).
+
+Because of this emulation, shared memory has filesystem lifetime in some
+of those systems.
 
 [endsect]
 
@@ -542,8 +550,8 @@ shared memory object of this name exists (that is, trying to open an object
 with that name will fail and an object of the same name can be created again).
 
 In Windows operating systems, current version supports an usually acceptable emulation
-of the UNIX unlink behaviour: the file is randomly renamed and marked as to be deleted when
-the last open handle is closed.
+of the UNIX unlink behaviour: the file is renamed with a random name and marked as ['to
+be deleted when the last open handle is closed].
 
 [endsect]
 

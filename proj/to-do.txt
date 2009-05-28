@@ -49,13 +49,11 @@
 
 -> find a way to pass security attributes to shared memory
 
--> Explain in docs that shared memory can't be used between different users in windows
-
 -> Implement vector with memcpy/memmove for trivially copyable types.
 
 -> flat_xxx constructors are not documented
 
--> operator >> eta antzekoek moved_value behar dute 
+-> operator >> and similar need moved_value
 
 -> Add cmath workaround for Boost < 1.37
 
