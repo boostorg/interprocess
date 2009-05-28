@@ -477,7 +477,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
    //!   throws or T's default or copy constructor throws.
    //! 
    //! <b>Complexity</b>: Linear to n.
-   vector(size_type n) 
+   explicit vector(size_type n) 
       :  base_t(allocator_type())
    {  this->resize(n); }
 
@@ -1723,6 +1723,10 @@ class vector : private containers_detail::vector_alloc_holder<A>
    void priv_assign_aux(FwdIt first, FwdIt last, std::forward_iterator_tag)
    {
       size_type n = std::distance(first, last);
+      if(!n){
+         this->prot_destroy_all();
+         return;
+      }
       //Check if we have enough memory or try to expand current memory
       size_type remaining = this->members_.m_capacity - this->members_.m_size;
       bool same_buffer_start;
@@ -1749,7 +1753,7 @@ class vector : private containers_detail::vector_alloc_holder<A>
          if (this->size() >= n){
             //There is memory, but there are more old elements than new ones
             //Overwrite old elements with new ones
-            // iG std::copy(first, last, start);
+            assert(start);
             std::copy(first, last, start);
             //Destroy remaining old elements
             this->destroy_n(start + n, this->members_.m_size - n);

@@ -139,7 +139,7 @@ inline OS_thread_id_t get_invalid_thread_id()
 }
 
 inline bool equal_thread_id(OS_thread_id_t id1, OS_thread_id_t id2)
-{  return 0 != ::pthread_equal(id1, id2);  }
+{  return 0 != pthread_equal(id1, id2);  }
 
 inline void thread_yield()
 {  ::sched_yield();  }
@@ -152,7 +152,7 @@ inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
 
 inline bool equal_systemwide_thread_id(const OS_systemwide_thread_id_t &id1, const OS_systemwide_thread_id_t &id2)
 {
-   return (0 != ::pthread_equal(id1.tid, id2.tid)) && (id1.pid == id2.pid);
+   return (0 != pthread_equal(id1.tid, id2.tid)) && (id1.pid == id2.pid);
 }
 
 inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()

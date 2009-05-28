@@ -84,6 +84,7 @@ inline bool create_directory(const char *path)
 inline const char *get_temporary_path()
 {  return std::getenv("TMP"); }
 
+
 inline file_handle_t create_new_file
    (const char *name, mode_t mode = read_write, bool temporary = false)
 {  
@@ -311,12 +312,13 @@ inline bool create_directory(const char *path)
 
 inline const char *get_temporary_path()
 {  
+   struct stat data;
    const char *dir = std::getenv("TMPDIR"); 
-   if(!dir){
+   if(!dir || ::stat(dir, &data) != 0){
       dir = std::getenv("TMP");
-      if(!dir){
+      if(!dir || ::stat(dir, &data) != 0){
          dir = std::getenv("TEMP");
-         if(!dir){
+         if(!dir || ::stat(dir, &data) != 0){
             dir = "/tmp";
          }
       }
