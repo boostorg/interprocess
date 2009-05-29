@@ -307,7 +307,7 @@ inline bool shared_memory_object::remove(const char *filename)
       #else
       detail::tmp_filename(filename, file_str);
       #endif
-      return 0 != shm_unlink(file_str.c_str());
+      return 0 == shm_unlink(file_str.c_str());
    }
    catch(...){
       return false;
