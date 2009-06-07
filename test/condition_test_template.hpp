@@ -30,6 +30,7 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/thread/xtime.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
+#include <iostream>
 
 namespace boost{
 namespace interprocess{
