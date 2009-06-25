@@ -62,7 +62,7 @@ class interprocess_semaphore
    public:
    //!Creates a interprocess_semaphore with the given initial count. 
    //!interprocess_exception if there is an error.*/
-   interprocess_semaphore(int initialCount);
+   interprocess_semaphore(unsigned int initialCount);
 
    //!Destroys the interprocess_semaphore.
    //!Does not throw
