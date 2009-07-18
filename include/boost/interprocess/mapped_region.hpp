@@ -31,7 +31,9 @@
 #    include <unistd.h>
 #    include <sys/stat.h>
 #    include <sys/types.h>
+#  ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
 #    include <sys/shm.h>
+#  endif
 #    include <cassert>
 #  else
 #    error Unknown platform
