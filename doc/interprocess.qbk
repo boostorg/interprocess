@@ -512,8 +512,16 @@ POSIX:
 *  Some UNIX systems don't fully support POSIX shared memory objects at all.
 
 In those platforms, shared memory is emulated with mapped files created
-in the temporary files directory. Because of this emulation, shared memory
-has filesystem lifetime in some of those systems.
+in a "boost_interprocess" folder created in a temporary files directory.
+In Windows platforms, if "Common AppData" key is present
+in the registry, "boost_interprocess" folder is created in that directory
+(in XP usually "C:\Documents and Settings\All Users\Application Data" and
+in Vista "C:\ProgramData").
+For Windows platforms without that registry key and Unix systems, shared memory is
+created in the system temporary files directory ("/tmp" or similar).
+
+Because of this emulation, shared memory has filesystem lifetime in some
+of those systems.
 
 [endsect]
 
@@ -542,8 +550,8 @@ shared memory object of this name exists (that is, trying to open an object
 with that name will fail and an object of the same name can be created again).
 
 In Windows operating systems, current version supports an usually acceptable emulation
-of the UNIX unlink behaviour: the file is randomly renamed and marked as to be deleted when
-the last open handle is closed.
+of the UNIX unlink behaviour: the file is renamed with a random name and marked as ['to
+be deleted when the last open handle is closed].
 
 [endsect]
 
@@ -1289,10 +1297,10 @@ region:
 
 A mutex can also be [*recursive] or [*non-recursive]:
 
-* Recursive mutexes can be locked several types by the same thread. To fully unlock the
-  mutex, the thread has two unlock the mutex the same times it has locked it.
+* Recursive mutexes can be locked several times by the same thread. To fully unlock the
+  mutex, the thread has to unlock the mutex the same times it has locked it.
 
-* Non-recursive mutexes can't be locked several types by the same thread. If a mutex
+* Non-recursive mutexes can't be locked several times by the same thread. If a mutex
   is locked twice by a thread, the result is undefined, it might throw an error or 
   the thread could be blocked forever.
 
@@ -6525,6 +6533,20 @@ warranty.
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_40_00 Boost 1.40 Release]
+
+*  Windows shared memory is created in Shared Documents folder so that it can be shared
+   between services and processes
+*  Fixed bugs
+  [@https://svn.boost.org/trac/boost/ticket/2967 #2967],
+  [@https://svn.boost.org/trac/boost/ticket/2973 #2973],
+  [@https://svn.boost.org/trac/boost/ticket/2992 #2992],
+  [@https://svn.boost.org/trac/boost/ticket/3138 #3138],
+  [@https://svn.boost.org/trac/boost/ticket/3166 #3166],
+  [@https://svn.boost.org/trac/boost/ticket/3205 #3205].
+
+[endsect]
 
 [section:release_notes_boost_1_39_00 Boost 1.39 Release]
 

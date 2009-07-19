@@ -10,6 +10,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/containers/string.hpp>
+#include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/streams/vectorstream.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <sstream>
@@ -23,13 +24,32 @@
 using namespace boost::interprocess;
 
 //Force instantiations to catch compile-time errors
-typedef basic_vectorstream<basic_string<char> > my_stringstream_t;
 typedef basic_string<char> my_string;
+typedef basic_vectorstream<my_string > my_stringstream_t;
+typedef vector<char> my_vector;
+typedef basic_vectorstream<my_vector>  my_vectorstream_t;
 template class basic_vectorstream<my_string>;
 template class basic_vectorstream<std::vector<char> >;
 
 static int vectorstream_test()
 {
+   {  //Test high watermarking initialization   
+      my_stringstream_t my_stringstream;
+      int a (0);
+      my_stringstream << 11;
+      my_stringstream >> a;
+      if(a != 11)
+         return 1;
+   }
+   {  //Test high watermarking initialization   
+      my_vectorstream_t my_stringstream;
+      int a (0);
+      my_stringstream << 13;
+      my_stringstream >> a;
+      if(a != 13)
+         return 1;
+   }
+
    //Pre-reserved string
    {
       my_stringstream_t my_stringstream;
@@ -42,7 +62,7 @@ static int vectorstream_test()
          my_stringstream  << "testline: " << i << std::endl;
          std_stringstream << "testline: " << i << std::endl;
       }
-
+   
       if(std::strcmp(my_stringstream.vector().c_str(), std_stringstream.str().c_str()) != 0){
          return 1;
       }
@@ -114,15 +134,39 @@ static int vectorstream_test()
          }
       }
    }
+
+   //Test seek
+   {
+      my_stringstream_t my_stringstream;
+      my_stringstream << "ABCDEFGHIJKLM";
+      my_stringstream.seekp(0);
+      my_stringstream << "PQRST";
+      string s("PQRSTFGHIJKLM");
+      if(s != my_stringstream.vector()){
+         return 1;
+      }
+      my_stringstream.seekp(0, std::ios_base::end);
+      my_stringstream << "NOPQRST";
+      s ="PQRSTFGHIJKLMNOPQRST";
+      if(s != my_stringstream.vector()){
+         return 1;
+      }
+      int size = static_cast<int>(my_stringstream.vector().size());
+      my_stringstream.seekp(-size, std::ios_base::cur);
+      my_stringstream << "ABCDE";
+      s ="ABCDEFGHIJKLMNOPQRST";
+      if(s != my_stringstream.vector()){
+         return 1;
+      }
+   }
    return 0;
 }
 
 int main ()
 {
-   if(vectorstream_test()==-1){
+   if(vectorstream_test()){
       return 1;
    }
-
    return 0;
 }
 
