@@ -18,9 +18,13 @@ namespace interprocess {
 inline interprocess_semaphore::~interprocess_semaphore()
 {}
 
-inline interprocess_semaphore::interprocess_semaphore(int initialCount)
+inline interprocess_semaphore::interprocess_semaphore(unsigned int initialCount)
    :  m_mut(), m_cond(), m_count(initialCount)
-{}
+{
+   if(m_count < 0){
+      throw interprocess_exception(size_error);
+   }
+}
 
 inline void interprocess_semaphore::post()
 {

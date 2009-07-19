@@ -24,7 +24,7 @@
 #include <string>
 #include <algorithm>
 
-#if defined(BOOST_INTERPROCESS_SYSTEM_V_SHARED_MEMORY_OBJECTS)
+#if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS_ONLY)
 #  include <sys/shm.h>      //System V shared memory...
 #elif defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
 #  include <fcntl.h>        //O_CREAT, O_*... 
@@ -307,7 +307,7 @@ inline bool shared_memory_object::remove(const char *filename)
       #else
       detail::tmp_filename(filename, file_str);
       #endif
-      return 0 != shm_unlink(file_str.c_str());
+      return 0 == shm_unlink(file_str.c_str());
    }
    catch(...){
       return false;

@@ -31,7 +31,9 @@
 #    include <unistd.h>
 #    include <sys/stat.h>
 #    include <sys/types.h>
+#  ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
 #    include <sys/shm.h>
+#  endif
 #    include <cassert>
 #  else
 #    error Unknown platform
@@ -397,6 +399,8 @@ inline mapped_region::mapped_region
 {
    mapping_handle_t map_hnd = mapping.get_mapping_handle();
 
+   //Some systems dont' support XSI shared memory
+   #ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
    if(map_hnd.is_xsi){
       //Get the size
       ::shmid_ds xsi_ds;
@@ -435,10 +439,9 @@ inline mapped_region::mapped_region
       m_mode   = mode;
       m_extra_offset = 0;
       m_is_xsi = true;
-
       return;
    }
-
+   #endif   //ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
    if(size == 0){
       offset_t filesize = lseek
          (map_hnd.handle, offset, SEEK_END);
@@ -548,12 +551,14 @@ inline bool mapped_region::flush(std::size_t mapping_offset, std::size_t numbyte
 inline void mapped_region::priv_close()
 {
    if(m_base != MAP_FAILED){
+      #ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
       if(m_is_xsi){
          int ret = ::shmdt(m_base);
          assert(ret == 0);
          (void)ret;
          return;
       }
+      #endif //#ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
       munmap(static_cast<char*>(m_base) - m_extra_offset, m_size + m_extra_offset);
       m_base = MAP_FAILED;
    }

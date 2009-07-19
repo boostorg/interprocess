@@ -18,7 +18,7 @@ namespace interprocess {
 inline interprocess_semaphore::~interprocess_semaphore()
 {}
 
-inline interprocess_semaphore::interprocess_semaphore(int initialCount)
+inline interprocess_semaphore::interprocess_semaphore(unsigned int initialCount)
    :  m_sem(initialCount)
 {}
 

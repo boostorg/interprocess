@@ -62,6 +62,11 @@
    #else
    #endif
 
+   //Check for XSI shared memory objects. They are available in nearly all UNIX platforms
+   #if !defined(__QNXNTO__)
+   # define BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
+   #endif
+
    #if ((_POSIX_SHARED_MEMORY_OBJECTS - 0) > 0)
    # define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
    #else
@@ -70,11 +75,16 @@
    #  if __CRTL_VER >= 70200000
    #  define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
    #  endif
-   # define BOOST_INTERPROCESS_SYSTEM_V_SHARED_MEMORY_OBJECTS
    //Mac OS has some non-conformant features like names limited to SHM_NAME_MAX
    //# elif defined (__APPLE__)
    //#  define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
    # endif 
+   #endif
+
+   //Now check if we have only XSI shared memory
+   #if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS) &&\
+      !defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
+   //#  define BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS_ONLY
    #endif
 
    #if ((_POSIX_TIMEOUTS - 0) > 0)

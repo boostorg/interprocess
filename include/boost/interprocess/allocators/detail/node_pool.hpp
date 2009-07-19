@@ -315,13 +315,13 @@ class private_node_pool_impl
 
    private:
    //!Returns a reference to the block hook placed in the end of the block
-   static inline node_t & get_block_hook (void *block, std::size_t blocksize)
+   static node_t & get_block_hook (void *block, std::size_t blocksize)
    {  
       return *reinterpret_cast<node_t*>(reinterpret_cast<char*>(block) + blocksize);  
    }
 
    //!Returns the starting address of the block reference to the block hook placed in the end of the block
-   inline void *get_block_from_hook (node_t *hook, std::size_t blocksize)
+   void *get_block_from_hook (node_t *hook, std::size_t blocksize)
    {  
       return (reinterpret_cast<char*>(hook) - blocksize);
    }
