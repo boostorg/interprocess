@@ -29,9 +29,7 @@ inline interprocess_semaphore::interprocess_semaphore(unsigned int initialCount)
 inline void interprocess_semaphore::post()
 {
    scoped_lock<interprocess_mutex> lock(m_mut);
-   if(m_count == 0){
-      m_cond.notify_one();
-   }
+   m_cond.notify_one();
    ++m_count;
 }
 
