@@ -449,7 +449,7 @@ inline mapped_region::mapped_region
          throw interprocess_exception(err);
       }
       std::size_t filesize = (std::size_t)buf.st_size;
-      if(offset >= filesize){
+      if((std::size_t)offset >= filesize){
          error_info err(size_error);
          throw interprocess_exception(err);
       }
