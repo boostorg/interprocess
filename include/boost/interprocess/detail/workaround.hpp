@@ -95,7 +95,7 @@
    //portable "/shmname" format does not work due to permission issues
    //For those systems we need to form a path to a temporary directory:
    //          hp-ux               tru64               vms               freebsd
-   #if defined(__hpux) || defined(__osf__) || defined(__vms) || defined(__FreeBSD__)
+   #if defined(__hpux) || defined(__osf__) || defined(__vms) || (defined(__FreeBSD__) && (__FreeBSD__ < 8)) 
    #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_RESOURCES
    #endif
 
