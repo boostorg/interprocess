@@ -113,13 +113,37 @@ inline bool delete_file(const char *name)
 {  return winapi::unlink_file(name);   }
 
 inline bool truncate_file (file_handle_t hnd, std::size_t size)
-{  
-   if(!winapi::set_file_pointer_ex(hnd, size, 0, winapi::file_begin)){
+{
+   offset_t filesize;
+   if(!winapi::get_file_size(hnd, filesize))
       return false;
-   }
 
-   if(!winapi::set_end_of_file(hnd)){
-      return false;
+   if(size > filesize){
+      if(!winapi::set_file_pointer_ex(hnd, filesize, 0, winapi::file_begin)){
+         return false;
+      }      
+      //We will write zeros in the end of the file
+      //since set_end_of_file does not guarantee this
+      for(std::size_t remaining = size - filesize, write_size = 0
+         ;remaining > 0
+         ;remaining -= write_size){
+         const std::size_t DataSize = 512;
+         static char data [DataSize];
+         write_size = DataSize < remaining ? DataSize : remaining;
+         unsigned long written;
+         winapi::write_file(hnd, data, (unsigned long)write_size, &written, 0);
+         if(written != write_size){
+            return false;
+         }
+      }
+   }
+   else{
+      if(!winapi::set_file_pointer_ex(hnd, size, 0, winapi::file_begin)){
+         return false;
+      }
+      if(!winapi::set_end_of_file(hnd)){
+         return false;
+      }
    }
    return true;
 }
