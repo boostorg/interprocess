@@ -443,24 +443,19 @@ inline mapped_region::mapped_region
    }
    #endif   //ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
    if(size == 0){
-      offset_t filesize = lseek
-         (map_hnd.handle, offset, SEEK_END);
-      if(filesize == -1 ){
+      struct ::stat buf;
+      if(0 != fstat(map_hnd.handle, &buf)){
          error_info err(system_error_code());
          throw interprocess_exception(err);
       }
+      std::size_t filesize = (std::size_t)buf.st_size;
       if(offset >= filesize){
          error_info err(size_error);
          throw interprocess_exception(err);
       }
 
       filesize -= offset;
-      size = (size_t)filesize;
-
-      if((offset_t)size != filesize){
-         error_info err(size_error);
-         throw interprocess_exception(err);
-      }
+      size = filesize;
    }
 
    //Create new mapping
