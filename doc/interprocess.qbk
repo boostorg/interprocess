@@ -7,8 +7,8 @@
 
 [library Boost.Interprocess
     [quickbook 1.3]
-    [authors [Gazta&ntilde;aga, Ion]]
-    [copyright 2005- 2008 Ion Gazta&ntilde;aga]
+    [authors [Gaztanaga, Ion]]
+    [copyright 2005- 2008 Ion Gaztanaga]
     [id interprocess]
     [dirname interprocess]
     [purpose Interprocess communication utilities]
