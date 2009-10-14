@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006-2008
+// (C) Copyright Ion Gaztanaga 2006-2009
 // (C) Copyright Markus Schoepflin 2007
 //
 // Distributed under the Boost Software License, Version 1.0. (See
@@ -303,7 +303,7 @@ inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
 //! Returns the old value of *mem
 inline boost::uint32_t atomic_cas32
    (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
-{  return __sync_val_compare_and_swap(const_cast<boost::uint32_t *>(mem), with, cmp);   }
+{  return __sync_val_compare_and_swap(const_cast<boost::uint32_t *>(mem), cmp, with);   }
 
 //! Atomically set an boost::uint32_t in memory
 //! "mem": pointer to the object
@@ -558,6 +558,25 @@ inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
 #error No atomic operations implemented for this platform, sorry!
 
 #endif
+
+namespace boost{
+namespace interprocess{
+namespace detail{
+
+inline bool atomic_add_unless32
+   (volatile boost::uint32_t *mem, boost::uint32_t value, volatile boost::uint32_t unless_this)
+{
+   boost::uint32_t old, c(atomic_read32(mem));
+   while(c != unless_this && (old = atomic_cas32(mem, c + value, c)) != c){
+      c = old;
+   }
+   return c != unless_this;
+}
+
+}  //namespace detail  
+}  //namespace interprocess  
+}  //namespace boost  
+
 
 #include <boost/interprocess/detail/config_end.hpp>
 

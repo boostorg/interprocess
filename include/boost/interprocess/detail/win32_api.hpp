@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -39,8 +39,12 @@ namespace winapi {
 //Some used constants
 static const unsigned long infinite_time        = 0xFFFFFFFF;
 static const unsigned long error_already_exists = 183L;
+static const unsigned long error_sharing_violation = 32L;
 static const unsigned long error_file_not_found = 2u;
 static const unsigned long error_no_more_files  = 18u;
+//Retries in CreateFile, see http://support.microsoft.com/kb/316609
+static const unsigned int  error_sharing_violation_tries = 3u;
+static const unsigned int  error_sharing_violation_sleep_ms = 250u;
 
 static const unsigned long semaphore_all_access = (0x000F0000L)|(0x00100000L)|0x3;
 static const unsigned long mutex_all_access     = (0x000F0000L)|(0x00100000L)|0x0001;
@@ -463,6 +467,9 @@ namespace boost {
 namespace interprocess {
 namespace winapi {
 
+inline unsigned long get_last_error()
+{  return GetLastError();  }
+
 inline unsigned long format_message
    (unsigned long dwFlags, const void *lpSource,
     unsigned long dwMessageId, unsigned long dwLanguageId,
@@ -508,9 +515,6 @@ inline bool duplicate_current_process_handle
       , lpTargetHandle,       0,                0
       , duplicate_same_access);
 }
-
-inline unsigned long get_last_error()
-{  return GetLastError();  }
 
 inline void get_system_time_as_file_time(interprocess_filetime *filetime)
 {  GetSystemTimeAsFileTime(filetime);  }
@@ -566,7 +570,22 @@ inline void *map_view_of_file_ex(void *handle, unsigned long file_access, unsign
 {  return MapViewOfFileEx(handle, file_access, highoffset, lowoffset, numbytes, base_addr);  }
 
 inline void *create_file(const char *name, unsigned long access, unsigned long creation_flags, unsigned long attributes = 0)
-{  return CreateFileA(name, access, file_share_read | file_share_write | file_share_delete, 0, creation_flags, attributes, 0);  }
+{
+   for (unsigned int attempt(0); attempt < error_sharing_violation_tries; ++attempt){
+      void * const handle = CreateFileA(name, access,
+                                        file_share_read | file_share_write | file_share_delete,
+                                        0, creation_flags, attributes, 0);
+      bool const invalid(invalid_handle_value == handle);
+      if (!invalid){
+         return handle;
+      }
+      if (error_sharing_violation != get_last_error()){
+         return handle;
+      }
+      Sleep(error_sharing_violation_sleep_ms);
+   }
+   return invalid_handle_value;
+}
 
 inline bool delete_file(const char *name)
 {  return 0 != DeleteFileA(name);  }

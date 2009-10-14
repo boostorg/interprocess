@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -26,6 +26,9 @@
 #     include <errno.h>
 #     include <cstdio>
 #     include <dirent.h>
+#     if 0
+#        include <sys/file.h> 
+#     endif
 #  else
 #    error Unknown platform
 #  endif
@@ -335,19 +338,16 @@ inline bool create_directory(const char *path)
 {  return ::mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0; }
 
 inline const char *get_temporary_path()
-{  
+{
+   const char *names[] = {"/tmp", "TMPDIR", "TMP", "TEMP" };
+   const int names_size = sizeof(names)/sizeof(names[0]);
    struct stat data;
-   const char *dir = std::getenv("TMPDIR"); 
-   if(!dir || ::stat(dir, &data) != 0){
-      dir = std::getenv("TMP");
-      if(!dir || ::stat(dir, &data) != 0){
-         dir = std::getenv("TEMP");
-         if(!dir || ::stat(dir, &data) != 0){
-            dir = "/tmp";
-         }
+   for(int i = 0; i != names_size; ++i){
+      if(::stat(names[i], &data) == 0){
+         return names[i];
       }
    }
-   return dir;
+   return "/tmp";
 }
 
 inline file_handle_t create_new_file
@@ -467,6 +467,34 @@ inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
 
 inline bool release_file_lock_sharable(file_handle_t hnd)
 {  return release_file_lock(hnd);   }
+
+#if 0
+inline bool acquire_file_lock(file_handle_t hnd)
+{  return 0 == ::flock(hnd, LOCK_EX); }
+
+inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
+{
+   int ret = ::flock(hnd, LOCK_EX | LOCK_NB);
+   acquired = ret == 0;
+   return (acquired || errno == EWOULDBLOCK);
+}
+
+inline bool release_file_lock(file_handle_t hnd)
+{  return 0 == ::flock(hnd, LOCK_UN); }
+
+inline bool acquire_file_lock_sharable(file_handle_t hnd)
+{  return 0 == ::flock(hnd, LOCK_SH); }
+
+inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
+{
+   int ret = ::flock(hnd, LOCK_SH | LOCK_NB);
+   acquired = ret == 0;
+   return (acquired || errno == EWOULDBLOCK);
+}
+
+inline bool release_file_lock_sharable(file_handle_t hnd)
+{  return 0 == ::flock(hnd, LOCK_UN); }
+#endif
 
 inline bool delete_subdirectories_recursive
    (const std::string &refcstrRootDirectory, const char *dont_delete_this)
