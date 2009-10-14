@@ -37,6 +37,8 @@ struct push_data_function
          IntType move_me(i);
          shmlist->push_back(boost::interprocess::move(move_me));
          stdlist->push_back(i);
+         shmlist->push_back(IntType(i));
+         stdlist->push_back(int(i));
       }
       if(!CheckEqualContainers(shmlist, stdlist))
          return 1;
@@ -55,6 +57,8 @@ struct push_data_function<false>
          IntType move_me(i);
          shmlist->push_front(boost::interprocess::move(move_me));
          stdlist->push_front(i);
+         shmlist->push_front(IntType(i));
+         stdlist->push_front(int(i));
       }
       if(!CheckEqualContainers(shmlist, stdlist))
          return 1;
@@ -115,7 +119,7 @@ int list_test (bool copied_allocators_equal = true)
 
       MyStdList *stdlist = new MyStdList;
 
-      if(push_data_t::execute(max, shmlist, stdlist)){
+      if(push_data_t::execute(max/2, shmlist, stdlist)){
          return 1;
       }
 
@@ -141,8 +145,8 @@ int list_test (bool copied_allocators_equal = true)
          for(int i = 0; i < 50; ++i){
             aux_vect2[i] = -1;
          }
-         shmlist->assign(boost::interprocess::make_move_iterator(&aux_vect[0])
-                        ,boost::interprocess::make_move_iterator(&aux_vect[50]));
+         shmlist->assign(::boost::interprocess::make_move_iterator(&aux_vect[0])
+                        ,::boost::interprocess::make_move_iterator(&aux_vect[50]));
          stdlist->assign(&aux_vect2[0], &aux_vect2[50]);
          if(!CheckEqualContainers(shmlist, stdlist)) return 1;
       }
@@ -172,8 +176,8 @@ int list_test (bool copied_allocators_equal = true)
             aux_vect2[i] = -1;
          }
          shmlist->insert(shmlist->begin()
-                        ,boost::interprocess::make_move_iterator(&aux_vect[0])
-                        ,boost::interprocess::make_move_iterator(&aux_vect[50]));
+                        ,::boost::interprocess::make_move_iterator(&aux_vect[0])
+                        ,::boost::interprocess::make_move_iterator(&aux_vect[50]));
          stdlist->insert(stdlist->begin(), &aux_vect2[0], &aux_vect2[50]);
       }
 
@@ -198,7 +202,7 @@ int list_test (bool copied_allocators_equal = true)
       if(!CheckEqualContainers(shmlist, stdlist))
          return 1;
 
-      if(push_data_t::execute(max, shmlist, stdlist)){
+      if(push_data_t::execute(max/2, shmlist, stdlist)){
          return 1;
       }
       {
@@ -207,7 +211,7 @@ int list_test (bool copied_allocators_equal = true)
 
          int listsize = (int)shmlist->size();
 
-         if(push_data_t::execute(listsize, shmlist, stdlist)){
+         if(push_data_t::execute(listsize/2, shmlist, stdlist)){
             return 1;
          }
 
@@ -220,11 +224,11 @@ int list_test (bool copied_allocators_equal = true)
 
          listsize = (int)shmlist->size();
 
-         if(push_data_t::execute(listsize, shmlist, stdlist)){
+         if(push_data_t::execute(listsize/2, shmlist, stdlist)){
             return 1;
          }
 
-         if(push_data_t::execute(listsize, &othershmlist, &otherstdlist)){
+         if(push_data_t::execute(listsize/2, &othershmlist, &otherstdlist)){
             return 1;
          }
 
@@ -244,6 +248,13 @@ int list_test (bool copied_allocators_equal = true)
             if(!CheckEqualContainers(shmlist, stdlist))
                return 1;
          }
+
+         for(int i = 0; i < max; ++i){
+            shmlist->insert(shmlist->begin(), IntType(i));
+            stdlist->insert(stdlist->begin(), int(i));
+         }
+         if(!CheckEqualContainers(shmlist, stdlist))
+            return 1;
       }
 
       segment.template destroy<MyShmList>("MyList");

@@ -25,11 +25,9 @@ namespace test{
 class EmplaceInt
 {
    private:
-   EmplaceInt (const EmplaceInt &o);
-   EmplaceInt& operator=(const EmplaceInt &o);
+   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(EmplaceInt)
 
    public:
-   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(EmplaceInt)
 
    EmplaceInt(int a = 0, int b = 0, int c = 0, int d = 0, int e = 0)
       : a_(a), b_(b), c_(c), d_(d), e_(e)

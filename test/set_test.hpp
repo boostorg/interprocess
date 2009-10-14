@@ -1,6 +1,6 @@
 ////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -77,16 +77,16 @@ int set_test ()
 
          MyShmSet *shmset2 = 
             segment.template construct<MyShmSet>("MyShmSet2")
-               (boost::interprocess::make_move_iterator(&aux_vect[0])
-               , boost::interprocess::make_move_iterator(aux_vect + 50)
+               ( ::boost::interprocess::make_move_iterator(&aux_vect[0])
+               , ::boost::interprocess::make_move_iterator(aux_vect + 50)
                , std::less<IntType>(), segment.get_segment_manager());
 
          MyStdSet *stdset2 = new MyStdSet(aux_vect2, aux_vect2 + 50);
 
          MyShmMultiSet *shmmultiset2 = 
             segment.template construct<MyShmMultiSet>("MyShmMultiSet2")
-               (boost::interprocess::make_move_iterator(&aux_vect3[0])
-               , boost::interprocess::make_move_iterator(aux_vect3 + 50)
+               ( ::boost::interprocess::make_move_iterator(&aux_vect3[0])
+               , ::boost::interprocess::make_move_iterator(aux_vect3 + 50)
                , std::less<IntType>(), segment.get_segment_manager());
 
          MyStdMultiSet *stdmultiset2 = new MyStdMultiSet(aux_vect2, aux_vect2 + 50);
@@ -99,20 +99,88 @@ int set_test ()
             return 1;
          }
 
+         //ordered range insertion
+         for(int i = 0; i < 50; ++i){
+            IntType move_me(i);
+            aux_vect[i] = boost::interprocess::move(move_me);
+         }
+
+         for(int i = 0; i < 50; ++i){
+            aux_vect2[i] = i;
+         }
+
+         for(int i = 0; i < 50; ++i){
+            IntType move_me(i);
+            aux_vect3[i] = boost::interprocess::move(move_me);
+         }
+
+         MyShmSet *shmset3 = 
+            segment.template construct<MyShmSet>("MyShmSet3")
+               ( ordered_unique_range
+               , ::boost::interprocess::make_move_iterator(&aux_vect[0])
+               , ::boost::interprocess::make_move_iterator(aux_vect + 50)
+               , std::less<IntType>(), segment.get_segment_manager());
+
+         MyStdSet *stdset3 = new MyStdSet(aux_vect2, aux_vect2 + 50);
+
+         MyShmMultiSet *shmmultiset3 = 
+            segment.template construct<MyShmMultiSet>("MyShmMultiSet3")
+               ( ordered_range
+               , ::boost::interprocess::make_move_iterator(&aux_vect3[0])
+               , ::boost::interprocess::make_move_iterator(aux_vect3 + 50)
+               , std::less<IntType>(), segment.get_segment_manager());
+
+         MyStdMultiSet *stdmultiset3 = new MyStdMultiSet(aux_vect2, aux_vect2 + 50);
+
+         if(!CheckEqualContainers(shmset3, stdset3)){
+            std::cout << "Error in construct<MyShmSet>(MyShmSet3)" << std::endl;
+            return 1;
+         }
+         if(!CheckEqualContainers(shmmultiset3, stdmultiset3)){
+            std::cout << "Error in construct<MyShmMultiSet>(MyShmMultiSet3)" << std::endl;
+            return 1;
+         }
+
          segment.destroy_ptr(shmset2);
          segment.destroy_ptr(shmmultiset2);
          delete stdset2;
          delete stdmultiset2;
+
+         segment.destroy_ptr(shmset3);
+         segment.destroy_ptr(shmmultiset3);
+         delete stdset3;
+         delete stdmultiset3;
+      }
+
+      if(!CheckEqualContainers(shmset, stdset)){
+         std::cout << "Error in shmset->insert(boost::interprocess::move(move_me)" << std::endl;
+         return 1;
       }
 
       int i, j;
-      for(i = 0; i < max; ++i){
+      for(i = 0; i < max/2; ++i){
          IntType move_me(i);
          shmset->insert(boost::interprocess::move(move_me));
          stdset->insert(i);
          IntType move_me2(i);
          shmmultiset->insert(boost::interprocess::move(move_me2));
          stdmultiset->insert(i);
+
+      if(!CheckEqualContainers(shmset, stdset)){
+         std::cout << "Error in shmset->insert(boost::interprocess::move(move_me)" << std::endl;
+         return 1;
+      }
+         //
+         shmset->insert(IntType(i));
+         stdset->insert(i);
+         shmmultiset->insert(IntType(i));
+         stdmultiset->insert(i);
+
+      if(!CheckEqualContainers(shmset, stdset)){
+         std::cout << "Error in shmset->insert(boost::interprocess::move(move_me)" << std::endl;
+         return 1;
+      }
+
       }
 
       if(!CheckEqualContainers(shmset, stdset)){
@@ -195,16 +263,16 @@ int set_test ()
             aux_vect3[i] = boost::interprocess::move(move_me);
          }
 
-         shmset->insert(boost::interprocess::make_move_iterator(&aux_vect[0]), boost::interprocess::make_move_iterator(aux_vect + 50));
+         shmset->insert(::boost::interprocess::make_move_iterator(&aux_vect[0]), ::boost::interprocess::make_move_iterator(aux_vect + 50));
          stdset->insert(aux_vect2, aux_vect2 + 50);
-         shmmultiset->insert(boost::interprocess::make_move_iterator(&aux_vect3[0]), boost::interprocess::make_move_iterator(aux_vect3 + 50));
+         shmmultiset->insert(::boost::interprocess::make_move_iterator(&aux_vect3[0]), ::boost::interprocess::make_move_iterator(aux_vect3 + 50));
          stdmultiset->insert(aux_vect2, aux_vect2 + 50);
          if(!CheckEqualContainers(shmset, stdset)){
-            std::cout << "Error in shmset->insert(boost::interprocess::make_move_iterator(&aux_vect[0])..." << std::endl;
+            std::cout << "Error in shmset->insert(::boost::interprocess::make_move_iterator(&aux_vect[0])..." << std::endl;
             return 1;
          }
          if(!CheckEqualContainers(shmmultiset, stdmultiset)){
-            std::cout << "Error in shmmultiset->insert(boost::interprocess::make_move_iterator(&aux_vect3[0]), ..." << std::endl;
+            std::cout << "Error in shmmultiset->insert(::boost::interprocess::make_move_iterator(&aux_vect3[0]), ..." << std::endl;
             return 1;
          }
 
@@ -252,20 +320,20 @@ int set_test ()
             aux_vect5[i] = boost::interprocess::move(move_me);
          }
 
-         shmset->insert(boost::interprocess::make_move_iterator(&aux_vect[0]), boost::interprocess::make_move_iterator(aux_vect + 50));
-         shmset->insert(boost::interprocess::make_move_iterator(&aux_vect3[0]), boost::interprocess::make_move_iterator(aux_vect3 + 50));
+         shmset->insert(::boost::interprocess::make_move_iterator(&aux_vect[0]), ::boost::interprocess::make_move_iterator(aux_vect + 50));
+         shmset->insert(::boost::interprocess::make_move_iterator(&aux_vect3[0]), ::boost::interprocess::make_move_iterator(aux_vect3 + 50));
          stdset->insert(aux_vect2, aux_vect2 + 50);
          stdset->insert(aux_vect2, aux_vect2 + 50);
-         shmmultiset->insert(boost::interprocess::make_move_iterator(&aux_vect4[0]), boost::interprocess::make_move_iterator(aux_vect4 + 50));
-         shmmultiset->insert(boost::interprocess::make_move_iterator(&aux_vect5[0]), boost::interprocess::make_move_iterator(aux_vect5 + 50));
+         shmmultiset->insert(::boost::interprocess::make_move_iterator(&aux_vect4[0]), ::boost::interprocess::make_move_iterator(aux_vect4 + 50));
+         shmmultiset->insert(::boost::interprocess::make_move_iterator(&aux_vect5[0]), ::boost::interprocess::make_move_iterator(aux_vect5 + 50));
          stdmultiset->insert(aux_vect2, aux_vect2 + 50);
          stdmultiset->insert(aux_vect2, aux_vect2 + 50);
          if(!CheckEqualContainers(shmset, stdset)){
-            std::cout << "Error in shmset->insert(boost::interprocess::make_move_iterator(&aux_vect3[0])..." << std::endl;
+            std::cout << "Error in shmset->insert(::boost::interprocess::make_move_iterator(&aux_vect3[0])..." << std::endl;
             return 1;
          }
          if(!CheckEqualContainers(shmmultiset, stdmultiset)){
-            std::cout << "Error in shmmultiset->insert(boost::interprocess::make_move_iterator(&aux_vect5[0])..." << std::endl;
+            std::cout << "Error in shmmultiset->insert(::boost::interprocess::make_move_iterator(&aux_vect5[0])..." << std::endl;
             return 1;
          }
 
@@ -283,13 +351,18 @@ int set_test ()
          }
       }
 
-      for(i = 0; i < max; ++i){
+      for(i = 0; i < max/2; ++i){
          IntType move_me(i);
-         shmset->insert(boost::interprocess::move(move_me));
-         stdset->insert(i);
+         shmset->insert(shmset->begin(), boost::interprocess::move(move_me));
+         stdset->insert(stdset->begin(), i);
          IntType move_me2(i);
-         shmmultiset->insert(boost::interprocess::move(move_me2));
-         stdmultiset->insert(i);
+         shmmultiset->insert(shmmultiset->begin(), boost::interprocess::move(move_me2));
+         stdmultiset->insert(stdmultiset->begin(), i);
+         //
+         shmset->insert(shmset->begin(), IntType(i));
+         stdset->insert(stdset->begin(), i);
+         shmmultiset->insert(shmmultiset->begin(), IntType(i));
+         stdmultiset->insert(stdmultiset->begin(), i);
       }
 
       if(!CheckEqualContainers(shmset, stdset)){

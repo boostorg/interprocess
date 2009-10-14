@@ -387,10 +387,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_named_mutex", "doc_name
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_windows_shared_memory2", "doc_windows_shared_memory2.vcproj", "{5E1D6C83-31DE-4F6F-6132-87A9FB663041}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "flat_map_index_allocation_test", "flat_map_index_allocation_test.vcproj", "{51D8E9C3-2D65-48FE-3AA7-7922C0E36329}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
@@ -833,10 +829,6 @@ Global
 		{58C181B3-9516-463E-2F12-122155400054}.Debug.Build.0 = Debug|Win32
 		{58C181B3-9516-463E-2F12-122155400054}.Release.ActiveCfg = Release|Win32
 		{58C181B3-9516-463E-2F12-122155400054}.Release.Build.0 = Release|Win32
-		{5E1D6C83-31DE-4F6F-6132-87A9FB663041}.Debug.ActiveCfg = Debug|Win32
-		{5E1D6C83-31DE-4F6F-6132-87A9FB663041}.Debug.Build.0 = Debug|Win32
-		{5E1D6C83-31DE-4F6F-6132-87A9FB663041}.Release.ActiveCfg = Release|Win32
-		{5E1D6C83-31DE-4F6F-6132-87A9FB663041}.Release.Build.0 = Release|Win32
 		{51D8E9C3-2D65-48FE-3AA7-7922C0E36329}.Debug.ActiveCfg = Debug|Win32
 		{51D8E9C3-2D65-48FE-3AA7-7922C0E36329}.Debug.Build.0 = Debug|Win32
 		{51D8E9C3-2D65-48FE-3AA7-7922C0E36329}.Release.ActiveCfg = Release|Win32

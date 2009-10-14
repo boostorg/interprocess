@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -122,6 +122,7 @@ int main ()
       if(!shmem_vect)
          return -1;
    }
+   #ifndef BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS_NO_GROW
    {
       std::size_t old_free_memory;
       {
@@ -196,14 +197,16 @@ int main ()
          if(next_shmem_size <= final_shmem_size)
             return -1;
       }
-      {
-         //Now test move semantics
-         managed_shared_memory original(open_only, ShmemName);
-         managed_shared_memory move_ctor(boost::interprocess::move(original));
-         managed_shared_memory move_assign;
-         move_assign = boost::interprocess::move(move_ctor);
-         move_assign.swap(original);
-      }
+   }
+   #endif //ifndef BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS_NO_GROW
+
+   {
+      //Now test move semantics
+      managed_shared_memory original(open_only, ShmemName);
+      managed_shared_memory move_ctor(boost::interprocess::move(original));
+      managed_shared_memory move_assign;
+      move_assign = boost::interprocess::move(move_ctor);
+      move_assign.swap(original);
    }
 
    shared_memory_object::remove(ShmemName);

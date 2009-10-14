@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -44,7 +44,7 @@ bool copyable_only(V1 *shmvector, V2 *stdvector, boost::interprocess::detail::tr
    typedef typename V1::value_type IntType;
    std::size_t size = shmvector->size();
    stdvector->insert(stdvector->end(), 50, 1);
-   shmvector->insert(shmvector->end(), 50, 1);
+   shmvector->insert(shmvector->end(), 50, IntType(1));
    if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
 
    {
@@ -134,7 +134,7 @@ int vector_test()
             IntType aux_vect[50];
             for(int i = 0; i < 50; ++i){
                IntType new_int(-1);
-               BOOST_STATIC_ASSERT((boost::interprocess::is_movable<boost::interprocess::test::movable_int>::value == true));
+               BOOST_STATIC_ASSERT((::boost::interprocess::is_movable<boost::interprocess::test::movable_int>::value == true));
                aux_vect[i] = boost::interprocess::move(new_int);
             }
             int aux_vect2[50];
@@ -143,8 +143,8 @@ int vector_test()
             }
 
             shmvector->insert(shmvector->end()
-                              ,boost::interprocess::make_move_iterator(&aux_vect[0])
-                              ,boost::interprocess::make_move_iterator(aux_vect + 50));
+                              ,::boost::interprocess::make_move_iterator(&aux_vect[0])
+                              ,::boost::interprocess::make_move_iterator(aux_vect + 50));
             stdvector->insert(stdvector->end(), aux_vect2, aux_vect2 + 50);
             if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 
@@ -165,8 +165,8 @@ int vector_test()
                aux_vect2[i] = -1;
             }
             shmvector->insert(shmvector->begin()
-                              ,boost::interprocess::make_move_iterator(&aux_vect[0])
-                              ,boost::interprocess::make_move_iterator(aux_vect + 50));
+                              ,::boost::interprocess::make_move_iterator(&aux_vect[0])
+                              ,::boost::interprocess::make_move_iterator(aux_vect + 50));
             stdvector->insert(stdvector->begin(), aux_vect2, aux_vect2 + 50);
             if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
          }
@@ -177,6 +177,8 @@ int vector_test()
 
          IntType push_back_this(1);
          shmvector->push_back(boost::interprocess::move(push_back_this));
+         stdvector->push_back(int(1));
+         shmvector->push_back(IntType(1));
          stdvector->push_back(int(1));
          if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 
@@ -193,6 +195,8 @@ int vector_test()
             IntType insert_this(i);
             shmvector->insert(shmvector->begin(), boost::interprocess::move(insert_this));
             stdvector->insert(stdvector->begin(), i);
+            shmvector->insert(shmvector->begin(), IntType(i));
+            stdvector->insert(stdvector->begin(), int(i));
          }
          if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;
 

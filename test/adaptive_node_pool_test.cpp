@@ -16,9 +16,6 @@
 using namespace boost::interprocess;
 typedef managed_shared_memory::segment_manager segment_manager_t;
 
-//Explicit specialization to catch compilation errors
-template class detail::private_adaptive_node_pool_impl<segment_manager_t>;
-
 int main ()
 {
    typedef detail::private_adaptive_node_pool

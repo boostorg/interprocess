@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -52,6 +52,8 @@ typedef allocator<std::pair<const test::movable_int, test::movable_int>, my_mana
    shmem_movable_node_pair_allocator_t;
 typedef allocator<test::movable_and_copyable_int, my_managed_shared_memory::segment_manager>   
    shmem_move_copy_allocator_t;
+typedef allocator<test::copyable_int, my_managed_shared_memory::segment_manager>   
+   shmem_copy_allocator_t;
 typedef allocator<std::pair<const test::movable_and_copyable_int, test::movable_and_copyable_int>, my_managed_shared_memory::segment_manager>   
    shmem_move_copy_node_pair_allocator_t;
 
@@ -86,6 +88,15 @@ typedef set<test::movable_and_copyable_int
 typedef multiset<test::movable_and_copyable_int, 
       std::less<test::movable_and_copyable_int>, 
       shmem_move_copy_allocator_t>                        MyMoveCopyShmMultiSet;
+
+typedef set<test::copyable_int
+           ,std::less<test::copyable_int>
+           ,shmem_copy_allocator_t>                  MyCopyShmSet;
+typedef multiset<test::copyable_int, 
+      std::less<test::copyable_int>, 
+      shmem_copy_allocator_t>                        MyCopyShmMultiSet;
+
+
 typedef map<test::movable_and_copyable_int
            ,test::movable_and_copyable_int
            ,std::less<test::movable_and_copyable_int>
@@ -194,6 +205,13 @@ int main ()
       return 1;
    }
 
+   if(0 != test::set_test<my_managed_shared_memory
+                        ,MyCopyShmSet
+                        ,MyStdSet
+                        ,MyCopyShmMultiSet
+                        ,MyStdMultiSet>()){
+      return 1;
+   }
 
    if (0 != test::map_test<my_managed_shared_memory
                   ,MyShmMap

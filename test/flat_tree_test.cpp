@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -77,6 +77,10 @@ typedef allocator<std::pair<test::movable_int, test::movable_int>, my_managed_sh
 
 typedef allocator<test::movable_and_copyable_int, my_managed_shared_memory::segment_manager> 
    shmem_move_copy_allocator_t;
+
+typedef allocator<test::copyable_int, my_managed_shared_memory::segment_manager> 
+   shmem_copy_allocator_t;
+
 typedef allocator<std::pair<test::movable_and_copyable_int, test::movable_and_copyable_int>, my_managed_shared_memory::segment_manager> 
    shmem_move_copy_pair_allocator_t;
 
@@ -106,6 +110,12 @@ typedef flat_set<test::movable_and_copyable_int, std::less<test::movable_and_cop
                 ,shmem_move_copy_allocator_t>                             MyMoveCopyShmSet;
 typedef flat_multiset<test::movable_and_copyable_int,std::less<test::movable_and_copyable_int>
                      ,shmem_move_copy_allocator_t>                        MyMoveCopyShmMultiSet;
+
+typedef flat_set<test::copyable_int, std::less<test::copyable_int>
+                ,shmem_copy_allocator_t>                                MyCopyShmSet;
+typedef flat_multiset<test::copyable_int,std::less<test::copyable_int>
+                     ,shmem_copy_allocator_t>                           MyCopyShmMultiSet;
+
 typedef flat_map<test::movable_and_copyable_int, test::movable_and_copyable_int
                 ,std::less<test::movable_and_copyable_int>
                 ,shmem_move_copy_pair_allocator_t>                        MyMoveCopyShmMap;
@@ -128,6 +138,12 @@ class recursive_flat_map
 public:
    int id_;
    flat_map<recursive_flat_map, recursive_flat_map> map_;
+   recursive_flat_map (const recursive_flat_map&x)
+      :id_(x.id_), map_(x.map_)
+   {}
+   recursive_flat_map &operator=(const recursive_flat_map &x)
+   { id_ = x.id_; map_ = x.map_; return *this; }
+
    friend bool operator< (const recursive_flat_map &a, const recursive_flat_map &b)
    {  return a.id_ < b.id_;   }
 };
@@ -147,6 +163,11 @@ class recursive_flat_multimap
 public:
    int id_;
    flat_map<recursive_flat_multimap, recursive_flat_multimap> map_;
+   recursive_flat_multimap (const recursive_flat_multimap&x)
+      :id_(x.id_), map_(x.map_)
+   {}
+   recursive_flat_multimap &operator=(const recursive_flat_multimap &x)
+   { id_ = x.id_; map_ = x.map_; return *this; }
    friend bool operator< (const recursive_flat_multimap &a, const recursive_flat_multimap &b)
    {  return a.id_ < b.id_;   }
 };
@@ -208,6 +229,15 @@ int main()
                   ,MyMoveCopyShmMultiSet
                   ,MyStdMultiSet>()){
       std::cout << "Error in set_test<MyMoveCopyShmSet>" << std::endl;
+      return 1;
+   }
+
+   if (0 != set_test<my_managed_shared_memory
+                  ,MyCopyShmSet
+                  ,MyStdSet
+                  ,MyCopyShmMultiSet
+                  ,MyStdMultiSet>()){
+      std::cout << "Error in set_test<MyCopyShmSet>" << std::endl;
       return 1;
    }
 

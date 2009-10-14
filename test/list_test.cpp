@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -27,14 +27,18 @@ template class boost::interprocess::list<test::movable_and_copyable_int,
 typedef allocator<int, managed_shared_memory::segment_manager> ShmemAllocator;
 typedef list<int, ShmemAllocator> MyList;
 
-typedef allocator<volatile int, managed_shared_memory::segment_manager> ShmemVolatileAllocator;
-typedef list<volatile int, ShmemVolatileAllocator> MyVolatileList;
+//typedef allocator<volatile int, managed_shared_memory::segment_manager> ShmemVolatileAllocator;
+//typedef list<volatile int, ShmemVolatileAllocator> MyVolatileList;
 
 typedef allocator<test::movable_int, managed_shared_memory::segment_manager> ShmemMoveAllocator;
 typedef list<test::movable_int, ShmemMoveAllocator> MyMoveList;
 
 typedef allocator<test::movable_and_copyable_int, managed_shared_memory::segment_manager> ShmemCopyMoveAllocator;
 typedef list<test::movable_and_copyable_int, ShmemCopyMoveAllocator> MyCopyMoveList;
+
+typedef allocator<test::copyable_int, managed_shared_memory::segment_manager> ShmemCopyAllocator;
+typedef list<test::copyable_int, ShmemCopyAllocator> MyCopyList;
+
 
 class recursive_list
 {
@@ -62,13 +66,16 @@ int main ()
    if(test::list_test<managed_shared_memory, MyList, true>())
       return 1;
 
-   if(test::list_test<managed_shared_memory, MyVolatileList, true>())
-      return 1;
+//   if(test::list_test<managed_shared_memory, MyVolatileList, true>())
+//      return 1;
 
    if(test::list_test<managed_shared_memory, MyMoveList, true>())
       return 1;
 
    if(test::list_test<managed_shared_memory, MyCopyMoveList, true>())
+      return 1;
+
+   if(test::list_test<managed_shared_memory, MyCopyList, true>())
       return 1;
 
    const test::EmplaceOptions Options = (test::EmplaceOptions)(test::EMPLACE_BACK | test::EMPLACE_FRONT | test::EMPLACE_BEFORE);

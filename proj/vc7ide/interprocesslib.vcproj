@@ -99,6 +99,9 @@
 			Name="Containers"
 			Filter="">
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\containers\containers_fwd.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\containers\deque.hpp">
 			</File>
 			<File
@@ -371,6 +374,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\in_place_interface.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\intermodule_singleton.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\interprocess_tester.hpp">

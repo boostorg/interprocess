@@ -94,26 +94,75 @@ int map_test ()
 
          MyShmMap *shmmap2 = 
             segment.template construct<MyShmMap>("MyShmMap2")
-               (boost::interprocess::make_move_iterator(&aux_vect[0])
-               , boost::interprocess::make_move_iterator(aux_vect + 50)
+               ( ::boost::interprocess::make_move_iterator(&aux_vect[0])
+               , ::boost::interprocess::make_move_iterator(aux_vect + 50)
                , std::less<IntType>(), segment.get_segment_manager());
 
          MyStdMap *stdmap2 = new MyStdMap(aux_vect2, aux_vect2 + 50);
 
          MyShmMultiMap *shmmultimap2 = 
             segment.template construct<MyShmMultiMap>("MyShmMultiMap2")
-               (boost::interprocess::make_move_iterator(&aux_vect3[0])
-               , boost::interprocess::make_move_iterator(aux_vect3 + 50)
+               ( ::boost::interprocess::make_move_iterator(&aux_vect3[0])
+               , ::boost::interprocess::make_move_iterator(aux_vect3 + 50)
                , std::less<IntType>(), segment.get_segment_manager());
 
          MyStdMultiMap *stdmultimap2 = new MyStdMultiMap(aux_vect2, aux_vect2 + 50);
          if(!CheckEqualContainers(shmmap2, stdmap2)) return 1;
          if(!CheckEqualContainers(shmmultimap2, stdmultimap2)) return 1;
 
+         //ordered range insertion
+         //This is really nasty, but we have no other simple choice
+         for(int i = 0; i < 50; ++i){
+            IntType i1(i);
+            IntType i2(i);
+            new(&aux_vect[i])IntPairType(boost::interprocess::move(i1), boost::interprocess::move(i2));
+         }
+
+         for(int i = 0; i < 50; ++i){
+            new(&aux_vect2[i])StdValueType(StdKeyType(i), StdMappedType(i));
+         }
+
+         for(int i = 0; i < 50; ++i){
+            IntType i1(i);
+            IntType i2(i);
+            new(&aux_vect3[i])IntPairType(boost::interprocess::move(i1), boost::interprocess::move(i2));
+         }
+
+         MyShmMap *shmmap3 = 
+            segment.template construct<MyShmMap>("MyShmMap3")
+               ( ordered_unique_range
+               , ::boost::interprocess::make_move_iterator(&aux_vect[0])
+               , ::boost::interprocess::make_move_iterator(aux_vect + 50)
+               , std::less<IntType>(), segment.get_segment_manager());
+
+         MyStdMap *stdmap3 = new MyStdMap(aux_vect2, aux_vect2 + 50);
+
+         MyShmMultiMap *shmmultimap3 = 
+            segment.template construct<MyShmMultiMap>("MyShmMultiMap3")
+               ( ordered_range
+               , ::boost::interprocess::make_move_iterator(&aux_vect3[0])
+               , ::boost::interprocess::make_move_iterator(aux_vect3 + 50)
+               , std::less<IntType>(), segment.get_segment_manager());
+
+         MyStdMultiMap *stdmultimap3 = new MyStdMultiMap(aux_vect2, aux_vect2 + 50);
+
+         if(!CheckEqualContainers(shmmap3, stdmap3)){
+            std::cout << "Error in construct<MyShmMap>(MyShmMap3)" << std::endl;
+            return 1;
+         }
+         if(!CheckEqualContainers(shmmultimap3, stdmultimap3)){
+            std::cout << "Error in construct<MyShmMultiMap>(MyShmMultiMap3)" << std::endl;
+            return 1;
+         }
+
          segment.destroy_ptr(shmmap2);
          segment.destroy_ptr(shmmultimap2);
          delete stdmap2;
          delete stdmultimap2;
+         segment.destroy_ptr(shmmap3);
+         segment.destroy_ptr(shmmultimap3);
+         delete stdmap3;
+         delete stdmultimap3;
       }
       {
          //This is really nasty, but we have no other simple choice
@@ -191,8 +240,8 @@ int map_test ()
             new(&aux_vect3[i])IntPairType(boost::interprocess::move(i1), boost::interprocess::move(i2));
          }
 
-         shmmap->insert(boost::interprocess::make_move_iterator(&aux_vect[0]), boost::interprocess::make_move_iterator(aux_vect + 50));
-         shmmultimap->insert(boost::interprocess::make_move_iterator(&aux_vect3[0]), boost::interprocess::make_move_iterator(aux_vect3 + 50));
+         shmmap->insert(::boost::interprocess::make_move_iterator(&aux_vect[0]), ::boost::interprocess::make_move_iterator(aux_vect + 50));
+         shmmultimap->insert(::boost::interprocess::make_move_iterator(&aux_vect3[0]), ::boost::interprocess::make_move_iterator(aux_vect3 + 50));
          for(std::size_t i = 0; i != 50; ++i){
             StdPairType stdpairtype(-1, -1);
             stdmap->insert(stdpairtype);
@@ -239,10 +288,10 @@ int map_test ()
             new(&aux_vect5[i])IntPairType(boost::interprocess::move(i1), boost::interprocess::move(i2));
          }
 
-         shmmap->insert(boost::interprocess::make_move_iterator(&aux_vect[0]), boost::interprocess::make_move_iterator(aux_vect + 50));
-         shmmap->insert(boost::interprocess::make_move_iterator(&aux_vect3[0]), boost::interprocess::make_move_iterator(aux_vect3 + 50));
-         shmmultimap->insert(boost::interprocess::make_move_iterator(&aux_vect4[0]), boost::interprocess::make_move_iterator(aux_vect4 + 50));
-         shmmultimap->insert(boost::interprocess::make_move_iterator(&aux_vect5[0]), boost::interprocess::make_move_iterator(aux_vect5 + 50));
+         shmmap->insert(::boost::interprocess::make_move_iterator(&aux_vect[0]), ::boost::interprocess::make_move_iterator(aux_vect + 50));
+         shmmap->insert(::boost::interprocess::make_move_iterator(&aux_vect3[0]), ::boost::interprocess::make_move_iterator(aux_vect3 + 50));
+         shmmultimap->insert(::boost::interprocess::make_move_iterator(&aux_vect4[0]), ::boost::interprocess::make_move_iterator(aux_vect4 + 50));
+         shmmultimap->insert(::boost::interprocess::make_move_iterator(&aux_vect5[0]), ::boost::interprocess::make_move_iterator(aux_vect5 + 50));
 
          for(std::size_t i = 0; i != 50; ++i){
             StdPairType stdpairtype(-1, -1);
