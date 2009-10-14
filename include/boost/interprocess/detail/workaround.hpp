@@ -77,8 +77,8 @@
    #  endif
    //Mac OS has some non-conformant features like names limited to SHM_NAME_MAX
    # elif defined (__APPLE__)
-   #  define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
-   #  define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS_NO_GROW
+//   #  define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
+//   #  define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS_NO_GROW
    # endif 
    #endif
 
