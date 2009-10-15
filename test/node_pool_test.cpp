@@ -12,9 +12,8 @@
 #include <boost/interprocess/allocators/detail/node_pool.hpp>
 
 using namespace boost::interprocess;
-typedef managed_shared_memory::segment_manager segment_manager_t;
-template class detail::private_node_pool_impl<segment_manager_t>;
 
+typedef managed_shared_memory::segment_manager segment_manager_t;
 
 int main ()
 {

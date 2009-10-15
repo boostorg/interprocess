@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -152,7 +152,7 @@ bool do_test()
    const char *const shMemName = test::get_process_id_name();
    const int max = 100;
 
-   try{
+   /*try*/{
       shared_memory_object::remove(shMemName);
 
       //Create shared memory
@@ -167,22 +167,26 @@ bool do_test()
 
       MyStdDeque *stddeque = new MyStdDeque;
 
-      try{
+      /*try*/{
          //Compare several shared memory deque operations with std::deque
          int i;
-         for(i = 0; i < max*100; ++i){
+         for(i = 0; i < max*50; ++i){
             IntType move_me(i);
             shmdeque->insert(shmdeque->end(), boost::interprocess::move(move_me));
             stddeque->insert(stddeque->end(), i);
+            shmdeque->insert(shmdeque->end(), IntType(i));
+            stddeque->insert(stddeque->end(), int(i));
          }
          if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
 
          shmdeque->clear();
          stddeque->clear();
 
-         for(i = 0; i < max*100; ++i){
+         for(i = 0; i < max*50; ++i){
             IntType move_me(i);
             shmdeque->push_back(boost::interprocess::move(move_me));
+            stddeque->push_back(i);
+            shmdeque->push_back(IntType(i));
             stddeque->push_back(i);
          }
          if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
@@ -190,10 +194,12 @@ bool do_test()
          shmdeque->clear();
          stddeque->clear();
 
-         for(i = 0; i < max*100; ++i){
+         for(i = 0; i < max*50; ++i){
             IntType move_me(i);
             shmdeque->push_front(boost::interprocess::move(move_me));
             stddeque->push_front(i);
+            shmdeque->push_front(IntType(i));
+            stddeque->push_front(int(i));
          }
          if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
 
@@ -221,8 +227,8 @@ bool do_test()
             }
 
             shmdeque->insert(shmdeque->end()
-                              ,boost::interprocess::make_move_iterator(&aux_vect[0])
-                              ,boost::interprocess::make_move_iterator(aux_vect + 50));
+                              ,::boost::interprocess::make_move_iterator(&aux_vect[0])
+                              ,::boost::interprocess::make_move_iterator(aux_vect + 50));
             stddeque->insert(stddeque->end(), aux_vect2, aux_vect2 + 50);
             if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
 
@@ -243,14 +249,14 @@ bool do_test()
                aux_vect2[i] = -1;
             }
             shmdeque->insert(shmdeque->begin()
-                              ,boost::interprocess::make_move_iterator(&aux_vect[0])
-                              ,boost::interprocess::make_move_iterator(aux_vect + 50));
+                              ,::boost::interprocess::make_move_iterator(&aux_vect[0])
+                              ,::boost::interprocess::make_move_iterator(aux_vect + 50));
             stddeque->insert(stddeque->begin(), aux_vect2, aux_vect2 + 50);
             if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
          }
 
          if(!copyable_only(shmdeque, stddeque
-                        ,detail::bool_<!boost::interprocess::is_movable<IntType>::value>())){
+                        ,detail::bool_<!::boost::interprocess::is_movable<IntType>::value>())){
             return false;
          }
 
@@ -291,18 +297,18 @@ bool do_test()
 
          if(!segment.all_memory_deallocated())
             return false;
-      }
+      }/*
       catch(std::exception &ex){
          std::cout << ex.what() << std::endl;
          return false;
-      }
+      }*/
       
       std::cout << std::endl << "Test OK!" << std::endl;
-   }
+   }/*
    catch(...){
       shared_memory_object::remove(shMemName);
       throw;
-   }
+   }*/
    shared_memory_object::remove(shMemName);
    return true;
 }
@@ -313,6 +319,9 @@ int main ()
       return 1;
 
    if(!do_test<test::movable_int, allocator>())
+      return 1;
+
+   if(!do_test<test::copyable_int, allocator>())
       return 1;
 
    if(!do_test<int, test::allocator_v1>())

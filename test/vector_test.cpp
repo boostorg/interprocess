@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -102,6 +102,9 @@ int main()
    typedef allocator<test::movable_and_copyable_int, managed_shared_memory::segment_manager> ShmemCopyMoveAllocator;
    typedef vector<test::movable_and_copyable_int, ShmemCopyMoveAllocator> MyCopyMoveVector;
 
+   typedef allocator<test::copyable_int, managed_shared_memory::segment_manager> ShmemCopyAllocator;
+   typedef vector<test::copyable_int, ShmemCopyAllocator> MyCopyVector;
+
    if(test::vector_test<managed_shared_memory, MyVector>())
       return 1;
 
@@ -112,6 +115,9 @@ int main()
       return 1;
 
    if(test::vector_test<managed_shared_memory, MyCopyMoveVector>())
+      return 1;
+
+   if(test::vector_test<managed_shared_memory, MyCopyVector>())
       return 1;
 
    if(test_expand_bwd())

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -37,6 +37,17 @@ struct employee
    int         id;
    int         age;
    shm_string  name;
+
+   employee(const employee &e)
+      : id(e.id), age(e.age), name(e.name)
+   {}
+
+   employee &operator=(const employee &e)
+   {
+      id = e.id; age = e.age; name = e.name;
+      return *this;
+   }
+
    employee( int id_
            , int age_
            , const char *name_

@@ -21,11 +21,9 @@ namespace test {
 
 class movable_int
 {
-   movable_int(movable_int&);
-   movable_int &operator= (movable_int&);
+   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(movable_int)
 
    public:
-   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(movable_int)
 
    movable_int()
       :  m_int(0)
@@ -81,8 +79,8 @@ std::basic_ostream<E, T> & operator<<
 
 class movable_and_copyable_int
 {
+   BOOST_COPYABLE_AND_MOVABLE(movable_and_copyable_int)
    public:
-   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(movable_and_copyable_int)
 
    movable_and_copyable_int()
       :  m_int(0)
@@ -96,7 +94,7 @@ class movable_and_copyable_int
       :  m_int(mmi.m_int)
    {}
    
-   movable_and_copyable_int &operator= (const movable_and_copyable_int& mi)
+   movable_and_copyable_int &operator= (BOOST_INTERPROCESS_COPY_ASSIGN_REF(movable_and_copyable_int) mi)
    {  this->m_int = mi.m_int;    return *this;  }
 
    movable_and_copyable_int(BOOST_INTERPROCESS_RV_REF(movable_and_copyable_int) mmi)
@@ -142,6 +140,64 @@ std::basic_ostream<E, T> & operator<<
     os << p.get_int();
     return os;
 }
+
+
+class copyable_int
+{
+   public:
+   copyable_int()
+      :  m_int(0)
+   {}
+
+   explicit copyable_int(int a)
+      :  m_int(a)
+   {}
+
+   copyable_int(const copyable_int& mmi)
+      :  m_int(mmi.m_int)
+   {}
+   
+   copyable_int & operator= (const copyable_int &mi)
+   {  this->m_int = mi.m_int; return *this;  }
+
+   copyable_int & operator= (int i)
+   {  this->m_int = i;  return *this;  }
+
+   bool operator ==(const copyable_int &mi) const
+   {  return this->m_int == mi.m_int;   }
+
+   bool operator !=(const copyable_int &mi) const
+   {  return this->m_int != mi.m_int;   }
+
+   bool operator <(const copyable_int &mi) const
+   {  return this->m_int < mi.m_int;   }
+
+   bool operator <=(const copyable_int &mi) const
+   {  return this->m_int <= mi.m_int;   }
+
+   bool operator >=(const copyable_int &mi) const
+   {  return this->m_int >= mi.m_int;   }
+
+   bool operator >(const copyable_int &mi) const
+   {  return this->m_int > mi.m_int;   }
+
+   int get_int() const
+   {  return m_int;  }
+
+   private:
+   int m_int;
+};
+
+template<class E, class T> 
+std::basic_ostream<E, T> & operator<< 
+   (std::basic_ostream<E, T> & os, copyable_int const & p)
+
+{
+    os << p.get_int();
+    return os;
+}
+
+
 
 }  //namespace test {
 }  //namespace interprocess {

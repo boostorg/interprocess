@@ -1,12 +1,12 @@
 [/
- / Copyright (c) 2007-2008 Ion Gaztanaga
+ / Copyright (c) 2007-2009 Ion Gaztanaga
  /
  / Distributed under the Boost Software License, Version 1.0. (See accompanying
  / file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
  /]
 
 [library Boost.Interprocess
-    [quickbook 1.3]
+    [quickbook 1.4]
     [authors [Gaztanaga, Ion]]
     [copyright 2005- 2008 Ion Gaztanaga]
     [id interprocess]
@@ -1351,14 +1351,14 @@ Boost.Interprocess offers the following mutex types:
 
    #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
-* [classref boost::interprocess::interprocess_mutex]: A non-recursive,
+* [classref boost::interprocess::interprocess_mutex interprocess_mutex]: A non-recursive,
   anonymous mutex that can be placed in shared memory or memory mapped files.
 
 [c++]
 
    #include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
 
-* [classref boost::interprocess::interprocess_recursive_mutex]: A recursive,
+* [classref boost::interprocess::interprocess_recursive_mutex interprocess_recursive_mutex]: A recursive,
   anonymous mutex that can be placed in shared memory or memory mapped files.
 
 [c++]
@@ -1518,7 +1518,7 @@ Boost.Interprocess offers the following condition types:
 
    #include <boost/interprocess/sync/interprocess_condition.hpp>
 
-* [classref boost::interprocess::interprocess_condition]:
+* [classref boost::interprocess::interprocess_condition interprocess_condition]:
   An anonymous condition variable that can be placed in shared memory or memory
   mapped files to be used with [classref boost::interprocess::interprocess_mutex].
 
@@ -1526,8 +1526,8 @@ Boost.Interprocess offers the following condition types:
 
    #include <boost/interprocess/sync/named_condition.hpp>
 
-* [classref boost::interprocess::named_condition]: A named
-  condition variable to be used with [classref boost::interprocess::named_mutex].
+* [classref boost::interprocess::named_condition named_condition]: A named
+  condition variable to be used with [classref boost::interprocess::named_mutex named_mutex].
 
 Named conditions are similar to anonymous conditions, but they are used in
 combination with named mutexes. Several times, we don't want to store
@@ -1609,7 +1609,7 @@ Boost.Interprocess offers the following semaphore types:
 
    #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 
-* [classref boost::interprocess::interprocess_semaphore]:
+* [classref boost::interprocess::interprocess_semaphore interprocess_semaphore]:
   An anonymous semaphore that can be placed in shared memory or memory
   mapped files.
 
@@ -1617,12 +1617,8 @@ Boost.Interprocess offers the following semaphore types:
 
    #include <boost/interprocess/sync/named_semaphore.hpp>
 
-* [classref boost::interprocess::named_condition]: A named
+* [classref boost::interprocess::named_semaphore named_semaphore]: A named
   semaphore.
-
-Named conditions are similar to anonymous conditions, but they are used in
-combination with named mutexes. Several times, we don't want to store
-synchronization objects with the synchronized data:
 
 [endsect]
 
@@ -1977,7 +1973,7 @@ Boost.Interprocess offers the following upgradable mutex types:
 
    #include <boost/interprocess/sync/interprocess_upgradable_mutex.hpp>
 
-* [classref boost::interprocess::interprocess_upgradable_mutex]: A non-recursive,
+* [classref boost::interprocess::interprocess_upgradable_mutex interprocess_upgradable_mutex]: A non-recursive,
   anonymous upgradable mutex that can be placed in shared memory or memory mapped files.
 
 [c++]
@@ -1993,12 +1989,12 @@ Boost.Interprocess offers the following upgradable mutex types:
 
 As with plain mutexes, it's important to release the acquired lock even in the presence
 of exceptions. [*Boost.Interprocess] mutexes are best used with the 
-[classref boost::interprocess::scoped_lock] utility,
+[classref boost::interprocess::scoped_lock scoped_lock] utility,
 and this class only offers exclusive locking.
 
 As we have sharable locking and upgradable locking with upgradable mutexes, we have two new
-utilities: [classref boost::interprocess::sharable_lock] and 
-[classref boost::interprocess::upgradable_lock]. Both classes are similar to `scoped_lock`
+utilities: [classref boost::interprocess::sharable_lock sharable_lock] and 
+[classref boost::interprocess::upgradable_lock upgradable_lock]. Both classes are similar to `scoped_lock`
 but `sharable_lock` acquires the sharable lock in the constructor and `upgradable_lock`
 acquires the upgradable lock in the constructor.
 
@@ -2855,7 +2851,7 @@ This is the second process:
 [doc_message_queueB]
 
 To know more about this class and all its operations, please see the
-[classref boost::interprocess::message_queue] class reference.
+[classref boost::interprocess::message_queue message_queue] class reference.
 
 [endsect]
 
@@ -3425,7 +3421,7 @@ parameter (`MemoryAlgorithm`). That is, the mutex type used to synchronize
 named/unique allocations is defined by the 
 `MemoryAlgorithm::mutex_family::recursive_mutex_type` type. For shared memory,
 and memory mapped file based managed segments this recursive mutex is defined
-as [classref boost::interprocess::interprocess_recursive_mutex].
+as [classref boost::interprocess::interprocess_recursive_mutex interprocess_recursive_mutex].
 
 If two processes can call:
 
@@ -4189,7 +4185,7 @@ To use a managed heap memory, you must include the following header:
    #include <boost/interprocess/managed_heap_memory.hpp>
 
 The use is exactly the same as 
-[classref boost::interprocess::basic_managed_external_buffer],
+[classref boost::interprocess::basic_managed_external_buffer basic_managed_external_buffer],
 except that memory is created by
 the managed memory segment itself using dynamic (new/delete) memory.
 
@@ -5023,7 +5019,7 @@ objects in the container, avoiding unnecessary copies.
 
 
 To transfer the contents of a container to another one, use 
-`boost::move()` function, as shown in the example. For more details
+`boost::interprocess::move()` function, as shown in the example. For more details
 about functions supporting move-semantics, see the reference section of
 Boost.Interprocess containers:
 
@@ -6533,6 +6529,14 @@ warranty.
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_41_00 Boost 1.41 Release]
+
+*  Support for POSIX shared memory in Mac OS.
+*  [*ABI breaking]: Generic `semaphore` and `named_semaphore` now implemented more efficiently with atomic operations.
+*  More robust file opening in Windows platforms with active Anti-virus software.
+
+[endsect]
 
 [section:release_notes_boost_1_40_00 Boost 1.40 Release]
 

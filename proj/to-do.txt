@@ -55,10 +55,10 @@
 
 -> operator >> and similar need moved_value
 
--> Add cmath workaround for Boost < 1.37
-
 -> rvalue reference enabled compilers are not optimized with is_movable and move_iterator
 
 -> Add allocator test template that test all new functions (allocate_many, etc.)
 
 -> MacOS shm_open is non-conformant. Is there a way to know the size of a shared memory object?
+
+-> swap() of multiallocaiton iterator is wrong. Try to reimplement it with slist

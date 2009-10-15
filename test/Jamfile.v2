@@ -27,6 +27,7 @@ rule test_all
       :  # requirements
         <toolset>acc:<linkflags>-lrt
         <toolset>acc-pa_risc:<linkflags>-lrt
+        <host-os>hpux,<toolset>gcc:<linkflags>"-Wl,+as,mpas"
       ] ;
    }
 

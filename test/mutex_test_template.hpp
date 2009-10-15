@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2007. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -234,6 +234,7 @@ void test_mutex_lock()
 
    //Wait completion
    tm1.join();
+   boost::thread::sleep(xsecs(1*BaseSeconds));
    tm2.join();
 
    assert(d1.m_value == 1);
