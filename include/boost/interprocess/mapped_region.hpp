@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -31,9 +31,9 @@
 #    include <unistd.h>
 #    include <sys/stat.h>
 #    include <sys/types.h>
-#  ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
-#    include <sys/shm.h>
-#  endif
+#    if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS)
+#      include <sys/shm.h>      //System V shared memory...
+#    endif
 #    include <cassert>
 #  else
 #    error Unknown platform
@@ -59,12 +59,10 @@ class mapped_region
 {
    /// @cond
    //Non-copyable
-   mapped_region(mapped_region &);
-   mapped_region &operator=(mapped_region &);
+   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(mapped_region)
    /// @endcond
 
    public:
-   BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(mapped_region)
 
    //!Creates a mapping region of the mapped memory "mapping", starting in
    //!offset "offset", and the mapping's size will be "size". The mapping 
