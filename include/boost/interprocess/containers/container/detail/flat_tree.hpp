@@ -340,7 +340,7 @@ class flat_tree
    template <class... Args>
    iterator emplace_unique(Args&&... args)
    {
-      value_type val(boost::interprocess::forward<Args>(args)...);
+      value_type && val = value_type(boost::interprocess::forward<Args>(args)...);
       insert_commit_data data;
       std::pair<iterator,bool> ret =
          priv_insert_unique_prepare(val, data);
@@ -353,7 +353,7 @@ class flat_tree
    template <class... Args>
    iterator emplace_hint_unique(const_iterator hint, Args&&... args)
    {
-      value_type val(boost::interprocess::forward<Args>(args)...);
+      value_type && val = value_type(boost::interprocess::forward<Args>(args)...);
       insert_commit_data data;
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(hint, val, data);
       if(ret.second){
@@ -365,7 +365,7 @@ class flat_tree
    template <class... Args>
    iterator emplace_equal(Args&&... args)
    {
-      value_type val(boost::interprocess::forward<Args>(args)...);
+      value_type &&val = value_type(boost::interprocess::forward<Args>(args)...);
       iterator i = this->upper_bound(KeyOfValue()(val));
       i = this->m_data.m_vect.insert(i, boost::interprocess::move<value_type>(val));
       return i;
@@ -374,7 +374,7 @@ class flat_tree
    template <class... Args>
    iterator emplace_hint_equal(const_iterator hint, Args&&... args)
    {
-      value_type val(boost::interprocess::forward<Args>(args)...);
+      value_type &&val = value_type(boost::interprocess::forward<Args>(args)...);
       insert_commit_data data;
       priv_insert_equal_prepare(hint, val, data);
       return priv_insert_commit(data, boost::interprocess::move<value_type>(val));
