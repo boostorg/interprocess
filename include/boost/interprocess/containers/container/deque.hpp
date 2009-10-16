@@ -814,7 +814,8 @@ class deque : protected deque_base<T, Alloc>
          this->priv_push_back_simple_commit();
       }
       else{
-         containers_detail::advanced_insert_aux_emplace<T, iterator, Args...> proxy(boost::interprocess::forward<Args>(args)...);
+         typedef containers_detail::advanced_insert_aux_emplace<T, iterator, Args...> type;
+         type &&proxy = type(boost::interprocess::forward<Args>(args)...);
          this->priv_insert_aux_impl(this->cend(), 1, proxy);
       }
    }
@@ -827,7 +828,8 @@ class deque : protected deque_base<T, Alloc>
          this->priv_push_front_simple_commit();
       }
       else{
-         containers_detail::advanced_insert_aux_emplace<T, iterator, Args...> proxy(boost::interprocess::forward<Args>(args)...);
+         typedef containers_detail::advanced_insert_aux_emplace<T, iterator, Args...> type;
+         type &&proxy = type(boost::interprocess::forward<Args>(args)...);
          this->priv_insert_aux_impl(this->cbegin(), 1, proxy);
       }
    }
@@ -845,7 +847,8 @@ class deque : protected deque_base<T, Alloc>
       }
       else{
          size_type n = p - this->cbegin();
-         containers_detail::advanced_insert_aux_emplace<T, iterator, Args...> proxy(boost::interprocess::forward<Args>(args)...);
+         typedef containers_detail::advanced_insert_aux_emplace<T, iterator, Args...> type;
+         type &&proxy = type(boost::interprocess::forward<Args>(args)...);
          this->priv_insert_aux_impl(p, 1, proxy);
          return iterator(this->begin() + n);
       }

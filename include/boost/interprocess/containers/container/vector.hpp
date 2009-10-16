@@ -947,8 +947,8 @@ class vector : private containers_detail::vector_alloc_holder<A>
          ++this->members_.m_size;
       }
       else{
-         containers_detail::advanced_insert_aux_emplace<T, T*, Args...> proxy
-            (boost::interprocess::forward<Args>(args)...);
+         typedef containers_detail::advanced_insert_aux_emplace<T, T*, Args...> type;
+         type &&proxy = type(boost::interprocess::forward<Args>(args)...);
          priv_range_insert(back_pos, 1, proxy);
       }
    }
@@ -967,8 +967,8 @@ class vector : private containers_detail::vector_alloc_holder<A>
    {
       //Just call more general insert(pos, size, value) and return iterator
       size_type pos_n = position - cbegin();
-      containers_detail::advanced_insert_aux_emplace<T, T*, Args...> proxy
-         (boost::interprocess::forward<Args>(args)...);
+      typedef containers_detail::advanced_insert_aux_emplace<T, T*, Args...> type;
+      type &&proxy = type(boost::interprocess::forward<Args>(args)...);
       priv_range_insert(position.get_ptr(), 1, proxy);
       return iterator(this->members_.m_start + pos_n);
    }

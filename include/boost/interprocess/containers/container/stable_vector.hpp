@@ -736,7 +736,7 @@ class stable_vector
    {
       typedef emplace_functor<node_type_t, Args...>         EmplaceFunctor;
       typedef emplace_iterator<node_type_t, EmplaceFunctor> EmplaceIterator;
-      EmplaceFunctor ef(boost::interprocess::forward<Args>(args)...);
+      EmplaceFunctor &&ef = EmplaceFunctor(boost::interprocess::forward<Args>(args)...);
       this->insert(this->cend(), EmplaceIterator(ef), EmplaceIterator());
    }
 
@@ -756,7 +756,7 @@ class stable_vector
       size_type pos_n = position - cbegin();
       typedef emplace_functor<node_type_t, Args...>         EmplaceFunctor;
       typedef emplace_iterator<node_type_t, EmplaceFunctor> EmplaceIterator;
-      EmplaceFunctor ef(boost::interprocess::forward<Args>(args)...);
+      EmplaceFunctor &&ef = EmplaceFunctor(boost::interprocess::forward<Args>(args)...);
       this->insert(position, EmplaceIterator(ef), EmplaceIterator());
       return iterator(this->begin() + pos_n);
    }

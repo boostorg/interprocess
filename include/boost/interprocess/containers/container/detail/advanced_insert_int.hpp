@@ -180,7 +180,7 @@ struct advanced_insert_aux_emplace
    typedef typename advanced_insert_aux_int<T, Iterator>::difference_type difference_type;
    typedef typename build_number_seq<sizeof...(Args)>::type             index_tuple_t;
 
-   advanced_insert_aux_emplace(Args&&... args)
+   explicit advanced_insert_aux_emplace(Args&&... args)
       : args_(args...), used_(false)
    {}
 
@@ -204,8 +204,7 @@ struct advanced_insert_aux_emplace
    void priv_copy_all_to(const index_tuple<IdxPack...>&, Iterator p)
    {
       if(!used_){
-         T object(boost::interprocess::forward<Args>(get<IdxPack>(args_))...);
-         *p = boost::interprocess::move(object);
+         *p = boost::interprocess::move(T (boost::interprocess::forward<Args>(get<IdxPack>(args_))...));
          used_ = true;
       }
    }
@@ -237,8 +236,7 @@ struct advanced_insert_aux_emplace
       assert(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
-            T object(boost::interprocess::forward<Args>(get<IdxPack>(args_))...);
-            *p = boost::interprocess::move(object);
+            *p = boost::interprocess::move(T(boost::interprocess::forward<Args>(get<IdxPack>(args_))...));
             used_ = true;
          }
       }
