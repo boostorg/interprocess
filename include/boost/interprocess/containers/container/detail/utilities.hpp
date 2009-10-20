@@ -14,6 +14,7 @@
 #include <boost/interprocess/containers/container/detail/config_begin.hpp>
 #include <cstdio>
 #include <boost/type_traits/is_fundamental.hpp>
+#include <boost/type_traits/is_pointer.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/containers/container/detail/mpl.hpp>
 #include <boost/interprocess/containers/container/detail/type_traits.hpp>
@@ -98,7 +99,7 @@ struct ct_rounded_size
 template<class T>
 struct move_const_ref_type
    : if_c
-   < ::boost::is_fundamental<T>::value
+   < ::boost::is_fundamental<T>::value || ::boost::is_pointer<T>::value
    ,const T &
    ,BOOST_INTERPROCESS_CATCH_CONST_RLVALUE(T)
    >
