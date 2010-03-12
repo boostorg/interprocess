@@ -349,6 +349,20 @@ union system_timeofday_information
    unsigned char Reserved1[SystemTimeOfDayInfoLength];
 };
 
+struct interprocess_by_handle_file_information
+{
+    unsigned long dwFileAttributes;
+    interprocess_filetime ftCreationTime;
+    interprocess_filetime ftLastAccessTime;
+    interprocess_filetime ftLastWriteTime;
+    unsigned long dwVolumeSerialNumber;
+    unsigned long nFileSizeHigh;
+    unsigned long nFileSizeLow;
+    unsigned long nNumberOfLinks;
+    unsigned long nFileIndexHigh;
+    unsigned long nFileIndexLow;
+};
+
 enum system_information_class {
    system_basic_information = 0,
    system_performance_information = 2,
@@ -433,6 +447,8 @@ extern "C" __declspec(dllimport) void *__stdcall LoadLibraryA(const char *);
 extern "C" __declspec(dllimport) int   __stdcall FreeLibrary(void *);
 extern "C" __declspec(dllimport) void *__stdcall GetProcAddress(void *, const char*);
 extern "C" __declspec(dllimport) void *__stdcall GetModuleHandleA(const char*);
+extern "C" __declspec(dllimport) void *__stdcall GetFileInformationByHandle(void *, interprocess_by_handle_file_information*);
+
 
 //API function typedefs
 //Pointer to functions
@@ -625,6 +641,9 @@ inline bool unlock_file_ex(void *hnd, unsigned long reserved, unsigned long size
 
 inline bool write_file(void *hnd, const void *buffer, unsigned long bytes_to_write, unsigned long *bytes_written, interprocess_overlapped* overlapped)
 {  return 0 != WriteFile(hnd, buffer, bytes_to_write, bytes_written, overlapped);  }
+
+inline bool get_file_information_by_handle(void *hnd, interprocess_by_handle_file_information *info)
+{  return 0 != GetFileInformationByHandle(hnd, info);  }
 
 inline long interlocked_increment(long volatile *addr)
 {  return BOOST_INTERLOCKED_INCREMENT(addr);  }

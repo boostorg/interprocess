@@ -15,17 +15,17 @@
 #  pragma once
 #endif
 
-#include <boost/interprocess/containers/container/detail/config_begin.hpp>
-#include <boost/interprocess/containers/container/container_fwd.hpp>
-#include <boost/interprocess/containers/container/detail/workaround.hpp>
-#include <boost/interprocess/containers/container/detail/utilities.hpp>
+#include "config_begin.hpp"
+#include INCLUDE_BOOST_CONTAINER_CONTAINER_FWD_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_UTILITIES_HPP
 #include <boost/pointer_to_other.hpp>
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/slist.hpp>
-#include <boost/interprocess/containers/container/detail/type_traits.hpp>
-#include <boost/interprocess/containers/container/detail/math_functions.hpp>
-#include <boost/interprocess/containers/container/detail/mpl.hpp>
-#include <boost/interprocess/containers/container/detail/pool_common.hpp>
+#include INCLUDE_BOOST_CONTAINER_DETAIL_TYPE_TRAITS_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_MATH_FUNCTIONS_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_POOL_COMMON_HPP
 #include <cassert>
 #include <cstddef>
 
@@ -270,11 +270,11 @@ class private_adaptive_node_pool_impl
          }
       }
       catch(...){
-         this->deallocate_nodes(boost::interprocess::move(chain));
+         this->deallocate_nodes(BOOST_CONTAINER_MOVE_NAMESPACE::move(chain));
          throw;
       }
       priv_invariants();
-      return boost::interprocess::move(chain);
+      return BOOST_CONTAINER_MOVE_NAMESPACE::move(chain);
    }
 
    //!Deallocates a linked list of nodes. Never throws
@@ -633,6 +633,6 @@ class private_adaptive_node_pool_impl
 }  //namespace container {
 }  //namespace boost {
 
-#include <boost/interprocess/containers/container/detail/config_end.hpp>
+#include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
 
 #endif   //#ifndef BOOST_CONTAINER_DETAIL_ADAPTIVE_NODE_POOL_IMPL_HPP

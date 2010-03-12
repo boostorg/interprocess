@@ -47,24 +47,24 @@
 #  pragma once
 #endif
 
-#include <boost/interprocess/containers/container/detail/config_begin.hpp>
-#include <boost/interprocess/containers/container/detail/workaround.hpp>
+#include "detail/config_begin.hpp"
+#include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
 
-#include <boost/interprocess/containers/container/container_fwd.hpp>
-#include <boost/interprocess/detail/move.hpp>
+#include INCLUDE_BOOST_CONTAINER_CONTAINER_FWD_HPP
+#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
 #include <boost/pointer_to_other.hpp>
-#include <boost/interprocess/containers/container/detail/utilities.hpp>
-#include <boost/interprocess/containers/container/detail/mpl.hpp>
+#include INCLUDE_BOOST_CONTAINER_DETAIL_UTILITIES_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
-#include <boost/interprocess/containers/container/detail/node_alloc_holder.hpp>
+#include INCLUDE_BOOST_CONTAINER_DETAIL_NODE_ALLOC_HOLDER_HPP
 #include <boost/intrusive/slist.hpp>
 
 
 #if defined(BOOST_CONTAINERS_PERFECT_FORWARDING) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
 //Preprocessor library to emulate perfect forwarding
 #else
-#include <boost/interprocess/containers/container/detail/preprocessor.hpp> 
+#include INCLUDE_BOOST_CONTAINER_DETAIL_PREPROCESSOR_HPP 
 #endif
 
 #include <stdexcept>
@@ -105,7 +105,7 @@ struct slist_node
 
    template<class ...Args>
    slist_node(Args &&...args)
-      : m_data(boost::interprocess::forward<Args>(args)...)
+      : m_data(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...)
    {}
 
    #else //#ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
@@ -254,7 +254,7 @@ class slist
 
    /// @cond
    private:
-   BOOST_COPYABLE_AND_MOVABLE(slist)
+   BOOST_MOVE_MACRO_COPYABLE_AND_MOVABLE(slist)
    typedef difference_type                         list_difference_type;
    typedef pointer                                 list_pointer;
    typedef const_pointer                           list_const_pointer;
@@ -404,8 +404,8 @@ class slist
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //! 
    //! <b>Complexity</b>: Constant.
-   slist(BOOST_INTERPROCESS_RV_REF(slist) x)
-      : AllocHolder(boost::interprocess::move((AllocHolder&)x))
+   slist(BOOST_MOVE_MACRO_RV_REF(slist) x)
+      : AllocHolder(BOOST_CONTAINER_MOVE_NAMESPACE::move((AllocHolder&)x))
    {}
 
    //! <b>Effects</b>: Makes *this contain the same elements as x.
@@ -416,7 +416,7 @@ class slist
    //! <b>Throws</b>: If memory allocation throws or T's copy constructor throws.
    //!
    //! <b>Complexity</b>: Linear to the number of elements in x.
-   slist& operator= (BOOST_INTERPROCESS_COPY_ASSIGN_REF(slist) x)
+   slist& operator= (BOOST_MOVE_MACRO_COPY_ASSIGN_REF(slist) x)
    {
       if (&x != this){
          this->assign(x.begin(), x.end());
@@ -432,7 +432,7 @@ class slist
    //! <b>Throws</b>: If memory allocation throws or T's copy constructor throws.
    //!
    //! <b>Complexity</b>: Linear to the number of elements in x.
-   slist& operator= (BOOST_INTERPROCESS_RV_REF(slist) mx)
+   slist& operator= (BOOST_MOVE_MACRO_RV_REF(slist) mx)
    {
       if (&mx != this){
          this->clear();
@@ -635,7 +635,7 @@ class slist
    void push_front(T &x) { push_front(const_cast<const T &>(x)); }
 
    template<class U>
-   void push_front(const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::boost::interprocess::is_movable<U>::value >::type* =0)
+   void push_front(const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::BOOST_CONTAINER_MOVE_NAMESPACE::is_movable<U>::value >::type* =0)
    {  return priv_push_front(u); }
    #endif
 
@@ -645,8 +645,8 @@ class slist
    //! <b>Throws</b>: If memory allocation throws.
    //!
    //! <b>Complexity</b>: Amortized constant time.
-   void push_front(BOOST_INTERPROCESS_RV_REF(T) x)
-   {  this->icont().push_front(*this->create_node(boost::interprocess::move(x)));  }
+   void push_front(BOOST_MOVE_MACRO_RV_REF(T) x)
+   {  this->icont().push_front(*this->create_node(BOOST_CONTAINER_MOVE_NAMESPACE::move(x)));  }
 
    //! <b>Effects</b>: Removes the first element from the list.
    //!
@@ -697,7 +697,7 @@ class slist
    { return this->insert_after(position, const_cast<const T &>(x)); }
 
    template<class U>
-   iterator insert_after(const_iterator position, const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::boost::interprocess::is_movable<U>::value >::type* =0)
+   iterator insert_after(const_iterator position, const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::BOOST_CONTAINER_MOVE_NAMESPACE::is_movable<U>::value >::type* =0)
    {  return this->priv_insert_after(position, u); }
    #endif
 
@@ -714,8 +714,8 @@ class slist
    //!
    //! <b>Note</b>: Does not affect the validity of iterators and references of
    //!   previous values.
-   iterator insert_after(const_iterator prev_pos, BOOST_INTERPROCESS_RV_REF(value_type) x) 
-   {  return iterator(this->icont().insert_after(prev_pos.get(), *this->create_node(boost::interprocess::move(x)))); }
+   iterator insert_after(const_iterator prev_pos, BOOST_MOVE_MACRO_RV_REF(value_type) x) 
+   {  return iterator(this->icont().insert_after(prev_pos.get(), *this->create_node(BOOST_CONTAINER_MOVE_NAMESPACE::move(x)))); }
 
    //! <b>Requires</b>: prev_pos must be a valid iterator of *this.
    //!
@@ -765,7 +765,7 @@ class slist
    { return this->insert(position, const_cast<const T &>(x)); }
 
    template<class U>
-   iterator insert(const_iterator position, const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::boost::interprocess::is_movable<U>::value >::type* =0)
+   iterator insert(const_iterator position, const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::BOOST_CONTAINER_MOVE_NAMESPACE::is_movable<U>::value >::type* =0)
    {  return this->priv_insert(position, u); }
    #endif
 
@@ -776,8 +776,8 @@ class slist
    //! <b>Throws</b>: If memory allocation throws.
    //!
    //! <b>Complexity</b>: Linear to the elements before p.
-   iterator insert(const_iterator p, BOOST_INTERPROCESS_RV_REF(value_type) x) 
-   {  return this->insert_after(previous(p), boost::interprocess::move(x)); }
+   iterator insert(const_iterator p, BOOST_MOVE_MACRO_RV_REF(value_type) x) 
+   {  return this->insert_after(previous(p), BOOST_CONTAINER_MOVE_NAMESPACE::move(x)); }
 
    //! <b>Requires</b>: p must be a valid iterator of *this.
    //!
@@ -813,7 +813,7 @@ class slist
    //! <b>Complexity</b>: Amortized constant time.
    template <class... Args>
    void emplace_front(Args&&... args)
-   {  this->emplace_after(this->cbefore_begin(), boost::interprocess::forward<Args>(args)...); }
+   {  this->emplace_after(this->cbefore_begin(), BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...); }
 
    //! <b>Effects</b>: Inserts an object of type T constructed with
    //!   std::forward<Args>(args)... before p
@@ -824,7 +824,7 @@ class slist
    //! <b>Complexity</b>: Linear to the elements before p
    template <class... Args>
    iterator emplace(const_iterator p, Args&&... args)
-   {  return this->emplace_after(this->previous(p), boost::interprocess::forward<Args>(args)...);  }
+   {  return this->emplace_after(this->previous(p), BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...);  }
 
    //! <b>Effects</b>: Inserts an object of type T constructed with
    //!   std::forward<Args>(args)... after prev
@@ -837,7 +837,7 @@ class slist
    iterator emplace_after(const_iterator prev, Args&&... args)
    {
       typename AllocHolder::Deallocator d(AllocHolder::create_node_and_deallocator());
-      new ((void*)containers_detail::get_pointer(d.get())) Node(boost::interprocess::forward<Args>(args)...);
+      new ((void*)containers_detail::get_pointer(d.get())) Node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...);
       NodePtr node = d.get();
       d.release();
       return iterator(this->icont().insert_after(prev.get(), *node));
@@ -1370,7 +1370,7 @@ class slist
 
    template<class Integer>
    void priv_insert_dispatch(const_iterator prev, Integer n, Integer x, containers_detail::true_) 
-   {  this->priv_create_and_insert_nodes(prev, n, x);  }
+   {  this->priv_create_and_insert_nodes(prev, (std::size_t)n, x);  }
 
    void priv_fill_assign(size_type n, const T& val) 
    {
@@ -1412,7 +1412,7 @@ class slist
 
    template <class Int>
    void priv_insert_after_range_dispatch(const_iterator prev_pos, Int n, Int x, containers_detail::true_) 
-   {  this->priv_create_and_insert_nodes(prev_pos, n, x);  }
+   {  this->priv_create_and_insert_nodes(prev_pos, (std::size_t)n, x);  }
 
    template <class InIter>
    void priv_insert_after_range_dispatch(const_iterator prev_pos, InIter first, InIter last, containers_detail::false_) 
@@ -1559,6 +1559,6 @@ class insert_iterator<boost::container::slist<T, A> >
 
 ///@endcond
 
-#include <boost/interprocess/containers/container/detail/config_end.hpp>
+#include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
 
 #endif /* BOOST_CONTAINERS_SLIST_HPP */

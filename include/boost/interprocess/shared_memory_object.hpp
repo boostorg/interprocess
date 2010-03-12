@@ -214,7 +214,7 @@ inline bool shared_memory_object::remove(const char *filename)
       //Make sure a temporary path is created for shared memory
       std::string shmfile;
       detail::tmp_filename(filename, shmfile);
-      return detail::delete_file(shmfile.c_str()) == 0;
+      return detail::delete_file(shmfile.c_str());
    }
    catch(...){
       return false;

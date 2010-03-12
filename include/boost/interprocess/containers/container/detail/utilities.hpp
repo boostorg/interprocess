@@ -11,13 +11,13 @@
 #ifndef BOOST_CONTAINERS_DETAIL_UTILITIES_HPP
 #define BOOST_CONTAINERS_DETAIL_UTILITIES_HPP
 
-#include <boost/interprocess/containers/container/detail/config_begin.hpp>
+#include "config_begin.hpp"
 #include <cstdio>
 #include <boost/type_traits/is_fundamental.hpp>
 #include <boost/type_traits/is_pointer.hpp>
-#include <boost/interprocess/detail/move.hpp>
-#include <boost/interprocess/containers/container/detail/mpl.hpp>
-#include <boost/interprocess/containers/container/detail/type_traits.hpp>
+#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_TYPE_TRAITS_HPP
 #include <algorithm>
 
 namespace boost {
@@ -101,7 +101,7 @@ struct move_const_ref_type
    : if_c
    < ::boost::is_fundamental<T>::value || ::boost::is_pointer<T>::value
    ,const T &
-   ,BOOST_INTERPROCESS_CATCH_CONST_RLVALUE(T)
+   ,BOOST_MOVE_MACRO_CATCH_CONST_RLVALUE(T)
    >
 {};
 
@@ -110,6 +110,6 @@ struct move_const_ref_type
 }  //namespace boost {
 
 
-#include <boost/interprocess/containers/container/detail/config_end.hpp>
+#include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
 
 #endif   //#ifndef BOOST_CONTAINERS_DETAIL_UTILITIES_HPP

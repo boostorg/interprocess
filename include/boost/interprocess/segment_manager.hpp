@@ -499,6 +499,24 @@ class segment_manager
    void atomic_func(Func &f)
    {  scoped_lock<rmutex> guard(m_header);  f();  }
 
+   //!Tries to calls a functor guaranteeing that no new construction, search or
+   //!destruction will be executed by any process while executing the object
+   //!function call. If the atomic function can't be immediatelly executed
+   //!because the internal mutex is already locked, returns false.
+   //!If the functor throws, this function throws.
+   template <class Func>
+   bool try_atomic_func(Func &f)
+   {
+      scoped_lock<rmutex> guard(m_header, try_to_lock);
+      if(guard){
+         f();
+         return true;
+      }
+      else{
+         return false;
+      }
+   }
+
    //!Destroys a previously created unique instance.
    //!Returns false if the object was not present.
    template <class T>

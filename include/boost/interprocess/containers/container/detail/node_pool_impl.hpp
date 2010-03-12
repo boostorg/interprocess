@@ -15,17 +15,17 @@
 #  pragma once
 #endif
 
-#include <boost/interprocess/containers/container/detail/config_begin.hpp>
-#include <boost/interprocess/containers/container/container_fwd.hpp>
-#include <boost/interprocess/containers/container/detail/workaround.hpp>
-#include <boost/interprocess/containers/container/detail/utilities.hpp>
+#include "config_begin.hpp"
+#include INCLUDE_BOOST_CONTAINER_CONTAINER_FWD_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_UTILITIES_HPP
 #include <boost/pointer_to_other.hpp>
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/slist.hpp>
-#include <boost/interprocess/containers/container/detail/type_traits.hpp>
-#include <boost/interprocess/containers/container/detail/math_functions.hpp>
-#include <boost/interprocess/containers/container/detail/mpl.hpp>
-#include <boost/interprocess/containers/container/detail/pool_common.hpp>
+#include INCLUDE_BOOST_CONTAINER_DETAIL_TYPE_TRAITS_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_MATH_FUNCTIONS_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_POOL_COMMON_HPP
 #include <cassert>
 #include <cstddef>
 #include <functional>   //std::unary_function
@@ -120,7 +120,7 @@ class private_node_pool_impl
       multiallocation_chain chain;
       chain.incorporate_after(chain.before_begin(), &*first_node, &*last_node, n);
       m_allocated += n;
-      return boost::interprocess::move(chain);
+      return BOOST_CONTAINER_MOVE_NAMESPACE::move(chain);
    }
 
    void deallocate_nodes(multiallocation_chain chain)
@@ -361,6 +361,6 @@ class private_node_pool_impl
 }  //namespace container {
 }  //namespace boost {
 
-#include <boost/interprocess/containers/container/detail/config_end.hpp>
+#include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
 
 #endif   //#ifndef BOOST_CONTAINER_DETAIL_ADAPTIVE_NODE_POOL_IMPL_HPP

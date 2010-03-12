@@ -15,8 +15,8 @@
 #  pragma once
 #endif
 
-#include <boost/interprocess/containers/container/detail/config_begin.hpp>
-#include <boost/interprocess/containers/container/detail/workaround.hpp>
+#include "config_begin.hpp"
+#include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
 
 #ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 #error "This file is not needed when perfect forwarding is available"
@@ -81,18 +81,18 @@
 #endif
 
 #define BOOST_CONTAINERS_PP_PARAM_FORWARD(z, n, data) \
-boost::interprocess::forward< BOOST_PP_CAT(P, n) >( BOOST_PP_CAT(p, n) ) \
+BOOST_CONTAINER_MOVE_NAMESPACE::forward< BOOST_PP_CAT(P, n) >( BOOST_PP_CAT(p, n) ) \
 //!
 
 #define BOOST_CONTAINERS_PP_MEMBER_FORWARD(z, n, data) \
-boost::interprocess::forward< BOOST_PP_CAT(P, n) >( BOOST_PP_CAT(m_p, n) ) \
+BOOST_CONTAINER_MOVE_NAMESPACE::forward< BOOST_PP_CAT(P, n) >( BOOST_PP_CAT(m_p, n) ) \
 //!
 
 #define BOOST_CONTAINERS_PP_MEMBER_IT_FORWARD(z, n, data) \
 BOOST_PP_CAT(*m_p, n) \
 //!
 
-#include <boost/interprocess/containers/container/detail/config_end.hpp>
+#include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
 
 #else
 #ifdef BOOST_CONTAINERS_PERFECT_FORWARDING

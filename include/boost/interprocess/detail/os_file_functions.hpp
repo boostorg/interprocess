@@ -13,6 +13,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/errors.hpp>
 #include <string>
 
 #if (defined BOOST_INTERPROCESS_WINDOWS)
@@ -262,8 +263,7 @@ inline bool delete_subdirectories_recursive
                //if(::SetFileAttributes(strFilePath.c_str(), winapi::file_attribute_normal) == 0)
                //return winapi::get_last_error();
                // Delete file
-               if(winapi::delete_file(strFilePath.c_str()) == 0)
-                  return false;
+               winapi::delete_file(strFilePath.c_str());
             }
          }
       //Go to the next file
@@ -550,6 +550,19 @@ inline bool delete_subdirectories(const std::string &refcstrRootDirectory, const
 }
 
 #endif   //#if (defined BOOST_INTERPROCESS_WINDOWS)
+
+inline bool open_or_create_directory(const char *dir_name)
+{
+   //If fails, check that it's because it already exists
+   if(!create_directory(dir_name)){
+      error_info info(system_error_code());
+      if(info.get_error_code() != already_exists_error){
+         return false;
+      }
+   }
+   return true;
+}
+
 
 }  //namespace detail{
 }  //namespace interprocess {

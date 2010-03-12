@@ -151,7 +151,7 @@ class offset_ptr
    pointer get()const
    {  return static_cast<pointer>(this->get_pointer());   }
 
-   std::ptrdiff_t get_offset()
+   std::ptrdiff_t get_offset() const
    {  return m_offset;  }
 
    //!Pointer-like -> operator. It can return 0 pointer.

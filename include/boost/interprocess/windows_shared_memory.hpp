@@ -80,6 +80,7 @@ class windows_shared_memory
    //!After the call, "moved" does not represent any shared memory object. 
    //!Does not throw
    windows_shared_memory(BOOST_INTERPROCESS_RV_REF(windows_shared_memory) moved)
+      : m_handle(0)
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s shared memory to *this.

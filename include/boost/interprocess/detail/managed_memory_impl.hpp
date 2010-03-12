@@ -519,7 +519,16 @@ class basic_managed_memory_impl
    //!function call. If the functor throws, this function throws.
    template <class Func>
    void atomic_func(Func &f)
-   {   mp_header->atomic_func(f); }
+   {   mp_header->atomic_func(f);  }
+
+   //!Tries to call a functor guaranteeing that no new construction, search or
+   //!destruction will be executed by any process while executing the object
+   //!function call. If the atomic function can't be immediatelly executed
+   //!because the internal mutex is already locked, returns false.
+   //!If the functor throws, this function throws.
+   template <class Func>
+   bool try_atomic_func(Func &f)
+   {   return mp_header->try_atomic_func(f); }
 
    //!Destroys a named memory object or array.
    //!
