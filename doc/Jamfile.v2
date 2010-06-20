@@ -44,7 +44,6 @@ boostbook standalone
       interprocess
    :
         <xsl:param>boost.root=../../../..
-        <xsl:param>boost.libraries=../../../../libs/libraries.htm
         <xsl:param>toc.max.depth=1
         <xsl:param>toc.section.depth=2
         <xsl:param>chunk.first.sections=1
