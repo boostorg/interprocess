@@ -37,10 +37,8 @@ namespace detail {
 #if defined (BOOST_INTERPROCESS_HAS_WINDOWS_KERNEL_BOOTTIME)
 inline void get_bootstamp(std::string &s, bool add = false)
 {
-   char bootstamp[winapi::BootstampLength*2+1];
-   std::size_t bootstamp_length = winapi::BootstampLength*2;
-   winapi::get_boot_time_str(bootstamp, bootstamp_length);
-   bootstamp[winapi::BootstampLength*2] = 0;
+   std::string bootstamp;
+   winapi::get_last_bootup_time(bootstamp);
    if(add){
       s += bootstamp;
    }
@@ -118,7 +116,7 @@ inline void tmp_filename(const char *filename, std::string &tmp_name)
    tmp_name += filename;
 }
 
-inline void create_tmp_dir(std::string &tmp_name)
+inline void create_tmp_and_clean_old(std::string &tmp_name)
 {
    //First get the temp directory
    std::string root_tmp_name;
@@ -146,12 +144,14 @@ inline void create_tmp_dir(std::string &tmp_name)
    std::string subdir = tmp_name;
    subdir.erase(0, root_tmp_name.size()+1);
    delete_subdirectories(root_tmp_name, subdir.c_str());
+   #else
+   tmp_name = root_tmp_name;
    #endif
 }
 
-inline void create_tmp_dir_and_get_filename(const char *filename, std::string &tmp_name)
+inline void create_tmp_and_clean_old_and_get_filename(const char *filename, std::string &tmp_name)
 {
-   create_tmp_dir(tmp_name);
+   create_tmp_and_clean_old(tmp_name);
    tmp_filename(filename, tmp_name);
 }
 
