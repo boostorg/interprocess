@@ -656,7 +656,7 @@ inline std::pair<void*, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlign
                         void *reuse_ptr, std::size_t sizeof_object)
 {
    if(!sizeof_object)
-      return std::pair<void *, bool>(static_cast<void*>(0), 0);
+      return std::pair<void *, bool>(static_cast<void*>(0), false);
    if(command & boost::interprocess::try_shrink_in_place){
       bool success = algo_impl_t::try_shrink
          ( this, reuse_ptr, limit_objects*sizeof_object

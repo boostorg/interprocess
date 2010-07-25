@@ -16,6 +16,7 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/tmp_dir_helpers.hpp>
+#include <boost/interprocess/permissions.hpp>
 #include <string>
 #include <semaphore.h>
 
@@ -42,13 +43,13 @@ namespace detail {
 
 inline bool semaphore_open
    (sem_t *&handle, detail::create_enum_t type, const char *origname, mode_t mode,
-    unsigned int count)
+    unsigned int count, const permissions &perm = permissions())
 {
    std::string name;
    #ifndef BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SEMAPHORES
    detail::add_leading_slash(origname, name);
    #else
-   detail::create_tmp_dir_and_get_filename(origname, name);
+   detail::create_tmp_and_clean_old_and_get_filename(origname, name);
    #endif
 
    //Create new mapping
@@ -83,7 +84,7 @@ inline bool semaphore_open
 
    //Open file using POSIX API
    if(oflag & O_CREAT)
-      handle = sem_open(name.c_str(), oflag, S_IRWXO | S_IRWXG | S_IRWXU, count);
+      handle = sem_open(name.c_str(), oflag, perm.get_permissions(), count);
    else
       handle = sem_open(name.c_str(), oflag);
 
@@ -204,8 +205,8 @@ class named_semaphore_wrapper
 
    public:
    named_semaphore_wrapper
-      (detail::create_enum_t type, const char *name, mode_t mode, unsigned int count)
-   {  semaphore_open(mp_sem, type, name, mode, count);   }
+      (detail::create_enum_t type, const char *name, mode_t mode, unsigned int count, const permissions &perm = permissions())
+   {  semaphore_open(mp_sem, type, name, mode, count, perm);   }
 
    ~named_semaphore_wrapper()
    {

@@ -8,13 +8,44 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#ifndef BOOST_INTERPROCESS_DETAIL_EMULATION_MUTEX_HPP
+#define BOOST_INTERPROCESS_DETAIL_EMULATION_MUTEX_HPP
+
+#if (defined _MSC_VER) && (_MSC_VER >= 1200)
+#  pragma once
+#endif
+
+#include <boost/interprocess/detail/config_begin.hpp>
+#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
+#include <cassert>
+#include <boost/interprocess/detail/atomic.hpp>
+#include <boost/cstdint.hpp>
+#include <boost/interprocess/detail/os_thread_functions.hpp>
 
 namespace boost {
-
 namespace interprocess {
+namespace detail {
 
-inline interprocess_mutex::interprocess_mutex() 
+class emulation_mutex
+{
+   emulation_mutex(const emulation_mutex &);
+   emulation_mutex &operator=(const emulation_mutex &);
+   public:
+
+   emulation_mutex();
+   ~emulation_mutex();
+
+   void lock();
+   bool try_lock();
+   bool timed_lock(const boost::posix_time::ptime &abs_time);
+   void unlock();
+   void take_ownership(){};
+   private:
+   volatile boost::uint32_t m_s;
+};
+
+inline emulation_mutex::emulation_mutex() 
    : m_s(0) 
 {
    //Note that this class is initialized to zero.
@@ -22,12 +53,12 @@ inline interprocess_mutex::interprocess_mutex()
    //initialized mutex
 }
 
-inline interprocess_mutex::~interprocess_mutex() 
+inline emulation_mutex::~emulation_mutex() 
 {
    //Trivial destructor
 }
 
-inline void interprocess_mutex::lock(void)
+inline void emulation_mutex::lock(void)
 {
    do{
       boost::uint32_t prev_s = detail::atomic_cas32(const_cast<boost::uint32_t*>(&m_s), 1, 0);
@@ -40,13 +71,13 @@ inline void interprocess_mutex::lock(void)
    }while (true);
 }
 
-inline bool interprocess_mutex::try_lock(void)
+inline bool emulation_mutex::try_lock(void)
 {
    boost::uint32_t prev_s = detail::atomic_cas32(const_cast<boost::uint32_t*>(&m_s), 1, 0);   
    return m_s == 1 && prev_s == 0;
 }
 
-inline bool interprocess_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
+inline bool emulation_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
 {
    if(abs_time == boost::posix_time::pos_infin){
       this->lock();
@@ -73,9 +104,11 @@ inline bool interprocess_mutex::timed_lock(const boost::posix_time::ptime &abs_t
    return true;
 }
 
-inline void interprocess_mutex::unlock(void)
+inline void emulation_mutex::unlock(void)
 {  detail::atomic_cas32(const_cast<boost::uint32_t*>(&m_s), 0, 1);   }
 
+}  //namespace detail {
 }  //namespace interprocess {
-
 }  //namespace boost {
+
+#endif   //BOOST_INTERPROCESS_DETAIL_EMULATION_MUTEX_HPP

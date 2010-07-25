@@ -21,7 +21,7 @@ inline interprocess_condition::interprocess_condition()
    pthread_condattr_t cond_attr;
    res = pthread_condattr_init(&cond_attr);
    if(res != 0){
-      throw interprocess_exception();
+      throw interprocess_exception("pthread_condattr_init failed");
    }
    res = pthread_condattr_setpshared(&cond_attr, PTHREAD_PROCESS_SHARED);
    if(res != 0){

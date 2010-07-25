@@ -60,7 +60,7 @@ class basic_managed_external_buffer
       //Check if alignment is correct
       assert((0 == (((std::size_t)addr) & (AllocationAlgorithm::Alignment - std::size_t(1u)))));
       if(!base_t::create_impl(addr, size)){
-         throw interprocess_exception();
+         throw interprocess_exception("Could not initialize buffer in basic_managed_external_buffer constructor");
       }
    }
 
@@ -71,7 +71,7 @@ class basic_managed_external_buffer
       //Check if alignment is correct
       assert((0 == (((std::size_t)addr) & (AllocationAlgorithm::Alignment - std::size_t(1u)))));
       if(!base_t::open_impl(addr, size)){
-         throw interprocess_exception();
+         throw interprocess_exception("Could not initialize buffer in basic_managed_external_buffer constructor");
       }
    }
 

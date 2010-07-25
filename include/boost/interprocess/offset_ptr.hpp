@@ -22,6 +22,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/cast_tags.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/pointer_cast.hpp>
 #include <boost/assert.hpp>
 #include <ostream>
 #include <istream>
@@ -330,7 +331,7 @@ inline void swap (boost::interprocess::offset_ptr<T> &pt,
 //!Simulation of static_cast between pointers. Never throws.
 template<class T, class U> 
 inline boost::interprocess::offset_ptr<T> 
-   static_pointer_cast(boost::interprocess::offset_ptr<U> const & r)
+   static_pointer_cast(const boost::interprocess::offset_ptr<U> & r)
 {  
    return boost::interprocess::offset_ptr<T>
             (r, boost::interprocess::detail::static_cast_tag());  
@@ -339,7 +340,7 @@ inline boost::interprocess::offset_ptr<T>
 //!Simulation of const_cast between pointers. Never throws.
 template<class T, class U> 
 inline boost::interprocess::offset_ptr<T>
-   const_pointer_cast(boost::interprocess::offset_ptr<U> const & r)
+   const_pointer_cast(const boost::interprocess::offset_ptr<U> & r)
 {  
    return boost::interprocess::offset_ptr<T>
             (r, boost::interprocess::detail::const_cast_tag());  
@@ -348,7 +349,7 @@ inline boost::interprocess::offset_ptr<T>
 //!Simulation of dynamic_cast between pointers. Never throws.
 template<class T, class U> 
 inline boost::interprocess::offset_ptr<T> 
-   dynamic_pointer_cast(boost::interprocess::offset_ptr<U> const & r)
+   dynamic_pointer_cast(const boost::interprocess::offset_ptr<U> & r)
 {  
    return boost::interprocess::offset_ptr<T>
             (r, boost::interprocess::detail::dynamic_cast_tag());  
@@ -357,7 +358,7 @@ inline boost::interprocess::offset_ptr<T>
 //!Simulation of reinterpret_cast between pointers. Never throws.
 template<class T, class U> 
 inline boost::interprocess::offset_ptr<T>
-   reinterpret_pointer_cast(boost::interprocess::offset_ptr<U> const & r)
+   reinterpret_pointer_cast(const boost::interprocess::offset_ptr<U> & r)
 {  
    return boost::interprocess::offset_ptr<T>
             (r, boost::interprocess::detail::reinterpret_cast_tag());  
