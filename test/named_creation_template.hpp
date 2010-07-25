@@ -31,7 +31,7 @@ inline void create_then_open_then_open_or_create()
    }
    catch(...){
       //This shouldn't throw so show the error
-      BOOST_INTERPROCES_CHECK(false);
+      BOOST_INTERPROCES_CHECK( false );
    }
 }
 

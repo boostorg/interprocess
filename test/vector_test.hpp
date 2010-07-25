@@ -8,6 +8,9 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#ifndef BOOST_INTERPROCESS_TEST_VECTOR_TEST_HEADER
+#define BOOST_INTERPROCESS_TEST_VECTOR_TEST_HEADER
+
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <algorithm>
 #include <memory>
@@ -246,3 +249,5 @@ int vector_test()
 }  //namespace boost{
 
 #include <boost/interprocess/detail/config_end.hpp>
+
+#endif

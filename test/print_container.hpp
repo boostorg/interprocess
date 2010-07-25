@@ -8,8 +8,8 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef BOOST_PRINTCONTAINER_HPP
-#define BOOST_PRINTCONTAINER_HPP
+#ifndef BOOST_INTERPROCESS_TEST_PRINTCONTAINER_HPP
+#define BOOST_INTERPROCESS_TEST_PRINTCONTAINER_HPP
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <functional>
@@ -61,4 +61,4 @@ void PrintContainers(MyShmCont *shmcont, MyStdCont *stdcont)
 
 #include <boost/interprocess/detail/config_end.hpp>
 
-#endif //#ifndef BOOST_PRINTCONTAINER_HPP
+#endif //#ifndef BOOST_INTERPROCESS_TEST_PRINTCONTAINER_HPP

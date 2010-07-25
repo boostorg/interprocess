@@ -49,16 +49,18 @@ class MyThrowingClass
 
 int main ()
 {
+
    bool exception_thrown = false;
    bool exception_2_thrown = false;
+
    try{
-      detail::intermodule_singleton<MyThrowingClass>::get();
+      detail::intermodule_singleton<MyThrowingClass, true>::get();
    }
    catch(int &){
       exception_thrown = true;
       //Second try
       try{
-         detail::intermodule_singleton<MyThrowingClass>::get();
+         detail::intermodule_singleton<MyThrowingClass, true>::get();
       }
       catch(interprocess_exception &){
          exception_2_thrown = true;
@@ -77,7 +79,7 @@ int main ()
    //Second try
    exception_2_thrown = false;
    try{
-      detail::intermodule_singleton<MyThrowingClass>::get();
+      detail::intermodule_singleton<MyThrowingClass, true>::get();
    }
    catch(interprocess_exception &){
       exception_2_thrown = true;

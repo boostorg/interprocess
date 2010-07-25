@@ -77,4 +77,37 @@ int main ()
    return 0;
 }
 //]
+
+/*
 #include <boost/interprocess/detail/config_end.hpp>
+
+#include <windows.h>
+#include <boost/interprocess/detail/win32_api.hpp>
+
+#include <string>
+#include <iostream>
+ 
+int main( int argc, char* argv[] )
+{
+	std::wstring strTmp;
+ 
+   unsigned long a = timeGetTime();
+	if ( false != boost::interprocess::winapi::get_last_bootup_time( strTmp ) )
+	{
+      unsigned long b = timeGetTime();
+		std::wcout << "Last boot up time: " << strTmp << "      t:" << b-a << std::endl;
+
+      std::vector<unsigned char> v;
+      a = timeGetTime();
+      boost::interprocess::winapi::get_registry_value("SYSTEM\\CurrentControlSet\\Control\\Windows", "ShutdownTime", v);
+      b = timeGetTime();
+		std::wcout << "shutdowntime get: " << b-a << std::endl;
+	}
+	else
+	{
+		std::cout << "Error: Can't retrieve last boot up time!" << std::endl;
+	}
+ 
+	return 0;
+}
+*/

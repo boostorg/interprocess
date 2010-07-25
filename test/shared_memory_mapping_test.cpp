@@ -69,6 +69,9 @@ int main ()
             ;++i){
             *filler++ = static_cast<unsigned char>(i);
          }
+         if(!region.flush()){
+            return 1;
+         }
       }
 
       //See if the pattern is correct in the file using two mapped regions

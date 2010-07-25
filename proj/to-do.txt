@@ -62,3 +62,138 @@
 -> MacOS shm_open is non-conformant. Is there a way to know the size of a shared memory object?
 
 -> swap() of multiallocaiton iterator is wrong. Try to reimplement it with slist
+
+-> Could the mapped_file constructor allow a wchar_t filename on Windows?
+ Or some cross-platform way to get Unicode support?
+
+-> map::node_ptr p = m.create_node(my_special_cheap_key_value, mv1, mv2);
+//We would need to unconst-cast...
+const_cast<Key&>(p->first) = modify( p->second );
+m.insert( boost::move(p) ); 
+
+->  I found some bug in the interprocess library. I use
+ boost::interprocess::managed_mapped_file class and
+ managed_mapped_file::shrink_to_fit() method to decrease the size of file
+ on the disk. It works good but the thread hang up on shrink_to_fit() call
+ if the file exists already and it's size is zero. It makes me check the
+ file existance and it's size before shrink_to_fit() call.
+ Thank you!
+
+-> Ticket URL: <https://svn.boost.org/trac/boost/ticket/3375>
+
+->Robust mutex emulation:
+
+Two new fields:
+ - owner
+ - state
+
+Use intermodule singleton to store the lock file name
+
+LOCK
+  if (broken_id){
+    throw exception;
+  }
+
+  lock_own_unique_file();
+
+  while(1){
+    if (try_lock_mtx){
+      write unique_id
+    }
+    else{
+      sleep();
+      ++tries;
+      if(tries > 100)
+        if(!robust_check()){
+          tries = 0;
+        }
+        else{
+          break;
+        }
+      }
+    }
+  }
+  
+
+UNLOCK
+  if (fixing_mode){
+    write_broken_id
+  }
+  else{
+    write invalid_id
+  }
+
+  unlock_mtx
+
+ROBUST_CHECK
+
+  if(check_if_owner_dead_and_take_ownership_atomically()){
+    return false;
+  }
+  write fixing_id
+
+CHECK_IF_OWNER_DEAD_AND_TAKE_OWNERSHIP_ATOMICALLY
+
+   do{
+      old_owner = read_owner_atomically()
+      if(check_owner_unique_resource_is_dead(old_owner){
+         return true;
+      }
+   }while(cas(old_owner, cur_owner) == old_owner);
+   return false;
+
+CHECK_OWNER_UNIQUE_RESOURCE_IS_DEAD(owner)
+
+   file = file_to_owner(owner);
+   if(file_exists(file)){
+      if(try_lock(file)){
+         write_owner_atomically();
+         remove(file);
+         unlock(file)
+         return true;
+      }
+   }
+   return false;
+
+
+LOCK_OWN_UNIQUE_FILE
+class MyRobustMutexLockFile
+{
+   int fd;
+};
+
+MyRobustMutexLockFile()
+{
+   //loop create_and_lock because another process
+   //can lock and erase it
+
+   //better create, lock and rename?
+   fd = create_file(lockfilename);
+   while(1){
+      lock_file(fd);
+      int fd2 = create_exclusive(lockfilename);
+      if(fd2){
+         close(fd);
+         fd = fd2;
+         continue;
+      }
+      else if(already_exist_error){ //must already exist
+         break;
+      }
+      else{
+         close(fd);
+         throw exception;
+      }
+   }
+}
+
+~MyRobustMutexLockFile()
+{
+   close(fd);
+   //No race condition because
+   //if any other thread tries to create the file
+   //the shm has a lock so constructor/destructor is serialized
+   unlink(lockfilename)
+}
+
+detail::intermodule_singleton<MyRobustMutexLockFile>::get();

@@ -27,6 +27,8 @@
 #include "util.hpp"
 #include <boost/thread/thread.hpp>
 #include <iostream>
+#include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 namespace boost { namespace interprocess { namespace test {
 

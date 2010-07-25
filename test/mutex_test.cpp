@@ -10,10 +10,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "mutex_test_template.hpp"
-#include "named_creation_template.hpp"
 
 int main ()
 {

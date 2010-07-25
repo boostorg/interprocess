@@ -609,6 +609,16 @@ which is the size of that memory. This limitation is imposed by the Windows API 
 the user must somehow transmit the size of the segment to processes opening the
 segment.
 
+Sharing memory between services and user applications is also different. To share memory
+between services and user applications the name of the shared memory must start with the
+global namespace prefix `"Global\"`. This global namespace enables processes on multiple
+client sessions to communicate with a service application. The server component can create
+the shared memory in the global namespace. Then a client session can use the "Global\" prefix
+to open that memory.
+
+The creation of a shared memory object in the global namespace from a session other than
+session zero is a privileged operation. 
+
 Let's repeat the same example presented for the portable shared memory object:
 A server process creates a
 shared memory object, maps it and initializes all the bytes to a value. After that, 
@@ -757,7 +767,8 @@ inmedially visible to other processes. However, the file contents on disk are
 not updated immediately, since that would hurt performance (writing to disk
 is several times slower than writing to memory). If the user wants to make sure
 that file's contents have been updated, it can flush a range from the view to disk.
-When the function returns, the data should have been written to disk:
+When the function returns, the flushing process has startd but there is not guarantee that
+all data has been written to disk:
 
 [c++]
 
@@ -3128,6 +3139,10 @@ lifetime issues as the windows shared memory: when the last process attached to 
 windows shared memory is detached from the memory (or ends/crashes) the memory is
 destroyed. So there is no persistence support for windows shared memory.
 
+To communicate between system services and user applications using `managed_windows_shared_memory`,
+please read the explanations given in chapter
+[interprocess.sharedmemorybetweenprocesses.sharedmemory.windows_shared_memory Native windows shared memory]
+
 [endsect]
 
 For more information about managed shared memory capabilities, see
@@ -5078,6 +5093,13 @@ Here is an example that shows how to put a multi index container in shared memor
 
 [endsect]
 
+Programmers can place [*Boost.CircularBuffer] containers in sharecd memory provided
+they disable debugging facilities with defines `BOOST_CB_DISABLE_DEBUG` or the more
+general `NDEBUG`. The reason is that those debugging facilities are only compatible
+with raw pointers.
+
+[endsect]
+
 [endsect]
 
 [section:memory_algorithms Memory allocation algorithms]
@@ -6529,6 +6551,31 @@ warranty.
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_45_00 Boost 1.45 Release]
+
+*  Fixed bugs
+  [@https://svn.boost.org/trac/boost/ticket/3439 #3439],
+  [@https://svn.boost.org/trac/boost/ticket/3448 #3448],
+  [@https://svn.boost.org/trac/boost/ticket/3582 #3582],
+  [@https://svn.boost.org/trac/boost/ticket/3682 #3682],
+  [@https://svn.boost.org/trac/boost/ticket/3829 #3829],
+  [@https://svn.boost.org/trac/boost/ticket/3846 #3846],
+  [@https://svn.boost.org/trac/boost/ticket/3947 #3947],
+  [@https://svn.boost.org/trac/boost/ticket/3950 #3950],
+  [@https://svn.boost.org/trac/boost/ticket/3951 #3951],
+  [@https://svn.boost.org/trac/boost/ticket/3985 #3985],
+  [@https://svn.boost.org/trac/boost/ticket/4010 #4010],
+  [@https://svn.boost.org/trac/boost/ticket/4019 #4019],
+  [@https://svn.boost.org/trac/boost/ticket/4039 #4039],
+  [@https://svn.boost.org/trac/boost/ticket/4218 #4218],
+  [@https://svn.boost.org/trac/boost/ticket/4230 #4230],
+  [@https://svn.boost.org/trac/boost/ticket/4230 #4352],
+
+*  `mapped_region::flush` initiates disk flushing but does not guarantee it's completed
+   when returns, since it is not portable.
+
+[endsect]
 
 [section:release_notes_boost_1_41_00 Boost 1.41 Release]
 

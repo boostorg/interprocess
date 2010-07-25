@@ -265,22 +265,22 @@
 				Name="emulation"
 				Filter="">
 				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_barrier.hpp">
+					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\barrier.hpp">
 				</File>
 				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_condition.hpp">
+					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\condition.hpp">
 				</File>
 				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_mutex.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_recursive_mutex.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\interprocess_semaphore.hpp">
+					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\mutex.hpp">
 				</File>
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\named_creation_functor.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\recursive_mutex.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\semaphore.hpp">
 				</File>
 			</Filter>
 		</Filter>
@@ -343,6 +343,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\mapped_region.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\permissions.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\segment_manager.hpp">
@@ -428,6 +431,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\ptime_wrk.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\robust_emulation.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\segment_manager_helper.hpp">
@@ -535,13 +541,7 @@
 				RelativePath="..\..\test\expand_bwd_test_template.hpp">
 			</File>
 			<File
-				RelativePath="..\..\test\get_compiler_name.hpp">
-			</File>
-			<File
 				RelativePath="..\..\test\get_process_id_name.hpp">
-			</File>
-			<File
-				RelativePath="..\..\test\itestvalue.hpp">
 			</File>
 			<File
 				RelativePath="..\..\test\list_test.hpp">
