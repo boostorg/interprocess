@@ -1,29 +1,3 @@
-/*
- *
- * Copyright (c) 1994
- * Hewlett-Packard Company
- *
- * Permission to use, copy, modify, distribute and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear
- * in supporting documentation.  Hewlett-Packard Company makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- *
- *
- * Copyright (c) 1996
- * Silicon Graphics Computer Systems, Inc.
- *
- * Permission to use, copy, modify, distribute and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear
- * in supporting documentation.  Silicon Graphics makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- *
- */
 //////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Ion Gaztanaga 2005-2006. Distributed under the Boost
@@ -33,13 +7,6 @@
 // See http://www.boost.org/libs/container for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-//
-// This file comes from SGI's stl_deque.h and stl_uninitialized.h files. 
-// Modified by Ion Gaztanaga 2005.
-// Renaming, isolating and porting to generic algorithms. Pointer typedef 
-// set to allocator::pointer to allow placing it in shared memory.
-//
-///////////////////////////////////////////////////////////////////////////////
 
 #ifndef BOOST_CONTAINERS_DEQUE_HPP
 #define BOOST_CONTAINERS_DEQUE_HPP
@@ -697,7 +664,7 @@ class deque : protected deque_base<T, Alloc>
       this->priv_assign_dispatch(first, last, Result());
    }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    void push_back(T &x) { push_back(const_cast<const T &>(x)); }
 
    template<class U>
@@ -719,7 +686,7 @@ class deque : protected deque_base<T, Alloc>
       }
    }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    void push_front(T &x) { push_front(const_cast<const T &>(x)); }
 
    template<class U>
@@ -761,7 +728,7 @@ class deque : protected deque_base<T, Alloc>
          this->priv_pop_front_aux();
    }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    iterator insert(const_iterator position, T &x)
    { return this->insert(position, const_cast<const T &>(x)); }
 
@@ -1172,7 +1139,7 @@ class deque : protected deque_base<T, Alloc>
 
    template <class Integer>
    void priv_assign_dispatch(Integer n, Integer val, containers_detail::true_)
-      { this->priv_fill_assign((size_type) n, (T) val); }
+      { this->priv_fill_assign((size_type) n, (value_type)val); }
 
    template <class InpIt>
    void priv_assign_dispatch(InpIt first, InpIt last, containers_detail::false_) 
@@ -1209,7 +1176,7 @@ class deque : protected deque_base<T, Alloc>
 
    template <class Integer>
    void priv_insert_dispatch(const_iterator pos, Integer n, Integer x, containers_detail::true_) 
-   {  this->priv_fill_insert(pos, (size_type) n, (value_type) x); }
+   {  this->priv_fill_insert(pos, (size_type) n, (value_type)x); }
 
    template <class InpIt>
    void priv_insert_dispatch(const_iterator pos,InpIt first, InpIt last, containers_detail::false_) 

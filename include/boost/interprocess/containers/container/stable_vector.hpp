@@ -672,7 +672,7 @@ class stable_vector
    void push_back(insert_const_ref_type x) 
    {  return priv_push_back(x);  }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    void push_back(T &x) { push_back(const_cast<const T &>(x)); }
 
    template<class U>
@@ -689,7 +689,7 @@ class stable_vector
    iterator insert(const_iterator position, insert_const_ref_type x) 
    {  return this->priv_insert(position, x); }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    iterator insert(const_iterator position, T &x) { return this->insert(position, const_cast<const T &>(x)); }
 
    template<class U>

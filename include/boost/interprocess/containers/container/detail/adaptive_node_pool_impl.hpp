@@ -69,6 +69,9 @@ struct adaptive_pool_types
          const bool is_equal = l.free_nodes.size() == r.free_nodes.size();
          return is_less || (is_equal && (&l < &r));
       }
+
+      friend bool operator ==(const block_info_t &l, const block_info_t &r)
+      {  return &l == &r;  }
    };
    typedef typename bi::make_multiset
       <block_info_t, bi::base_hook<multiset_hook_t> >::type  block_multiset_t;

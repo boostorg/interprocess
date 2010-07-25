@@ -7,38 +7,6 @@
 // See http://www.boost.org/libs/container for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-//
-// This file comes from SGI's stl_set/stl_multiset files. Modified by Ion Gaztanaga 2004.
-// Renaming, isolating and porting to generic algorithms. Pointer typedef 
-// set to allocator::pointer to allow placing it in shared memory.
-//
-///////////////////////////////////////////////////////////////////////////////
-/*
- *
- * Copyright (c) 1994
- * Hewlett-Packard Company
- *
- * Permission to use, copy, modify, distribute and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear
- * in supporting documentation.  Hewlett-Packard Company makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- *
- *
- * Copyright (c) 1996
- * Silicon Graphics Computer Systems, Inc.
- *
- * Permission to use, copy, modify, distribute and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear
- * in supporting documentation.  Silicon Graphics makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- *
- */
 
 #ifndef BOOST_CONTAINERS_SET_HPP
 #define BOOST_CONTAINERS_SET_HPP
@@ -357,7 +325,7 @@ class set
    std::pair<iterator,bool> insert(insert_const_ref_type x) 
    {  return priv_insert(x); }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    std::pair<iterator,bool> insert(T &x)
    { return this->insert(const_cast<const T &>(x)); }
 
@@ -389,7 +357,7 @@ class set
    iterator insert(const_iterator p, insert_const_ref_type x) 
    {  return priv_insert(p, x); }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    iterator insert(const_iterator position, T &x)
    { return this->insert(position, const_cast<const T &>(x)); }
 
@@ -912,7 +880,7 @@ class multiset
    iterator insert(insert_const_ref_type x) 
    {  return priv_insert(x); }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    iterator insert(T &x)
    { return this->insert(const_cast<const T &>(x)); }
 
@@ -942,7 +910,7 @@ class multiset
    iterator insert(const_iterator p, insert_const_ref_type x) 
    {  return priv_insert(p, x); }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    iterator insert(const_iterator position, T &x)
    { return this->insert(position, const_cast<const T &>(x)); }
 

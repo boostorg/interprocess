@@ -13,7 +13,7 @@
 
 #include "config_begin.hpp"
 
-#if     defined(BOOST_HAS_RVALUE_REFS) && defined(BOOST_HAS_VARIADIC_TMPL)\
+#if    !defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_NO_VARIADIC_TEMPLATES)\
     && !defined(BOOST_MOVE_MACRO_DISABLE_VARIADIC_TMPL)
 #define BOOST_CONTAINERS_PERFECT_FORWARDING
 

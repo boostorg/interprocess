@@ -121,23 +121,32 @@ class flat_map
    public:
 
    // typedefs:
-   typedef typename tree_t::key_type               key_type;
-   typedef typename tree_t::value_type             value_type;
-   typedef typename tree_t::pointer                pointer;
-   typedef typename tree_t::const_pointer          const_pointer;
-   typedef typename tree_t::reference              reference;
-   typedef typename tree_t::const_reference        const_reference;
-   typedef typename tree_t::value_compare          value_compare;
-   typedef T                                       mapped_type;
-   typedef typename tree_t::key_compare            key_compare;
-   typedef typename tree_t::iterator               iterator;
-   typedef typename tree_t::const_iterator         const_iterator;
-   typedef typename tree_t::reverse_iterator       reverse_iterator;
-   typedef typename tree_t::const_reverse_iterator const_reverse_iterator;
-   typedef typename tree_t::size_type              size_type;
-   typedef typename tree_t::difference_type        difference_type;
-   typedef typename tree_t::allocator_type         allocator_type;
-   typedef typename tree_t::stored_allocator_type  stored_allocator_type;
+   typedef typename impl_tree_t::key_type               key_type;
+   typedef T                                            mapped_type;
+   typedef typename std::pair<key_type, mapped_type>    value_type;
+   typedef typename Alloc::pointer                      pointer;
+   typedef typename Alloc::const_pointer                const_pointer;
+   typedef typename Alloc::reference                    reference;
+   typedef typename Alloc::const_reference              const_reference;
+   typedef containers_detail::flat_tree_value_compare
+      < Pred
+      , containers_detail::select1st< std::pair<Key, T> >
+      , std::pair<Key, T> >                             value_compare;
+   typedef Pred                                         key_compare;
+   typedef typename containers_detail::
+      get_flat_tree_iterators<pointer>::iterator        iterator;
+   typedef typename containers_detail::
+      get_flat_tree_iterators<pointer>::const_iterator  const_iterator;
+   typedef typename containers_detail::
+      get_flat_tree_iterators
+         <pointer>::reverse_iterator                    reverse_iterator;
+   typedef typename containers_detail::
+      get_flat_tree_iterators
+         <pointer>::const_reverse_iterator              const_reverse_iterator;
+   typedef typename impl_tree_t::size_type              size_type;
+   typedef typename impl_tree_t::difference_type        difference_type;
+   typedef Alloc                                        allocator_type;
+   typedef Alloc                                        stored_allocator_type;
 
    //! <b>Effects</b>: Constructs an empty flat_map using the specified
    //! comparison object and allocator.
@@ -851,23 +860,32 @@ class flat_multimap
    public:
 
    // typedefs:
-   typedef typename tree_t::key_type               key_type;
-   typedef typename tree_t::value_type             value_type;
-   typedef typename tree_t::pointer                pointer;
-   typedef typename tree_t::const_pointer          const_pointer;
-   typedef typename tree_t::reference              reference;
-   typedef typename tree_t::const_reference        const_reference;
-   typedef typename tree_t::value_compare          value_compare;
-   typedef T                                       mapped_type;
-   typedef typename tree_t::key_compare            key_compare;
-   typedef typename tree_t::iterator               iterator;
-   typedef typename tree_t::const_iterator         const_iterator;
-   typedef typename tree_t::reverse_iterator       reverse_iterator;
-   typedef typename tree_t::const_reverse_iterator const_reverse_iterator;
-   typedef typename tree_t::size_type              size_type;
-   typedef typename tree_t::difference_type        difference_type;
-   typedef typename tree_t::allocator_type         allocator_type;
-   typedef typename tree_t::stored_allocator_type  stored_allocator_type;
+   typedef typename impl_tree_t::key_type               key_type;
+   typedef T                                            mapped_type;
+   typedef typename std::pair<key_type, mapped_type>    value_type;
+   typedef typename Alloc::pointer                      pointer;
+   typedef typename Alloc::const_pointer                const_pointer;
+   typedef typename Alloc::reference                    reference;
+   typedef typename Alloc::const_reference              const_reference;
+   typedef containers_detail::flat_tree_value_compare
+      < Pred
+      , containers_detail::select1st< std::pair<Key, T> >
+      , std::pair<Key, T> >                             value_compare;
+   typedef Pred                                         key_compare;
+   typedef typename containers_detail::
+      get_flat_tree_iterators<pointer>::iterator        iterator;
+   typedef typename containers_detail::
+      get_flat_tree_iterators<pointer>::const_iterator  const_iterator;
+   typedef typename containers_detail::
+      get_flat_tree_iterators
+         <pointer>::reverse_iterator                    reverse_iterator;
+   typedef typename containers_detail::
+      get_flat_tree_iterators
+         <pointer>::const_reverse_iterator              const_reverse_iterator;
+   typedef typename impl_tree_t::size_type              size_type;
+   typedef typename impl_tree_t::difference_type        difference_type;
+   typedef Alloc                                        allocator_type;
+   typedef Alloc                                        stored_allocator_type;
 
    //! <b>Effects</b>: Constructs an empty flat_multimap using the specified comparison
    //!   object and allocator.

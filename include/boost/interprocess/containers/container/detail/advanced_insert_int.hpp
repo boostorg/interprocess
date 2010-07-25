@@ -19,7 +19,6 @@
 #include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
 #include INCLUDE_BOOST_CONTAINER_MOVE_HPP
 #include <iterator>  //std::iterator_traits
-#include <algorithm> //std::copy, std::uninitialized_copy
 #include <new>       //placement new
 #include <cassert>
 
@@ -51,7 +50,7 @@ struct advanced_insert_aux_proxy
    {}
 
    virtual void copy_all_to(Iterator p)
-   {  std::copy(first_, last_, p);  }
+   {  ::BOOST_CONTAINER_MOVE_NAMESPACE::copy_or_move(first_, last_, p);  }
 
    virtual void uninitialized_copy_all_to(Iterator p)
    {  ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_copy_or_move(first_, last_, p);  }
@@ -75,11 +74,11 @@ struct advanced_insert_aux_proxy
       FwdIt mid = first_;
       std::advance(mid, division_count);
       if(first_n){
-         std::copy(first_, mid, pos);
+         ::BOOST_CONTAINER_MOVE_NAMESPACE::copy_or_move(first_, mid, pos);
          first_ = mid;
       }
       else{
-         std::copy(mid, last_, pos);
+         ::BOOST_CONTAINER_MOVE_NAMESPACE::copy_or_move(mid, last_, pos);
          last_ = mid;
       }
    }
@@ -164,6 +163,7 @@ struct default_construct_aux_proxy
 #ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 
 #include INCLUDE_BOOST_CONTAINER_DETAIL_VARIADIC_TEMPLATES_TOOLS_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_STORED_REF_HPP
 #include INCLUDE_BOOST_CONTAINER_MOVE_HPP
 #include <typeinfo>
 //#include <iostream> //For debugging purposes
@@ -181,7 +181,8 @@ struct advanced_insert_aux_emplace
    typedef typename build_number_seq<sizeof...(Args)>::type             index_tuple_t;
 
    explicit advanced_insert_aux_emplace(Args&&... args)
-      : args_(args...), used_(false)
+      : args_(args...)
+      , used_(false)
    {}
 
    ~advanced_insert_aux_emplace()
@@ -204,7 +205,7 @@ struct advanced_insert_aux_emplace
    void priv_copy_all_to(const index_tuple<IdxPack...>&, Iterator p)
    {
       if(!used_){
-         *p = BOOST_CONTAINER_MOVE_NAMESPACE::move(T (BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(get<IdxPack>(args_))...));
+         *p = BOOST_CONTAINER_MOVE_NAMESPACE::move(T (::boost::container::containers_detail::stored_ref<Args>::forward(get<IdxPack>(args_))...));
          used_ = true;
       }
    }
@@ -213,7 +214,7 @@ struct advanced_insert_aux_emplace
    void priv_uninitialized_copy_all_to(const index_tuple<IdxPack...>&, Iterator p)
    {
       if(!used_){
-         new(containers_detail::get_pointer(&*p))T(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(get<IdxPack>(args_))...);
+         new(containers_detail::get_pointer(&*p))T(::boost::container::containers_detail::stored_ref<Args>::forward(get<IdxPack>(args_))...);
          used_ = true;
       }
    }
@@ -224,7 +225,7 @@ struct advanced_insert_aux_emplace
       assert(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
-            new(containers_detail::get_pointer(&*p))T(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(get<IdxPack>(args_))...);
+            new(containers_detail::get_pointer(&*p))T(::boost::container::containers_detail::stored_ref<Args>::forward(get<IdxPack>(args_))...);
             used_ = true;
          }
       }
@@ -236,12 +237,12 @@ struct advanced_insert_aux_emplace
       assert(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
-            *p = BOOST_CONTAINER_MOVE_NAMESPACE::move(T(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(get<IdxPack>(args_))...));
+            *p = BOOST_CONTAINER_MOVE_NAMESPACE::move(T(::boost::container::containers_detail::stored_ref<Args>::forward(get<IdxPack>(args_))...));
             used_ = true;
          }
       }
    }
-   tuple<Args&&...> args_;
+   tuple<Args&...> args_;
    bool used_;
 };
 

@@ -331,7 +331,7 @@ class flat_set
    std::pair<iterator, bool> insert(insert_const_ref_type x) 
    {  return priv_insert(x); }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    std::pair<iterator, bool> insert(T &x)
    { return this->insert(const_cast<const T &>(x)); }
 
@@ -368,7 +368,7 @@ class flat_set
    iterator insert(const_iterator p, insert_const_ref_type x) 
    {  return priv_insert(p, x); }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    iterator insert(const_iterator position, T &x)
    { return this->insert(position, const_cast<const T &>(x)); }
 
@@ -922,7 +922,7 @@ class flat_multiset
    iterator insert(insert_const_ref_type x) 
    {  return priv_insert(x); }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    iterator insert(T &x)
    { return this->insert(const_cast<const T &>(x)); }
 
@@ -954,7 +954,7 @@ class flat_multiset
    iterator insert(const_iterator p, insert_const_ref_type x) 
    {  return priv_insert(p, x); }
 
-   #if !defined(BOOST_HAS_RVALUE_REFS) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
    iterator insert(const_iterator position, T &x)
    { return this->insert(position, const_cast<const T &>(x)); }
 

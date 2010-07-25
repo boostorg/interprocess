@@ -47,7 +47,7 @@ struct operator_arrow_proxy<T&>
       :  m_value(px)
    {}
 
-   T* operator->() const { return &m_value; }
+   T* operator->() const { return const_cast<T*>(&m_value); }
    // This function is needed for MWCW and BCC, which won't call operator->
    // again automatically per 13.3.1.2 para 8
 //   operator T*() const { return &m_value; }

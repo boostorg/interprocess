@@ -62,6 +62,7 @@
 #define INCLUDE_BOOST_CONTAINER_DETAIL_UTILITIES_HPP                <boost/interprocess/containers/container/detail/utilities.hpp>
 #define INCLUDE_BOOST_CONTAINER_DETAIL_VALUE_INIT_HPP               <boost/interprocess/containers/container/detail/value_init.hpp>
 #define INCLUDE_BOOST_CONTAINER_DETAIL_VARIADIC_TEMPLATES_TOOLS_HPP <boost/interprocess/containers/container/detail/variadic_templates_tools.hpp>
+#define INCLUDE_BOOST_CONTAINER_DETAIL_STORED_REF_HPP               <boost/interprocess/containers/container/detail/stored_ref.hpp>
 #define INCLUDE_BOOST_CONTAINER_DETAIL_VERSION_TYPE_HPP             <boost/interprocess/containers/container/detail/version_type.hpp>
 #define INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP               <boost/interprocess/containers/container/detail/workaround.hpp>
 

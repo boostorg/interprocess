@@ -56,37 +56,51 @@ namespace container {
 
 namespace containers_detail {
 
+template<class Compare, class Value, class KeyOfValue>
+class flat_tree_value_compare
+   : private Compare
+{
+   typedef Value              first_argument_type;
+   typedef Value              second_argument_type;
+   typedef bool               return_type;
+   public:     
+   flat_tree_value_compare(const Compare &pred) 
+      : Compare(pred)
+   {}
+
+   bool operator()(const Value& lhs, const Value& rhs) const
+   { 
+      KeyOfValue key_extract;
+      return Compare::operator()(key_extract(lhs), key_extract(rhs)); 
+   }
+
+   const Compare &get_comp() const
+      {  return *this;  }
+   
+   Compare &get_comp()
+      {  return *this;  }
+};
+
+template<class Pointer>
+struct get_flat_tree_iterators
+{
+   typedef typename containers_detail::
+      vector_iterator<Pointer>                        iterator;
+   typedef typename containers_detail::
+      vector_const_iterator<Pointer>                  const_iterator;
+   typedef std::reverse_iterator<iterator>            reverse_iterator;
+   typedef std::reverse_iterator<const_iterator>      const_reverse_iterator;
+};
+
 template <class Key, class Value, class KeyOfValue, 
           class Compare, class Alloc>
 class flat_tree
 {
    typedef boost::container::vector<Value, Alloc>  vector_t;
-   typedef Alloc                                      allocator_t;
+   typedef Alloc                                   allocator_t;
 
    public:
-   class value_compare
-      : private Compare
-   {
-      typedef Value              first_argument_type;
-      typedef Value              second_argument_type;
-      typedef bool               return_type;
-    public:     
-      value_compare(const Compare &pred) 
-         : Compare(pred)
-      {}
-
-      bool operator()(const Value& lhs, const Value& rhs) const
-      { 
-         KeyOfValue key_extract;
-         return Compare::operator()(key_extract(lhs), key_extract(rhs)); 
-      }
-
-      const Compare &get_comp() const
-         {  return *this;  }
-      
-      Compare &get_comp()
-         {  return *this;  }
-   };
+   typedef flat_tree_value_compare<Compare, Value, KeyOfValue> value_compare;
 
  private:
    struct Data 
@@ -113,14 +127,14 @@ class flat_tree
 
       Data& operator=(BOOST_MOVE_MACRO_COPY_ASSIGN_REF(Data) d)
       {
-         value_compare::operator=(d);
+         this->value_compare::operator=(d);
          m_vect = d.m_vect;
          return *this;
       }
 
       Data& operator=(BOOST_MOVE_MACRO_RV_REF(Data) d)
       {
-         value_compare::operator=(BOOST_CONTAINER_MOVE_NAMESPACE::move(static_cast<value_compare &>(d)));
+         this->value_compare::operator=(BOOST_CONTAINER_MOVE_NAMESPACE::move(static_cast<value_compare &>(d)));
          m_vect = BOOST_CONTAINER_MOVE_NAMESPACE::move(d.m_vect);
          return *this;
       }
@@ -345,7 +359,7 @@ class flat_tree
       std::pair<iterator,bool> ret =
          priv_insert_unique_prepare(val, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));
+         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move(val));
       }
       return ret.first;
    }
@@ -357,7 +371,7 @@ class flat_tree
       insert_commit_data data;
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(hint, val, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));
+         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move(val));
       }
       return ret.first;
    }
@@ -367,7 +381,7 @@ class flat_tree
    {
       value_type &&val = value_type(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...);
       iterator i = this->upper_bound(KeyOfValue()(val));
-      i = this->m_data.m_vect.insert(i, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));
+      i = this->m_data.m_vect.insert(i, BOOST_CONTAINER_MOVE_NAMESPACE::move(val));
       return i;
    }
 
@@ -377,7 +391,7 @@ class flat_tree
       value_type &&val = value_type(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...);
       insert_commit_data data;
       priv_insert_equal_prepare(hint, val, data);
-      return priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));
+      return priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move(val));
    }
 
    #else //#ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
@@ -390,7 +404,7 @@ class flat_tree
       std::pair<iterator,bool> ret =
          priv_insert_unique_prepare(val, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));
+         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move(val));
       }
       return ret.first;
    }
@@ -402,7 +416,7 @@ class flat_tree
       insert_commit_data data;
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(hint, val, data);
       if(ret.second){
-         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));
+         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move(val));
       }
       return ret.first;
    }
@@ -412,7 +426,7 @@ class flat_tree
       containers_detail::value_init<value_type> vval;
       value_type &val = vval.m_t;
       iterator i = this->upper_bound(KeyOfValue()(val));
-      i = this->m_data.m_vect.insert(i, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));
+      i = this->m_data.m_vect.insert(i, BOOST_CONTAINER_MOVE_NAMESPACE::move(val));
       return i;
    }
 
@@ -422,7 +436,7 @@ class flat_tree
       value_type &val = vval.m_t;
       insert_commit_data data;
       priv_insert_equal_prepare(hint, val, data);
-      return priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));
+      return priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move(val));
    }
 
    #define BOOST_PP_LOCAL_MACRO(n)                                                        \
@@ -433,7 +447,7 @@ class flat_tree
       insert_commit_data data;                                                            \
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(val, data);               \
       if(ret.second){                                                                     \
-         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));        \
+         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move(val)); \
       }                                                                                   \
       return ret.first;                                                                   \
    }                                                                                      \
@@ -446,7 +460,7 @@ class flat_tree
       insert_commit_data data;                                                            \
       std::pair<iterator,bool> ret = priv_insert_unique_prepare(hint, val, data);         \
       if(ret.second){                                                                     \
-         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));        \
+         ret.first = priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move(val));        \
       }                                                                                   \
       return ret.first;                                                                   \
    }                                                                                      \
@@ -456,7 +470,7 @@ class flat_tree
    {                                                                                      \
       value_type val(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_FORWARD, _));           \
       iterator i = this->upper_bound(KeyOfValue()(val));                                  \
-      i = this->m_data.m_vect.insert(i, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));              \
+      i = this->m_data.m_vect.insert(i, BOOST_CONTAINER_MOVE_NAMESPACE::move(val));       \
       return i;                                                                           \
    }                                                                                      \
                                                                                           \
@@ -467,7 +481,7 @@ class flat_tree
       value_type val(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_FORWARD, _));           \
       insert_commit_data data;                                                            \
       priv_insert_equal_prepare(hint, val, data);                                         \
-      return priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move<value_type>(val));                \
+      return priv_insert_commit(data, BOOST_CONTAINER_MOVE_NAMESPACE::move(val));                \
    }                                                                                      \
    //!
    #define BOOST_PP_LOCAL_LIMITS (1, BOOST_CONTAINERS_MAX_CONSTRUCTOR_PARAMETERS)

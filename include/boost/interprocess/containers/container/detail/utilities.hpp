@@ -15,6 +15,8 @@
 #include <cstdio>
 #include <boost/type_traits/is_fundamental.hpp>
 #include <boost/type_traits/is_pointer.hpp>
+#include <boost/type_traits/is_enum.hpp>
+#include <boost/type_traits/is_member_pointer.hpp>
 #include INCLUDE_BOOST_CONTAINER_MOVE_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_TYPE_TRAITS_HPP
@@ -96,10 +98,41 @@ struct ct_rounded_size
    enum { value = ((OrigSize-1)/RoundTo+1)*RoundTo };
 };
 
+template <class _TypeT>
+struct __rw_is_enum
+{
+struct _C_no { };
+struct _C_yes { int _C_dummy [2]; };
+
+struct _C_indirect {
+// prevent classes with user-defined conversions from matching
+
+// use double to prevent float->int gcc conversion warnings
+_C_indirect (double);
+};
+
+// nested struct gets rid of bogus gcc errors
+struct _C_nest {
+// supply first argument to prevent HP aCC warnings
+static _C_no _C_is (int, ...);
+static _C_yes _C_is (int, _C_indirect);
+
+static _TypeT _C_make_T ();
+};
+
+enum {
+_C_val = sizeof (_C_yes)
+== sizeof (_C_nest::_C_is (0, _C_nest::_C_make_T ()))
+&& !::boost::is_fundamental<_TypeT>::value
+};
+
+}; 
+
 template<class T>
 struct move_const_ref_type
    : if_c
-   < ::boost::is_fundamental<T>::value || ::boost::is_pointer<T>::value
+   < ::boost::is_fundamental<T>::value || ::boost::is_pointer<T>::value ||
+     ::boost::is_member_pointer<T>::value || ::boost::is_enum<T>::value
    ,const T &
    ,BOOST_MOVE_MACRO_CATCH_CONST_RLVALUE(T)
    >

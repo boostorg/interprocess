@@ -35,7 +35,7 @@
 namespace boost {
 namespace container { 
 
-#if !defined(BOOST_HAS_RVALUE_REFS)
+#if defined(BOOST_NO_RVALUE_REFERENCES)
 template<class T>
 struct has_own_construct_from_it
 {

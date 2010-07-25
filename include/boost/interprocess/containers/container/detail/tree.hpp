@@ -7,38 +7,7 @@
 // See http://www.boost.org/libs/container for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-//
-// This file comes from SGI's stl_tree file. Modified by Ion Gaztanaga 2005.
-// Renaming, isolating and porting to generic algorithms. Pointer typedef 
-// set to allocator::pointer to allow placing it in shared memory.
-//
-///////////////////////////////////////////////////////////////////////////////
-/*
- *
- * Copyright (c) 1994
- * Hewlett-Packard Company
- *
- * Permission to use, copy, modify, distribute and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear
- * in supporting documentation.  Hewlett-Packard Company makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- *
- *
- * Copyright (c) 1996
- * Silicon Graphics Computer Systems, Inc.
- *
- * Permission to use, copy, modify, distribute and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and
- * that both that copyright notice and this permission notice appear
- * in supporting documentation.  Silicon Graphics makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- *
- */
+
 #ifndef BOOST_CONTAINERS_TREE_HPP
 #define BOOST_CONTAINERS_TREE_HPP
 
@@ -200,7 +169,7 @@ struct rbtree_node
 };
 
 }//namespace containers_detail {
-#if !defined(BOOST_HAS_RVALUE_REFS)
+#if defined(BOOST_NO_RVALUE_REFERENCES)
 template<class T, class VoidPointer>
 struct has_own_construct_from_it
    < boost::container::containers_detail::rbtree_node<T, VoidPointer> >
