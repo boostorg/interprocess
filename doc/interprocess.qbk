@@ -5219,8 +5219,6 @@ segments.
 
 [endsect]
 
-[endsect]
-
 [section:streams Direct iostream formatting: vectorstream and bufferstream]
 
 Shared memory, memory-mapped files and all [*Boost.Interprocess] mechanisms are focused
