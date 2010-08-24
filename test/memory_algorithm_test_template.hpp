@@ -501,17 +501,23 @@ bool test_clear_free_memory(Allocator &a)
 
    //Now test all allocated memory is zero
    //Allocate memory
+   const char *first_addr = 0;
    for(int i = 0; true; ++i){
       void *ptr = a.allocate(i, std::nothrow);
       if(!ptr)
          break;
+      if(i == 0){
+         first_addr = (char*)ptr;
+      }
+      std::size_t memsize = a.size(ptr);
       buffers.push_back(ptr);
-   }
 
-   //Test allocated memory is zero
-   for(int i = 0, max = buffers.size(); i < max; ++i){
-      for(int j = 0; j < i; ++j){
-         if(static_cast<char*>(buffers[i])[j])    return false;
+      for(int j = 0; j < (int)memsize; ++j){
+         if(static_cast<char*>((char*)ptr)[j]){
+            std::cout << "Zero memory test failed. in buffer " << i
+                      << " byte " << j << " first address " << (void*) first_addr << " offset " << ((char*)ptr+j) - (char*)first_addr << " memsize: " << memsize << std::endl;
+            return false;
+         }
       }
    }
 

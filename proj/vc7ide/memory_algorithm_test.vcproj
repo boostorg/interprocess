@@ -72,6 +72,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				GlobalOptimizations="TRUE"
 				AdditionalIncludeDirectories="../../../.."
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;BOOST_DATE_TIME_NO_LIB"
 				RuntimeLibrary="2"
@@ -80,7 +81,7 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="0"/>
+				DebugInformationFormat="3"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool

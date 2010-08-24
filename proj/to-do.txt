@@ -1,4 +1,46 @@
--> add private_read_only to mapped_region to support MAP_PRIVATE plus PROT_READ
+//////////////////////////////////////////////////////////////////////////////
+//
+// (C) Copyright Ion Gaztanaga. Distributed under the Boost
+// Software License, Version 1.0. (See accompanying file
+// LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// See http://www.boost.org/libs/interprocess for documentation.
+//
+//////////////////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////////////
+Platform conformance
+//////////////////////////////////////////////////////////////////////////////
+
+//////////
+FreeBSD
+//////////
+
+Tested until FreeBSD 9
+
+Shared memory: FreeBSD < 7 filesystem semantics
+
+   HISTORY
+        The shm_open() and shm_unlink() functions first appeared in FreeBSD 4.3.
+        The functions were reimplemented as system calls using shared memory
+        objects directly rather than files in FreeBSD 7.0.
+
+   BUG: MAP_PRIVATE requires read-write access to shared memory object (mapped files work fine)
+
+Named semaphore: _POSIX_SEMAPHORES not defined. Limited named semaphore support (short names)
+Process shared: _POSIX_THREAD_PROCESS_SHARED not defined
+
+//////////
+Linux 2.6
+//////////
+
+All Fine
+
+
+
+
+
 
 -> add contiguous_elements option to burst allocation
 
