@@ -25,7 +25,7 @@
 #include <boost/interprocess/detail/tmp_dir_helpers.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
-#include <cassert>
+#include <boost/assert.hpp>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -765,7 +765,7 @@ struct unlink_shmlogic
       intermodule_singleton_helpers::locking_file_serial_id *pserial_id =
          mshm_.find<intermodule_singleton_helpers::locking_file_serial_id>
             ("lock_file_fd").first;
-      assert(0 != pserial_id);
+      BOOST_ASSERT(0 != pserial_id);
       if(1 == atomic_dec32(&pserial_id->modules_attached_to_gmem_count)){
          int fd = pserial_id->fd;
          if(fd > 0){
@@ -863,7 +863,7 @@ void intermodule_singleton_common<Dummy>::initialize_singleton_logic
             }
             else{
                //This can't be happening!
-               assert(0);
+               BOOST_ASSERT(0);
             }
          }
       }
@@ -876,7 +876,7 @@ void intermodule_singleton_common<Dummy>::initialize_singleton_logic
          throw interprocess_exception("boost::interprocess::intermodule_singleton initialization failed");
       }
    }
-   assert(ptr != 0);
+   BOOST_ASSERT(ptr != 0);
 }
 
 //Now this class is a singleton, initializing the singleton in
@@ -988,15 +988,15 @@ class intermodule_singleton
       {
          ref_count_ptr *rcount = mshm.find<ref_count_ptr>(unique_instance).first;
             //The object must exist
-         assert(rcount);
+         BOOST_ASSERT(rcount);
          //Check if last reference
          if(atomic_dec32(&rcount->singleton_ref_count) == 1){
             //If last, destroy the object
-            assert(rcount->ptr != 0);
+            BOOST_ASSERT(rcount->ptr != 0);
             delete rcount->ptr;
             //Now destroy shm entry
             bool destroyed = mshm.destroy<ref_count_ptr>(unique_instance);
-            (void)destroyed;  assert(destroyed == true);
+            (void)destroyed;  BOOST_ASSERT(destroyed == true);
          }
       }
       managed_shared_memory &mshm;
@@ -1126,7 +1126,7 @@ loop all files in /tmp/boost_interprocess/gmem
      continue;
   open(name);
   if(::fnctl(fd, GET_LCK)
-     assert(flock.pid != self_pid)
+     BOOST_ASSERT(flock.pid != self_pid)
      continue;
   shm_remove(bip_gmem_#PID#)
   unlink(name);

@@ -34,6 +34,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/interprocess/sync/emulation/mutex.hpp>
+#include <boost/assert.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -141,7 +142,7 @@ inline void emulation_recursive_mutex::unlock()
    const handle_t thr_id(detail::get_current_systemwide_thread_id());
    (void)old_id;
    (void)thr_id;
-   assert(detail::equal_systemwide_thread_id(thr_id, old_id));
+   BOOST_ASSERT(detail::equal_systemwide_thread_id(thr_id, old_id));
    --m_nLockCount;
    if(!m_nLockCount){
       const handle_t new_id(detail::get_invalid_systemwide_thread_id());

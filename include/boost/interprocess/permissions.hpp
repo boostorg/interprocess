@@ -19,7 +19,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
 
-#if (defined BOOST_INTERPROCESS_WINDOWS)
+#if defined(BOOST_INTERPROCESS_WINDOWS)
 
 #include <boost/interprocess/detail/win32_api.hpp>
 
@@ -31,7 +31,7 @@
 namespace boost {
 namespace interprocess {
 
-#if (defined BOOST_INTERPROCESS_WINDOWS)
+#if defined(BOOST_INTERPROCESS_WINDOWS)
 
 namespace detail {
 
@@ -54,7 +54,7 @@ winapi::interprocess_all_access_security unrestricted_permissions_holder<Dummy>:
 class permissions
 {
    /// @cond
-   #if (defined BOOST_INTERPROCESS_WINDOWS)
+   #if defined (BOOST_INTERPROCESS_WINDOWS)
    typedef void*  os_permissions_type;
    #else
    typedef int    os_permissions_type;
@@ -70,11 +70,14 @@ class permissions
    {}
 
    //!Constructs a default permissions object:
-   //!A null security descriptor pointer for windows or 0644
+   //!A null security attributes pointer for windows or 0644
    //!for UNIX.
    permissions()
    {  set_default(); }
 
+   //!Sets permissions to default values:
+   //!A null security attributes pointer for windows or 0644
+   //!for UNIX.
    void set_default()
    {
       #if (defined BOOST_INTERPROCESS_WINDOWS)
@@ -84,6 +87,8 @@ class permissions
       #endif
    }
 
+   //!Sets permissions to unrestricted access:
+   //!A null DACL for windows or 0666 for UNIX.
    void set_unrestricted()
    {
       #if (defined BOOST_INTERPROCESS_WINDOWS)
@@ -93,9 +98,13 @@ class permissions
       #endif
    }
 
+   //!Sets permissions from a user provided os-dependent
+   //!permissions.
    void set_permissions(os_permissions_type perm)
    {  m_perm = perm; }
 
+   //!Returns stored os-dependent
+   //!permissions
    os_permissions_type get_permissions() const
    {  return m_perm; }
 };

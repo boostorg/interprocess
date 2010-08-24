@@ -264,7 +264,7 @@ class basic_string_base
       (void)limit_size;
       (void)reuse;
       if(!(command & allocate_new))
-         return std::pair<pointer, bool>(pointer(0), 0);
+         return std::pair<pointer, bool>(pointer(0), false);
       received_size = preferred_size;
       return std::make_pair(this->alloc().allocate(received_size), false);
    }

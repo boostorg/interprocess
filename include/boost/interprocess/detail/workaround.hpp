@@ -46,8 +46,9 @@
    #  if defined(__CYGWIN__)
       #define BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK
    #  endif
-   //#elif defined(__APPLE__)
-   //# define BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES   
+   //Some platforms have a limited (name length) named semaphore support
+   #elif (defined(__FreeBSD__) && (__FreeBSD__ >= 4)) || defined(__APPLE__)
+     # define BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES   
    #endif 
 
    #if ((defined _V6_ILP32_OFFBIG)  &&(_V6_ILP32_OFFBIG   - 0 > 0)) ||\
@@ -98,7 +99,7 @@
       //portable "/shmname" format does not work due to permission issues
       //For those systems we need to form a path to a temporary directory:
       //          hp-ux               tru64               vms               freebsd
-      #if defined(__hpux) || defined(__osf__) || defined(__vms) || (defined(__FreeBSD__) && (__FreeBSD__ < 8)) 
+      #if defined(__hpux) || defined(__osf__) || defined(__vms) || (defined(__FreeBSD__) && (__FreeBSD__ < 7)) 
       #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
       #endif
    #endif

@@ -26,7 +26,7 @@
 #include INCLUDE_BOOST_CONTAINER_DETAIL_MATH_FUNCTIONS_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_POOL_COMMON_HPP
-#include <cassert>
+#include <boost/assert.hpp>
 #include <cstddef>
 #include <functional>   //std::unary_function
 
@@ -185,7 +185,7 @@ class private_node_pool_impl
          }
       }
       //We should have removed all the nodes from the free list
-      assert(m_freelist.empty());
+      BOOST_ASSERT(m_freelist.empty());
 
       //Now pass all the node to the free list again
       m_freelist.splice_after
@@ -204,7 +204,7 @@ class private_node_pool_impl
    void purge_blocks()
    {
       //check for memory leaks
-      assert(m_allocated==0);
+      BOOST_ASSERT(m_allocated==0);
       std::size_t blocksize = get_rounded_size
          (m_real_node_size*m_nodes_per_block, alignment_of<node_t>::value);
       typename blockslist_t::iterator
@@ -222,8 +222,8 @@ class private_node_pool_impl
 
    void swap(private_node_pool_impl &other)
    {
-      assert(m_nodes_per_block == other.m_nodes_per_block);
-      assert(m_real_node_size == other.m_real_node_size);
+      BOOST_ASSERT(m_nodes_per_block == other.m_nodes_per_block);
+      BOOST_ASSERT(m_real_node_size == other.m_real_node_size);
       std::swap(mp_segment_mngr_base, other.mp_segment_mngr_base);
       m_blocklist.swap(other.m_blocklist);
       m_freelist.swap(other.m_freelist);
@@ -289,7 +289,7 @@ class private_node_pool_impl
       //We put the node at the beginning of the free node list
       node_t * to_deallocate = static_cast<node_t*>(pElem);
       m_freelist.push_front(*to_deallocate);
-      assert(m_allocated>0);
+      BOOST_ASSERT(m_allocated>0);
       --m_allocated;
    }
 

@@ -19,6 +19,7 @@
 #include <boost/interprocess/permissions.hpp>
 #include <string>
 #include <semaphore.h>
+#include <boost/assert.hpp>
 
 #ifdef SEM_FAILED
 #define BOOST_INTERPROCESS_POSIX_SEM_FAILED (reinterpret_cast<sem_t*>(SEM_FAILED))
@@ -42,7 +43,7 @@ namespace detail{ class interprocess_tester; }
 namespace detail {
 
 inline bool semaphore_open
-   (sem_t *&handle, detail::create_enum_t type, const char *origname, mode_t mode,
+   (sem_t *&handle, detail::create_enum_t type, const char *origname, 
     unsigned int count, const permissions &perm = permissions())
 {
    std::string name;
@@ -54,17 +55,6 @@ inline bool semaphore_open
 
    //Create new mapping
    int oflag = 0;
-   if(mode == read_only){
-      oflag |= O_RDONLY;
-   }
-   else if(mode == read_write){
-      oflag |= O_RDWR;
-   }
-   else{
-      error_info err(mode_error);
-      throw interprocess_exception(err);
-   }
-
    switch(type){
       case detail::DoOpen:
          //No addition
@@ -100,7 +90,7 @@ inline void semaphore_close(sem_t *handle)
 {
    int ret = sem_close(handle);
    if(ret != 0){  
-      assert(0);
+      BOOST_ASSERT(0);
    }
 }
 
@@ -135,7 +125,7 @@ inline void semaphore_destroy(sem_t *handle)
 {
    int ret = sem_destroy(handle);
    if(ret != 0){  
-      assert(0);
+      BOOST_ASSERT(0);
    }
 }
 
@@ -205,8 +195,8 @@ class named_semaphore_wrapper
 
    public:
    named_semaphore_wrapper
-      (detail::create_enum_t type, const char *name, mode_t mode, unsigned int count, const permissions &perm = permissions())
-   {  semaphore_open(mp_sem, type, name, mode, count, perm);   }
+      (detail::create_enum_t type, const char *name, unsigned int count, const permissions &perm = permissions())
+   {  semaphore_open(mp_sem, type, name, count, perm);   }
 
    ~named_semaphore_wrapper()
    {

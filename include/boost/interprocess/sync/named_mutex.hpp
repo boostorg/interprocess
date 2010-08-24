@@ -124,15 +124,15 @@ class named_mutex
 #if defined(BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
 
 inline named_mutex::named_mutex(create_only_t, const char *name, const permissions &perm)
-   :  m_sem(detail::DoCreate, name, read_write, 1, perm)
+   :  m_sem(detail::DoCreate, name, 1, perm)
 {}
 
 inline named_mutex::named_mutex(open_or_create_t, const char *name, const permissions &perm)
-   :  m_sem(detail::DoOpenOrCreate, name, read_write, 1, perm)
+   :  m_sem(detail::DoOpenOrCreate, name, 1, perm)
 {}
 
 inline named_mutex::named_mutex(open_only_t, const char *name)
-   :  m_sem(detail::DoOpen, name, read_write, 1, permissions())
+   :  m_sem(detail::DoOpen, name, 1, permissions())
 {}
 
 inline void named_mutex::dont_close_on_destruction()

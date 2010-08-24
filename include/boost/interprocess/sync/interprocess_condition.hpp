@@ -26,7 +26,7 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/limits.hpp>
-#include <cassert>
+#include <boost/assert.hpp>
 
 #if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)
    #include <pthread.h>

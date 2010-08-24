@@ -34,7 +34,7 @@
 #    if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS)
 #      include <sys/shm.h>      //System V shared memory...
 #    endif
-#    include <cassert>
+#    include <boost/assert.hpp>
 #  else
 #    error Unknown platform
 #  endif
@@ -550,7 +550,7 @@ inline void mapped_region::priv_close()
       #ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
       if(m_is_xsi){
          int ret = ::shmdt(m_base);
-         assert(ret == 0);
+         BOOST_ASSERT(ret == 0);
          (void)ret;
          return;
       }

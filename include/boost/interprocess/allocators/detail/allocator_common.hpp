@@ -21,6 +21,7 @@
 #include <utility>   //std::pair
 #include <boost/utility/addressof.hpp> //boost::addressof
 #include <boost/assert.hpp>   //BOOST_ASSERT
+#include <boost/assert.hpp>
 #include <boost/interprocess/exceptions.hpp> //bad_alloc
 #include <boost/interprocess/sync/scoped_lock.hpp> //scoped_lock
 #include <boost/interprocess/containers/allocation_type.hpp> //boost::interprocess::allocation_type
@@ -812,7 +813,7 @@ class shared_pool_impl
       //-----------------------
       boost::interprocess::scoped_lock<mutex_type> guard(m_header);
       //-----------------------
-      assert(m_header.m_usecount > 0);
+      BOOST_ASSERT(m_header.m_usecount > 0);
       return --m_header.m_usecount;
    }
 

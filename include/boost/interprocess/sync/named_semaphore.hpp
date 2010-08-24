@@ -126,16 +126,16 @@ class named_semaphore
 
 inline named_semaphore::named_semaphore
    (create_only_t, const char *name, unsigned int initialCount, const permissions &perm)
-   :  m_sem(detail::DoCreate, name, read_write, initialCount, perm)
+   :  m_sem(detail::DoCreate, name, initialCount, perm)
 {}
 
 inline named_semaphore::named_semaphore
    (open_or_create_t, const char *name, unsigned int initialCount, const permissions &perm)
-   :  m_sem(detail::DoOpenOrCreate, name, read_write, initialCount, perm)
+   :  m_sem(detail::DoOpenOrCreate, name, initialCount, perm)
 {}
 
 inline named_semaphore::named_semaphore(open_only_t, const char *name)
-   :  m_sem(detail::DoOpen, name, read_write, 1, permissions())
+   :  m_sem(detail::DoOpen, name, 1, permissions())
 {}
 
 inline named_semaphore::~named_semaphore()

@@ -25,7 +25,7 @@
 #include INCLUDE_BOOST_CONTAINER_CONTAINER_FWD_HPP
 #include <cstddef>
 #include <iterator>
-#include <cassert>
+#include <boost/assert.hpp>
 #include <memory>
 #include <algorithm>
 #include <stdexcept>

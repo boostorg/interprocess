@@ -20,7 +20,7 @@
 #include INCLUDE_BOOST_CONTAINER_MOVE_HPP
 #include <iterator>  //std::iterator_traits
 #include <new>       //placement new
-#include <cassert>
+#include <boost/assert.hpp>
 
 namespace boost { namespace container { namespace containers_detail {
 
@@ -98,7 +98,7 @@ struct default_construct_aux_proxy
 
    void uninitialized_copy_impl(Iterator p, const SizeType n)
    {
-      assert(n <= count_);
+      BOOST_ASSERT(n <= count_);
       Iterator orig_p = p;
       SizeType i = 0;
       try{
@@ -120,7 +120,7 @@ struct default_construct_aux_proxy
 
    virtual void copy_all_to(Iterator)
    {  //This should never be called with any count
-      assert(count_ == 0);
+      BOOST_ASSERT(count_ == 0);
    }
 
    virtual void uninitialized_copy_all_to(Iterator p)
@@ -133,7 +133,7 @@ struct default_construct_aux_proxy
          new_count = division_count;
       }
       else{
-         assert(difference_type(count_)>= division_count);
+         BOOST_ASSERT(difference_type(count_)>= division_count);
          new_count = count_ - division_count;
       }
       this->uninitialized_copy_impl(pos, new_count);
@@ -141,17 +141,17 @@ struct default_construct_aux_proxy
 
    virtual void copy_some_and_update(Iterator , difference_type division_count, bool first_n)
    {
-      assert(count_ == 0);
+      BOOST_ASSERT(count_ == 0);
       SizeType new_count;
       if(first_n){
          new_count = division_count;
       }
       else{
-         assert(difference_type(count_)>= division_count);
+         BOOST_ASSERT(difference_type(count_)>= division_count);
          new_count = count_ - division_count;
       }
       //This function should never called with a count different to zero
-      assert(new_count == 0);
+      BOOST_ASSERT(new_count == 0);
       (void)new_count;
    }
 
@@ -222,7 +222,7 @@ struct advanced_insert_aux_emplace
    template<int ...IdxPack>
    void priv_uninitialized_copy_some_and_update(const index_tuple<IdxPack...>&, Iterator p, difference_type division_count, bool first_n)
    {
-      assert(division_count <=1);
+      BOOST_ASSERT(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
             new(containers_detail::get_pointer(&*p))T(::boost::container::containers_detail::stored_ref<Args>::forward(get<IdxPack>(args_))...);
@@ -234,7 +234,7 @@ struct advanced_insert_aux_emplace
    template<int ...IdxPack>
    void priv_copy_some_and_update(const index_tuple<IdxPack...>&, Iterator p, difference_type division_count, bool first_n)
    {
-      assert(division_count <=1);
+      BOOST_ASSERT(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
             *p = BOOST_CONTAINER_MOVE_NAMESPACE::move(T(::boost::container::containers_detail::stored_ref<Args>::forward(get<IdxPack>(args_))...));
@@ -289,7 +289,7 @@ struct advanced_insert_aux_emplace
 
    virtual void uninitialized_copy_some_and_update(Iterator p, difference_type division_count, bool first_n)
    {
-      assert(division_count <=1);
+      BOOST_ASSERT(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
             new(containers_detail::get_pointer(&*p))T();
@@ -300,7 +300,7 @@ struct advanced_insert_aux_emplace
 
    virtual void copy_some_and_update(Iterator p, difference_type division_count, bool first_n)
    {
-      assert(division_count <=1);
+      BOOST_ASSERT(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
             value_init<T>v;
@@ -345,7 +345,7 @@ struct advanced_insert_aux_emplace
       virtual void uninitialized_copy_some_and_update                                  \
          (Iterator p, difference_type division_count, bool first_n)                    \
       {                                                                                \
-         assert(division_count <=1);                                                   \
+         BOOST_ASSERT(division_count <=1);                                                   \
          if((first_n && division_count == 1) || (!first_n && division_count == 0)){    \
             if(!used_){                                                                \
                new(containers_detail::get_pointer(&*p))T                                          \
@@ -358,7 +358,7 @@ struct advanced_insert_aux_emplace
       virtual void copy_some_and_update                                                \
          (Iterator p, difference_type division_count, bool first_n)                    \
       {                                                                                \
-         assert(division_count <=1);                                                   \
+         BOOST_ASSERT(division_count <=1);                                                   \
          if((first_n && division_count == 1) || (!first_n && division_count == 0)){    \
             if(!used_){                                                                \
                T v(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_MEMBER_FORWARD, _));         \

@@ -182,6 +182,11 @@ class basic_managed_shared_memory
          <basic_managed_shared_memory>(shmname);
    }
 
+   bool flush()
+   {
+      return this->base2_t::flush();
+   }
+
    /// @cond
 
    //!Tries to find a previous named allocation address. Returns a memory

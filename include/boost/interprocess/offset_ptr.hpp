@@ -24,6 +24,7 @@
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/assert.hpp>
+#include <boost/assert.hpp>
 #include <ostream>
 #include <istream>
 #include <iterator>
@@ -59,21 +60,17 @@ class offset_ptr
    typedef void (self_t::*unspecified_bool_type)() const;
 
    #if defined(_MSC_VER) && (_MSC_VER >= 1400)
-   __declspec(noinline) //this workaround is needed for msvc-8.0 and msvc-9.0
+   __declspec(noinline) //this workaround is needed for msvc > 8.0
    #endif
-   void set_offset(const volatile void *ptr)
-   {  set_offset(const_cast<const void*>(ptr)); }
-
-   void set_offset(const void *ptr)
+   void set_offset(const PointedType *ptr)
    {
-      const char *p = static_cast<const char*>(ptr);
       //offset == 1 && ptr != 0 is not legal for this pointer
       if(!ptr){
-         m_offset = 1;
+         internal.m_offset = 1;
       }
       else{
-         m_offset = p - reinterpret_cast<const char*>(this);
-         BOOST_ASSERT(m_offset != 1);
+         internal.m_offset = (const char*)ptr - (const char*)(this);
+         BOOST_ASSERT(internal.m_offset != 1);
       }
    }
 
@@ -81,15 +78,18 @@ class offset_ptr
    __declspec(noinline) //this workaround is needed for msvc-8.0 and msvc-9.0
    #endif
    void* get_pointer() const
-   {  return (m_offset == 1) ? 0 : (const_cast<char*>(reinterpret_cast<const char*>(this)) + m_offset); }
+   {  return (internal.m_offset == 1) ? 0 : (const_cast<char*>(reinterpret_cast<const char*>(this)) + internal.m_offset); }
 
    void inc_offset(std::ptrdiff_t bytes)
-   {  m_offset += bytes;   }
+   {  internal.m_offset += bytes;   }
 
    void dec_offset(std::ptrdiff_t bytes)
-   {  m_offset -= bytes;   }
+   {  internal.m_offset -= bytes;   }
 
-   std::ptrdiff_t m_offset; //Distance between this object and pointed address
+   union internal_type{
+      std::ptrdiff_t m_offset; //Distance between this object and pointed address
+      PointedType *aliasing_helper;
+   } internal;
    /// @endcond
 
    public:
@@ -153,7 +153,7 @@ class offset_ptr
    {  return static_cast<pointer>(this->get_pointer());   }
 
    std::ptrdiff_t get_offset() const
-   {  return m_offset;  }
+   {  return internal.m_offset;  }
 
    //!Pointer-like -> operator. It can return 0 pointer.
    //!Never throws.
@@ -435,7 +435,7 @@ struct pointer_plus_bits<boost::interprocess::offset_ptr<T>, NumBits>
    static void set_pointer(pointer &n, pointer p)
    {
       std::size_t pint = std::size_t(p.get());
-      assert(0 == (std::size_t(pint) & Mask));
+      BOOST_ASSERT(0 == (std::size_t(pint) & Mask));
       n = reinterpret_cast<T*>(pint | (std::size_t(n.get()) & std::size_t(Mask)));
    }
 
@@ -444,7 +444,7 @@ struct pointer_plus_bits<boost::interprocess::offset_ptr<T>, NumBits>
 
    static void set_bits(pointer &n, std::size_t b)
    {
-      assert(b < (std::size_t(1) << NumBits));
+      BOOST_ASSERT(b < (std::size_t(1) << NumBits));
       n = reinterpret_cast<T*>(std::size_t(get_pointer(n).get()) | (b << 1u));
    }
 };

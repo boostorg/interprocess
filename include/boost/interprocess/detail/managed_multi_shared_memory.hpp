@@ -33,6 +33,7 @@
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/streams/vectorstream.hpp>
 #include <memory>
+#include <boost/assert.hpp>
 
 //!\file
 //!Describes a named shared memory object allocation user class.
@@ -196,7 +197,7 @@ class basic_managed_multi_shared_memory
          }
          if(mapped){
             bool ret = void_pointer::erase_last_mapping(group);
-            assert(ret);(void)ret;
+            BOOST_ASSERT(ret);(void)ret;
          }
          return false;
       }
@@ -372,7 +373,7 @@ class basic_managed_multi_shared_memory
          //(*itbeg)->close_with_func(close_func(this));
          //Delete group. All mappings are erased too.
          ret = void_pointer::delete_group(group);
-         assert(ret);
+         BOOST_ASSERT(ret);
          m_shmem_list.clear();
       }
    }
