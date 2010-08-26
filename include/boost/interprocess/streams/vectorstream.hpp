@@ -46,7 +46,7 @@
 #include <string>    // char traits            
 #include <cstddef>   // ptrdiff_t
 #include <boost/interprocess/interprocess_fwd.hpp>
-#include <cassert>
+#include <boost/assert.hpp>
 
 namespace boost {  namespace interprocess {
 
@@ -186,7 +186,7 @@ class basic_vectorbuf
          int real_size = (int)m_vect.size();
          //Then maximize size for high watermarking
          m_vect.resize(m_vect.capacity());
-         assert(m_vect.size() == m_vect.capacity());
+         BOOST_ASSERT(m_vect.size() == m_vect.capacity());
          //Set high watermarking with the expanded size
          mp_high_water = m_vect.size() ? (&m_vect[0] + real_size) : 0;
          //Now set formatting pointers
@@ -263,7 +263,7 @@ class basic_vectorbuf
                //Insert the new data
                m_vect.push_back(CharTraits::to_char_type(c));
                m_vect.resize(m_vect.capacity());
-               assert(m_vect.size() == m_vect.capacity());
+               BOOST_ASSERT(m_vect.size() == m_vect.capacity());
                char_type* p = const_cast<char_type*>(&m_vect[0]);
                //A reallocation might have happened, update pointers
                base_t::setp(p, p + (dif_t)m_vect.size());

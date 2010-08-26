@@ -22,7 +22,7 @@ namespace boost{
 namespace interprocess{
 namespace detail{
 
-//! Atomically increment an apr_uint32_t by 1
+//! Atomically increment an boost::uint32_t by 1
 //! "mem": pointer to the object
 //! Returns the old value pointed to by mem
 inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem);
