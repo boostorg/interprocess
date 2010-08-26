@@ -162,8 +162,8 @@ static unsigned long key_query_value    = 0x0001;
 const long RPC_C_AUTHN_LEVEL_PKT_IG = 4;
 const long RPC_C_IMP_LEVEL_IMPERSONATE_IG = 3;
 const long EOAC_NONE_IG = 0;
-const long CLSCTX_INPROC_SERVER_IG	= 0x1;
-const long CLSCTX_LOCAL_SERVER_IG	= 0x4;
+const long CLSCTX_INPROC_SERVER_IG   = 0x1;
+const long CLSCTX_LOCAL_SERVER_IG   = 0x4;
 const long WBEM_FLAG_RETURN_IMMEDIATELY_IG = 0x10;
 const long WBEM_INFINITE_IG = 0xffffffff;
 
@@ -1450,47 +1450,47 @@ inline void get_registry_value(const char *folder, const char *value_key, std::v
 
 inline bool get_wmi_class_attribute( std::wstring& strValue, const wchar_t *wmi_class, const wchar_t *wmi_class_var)
 {
-	CoInitialize(0);
+   CoInitialize(0);
  
-	bool bRet = false;
+   bool bRet = false;
  
-	if( 0 == CoInitializeSecurity( 0, -1, 0, 0, RPC_C_AUTHN_LEVEL_PKT_IG, RPC_C_IMP_LEVEL_IMPERSONATE_IG, 0, EOAC_NONE_IG, 0 ) )
-	{
-		IWbemLocator_IG * pIWbemLocator = 0;
+   if( 0 == CoInitializeSecurity( 0, -1, 0, 0, RPC_C_AUTHN_LEVEL_PKT_IG, RPC_C_IMP_LEVEL_IMPERSONATE_IG, 0, EOAC_NONE_IG, 0 ) )
+   {
+      IWbemLocator_IG * pIWbemLocator = 0;
 
-		IWbemServices_IG * pWbemServices = 0;
-		IEnumWbemClassObject_IG * pEnumObject  = 0;
+      IWbemServices_IG * pWbemServices = 0;
+      IEnumWbemClassObject_IG * pEnumObject  = 0;
  
-		const wchar_t * bstrNamespace = L"root\\cimv2";
+      const wchar_t * bstrNamespace = L"root\\cimv2";
  
-		if( 0 != CoCreateInstance(
-				CLSID_WbemAdministrativeLocator,
-				0,
-				CLSCTX_INPROC_SERVER_IG | CLSCTX_LOCAL_SERVER_IG,
-				IID_IUnknown,
-				( void ** )&pIWbemLocator
-				)
-			)
-		{
-			return false;
-		}
+      if( 0 != CoCreateInstance(
+            CLSID_WbemAdministrativeLocator,
+            0,
+            CLSCTX_INPROC_SERVER_IG | CLSCTX_LOCAL_SERVER_IG,
+            IID_IUnknown,
+            ( void ** )&pIWbemLocator
+            )
+         )
+      {
+         return false;
+      }
  
-		if( 0 != pIWbemLocator->ConnectServer(
-				bstrNamespace,  // Namespace
-				0,          // Userid
-				0,           // PW
-				0,           // Locale
-				0,              // flags
-				0,           // Authority
-				0,           // Context
-				&pWbemServices
-				)
-			)
-		{
-			pIWbemLocator->Release();
+      if( 0 != pIWbemLocator->ConnectServer(
+            bstrNamespace,  // Namespace
+            0,          // Userid
+            0,           // PW
+            0,           // Locale
+            0,              // flags
+            0,           // Authority
+            0,           // Context
+            &pWbemServices
+            )
+         )
+      {
+         pIWbemLocator->Release();
  
-			return false;
-		}
+         return false;
+      }
  
       strValue.clear();
       strValue += L"Select ";
@@ -1498,55 +1498,55 @@ inline bool get_wmi_class_attribute( std::wstring& strValue, const wchar_t *wmi_
       strValue += L" from ";
       strValue += wmi_class;
 
-		if ( 0 != pWbemServices->ExecQuery(
-				L"WQL",
+      if ( 0 != pWbemServices->ExecQuery(
+            L"WQL",
             strValue.c_str(),
-				WBEM_FLAG_RETURN_IMMEDIATELY_IG,
-				0,
-				&pEnumObject
-				)
-			)
-		{
-			pIWbemLocator->Release();
-			pWbemServices->Release();
+            WBEM_FLAG_RETURN_IMMEDIATELY_IG,
+            0,
+            &pEnumObject
+            )
+         )
+      {
+         pIWbemLocator->Release();
+         pWbemServices->Release();
  
-			return false;
-		}
-		
-		unsigned long uCount = 1, uReturned;
-		IWbemClassObject_IG * pClassObject = 0;
+         return false;
+      }
+      
+      unsigned long uCount = 1, uReturned;
+      IWbemClassObject_IG * pClassObject = 0;
  
-		if ( 0 != pEnumObject->Reset() )
-		{
-			pIWbemLocator->Release();
-			pWbemServices->Release();
-			pEnumObject->Release();
+      if ( 0 != pEnumObject->Reset() )
+      {
+         pIWbemLocator->Release();
+         pWbemServices->Release();
+         pEnumObject->Release();
  
-			return false;
-		}
+         return false;
+      }
 
       wchar_variant vwchar;
 
-		while( 0 == pEnumObject->Next( WBEM_INFINITE_IG, uCount, &pClassObject, &uReturned ) )
-		{
-			if ( 0 == pClassObject->Get( L"LastBootUpTime", 0, &vwchar, 0, 0 ) )
-			{
-				bRet = true;
- 				strValue = vwchar.value.pbstrVal;
- 				VariantClear(&vwchar );
- 				break;
-			}
-		}
+      while( 0 == pEnumObject->Next( WBEM_INFINITE_IG, uCount, &pClassObject, &uReturned ) )
+      {
+         if ( 0 == pClassObject->Get( L"LastBootUpTime", 0, &vwchar, 0, 0 ) )
+         {
+            bRet = true;
+             strValue = vwchar.value.pbstrVal;
+             VariantClear(&vwchar );
+             break;
+         }
+      }
  
-		pIWbemLocator->Release();
-		pWbemServices->Release();
-		pEnumObject->Release();
-		pClassObject->Release();
-	}
+      pIWbemLocator->Release();
+      pWbemServices->Release();
+      pEnumObject->Release();
+      pClassObject->Release();
+   }
  
-	CoUninitialize();
+   CoUninitialize();
  
-	return bRet;
+   return bRet;
 }
 
 inline bool get_last_bootup_time( std::wstring& strValue )
