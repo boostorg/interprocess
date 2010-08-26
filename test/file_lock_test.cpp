@@ -20,6 +20,16 @@
 #include <cstdio> //std::remove
 
 using namespace boost::interprocess;
+
+static const std::size_t FileSize = 1000;
+inline std::string get_filename()
+{
+   std::string ret (detail::get_temporary_path());
+   ret += "/";
+   ret += test::get_process_id_name();
+   return ret;
+}
+
 //This wrapper is necessary to have a default constructor
 //in generic mutex_test_template functions
 class file_lock_lock_test_wrapper
@@ -27,7 +37,7 @@ class file_lock_lock_test_wrapper
 {
    public:
    file_lock_lock_test_wrapper()
-      :  boost::interprocess::file_lock(test::get_process_id_name())
+      :  boost::interprocess::file_lock(get_filename().c_str())
    {}
 };
 
@@ -35,12 +45,12 @@ int main ()
 {
    //Destroy and create file
    {
-      std::remove(test::get_process_id_name());
-      std::ofstream file(test::get_process_id_name());
+      std::remove(get_filename().c_str());
+      std::ofstream file(get_filename().c_str());
       if(!file){
          return 1;
       }
-      file_lock flock(test::get_process_id_name());
+      file_lock flock(get_filename().c_str());
       {
       scoped_lock<file_lock> sl(flock);
       }
@@ -53,7 +63,7 @@ int main ()
    }
    {
       //Now test move semantics
-      file_lock mapping(test::get_process_id_name());
+      file_lock mapping(get_filename().c_str());
       file_lock move_ctor(boost::interprocess::move(mapping));
       file_lock move_assign;
       move_assign = boost::interprocess::move(move_ctor);
@@ -63,7 +73,7 @@ int main ()
    //test::test_all_lock<file_lock_lock_test_wrapper>();
    //test::test_all_mutex<false, file_lock_lock_test_wrapper>();
    //test::test_all_sharable_mutex<false, file_lock_lock_test_wrapper>();
-   std::remove(test::get_process_id_name());
+   std::remove(get_filename().c_str());
 
    return 0;
 }

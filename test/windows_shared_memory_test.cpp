@@ -42,15 +42,15 @@ class shared_memory_creation_test_wrapper
 {
    public:
    shared_memory_creation_test_wrapper(create_only_t)
-      :  windows_shared_memory_t(create_only, name_initialization_routine(), ShmSize)
+      :  windows_shared_memory_t(create_only, name_initialization_routine(), ShmSize, read_write, 0, permissions())
    {}
 
    shared_memory_creation_test_wrapper(open_only_t)
-      :  windows_shared_memory_t(open_only, name_initialization_routine())
+      :  windows_shared_memory_t(open_only, name_initialization_routine(), read_write, 0)
    {}
 
    shared_memory_creation_test_wrapper(open_or_create_t)
-      :  windows_shared_memory_t(open_or_create, name_initialization_routine(), ShmSize)
+      :  windows_shared_memory_t(open_or_create, name_initialization_routine(), ShmSize, read_write, 0, permissions())
    {}
 };
 

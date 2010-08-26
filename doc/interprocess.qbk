@@ -8,7 +8,7 @@
 [library Boost.Interprocess
     [quickbook 1.4]
     [authors [Gaztanaga, Ion]]
-    [copyright 2005- 2008 Ion Gaztanaga]
+    [copyright 2005- 2010 Ion Gaztanaga]
     [id interprocess]
     [dirname interprocess]
     [purpose Interprocess communication utilities]
@@ -311,6 +311,33 @@ allocated by the system for use by the process for the named resource.
 
 [endsect]
 
+[section:permissions Permissions]
+
+Named resources offered by [*Boost.Interprocess] must cope with platform-dependant
+permission issues also present when creating files. If a programmer wants to
+shared shared memory, memory mapped files or named synchronization mechanisms
+(mutexes, semaphores, etc...) between users, it's necessary to specify 
+those permissions. Sadly, traditional UNIX and Windows permissions are very
+different and [*Boost.Interprocess] does not try to standardize permissions,
+but does not ignore them.
+
+All named resource creation functions take an optional
+[classref boost::interprocess::permissions permissions object] that can be
+configured with platform-dependant permissions.
+
+Since each mechanism can be emulated through diferent mechanisms
+(a semaphore might be implement using mapped files or native semaphores)
+permissions types could vary when the implementation of a named resource
+changes (eg.: in Windows mutexes require `synchronize permissions`, but
+that's not the case of files). 
+To avoid this, [*Boost.Interprocess] relies on file-like permissions,
+requiring file read-write-delete permissions to open named synchronization mechanisms
+(mutex, semaphores, etc.) and appropiate read or read-write-delete permissions for
+shared memory. This approach has two advantages: it's similar to the UNIX philosophy
+and the programmer does not need to know how the named resource is implemented.
+
+[endsect]
+
 [endsect]
 
 [section:sharedmemorybetweenprocesses Sharing memory between processes]
@@ -609,6 +636,16 @@ which is the size of that memory. This limitation is imposed by the Windows API 
 the user must somehow transmit the size of the segment to processes opening the
 segment.
 
+Sharing memory between services and user applications is also different. To share memory
+between services and user applications the name of the shared memory must start with the
+global namespace prefix `"Global\\"`. This global namespace enables processes on multiple
+client sessions to communicate with a service application. The server component can create
+the shared memory in the global namespace. Then a client session can use the "Global\" prefix
+to open that memory.
+
+The creation of a shared memory object in the global namespace from a session other than
+session zero is a privileged operation. 
+
 Let's repeat the same example presented for the portable shared memory object:
 A server process creates a
 shared memory object, maps it and initializes all the bytes to a value. After that, 
@@ -757,7 +794,8 @@ inmedially visible to other processes. However, the file contents on disk are
 not updated immediately, since that would hurt performance (writing to disk
 is several times slower than writing to memory). If the user wants to make sure
 that file's contents have been updated, it can flush a range from the view to disk.
-When the function returns, the data should have been written to disk:
+When the function returns, the flushing process has startd but there is not guarantee that
+all data has been written to disk:
 
 [c++]
 
@@ -3128,6 +3166,10 @@ lifetime issues as the windows shared memory: when the last process attached to 
 windows shared memory is detached from the memory (or ends/crashes) the memory is
 destroyed. So there is no persistence support for windows shared memory.
 
+To communicate between system services and user applications using `managed_windows_shared_memory`,
+please read the explanations given in chapter
+[interprocess.sharedmemorybetweenprocesses.sharedmemory.windows_shared_memory Native windows shared memory]
+
 [endsect]
 
 For more information about managed shared memory capabilities, see
@@ -5078,6 +5120,13 @@ Here is an example that shows how to put a multi index container in shared memor
 
 [endsect]
 
+Programmers can place [*Boost.CircularBuffer] containers in sharecd memory provided
+they disable debugging facilities with defines `BOOST_CB_DISABLE_DEBUG` or the more
+general `NDEBUG`. The reason is that those debugging facilities are only compatible
+with raw pointers.
+
+[endsect]
+
 [endsect]
 
 [section:memory_algorithms Memory allocation algorithms]
@@ -5192,9 +5241,6 @@ For allocations bigger than 8 bytes the memory overhead is exactly the same.
 This is the default allocation algorithm in [*Boost.Interprocess] managed memory
 segments.
                                                                                                                                
-
-[endsect]
-
 [endsect]
 
 [endsect]
@@ -6504,31 +6550,45 @@ thank them:
 
 [endsect]
 
-[section:thanks_to_license_notes License notes]
-
-[*Boost.Interprocess] STL containers are based on the SGI STL library implementation:
-
-Copyright (c) 1996,1997 Silicon Graphics Computer Systems, Inc. Permission to use, 
-copy, modify, distribute and sell this software and its documentation for any 
-purpose is hereby granted without fee, provided that the above copyright notice 
-appear in all copies and that both that copyright notice and this permission 
-notice appear in supporting documentation. Silicon Graphics makes no representations 
-about the suitability of this software for any purpose. It is provided "as is" 
-without express or implied warranty. 
-
-Copyright (c) 1994 Hewlett-Packard Company Permission to use, copy, modify, 
-distribute and sell this software and its documentation for any purpose is hereby 
-granted without fee, provided that the above copyright notice appear in all copies 
-and that both that copyright notice and this permission notice appear in supporting 
-documentation. Hewlett-Packard Company makes no representations about the suitability 
-of this software for any purpose. It is provided "as is" without express or implied 
-warranty. 
-
-[endsect]
-
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_45_00 Boost 1.45 Release]
+
+*  Fixed bugs
+  [@https://svn.boost.org/trac/boost/ticket/3439 #3439],
+  [@https://svn.boost.org/trac/boost/ticket/3448 #3448],
+  [@https://svn.boost.org/trac/boost/ticket/3582 #3582],
+  [@https://svn.boost.org/trac/boost/ticket/3682 #3682],
+  [@https://svn.boost.org/trac/boost/ticket/3829 #3829],
+  [@https://svn.boost.org/trac/boost/ticket/3846 #3846],
+  [@https://svn.boost.org/trac/boost/ticket/3947 #3947],
+  [@https://svn.boost.org/trac/boost/ticket/3950 #3950],
+  [@https://svn.boost.org/trac/boost/ticket/3951 #3951],
+  [@https://svn.boost.org/trac/boost/ticket/3985 #3985],
+  [@https://svn.boost.org/trac/boost/ticket/4010 #4010],
+  [@https://svn.boost.org/trac/boost/ticket/4019 #4019],
+  [@https://svn.boost.org/trac/boost/ticket/4039 #4039],
+  [@https://svn.boost.org/trac/boost/ticket/4218 #4218],
+  [@https://svn.boost.org/trac/boost/ticket/4230 #4230],
+  [@https://svn.boost.org/trac/boost/ticket/4230 #4352],
+  [@https://svn.boost.org/trac/boost/ticket/4230 #4352],
+  [@https://svn.boost.org/trac/boost/ticket/4516 #4516],
+  [@https://svn.boost.org/trac/boost/ticket/4524 #4524],
+  [@https://svn.boost.org/trac/boost/ticket/4557 #4557].
+
+*  Added support for standard rvalue reference move semantics
+   (tested on GCC 4.5 and VC10).
+
+*  Permissions can be detailed for interprocess named resources.
+
+*  `mapped_region::flush` initiates disk flushing but does not guarantee it's completed
+   when returns, since it is not portable.
+
+*  FreeBSD and MacOS now use posix semaphores to implement named semaphores and mutex.
+
+[endsect]
 
 [section:release_notes_boost_1_41_00 Boost 1.41 Release]
 

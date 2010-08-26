@@ -18,19 +18,26 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <boost/interprocess/detail/os_file_functions.hpp>
 #include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
 
 static const std::size_t FileSize = 1000;
-static const char *      FileName = test::get_process_id_name();
+inline std::string get_filename()
+{
+   std::string ret (detail::get_temporary_path());
+   ret += "/";
+   ret += test::get_process_id_name();
+   return ret;
+}
 
 struct file_destroyer
 {
    ~file_destroyer()
    {
       //The last destructor will destroy the file
-      file_mapping::remove(FileName);  
+      file_mapping::remove(get_filename().c_str());  
    }
 };
 
@@ -45,15 +52,15 @@ class mapped_file_creation_test_wrapper
       <boost::interprocess::detail::file_wrapper> mapped_file;
    public:
    mapped_file_creation_test_wrapper(boost::interprocess::create_only_t)
-      :  mapped_file(boost::interprocess::create_only, FileName, FileSize)
+      :  mapped_file(boost::interprocess::create_only, get_filename().c_str(), FileSize, read_write, 0, permissions())
    {}
 
    mapped_file_creation_test_wrapper(boost::interprocess::open_only_t)
-      :  mapped_file(boost::interprocess::open_only, FileName)
+      :  mapped_file(boost::interprocess::open_only, get_filename().c_str(), read_write, 0)
    {}
 
    mapped_file_creation_test_wrapper(boost::interprocess::open_or_create_t)
-      :  mapped_file(boost::interprocess::open_or_create, FileName, FileSize)
+      :  mapped_file(boost::interprocess::open_or_create, get_filename().c_str(), FileSize, read_write, 0, permissions())
    {}
 };
 
@@ -61,15 +68,15 @@ int main ()
 {
    typedef boost::interprocess::detail::managed_open_or_create_impl
       <boost::interprocess::detail::file_wrapper> mapped_file;
-   file_mapping::remove(FileName);
+   file_mapping::remove(get_filename().c_str());
    test::test_named_creation<mapped_file_creation_test_wrapper>();
 
    //Create and get name, size and address
    {  
-      mapped_file file1(create_only, FileName, FileSize);
+      mapped_file file1(create_only, get_filename().c_str(), FileSize, read_write, 0, permissions());
 
       //Compare name
-      if(std::strcmp(file1.get_name(), FileName) != 0){
+      if(std::strcmp(file1.get_name(), get_filename().c_str()) != 0){
          return 1;
       }
 
@@ -81,7 +88,7 @@ int main ()
       mapped_file move_assign;
       move_assign = boost::interprocess::move(move_ctor);
    }
-   file_mapping::remove(FileName);
+//   file_mapping::remove(get_filename().c_str());
    return 0;
 }
 

@@ -71,8 +71,9 @@ int main ()
       //Fill vector at the beginning until there is no more memory
       MyVect myvec(myallocator);
       int i;
+      InstanceCounter ic;
       for(i = 0; true; ++i){
-         myvec.insert(myvec.begin(), i, InstanceCounter());
+         myvec.insert(myvec.begin(), i, ic);
       }  
    }
    catch(boost::interprocess::bad_alloc &){

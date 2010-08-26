@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="doc_windows_shared_memory2"
-	ProjectGUID="{5E1D6C83-31DE-4F6F-6132-87A9FB663041}"
+	Name="intermodule_singleton_test"
+	ProjectGUID="{58CCE183-6092-48FE-A4F7-BA0D3A792608}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -13,7 +13,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="../../Bin/Win32/Debug"
-			IntermediateDirectory="Debug/doc_windows_shared_memory2"
+			IntermediateDirectory="Debug/intermodule_singleton_test"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -35,11 +35,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/doc_windows_shared_memory2_d.exe"
+				OutputFile="$(OutDir)/intermodule_singleton_test_d.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/doc_windows_shared_memoryB.pdb"
+				ProgramDatabaseFile="$(OutDir)/intermodule_singleton_test.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 				FixedBaseAddress="1"/>
@@ -67,7 +67,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="../../Bin/Win32/Release"
-			IntermediateDirectory="Release/doc_windows_shared_memory2"
+			IntermediateDirectory="Release/intermodule_singleton_test"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -86,7 +86,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/doc_windows_shared_memoryB.exe"
+				OutputFile="$(OutDir)/intermodule_singleton_test.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
@@ -122,10 +122,15 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{437F71DF-CA9B-6637-0366-3E52D735BAFF}">
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\example\comp_doc_windows_shared_memoryB.cpp">
+				RelativePath="..\..\test\intermodule_singleton_test.cpp">
 			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc;xsd"
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 		</Filter>
 	</Files>
 	<Globals>

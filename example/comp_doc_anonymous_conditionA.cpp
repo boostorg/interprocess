@@ -77,4 +77,3 @@ int main ()
    return 0;
 }
 //]
-#include <boost/interprocess/detail/config_end.hpp>

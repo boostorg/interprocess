@@ -42,15 +42,15 @@ class shared_memory_creation_test_wrapper
 
    public:
    shared_memory_creation_test_wrapper(create_only_t)
-      :  shared_memory(create_only, ShmName, ShmSize)
+      :  shared_memory(create_only, ShmName, ShmSize, read_write, 0, permissions())
    {}
 
    shared_memory_creation_test_wrapper(open_only_t)
-      :  shared_memory(open_only, ShmName)
+      :  shared_memory(open_only, ShmName, read_write, 0)
    {}
 
    shared_memory_creation_test_wrapper(open_or_create_t)
-      :  shared_memory(open_or_create, ShmName, ShmSize)
+      :  shared_memory(open_or_create, ShmName, ShmSize, read_write, 0, permissions())
    {}
 };
 
@@ -64,7 +64,7 @@ int main ()
       //Create and get name, size and address
       {  
          shared_memory_object::remove(ShmName);
-         shared_memory shm1(create_only, ShmName, ShmSize);
+         shared_memory shm1(create_only, ShmName, ShmSize, read_write, 0, permissions());
 
          //Compare name
          if(std::strcmp(shm1.get_name(), ShmName) != 0){

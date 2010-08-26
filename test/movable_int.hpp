@@ -79,7 +79,7 @@ std::basic_ostream<E, T> & operator<<
 
 class movable_and_copyable_int
 {
-   BOOST_COPYABLE_AND_MOVABLE(movable_and_copyable_int)
+   BOOST_INTERPROCESS_COPYABLE_AND_MOVABLE(movable_and_copyable_int)
    public:
 
    movable_and_copyable_int()
