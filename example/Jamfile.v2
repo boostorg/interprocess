@@ -23,6 +23,10 @@ rule test_all
    {
       all_rules += [ link $(fileb) /boost/thread//boost_thread
       :  # additional args
+        <toolset>acc:<linkflags>-lrt
+        <toolset>acc-pa_risc:<linkflags>-lrt
+        <toolset>gcc-mingw:<linkflags>"-lole32 -loleaut32" 
+        <host-os>hpux,<toolset>gcc:<linkflags>"-Wl,+as,mpas"
       :  # test-files
       :  # requirements
       ] ;
