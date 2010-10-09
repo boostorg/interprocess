@@ -101,6 +101,8 @@
       //          hp-ux               tru64               vms               freebsd
       #if defined(__hpux) || defined(__osf__) || defined(__vms) || (defined(__FreeBSD__) && (__FreeBSD__ < 7)) 
       #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
+      #elif defined(__FreeBSD__)
+      #define BOOST_INTERPROCESS_RUNTIME_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
       #endif
    #endif
 

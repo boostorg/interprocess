@@ -37,7 +37,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#if (defined BOOST_INTERPROCESS_WINDOWS)
+#if defined (BOOST_INTERPROCESS_WINDOWS)
 #include <fcntl.h>
 #include <io.h>
 
@@ -433,7 +433,7 @@ struct gmem_erase_func
 
    void operator()()
    {
-      locking_file_serial_id *pserial_id = shm_.find<locking_file_serial_id>("lock_file_fd").first;
+      locking_file_serial_id *pserial_id = shm_.template find<locking_file_serial_id>("lock_file_fd").first;
       if(pserial_id){
          pserial_id->fd = GMemMarkToBeRemoved;
       }
@@ -507,7 +507,7 @@ struct lock_file_logic
 
       //First find the file locking descriptor id
       locking_file_serial_id *pserial_id =
-         mshm.find<locking_file_serial_id>("lock_file_fd").first;
+         mshm.template find<locking_file_serial_id>("lock_file_fd").first;
 
       int fd;
       //If not found schedule a creation
@@ -570,7 +570,7 @@ struct lock_file_logic
    private:
    locking_file_serial_id * register_lock_file(int fd)
    {
-      locking_file_serial_id *pinfo = mshm.construct<locking_file_serial_id>("lock_file_fd")();
+      locking_file_serial_id *pinfo = mshm.template construct<locking_file_serial_id>("lock_file_fd")();
       fill_file_serial_id(fd, *pinfo);
       return pinfo;
    }
@@ -580,7 +580,9 @@ struct lock_file_logic
    bool retry_with_new_shm;
 };
 
-template <>
+#if defined (BOOST_INTERPROCESS_WINDOWS)
+
+template<>
 struct lock_file_logic<managed_windows_shared_memory>
 {
    lock_file_logic(managed_windows_shared_memory &)
@@ -590,6 +592,8 @@ struct lock_file_logic<managed_windows_shared_memory>
    void operator()(void){}
    const bool retry_with_new_shm;
 };
+
+#endif
 
 }  //namespace intermodule_singleton_helpers {
 
@@ -632,7 +636,8 @@ class intermodule_singleton_common
       return *static_cast<ManagedShMem *>(static_cast<void *>(&shm_mem));
    }
 
-   static const std::size_t MemSize = ((sizeof(ManagedShMem)-1)/sizeof(max_align))+1u;
+   enum { MemSize = ((sizeof(ManagedShMem)-1)/sizeof(max_align))+1u };
+
    static void initialize_shm();
    static void destroy_shm();
    //Static data, zero-initalized without any dependencies
@@ -709,7 +714,7 @@ struct unlink_shmlogic
    void operator()()
    {
       intermodule_singleton_helpers::locking_file_serial_id *pserial_id =
-         mshm_.find<intermodule_singleton_helpers::locking_file_serial_id>
+         mshm_.template find<intermodule_singleton_helpers::locking_file_serial_id>
             ("lock_file_fd").first;
       BOOST_ASSERT(0 != pserial_id);
       if(1 == atomic_dec32(&pserial_id->modules_attached_to_gmem_count)){
@@ -728,6 +733,8 @@ struct unlink_shmlogic
    ManagedShMem &mshm_;
 };
 
+#if defined (BOOST_INTERPROCESS_WINDOWS)
+
 template<>
 struct unlink_shmlogic<managed_windows_shared_memory>
 {
@@ -735,6 +742,8 @@ struct unlink_shmlogic<managed_windows_shared_memory>
    {}
    void operator()(){}
 };
+
+#endif
 
 
 template<class ManagedShMem>
@@ -913,11 +922,11 @@ class intermodule_singleton_impl
 
       void operator()()
       {
-         ref_count_ptr *rcount = mshm.find<ref_count_ptr>(unique_instance).first;
+         ref_count_ptr *rcount = mshm.template find<ref_count_ptr>(unique_instance).first;
          if(!rcount){
             C *p = new C();
             try{
-               rcount = mshm.construct<ref_count_ptr>(unique_instance)(p, 0u);
+               rcount = mshm.template construct<ref_count_ptr>(unique_instance)(p, 0u);
             }
             catch(...){
                delete p;
@@ -941,7 +950,7 @@ class intermodule_singleton_impl
 
       void operator()()
       {
-         ref_count_ptr *rcount = mshm.find<ref_count_ptr>(unique_instance).first;
+         ref_count_ptr *rcount = mshm.template find<ref_count_ptr>(unique_instance).first;
             //The object must exist
          BOOST_ASSERT(rcount);
          //Check if last reference
@@ -950,7 +959,7 @@ class intermodule_singleton_impl
             BOOST_ASSERT(rcount->ptr != 0);
             delete rcount->ptr;
             //Now destroy shm entry
-            bool destroyed = mshm.destroy<ref_count_ptr>(unique_instance);
+            bool destroyed = mshm.template destroy<ref_count_ptr>(unique_instance);
             (void)destroyed;  BOOST_ASSERT(destroyed == true);
          }
       }
