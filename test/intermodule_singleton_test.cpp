@@ -46,21 +46,20 @@ class MyThrowingClass
 };
 
 
-
-int main ()
+template < template<class, bool> class IntermoduleType >
+int intermodule_singleton_test()
 {
-
    bool exception_thrown = false;
    bool exception_2_thrown = false;
 
    try{
-      detail::intermodule_singleton<MyThrowingClass, true>::get();
+      IntermoduleType<MyThrowingClass, true>::get();
    }
    catch(int &){
       exception_thrown = true;
       //Second try
       try{
-         detail::intermodule_singleton<MyThrowingClass, true>::get();
+         IntermoduleType<MyThrowingClass, true>::get();
       }
       catch(interprocess_exception &){
          exception_2_thrown = true;
@@ -71,15 +70,15 @@ int main ()
       return 1;
    }
 
-   MyClass & mc = detail::intermodule_singleton<MyClass>::get();
+   MyClass & mc = IntermoduleType<MyClass>::get();
    mc.shout();
-   detail::intermodule_singleton<MyClass>::get().shout();
-   detail::intermodule_singleton<MyDerivedClass>::get().shout();
+   IntermoduleType<MyClass>::get().shout();
+   IntermoduleType<MyDerivedClass>::get().shout();
 
    //Second try
    exception_2_thrown = false;
    try{
-      detail::intermodule_singleton<MyThrowingClass, true>::get();
+      IntermoduleType<MyThrowingClass, true>::get();
    }
    catch(interprocess_exception &){
       exception_2_thrown = true;
@@ -89,6 +88,21 @@ int main ()
    }
 
    return 0;   
+}
+
+int main ()
+{
+   if(0 != intermodule_singleton_test<detail::portable_intermodule_singleton>()){
+      return 1;
+   }
+
+   #ifdef BOOST_INTERPROCESS_WINDOWS
+   if(0 != intermodule_singleton_test<detail::windows_intermodule_singleton>()){
+      return 1;
+   }
+   #endif
+
+   return 0;
 }
 
 #include <boost/interprocess/detail/config_end.hpp>
