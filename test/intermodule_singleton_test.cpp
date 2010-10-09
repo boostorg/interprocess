@@ -46,7 +46,7 @@ class MyThrowingClass
 };
 
 
-template < template<class, bool> class IntermoduleType >
+template < template<class, bool = false> class IntermoduleType >
 int intermodule_singleton_test()
 {
    bool exception_thrown = false;
