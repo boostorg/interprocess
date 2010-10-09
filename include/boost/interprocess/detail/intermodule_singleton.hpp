@@ -19,9 +19,11 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/managed_shared_memory.hpp>
+#ifdef BOOST_INTERPROCESS_WINDOWS
+#include <boost/interprocess/managed_windows_shared_memory.hpp>
+#endif
 #include <boost/interprocess/detail/atomic.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
-#include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/detail/tmp_dir_helpers.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
@@ -154,57 +156,32 @@ inline void get_shm_name(std::string &shm_name)
 inline std::size_t get_shm_size()
 {  return 65536;  }
 
-inline void apply_gmem_erase_logic(const char *filepath, const char *filename);
-
-inline bool remove_old_gmem()
+template<class ManagedShMem>
+struct managed_sh_dependant
 {
-   std::string refcstrRootDirectory;
-   tmp_folder(refcstrRootDirectory);
-   refcstrRootDirectory += "/";
-   refcstrRootDirectory += get_lock_file_subdir_name();
-   return for_each_file_in_dir(refcstrRootDirectory.c_str(), apply_gmem_erase_logic);
-}
+   static void apply_gmem_erase_logic(const char *filepath, const char *filename);
+
+   static bool remove_old_gmem()
+   {
+      std::string refcstrRootDirectory;
+      tmp_folder(refcstrRootDirectory);
+      refcstrRootDirectory += "/";
+      refcstrRootDirectory += get_lock_file_subdir_name();
+      return for_each_file_in_dir(refcstrRootDirectory.c_str(), apply_gmem_erase_logic);
+   }
+};
 
 #if (defined BOOST_INTERPROCESS_WINDOWS)
-/*
-inline bool remove_old_gmem()
+
+template<>
+struct managed_sh_dependant<managed_windows_shared_memory>
 {
-   void *             hFile;                       // Handle to directory
-   winapi::win32_find_data_t  FileInformation;     // File information
+   static void apply_gmem_erase_logic(const char *, const char *){}
 
-   //Get base directory
-   std::string str;
-   tmp_folder(str);
-   str += "/";
-   str += get_lock_file_subdir_name();
-   const std::size_t base_root_dir_len = str.size();
+   static bool remove_old_gmem()
+   { return true; }
+};
 
-   //Find all files and directories
-   str  +=  "\\*.*";
-   hFile = winapi::find_first_file(str.c_str(), &FileInformation);
-   if(hFile != winapi::invalid_handle_value){
-      do{   //Now loop every file
-         str.erase(base_root_dir_len);
-         //If it's not "." or ".." skip it
-         if(FileInformation.cFileName[0] != '.'){
-            str += "\\";   str += FileInformation.cFileName;
-            //If it's a file, apply erase logic
-            if(!(FileInformation.dwFileAttributes & winapi::file_attribute_directory)){
-               apply_gmem_erase_logic(str.c_str(), FileInformation.cFileName);
-            }
-         }
-      //Go to the next file
-      } while(winapi::find_next_file(hFile, &FileInformation) == 1);
-
-      // Close handle and see if the loop has ended with an error
-      winapi::find_close(hFile);
-      if(winapi::get_last_error() != winapi::error_no_more_files){
-         return false;
-      }
-   }
-   return true;
-}
-*/
 
 struct locking_file_serial_id
 {
@@ -325,52 +302,7 @@ inline bool compare_file_serial(int fd, const locking_file_serial_id &id)
 }
 
 #else //UNIX
-/*
-inline bool remove_old_gmem()
-{
-   std::string refcstrRootDirectory;
-   tmp_folder(refcstrRootDirectory);
-   refcstrRootDirectory += "/";
-   refcstrRootDirectory += get_lock_file_subdir_name();
 
-   DIR *d = opendir(refcstrRootDirectory.c_str());
-   if(!d) {
-      return false;
-   }
-
-   struct dir_close
-   {
-      DIR *d_;
-      dir_close(DIR *d) : d_(d) {}
-      ~dir_close() { ::closedir(d_); }
-   } dc(d); (void)dc;
-
-   struct ::dirent *de;
-   struct ::stat st;
-   std::string fn;
-
-   while((de=::readdir(d))) {
-      if( de->d_name[0] == '.' && ( de->d_name[1] == '\0'
-            || (de->d_name[1] == '.' && de->d_name[2] == '\0' )) ){
-         continue;
-      }
-      fn = refcstrRootDirectory;
-      fn += '/';
-      fn += de->d_name;
-
-      //if(std::remove(fn.c_str())) {
-         if(::stat(fn.c_str(), & st)) {
-            return false;
-         }
-         //If it's a file, apply erase logic
-         if(!S_ISDIR(st.st_mode)) {
-            apply_gmem_erase_logic(fn.c_str(), de->d_name);
-         }
-      //}
-   }
-   return true;
-}
-*/
 struct locking_file_serial_id
 {
    int fd;
@@ -492,9 +424,10 @@ inline bool compare_file_serial(int fd, const locking_file_serial_id &id)
 
 #endif
 
+template<class ManagedShMem>
 struct gmem_erase_func
 {
-   gmem_erase_func(const char *shm_name, const char *singleton_lock_file_path, managed_shared_memory & shm)
+   gmem_erase_func(const char *shm_name, const char *singleton_lock_file_path, ManagedShMem & shm)
       :shm_name_(shm_name), singleton_lock_file_path_(singleton_lock_file_path), shm_(shm)
    {}
 
@@ -510,11 +443,13 @@ struct gmem_erase_func
    
    const char * const shm_name_;
    const char * const singleton_lock_file_path_;
-   managed_shared_memory & shm_;
+   ManagedShMem & shm_;
 };
 
 //This function applies shared memory erasure logic based on the passed lock file.
-inline void apply_gmem_erase_logic(const char *filepath, const char *filename)
+template<class ManagedShMem>
+void managed_sh_dependant<ManagedShMem>::
+   apply_gmem_erase_logic(const char *filepath, const char *filename)
 {
    int fd = GMemMarkToBeRemoved;
    try{
@@ -533,8 +468,8 @@ inline void apply_gmem_erase_logic(const char *filepath, const char *filename)
       //(the name is based on the lock file name) and try to apply erasure logic
       str.insert(0, get_shm_base_name());
       try{
-         managed_shared_memory shm(open_only, str.c_str());
-         gmem_erase_func func(str.c_str(), filepath, shm);
+         ManagedShMem shm(open_only, str.c_str());
+         gmem_erase_func<ManagedShMem> func(str.c_str(), filepath, shm);
          shm.try_atomic_func(func);
       }
       catch(interprocess_exception &e){
@@ -559,18 +494,12 @@ inline void apply_gmem_erase_logic(const char *filepath, const char *filename)
 namespace intermodule_singleton_helpers {
 
 //The lock file logic creates uses a unique instance to a file
+template <class ManagedShMem>
 struct lock_file_logic
 {
-   lock_file_logic(managed_shared_memory &shm)
+   lock_file_logic(ManagedShMem &shm)
       : mshm(shm)
-   {}
-
-   locking_file_serial_id * register_lock_file(int fd)
-   {
-      locking_file_serial_id *pinfo = mshm.construct<locking_file_serial_id>("lock_file_fd")();
-      fill_file_serial_id(fd, *pinfo);
-      return pinfo;
-   }
+   {  shm.atomic_func(*this); }
 
    void operator()(void)
    {
@@ -638,8 +567,28 @@ struct lock_file_logic
       }
    }
 
-   managed_shared_memory &mshm;
+   private:
+   locking_file_serial_id * register_lock_file(int fd)
+   {
+      locking_file_serial_id *pinfo = mshm.construct<locking_file_serial_id>("lock_file_fd")();
+      fill_file_serial_id(fd, *pinfo);
+      return pinfo;
+   }
+
+   public:
+   ManagedShMem &mshm;
    bool retry_with_new_shm;
+};
+
+template <>
+struct lock_file_logic<managed_windows_shared_memory>
+{
+   lock_file_logic(managed_windows_shared_memory &)
+      : retry_with_new_shm(false)
+   {}
+
+   void operator()(void){}
+   const bool retry_with_new_shm;
 };
 
 }  //namespace intermodule_singleton_helpers {
@@ -648,12 +597,12 @@ struct lock_file_logic
 //code just once per module. This class also holds a reference counted shared memory
 //to be used by all instances
 
-template<int Dummy>
+template<class ManagedShMem>
 class intermodule_singleton_common
 {
    public:
-   typedef void*(singleton_constructor_t)(managed_shared_memory &);
-   typedef void (singleton_destructor_t)(void *, managed_shared_memory &);
+   typedef void*(singleton_constructor_t)(ManagedShMem &);
+   typedef void (singleton_destructor_t)(void *, ManagedShMem &);
 
    static const ::boost::uint32_t Uninitialized       = 0u;
    static const ::boost::uint32_t Initializing        = 1u;
@@ -678,12 +627,12 @@ class intermodule_singleton_common
       (void *&ptr, volatile boost::uint32_t &this_module_singleton_initialized, singleton_constructor_t ini_func);
 
    private:
-   static managed_shared_memory &get_shm()
+   static ManagedShMem &get_shm()
    {
-      return *static_cast<managed_shared_memory *>(static_cast<void *>(&shm_mem));
+      return *static_cast<ManagedShMem *>(static_cast<void *>(&shm_mem));
    }
 
-   static const std::size_t MemSize = ((sizeof(managed_shared_memory)-1)/sizeof(max_align))+1u;
+   static const std::size_t MemSize = ((sizeof(ManagedShMem)-1)/sizeof(max_align))+1u;
    static void initialize_shm();
    static void destroy_shm();
    //Static data, zero-initalized without any dependencies
@@ -694,20 +643,17 @@ class intermodule_singleton_common
    static max_align shm_mem[MemSize];
 };
 
-template<int Dummy>
-volatile boost::uint32_t intermodule_singleton_common<Dummy>::this_module_singleton_count;
+template<class ManagedShMem>
+volatile boost::uint32_t intermodule_singleton_common<ManagedShMem>::this_module_singleton_count;
 
-//template<int Dummy>
-//const std::size_t intermodule_singleton_common<Dummy>::MemSize;
+template<class ManagedShMem>
+volatile boost::uint32_t intermodule_singleton_common<ManagedShMem>::this_module_shm_initialized;
 
-template<int Dummy>
-volatile boost::uint32_t intermodule_singleton_common<Dummy>::this_module_shm_initialized;
+template<class ManagedShMem>
+max_align intermodule_singleton_common<ManagedShMem>::shm_mem[intermodule_singleton_common<ManagedShMem>::MemSize];
 
-template<int Dummy>
-max_align intermodule_singleton_common<Dummy>::shm_mem[intermodule_singleton_common<Dummy>::MemSize];
-
-template<int Dummy>
-void intermodule_singleton_common<Dummy>::initialize_shm()
+template<class ManagedShMem>
+void intermodule_singleton_common<ManagedShMem>::initialize_shm()
 {
    //Obtain unique shm name and size
    std::string s;
@@ -728,17 +674,16 @@ void intermodule_singleton_common<Dummy>::initialize_shm()
          //If not initialized try it again?
          try{
             //Remove old shared memory from the system
-            intermodule_singleton_helpers::remove_old_gmem();
+            intermodule_singleton_helpers::managed_sh_dependant<ManagedShMem>::remove_old_gmem();
             //in-place construction of the shared memory class
-            ::new (&get_shm())managed_shared_memory(open_or_create, ShmName, ShmSize);
+            ::new (&get_shm())ManagedShMem(open_or_create, ShmName, ShmSize);
             //Use shared memory internal lock to initialize the lock file
             //that will mark this gmem as "in use".
-            intermodule_singleton_helpers::lock_file_logic f(get_shm());
-            get_shm().atomic_func(f);
+            intermodule_singleton_helpers::lock_file_logic<ManagedShMem> f(get_shm());
             //If function failed (maybe a competing process has erased the shared
             //memory between creation and file locking), retry with a new instance.
             if(f.retry_with_new_shm){
-               get_shm().~managed_shared_memory();
+               get_shm().~ManagedShMem();
                atomic_write32(&this_module_shm_initialized, Uninitialized);
             }
             else{
@@ -755,11 +700,12 @@ void intermodule_singleton_common<Dummy>::initialize_shm()
    }
 }
 
+template<class ManagedShMem>
 struct unlink_shmlogic
 {
-   unlink_shmlogic(managed_shared_memory &mshm)
+   unlink_shmlogic(ManagedShMem &mshm)
       : mshm_(mshm)
-   {}
+   {  mshm.atomic_func(*this);  }
    void operator()()
    {
       intermodule_singleton_helpers::locking_file_serial_id *pserial_id =
@@ -779,22 +725,30 @@ struct unlink_shmlogic
          }
       }
    }
-   managed_shared_memory &mshm_;
+   ManagedShMem &mshm_;
 };
 
-template<int Dummy>
-void intermodule_singleton_common<Dummy>::destroy_shm()
+template<>
+struct unlink_shmlogic<managed_windows_shared_memory>
+{
+   unlink_shmlogic(managed_windows_shared_memory &)
+   {}
+   void operator()(){}
+};
+
+
+template<class ManagedShMem>
+void intermodule_singleton_common<ManagedShMem>::destroy_shm()
 {
    if(!atomic_read32(&this_module_singleton_count)){
       //This module is being unloaded, so destroy
       //the shared memory object of this module
       //and unlink the shared memory if it's the last
-      unlink_shmlogic f(get_shm());
-      get_shm().atomic_func(f);
-      (get_shm()).~managed_shared_memory();
+      unlink_shmlogic<ManagedShMem> f(get_shm());
+      (get_shm()).~ManagedShMem();
       atomic_write32(&this_module_shm_initialized, Uninitialized);
       //Do some cleanup for other processes old gmem instances
-      intermodule_singleton_helpers::remove_old_gmem();
+      intermodule_singleton_helpers::managed_sh_dependant<ManagedShMem>::remove_old_gmem();
    }
 }
 
@@ -809,8 +763,8 @@ void intermodule_singleton_common<Dummy>::destroy_shm()
 //
 //All static variables declared here are shared between inside a module
 //so atomic operations will synchronize only threads of the same module.
-template<int Dummy>
-void intermodule_singleton_common<Dummy>::initialize_singleton_logic
+template<class ManagedShMem>
+void intermodule_singleton_common<ManagedShMem>::initialize_singleton_logic
    (void *&ptr, volatile boost::uint32_t &this_module_singleton_initialized, singleton_constructor_t constructor)
 {
    //If current module is not initialized enter to lock free logic
@@ -882,19 +836,21 @@ void intermodule_singleton_common<Dummy>::initialize_singleton_logic
 //Now this class is a singleton, initializing the singleton in
 //the first get() function call if LazyInit is false. If true
 //then the singleton will be initialized when loading the module.
-template<typename C, bool LazyInit = false>
-class intermodule_singleton
+template<typename C, bool LazyInit, class ManagedShMem>
+class intermodule_singleton_impl
 {
    public:
    static C& get()   //Let's make inlining easy
    {
       if(!this_module_singleton_ptr){
          if(lifetime.dummy_function())  //This forces lifetime instantiation, for reference counted destruction
-            intermodule_singleton_common<0>::initialize_singleton_logic
+            intermodule_singleton_common<ManagedShMem>::initialize_singleton_logic
                (this_module_singleton_ptr, this_module_singleton_initialized, singleton_constructor);
       }
       return *static_cast<C*>(this_module_singleton_ptr);
    }
+
+   private:
 
    struct ref_count_ptr
    {
@@ -907,7 +863,6 @@ class intermodule_singleton
       volatile boost::uint32_t singleton_ref_count;
    };
 
-   private:
    //These statics will be zero-initialized without any constructor call dependency
    //this_module_singleton_ptr will be a module-local pointer to the singleton
    static void*                      this_module_singleton_ptr;
@@ -924,7 +879,7 @@ class intermodule_singleton
 
       ~lifetime_type_lazy()
       {
-         intermodule_singleton_common<0>::finalize_singleton_logic
+         intermodule_singleton_common<ManagedShMem>::finalize_singleton_logic
             (this_module_singleton_ptr, singleton_destructor);
       }
       //Dummy volatile so that the compiler can't resolve its value at compile-time
@@ -937,7 +892,7 @@ class intermodule_singleton
    {
       lifetime_type_static()
       {
-         intermodule_singleton_common<0>::initialize_singleton_logic
+         intermodule_singleton_common<ManagedShMem>::initialize_singleton_logic
             (this_module_singleton_ptr, this_module_singleton_initialized, singleton_constructor);
       }
    };
@@ -952,7 +907,7 @@ class intermodule_singleton
    //If singleton constructor throws, the exception is propagated
    struct init_atomic_func
    {
-      init_atomic_func(managed_shared_memory &m)
+      init_atomic_func(ManagedShMem &m)
          : mshm(m)
       {}
 
@@ -972,7 +927,7 @@ class intermodule_singleton
          atomic_inc32(&rcount->singleton_ref_count);
          ret_ptr = rcount->ptr;
       }
-      managed_shared_memory &mshm;
+      ManagedShMem &mshm;
       void *ret_ptr;
    };
 
@@ -980,7 +935,7 @@ class intermodule_singleton
    //deletes the singleton in shm if the attached count reaches to zero
    struct fini_atomic_func
    {
-      fini_atomic_func(managed_shared_memory &m)
+      fini_atomic_func(ManagedShMem &m)
          : mshm(m)
       {}
 
@@ -999,12 +954,12 @@ class intermodule_singleton
             (void)destroyed;  BOOST_ASSERT(destroyed == true);
          }
       }
-      managed_shared_memory &mshm;
+      ManagedShMem &mshm;
       void *ret_ptr;
    };
 
    //A wrapper to execute init_atomic_func
-   static void *singleton_constructor(managed_shared_memory &mshm)
+   static void *singleton_constructor(ManagedShMem &mshm)
    {
       init_atomic_func f(mshm);
       mshm.atomic_func(f);
@@ -1012,26 +967,54 @@ class intermodule_singleton
    }
 
    //A wrapper to execute fini_atomic_func
-   static void singleton_destructor(void *p, managed_shared_memory &mshm)
+   static void singleton_destructor(void *p, ManagedShMem &mshm)
    {  (void)p;
       fini_atomic_func f(mshm);
       mshm.atomic_func(f);
    }
 };
 
-template <typename C, bool L>
-volatile int intermodule_singleton<C, L>::lifetime_type_lazy::m_dummy;
+template <typename C, bool L, class ManagedShMem>
+volatile int intermodule_singleton_impl<C, L, ManagedShMem>::lifetime_type_lazy::m_dummy;
 
 //These will be zero-initialized by the loader
-template <typename C, bool L>
-void *intermodule_singleton<C, L>::this_module_singleton_ptr;
+template <typename C, bool L, class ManagedShMem>
+void *intermodule_singleton_impl<C, L, ManagedShMem>::this_module_singleton_ptr;
 
-template <typename C, bool L>
-volatile boost::uint32_t intermodule_singleton<C, L>::this_module_singleton_initialized;
+template <typename C, bool L, class ManagedShMem>
+volatile boost::uint32_t intermodule_singleton_impl<C, L, ManagedShMem>::this_module_singleton_initialized;
 
-template <typename C, bool L>
-typename intermodule_singleton<C, L>::lifetime_type intermodule_singleton<C, L>::lifetime;
-  
+template <typename C, bool L, class ManagedShMem>
+typename intermodule_singleton_impl<C, L, ManagedShMem>::lifetime_type
+   intermodule_singleton_impl<C, L, ManagedShMem>::lifetime;
+
+template<typename C, bool LazyInit = false>
+class portable_intermodule_singleton
+   : public intermodule_singleton_impl<C, LazyInit, managed_shared_memory>
+{};
+
+#ifdef BOOST_INTERPROCESS_WINDOWS
+
+template<typename C, bool LazyInit = false>
+class windows_intermodule_singleton
+   : public intermodule_singleton_impl<C, LazyInit, managed_windows_shared_memory>
+{};
+
+#endif
+
+//Now this class is a singleton, initializing the singleton in
+//the first get() function call if LazyInit is false. If true
+//then the singleton will be initialized when loading the module.
+template<typename C, bool LazyInit = false>
+class intermodule_singleton
+   #ifdef BOOST_INTERPROCESS_WINDOWS
+   : public windows_intermodule_singleton<C, LazyInit>
+//   : public portable_intermodule_singleton<C, LazyInit>
+   #else
+   : public portable_intermodule_singleton<C, LazyInit>
+   #endif
+{};
+
 
 }  //namespace detail{
 }  //namespace interprocess{
@@ -1040,143 +1023,3 @@ typename intermodule_singleton<C, L>::lifetime_type intermodule_singleton<C, L>:
 #include <boost/interprocess/detail/config_end.hpp>
 
 #endif
-
-
-/*
-
-
-
-
-
-
-                       if try_lock_file
-                          open_shm_1
-open_or_create_shm_1         
-                          atomic_1
-                            mark_to_be_removed
-                            remove_file
-                            remove_shm
-                            close
-                                                
-atomic_1     
-   if not present fd
-     if(!create_and_lock) //delete in course, try again later
-       mark_to_be_removed
-       remove_shm_1
-       try_again
-     register_fd
-   else if to_be_removed
-     try_again
-   else if not_valid_fd
-     mark_to_be_removed
-     remove_shm_1
-     try_again
-   else if(valid_fd)
-      continue;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Hint: fcntl is a nightmare because:
-
-- to check if a file is locked you must open an new descriptor
-- if you close any descriptor to that file all locks on that file are gone
-- so each time you want to check something is locked without disburbing
-  anything, you must leak that descriptor.
-
-Hints to have only one open descriptor:
-
-- Mark the lock file with a magic string.
-- Store the file descriptor in shared memory.
-- Open or create the shared memory:
-    - If created, no problem,
-         create a file and lock it in a loop testing that the file exists
-    - If opened, take the the stored fd:
-        - Take a lock on shared memory, if time exceeds too much time, unlink it and start again
-        - IF it's a regular file (IFREG, using fstat to check) AND 
-          its size is the expected (fstat) AND
-          contains the magic number.
-              LOCK IT
-          ELSE
-             the fd is invalid so unlink the shared memory and try to create it again
-
-
-REMOVE_OLD_GMEM()
-
-lock semaphore
-
-loop all files in /tmp/boost_interprocess/gmem
-  check pattern(name) #PID#.lock
-  if (!pattern)
-    continue;
-  pid = extract_pid(name)
-  if(pid == self_pid)
-     continue;
-  open(name);
-  if(::fnctl(fd, GET_LCK)
-     BOOST_ASSERT(flock.pid != self_pid)
-     continue;
-  shm_remove(bip_gmem_#PID#)
-  unlink(name);
-
-unlock_semaphore
-
-
-
-STATIC_SINGLETON_CONSTRUCTOR 
-
-remove_old_gmem()
-
-  managed_shared_memory shm;
-  bool completed = false;
-  while(!completed){
-     exclusive_lock(semaphore);
-     try{
-       managed_shared_memory tmp(create_only, bip_gmem_#SELFPID#, SIZE);
-       shm = ::boost::move(tmp);
-       if(!::open(/tmp/boost_interprocess/gmem/#PID#.lock) ||
-          !::fnctl(fd, LOCK)
-         throw whatever;
-       leave file locked;
-     }
-     catch(interprocess_exception &e){
-       if(e.error_code() != already_exists_error)){
-         throw;
-       }
-       try{
-          managed_shared_memory tmp(open_only, bip_gmem_#SELFPID#)
-          shm = ::boost::move(tmp);
-       }
-       catch(...){
-          if(e.error_code() != not_found_error)){
-            throw;
-          }
-       }
-     }
-     completed = true;
-  }
-  ref_counted_type *rcount = shm.find_or_create<ref_counted_type>(unique_instance)(int(0));
-  atomic_inc(rcount->cnt);
-
-STATIC_SINGLETON_DESTRUCTOR
-
-remove_old_mem()
-
-exclusive_lock(semaphore)
-  ref_count_type *rcount = shm.find_or_create<ref_count_type>("ref_count")(int(0));
-  if(!atomic_dec(rcount->cnt))
-    shm.destroy<T>(unique_instance);
-
-*/

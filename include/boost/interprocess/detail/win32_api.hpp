@@ -1552,7 +1552,14 @@ inline bool get_wmi_class_attribute( std::wstring& strValue, const wchar_t *wmi_
 inline bool get_last_bootup_time( std::wstring& strValue )
 {
    bool ret = get_wmi_class_attribute(strValue, L"Win32_OperatingSystem", L"LastBootUpTime");
-   strValue.erase(strValue.find(L'+'));
+   std::size_t timezone = strValue.find(L'+');
+   if(timezone != std::wstring::npos){
+      strValue.erase(timezone);
+   }
+   timezone = strValue.find(L'-');
+   if(timezone != std::wstring::npos){
+      strValue.erase(timezone);
+   }
    return ret;
 }
 
