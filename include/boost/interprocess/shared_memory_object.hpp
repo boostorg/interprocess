@@ -32,6 +32,11 @@
 #  include <sys/mman.h>     //shm_xxx
 #  include <unistd.h>       //ftruncate, close
 #  include <sys/stat.h>     //mode_t, S_IRWXG, S_IRWXO, S_IRWXU,
+#  if defined(BOOST_INTERPROCESS_RUNTIME_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
+#     if defined(__FreeBSD__)
+#        include <sys/sysctl.h>
+#     endif
+#  endif
 #else
 //
 #endif
@@ -240,16 +245,46 @@ inline void shared_memory_object::priv_close()
 
 #else //!defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
 
+namespace shared_memory_object_detail {
+
+#ifdef BOOST_INTERPROCESS_RUNTIME_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
+
+#if defined(__FreeBSD__)
+
+inline bool use_filesistem_based_posix()
+{
+   int jailed = 0;
+   std::size_t len = sizeof(jailed);
+   ::sysctlbyname("security.jail.jailed", &jailed, &len, NULL, 0);
+   return jailed != 0;
+}
+
+#else
+#error "Not supported platform for BOOST_INTERPROCESS_RUNTIME_FILESYSTEM_BASED_POSIX_SHARED_MEMORY"
+#endif
+
+#endif
+
+}  //shared_memory_object_detail
+
 inline bool shared_memory_object::priv_open_or_create
    (detail::create_enum_t type, 
     const char *filename,
     mode_t mode, const permissions &perm)
 {
-   #ifndef BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
-   detail::add_leading_slash(filename, m_filename);
+   #if defined(BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
+   const bool add_leading_slash = false;
+   #elif defined(BOOST_INTERPROCESS_RUNTIME_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
+   const bool add_leading_slash = !shared_memory_object_detail::use_filesistem_based_posix();
    #else
-   detail::create_tmp_and_clean_old_and_get_filename(filename, m_filename);
+   const bool add_leading_slash = true;
    #endif
+   if(add_leading_slash){
+      detail::add_leading_slash(filename, m_filename);
+   }
+   else{
+      detail::create_tmp_and_clean_old_and_get_filename(filename, m_filename);
+   }
 
    //Create new mapping
    int oflag = 0;
@@ -304,11 +339,19 @@ inline bool shared_memory_object::remove(const char *filename)
 {
    try{
       std::string file_str;
-      #ifndef BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
-      detail::add_leading_slash(filename, file_str);
+      #if defined(BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
+      const bool add_leading_slash = false;
+      #elif defined(BOOST_INTERPROCESS_RUNTIME_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
+      const bool add_leading_slash = !shared_memory_object_detail::use_filesistem_based_posix();
       #else
-      detail::tmp_filename(filename, file_str);
+      const bool add_leading_slash = true;
       #endif
+      if(add_leading_slash){
+         detail::add_leading_slash(filename, file_str);
+      }
+      else{
+         detail::tmp_filename(filename, file_str);
+      }
       return 0 == shm_unlink(file_str.c_str());
    }
    catch(...){

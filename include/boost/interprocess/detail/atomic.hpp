@@ -564,7 +564,7 @@ namespace interprocess{
 namespace detail{
 
 inline bool atomic_add_unless32
-   (volatile boost::uint32_t *mem, boost::uint32_t value, volatile boost::uint32_t unless_this)
+   (volatile boost::uint32_t *mem, boost::uint32_t value, boost::uint32_t unless_this)
 {
    boost::uint32_t old, c(atomic_read32(mem));
    while(c != unless_this && (old = atomic_cas32(mem, c + value, c)) != c){
