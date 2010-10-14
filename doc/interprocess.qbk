@@ -6583,7 +6583,10 @@ thank them:
   [@https://svn.boost.org/trac/boost/ticket/4426 #4426],
   [@https://svn.boost.org/trac/boost/ticket/4516 #4516],
   [@https://svn.boost.org/trac/boost/ticket/4524 #4524],
-  [@https://svn.boost.org/trac/boost/ticket/4557 #4557].
+  [@https://svn.boost.org/trac/boost/ticket/4557 #4557],
+  [@https://svn.boost.org/trac/boost/ticket/4606 #4606],
+  [@https://svn.boost.org/trac/boost/ticket/4685 #4685],
+  [@https://svn.boost.org/trac/boost/ticket/4694 #4694].
 
 *  Added support for standard rvalue reference move semantics
    (tested on GCC 4.5 and VC10).
