@@ -356,6 +356,9 @@
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\windows_shared_memory.hpp">
 			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\xsi_shared_memory.hpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Detail"
@@ -458,6 +461,12 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\workaround.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\xsi_shared_memory_device.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\xsi_shared_memory_file_wrapper.hpp">
 			</File>
 		</Filter>
 		<Filter

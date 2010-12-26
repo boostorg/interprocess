@@ -25,49 +25,43 @@
 int main(int argc, char *argv[])
 {
    using namespace boost::interprocess;
+
+   //Define file names
+   //<-
+   #if 1
+   std::string file_name(boost::interprocess::detail::get_temporary_path());
+   file_name += "/"; file_name += test::get_process_id_name();
+   const char *FileName = file_name.c_str();
+   #else
+   //->
+   const char *FileName  = "file.bin";
+   //<-
+   #endif
+   //->
    const std::size_t FileSize = 10000;
+
    if(argc == 1){ //Parent process executes this
       {  //Create a file
+         file_mapping::remove(FileName);
          std::filebuf fbuf;
-      //<-
-      #if 1
-         fbuf.open(test::get_process_id_name(), std::ios_base::in | std::ios_base::out 
+         fbuf.open(FileName, std::ios_base::in | std::ios_base::out 
                               | std::ios_base::trunc | std::ios_base::binary); 
-      #else
-      //->
-         fbuf.open("file.bin", std::ios_base::in | std::ios_base::out 
-                              | std::ios_base::trunc | std::ios_base::binary); 
-      //<-
-      #endif
-      //->
          //Set the size
          fbuf.pubseekoff(FileSize-1, std::ios_base::beg);
          fbuf.sputc(0);
       }
-      //Remove file on exit
+
+      //Remove on exit
       struct file_remove 
       {
-      //<-
-      #if 1
-         ~file_remove (){  file_mapping::remove(test::get_process_id_name()); }
-      #else
-      //->
-         ~file_remove (){  file_mapping::remove("file.bin"); }
-      //<-
-      #endif
-      //->
-      } destroy_on_exit;
+         file_remove(const char *FileName)
+            : FileName_(FileName) {}
+         ~file_remove(){ file_mapping::remove(FileName_); }
+         const char *FileName_;
+      } remover(FileName);
 
       //Create a file mapping
-      //<-
-      #if 1
-      file_mapping m_file(test::get_process_id_name(), read_write);
-      #else
-      //->
-      file_mapping m_file("file.bin", read_write);
-      //<-
-      #endif
-      //->
+      file_mapping m_file(FileName, read_write);
 
       //Map the whole file with read-write permissions in this process
       mapped_region region(m_file, read_write);
@@ -82,7 +76,7 @@ int main(int argc, char *argv[])
       //Launch child process
       std::string s(argv[0]); s += " child ";
       //<-
-      s += test::get_process_id_name();
+      s += "\""; s+= FileName; s += "\"";
       //->
       if(0 != std::system(s.c_str()))
          return 1;
@@ -94,7 +88,7 @@ int main(int argc, char *argv[])
          file_mapping m_file(argv[2], read_only);
          #else
          //->
-         file_mapping m_file("file.bin", read_only);
+         file_mapping m_file(FileName, read_only);
          //<-
          #endif
          //->
@@ -118,7 +112,7 @@ int main(int argc, char *argv[])
          fbuf.open(argv[2], std::ios_base::in | std::ios_base::binary); 
          #else
          //->
-         fbuf.open("file.bin", std::ios_base::in | std::ios_base::binary); 
+         fbuf.open(FileName, std::ios_base::in | std::ios_base::binary); 
          //<-
          #endif
          //->

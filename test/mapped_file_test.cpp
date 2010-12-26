@@ -75,11 +75,6 @@ int main ()
    {  
       mapped_file file1(create_only, get_filename().c_str(), FileSize, read_write, 0, permissions());
 
-      //Compare name
-      if(std::strcmp(file1.get_name(), get_filename().c_str()) != 0){
-         return 1;
-      }
-
       //Overwrite all memory
       std::memset(file1.get_user_address(), 0, file1.get_user_size());
 

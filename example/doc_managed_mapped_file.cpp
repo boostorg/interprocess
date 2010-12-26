@@ -16,15 +16,32 @@
 #include <cstddef>
 #include <cstdio>
 
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
+
 using namespace boost::interprocess;
 typedef list<int, allocator<int, managed_mapped_file::segment_manager> > 
    MyList;
 
 int main ()
-{
+{   
+   //Define file names
+   //<-
+   #if 1
+   std::string file(boost::interprocess::detail::get_temporary_path());
+   file += "/"; file += test::get_process_id_name();
+   const char *FileName = file.c_str();
+   #else
+   //->
    const char *FileName       = "file_mapping";
+   //<-
+   #endif
+   //->
+
    const std::size_t FileSize = 1000;
    file_mapping::remove(FileName);
+
    try{
       std::size_t old_size = 0;
       managed_mapped_file::handle_t list_handle;

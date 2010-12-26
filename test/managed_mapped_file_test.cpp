@@ -29,6 +29,8 @@ inline std::string get_filename()
 int main ()
 {
    const int FileSize          = 65536*10;
+   std::string filename(get_filename());
+   const char *FileName = filename.c_str();
 
    //STL compatible allocator object for memory-mapped file
    typedef allocator<int, managed_mapped_file::segment_manager>
@@ -38,12 +40,12 @@ int main ()
 
    {
       //Remove the file it is already created
-      file_mapping::remove(get_filename().c_str());
+      file_mapping::remove(FileName);
 
       const int max              = 100;
       void *array[max];
       //Named allocate capable shared memory allocator
-      managed_mapped_file mfile(create_only, get_filename().c_str(), FileSize);
+      managed_mapped_file mfile(create_only, FileName, FileSize);
 
       int i;
       //Let's allocate some memory 
@@ -59,10 +61,10 @@ int main ()
 
    {
       //Remove the file it is already created
-      file_mapping::remove(get_filename().c_str());
+      file_mapping::remove(FileName);
 
       //Named allocate capable memory mapped file managed memory class
-      managed_mapped_file mfile(create_only, get_filename().c_str(), FileSize);
+      managed_mapped_file mfile(create_only, FileName, FileSize);
 
       //Construct the STL-like allocator with the segment manager
       const allocator_int_t myallocator (mfile.get_segment_manager());
@@ -87,7 +89,7 @@ int main ()
    }
    {
       //Map preexisting file again in memory
-      managed_mapped_file mfile(open_only, get_filename().c_str());
+      managed_mapped_file mfile(open_only, FileName);
 
       //Check vector is still there
       MyVect *mfile_vect = mfile.find<MyVect>("MyVector").first;
@@ -98,7 +100,7 @@ int main ()
    {
       {
          //Map preexisting file again in copy-on-write
-         managed_mapped_file mfile(open_copy_on_write, get_filename().c_str());
+         managed_mapped_file mfile(open_copy_on_write, FileName);
 
          //Check vector is still there
          MyVect *mfile_vect = mfile.find<MyVect>("MyVector").first;
@@ -116,7 +118,7 @@ int main ()
       //Now check vector is still in the file
       {
          //Map preexisting file again in copy-on-write
-         managed_mapped_file mfile(open_copy_on_write, get_filename().c_str());
+         managed_mapped_file mfile(open_copy_on_write, FileName);
 
          //Check vector is still there
          MyVect *mfile_vect = mfile.find<MyVect>("MyVector").first;
@@ -126,7 +128,7 @@ int main ()
    }
    {
       //Map preexisting file again in copy-on-write
-      managed_mapped_file mfile(open_read_only, get_filename().c_str());
+      managed_mapped_file mfile(open_read_only, FileName);
 
       //Check vector is still there
       MyVect *mfile_vect = mfile.find<MyVect>("MyVector").first;
@@ -137,15 +139,15 @@ int main ()
       std::size_t old_free_memory;
       {
          //Map preexisting file again in memory
-         managed_mapped_file mfile(open_only, get_filename().c_str());
+         managed_mapped_file mfile(open_only, FileName);
          old_free_memory = mfile.get_free_memory();
       }
 
       //Now grow the file
-      managed_mapped_file::grow(get_filename().c_str(), FileSize);
+      managed_mapped_file::grow(FileName, FileSize);
 
       //Map preexisting file again in memory
-      managed_mapped_file mfile(open_only, get_filename().c_str());
+      managed_mapped_file mfile(open_only, FileName);
 
       //Check vector is still there
       MyVect *mfile_vect = mfile.find<MyVect>("MyVector").first;
@@ -162,17 +164,17 @@ int main ()
                   old_file_size, next_file_size, final_file_size;
       {
          //Map preexisting file again in memory
-         managed_mapped_file mfile(open_only, get_filename().c_str());
+         managed_mapped_file mfile(open_only, FileName);
          old_free_memory = mfile.get_free_memory();
          old_file_size   = mfile.get_size();
       }
 
       //Now shrink the file
-      managed_mapped_file::shrink_to_fit(get_filename().c_str());
+      managed_mapped_file::shrink_to_fit(FileName);
 
       {
          //Map preexisting file again in memory
-         managed_mapped_file mfile(open_only, get_filename().c_str());
+         managed_mapped_file mfile(open_only, FileName);
          next_file_size = mfile.get_size();
 
          //Check vector is still there
@@ -190,7 +192,7 @@ int main ()
       //Now destroy the vector
       {
          //Map preexisting file again in memory
-         managed_mapped_file mfile(open_only, get_filename().c_str());
+         managed_mapped_file mfile(open_only, FileName);
 
          //Destroy and check it is not present
          mfile.destroy<MyVect>("MyVector");
@@ -199,17 +201,17 @@ int main ()
       }
 
       //Now shrink the file
-      managed_mapped_file::shrink_to_fit(get_filename().c_str());
+      managed_mapped_file::shrink_to_fit(FileName);
       {
          //Map preexisting file again in memory
-         managed_mapped_file mfile(open_only, get_filename().c_str());
+         managed_mapped_file mfile(open_only, FileName);
          final_file_size = mfile.get_size();
          if(next_file_size <= final_file_size)
             return -1;
       }
       {
          //Now test move semantics
-         managed_mapped_file original(open_only, get_filename().c_str());
+         managed_mapped_file original(open_only, FileName);
          managed_mapped_file move_ctor(boost::interprocess::move(original));
          managed_mapped_file move_assign;
          move_assign = boost::interprocess::move(move_ctor);
@@ -217,7 +219,7 @@ int main ()
       }
    }
 
-   file_mapping::remove(get_filename().c_str());
+   file_mapping::remove(FileName);
    return 0;
 }
 
