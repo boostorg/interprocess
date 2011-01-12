@@ -50,31 +50,29 @@ typedef list
 
 int main ()
 {
-   //Destroy any previous file with the name to be used.
-   struct file_remove 
-   {
+   //Define file names
    //<-
    #if 1
-      file_remove() { file_mapping::remove(test::get_process_id_name()); }
-      ~file_remove(){ file_mapping::remove(test::get_process_id_name()); }
+   std::string mapped_file(boost::interprocess::detail::get_temporary_path());
+   mapped_file += "/"; mapped_file += test::get_process_id_name();
+   const char *MappedFile = mapped_file.c_str();
    #else
    //->
-      file_remove() { file_mapping::remove("MyMappedFile"); }
-      ~file_remove(){ file_mapping::remove("MyMappedFile"); }
+   const char *MappedFile  = "MyMappedFile";
    //<-
    #endif
    //->
-   } remover;
+
+   //Destroy any previous file with the name to be used.
+   struct file_remove 
    {
-      //<-
-      #if 1
-      managed_mapped_file file(create_only, test::get_process_id_name(), 65536);
-      #else
-      //->
-      managed_mapped_file file(create_only, "MyMappedFile", 65536);
-      //<-
-      #endif
-      //->
+      file_remove(const char *MappedFile)
+         : MappedFile_(MappedFile) { file_mapping::remove(MappedFile_); }
+      ~file_remove(){ file_mapping::remove(MappedFile_); }
+      const char *MappedFile_;
+   } remover(MappedFile);
+   {
+      managed_mapped_file file(create_only, MappedFile, 65536);
 
       //Construct an object in the file and
       //pass ownership to this local unique pointer
@@ -122,15 +120,7 @@ int main ()
    }
    {
       //Reopen the mapped file and find again the list
-      //<-
-      #if 1
-      managed_mapped_file file(open_only, test::get_process_id_name());
-      #else
-      //->
-      managed_mapped_file file(open_only, "MyMappedFile");
-      //<-
-      #endif
-      //->
+      managed_mapped_file file(open_only, MappedFile);
 
       unique_ptr_list_t   *unique_list =
          file.find<unique_ptr_list_t>("unique list").first;

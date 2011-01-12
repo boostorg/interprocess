@@ -66,11 +66,6 @@ int main ()
          shared_memory_object::remove(ShmName);
          shared_memory shm1(create_only, ShmName, ShmSize, read_write, 0, permissions());
 
-         //Compare name
-         if(std::strcmp(shm1.get_name(), ShmName) != 0){
-            return 1;
-         }
-
          //Overwrite all memory
          std::memset(shm1.get_user_address(), 0, shm1.get_user_size());
 

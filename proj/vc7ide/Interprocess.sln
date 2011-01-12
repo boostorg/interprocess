@@ -1,68 +1,4 @@
 Microsoft Visual Studio Solution File, Format Version 8.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_map", "doc_map.vcproj", "{59CEC183-8192-8F6D-4FB7-BA260A79D352}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "windows_shared_memory_test", "windows_shared_memory_test.vcproj", "{E385C28C-0691-4FA7-F48E-935BA0D06310}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "windows_shared_memory_mapping_test", "windows_shared_memory_mapping_test.vcproj", "{518CE8C3-6512-FA75-46EF-B917A3A116D1}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "managed_windows_shared_memory_test", "managed_windows_shared_memory.vcproj", "{5D18CE83-1926-7AE4-FE94-B606D9B23131}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "adaptive_pool_test", "adaptive_pool_test.vcproj", "{58CE1D84-1962-4FE9-BA0D-A4F7973A4652}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cached_adaptive_pool_test", "cached_adaptive_pool_test.vcproj", "{5188E3CE-2964-F43E-FB87-B037AC692D59}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "private_adaptive_pool_test", "private_adaptive_pool_test.vcproj", "{5CE14C83-4962-8F5E-4FA7-B0D3A7B93635}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_allocator", "doc_allocator.vcproj", "{581B1C83-4E12-9526-020F-012482540054}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_node_allocator", "doc_node_allocator.vcproj", "{51B17C83-E172-5396-0FA2-825472008554}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_private_node_allocator", "doc_private_node_allocator.vcproj", "{2B75C833-17D2-4956-A23F-820854254175}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_cached_node_allocator", "doc_cached_node_allocator.vcproj", "{283AD375-7D12-5866-23BF-854308651275}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_adaptive_pool", "doc_adaptive_pool.vcproj", "{57C832B1-17D2-9537-FA12-827220448554}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_cached_adaptive_pool", "doc_cached_adaptive_pool.vcproj", "{536C8251-7E12-9537-A1E2-822073258554}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_private_adaptive_pool", "doc_private_adaptive_pool.vcproj", "{83258CB1-127E-9375-F872-8324A1054454}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_managed_raw_allocation", "doc_managed_raw_allocation.vcproj", "{5198EFC3-2731-F34E-4FD8-1859AC94F761}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_managed_aligned_allocation", "doc_managed_aligned_allocation.vcproj", "{58DE18C3-3261-2F3E-FD47-83760B9FA761}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "_interprocesslib", "interprocesslib.vcproj", "{FFAA56F1-32EC-4B22-B6BD-95A311A67C35}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
@@ -447,76 +383,26 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "recursive_mutex_test", "rec
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xsi_shared_memory_mapping_test", "xsi_shared_memory_mapping_test.vcproj", "{518CE8C3-5DA7-6256-46EF-97A116702AD1}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "managed_xsi_shared_memory_test", "managed_xsi_shared_memory.vcproj", "{58DF28E3-0926-F47A-E28A-B03A4D619631}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doc_xsi_shared_memory", "doc_xsi_shared_memory.vcproj", "{8C5CE183-0326-47FC-12FE-8B6F7963A071}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
 		Release = Release
 	EndGlobalSection
+	GlobalSection(ProjectDependencies) = postSolution
+	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
-		{59CEC183-8192-8F6D-4FB7-BA260A79D352}.Debug.ActiveCfg = Debug|Win32
-		{59CEC183-8192-8F6D-4FB7-BA260A79D352}.Debug.Build.0 = Debug|Win32
-		{59CEC183-8192-8F6D-4FB7-BA260A79D352}.Release.ActiveCfg = Release|Win32
-		{59CEC183-8192-8F6D-4FB7-BA260A79D352}.Release.Build.0 = Release|Win32
-		{E385C28C-0691-4FA7-F48E-935BA0D06310}.Debug.ActiveCfg = Debug|Win32
-		{E385C28C-0691-4FA7-F48E-935BA0D06310}.Debug.Build.0 = Debug|Win32
-		{E385C28C-0691-4FA7-F48E-935BA0D06310}.Release.ActiveCfg = Release|Win32
-		{E385C28C-0691-4FA7-F48E-935BA0D06310}.Release.Build.0 = Release|Win32
-		{518CE8C3-6512-FA75-46EF-B917A3A116D1}.Debug.ActiveCfg = Debug|Win32
-		{518CE8C3-6512-FA75-46EF-B917A3A116D1}.Debug.Build.0 = Debug|Win32
-		{518CE8C3-6512-FA75-46EF-B917A3A116D1}.Release.ActiveCfg = Release|Win32
-		{518CE8C3-6512-FA75-46EF-B917A3A116D1}.Release.Build.0 = Release|Win32
-		{5D18CE83-1926-7AE4-FE94-B606D9B23131}.Debug.ActiveCfg = Debug|Win32
-		{5D18CE83-1926-7AE4-FE94-B606D9B23131}.Debug.Build.0 = Debug|Win32
-		{5D18CE83-1926-7AE4-FE94-B606D9B23131}.Release.ActiveCfg = Release|Win32
-		{5D18CE83-1926-7AE4-FE94-B606D9B23131}.Release.Build.0 = Release|Win32
-		{58CE1D84-1962-4FE9-BA0D-A4F7973A4652}.Debug.ActiveCfg = Debug|Win32
-		{58CE1D84-1962-4FE9-BA0D-A4F7973A4652}.Debug.Build.0 = Debug|Win32
-		{58CE1D84-1962-4FE9-BA0D-A4F7973A4652}.Release.ActiveCfg = Release|Win32
-		{58CE1D84-1962-4FE9-BA0D-A4F7973A4652}.Release.Build.0 = Release|Win32
-		{5188E3CE-2964-F43E-FB87-B037AC692D59}.Debug.ActiveCfg = Debug|Win32
-		{5188E3CE-2964-F43E-FB87-B037AC692D59}.Debug.Build.0 = Debug|Win32
-		{5188E3CE-2964-F43E-FB87-B037AC692D59}.Release.ActiveCfg = Release|Win32
-		{5188E3CE-2964-F43E-FB87-B037AC692D59}.Release.Build.0 = Release|Win32
-		{5CE14C83-4962-8F5E-4FA7-B0D3A7B93635}.Debug.ActiveCfg = Debug|Win32
-		{5CE14C83-4962-8F5E-4FA7-B0D3A7B93635}.Debug.Build.0 = Debug|Win32
-		{5CE14C83-4962-8F5E-4FA7-B0D3A7B93635}.Release.ActiveCfg = Release|Win32
-		{5CE14C83-4962-8F5E-4FA7-B0D3A7B93635}.Release.Build.0 = Release|Win32
-		{581B1C83-4E12-9526-020F-012482540054}.Debug.ActiveCfg = Debug|Win32
-		{581B1C83-4E12-9526-020F-012482540054}.Debug.Build.0 = Debug|Win32
-		{581B1C83-4E12-9526-020F-012482540054}.Release.ActiveCfg = Release|Win32
-		{581B1C83-4E12-9526-020F-012482540054}.Release.Build.0 = Release|Win32
-		{51B17C83-E172-5396-0FA2-825472008554}.Debug.ActiveCfg = Debug|Win32
-		{51B17C83-E172-5396-0FA2-825472008554}.Debug.Build.0 = Debug|Win32
-		{51B17C83-E172-5396-0FA2-825472008554}.Release.ActiveCfg = Release|Win32
-		{51B17C83-E172-5396-0FA2-825472008554}.Release.Build.0 = Release|Win32
-		{2B75C833-17D2-4956-A23F-820854254175}.Debug.ActiveCfg = Debug|Win32
-		{2B75C833-17D2-4956-A23F-820854254175}.Debug.Build.0 = Debug|Win32
-		{2B75C833-17D2-4956-A23F-820854254175}.Release.ActiveCfg = Release|Win32
-		{2B75C833-17D2-4956-A23F-820854254175}.Release.Build.0 = Release|Win32
-		{283AD375-7D12-5866-23BF-854308651275}.Debug.ActiveCfg = Debug|Win32
-		{283AD375-7D12-5866-23BF-854308651275}.Debug.Build.0 = Debug|Win32
-		{283AD375-7D12-5866-23BF-854308651275}.Release.ActiveCfg = Release|Win32
-		{283AD375-7D12-5866-23BF-854308651275}.Release.Build.0 = Release|Win32
-		{57C832B1-17D2-9537-FA12-827220448554}.Debug.ActiveCfg = Debug|Win32
-		{57C832B1-17D2-9537-FA12-827220448554}.Debug.Build.0 = Debug|Win32
-		{57C832B1-17D2-9537-FA12-827220448554}.Release.ActiveCfg = Release|Win32
-		{57C832B1-17D2-9537-FA12-827220448554}.Release.Build.0 = Release|Win32
-		{536C8251-7E12-9537-A1E2-822073258554}.Debug.ActiveCfg = Debug|Win32
-		{536C8251-7E12-9537-A1E2-822073258554}.Debug.Build.0 = Debug|Win32
-		{536C8251-7E12-9537-A1E2-822073258554}.Release.ActiveCfg = Release|Win32
-		{536C8251-7E12-9537-A1E2-822073258554}.Release.Build.0 = Release|Win32
-		{83258CB1-127E-9375-F872-8324A1054454}.Debug.ActiveCfg = Debug|Win32
-		{83258CB1-127E-9375-F872-8324A1054454}.Debug.Build.0 = Debug|Win32
-		{83258CB1-127E-9375-F872-8324A1054454}.Release.ActiveCfg = Release|Win32
-		{83258CB1-127E-9375-F872-8324A1054454}.Release.Build.0 = Release|Win32
-		{5198EFC3-2731-F34E-4FD8-1859AC94F761}.Debug.ActiveCfg = Debug|Win32
-		{5198EFC3-2731-F34E-4FD8-1859AC94F761}.Debug.Build.0 = Debug|Win32
-		{5198EFC3-2731-F34E-4FD8-1859AC94F761}.Release.ActiveCfg = Release|Win32
-		{5198EFC3-2731-F34E-4FD8-1859AC94F761}.Release.Build.0 = Release|Win32
-		{58DE18C3-3261-2F3E-FD47-83760B9FA761}.Debug.ActiveCfg = Debug|Win32
-		{58DE18C3-3261-2F3E-FD47-83760B9FA761}.Debug.Build.0 = Debug|Win32
-		{58DE18C3-3261-2F3E-FD47-83760B9FA761}.Release.ActiveCfg = Release|Win32
-		{58DE18C3-3261-2F3E-FD47-83760B9FA761}.Release.Build.0 = Release|Win32
 		{FFAA56F1-32EC-4B22-B6BD-95A311A67C35}.Debug.ActiveCfg = Debug|Win32
 		{FFAA56F1-32EC-4B22-B6BD-95A311A67C35}.Debug.Build.0 = Debug|Win32
 		{FFAA56F1-32EC-4B22-B6BD-95A311A67C35}.Release.ActiveCfg = Release|Win32
@@ -901,6 +787,18 @@ Global
 		{83581CCE-487E-3292-A4E7-BA07926D3A14}.Debug.Build.0 = Debug|Win32
 		{83581CCE-487E-3292-A4E7-BA07926D3A14}.Release.ActiveCfg = Release|Win32
 		{83581CCE-487E-3292-A4E7-BA07926D3A14}.Release.Build.0 = Release|Win32
+		{518CE8C3-5DA7-6256-46EF-97A116702AD1}.Debug.ActiveCfg = Debug|Win32
+		{518CE8C3-5DA7-6256-46EF-97A116702AD1}.Debug.Build.0 = Debug|Win32
+		{518CE8C3-5DA7-6256-46EF-97A116702AD1}.Release.ActiveCfg = Release|Win32
+		{518CE8C3-5DA7-6256-46EF-97A116702AD1}.Release.Build.0 = Release|Win32
+		{58DF28E3-0926-F47A-E28A-B03A4D619631}.Debug.ActiveCfg = Debug|Win32
+		{58DF28E3-0926-F47A-E28A-B03A4D619631}.Debug.Build.0 = Debug|Win32
+		{58DF28E3-0926-F47A-E28A-B03A4D619631}.Release.ActiveCfg = Release|Win32
+		{58DF28E3-0926-F47A-E28A-B03A4D619631}.Release.Build.0 = Release|Win32
+		{8C5CE183-0326-47FC-12FE-8B6F7963A071}.Debug.ActiveCfg = Debug|Win32
+		{8C5CE183-0326-47FC-12FE-8B6F7963A071}.Debug.Build.0 = Debug|Win32
+		{8C5CE183-0326-47FC-12FE-8B6F7963A071}.Release.ActiveCfg = Release|Win32
+		{8C5CE183-0326-47FC-12FE-8B6F7963A071}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

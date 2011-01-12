@@ -664,6 +664,38 @@ that the shared memory won't be destroyed before the client is launched.
 
 [endsect]
 
+[section:xsi_shared_memory XSI shared memory]
+
+In many UNIX systems, the OS offers another shared memory memory mechanism, XSI
+(X/Open System Interfaces) shared memory segments, also known as "System V" shared memory.
+This shared memory mechanism is quite popular and portable, and it's not based in file-mapping
+semantics, but it uses special functions (`shmget`, `shmat`, `shmdt`, `shmctl`...).
+
+Unlike POSIX shared memory segments, XSI shared memory segments are not identified by names but
+by 'keys' usually created with `ftok`. XSI shared memory segments have kernel lifetime and
+must be explicitly removed. XSI shared memory does not support copy-on-write and partial shared memory mapping
+but it supports anonymous shared memory.
+
+[*Boost.Interprocess] offers simple ([classref boost::interprocess::xsi_shared_memory xsi_shared_memory])
+and managed ([classref boost::interprocess::managed_xsi_shared_memory managed_xsi_shared_memory])
+shared memory classes to ease the use of XSI shared memory. It also wraps key creation with the
+simple [classref boost::interprocess::xsi_key xsi_key] class.
+
+Let's repeat the same example presented for the portable shared memory object:
+A server process creates a shared memory object, maps it and initializes all the bytes to a value. After that, 
+a client process opens the shared memory, maps it, and checks
+that the data is correctly initialized. 
+
+This is the server process:
+
+[import ../example/doc_xsi_shared_memory.cpp]
+[doc_xsi_shared_memory]
+
+As we can see, native windows shared memory needs synchronization to make sure
+that the shared memory won't be destroyed before the client is launched.
+
+[endsect]
+
 [endsect]
 
 [section:mapped_file Memory Mapped Files]
@@ -3151,7 +3183,7 @@ add the mapping address as an extra parameter:
 
 Windows users might also want to use native windows shared memory instead of
 the portable [classref boost::interprocess::shared_memory_object shared_memory_object]
-based managed memory. This is achieved through the
+managed memory. This is achieved through the
 [classref boost::interprocess::basic_managed_windows_shared_memory basic_managed_windows_shared_memory]
 class. To use it just include:
 
@@ -3169,6 +3201,24 @@ destroyed. So there is no persistence support for windows shared memory.
 To communicate between system services and user applications using `managed_windows_shared_memory`,
 please read the explanations given in chapter
 [interprocess.sharedmemorybetweenprocesses.sharedmemory.windows_shared_memory Native windows shared memory]
+
+[endsect]
+
+[section:xsi_managed_memory_common_shm Using XSI (system V) shared memory]
+
+Unix users might also want to use XSI (system V) instead of
+the portable [classref boost::interprocess::shared_memory_object shared_memory_object]
+managed memory. This is achieved through the
+[classref boost::interprocess::basic_managed_xsi_shared_memory basic_managed_xsi_shared_memory]
+class. To use it just include:
+
+[c++]
+
+   #include <boost/interprocess/managed_xsi_shared_memory.hpp>
+
+This class has nearly the same interface as
+[classref boost::interprocess::basic_managed_shared_memory basic_managed_shared_memory]
+but uses XSI shared memory as backend.
 
 [endsect]
 
