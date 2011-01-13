@@ -2,6 +2,7 @@
 //
 // (C) Copyright Ion Gaztanaga 2006-2009
 // (C) Copyright Markus Schoepflin 2007
+// (C) Copyright Bryce Lelbach 2010
 //
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at
@@ -108,12 +109,21 @@ inline boost::uint32_t atomic_cas32
    (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
 {
    boost::uint32_t prev = cmp;
+   // This version by Mans Rullgard of Pathscale
+   __asm__ __volatile__ ( "lock\n\t"
+                          "cmpxchg %2,%0"
+                        : "+m"(*mem), "+a"(prev)
+                        : "r"(with)
+                        : "cc");
+
+   return prev;
+/*
    asm volatile( "lock\n\t"
                  "cmpxchg %3,%1"
                : "=a" (prev), "=m" (*(mem))
                : "0" (prev), "r" (with)
                : "memory", "cc");
-   return prev;
+*/
 /*
    boost::uint32_t prev;
 
