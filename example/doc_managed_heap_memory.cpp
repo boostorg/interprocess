@@ -40,7 +40,7 @@ int main ()
       //memory is full
    }
    //Let's obtain the size of the list
-   std::size_t old_size = mylist->size();
+   MyList::size_type old_size = mylist->size();
 
    //To make the list bigger, let's increase the heap buffer
    //in 1000 bytes more.
@@ -62,7 +62,7 @@ int main ()
    }
 
    //Let's obtain the new size of the list      
-   std::size_t new_size = mylist->size();
+   MyList::size_type new_size = mylist->size();
 
    assert(new_size > old_size);
 

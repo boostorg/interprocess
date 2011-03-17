@@ -99,6 +99,9 @@
 			Name="Containers"
 			Filter="">
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\containers\allocation_type.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\containers\containers_fwd.hpp">
 			</File>
 			<File
@@ -117,6 +120,9 @@
 				RelativePath="..\..\..\..\boost\interprocess\containers\map.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\containers\pair.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\containers\set.hpp">
 			</File>
 			<File
@@ -131,6 +137,128 @@
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\containers\vector.hpp">
 			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\containers\version_type.hpp">
+			</File>
+			<Filter
+				Name="container"
+				Filter="">
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\container\container_fwd.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\container\deque.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\container\flat_map.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\container\flat_set.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\container\list.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\container\map.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\container\set.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\container\slist.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\container\stable_vector.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\container\string.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\containers\container\vector.hpp">
+				</File>
+				<Filter
+					Name="detail"
+					Filter="">
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\adaptive_node_pool_impl.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\advanced_insert_int.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\algorithms.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\allocation_type.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\config_begin.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\config_end.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\destroyers.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\flat_tree.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\iterators.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\math_functions.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\mpl.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\multiallocation_chain.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\node_alloc_holder.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\node_pool_impl.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\pair.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\pool_common.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\preprocessor.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\stored_ref.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\transform_iterator.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\tree.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\type_traits.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\utilities.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\value_init.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\variadic_templates_tools.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\version_type.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\workaround.hpp">
+					</File>
+				</Filter>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Allocators"
@@ -281,6 +409,19 @@
 				</File>
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\emulation\semaphore.hpp">
+				</File>
+			</Filter>
+			<Filter
+				Name="xsi"
+				Filter="">
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\xsi\advanced_xsi_semaphore.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\xsi\simple_xsi_semaphore.hpp">
+				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\xsi\xsi_named_mutex.hpp">
 				</File>
 			</Filter>
 		</Filter>
@@ -621,6 +762,36 @@
 			Name="Example"
 			Filter="">
 			<File
+				RelativePath="..\..\example\comp_doc_anonymous_conditionA.cpp">
+			</File>
+			<File
+				RelativePath="..\..\example\comp_doc_anonymous_conditionB.cpp">
+			</File>
+			<File
+				RelativePath="..\..\example\comp_doc_anonymous_mutexA.cpp">
+			</File>
+			<File
+				RelativePath="..\..\example\comp_doc_anonymous_mutexB.cpp">
+			</File>
+			<File
+				RelativePath="..\..\example\comp_doc_anonymous_semaphoreA.cpp">
+			</File>
+			<File
+				RelativePath="..\..\example\comp_doc_anonymous_semaphoreB.cpp">
+			</File>
+			<File
+				RelativePath="..\..\example\comp_doc_anonymous_upgradable_mutexA.cpp">
+			</File>
+			<File
+				RelativePath="..\..\example\comp_doc_anonymous_upgradable_mutexB.cpp">
+			</File>
+			<File
+				RelativePath="..\..\example\comp_doc_message_queueA.cpp">
+			</File>
+			<File
+				RelativePath="..\..\example\comp_doc_message_queueB.cpp">
+			</File>
+			<File
 				RelativePath="..\..\example\doc_adaptive_pool.cpp">
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -720,6 +891,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\example\doc_anonymous_shared_memory.cpp">
+			</File>
+			<File
 				RelativePath="..\..\example\doc_anonymous_upgradable_mutexA.cpp">
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -763,6 +937,9 @@
 					<Tool
 						Name="VCCLCompilerTool"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_complex_map.cpp">
 			</File>
 			<File
 				RelativePath="..\..\example\doc_cont.cpp">
@@ -819,6 +996,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\example\doc_ipc_message.cpp">
+			</File>
+			<File
 				RelativePath="..\..\example\doc_ipc_messageA.cpp">
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -864,6 +1044,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\example\doc_managed_copy_on_write.cpp">
+			</File>
+			<File
 				RelativePath="..\..\example\doc_managed_external_buffer.cpp">
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -871,6 +1054,9 @@
 					<Tool
 						Name="VCCLCompilerTool"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_managed_grow.cpp">
 			</File>
 			<File
 				RelativePath="..\..\example\doc_managed_heap_memory.cpp">
@@ -943,6 +1129,12 @@
 					<Tool
 						Name="VCCLCompilerTool"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_multi_index.cpp">
+			</File>
+			<File
+				RelativePath="..\..\example\doc_named_alloc.cpp">
 			</File>
 			<File
 				RelativePath="..\..\example\doc_named_allocA.cpp">
@@ -1062,6 +1254,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\example\doc_spawn_vector.cpp">
+			</File>
+			<File
 				RelativePath="..\..\example\doc_unique_ptr.cpp">
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1069,6 +1264,9 @@
 					<Tool
 						Name="VCCLCompilerTool"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_unordered_map.cpp">
 			</File>
 			<File
 				RelativePath="..\..\example\doc_upgradable_mutex_shared_data.hpp">
@@ -1114,6 +1312,9 @@
 					<Tool
 						Name="VCCLCompilerTool"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\example\doc_xsi_shared_memory.cpp">
 			</File>
 			<File
 				RelativePath="..\..\example\Jamfile.v2">

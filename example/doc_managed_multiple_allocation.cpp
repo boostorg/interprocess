@@ -76,7 +76,7 @@ int main()
    }
 
    //Allocate 10 buffers of different sizes in a single call. Throwing version
-   std::size_t sizes[10];
+   managed_shared_memory::size_type sizes[10];
    for(std::size_t i = 0; i < 10; ++i)
       sizes[i] = i*3;
 

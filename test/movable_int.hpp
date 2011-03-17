@@ -21,7 +21,7 @@ namespace test {
 
 class movable_int
 {
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(movable_int)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(movable_int)
 
    public:
 
@@ -33,11 +33,11 @@ class movable_int
       :  m_int(a)
    {}
 
-   movable_int(BOOST_INTERPROCESS_RV_REF(movable_int) mmi)
+   movable_int(BOOST_RV_REF(movable_int) mmi)
       :  m_int(mmi.m_int)
    {  mmi.m_int = 0; }
 
-   movable_int & operator= (BOOST_INTERPROCESS_RV_REF(movable_int) mmi)
+   movable_int & operator= (BOOST_RV_REF(movable_int) mmi)
    {  this->m_int = mmi.m_int;   mmi.m_int = 0;  return *this;  }
 
    movable_int & operator= (int i)
@@ -79,7 +79,7 @@ std::basic_ostream<E, T> & operator<<
 
 class movable_and_copyable_int
 {
-   BOOST_INTERPROCESS_COPYABLE_AND_MOVABLE(movable_and_copyable_int)
+   BOOST_COPYABLE_AND_MOVABLE(movable_and_copyable_int)
    public:
 
    movable_and_copyable_int()
@@ -94,14 +94,14 @@ class movable_and_copyable_int
       :  m_int(mmi.m_int)
    {}
    
-   movable_and_copyable_int &operator= (BOOST_INTERPROCESS_COPY_ASSIGN_REF(movable_and_copyable_int) mi)
+   movable_and_copyable_int &operator= (BOOST_COPY_ASSIGN_REF(movable_and_copyable_int) mi)
    {  this->m_int = mi.m_int;    return *this;  }
 
-   movable_and_copyable_int(BOOST_INTERPROCESS_RV_REF(movable_and_copyable_int) mmi)
+   movable_and_copyable_int(BOOST_RV_REF(movable_and_copyable_int) mmi)
       :  m_int(mmi.m_int)
    {  mmi.m_int = 0; }
 
-   movable_and_copyable_int & operator= (BOOST_INTERPROCESS_RV_REF(movable_and_copyable_int) mmi)
+   movable_and_copyable_int & operator= (BOOST_RV_REF(movable_and_copyable_int) mmi)
    {  this->m_int = mmi.m_int;   mmi.m_int = 0;    return *this;  }
 
    movable_and_copyable_int & operator= (int i)

@@ -25,19 +25,21 @@ namespace test{
 class EmplaceInt
 {
    private:
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(EmplaceInt)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(EmplaceInt)
 
    public:
-
-   EmplaceInt(int a = 0, int b = 0, int c = 0, int d = 0, int e = 0)
+   EmplaceInt()
+      : a_(0), b_(0), c_(0), d_(0), e_(0)
+   {}
+   EmplaceInt(int a, int b = 0, int c = 0, int d = 0, int e = 0)
       : a_(a), b_(b), c_(c), d_(d), e_(e)
    {}
 
-   EmplaceInt(BOOST_INTERPROCESS_RV_REF(EmplaceInt) o)
+   EmplaceInt(BOOST_RV_REF(EmplaceInt) o)
       : a_(o.a_), b_(o.b_), c_(o.c_), d_(o.d_), e_(o.e_)
    {}
 
-   EmplaceInt& operator=(BOOST_INTERPROCESS_RV_REF(EmplaceInt) o)
+   EmplaceInt& operator=(BOOST_RV_REF(EmplaceInt) o)
    {
       this->a_ = o.a_;
       this->b_ = o.b_;

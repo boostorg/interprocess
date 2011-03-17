@@ -227,8 +227,8 @@ bool do_test()
             }
 
             shmdeque->insert(shmdeque->end()
-                              ,::boost::interprocess::make_move_iterator(&aux_vect[0])
-                              ,::boost::interprocess::make_move_iterator(aux_vect + 50));
+                              ,::boost::make_move_iterator(&aux_vect[0])
+                              ,::boost::make_move_iterator(aux_vect + 50));
             stddeque->insert(stddeque->end(), aux_vect2, aux_vect2 + 50);
             if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
 
@@ -249,14 +249,14 @@ bool do_test()
                aux_vect2[i] = -1;
             }
             shmdeque->insert(shmdeque->begin()
-                              ,::boost::interprocess::make_move_iterator(&aux_vect[0])
-                              ,::boost::interprocess::make_move_iterator(aux_vect + 50));
+                              ,::boost::make_move_iterator(&aux_vect[0])
+                              ,::boost::make_move_iterator(aux_vect + 50));
             stddeque->insert(stddeque->begin(), aux_vect2, aux_vect2 + 50);
             if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
          }
 
          if(!copyable_only(shmdeque, stddeque
-                        ,detail::bool_<!::boost::interprocess::is_movable<IntType>::value>())){
+                        ,detail::bool_<!detail::is_same<IntType, test::movable_int>::value>())){
             return false;
          }
 

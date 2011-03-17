@@ -43,7 +43,7 @@ int main ()
    file_mapping::remove(FileName);
 
    try{
-      std::size_t old_size = 0;
+      MyList::size_type old_size = 0;
       managed_mapped_file::handle_t list_handle;
       {
          managed_mapped_file mfile_memory(create_only, FileName, FileSize);
@@ -89,7 +89,7 @@ int main ()
          }
 
          //Let's obtain the new size of the list      
-         std::size_t new_size = mylist->size();
+         MyList::size_type new_size = mylist->size();
 
          assert(new_size > old_size);
 

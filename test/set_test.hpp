@@ -77,16 +77,16 @@ int set_test ()
 
          MyShmSet *shmset2 = 
             segment.template construct<MyShmSet>("MyShmSet2")
-               ( ::boost::interprocess::make_move_iterator(&aux_vect[0])
-               , ::boost::interprocess::make_move_iterator(aux_vect + 50)
+               ( ::boost::make_move_iterator(&aux_vect[0])
+               , ::boost::make_move_iterator(aux_vect + 50)
                , std::less<IntType>(), segment.get_segment_manager());
 
          MyStdSet *stdset2 = new MyStdSet(aux_vect2, aux_vect2 + 50);
 
          MyShmMultiSet *shmmultiset2 = 
             segment.template construct<MyShmMultiSet>("MyShmMultiSet2")
-               ( ::boost::interprocess::make_move_iterator(&aux_vect3[0])
-               , ::boost::interprocess::make_move_iterator(aux_vect3 + 50)
+               ( ::boost::make_move_iterator(&aux_vect3[0])
+               , ::boost::make_move_iterator(aux_vect3 + 50)
                , std::less<IntType>(), segment.get_segment_manager());
 
          MyStdMultiSet *stdmultiset2 = new MyStdMultiSet(aux_vect2, aux_vect2 + 50);
@@ -117,8 +117,8 @@ int set_test ()
          MyShmSet *shmset3 = 
             segment.template construct<MyShmSet>("MyShmSet3")
                ( ordered_unique_range
-               , ::boost::interprocess::make_move_iterator(&aux_vect[0])
-               , ::boost::interprocess::make_move_iterator(aux_vect + 50)
+               , ::boost::make_move_iterator(&aux_vect[0])
+               , ::boost::make_move_iterator(aux_vect + 50)
                , std::less<IntType>(), segment.get_segment_manager());
 
          MyStdSet *stdset3 = new MyStdSet(aux_vect2, aux_vect2 + 50);
@@ -126,8 +126,8 @@ int set_test ()
          MyShmMultiSet *shmmultiset3 = 
             segment.template construct<MyShmMultiSet>("MyShmMultiSet3")
                ( ordered_range
-               , ::boost::interprocess::make_move_iterator(&aux_vect3[0])
-               , ::boost::interprocess::make_move_iterator(aux_vect3 + 50)
+               , ::boost::make_move_iterator(&aux_vect3[0])
+               , ::boost::make_move_iterator(aux_vect3 + 50)
                , std::less<IntType>(), segment.get_segment_manager());
 
          MyStdMultiSet *stdmultiset3 = new MyStdMultiSet(aux_vect2, aux_vect2 + 50);
@@ -263,16 +263,16 @@ int set_test ()
             aux_vect3[i] = boost::interprocess::move(move_me);
          }
 
-         shmset->insert(::boost::interprocess::make_move_iterator(&aux_vect[0]), ::boost::interprocess::make_move_iterator(aux_vect + 50));
+         shmset->insert(::boost::make_move_iterator(&aux_vect[0]), ::boost::make_move_iterator(aux_vect + 50));
          stdset->insert(aux_vect2, aux_vect2 + 50);
-         shmmultiset->insert(::boost::interprocess::make_move_iterator(&aux_vect3[0]), ::boost::interprocess::make_move_iterator(aux_vect3 + 50));
+         shmmultiset->insert(::boost::make_move_iterator(&aux_vect3[0]), ::boost::make_move_iterator(aux_vect3 + 50));
          stdmultiset->insert(aux_vect2, aux_vect2 + 50);
          if(!CheckEqualContainers(shmset, stdset)){
-            std::cout << "Error in shmset->insert(::boost::interprocess::make_move_iterator(&aux_vect[0])..." << std::endl;
+            std::cout << "Error in shmset->insert(::boost::make_move_iterator(&aux_vect[0])..." << std::endl;
             return 1;
          }
          if(!CheckEqualContainers(shmmultiset, stdmultiset)){
-            std::cout << "Error in shmmultiset->insert(::boost::interprocess::make_move_iterator(&aux_vect3[0]), ..." << std::endl;
+            std::cout << "Error in shmmultiset->insert(::boost::make_move_iterator(&aux_vect3[0]), ..." << std::endl;
             return 1;
          }
 
@@ -320,20 +320,20 @@ int set_test ()
             aux_vect5[i] = boost::interprocess::move(move_me);
          }
 
-         shmset->insert(::boost::interprocess::make_move_iterator(&aux_vect[0]), ::boost::interprocess::make_move_iterator(aux_vect + 50));
-         shmset->insert(::boost::interprocess::make_move_iterator(&aux_vect3[0]), ::boost::interprocess::make_move_iterator(aux_vect3 + 50));
+         shmset->insert(::boost::make_move_iterator(&aux_vect[0]), ::boost::make_move_iterator(aux_vect + 50));
+         shmset->insert(::boost::make_move_iterator(&aux_vect3[0]), ::boost::make_move_iterator(aux_vect3 + 50));
          stdset->insert(aux_vect2, aux_vect2 + 50);
          stdset->insert(aux_vect2, aux_vect2 + 50);
-         shmmultiset->insert(::boost::interprocess::make_move_iterator(&aux_vect4[0]), ::boost::interprocess::make_move_iterator(aux_vect4 + 50));
-         shmmultiset->insert(::boost::interprocess::make_move_iterator(&aux_vect5[0]), ::boost::interprocess::make_move_iterator(aux_vect5 + 50));
+         shmmultiset->insert(::boost::make_move_iterator(&aux_vect4[0]), ::boost::make_move_iterator(aux_vect4 + 50));
+         shmmultiset->insert(::boost::make_move_iterator(&aux_vect5[0]), ::boost::make_move_iterator(aux_vect5 + 50));
          stdmultiset->insert(aux_vect2, aux_vect2 + 50);
          stdmultiset->insert(aux_vect2, aux_vect2 + 50);
          if(!CheckEqualContainers(shmset, stdset)){
-            std::cout << "Error in shmset->insert(::boost::interprocess::make_move_iterator(&aux_vect3[0])..." << std::endl;
+            std::cout << "Error in shmset->insert(::boost::make_move_iterator(&aux_vect3[0])..." << std::endl;
             return 1;
          }
          if(!CheckEqualContainers(shmmultiset, stdmultiset)){
-            std::cout << "Error in shmmultiset->insert(::boost::interprocess::make_move_iterator(&aux_vect5[0])..." << std::endl;
+            std::cout << "Error in shmmultiset->insert(::boost::make_move_iterator(&aux_vect5[0])..." << std::endl;
             return 1;
          }
 
