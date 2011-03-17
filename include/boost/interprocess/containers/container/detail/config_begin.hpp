@@ -12,19 +12,6 @@
 #include <boost/config.hpp>
 
 #define BOOST_CONTAINER_IN_INTERPROCESS
-#define BOOST_MOVE_IN_INTERPROCESS
-
-#ifdef BOOST_MOVE_IN_INTERPROCESS
-
-#define INCLUDE_BOOST_CONTAINER_MOVE_HPP <boost/interprocess/detail/move.hpp>
-#define BOOST_CONTAINER_MOVE_NAMESPACE boost::interprocess
-
-#else
-
-#define INCLUDE_BOOST_CONTAINER_MOVE_HPP <boost/move/move.hpp>
-#define BOOST_CONTAINER_MOVE_NAMESPACE boost
-
-#endif
 
 #ifdef BOOST_CONTAINER_IN_INTERPROCESS
 

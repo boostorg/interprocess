@@ -28,7 +28,7 @@ struct stored_ref
    #ifdef BOOST_MOVE_OLD_RVALUE_REF_BINDING_RULES
    { return t; }
    #else
-   { return BOOST_CONTAINER_MOVE_NAMESPACE::move(t); }
+   { return boost::move(t); }
    #endif
 };
 
@@ -50,7 +50,7 @@ struct stored_ref<T&&>
    #ifdef BOOST_MOVE_OLD_RVALUE_REF_BINDING_RULES
    { return t; }
    #else
-   { return BOOST_CONTAINER_MOVE_NAMESPACE::move(t); }
+   { return boost::move(t); }
    #endif
 };
 

@@ -90,8 +90,8 @@ class private_adaptive_pool_base
                      <value_type>::type                  reference;
    typedef typename detail::add_reference
                      <const value_type>::type            const_reference;
-   typedef std::size_t                                   size_type;
-   typedef std::ptrdiff_t                                difference_type;
+   typedef typename segment_manager::size_type           size_type;
+   typedef typename segment_manager::size_type           difference_type;
    typedef boost::interprocess::version_type
       <private_adaptive_pool_base, Version>              version;
    typedef boost::container::containers_detail::transform_multiallocation_chain
@@ -293,8 +293,8 @@ class private_adaptive_pool
                      <value_type>::type                  reference;
    typedef typename detail::add_reference
                      <const value_type>::type            const_reference;
-   typedef std::size_t                                   size_type;
-   typedef std::ptrdiff_t                                difference_type;
+   typedef typename segment_manager::size_type           size_type;
+   typedef typename segment_manager::difference_type     difference_type;
 
    //!Obtains private_adaptive_pool from 
    //!private_adaptive_pool
@@ -398,7 +398,7 @@ class private_adaptive_pool
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. The elements must be deallocated
    //!with deallocate(...)
-   multiallocation_chain allocate_many(size_type elem_size, std::size_t num_elements);
+   multiallocation_chain allocate_many(size_type elem_size, size_type num_elements);
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
    //!contiguous block
@@ -424,7 +424,7 @@ class private_adaptive_pool
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
-   multiallocation_chain allocate_individual(std::size_t num_elements);
+   multiallocation_chain allocate_individual(size_type num_elements);
 
    //!Deallocates memory previously allocated with allocate_one().
    //!You should never use deallocate_one to deallocate memory allocated

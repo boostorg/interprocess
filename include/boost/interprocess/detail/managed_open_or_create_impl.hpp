@@ -23,6 +23,8 @@
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/permissions.hpp>
+#include <boost/type_traits/alignment_of.hpp>
+#include <boost/type_traits/type_with_alignment.hpp>
 #include <boost/cstdint.hpp>
 
 namespace boost {
@@ -86,7 +88,7 @@ class managed_open_or_create_impl
    : public managed_open_or_create_impl_device_holder<StoreDevice, DeviceAbstraction>
 {
    //Non-copyable
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(managed_open_or_create_impl)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(managed_open_or_create_impl)
 
    typedef typename managed_open_or_create_impl_device_id_t<DeviceAbstraction>::type device_id_t;
    typedef managed_open_or_create_impl_device_holder<StoreDevice, DeviceAbstraction> DevHolder;
@@ -103,7 +105,7 @@ class managed_open_or_create_impl
       ManagedOpenOrCreateUserOffset = 
          detail::ct_rounded_size
             < sizeof(boost::uint32_t)
-            , detail::alignment_of<detail::max_align>::value>::value;
+			, ::boost::alignment_of< ::boost::detail::max_align >::value >::value;
 
    managed_open_or_create_impl()
    {}
@@ -213,10 +215,10 @@ class managed_open_or_create_impl
          , construct_func);
    }
 
-   managed_open_or_create_impl(BOOST_INTERPROCESS_RV_REF(managed_open_or_create_impl) moved)
+   managed_open_or_create_impl(BOOST_RV_REF(managed_open_or_create_impl) moved)
    {  this->swap(moved);   }
 
-   managed_open_or_create_impl &operator=(BOOST_INTERPROCESS_RV_REF(managed_open_or_create_impl) moved)
+   managed_open_or_create_impl &operator=(BOOST_RV_REF(managed_open_or_create_impl) moved)
    {  
       managed_open_or_create_impl tmp(boost::interprocess::move(moved));
       this->swap(tmp);

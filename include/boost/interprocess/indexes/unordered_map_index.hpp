@@ -84,7 +84,7 @@ class unordered_map_index
 
    //!This reserves memory to optimize the insertion of n
    //!elements in the index
-   void reserve(std::size_t n)
+   void reserve(typename segment_manager_base::size_type n)
    {  base_type::rehash(n);  }
 
    //!This tries to free previously allocate

@@ -158,7 +158,9 @@ class cached_adaptive_pool;
 //                            offset_ptr
 //////////////////////////////////////////////////////////////////////////////
 
-template <class T>
+static const std::size_t offset_type_alignment = 0;
+
+template <class T, class DifferenceType = std::ptrdiff_t, class OffsetType = std::size_t, std::size_t Alignment = offset_type_alignment>
 class offset_ptr;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -410,7 +412,10 @@ class weak_ptr;
 //                                  IPC
 //////////////////////////////////////////////////////////////////////////////
 
-class message_queue;
+template<class VoidPointer>
+class message_queue_t;
+
+typedef message_queue_t<offset_ptr<void> > message_queue;
 
 }}  //namespace boost { namespace interprocess {
 

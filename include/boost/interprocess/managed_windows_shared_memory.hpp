@@ -61,10 +61,11 @@ class basic_managed_windows_shared_memory
 
    private:
    typedef typename base_t::char_ptr_holder_t   char_ptr_holder_t;
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(basic_managed_windows_shared_memory)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_windows_shared_memory)
    /// @endcond
 
    public: //functions
+   typedef typename base_t::size_type              size_type;
 
    //!Default constructor. Does nothing.
    //!Useful in combination with move semantics
@@ -75,7 +76,7 @@ class basic_managed_windows_shared_memory
    //!This can throw.
    basic_managed_windows_shared_memory
       (create_only_t create_only, const char *name,
-       std::size_t size, const void *addr = 0, const permissions &perm = permissions())
+     size_type size, const void *addr = 0, const permissions &perm = permissions())
       : m_wshm(create_only, name, size, read_write, addr, 
                 create_open_func_t(get_this_pointer(), detail::DoCreate), perm)
    {}
@@ -86,7 +87,7 @@ class basic_managed_windows_shared_memory
    //!This can throw.
    basic_managed_windows_shared_memory
       (open_or_create_t open_or_create,
-      const char *name, std::size_t size, 
+      const char *name, size_type size, 
       const void *addr = 0,
       const permissions &perm = permissions())
       : m_wshm(open_or_create, name, size, read_write, addr, 
@@ -125,12 +126,12 @@ class basic_managed_windows_shared_memory
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
    basic_managed_windows_shared_memory
-      (BOOST_INTERPROCESS_RV_REF(basic_managed_windows_shared_memory) moved)
+      (BOOST_RV_REF(basic_managed_windows_shared_memory) moved)
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
-   basic_managed_windows_shared_memory &operator=(BOOST_INTERPROCESS_RV_REF(basic_managed_windows_shared_memory) moved)
+   basic_managed_windows_shared_memory &operator=(BOOST_RV_REF(basic_managed_windows_shared_memory) moved)
    {
       basic_managed_windows_shared_memory tmp(boost::interprocess::move(moved));
       this->swap(tmp);
@@ -159,7 +160,7 @@ class basic_managed_windows_shared_memory
    //!buffer and the object count. If not found returned pointer is 0.
    //!Never throws.
    template <class T>
-   std::pair<T*, std::size_t> find  (char_ptr_holder_t name)
+   std::pair<T*, size_type> find  (char_ptr_holder_t name)
    {
       if(m_wshm.get_mapped_region().get_mode() == read_only){
          return base_t::template find_no_lock<T>(name);

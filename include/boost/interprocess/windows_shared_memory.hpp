@@ -52,7 +52,7 @@ class windows_shared_memory
 {
    /// @cond
    //Non-copyable and non-assignable
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(windows_shared_memory)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(windows_shared_memory)
    /// @endcond
 
    public:
@@ -80,14 +80,14 @@ class windows_shared_memory
    //!Moves the ownership of "moved"'s shared memory object to *this. 
    //!After the call, "moved" does not represent any shared memory object. 
    //!Does not throw
-   windows_shared_memory(BOOST_INTERPROCESS_RV_REF(windows_shared_memory) moved)
+   windows_shared_memory(BOOST_RV_REF(windows_shared_memory) moved)
       : m_handle(0)
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s shared memory to *this.
    //!After the call, "moved" does not represent any shared memory. 
    //!Does not throw
-   windows_shared_memory &operator=(BOOST_INTERPROCESS_RV_REF(windows_shared_memory) moved)
+   windows_shared_memory &operator=(BOOST_RV_REF(windows_shared_memory) moved)
    {  
       windows_shared_memory tmp(boost::interprocess::move(moved));
       this->swap(tmp);

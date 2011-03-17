@@ -97,7 +97,7 @@ struct intersegment_base
       std::size_t pow      :  pow_size_bits;
       std::size_t frc      :  frc_size_bits;
       std::size_t beg      :  begin_bits;
-      std::ptrdiff_t off   :  sizeof(ptrdiff_t)*CHAR_BIT - 2;
+      std::ptrdiff_t off   :  sizeof(std::ptrdiff_t)*CHAR_BIT - 2;
       std::ptrdiff_t bits  :  2;
    };
 
@@ -159,7 +159,7 @@ struct intersegment_base
       std::size_t diff = orig_size - low_size;
       BOOST_ASSERT(pow >= frc_size_bits);
       std::size_t rounded = detail::get_rounded_size_po2
-                              (diff, (1u << (pow - frc_size_bits)));
+                              (diff, (std::size_t)(1u << (pow - frc_size_bits)));
       if(rounded == low_size){
          ++pow;
          frc = 0;
@@ -762,7 +762,7 @@ class intersegment_ptr : public flat_map_intersegment<interprocess_mutex>
    //!This only works with two basic_intersegment_ptr pointing
    //!to the same segment. Otherwise undefined
    template <class T2>
-   ptrdiff_t _diff(const intersegment_ptr<T2> &other) const
+   std::ptrdiff_t _diff(const intersegment_ptr<T2> &other) const
    {  return base_t::diff(other);   }
 
    //!Returns true if both point to the

@@ -149,15 +149,16 @@ class cache_impl
       void_pointer                                          void_pointer;
    typedef typename pointer_to_other
       <void_pointer, NodePool>::type                        node_pool_ptr;
-   typedef typename NodePool::multiallocation_chain  multiallocation_chain;
+   typedef typename NodePool::multiallocation_chain         multiallocation_chain;
+   typedef typename NodePool::segment_manager::size_type    size_type;
    node_pool_ptr                 mp_node_pool;
    multiallocation_chain         m_cached_nodes;
-   std::size_t                   m_max_cached_nodes;
+   size_type                     m_max_cached_nodes;
 
    public:
    typedef typename NodePool::segment_manager            segment_manager;
 
-   cache_impl(segment_manager *segment_mngr, std::size_t max_cached_nodes)
+   cache_impl(segment_manager *segment_mngr, size_type max_cached_nodes)
       : mp_node_pool(get_or_create_node_pool<NodePool>(segment_mngr))
       , m_max_cached_nodes(max_cached_nodes)
    {}
@@ -181,7 +182,7 @@ class cache_impl
    segment_manager *get_segment_manager() const
    {  return mp_node_pool->get_segment_manager(); }
 
-   std::size_t get_max_cached_nodes() const
+   size_type get_max_cached_nodes() const
    {  return m_max_cached_nodes; }
 
    void *cached_allocation()
@@ -195,10 +196,10 @@ class cache_impl
       return ret;
    }
 
-   multiallocation_chain cached_allocation(std::size_t n)
+   multiallocation_chain cached_allocation(size_type n)
    {
       multiallocation_chain chain;
-      std::size_t count = n, allocated(0);
+      size_type count = n, allocated(0);
       BOOST_TRY{
          //If don't have any cached node, we have to get a new list of free nodes from the pool
          while(!m_cached_nodes.empty() && count--){
@@ -250,7 +251,7 @@ class cache_impl
 
    //!Sets the new max cached nodes value. This can provoke deallocations
    //!if "newmax" is less than current cached nodes. Never throws
-   void set_max_cached_nodes(std::size_t newmax)
+   void set_max_cached_nodes(size_type newmax)
    {
       m_max_cached_nodes = newmax;
       this->priv_deallocate_remaining_nodes();
@@ -275,13 +276,13 @@ class cache_impl
    }
 
    //!Frees n cached nodes at once. Never throws
-   void priv_deallocate_n_nodes(std::size_t n)
+   void priv_deallocate_n_nodes(size_type n)
    {
       //This only occurs if this allocator deallocate memory allocated
       //with other equal allocator. Since the cache is full, and more 
       //deallocations are probably coming, we'll make some room in cache
       //in a single, efficient multi node deallocation.
-      std::size_t count(n);
+      size_type count(n);
       typename multiallocation_chain::iterator it(m_cached_nodes.before_begin());
       while(count--){
          ++it;
@@ -321,8 +322,8 @@ class array_allocation_impl
                      <value_type>::type                  reference;
    typedef typename detail::add_reference
                      <const value_type>::type            const_reference;
-   typedef std::size_t                                   size_type;
-   typedef std::ptrdiff_t                                difference_type;
+   typedef typename SegmentManager::size_type            size_type;
+   typedef typename SegmentManager::difference_type      difference_type;
    typedef boost::container::containers_detail::transform_multiallocation_chain
       <typename SegmentManager::multiallocation_chain, T>multiallocation_chain;
 
@@ -352,7 +353,7 @@ class array_allocation_impl
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. The elements must be deallocated
    //!with deallocate(...)
-   multiallocation_chain allocate_many(size_type elem_size, std::size_t num_elements)
+   multiallocation_chain allocate_many(size_type elem_size, size_type num_elements)
    {
       return this->derived()->get_segment_manager()->allocate_many(sizeof(T)*elem_size, num_elements);
    }
@@ -432,8 +433,8 @@ class node_pool_allocation_impl
                      <value_type>::type                  reference;
    typedef typename detail::add_reference
                      <const value_type>::type            const_reference;
-   typedef std::size_t                                   size_type;
-   typedef std::ptrdiff_t                                difference_type;
+   typedef typename SegmentManager::size_type            size_type;
+   typedef typename SegmentManager::difference_type      difference_type;
    typedef boost::container::containers_detail::transform_multiallocation_chain
       <typename SegmentManager::multiallocation_chain, T>multiallocation_chain;
 
@@ -492,7 +493,7 @@ class node_pool_allocation_impl
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
-   multiallocation_chain allocate_individual(std::size_t num_elements)
+   multiallocation_chain allocate_individual(size_type num_elements)
    {
       typedef typename node_pool<0>::type node_pool_t;
       node_pool_t *pool = node_pool<0>::get(this->derived()->get_node_pool());
@@ -557,7 +558,7 @@ class cached_allocator_impl
    public:
    enum { DEFAULT_MAX_CACHED_NODES = 64 };
 
-   cached_allocator_impl(segment_manager *segment_mngr, std::size_t max_cached_nodes)
+   cached_allocator_impl(segment_manager *segment_mngr, size_type max_cached_nodes)
       : m_cache(segment_mngr, max_cached_nodes)
    {}
 
@@ -587,12 +588,12 @@ class cached_allocator_impl
 
    //!Sets the new max cached nodes value. This can provoke deallocations
    //!if "newmax" is less than current cached nodes. Never throws
-   void set_max_cached_nodes(std::size_t newmax)
+   void set_max_cached_nodes(size_type newmax)
    {  m_cache.set_max_cached_nodes(newmax);   }
 
    //!Returns the max cached nodes parameter.
    //!Never throws
-   std::size_t get_max_cached_nodes() const
+   size_type get_max_cached_nodes() const
    {  return m_cache.get_max_cached_nodes();   }
 
    //!Allocate memory for an array of count elements. 
@@ -636,7 +637,7 @@ class cached_allocator_impl
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
-   multiallocation_chain allocate_individual(std::size_t num_elements)
+   multiallocation_chain allocate_individual(size_type num_elements)
    {  return multiallocation_chain(this->m_cache.cached_allocation(num_elements));   }
 
    //!Deallocates memory previously allocated with allocate_one().
@@ -708,6 +709,8 @@ class shared_pool_impl
       segment_manager                           segment_manager;
    typedef typename private_node_allocator_t::
       multiallocation_chain                     multiallocation_chain;
+   typedef typename private_node_allocator_t::
+     size_type                                 size_type;
 
  private:
    typedef typename segment_manager::mutex_family::mutex_type mutex_type;
@@ -742,7 +745,7 @@ class shared_pool_impl
 /*
    //!Allocates a singly linked list of n nodes ending in null pointer.
    //!can throw boost::interprocess::bad_alloc
-   void allocate_nodes(multiallocation_chain &nodes, std::size_t n)
+   void allocate_nodes(multiallocation_chain &nodes, size_type n)
    {
       //-----------------------
       boost::interprocess::scoped_lock<mutex_type> guard(m_header);
@@ -752,7 +755,7 @@ class shared_pool_impl
 */
    //!Allocates n nodes. 
    //!Can throw boost::interprocess::bad_alloc
-   multiallocation_chain allocate_nodes(const std::size_t n)
+   multiallocation_chain allocate_nodes(const size_type n)
    {
       //-----------------------
       boost::interprocess::scoped_lock<mutex_type> guard(m_header);
@@ -761,7 +764,7 @@ class shared_pool_impl
    }
 
    //!Deallocates a linked list of nodes ending in null pointer. Never throws
-   void deallocate_nodes(multiallocation_chain &nodes, std::size_t num)
+   void deallocate_nodes(multiallocation_chain &nodes, size_type num)
    {
       //-----------------------
       boost::interprocess::scoped_lock<mutex_type> guard(m_header);
@@ -799,7 +802,7 @@ class shared_pool_impl
    }
 
    //!Increments internal reference count and returns new count. Never throws
-   std::size_t inc_ref_count()
+   size_type inc_ref_count()
    {
       //-----------------------
       boost::interprocess::scoped_lock<mutex_type> guard(m_header);
@@ -808,7 +811,7 @@ class shared_pool_impl
    }
 
    //!Decrements internal reference count and returns new count. Never throws
-   std::size_t dec_ref_count()
+   size_type dec_ref_count()
    {
       //-----------------------
       boost::interprocess::scoped_lock<mutex_type> guard(m_header);
@@ -840,7 +843,7 @@ class shared_pool_impl
    //!the mutex type to allow EBO when using null_mutex
    struct header_t : mutex_type
    {
-      std::size_t m_usecount;    //Number of attached allocators
+      size_type m_usecount;    //Number of attached allocators
 
       header_t()
       :  m_usecount(0) {}

@@ -46,10 +46,11 @@ class basic_managed_heap_memory
 
    typedef detail::basic_managed_memory_impl 
       <CharType, AllocationAlgorithm, IndexType>             base_t;
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(basic_managed_heap_memory)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_heap_memory)
    /// @endcond
 
    public: //functions
+   typedef typename base_t::size_type              size_type;
 
    //!Default constructor. Does nothing.
    //!Useful in combination with move semantics
@@ -62,7 +63,7 @@ class basic_managed_heap_memory
 
    //!Creates heap memory and initializes the segment manager.
    //!This can throw.
-   basic_managed_heap_memory(std::size_t size)
+   basic_managed_heap_memory(size_type size)
       :  m_heapmem(size, char(0))
    {
       if(!base_t::create_impl(&m_heapmem[0], size)){
@@ -72,11 +73,11 @@ class basic_managed_heap_memory
    }
 
    //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
-   basic_managed_heap_memory(BOOST_INTERPROCESS_RV_REF(basic_managed_heap_memory) moved)
+   basic_managed_heap_memory(BOOST_RV_REF(basic_managed_heap_memory) moved)
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
-   basic_managed_heap_memory &operator=(BOOST_INTERPROCESS_RV_REF(basic_managed_heap_memory) moved)
+   basic_managed_heap_memory &operator=(BOOST_RV_REF(basic_managed_heap_memory) moved)
    {
       basic_managed_heap_memory tmp(boost::interprocess::move(moved));
       this->swap(tmp);
@@ -92,12 +93,12 @@ class basic_managed_heap_memory
    //!Returns true if the growth has been successful, so you will
    //!have some extra bytes to allocate new objects. If returns 
    //!false, the heap allocation has failed.
-   bool grow(std::size_t extra_bytes)
+   bool grow(size_type extra_bytes)
    {  
       //If memory is reallocated, data will
       //be automatically copied
       BOOST_TRY{
-         m_heapmem.resize(m_heapmem.size()+extra_bytes);
+        m_heapmem.resize(m_heapmem.size()+extra_bytes);
       }
       BOOST_CATCH(...){
          return false;

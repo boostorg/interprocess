@@ -39,7 +39,7 @@ class file_lock
 {
    /// @cond
    //Non-copyable
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(file_lock)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(file_lock)
    /// @endcond
 
    public:
@@ -56,14 +56,14 @@ class file_lock
    //!Moves the ownership of "moved"'s file mapping object to *this. 
    //!After the call, "moved" does not represent any file mapping object. 
    //!Does not throw
-   file_lock(BOOST_INTERPROCESS_RV_REF(file_lock) moved)
+   file_lock(BOOST_RV_REF(file_lock) moved)
       :  m_file_hnd(file_handle_t(detail::invalid_file()))
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s file mapping to *this.
    //!After the call, "moved" does not represent any file mapping. 
    //!Does not throw
-   file_lock &operator=(BOOST_INTERPROCESS_RV_REF(file_lock) moved)
+   file_lock &operator=(BOOST_RV_REF(file_lock) moved)
    {  
       file_lock tmp(boost::interprocess::move(moved));
       this->swap(tmp);

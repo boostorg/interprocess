@@ -15,7 +15,7 @@
 #include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
 #include INCLUDE_BOOST_CONTAINER_CONTAINER_FWD_HPP
 
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/move/move.hpp>
 #include <boost/pointer_to_other.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
@@ -122,7 +122,7 @@ struct rbtree_node
 
    template<class ...Args>
    rbtree_node(Args &&...args)
-      : m_data(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...)
+      : m_data(boost::forward<Args>(args)...)
    {}
    #endif//#ifndef BOOST_CONTAINERS_PERFECT_FORWARDING
 
@@ -164,8 +164,8 @@ struct rbtree_node
 
    public:
    template<class Convertible>
-   static void construct(node_type *ptr, BOOST_MOVE_MACRO_FWD_REF(Convertible) convertible)
-   {  new(ptr) node_type(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Convertible>(convertible));  }
+   static void construct(node_type *ptr, BOOST_FWD_REF(Convertible) convertible)
+   {  new(ptr) node_type(boost::forward<Convertible>(convertible));  }
 };
 
 }//namespace containers_detail {
@@ -267,7 +267,7 @@ class rbtree
       AllocHolder &m_holder;
       Icont &m_icont;
    };
-   BOOST_MOVE_MACRO_COPYABLE_AND_MOVABLE(rbtree)
+   BOOST_COPYABLE_AND_MOVABLE(rbtree)
 
    public:
 
@@ -437,14 +437,14 @@ class rbtree
          (x.icont(), typename AllocHolder::cloner(*this), Destroyer(this->node_alloc()));
    }
 
-   rbtree(BOOST_MOVE_MACRO_RV_REF(rbtree) x) 
+   rbtree(BOOST_RV_REF(rbtree) x) 
       :  AllocHolder(x, x.key_comp())
    {  this->swap(x);  }
 
    ~rbtree()
    {} //AllocHolder clears the tree
 
-   rbtree& operator=(BOOST_MOVE_MACRO_COPY_ASSIGN_REF(rbtree) x)
+   rbtree& operator=(BOOST_COPY_ASSIGN_REF(rbtree) x)
    {
       if (this != &x) {
          //Transfer all the nodes to a temporary tree
@@ -469,7 +469,7 @@ class rbtree
       return *this;
    }
 
-   rbtree& operator=(BOOST_MOVE_MACRO_RV_REF(rbtree) mx)
+   rbtree& operator=(BOOST_RV_REF(rbtree) mx)
    {  this->clear(); this->swap(mx);   return *this;  }
 
    public:    
@@ -589,9 +589,9 @@ class rbtree
 
    template<class MovableConvertible>
    iterator insert_unique_commit
-      (BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv, insert_commit_data &data)
+      (BOOST_FWD_REF(MovableConvertible) mv, insert_commit_data &data)
    {
-      NodePtr tmp = AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv));
+      NodePtr tmp = AllocHolder::create_node(boost::forward<MovableConvertible>(mv));
       iiterator it(this->icont().insert_unique_commit(*tmp, data));
       return iterator(it);
    }
@@ -608,7 +608,7 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   std::pair<iterator,bool> insert_unique(BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   std::pair<iterator,bool> insert_unique(BOOST_FWD_REF(MovableConvertible) mv)
    {
       insert_commit_data data;
       std::pair<iterator,bool> ret =
@@ -616,7 +616,7 @@ class rbtree
       if(!ret.second)
          return ret;
       return std::pair<iterator,bool>
-         (this->insert_unique_commit(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv), data), true);
+         (this->insert_unique_commit(boost::forward<MovableConvertible>(mv), data), true);
    }
 
    private:
@@ -652,23 +652,23 @@ class rbtree
 
    template <class... Args>
    iterator emplace_unique(Args&&... args)
-   {  return this->emplace_unique_impl(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));   }
+   {  return this->emplace_unique_impl(AllocHolder::create_node(boost::forward<Args>(args)...));   }
 
    template <class... Args>
    iterator emplace_hint_unique(const_iterator hint, Args&&... args)
-   {  return this->emplace_unique_hint_impl(hint, AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));   }
+   {  return this->emplace_unique_hint_impl(hint, AllocHolder::create_node(boost::forward<Args>(args)...));   }
 
    template <class... Args>
    iterator emplace_equal(Args&&... args)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));
+      NodePtr p(AllocHolder::create_node(boost::forward<Args>(args)...));
       return iterator(this->icont().insert_equal(this->icont().end(), *p));
    }
 
    template <class... Args>
    iterator emplace_hint_equal(const_iterator hint, Args&&... args)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));
+      NodePtr p(AllocHolder::create_node(boost::forward<Args>(args)...));
       return iterator(this->icont().insert_equal(hint.get(), *p));
    }
 
@@ -737,14 +737,14 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   iterator insert_unique(const_iterator hint, BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   iterator insert_unique(const_iterator hint, BOOST_FWD_REF(MovableConvertible) mv)
    {
       insert_commit_data data;
       std::pair<iterator,bool> ret =
          this->insert_unique_check(hint, KeyOfValue()(mv), data);
       if(!ret.second)
          return ret.first;
-      return this->insert_unique_commit(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv), data);
+      return this->insert_unique_commit(boost::forward<MovableConvertible>(mv), data);
    }
 
    template <class InputIterator>
@@ -770,9 +770,9 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   iterator insert_equal(BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   iterator insert_equal(BOOST_FWD_REF(MovableConvertible) mv)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv)));
+      NodePtr p(AllocHolder::create_node(boost::forward<MovableConvertible>(mv)));
       return iterator(this->icont().insert_equal(this->icont().end(), *p));
    }
 
@@ -783,9 +783,9 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   iterator insert_equal(const_iterator hint, BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   iterator insert_equal(const_iterator hint, BOOST_FWD_REF(MovableConvertible) mv)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv)));
+      NodePtr p(AllocHolder::create_node(boost::forward<MovableConvertible>(mv)));
       return iterator(this->icont().insert_equal(hint.get(), *p));
    }
 

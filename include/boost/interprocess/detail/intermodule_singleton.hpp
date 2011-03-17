@@ -27,6 +27,7 @@
 #include <boost/interprocess/detail/tmp_dir_helpers.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/type_traits/type_with_alignment.hpp>
 #include <boost/assert.hpp>
 #include <cstddef>
 #include <cstdio>
@@ -636,7 +637,7 @@ class intermodule_singleton_common
       return *static_cast<ManagedShMem *>(static_cast<void *>(&shm_mem));
    }
 
-   enum { MemSize = ((sizeof(ManagedShMem)-1)/sizeof(max_align))+1u };
+   enum { MemSize = ((sizeof(ManagedShMem)-1)/sizeof(::boost::detail::max_align))+1u };
 
    static void initialize_shm();
    static void destroy_shm();
@@ -645,7 +646,7 @@ class intermodule_singleton_common
    static volatile boost::uint32_t this_module_singleton_count;
    //this_module_shm_initialized is the state of this module's shm class object
    static volatile boost::uint32_t this_module_shm_initialized;
-   static max_align shm_mem[MemSize];
+   static ::boost::detail::max_align shm_mem[MemSize];
 };
 
 template<class ManagedShMem>
@@ -655,7 +656,7 @@ template<class ManagedShMem>
 volatile boost::uint32_t intermodule_singleton_common<ManagedShMem>::this_module_shm_initialized;
 
 template<class ManagedShMem>
-max_align intermodule_singleton_common<ManagedShMem>::shm_mem[intermodule_singleton_common<ManagedShMem>::MemSize];
+::boost::detail::max_align intermodule_singleton_common<ManagedShMem>::shm_mem[intermodule_singleton_common<ManagedShMem>::MemSize];
 
 template<class ManagedShMem>
 void intermodule_singleton_common<ManagedShMem>::initialize_shm()

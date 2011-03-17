@@ -151,7 +151,7 @@ class unique_ptr
    //!deleter() and u.get_deleter() both reference the same lvalue deleter.
    //!
    //!Throws: nothing.
-   unique_ptr(BOOST_INTERPROCESS_RV_REF(unique_ptr) u)
+   unique_ptr(BOOST_RV_REF(unique_ptr) u)
       : ptr_(u.release(), boost::interprocess::forward<D>(u.get_deleter()))
    {}
 
@@ -175,7 +175,7 @@ class unique_ptr
    //!
    //!Throws: nothing.
    template <class U, class E>
-   unique_ptr(BOOST_INTERPROCESS_RV_REF_2_TEMPL_ARGS(unique_ptr, U, E) u,
+   unique_ptr(BOOST_RV_REF_2_TEMPL_ARGS(unique_ptr, U, E) u,
       typename detail::enable_if_c<
             detail::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
             detail::is_convertible<E, D>::value &&
@@ -208,7 +208,7 @@ class unique_ptr
    //!Returns: *this.
    //!
    //!Throws: nothing.
-   unique_ptr& operator=(BOOST_INTERPROCESS_RV_REF(unique_ptr) u)
+   unique_ptr& operator=(BOOST_RV_REF(unique_ptr) u)
    {
       reset(u.release());
       ptr_.second() = boost::interprocess::move(u.get_deleter());
@@ -230,7 +230,7 @@ class unique_ptr
    //!
    //!Throws: nothing.
    template <class U, class E>
-   unique_ptr& operator=(BOOST_INTERPROCESS_RV_REF_2_TEMPL_ARGS(unique_ptr, U, E) u)
+   unique_ptr& operator=(BOOST_RV_REF_2_TEMPL_ARGS(unique_ptr, U, E) u)
    {
       reset(u.release());
       ptr_.second() = boost::interprocess::move(u.get_deleter());
@@ -325,7 +325,7 @@ class unique_ptr
    /// @cond
    private:
    boost::compressed_pair<pointer, D> ptr_;
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(unique_ptr)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(unique_ptr)
    template <class U, class E> unique_ptr(unique_ptr<U, E>&);
    template <class U> unique_ptr(U&, typename detail::unique_ptr_error<U>::type = 0);
    

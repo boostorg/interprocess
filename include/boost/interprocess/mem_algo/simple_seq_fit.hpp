@@ -39,10 +39,12 @@ class simple_seq_fit
    /// @endcond
 
    public:
+   typedef typename base_t::size_type                            size_type;
+
    //!Constructor. "size" is the total size of the managed memory segment, 
    //!"extra_hdr_bytes" indicates the extra bytes beginning in the sizeof(simple_seq_fit)
    //!offset that the allocator should not use at all.*/
-   simple_seq_fit           (std::size_t size, std::size_t extra_hdr_bytes)
+   simple_seq_fit           (size_type size, size_type extra_hdr_bytes)
       : base_t(size, extra_hdr_bytes){}
 };
 

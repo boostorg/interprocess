@@ -52,7 +52,7 @@ inline void get_bootstamp(std::string &s, bool add = false)
    // FreeBSD specific: sysctl "kern.boottime"
    int request[2] = { CTL_KERN, KERN_BOOTTIME };
    struct ::timeval result;
-   size_t result_len = sizeof result;
+   std::size_t result_len = sizeof result;
 
    if (::sysctl (request, 2, &result, &result_len, NULL, 0) < 0)
       return;

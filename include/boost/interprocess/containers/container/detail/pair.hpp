@@ -25,7 +25,8 @@
 
 #include <utility>   //std::pair
 
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/move/move.hpp>
+#include <boost/type_traits/is_class.hpp>
 
 #ifndef BOOST_CONTAINERS_PERFECT_FORWARDING
 #include INCLUDE_BOOST_CONTAINER_DETAIL_PREPROCESSOR_HPP
@@ -39,7 +40,7 @@ template <class T1, class T2>
 struct pair
 {
    private:
-   BOOST_MOVE_MACRO_COPYABLE_AND_MOVABLE(pair)
+   BOOST_COPYABLE_AND_MOVABLE(pair)
 
    public:
    typedef T1 first_type;
@@ -61,8 +62,8 @@ struct pair
    {}
 
    template <class D, class S>
-   pair(BOOST_MOVE_MACRO_RV_REF_2_TEMPL_ARGS(std::pair, D, S) p)
-      : first(BOOST_CONTAINER_MOVE_NAMESPACE::move(p.first)), second(BOOST_CONTAINER_MOVE_NAMESPACE::move(p.second))
+   pair(BOOST_RV_REF_2_TEMPL_ARGS(std::pair, D, S) p)
+      : first(boost::move(p.first)), second(boost::move(p.second))
    {}
 
    pair()
@@ -72,28 +73,28 @@ struct pair
    pair(const pair<T1, T2>& x)
       : first(x.first), second(x.second)
    {}
-
+/*
    //To resolve ambiguity with the variadic constructor of 1 argument
    //and the copy constructor
    pair(pair<T1, T2>& x)
       : first(x.first), second(x.second)
    {}
-
-   pair(BOOST_MOVE_MACRO_RV_REF(pair) p)
-      : first(BOOST_CONTAINER_MOVE_NAMESPACE::move(p.first)), second(BOOST_CONTAINER_MOVE_NAMESPACE::move(p.second))
+*/
+   pair(BOOST_RV_REF(pair) p)
+      : first(boost::move(p.first)), second(boost::move(p.second))
    {}
 
    template <class D, class S>
-   pair(BOOST_MOVE_MACRO_RV_REF_2_TEMPL_ARGS(pair, D, S) p)
-      : first(BOOST_CONTAINER_MOVE_NAMESPACE::move(p.first)), second(BOOST_CONTAINER_MOVE_NAMESPACE::move(p.second))
+   pair(BOOST_RV_REF_2_TEMPL_ARGS(pair, D, S) p)
+      : first(boost::move(p.first)), second(boost::move(p.second))
    {}
 
    #ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 
    template<class U, class ...Args>
    pair(U &&u, Args &&... args)
-      : first(BOOST_CONTAINER_MOVE_NAMESPACE::forward<U>(u))
-      , second(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...)
+      : first(boost::forward<U>(u))
+      , second(boost::forward<Args>(args)...)
    {}
 
    #else
@@ -102,17 +103,17 @@ struct pair
    pair( BOOST_CONTAINERS_PARAM(U, u)
        #ifdef BOOST_NO_RVALUE_REFERENCES
        , typename containers_detail::disable_if
-          < containers_detail::is_same<U, ::BOOST_CONTAINER_MOVE_NAMESPACE::rv<pair> > >::type* = 0
+          < containers_detail::is_same<U, ::boost::rv<pair> > >::type* = 0
        #endif
       )
-      : first(BOOST_CONTAINER_MOVE_NAMESPACE::forward<U>(const_cast<U&>(u)))
+      : first(boost::forward<U>(const_cast<U&>(u)))
    {}
 
    #define BOOST_PP_LOCAL_MACRO(n)                                                            \
    template<class U, BOOST_PP_ENUM_PARAMS(n, class P)>                                        \
    pair(BOOST_CONTAINERS_PARAM(U, u)                                                          \
        ,BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_LIST, _))                                  \
-      : first(BOOST_CONTAINER_MOVE_NAMESPACE::forward<U>(const_cast<U&>(u)))                             \
+      : first(boost::forward<U>(const_cast<U&>(u)))                             \
       , second(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_FORWARD, _))                        \
    {}                                                                                         \
    //!
@@ -120,32 +121,32 @@ struct pair
    #include BOOST_PP_LOCAL_ITERATE()
    #endif
 
-   pair& operator=(BOOST_MOVE_MACRO_COPY_ASSIGN_REF(pair) p)
+   pair& operator=(BOOST_COPY_ASSIGN_REF(pair) p)
    {
       first  = p.first;
       second = p.second;
       return *this;
    }
 
-   pair& operator=(BOOST_MOVE_MACRO_RV_REF(pair) p)
+   pair& operator=(BOOST_RV_REF(pair) p)
    {
-      first  = BOOST_CONTAINER_MOVE_NAMESPACE::move(p.first);
-      second = BOOST_CONTAINER_MOVE_NAMESPACE::move(p.second);
+      first  = boost::move(p.first);
+      second = boost::move(p.second);
       return *this;
    }
 
-   pair& operator=(BOOST_MOVE_MACRO_RV_REF_2_TEMPL_ARGS(std::pair, T1, T2) p)
+   pair& operator=(BOOST_RV_REF_2_TEMPL_ARGS(std::pair, T1, T2) p)
    {
-      first  = BOOST_CONTAINER_MOVE_NAMESPACE::move(p.first);
-      second = BOOST_CONTAINER_MOVE_NAMESPACE::move(p.second);
+      first  = boost::move(p.first);
+      second = boost::move(p.second);
       return *this;
    }
 
    template <class D, class S>
-   pair& operator=(BOOST_MOVE_MACRO_RV_REF_2_TEMPL_ARGS(std::pair, D, S) p)
+   pair& operator=(BOOST_RV_REF_2_TEMPL_ARGS(std::pair, D, S) p)
    {
-      first  = BOOST_CONTAINER_MOVE_NAMESPACE::move(p.first);
-      second = BOOST_CONTAINER_MOVE_NAMESPACE::move(p.second);
+      first  = boost::move(p.first);
+      second = boost::move(p.second);
       return *this;
    }
 
@@ -204,6 +205,23 @@ struct is_enum< ::boost::container::containers_detail::pair<T, U> >
 {
    static const bool value = false;
 };
+
+//This specialization is needed to avoid instantiation of pair in
+//is_class, and allow recursive maps.
+template <class T1, class T2>
+struct is_class< ::boost::container::containers_detail::pair<T1, T2> >
+   : public ::boost::true_type
+{};
+
+#ifdef BOOST_NO_RVALUE_REFERENCES
+
+template<class T1, class T2>
+struct has_move_emulation_enabled< ::boost::container::containers_detail::pair<T1, T2> >
+   : ::boost::true_type
+{};
+
+#endif
+
 
 }  //namespace boost {
 

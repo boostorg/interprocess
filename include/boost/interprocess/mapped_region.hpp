@@ -59,7 +59,7 @@ class mapped_region
 {
    /// @cond
    //Non-copyable
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(mapped_region)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(mapped_region)
    /// @endcond
 
    public:
@@ -81,7 +81,7 @@ class mapped_region
 
    //!Move constructor. *this will be constructed taking ownership of "other"'s 
    //!region and "other" will be left in default constructor state.
-   mapped_region(BOOST_INTERPROCESS_RV_REF(mapped_region) other)
+   mapped_region(BOOST_RV_REF(mapped_region) other)
    #if defined (BOOST_INTERPROCESS_WINDOWS)
    :  m_base(0), m_size(0), m_offset(0)
    ,  m_extra_offset(0)
@@ -99,7 +99,7 @@ class mapped_region
 
    //!Move assignment. If *this owns a memory mapped region, it will be
    //!destroyed and it will take ownership of "other"'s memory mapped region.
-   mapped_region &operator=(BOOST_INTERPROCESS_RV_REF(mapped_region) other)
+   mapped_region &operator=(BOOST_RV_REF(mapped_region) other)
    {
       mapped_region tmp(boost::interprocess::move(other));
       this->swap(tmp);

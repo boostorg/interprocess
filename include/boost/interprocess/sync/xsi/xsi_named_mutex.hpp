@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2009-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -49,7 +49,7 @@ class xsi_named_mutex
    /// @endcond
 
    public:
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(xsi_named_mutex)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(xsi_named_mutex)
 
    //!Default constructor.
    //!Represents an empty xsi_named_mutex.
@@ -65,13 +65,13 @@ class xsi_named_mutex
    //!Moves the ownership of "moved"'s named mutex to *this. 
    //!After the call, "moved" does not represent any named mutex 
    //!Does not throw
-   xsi_named_mutex(BOOST_INTERPROCESS_RV_REF(xsi_named_mutex) moved)
+   xsi_named_mutex(BOOST_RV_REF(xsi_named_mutex) moved)
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s named mutex to *this.
    //!After the call, "moved" does not represent any named mutex. 
    //!Does not throw
-   xsi_named_mutex &operator=(BOOST_INTERPROCESS_RV_REF(xsi_named_mutex) moved)
+   xsi_named_mutex &operator=(BOOST_RV_REF(xsi_named_mutex) moved)
    {  
       xsi_named_mutex tmp(boost::interprocess::move(moved));
       this->swap(tmp);

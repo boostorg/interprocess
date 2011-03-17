@@ -108,7 +108,7 @@ class shared_ptr
    typedef typename boost::pointer_to_other
             <typename VoidAllocator::pointer, const VoidAllocator>::type   const_allocator_pointer;
 
-   BOOST_INTERPROCESS_COPYABLE_AND_MOVABLE(shared_ptr)
+   BOOST_COPYABLE_AND_MOVABLE(shared_ptr)
    public:
 
    //!Constructs an empty shared_ptr.
@@ -156,7 +156,7 @@ class shared_ptr
    //!Move-Constructs a shared_ptr that takes ownership of other resource and
    //!other is put in default-constructed state.
    //!Throws: nothing.
-   explicit shared_ptr(BOOST_INTERPROCESS_RV_REF(shared_ptr) other)
+   explicit shared_ptr(BOOST_RV_REF(shared_ptr) other)
       :  m_pn()
    {  this->swap(other);   }
 
@@ -195,7 +195,7 @@ class shared_ptr
 
    //!Equivalent to shared_ptr(r).swap(*this).
    //!Never throws
-   shared_ptr & operator=(BOOST_INTERPROCESS_COPY_ASSIGN_REF(shared_ptr) r)
+   shared_ptr & operator=(BOOST_COPY_ASSIGN_REF(shared_ptr) r)
    {
       m_pn = r.m_pn; // shared_count::op= doesn't throw
       return *this;
@@ -203,7 +203,7 @@ class shared_ptr
 
    //!Move-assignment. Equivalent to shared_ptr(other).swap(*this).
    //!Never throws
-   shared_ptr & operator=(BOOST_INTERPROCESS_RV_REF(shared_ptr) other) // never throws
+   shared_ptr & operator=(BOOST_RV_REF(shared_ptr) other) // never throws
    {
       this_type(other).swap(*this);
       return *this;

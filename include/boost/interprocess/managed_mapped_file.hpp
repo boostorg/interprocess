@@ -48,6 +48,7 @@ class basic_managed_mapped_file
       <CharType, AllocationAlgorithm, IndexType,
       detail::managed_open_or_create_impl<detail::file_wrapper>::ManagedOpenOrCreateUserOffset>   base_t;
    typedef detail::file_wrapper device_type;
+   typedef typename base_t::size_type              size_type;
 
    private:
 
@@ -59,7 +60,7 @@ class basic_managed_mapped_file
 
    private:
    typedef typename base_t::char_ptr_holder_t   char_ptr_holder_t;
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(basic_managed_mapped_file)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_mapped_file)
    /// @endcond
 
    public: //functions
@@ -72,7 +73,7 @@ class basic_managed_mapped_file
    //!Creates mapped file and creates and places the segment manager. 
    //!This can throw.
    basic_managed_mapped_file(create_only_t create_only, const char *name,
-                             std::size_t size, const void *addr = 0, const permissions &perm = permissions())
+                             size_type size, const void *addr = 0, const permissions &perm = permissions())
       : m_mfile(create_only, name, size, read_write, addr, 
                 create_open_func_t(get_this_pointer(), detail::DoCreate), perm)
    {}
@@ -82,7 +83,7 @@ class basic_managed_mapped_file
    //!segment.
    //!This can throw.
    basic_managed_mapped_file (open_or_create_t open_or_create,
-                              const char *name, std::size_t size, 
+                              const char *name, size_type size, 
                               const void *addr = 0, const permissions &perm = permissions())
       : m_mfile(open_or_create, name, size, read_write, addr,
                 create_open_func_t(get_this_pointer(), 
@@ -120,14 +121,14 @@ class basic_managed_mapped_file
 
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
-   basic_managed_mapped_file(BOOST_INTERPROCESS_RV_REF(basic_managed_mapped_file) moved)
+   basic_managed_mapped_file(BOOST_RV_REF(basic_managed_mapped_file) moved)
    {
       this->swap(moved);
    }
 
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
-   basic_managed_mapped_file &operator=(BOOST_INTERPROCESS_RV_REF(basic_managed_mapped_file) moved)
+   basic_managed_mapped_file &operator=(BOOST_RV_REF(basic_managed_mapped_file) moved)
    {
       basic_managed_mapped_file tmp(boost::interprocess::move(moved));
       this->swap(tmp);
@@ -161,7 +162,7 @@ class basic_managed_mapped_file
    //!
    //!This function is not synchronized so no other thread or process should
    //!be reading or writing the file
-   static bool grow(const char *filename, std::size_t extra_bytes)
+   static bool grow(const char *filename, size_type extra_bytes)
    {
       return base_t::template grow
          <basic_managed_mapped_file>(filename, extra_bytes);
@@ -183,7 +184,7 @@ class basic_managed_mapped_file
    //!buffer and the object count. If not found returned pointer is 0.
    //!Never throws.
    template <class T>
-   std::pair<T*, std::size_t> find  (char_ptr_holder_t name)
+   std::pair<T*, size_type> find  (char_ptr_holder_t name)
    {
       if(m_mfile.get_mapped_region().get_mode() == read_only){
          return base_t::template find_no_lock<T>(name);

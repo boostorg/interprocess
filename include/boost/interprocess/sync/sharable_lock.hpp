@@ -56,7 +56,7 @@ class sharable_lock
    typedef sharable_lock<SharableMutex> this_type;
    explicit sharable_lock(scoped_lock<mutex_type>&);
    typedef bool this_type::*unspecified_bool_type;
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(sharable_lock)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(sharable_lock)
    /// @endcond
    public:
 
@@ -124,7 +124,7 @@ class sharable_lock
    //!   signature. An non-moved sharable_lock can be moved with the expression:
    //!   "boost::interprocess::move(lock);". This constructor does not alter the state of the mutex,
    //!   only potentially who owns it.
-   sharable_lock(BOOST_INTERPROCESS_RV_REF(sharable_lock<mutex_type>) upgr)
+   sharable_lock(BOOST_RV_REF(sharable_lock<mutex_type>) upgr)
       : mp_mutex(0), m_locked(upgr.owns())
    {  mp_mutex = upgr.release(); }
 
@@ -138,7 +138,7 @@ class sharable_lock
    //!   signature. An non-moved upgradable_lock can be moved with the expression:
    //!   "boost::interprocess::move(lock);".*/
    template<class T>
-   sharable_lock(BOOST_INTERPROCESS_RV_REF(upgradable_lock<T>) upgr
+   sharable_lock(BOOST_RV_REF(upgradable_lock<T>) upgr
       , typename detail::enable_if< detail::is_same<T, SharableMutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
@@ -161,7 +161,7 @@ class sharable_lock
    //!   signature. An non-moved scoped_lock can be moved with the expression:
    //!   "boost::interprocess::move(lock);".
    template<class T>
-   sharable_lock(BOOST_INTERPROCESS_RV_REF(scoped_lock<T>) scop
+   sharable_lock(BOOST_RV_REF(scoped_lock<T>) scop
                , typename detail::enable_if< detail::is_same<T, SharableMutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
@@ -188,7 +188,7 @@ class sharable_lock
    //!Notes: With a recursive mutex it is possible that both this and upgr own the mutex
    //!   before the assignment. In this case, this will own the mutex after the assignment
    //!   (and upgr will not), but the mutex's lock count will be decremented by one.
-   sharable_lock &operator=(BOOST_INTERPROCESS_RV_REF(sharable_lock<mutex_type>) upgr)
+   sharable_lock &operator=(BOOST_RV_REF(sharable_lock<mutex_type>) upgr)
    {  
       if(this->owns())
          this->unlock();

@@ -33,7 +33,7 @@ namespace interprocess {
 class file_mapping
 {
    /// @cond
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(file_mapping)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(file_mapping)
    /// @endcond
 
    public:
@@ -50,14 +50,14 @@ class file_mapping
    //!Moves the ownership of "moved"'s file mapping object to *this. 
    //!After the call, "moved" does not represent any file mapping object. 
    //!Does not throw
-   file_mapping(BOOST_INTERPROCESS_RV_REF(file_mapping) moved)
+   file_mapping(BOOST_RV_REF(file_mapping) moved)
       :  m_handle(file_handle_t(detail::invalid_file()))
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s file mapping to *this.
    //!After the call, "moved" does not represent any file mapping. 
    //!Does not throw
-   file_mapping &operator=(BOOST_INTERPROCESS_RV_REF(file_mapping) moved)
+   file_mapping &operator=(BOOST_RV_REF(file_mapping) moved)
    {
       file_mapping tmp(boost::interprocess::move(moved));
       this->swap(tmp);

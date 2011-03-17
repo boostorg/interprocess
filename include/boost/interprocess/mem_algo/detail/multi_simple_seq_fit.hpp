@@ -41,13 +41,13 @@ class multi_simple_seq_fit
    /*!Constructor. "size" is the total size of the managed memory segment, 
       "extra_hdr_bytes" indicates the extra bytes beginning in the sizeof(multi_simple_seq_fit)
       offset that the allocator should not use at all.*/
-   multi_simple_seq_fit           (std::size_t size, std::size_t extra_hdr_bytes)
+   multi_simple_seq_fit           (size_type size, size_type extra_hdr_bytes)
       : base_t(size, extra_hdr_bytes){}
 
    /*!Allocates bytes from existing segments. If there is no memory, it uses
       the growing functor associated with the group to allocate a new segment.
       If this fails, returns 0.*/
-   void* allocate             (std::size_t nbytes)
+   void* allocate             (size_type nbytes)
       {  return base_t::multi_allocate(nbytes);   }
 };
 

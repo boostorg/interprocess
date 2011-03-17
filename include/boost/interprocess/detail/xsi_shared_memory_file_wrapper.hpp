@@ -39,7 +39,7 @@ class xsi_shared_memory_file_wrapper
    : public xsi_shared_memory
 {
    /// @cond
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(xsi_shared_memory_file_wrapper)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(xsi_shared_memory_file_wrapper)
    /// @endcond   
    public:
 
@@ -57,10 +57,10 @@ class xsi_shared_memory_file_wrapper
       : xsi_shared_memory(open_only_t(), key)
    {}
 
-   xsi_shared_memory_file_wrapper(BOOST_INTERPROCESS_RV_REF(xsi_shared_memory_file_wrapper) moved)
+   xsi_shared_memory_file_wrapper(BOOST_RV_REF(xsi_shared_memory_file_wrapper) moved)
    {  this->swap(moved);   }
 
-   xsi_shared_memory_file_wrapper &operator=(BOOST_INTERPROCESS_RV_REF(xsi_shared_memory_file_wrapper) moved)
+   xsi_shared_memory_file_wrapper &operator=(BOOST_RV_REF(xsi_shared_memory_file_wrapper) moved)
    {  
       xsi_shared_memory_file_wrapper tmp(boost::interprocess::move(moved));
       this->swap(tmp);

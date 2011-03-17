@@ -64,10 +64,11 @@ class basic_managed_xsi_shared_memory
 
    private:
    typedef typename base_t::char_ptr_holder_t   char_ptr_holder_t;
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(basic_managed_xsi_shared_memory)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_xsi_shared_memory)
    /// @endcond
 
    public: //functions
+   typedef typename base_t::size_type              size_type;
 
    //!Destroys *this and indicates that the calling process is finished using
    //!the resource. The destructor function will deallocate
@@ -128,7 +129,7 @@ class basic_managed_xsi_shared_memory
 
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
-   basic_managed_xsi_shared_memory(BOOST_INTERPROCESS_RV_REF(basic_managed_xsi_shared_memory) moved)
+   basic_managed_xsi_shared_memory(BOOST_RV_REF(basic_managed_xsi_shared_memory) moved)
    {
       basic_managed_xsi_shared_memory tmp;
       this->swap(moved);
@@ -137,7 +138,7 @@ class basic_managed_xsi_shared_memory
 
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
-   basic_managed_xsi_shared_memory &operator=(BOOST_INTERPROCESS_RV_REF(basic_managed_xsi_shared_memory) moved)
+   basic_managed_xsi_shared_memory &operator=(BOOST_RV_REF(basic_managed_xsi_shared_memory) moved)
    {
       basic_managed_xsi_shared_memory tmp(boost::interprocess::move(moved));
       this->swap(tmp);

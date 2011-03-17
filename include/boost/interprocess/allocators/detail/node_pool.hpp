@@ -55,11 +55,12 @@ class private_node_pool
    private_node_pool &operator=(const private_node_pool &);
 
    public:
-   typedef SegmentManager segment_manager;
+   typedef SegmentManager              segment_manager;
+   typedef typename base_t::size_type  size_type;
 
-   static const std::size_t nodes_per_block = NodesPerBlock;
+   static const size_type nodes_per_block = NodesPerBlock;
    //Deprecated, use nodes_per_block
-   static const std::size_t nodes_per_chunk = NodesPerBlock;
+   static const size_type nodes_per_chunk = NodesPerBlock;
 
    //!Constructor from a segment manager. Never throws
    private_node_pool(segment_manager *segment_mngr)
