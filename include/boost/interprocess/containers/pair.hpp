@@ -23,6 +23,7 @@ namespace boost {
 namespace interprocess {
 
 using boost::container::containers_detail::pair;
+using boost::container::containers_detail::piecewise_construct;
 
 }  //namespace interprocess {
 }  //namespace boost {

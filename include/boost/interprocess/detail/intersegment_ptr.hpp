@@ -1037,5 +1037,6 @@ void set_from_other(const self_t &other)
 
 #endif
 
-#endif //#ifndef BOOST_INTERPROCESS_INTERSEGMENT_PTR_HPP
+#include <boost/interprocess/detail/config_end.hpp>
 
+#endif //#ifndef BOOST_INTERPROCESS_INTERSEGMENT_PTR_HPP

@@ -62,6 +62,9 @@ struct enable_if : public enable_if_c<Cond::value, T> {};
 template <class Cond, class T = void>
 struct disable_if : public enable_if_c<!Cond::value, T> {};
 
+template <bool B, class T = void>
+struct disable_if_c : public enable_if_c<!B, T> {};
+
 template <class T, class U>
 class is_convertible
 {

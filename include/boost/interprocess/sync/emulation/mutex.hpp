@@ -111,4 +111,6 @@ inline void emulation_mutex::unlock(void)
 }  //namespace interprocess {
 }  //namespace boost {
 
+#include <boost/interprocess/detail/config_end.hpp>
+
 #endif   //BOOST_INTERPROCESS_DETAIL_EMULATION_MUTEX_HPP

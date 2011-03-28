@@ -112,11 +112,11 @@ class offset_ptr
 
    union internal_type{
       OffsetType m_offset; //Distance between this object and pointed address
-/*    typename ::boost::aligned_storage
+    typename ::boost::aligned_storage
          < sizeof(OffsetType)
          , (OffsetAlignment == offset_type_alignment) ?
             ::boost::alignment_of<OffsetType>::value : OffsetAlignment
-         >::type alignment_helper;*/
+         >::type alignment_helper;
    } internal;
    /// @endcond
 

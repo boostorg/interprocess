@@ -21,7 +21,6 @@
 #include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_TYPE_TRAITS_HPP
 
-
 namespace boost{
 namespace container {
 namespace containers_detail {
@@ -87,5 +86,7 @@ struct version
 }  //namespace containers_detail {
 }  //namespace container {
 }  //namespace boost{
+
+#include "config_end.hpp"
 
 #endif   //#define BOOST_CONTAINERS_DETAIL_VERSION_TYPE_HPP

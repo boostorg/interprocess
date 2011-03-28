@@ -16,6 +16,7 @@
 #ifndef BOOST_CONTAINER_DETAIL_MATH_FUNCTIONS_HPP
 #define BOOST_CONTAINER_DETAIL_MATH_FUNCTIONS_HPP
 
+#include "config_begin.hpp"
 #include <climits>
 #include <boost/static_assert.hpp>
 
@@ -106,5 +107,7 @@ inline std::size_t floor_log2 (std::size_t x)
 } // namespace containers_detail
 } // namespace container
 } // namespace boost
+
+#include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
 
 #endif

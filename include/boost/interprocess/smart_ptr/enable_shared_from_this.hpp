@@ -14,8 +14,8 @@
 #ifndef BOOST_INTERPROCESS_ENABLE_SHARED_FROM_THIS_HPP_INCLUDED
 #define BOOST_INTERPROCESS_ENABLE_SHARED_FROM_THIS_HPP_INCLUDED
 
-#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/config_begin.hpp>
+#include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/interprocess/smart_ptr/weak_ptr.hpp>

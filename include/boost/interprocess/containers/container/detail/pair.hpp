@@ -37,6 +37,32 @@ namespace container {
 namespace containers_detail {
 
 template <class T1, class T2>
+struct pair;
+
+template <class T>
+struct is_pair
+{
+   static const bool value = false;
+};
+
+template <class T1, class T2>
+struct is_pair< pair<T1, T2> >
+{
+   static const bool value = true;
+};
+
+template <class T1, class T2>
+struct is_pair< std::pair<T1, T2> >
+{
+   static const bool value = true;
+};
+
+struct pair_nat;
+
+struct piecewise_construct_t { };
+static const piecewise_construct_t piecewise_construct = piecewise_construct_t();
+
+template <class T1, class T2>
 struct pair
 {
    private:
@@ -49,78 +75,103 @@ struct pair
    T1 first;
    T2 second;
 
-   //std::pair compatibility
+   //Default constructor
+   pair()
+      : first(), second()
+   {}
+/*
+   //pair from two values
+   pair(const T1 &t1, const T2 &t2)
+      : first(t1)
+      , second(t2)
+   {}
+
+
+   //pair from two values
+   pair(BOOST_RV_REF(T1) t1, BOOST_RV_REF(T2) t2)
+      : first(::boost::move(t1))
+      , second(::boost::move(t2))
+   {}
+*/
+   template<class U, class V>
+   pair(BOOST_FWD_REF(U) u, BOOST_FWD_REF(V) v)
+      : first(::boost::forward<U>(u))
+      , second(::boost::forward<V>(v))
+   {}
+
+   //pair copy assignment
+   pair(const pair& x)
+      : first(x.first), second(x.second)
+   {}
+
+   template <class D, class S>
+   pair(const pair<D, S> &p)
+      : first(p.first), second(p.second)
+   {}
+
+   //pair move constructor
+   pair(BOOST_RV_REF(pair) p)
+      : first(::boost::move(p.first)), second(::boost::move(p.second))
+   {}
+
+   template <class D, class S>
+   pair(BOOST_RV_REF_2_TEMPL_ARGS(pair, D, S) p)
+      : first(::boost::move(p.first)), second(::boost::move(p.second))
+   {}
+
+   //std::pair copy constructor
+   pair(const std::pair<T1, T2>& x)
+      : first(x.first), second(x.second)
+   {}
+
    template <class D, class S>
    pair(const std::pair<D, S>& p)
       : first(p.first), second(p.second)
    {}
 
-   //To resolve ambiguity with the variadic constructor of 1 argument
-   //and the previous constructor
-   pair(std::pair<T1, T2>& x)
-      : first(x.first), second(x.second)
-   {}
-
+   //std::pair move constructor
    template <class D, class S>
    pair(BOOST_RV_REF_2_TEMPL_ARGS(std::pair, D, S) p)
-      : first(boost::move(p.first)), second(boost::move(p.second))
+      : first(::boost::move(p.first)), second(::boost::move(p.second))
    {}
 
-   pair()
-      : first(), second()
+   pair(BOOST_RV_REF_2_TEMPL_ARGS(std::pair, T1, T2) p)
+      : first(::boost::move(p.first)), second(::boost::move(p.second))
    {}
 
-   pair(const pair<T1, T2>& x)
-      : first(x.first), second(x.second)
-   {}
+   //piecewise_construct missing
 /*
-   //To resolve ambiguity with the variadic constructor of 1 argument
-   //and the copy constructor
-   pair(pair<T1, T2>& x)
-      : first(x.first), second(x.second)
-   {}
-*/
-   pair(BOOST_RV_REF(pair) p)
-      : first(boost::move(p.first)), second(boost::move(p.second))
-   {}
-
-   template <class D, class S>
-   pair(BOOST_RV_REF_2_TEMPL_ARGS(pair, D, S) p)
-      : first(boost::move(p.first)), second(boost::move(p.second))
+   //Variadic versions
+   template<class U>
+   pair(BOOST_CONTAINERS_PARAM(U, u), typename containers_detail::disable_if
+         < containers_detail::is_pair< typename containers_detail::remove_ref_const<U>::type >, pair_nat>::type* = 0)
+      : first(::boost::forward<U>(u))
+      , second()
    {}
 
    #ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 
-   template<class U, class ...Args>
-   pair(U &&u, Args &&... args)
-      : first(boost::forward<U>(u))
-      , second(boost::forward<Args>(args)...)
+   template<class U, class V, class ...Args>
+   pair(U &&u, V &&v)
+      : first(::boost::forward<U>(u))
+      , second(::boost::forward<V>(v), ::boost::forward<Args>(args)...)
    {}
 
    #else
-
-   template<class U>
-   pair( BOOST_CONTAINERS_PARAM(U, u)
-       #ifdef BOOST_NO_RVALUE_REFERENCES
-       , typename containers_detail::disable_if
-          < containers_detail::is_same<U, ::boost::rv<pair> > >::type* = 0
-       #endif
-      )
-      : first(boost::forward<U>(const_cast<U&>(u)))
-   {}
 
    #define BOOST_PP_LOCAL_MACRO(n)                                                            \
    template<class U, BOOST_PP_ENUM_PARAMS(n, class P)>                                        \
    pair(BOOST_CONTAINERS_PARAM(U, u)                                                          \
        ,BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_LIST, _))                                  \
-      : first(boost::forward<U>(const_cast<U&>(u)))                             \
+      : first(::boost::forward<U>(u))                             \
       , second(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_PARAM_FORWARD, _))                        \
    {}                                                                                         \
    //!
    #define BOOST_PP_LOCAL_LIMITS (1, BOOST_CONTAINERS_MAX_CONSTRUCTOR_PARAMETERS)
    #include BOOST_PP_LOCAL_ITERATE()
    #endif
-
+*/
+   //pair copy assignment
    pair& operator=(BOOST_COPY_ASSIGN_REF(pair) p)
    {
       first  = p.first;
@@ -128,30 +179,69 @@ struct pair
       return *this;
    }
 
-   pair& operator=(BOOST_RV_REF(pair) p)
+   template <class D, class S>
+   pair& operator=(const pair<D, S>&p)
    {
-      first  = boost::move(p.first);
-      second = boost::move(p.second);
+      first  = p.first;
+      second = p.second;
       return *this;
    }
 
+   //pair move assignment
+   pair& operator=(BOOST_RV_REF(pair) p)
+   {
+      first  = ::boost::move(p.first);
+      second = ::boost::move(p.second);
+      return *this;
+   }
+
+   template <class D, class S>
+   pair& operator=(BOOST_RV_REF_2_TEMPL_ARGS(pair, D, S) p)
+   {
+      first  = ::boost::move(p.first);
+      second = ::boost::move(p.second);
+      return *this;
+   }
+
+   //std::pair copy assignment
+   pair& operator=(const std::pair<T1, T2> &p)
+   {
+      first  = p.first;
+      second = p.second;
+      return *this;
+   }
+
+   template <class D, class S>
+   pair& operator=(const std::pair<D, S> &p)
+   {
+      first  = ::boost::move(p.first);
+      second = ::boost::move(p.second);
+      return *this;
+   }
+
+   //std::pair move assignment
    pair& operator=(BOOST_RV_REF_2_TEMPL_ARGS(std::pair, T1, T2) p)
    {
-      first  = boost::move(p.first);
-      second = boost::move(p.second);
+      first  = ::boost::move(p.first);
+      second = ::boost::move(p.second);
       return *this;
    }
 
    template <class D, class S>
    pair& operator=(BOOST_RV_REF_2_TEMPL_ARGS(std::pair, D, S) p)
    {
-      first  = boost::move(p.first);
-      second = boost::move(p.second);
+      first  = ::boost::move(p.first);
+      second = ::boost::move(p.second);
       return *this;
    }
 
+   //swap
    void swap(pair& p)
-   {  std::swap(*this, p); }
+   {
+      using std::swap;
+      swap(this->first, p.first);
+      swap(this->second, p.second);
+   }
 };
 
 template <class T1, class T2>

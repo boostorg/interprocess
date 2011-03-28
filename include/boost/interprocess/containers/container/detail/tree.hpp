@@ -47,7 +47,7 @@ struct value_compare_impl
    typedef KeyOfValue   key_of_value;
    typedef Key          key_type;
 
-   value_compare_impl(key_compare kcomp)
+   value_compare_impl(const key_compare &kcomp)
       :  key_compare(kcomp)
    {}
 
@@ -57,9 +57,25 @@ struct value_compare_impl
    key_compare &key_comp()
    {  return static_cast<key_compare &>(*this);  }
 
-   template<class A, class B>
-   bool operator()(const A &a, const B &b) const
-   {  return key_compare::operator()(KeyOfValue()(a), KeyOfValue()(b)); }
+   template<class T>
+   struct is_key
+   {
+      static const bool value = is_same<const T, const key_type>::value;
+   };
+
+   template<class T>
+   typename enable_if_c<is_key<T>::value, const key_type &>::type
+      key_forward(const T &key) const
+   {  return key; }
+
+   template<class T>
+   typename enable_if_c<!is_key<T>::value, const key_type &>::type
+      key_forward(const T &key) const
+   {  return KeyOfValue()(key);  }
+
+   template<class KeyType, class KeyType2>
+   bool operator()(const KeyType &key1, const KeyType2 &key2) const
+   {  return key_compare::operator()(this->key_forward(key1), this->key_forward(key2));  }
 };
 
 template<class VoidPointer>
@@ -296,17 +312,29 @@ class rbtree
    struct key_node_compare
       :  private KeyValueCompare
    {
-      key_node_compare(KeyValueCompare comp)
+      key_node_compare(const KeyValueCompare &comp)
          :  KeyValueCompare(comp)
       {}
-      
-      template<class KeyType>
-      bool operator()(const Node &n, const KeyType &k) const
-      {  return KeyValueCompare::operator()(n.get_data(), k);  }
 
-      template<class KeyType>
-      bool operator()(const KeyType &k, const Node &n) const
-      {  return KeyValueCompare::operator()(k, n.get_data());  }
+      template<class T>
+      struct is_node
+      {
+         static const bool value = is_same<T, Node>::value;
+      };
+
+      template<class T>
+      typename enable_if_c<is_node<T>::value, const value_type &>::type
+         key_forward(const T &node) const
+      {  return node.get_data();  }
+
+      template<class T>
+      typename enable_if_c<!is_node<T>::value, const T &>::type
+         key_forward(const T &key) const
+      {  return key; }
+
+      template<class KeyType, class KeyType2>
+      bool operator()(const KeyType &key1, const KeyType2 &key2) const
+      {  return KeyValueCompare::operator()(this->key_forward(key1), this->key_forward(key2));  }
    };
 
    typedef key_node_compare<value_compare>  KeyNodeCompare;
