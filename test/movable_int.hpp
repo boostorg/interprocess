@@ -141,7 +141,6 @@ std::basic_ostream<E, T> & operator<<
     return os;
 }
 
-
 class copyable_int
 {
    public:
@@ -179,6 +178,45 @@ class copyable_int
    {  return this->m_int >= mi.m_int;   }
 
    bool operator >(const copyable_int &mi) const
+   {  return this->m_int > mi.m_int;   }
+
+   int get_int() const
+   {  return m_int;  }
+
+   private:
+   int m_int;
+};
+
+class non_copymovable_int
+{
+   non_copymovable_int(const non_copymovable_int& mmi);
+   non_copymovable_int & operator= (const non_copymovable_int &mi);
+
+   public:
+   non_copymovable_int()
+      :  m_int(0)
+   {}
+
+   explicit non_copymovable_int(int a)
+      :  m_int(a)
+   {}
+
+   bool operator ==(const non_copymovable_int &mi) const
+   {  return this->m_int == mi.m_int;   }
+
+   bool operator !=(const non_copymovable_int &mi) const
+   {  return this->m_int != mi.m_int;   }
+
+   bool operator <(const non_copymovable_int &mi) const
+   {  return this->m_int < mi.m_int;   }
+
+   bool operator <=(const non_copymovable_int &mi) const
+   {  return this->m_int <= mi.m_int;   }
+
+   bool operator >=(const non_copymovable_int &mi) const
+   {  return this->m_int >= mi.m_int;   }
+
+   bool operator >(const non_copymovable_int &mi) const
    {  return this->m_int > mi.m_int;   }
 
    int get_int() const
