@@ -25,7 +25,6 @@
 #include <boost/pointer_cast.hpp>
 #include <boost/pointer_to_other.hpp>
 #include <boost/assert.hpp>
-#include <boost/assert.hpp>
 #include <ostream>
 #include <istream>
 #include <iterator>

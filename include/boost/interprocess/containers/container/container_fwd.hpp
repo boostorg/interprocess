@@ -32,6 +32,8 @@ namespace bi = boost::intrusive;
 
 }}}
 
+#ifndef _LIBCPP_VERSION
+
 namespace std {
 
 template <class T>
@@ -47,6 +49,15 @@ template <class CharType>
 struct char_traits;
 
 }  //namespace std {
+
+#else 
+
+#include <utility> 
+#include <memory> 
+#include <functional> 
+#include <iosfwd> 
+ 
+#endif
 
 /// @endcond
 
