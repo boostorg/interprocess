@@ -19,9 +19,9 @@
 #include <string>
 
 #if defined(BOOST_INTERPROCESS_WINDOWS)
-   #define BOOST_INTERPROCESS_HAS_WINDOWS_KERNEL_BOOTTIME
-   #define BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME
-   #include <boost/interprocess/detail/win32_api.hpp>
+   //#define BOOST_INTERPROCESS_HAS_WINDOWS_KERNEL_BOOTTIME
+   //#define BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME
+   //#include <boost/interprocess/detail/win32_api.hpp>
 #elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
    #include <sys/sysctl.h>
    #if defined(CTL_KERN) && defined (KERN_BOOTTIME)
@@ -152,7 +152,8 @@ inline void create_tmp_and_clean_old(std::string &tmp_name)
 inline void create_tmp_and_clean_old_and_get_filename(const char *filename, std::string &tmp_name)
 {
    create_tmp_and_clean_old(tmp_name);
-   tmp_filename(filename, tmp_name);
+   tmp_name += "/";
+   tmp_name += filename;
 }
 
 inline void add_leading_slash(const char *name, std::string &new_name)

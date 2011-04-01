@@ -166,6 +166,8 @@ const long EOAC_NONE_IG = 0;
 const long CLSCTX_INPROC_SERVER_IG   = 0x1;
 const long CLSCTX_LOCAL_SERVER_IG   = 0x4;
 const long WBEM_FLAG_RETURN_IMMEDIATELY_IG = 0x10;
+const long WBEM_FLAG_RETURN_WHEN_COMPLETE_IG = 0x0;
+const long WBEM_FLAG_FORWARD_ONLY_IG = 0x20;
 const long WBEM_INFINITE_IG = 0xffffffffL;
 const long RPC_E_TOO_LATE_IG = 0x80010119L;
 const long S_OK_IG = 0L;
@@ -1527,7 +1529,8 @@ inline bool get_wmi_class_attribute( std::wstring& strValue, const wchar_t *wmi_
       if ( 0 != pWbemServices->ExecQuery(
             L"WQL",
             strValue.c_str(),
-            WBEM_FLAG_RETURN_IMMEDIATELY_IG,
+            //WBEM_FLAG_RETURN_IMMEDIATELY_IG,
+            WBEM_FLAG_RETURN_WHEN_COMPLETE_IG | WBEM_FLAG_FORWARD_ONLY_IG,
             0,
             &pEnumObject
             )
@@ -1537,9 +1540,10 @@ inline bool get_wmi_class_attribute( std::wstring& strValue, const wchar_t *wmi_
 
       com_releaser<IEnumWbemClassObject_IG> IEnumWbemClassObject_releaser(pEnumObject);
 
-      if ( 0 != pEnumObject->Reset() ){
-         return false;
-      }
+      //WBEM_FLAG_FORWARD_ONLY_IG incompatible with Reset
+      //if ( 0 != pEnumObject->Reset() ){
+         //return false;
+      //}
 
       wchar_variant vwchar;
       unsigned long uCount = 1, uReturned;
