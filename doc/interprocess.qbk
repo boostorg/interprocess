@@ -2777,8 +2777,8 @@ restrictions:
 
 [section:file_lock_careful_iostream Be Careful With Iostream Writing]
 
-As we've seen file locking can be useful to synchronize two processes
-reading and writing to a file, but [*make sure data is written to the file]
+As we've seen file locking can be useful to synchronize two processes,
+but [*make sure data is written to the file]
 before unlocking the file lock. Take in care that iostream classes do some
 kind of buffering, so if you want to make sure that other processes can
 see the data you've written, you have the following alternatives:
@@ -2787,7 +2787,8 @@ see the data you've written, you have the following alternatives:
    in Windows systems) instead of iostream.
 
 *  Flush data before unlocking the file lock in writers using `fflush` if you are using
-   standard C functions or the `flush()` member function when using C++ iostreams.
+   standard C functions or the `flush()` member function when using C++ iostreams. In windows
+   you can't even use another class to access the same file.
 
    //...
 
@@ -2796,7 +2797,7 @@ see the data you've written, you have the following alternatives:
    //    ...
    //Open the file lock
    fstream file("my_file")
-   file_lock f_lock("my_file");
+   file_lock f_lock("my_lock_file");
 
    {
       scoped_lock<file_lock> e_lock(f_lock);
@@ -6604,7 +6605,22 @@ thank them:
 [section:release_notes_boost_1_47_00 Boost 1.47 Release]
 
 *  Fixed bugs
-  [@https://svn.boost.org/trac/boost/ticket/5197 #5197].
+  [@https://svn.boost.org/trac/boost/ticket/2796 #2796],
+  [@https://svn.boost.org/trac/boost/ticket/4031 #4031],
+  [@https://svn.boost.org/trac/boost/ticket/4251 #4251],
+  [@https://svn.boost.org/trac/boost/ticket/4452 #4452],
+  [@https://svn.boost.org/trac/boost/ticket/4895 #4895],
+  [@https://svn.boost.org/trac/boost/ticket/5077 #5077],
+  [@https://svn.boost.org/trac/boost/ticket/5120 #5120],
+  [@https://svn.boost.org/trac/boost/ticket/5123 #5123],
+  [@https://svn.boost.org/trac/boost/ticket/5230 #5230],
+  [@https://svn.boost.org/trac/boost/ticket/5197 #5197],
+  [@https://svn.boost.org/trac/boost/ticket/5287 #5287],
+  [@https://svn.boost.org/trac/boost/ticket/5294 #5294],
+  [@https://svn.boost.org/trac/boost/ticket/5306 #5306],
+  [@https://svn.boost.org/trac/boost/ticket/5308 #5308],
+  [@https://svn.boost.org/trac/boost/ticket/5392 #5392],
+  [@https://svn.boost.org/trac/boost/ticket/5409 #5409],
 
 * Added support to customize offset_ptr and allow
   creating custom managed segments that might be shared between
