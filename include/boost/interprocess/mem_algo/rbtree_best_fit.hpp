@@ -338,8 +338,8 @@ class rbtree_best_fit
    public:
    
    static const size_type Alignment = !MemAlignment
-      ? ::boost::alignment_of< ::boost::detail::max_align>::value
-      : MemAlignment
+      ? size_type(::boost::alignment_of< ::boost::detail::max_align>::value)
+      : size_type(MemAlignment)
       ;
 
    private:

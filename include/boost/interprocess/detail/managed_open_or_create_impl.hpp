@@ -263,12 +263,21 @@ class managed_open_or_create_impl
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
-   static void truncate_device(DeviceAbstraction &, std::size_t, detail::false_)
+   static void truncate_device(DeviceAbstraction &, offset_t, detail::false_)
    {} //Empty
 
    template<bool dummy>
-   static void truncate_device(DeviceAbstraction &dev, std::size_t size, detail::true_)
+   static void truncate_device(DeviceAbstraction &dev, offset_t size, detail::true_)
    {  dev.truncate(size);  }
+
+
+   template<bool dummy>
+   static bool check_offset_t_size(std::size_t , detail::false_)
+   { return true; } //Empty
+
+   template<bool dummy>
+   static bool check_offset_t_size(std::size_t size, detail::true_)
+   { return size == std::size_t(offset_t(size)); }
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
@@ -305,7 +314,10 @@ class managed_open_or_create_impl
       if(type != detail::DoOpen && size < ManagedOpenOrCreateUserOffset){
          throw interprocess_exception(error_info(size_error));
       }
-
+      //Check size can be represented by offset_t (used by truncate)
+      if(type != detail::DoOpen && !check_offset_t_size<FileBased>(size, file_like_t())){
+         throw interprocess_exception(error_info(size_error));
+      }
       if(type == detail::DoOpen && mode == read_write){
          DeviceAbstraction tmp(open_only, id, read_write);
          tmp.swap(dev);

@@ -132,6 +132,7 @@ static const unsigned long format_message_max_width_mask
 static const unsigned long lang_neutral         = (unsigned long)0x00;
 static const unsigned long sublang_default      = (unsigned long)0x01;
 static const unsigned long invalid_file_size    = (unsigned long)0xFFFFFFFF;
+static const unsigned long invalid_file_attributes =  ((unsigned long)-1);
 static       void * const  invalid_handle_value = (void*)(long)(-1);
 static const unsigned long create_new        = 1;
 static const unsigned long create_always     = 2;
@@ -822,6 +823,7 @@ extern "C" __declspec(dllimport) unsigned long __stdcall FormatMessageA
    unsigned long dwLanguageId,   char *lpBuffer,         unsigned long nSize, 
    std::va_list *Arguments);
 extern "C" __declspec(dllimport) void *__stdcall LocalFree (void *);
+extern "C" __declspec(dllimport) unsigned long __stdcall GetFileAttributesA(const char *);
 extern "C" __declspec(dllimport) int __stdcall CreateDirectoryA(const char *, interprocess_security_attributes*);
 extern "C" __declspec(dllimport) int __stdcall RemoveDirectoryA(const char *lpPathName);
 extern "C" __declspec(dllimport) int __stdcall GetTempPathA(unsigned long length, char *buffer);
@@ -841,7 +843,6 @@ extern "C" __declspec(dllimport) int   __stdcall FreeLibrary(void *);
 extern "C" __declspec(dllimport) void *__stdcall GetProcAddress(void *, const char*);
 extern "C" __declspec(dllimport) void *__stdcall GetModuleHandleA(const char*);
 extern "C" __declspec(dllimport) void *__stdcall GetFileInformationByHandle(void *, interprocess_by_handle_file_information*);
-
 
 //COM API
 extern "C" __declspec(dllimport) long __stdcall CoInitialize(void *pvReserved);
@@ -1472,6 +1473,7 @@ inline bool get_wmi_class_attribute( std::wstring& strValue, const wchar_t *wmi_
    if(co_init_ret != S_OK_IG && co_init_ret != S_FALSE_IG)
       return false;
    co_uninitializer co_initialize_end;
+   (void)co_initialize_end;
 
    bool bRet = false;
    long sec_init_ret = CoInitializeSecurity
@@ -1587,6 +1589,13 @@ inline bool get_last_bootup_time( std::string& str )
    return ret;
 }
 
+inline bool is_directory(const char *path)
+{
+	unsigned long attrib = GetFileAttributesA(path);
+
+	return (attrib != invalid_file_attributes &&
+	        (attrib & file_attribute_directory));
+}
 
 }  //namespace winapi 
 }  //namespace interprocess
