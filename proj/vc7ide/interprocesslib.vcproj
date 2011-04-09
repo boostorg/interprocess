@@ -643,17 +643,6 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="Jamfiles"
-			Filter="">
-			<Filter
-				Name="Test"
-				Filter="">
-				<File
-					RelativePath="..\..\test\Jamfile.v2">
-				</File>
-			</Filter>
-		</Filter>
-		<Filter
 			Name="Streams"
 			Filter="">
 			<File
@@ -692,6 +681,9 @@
 			</File>
 			<File
 				RelativePath="..\..\test\get_process_id_name.hpp">
+			</File>
+			<File
+				RelativePath="..\..\test\Jamfile.v2">
 			</File>
 			<File
 				RelativePath="..\..\test\list_test.hpp">
