@@ -368,6 +368,27 @@ inline typename managed_shared_ptr<T, ManagedMemory>::type
    );
 }
 
+//!Returns an instance of a shared pointer constructed
+//!with the default allocator and deleter from a pointer
+//!of type T that has been allocated in the passed managed segment.
+//!Does not throw, return null shared pointer in error.
+template<class T, class ManagedMemory>
+inline typename managed_shared_ptr<T, ManagedMemory>::type
+   make_managed_shared_ptr(T *constructed_object, ManagedMemory &managed_memory, std::nothrow_t)
+{
+   try{
+      return typename managed_shared_ptr<T, ManagedMemory>::type
+      ( constructed_object
+      , managed_memory.template get_allocator<void>()
+      , managed_memory.template get_deleter<T>()
+      );
+   }
+   catch(...){
+      return managed_shared_ptr<T, ManagedMemory>::type();
+   }
+}
+
+
 } // namespace interprocess
 
 /// @cond
