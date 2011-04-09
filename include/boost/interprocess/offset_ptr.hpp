@@ -92,7 +92,7 @@ class offset_ptr
    PointedType * get_pointer() const
    {
       #if defined (__GNUC__)
-      asm(""); //Prevents the function to be optimized-away (provokes an special "side-effect")
+      //asm(""); //Prevents the function to be optimized-away (provokes an special "side-effect")
       #endif
       return static_cast<PointedType *>(
          static_cast<void*>(
