@@ -72,7 +72,7 @@ class offset_ptr
    void set_offset(const PointedType *ptr)
    {
       #if defined (__GNUC__)
-      asm(""); //Prevents the function to be optimized-away (provokes an special "side-effect")
+      //asm(""); //Prevents the function to be optimized-away (provokes an special "side-effect")
       #endif
       //offset == 1 && ptr != 0 is not legal for this pointer
       if(!ptr){
