@@ -384,7 +384,7 @@ inline typename managed_shared_ptr<T, ManagedMemory>::type
       );
    }
    catch(...){
-      return managed_shared_ptr<T, ManagedMemory>::type();
+      return typename managed_shared_ptr<T, ManagedMemory>::type();
    }
 }
 

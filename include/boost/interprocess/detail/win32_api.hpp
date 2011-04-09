@@ -24,6 +24,7 @@
 #  pragma comment( lib, "advapi32.lib" )
 #  pragma comment( lib, "oleaut32.lib" )
 #  pragma comment( lib, "Ole32.lib" )
+#  pragma comment( lib, "Psapi.lib" )
 #endif
 
 #if (defined BOOST_INTERPROCESS_WINDOWS)
@@ -843,6 +844,10 @@ extern "C" __declspec(dllimport) int   __stdcall FreeLibrary(void *);
 extern "C" __declspec(dllimport) void *__stdcall GetProcAddress(void *, const char*);
 extern "C" __declspec(dllimport) void *__stdcall GetModuleHandleA(const char*);
 extern "C" __declspec(dllimport) void *__stdcall GetFileInformationByHandle(void *, interprocess_by_handle_file_information*);
+extern "C" __declspec(dllimport) unsigned long __stdcall GetMappedFileNameW(void *, void *, wchar_t *, unsigned long);
+extern "C" __declspec(dllimport) long __stdcall RegOpenKeyExA(void *, const char *, unsigned long, unsigned long, void **);
+extern "C" __declspec(dllimport) long __stdcall RegQueryValueExA(void *, const char *, unsigned long*, unsigned long*, unsigned char *, unsigned long*);
+extern "C" __declspec(dllimport) long __stdcall RegCloseKey(void *);
 
 //COM API
 extern "C" __declspec(dllimport) long __stdcall CoInitialize(void *pvReserved);
@@ -868,6 +873,8 @@ extern "C" __declspec(dllimport) void __stdcall CoUninitialize(void);
 //Pointer to functions
 typedef long (__stdcall *NtDeleteFile_t)(object_attributes_t *ObjectAttributes); 
 typedef long (__stdcall *NtSetInformationFile_t)(void *FileHandle, io_status_block_t *IoStatusBlock, void *FileInformation, unsigned long Length, int FileInformationClass ); 
+typedef long (__stdcall * NtQuerySystemInformation_t)(int, void*, unsigned long, unsigned long *); 
+typedef long (__stdcall * NtQueryObject_t)(void*, object_information_class, void *, unsigned long, unsigned long *); 
 typedef long (__stdcall *NtQueryInformationFile_t)(void *,io_status_block_t *,void *, long, int);
 typedef long (__stdcall *NtOpenFile_t)(void*,unsigned long ,object_attributes_t*,io_status_block_t*,unsigned long,unsigned long);
 typedef long (__stdcall *NtClose_t) (void*);
@@ -875,13 +882,8 @@ typedef long (__stdcall *RtlCreateUnicodeStringFromAsciiz_t)(unicode_string_t *,
 typedef void (__stdcall *RtlFreeUnicodeString_t)(unicode_string_t *);
 typedef void (__stdcall *RtlInitUnicodeString_t)( unicode_string_t *, const wchar_t * );
 typedef long (__stdcall *RtlAppendUnicodeToString_t)(unicode_string_t *Destination, const wchar_t *Source);
-typedef long (__stdcall * NtQuerySystemInformation_t)(int, void*, unsigned long, unsigned long *); 
-typedef long (__stdcall * NtQueryObject_t)(void*, object_information_class, void *, unsigned long, unsigned long *); 
 typedef unsigned long (__stdcall * GetMappedFileName_t)(void *, void *, wchar_t *, unsigned long);
-typedef unsigned long (__stdcall * GetMappedFileName_t)(void *, void *, wchar_t *, unsigned long);
-typedef long          (__stdcall * RegOpenKey_t)(void *, const char *, void **);
 typedef long          (__stdcall * RegOpenKeyEx_t)(void *, const char *, unsigned long, unsigned long, void **);
-typedef long          (__stdcall * RegQueryValue_t)(void *, const char *, char *, long*);
 typedef long          (__stdcall * RegQueryValueEx_t)(void *, const char *, unsigned long*, unsigned long*, unsigned char *, unsigned long*);
 typedef long          (__stdcall * RegCloseKey_t)(void *);
 
@@ -1111,6 +1113,18 @@ inline void *get_current_process()
 inline void *get_module_handle(const char *name)
 {  return GetModuleHandleA(name); }
 
+inline unsigned long get_mapped_file_name(void *process, void *lpv, wchar_t *lpfilename, unsigned long nSize)
+{  return GetMappedFileNameW(process, lpv, lpfilename, nSize); }
+
+inline long reg_open_key_ex(void *hKey, const char *lpSubKey, unsigned long ulOptions, unsigned long samDesired, void **phkResult)
+{  return RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult); }
+
+inline long reg_query_value_ex(void *hKey, const char *lpValueName, unsigned long*lpReserved, unsigned long*lpType, unsigned char *lpData, unsigned long*lpcbData)
+{  return RegQueryValueExA(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData); }
+
+inline long reg_close_key(void *hKey)
+{  return RegCloseKey(hKey); }
+
 inline void initialize_object_attributes
 ( object_attributes_t *pobject_attr, unicode_string_t *name
  , unsigned long attr, void *rootdir, void *security_descr)
@@ -1131,6 +1145,48 @@ inline void rtl_init_empty_unicode_string(unicode_string_t *ucStr, wchar_t *buf,
    ucStr->MaximumLength = bufSize;
 }
 
+template<int Dummy>
+struct function_address_holder
+{
+   enum { NtSetInformationFile, NtQuerySystemInformation, NtQueryObject, FunctionAddressNum };
+
+   private:
+   static void *FunctionAddresses[FunctionAddressNum];
+   static volatile long FunctionStates[FunctionAddressNum];
+
+   static void *get_address_from_dll(const unsigned int id)
+   {
+      const char *module[] = { "ntdll.dll", "ntdll.dll", "ntdll.dll" };
+      const char *function[] = { "NtSetInformationFile", "NtQuerySystemInformation", "NtQueryObject" };
+      return get_proc_address(get_module_handle(module[id]), function[id]);
+   }
+
+   public:
+   static void *get(const unsigned int id)
+   {
+      while(FunctionStates[id] < 2u){
+         if(interlocked_compare_exchange(&FunctionStates[id], 1, 0) == 0){
+            FunctionAddresses[id] = get_address_from_dll(id);
+            interlocked_increment(&FunctionStates[id]);
+         }
+         else{
+            sched_yield();
+         }
+      }
+      return FunctionAddresses[id];
+   }
+};
+
+template<int Dummy>
+void *function_address_holder<Dummy>::FunctionAddresses[FunctionAddressNum];
+
+template<int Dummy>
+volatile long function_address_holder<Dummy>::FunctionStates[FunctionAddressNum];
+
+struct dll_func
+   : public function_address_holder<0>
+{};
+
 //Complex winapi based functions...
 struct library_unloader
 {
@@ -1147,30 +1203,29 @@ inline bool get_file_name_from_handle_function
       return false;
    }
 
-   void *hiPSAPI = load_library("PSAPI.DLL");
-   if (0 == hiPSAPI)
-      return 0;
+//   void *hiPSAPI = load_library("PSAPI.DLL");
+//   if (0 == hiPSAPI)
+//      return 0;
+//   library_unloader unloader(hiPSAPI);
 
-   library_unloader unloader(hiPSAPI);
-
-   //  Pointer to function getMappedFileName() in PSAPI.DLL
-   GetMappedFileName_t pfGMFN =
-      (GetMappedFileName_t)get_proc_address(hiPSAPI, "GetMappedFileNameW");
-   if (! pfGMFN){
-      return 0;      //  Failed: unexpected error
-   }
+//  Pointer to function getMappedFileName() in PSAPI.DLL
+//   GetMappedFileName_t pfGMFN =
+//      (GetMappedFileName_t)get_proc_address(hiPSAPI, "GetMappedFileNameW");
+//   if (! pfGMFN){
+//      return 0;      //  Failed: unexpected error
+//   }
 
    bool bSuccess = false;
 
    // Create a file mapping object.
    void * hFileMap = create_file_mapping(hFile, page_readonly, 0, 1, 0, 0);
-   if(hFileMap)
-   {
+   if(hFileMap){
       // Create a file mapping to get the file name.
       void* pMem = map_view_of_file_ex(hFileMap, file_map_read, 0, 0, 1, 0);
 
       if (pMem){
-         out_length = pfGMFN(get_current_process(), pMem, pszFilename, MaxPath);
+         //out_length = pfGMFN(get_current_process(), pMem, pszFilename, MaxPath);
+         out_length = get_mapped_file_name(get_current_process(), pMem, pszFilename, MaxPath);
          if(out_length){
             bSuccess = true;
          } 
@@ -1185,7 +1240,8 @@ inline bool get_file_name_from_handle_function
 inline bool get_system_time_of_day_information(system_timeofday_information &info)
 {
    NtQuerySystemInformation_t pNtQuerySystemInformation = (NtQuerySystemInformation_t)
-      get_proc_address(get_module_handle("ntdll.dll"), "NtQuerySystemInformation");
+      //get_proc_address(get_module_handle("ntdll.dll"), "NtQuerySystemInformation");
+         dll_func::get(dll_func::NtQuerySystemInformation);
    unsigned long res;
    long status = pNtQuerySystemInformation(system_time_of_day_information, &info, sizeof(info), &res);
    if(status){
@@ -1280,13 +1336,15 @@ inline bool unlink_file(const char *filename)
 {
    try{
       NtSetInformationFile_t pNtSetInformationFile =
-         (NtSetInformationFile_t)get_proc_address(get_module_handle("ntdll.dll"), "NtSetInformationFile"); 
+         //(NtSetInformationFile_t)get_proc_address(get_module_handle("ntdll.dll"), "NtSetInformationFile"); 
+         (NtSetInformationFile_t)dll_func::get(dll_func::NtSetInformationFile);
       if(!pNtSetInformationFile){
          return false;
       }
 
       NtQueryObject_t pNtQueryObject =
-         (NtQueryObject_t)get_proc_address(get_module_handle("ntdll.dll"), "NtQueryObject"); 
+         //(NtQueryObject_t)get_proc_address(get_module_handle("ntdll.dll"), "NtQueryObject"); 
+         (NtQueryObject_t)dll_func::get(dll_func::NtQueryObject);
 
       //First step: Obtain a handle to the file using Win32 rules. This resolves relative paths
       void *fh = create_file(filename, generic_read | delete_access, open_existing,
@@ -1354,105 +1412,123 @@ inline bool unlink_file(const char *filename)
 
 struct reg_closer
 {
-   RegCloseKey_t func_;
+   //reg_closer(RegCloseKey_t func, void *key) : func_(func), key_(key){}
+   //~reg_closer(){ (*func_)(key_);  }
+   //RegCloseKey_t func_;
    void *key_;
-   reg_closer(RegCloseKey_t func, void *key) : func_(func), key_(key){}
-   ~reg_closer(){ (*func_)(key_);  }
+   reg_closer(void *key) : key_(key){}
+   ~reg_closer(){ reg_close_key(key_);  }
 };
 
 inline void get_shared_documents_folder(std::string &s)
 {
    s.clear();
-   void *hAdvapi = load_library("Advapi32.dll");
-   if (hAdvapi){
-      library_unloader unloader(hAdvapi);
+   //void *hAdvapi = load_library("Advapi32.dll");
+   //if (hAdvapi){
+      //library_unloader unloader(hAdvapi);
       //  Pointer to function RegOpenKeyA
-      RegOpenKeyEx_t pRegOpenKey =
-         (RegOpenKeyEx_t)get_proc_address(hAdvapi, "RegOpenKeyExA");
-      if (pRegOpenKey){
+      //RegOpenKeyEx_t pRegOpenKey =
+         //(RegOpenKeyEx_t)get_proc_address(hAdvapi, "RegOpenKeyExA");
+      //if (pRegOpenKey){
          //  Pointer to function RegCloseKey
-         RegCloseKey_t pRegCloseKey =
-            (RegCloseKey_t)get_proc_address(hAdvapi, "RegCloseKey");
-         if (pRegCloseKey){
+         //RegCloseKey_t pRegCloseKey =
+            //(RegCloseKey_t)get_proc_address(hAdvapi, "RegCloseKey");
+         //if (pRegCloseKey){
             //  Pointer to function RegQueryValueA
-            RegQueryValueEx_t pRegQueryValue =
-               (RegQueryValueEx_t)get_proc_address(hAdvapi, "RegQueryValueExA");
-            if (pRegQueryValue){
+            //RegQueryValueEx_t pRegQueryValue =
+               //(RegQueryValueEx_t)get_proc_address(hAdvapi, "RegQueryValueExA");
+            //if (pRegQueryValue){
                //Open the key
                void *key;
-               if ((*pRegOpenKey)( hkey_local_machine
+               //if ((*pRegOpenKey)( hkey_local_machine
+                                 //, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders"
+                                 //, 0
+                                 //, key_query_value
+                                 //, &key) == 0){
+                  //reg_closer key_closer(pRegCloseKey, key);
+               if (reg_open_key_ex( hkey_local_machine
                                  , "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders"
                                  , 0
                                  , key_query_value
                                  , &key) == 0){
-                  reg_closer key_closer(pRegCloseKey, key);
+                  reg_closer key_closer(key);
 
                   //Obtain the value
                   unsigned long size;
                   unsigned long type;
                   const char *const reg_value = "Common AppData";
-                  long err = (*pRegQueryValue)( key, reg_value, 0, &type, 0, &size);
+                  //long err = (*pRegQueryValue)( key, reg_value, 0, &type, 0, &size);
+                  long err = reg_query_value_ex( key, reg_value, 0, &type, 0, &size);
                   if(!err){
                      //Size includes terminating NULL
                      s.resize(size);
-                     err = (*pRegQueryValue)( key, reg_value, 0, &type, (unsigned char*)(&s[0]), &size);
+                     //err = (*pRegQueryValue)( key, reg_value, 0, &type, (unsigned char*)(&s[0]), &size);
+                     err = reg_query_value_ex( key, reg_value, 0, &type, (unsigned char*)(&s[0]), &size);
                      if(!err)
                         s.erase(s.end()-1);
                      (void)err;
                   }
                }
-            }
-         }
-      }
-   }
+            //}
+         //}
+      //}
+   //}
 }
 
 
 inline void get_registry_value(const char *folder, const char *value_key, std::vector<unsigned char> &s)
 {
    s.clear();
-   void *hAdvapi = load_library("Advapi32.dll");
-   if (hAdvapi){
-      library_unloader unloader(hAdvapi);
+   //void *hAdvapi = load_library("Advapi32.dll");
+   //if (hAdvapi){
+      //library_unloader unloader(hAdvapi);
       //  Pointer to function RegOpenKeyA
-      RegOpenKeyEx_t pRegOpenKey =
-         (RegOpenKeyEx_t)get_proc_address(hAdvapi, "RegOpenKeyExA");
-      if (pRegOpenKey){
+      //RegOpenKeyEx_t pRegOpenKey =
+         //(RegOpenKeyEx_t)get_proc_address(hAdvapi, "RegOpenKeyExA");
+      //if (pRegOpenKey){
          //  Pointer to function RegCloseKey
-         RegCloseKey_t pRegCloseKey =
-            (RegCloseKey_t)get_proc_address(hAdvapi, "RegCloseKey");
-         if (pRegCloseKey){
+         //RegCloseKey_t pRegCloseKey =
+            //(RegCloseKey_t)get_proc_address(hAdvapi, "RegCloseKey");
+         //if (pRegCloseKey){
             //  Pointer to function RegQueryValueA
-            RegQueryValueEx_t pRegQueryValue =
-               (RegQueryValueEx_t)get_proc_address(hAdvapi, "RegQueryValueExA");
-            if (pRegQueryValue){
+            //RegQueryValueEx_t pRegQueryValue =
+               //(RegQueryValueEx_t)get_proc_address(hAdvapi, "RegQueryValueExA");
+            //if (pRegQueryValue){
                //Open the key
                void *key;
-               if ((*pRegOpenKey)( hkey_local_machine
+               //if ((*pRegOpenKey)( hkey_local_machine
+                                 //, folder
+                                 //, 0
+                                 //, key_query_value
+                                 //, &key) == 0){
+                  //reg_closer key_closer(pRegCloseKey, key);
+               if (reg_open_key_ex( hkey_local_machine
                                  , folder
                                  , 0
                                  , key_query_value
                                  , &key) == 0){
-                  reg_closer key_closer(pRegCloseKey, key);
+                  reg_closer key_closer(key);
 
                   //Obtain the value
                   unsigned long size;
                   unsigned long type;
                   const char *const reg_value = value_key;
-                  long err = (*pRegQueryValue)( key, reg_value, 0, &type, 0, &size);
+                  //long err = (*pRegQueryValue)( key, reg_value, 0, &type, 0, &size);
+                  long err = reg_query_value_ex( key, reg_value, 0, &type, 0, &size);
                   if(!err){
                      //Size includes terminating NULL
                      s.resize(size);
-                     err = (*pRegQueryValue)( key, reg_value, 0, &type, (unsigned char*)(&s[0]), &size);
+                     //err = (*pRegQueryValue)( key, reg_value, 0, &type, (unsigned char*)(&s[0]), &size);
+                     err = reg_query_value_ex( key, reg_value, 0, &type, (unsigned char*)(&s[0]), &size);
                      if(!err)
                         s.erase(s.end()-1);
                      (void)err;
                   }
                }
-            }
-         }
-      }
-   }
+            //}
+         //}
+      //}
+   //}
 }
 
 struct co_uninitializer
