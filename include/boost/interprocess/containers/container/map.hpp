@@ -61,7 +61,9 @@
 #include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_UTILITIES_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_PAIR_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_TYPE_TRAITS_HPP
 #include <boost/move/move.hpp>
+#include <boost/static_assert.hpp>
 
 #ifdef BOOST_CONTAINER_DOXYGEN_INVOKED
 namespace boost {
@@ -106,6 +108,10 @@ class map
                            Pred, 
                            Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing map
+
+   //Allocator type must be std::pair<CONST Key, T>
+   BOOST_STATIC_ASSERT((containers_detail::is_same<std::pair<const Key, T>, typename Alloc::value_type>::value));
+
    /// @endcond
 
    public:
@@ -760,6 +766,9 @@ class multimap
                            Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing map
    /// @endcond
+
+   //Allocator type must be std::pair<CONST Key, T>
+   BOOST_STATIC_ASSERT((containers_detail::is_same<std::pair<const Key, T>, typename Alloc::value_type>::value));
 
    public:
 

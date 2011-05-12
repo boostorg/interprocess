@@ -15,6 +15,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <cstddef>
 #include <cstring>
+#include <cassert>
 #include <string>
 #include <vector>
 #include <memory>
@@ -1145,29 +1146,62 @@ inline void rtl_init_empty_unicode_string(unicode_string_t *ucStr, wchar_t *buf,
    ucStr->MaximumLength = bufSize;
 }
 
+//A class that locates and caches loaded DLL function addresses.
 template<int Dummy>
 struct function_address_holder
 {
-   enum { NtSetInformationFile, NtQuerySystemInformation, NtQueryObject, FunctionAddressNum };
+   enum { NtSetInformationFile, NtQuerySystemInformation, NtQueryObject, NumFunction };
+   enum { NtDll_dll, NumModule };
 
    private:
-   static void *FunctionAddresses[FunctionAddressNum];
-   static volatile long FunctionStates[FunctionAddressNum];
+   static void *FunctionAddresses[NumFunction];
+   static volatile long FunctionStates[NumFunction];
+   static void *ModuleAddresses[NumModule];
+   static volatile long ModuleStates[NumModule];
+
+   static void *get_module_from_id(unsigned int id)
+   {
+      assert(id < (unsigned int)NumModule);
+      const char *module[] = { "ntdll.dll" };
+      bool compile_check[sizeof(module)/sizeof(module[0]) == NumModule];
+      (void)compile_check;
+      return get_module_handle(module[id]);
+   }
+
+   static void *get_module(const unsigned int id)
+   {
+      assert(id < (unsigned int)NumModule);
+      while(ModuleStates[id] < 2u){
+         if(interlocked_compare_exchange(&ModuleStates[id], 1, 0) == 0){
+            ModuleAddresses[id] = get_module_from_id(id);
+            interlocked_increment(&ModuleStates[id]);
+            break;
+         }
+         else{
+            sched_yield();
+         }
+      }
+      return ModuleAddresses[id];
+   }
 
    static void *get_address_from_dll(const unsigned int id)
    {
-      const char *module[] = { "ntdll.dll", "ntdll.dll", "ntdll.dll" };
+      assert(id < (unsigned int)NumFunction);
       const char *function[] = { "NtSetInformationFile", "NtQuerySystemInformation", "NtQueryObject" };
-      return get_proc_address(get_module_handle(module[id]), function[id]);
+      bool compile_check[sizeof(function)/sizeof(function[0]) == NumFunction];
+      (void)compile_check;
+      return get_proc_address(get_module(NtDll_dll), function[id]);
    }
 
    public:
    static void *get(const unsigned int id)
    {
+      assert(id < (unsigned int)NumFunction);
       while(FunctionStates[id] < 2u){
          if(interlocked_compare_exchange(&FunctionStates[id], 1, 0) == 0){
             FunctionAddresses[id] = get_address_from_dll(id);
             interlocked_increment(&FunctionStates[id]);
+            break;
          }
          else{
             sched_yield();
@@ -1178,10 +1212,17 @@ struct function_address_holder
 };
 
 template<int Dummy>
-void *function_address_holder<Dummy>::FunctionAddresses[FunctionAddressNum];
+void *function_address_holder<Dummy>::FunctionAddresses[function_address_holder<Dummy>::NumFunction];
 
 template<int Dummy>
-volatile long function_address_holder<Dummy>::FunctionStates[FunctionAddressNum];
+volatile long function_address_holder<Dummy>::FunctionStates[function_address_holder<Dummy>::NumFunction];
+
+template<int Dummy>
+void *function_address_holder<Dummy>::ModuleAddresses[function_address_holder<Dummy>::NumModule];
+
+template<int Dummy>
+volatile long function_address_holder<Dummy>::ModuleStates[function_address_holder<Dummy>::NumModule];
+
 
 struct dll_func
    : public function_address_holder<0>
@@ -1334,80 +1375,83 @@ union ntquery_mem_t
 
 inline bool unlink_file(const char *filename)
 {
-   try{
-      NtSetInformationFile_t pNtSetInformationFile =
-         //(NtSetInformationFile_t)get_proc_address(get_module_handle("ntdll.dll"), "NtSetInformationFile"); 
-         (NtSetInformationFile_t)dll_func::get(dll_func::NtSetInformationFile);
-      if(!pNtSetInformationFile){
+   if(!delete_file(filename)){
+      try{
+         NtSetInformationFile_t pNtSetInformationFile =
+            //(NtSetInformationFile_t)get_proc_address(get_module_handle("ntdll.dll"), "NtSetInformationFile"); 
+            (NtSetInformationFile_t)dll_func::get(dll_func::NtSetInformationFile);
+         if(!pNtSetInformationFile){
+            return false;
+         }
+
+         NtQueryObject_t pNtQueryObject =
+            //(NtQueryObject_t)get_proc_address(get_module_handle("ntdll.dll"), "NtQueryObject"); 
+            (NtQueryObject_t)dll_func::get(dll_func::NtQueryObject);
+
+         //First step: Obtain a handle to the file using Win32 rules. This resolves relative paths
+         void *fh = create_file(filename, generic_read | delete_access, open_existing,
+            file_flag_backup_semantics | file_flag_delete_on_close, 0); 
+         if(fh == invalid_handle_value){
+            return false;
+         }
+
+         handle_closer h_closer(fh);
+
+         std::auto_ptr<ntquery_mem_t> pmem(new ntquery_mem_t);
+         file_rename_information_t *pfri = &pmem->ren.info;
+         const std::size_t RenMaxNumChars =
+            ((char*)pmem.get() - (char*)&pmem->ren.info.FileName[0])/sizeof(wchar_t);
+
+         //Obtain file name
+         unsigned long size;
+         if(pNtQueryObject(fh, object_name_information, pmem.get(), sizeof(ntquery_mem_t), &size)){
+            return false;
+         }
+
+         //Copy filename to the rename member
+         std::memmove(pmem->ren.info.FileName, pmem->name.Name.Buffer, pmem->name.Name.Length);
+         std::size_t filename_string_length = pmem->name.Name.Length/sizeof(wchar_t);
+
+         //Second step: obtain the complete native-nt filename
+         //if(!get_file_name_from_handle_function(fh, pfri->FileName, RenMaxNumChars, filename_string_length)){
+         //return 0;
+         //}
+
+         //Add trailing mark
+         if((RenMaxNumChars-filename_string_length) < (SystemTimeOfDayInfoLength*2)){
+            return false;
+         }
+
+         //Search '\\' character to replace it
+         for(std::size_t i = filename_string_length; i != 0; --filename_string_length){
+            if(pmem->ren.info.FileName[--i] == L'\\')
+               break;
+         }
+
+         //Add random number
+         std::size_t s = RenMaxNumChars - filename_string_length;
+         if(!get_boot_and_system_time_wstr(&pfri->FileName[filename_string_length], s)){
+            return false;
+         }
+         filename_string_length += s;
+
+         //Fill rename information (FileNameLength is in bytes)
+         pfri->FileNameLength = static_cast<unsigned long>(sizeof(wchar_t)*(filename_string_length));
+         pfri->Replace = 1;
+         pfri->RootDir = 0;
+
+         //Final step: change the name of the in-use file:
+         io_status_block_t io;
+         if(0 != pNtSetInformationFile(fh, &io, pfri, sizeof(ntquery_mem_t::ren_t), file_rename_information)){
+            return false;
+         }
+         return true;
+      }
+      catch(...){
          return false;
       }
-
-      NtQueryObject_t pNtQueryObject =
-         //(NtQueryObject_t)get_proc_address(get_module_handle("ntdll.dll"), "NtQueryObject"); 
-         (NtQueryObject_t)dll_func::get(dll_func::NtQueryObject);
-
-      //First step: Obtain a handle to the file using Win32 rules. This resolves relative paths
-      void *fh = create_file(filename, generic_read | delete_access, open_existing,
-         file_flag_backup_semantics | file_flag_delete_on_close, 0); 
-      if(fh == invalid_handle_value){
-         return false;
-      }
-
-      handle_closer h_closer(fh);
-
-      std::auto_ptr<ntquery_mem_t> pmem(new ntquery_mem_t);
-      file_rename_information_t *pfri = (file_rename_information_t*)&pmem->ren.info;
-      const std::size_t RenMaxNumChars =
-         ((char*)pmem.get() - (char*)&pmem->ren.info.FileName[0])/sizeof(wchar_t);
-
-      //Obtain file name
-      unsigned long size;
-      if(pNtQueryObject(fh, object_name_information, pmem.get(), sizeof(ntquery_mem_t), &size)){
-         return false;
-      }
-
-      //Copy filename to the rename member
-      std::memmove(pmem->ren.info.FileName, pmem->name.Name.Buffer, pmem->name.Name.Length);
-      std::size_t filename_string_length = pmem->name.Name.Length/sizeof(wchar_t);
-
-      //Second step: obtain the complete native-nt filename
-      //if(!get_file_name_from_handle_function(fh, pfri->FileName, RenMaxNumChars, filename_string_length)){
-      //return 0;
-      //}
-
-      //Add trailing mark
-      if((RenMaxNumChars-filename_string_length) < (SystemTimeOfDayInfoLength*2)){
-         return false;
-      }
-
-      //Search '\\' character to replace it
-      for(std::size_t i = filename_string_length; i != 0; --filename_string_length){
-         if(pmem->ren.info.FileName[--i] == L'\\')
-            break;
-      }
-
-      //Add random number
-      std::size_t s = RenMaxNumChars - filename_string_length;
-      if(!get_boot_and_system_time_wstr(&pfri->FileName[filename_string_length], s)){
-         return false;
-      }
-      filename_string_length += s;
-
-      //Fill rename information (FileNameLength is in bytes)
-      pfri->FileNameLength = static_cast<unsigned long>(sizeof(wchar_t)*(filename_string_length));
-      pfri->Replace = 1;
-      pfri->RootDir = 0;
-
-      //Final step: change the name of the in-use file:
-      io_status_block_t io;
-      if(0 != pNtSetInformationFile(fh, &io, pfri, sizeof(ntquery_mem_t::ren_t), file_rename_information)){
-         return false;
-      }
-      return true;
    }
-   catch(...){
-      return false;
-   }
+   return true;
 }
 
 struct reg_closer
