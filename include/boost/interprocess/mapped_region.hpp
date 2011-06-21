@@ -524,7 +524,7 @@ inline mapped_region::mapped_region
 
    //Check for fixed mapping error
    if(address && (old_base != address)){
-      error_info err = system_error_code();
+      error_info err(busy_error);
       this->priv_close();
       throw interprocess_exception(err);
    }
