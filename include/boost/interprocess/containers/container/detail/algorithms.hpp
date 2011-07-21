@@ -77,8 +77,8 @@ inline void construct_in_place(T *dest, default_construct_iterator<U, D>)
    ::new((void*)dest)T();
 }
 
-template<class T, class U, class E>
-inline void construct_in_place(T *dest, emplace_iterator<U, E> ei)
+template<class T, class U, class E, class D>
+inline void construct_in_place(T *dest, emplace_iterator<U, E, D> ei)
 {
    ei.construct_in_place(dest);
 }

@@ -33,15 +33,16 @@ namespace boost {
 namespace container {
 namespace containers_detail {
 
-struct hdr_offset_holder
+template<class size_type>
+struct hdr_offset_holder_t
 {
-   hdr_offset_holder(std::size_t offset = 0)
+   hdr_offset_holder_t(size_type offset = 0)
       : hdr_offset(offset)
    {}
-   std::size_t hdr_offset;
+   size_type hdr_offset;
 };
 
-template<class VoidPointer>
+template<class VoidPointer, class SizeType>
 struct adaptive_pool_types
 {
    typedef VoidPointer void_pointer;
@@ -50,6 +51,8 @@ struct adaptive_pool_types
       , bi::optimize_size<true>
       , bi::constant_time_size<false>
       , bi::link_mode<bi::normal_link> >::type multiset_hook_t;
+   
+   typedef hdr_offset_holder_t<SizeType> hdr_offset_holder;
 
    struct block_info_t
       :  
@@ -77,23 +80,23 @@ struct adaptive_pool_types
       <block_info_t, bi::base_hook<multiset_hook_t> >::type  block_multiset_t;
 };
 
-
-inline std::size_t calculate_alignment
-   ( std::size_t overhead_percent, std::size_t real_node_size
-   , std::size_t hdr_size, std::size_t hdr_offset_size, std::size_t payload_per_allocation)
+template<class size_type>
+inline size_type calculate_alignment
+   ( size_type overhead_percent, size_type real_node_size
+   , size_type hdr_size, size_type hdr_offset_size, size_type payload_per_allocation)
 {
    //to-do: handle real_node_size != node_size
-   const std::size_t divisor  = overhead_percent*real_node_size;
-   const std::size_t dividend = hdr_offset_size*100;
-   std::size_t elements_per_subblock = (dividend - 1)/divisor + 1;
-   std::size_t candidate_power_of_2 = 
+   const size_type divisor  = overhead_percent*real_node_size;
+   const size_type dividend = hdr_offset_size*100;
+   size_type elements_per_subblock = (dividend - 1)/divisor + 1;
+   size_type candidate_power_of_2 = 
       upper_power_of_2(elements_per_subblock*real_node_size + hdr_offset_size);
    bool overhead_satisfied = false;
    //Now calculate the wors-case overhead for a subblock
-   const std::size_t max_subblock_overhead  = hdr_size + payload_per_allocation;
+   const size_type max_subblock_overhead  = hdr_size + payload_per_allocation;
    while(!overhead_satisfied){
       elements_per_subblock = (candidate_power_of_2 - max_subblock_overhead)/real_node_size;
-      const std::size_t overhead_size = candidate_power_of_2 - elements_per_subblock*real_node_size;
+      const size_type overhead_size = candidate_power_of_2 - elements_per_subblock*real_node_size;
       if(overhead_size*100/candidate_power_of_2 < overhead_percent){
          overhead_satisfied = true;
       }
@@ -104,22 +107,23 @@ inline std::size_t calculate_alignment
    return candidate_power_of_2;
 }
 
+template<class size_type>
 inline void calculate_num_subblocks
-   (std::size_t alignment, std::size_t real_node_size, std::size_t elements_per_block
-   , std::size_t &num_subblocks, std::size_t &real_num_node, std::size_t overhead_percent
-   , std::size_t hdr_size, std::size_t hdr_offset_size, std::size_t payload_per_allocation)
+   (size_type alignment, size_type real_node_size, size_type elements_per_block
+   , size_type &num_subblocks, size_type &real_num_node, size_type overhead_percent
+   , size_type hdr_size, size_type hdr_offset_size, size_type payload_per_allocation)
 {
-   std::size_t elements_per_subblock = (alignment - hdr_offset_size)/real_node_size;
-   std::size_t possible_num_subblock = (elements_per_block - 1)/elements_per_subblock + 1;
-   std::size_t hdr_subblock_elements = (alignment - hdr_size - payload_per_allocation)/real_node_size;
+   size_type elements_per_subblock = (alignment - hdr_offset_size)/real_node_size;
+   size_type possible_num_subblock = (elements_per_block - 1)/elements_per_subblock + 1;
+   size_type hdr_subblock_elements = (alignment - hdr_size - payload_per_allocation)/real_node_size;
    while(((possible_num_subblock-1)*elements_per_subblock + hdr_subblock_elements) < elements_per_block){
       ++possible_num_subblock;
    }
    elements_per_subblock = (alignment - hdr_offset_size)/real_node_size;
    bool overhead_satisfied = false;
    while(!overhead_satisfied){
-      const std::size_t total_data = (elements_per_subblock*(possible_num_subblock-1) + hdr_subblock_elements)*real_node_size;
-      const std::size_t total_size = alignment*possible_num_subblock;
+      const size_type total_data = (elements_per_subblock*(possible_num_subblock-1) + hdr_subblock_elements)*real_node_size;
+      const size_type total_size = alignment*possible_num_subblock;
       if((total_size - total_data)*100/total_size < overhead_percent){
          overhead_satisfied = true;
       }
@@ -141,7 +145,8 @@ class private_adaptive_node_pool_impl
    typedef private_adaptive_node_pool_impl this_type;
 
    typedef typename SegmentManagerBase::void_pointer void_pointer;
-   static const std::size_t PayloadPerAllocation = SegmentManagerBase::PayloadPerAllocation;
+   static const typename SegmentManagerBase::
+      size_type PayloadPerAllocation = SegmentManagerBase::PayloadPerAllocation;
    typedef bool_<AlignOnly>            IsAlignOnly;
    typedef true_                       AlignOnlyTrue;
    typedef false_                      AlignOnlyFalse;
@@ -150,15 +155,17 @@ class private_adaptive_node_pool_impl
    typedef typename node_slist<void_pointer>::node_t node_t;
    typedef typename node_slist<void_pointer>::node_slist_t free_nodes_t;
    typedef typename SegmentManagerBase::multiallocation_chain     multiallocation_chain;
+   typedef typename SegmentManagerBase::size_type                 size_type;
 
    private:
-   typedef typename adaptive_pool_types<void_pointer>::block_info_t     block_info_t;
-   typedef typename adaptive_pool_types<void_pointer>::block_multiset_t block_multiset_t;
-   typedef typename block_multiset_t::iterator               block_iterator;
+   typedef typename adaptive_pool_types<void_pointer, size_type>::block_info_t      block_info_t;
+   typedef typename adaptive_pool_types<void_pointer, size_type>::block_multiset_t  block_multiset_t;
+   typedef typename block_multiset_t::iterator                                      block_iterator;
+   typedef typename adaptive_pool_types<void_pointer, size_type>::hdr_offset_holder hdr_offset_holder;
 
-   static const std::size_t MaxAlign = alignment_of<node_t>::value;
-   static const std::size_t HdrSize  = ((sizeof(block_info_t)-1)/MaxAlign+1)*MaxAlign;
-   static const std::size_t HdrOffsetSize = ((sizeof(hdr_offset_holder)-1)/MaxAlign+1)*MaxAlign;
+   static const size_type MaxAlign = alignment_of<node_t>::value;
+   static const size_type HdrSize  = ((sizeof(block_info_t)-1)/MaxAlign+1)*MaxAlign;
+   static const size_type HdrOffsetSize = ((sizeof(hdr_offset_holder)-1)/MaxAlign+1)*MaxAlign;
 
 
    public:
@@ -168,20 +175,20 @@ class private_adaptive_node_pool_impl
    //!Constructor from a segment manager. Never throws
    private_adaptive_node_pool_impl
       ( segment_manager_base_type *segment_mngr_base
-      , std::size_t node_size
-      , std::size_t nodes_per_block
-      , std::size_t max_free_blocks
+      , size_type node_size
+      , size_type nodes_per_block
+      , size_type max_free_blocks
       , unsigned char overhead_percent
       )
    :  m_max_free_blocks(max_free_blocks)
-   ,  m_real_node_size(lcm(node_size, std::size_t(alignment_of<node_t>::value)))
+   ,  m_real_node_size(lcm(node_size, size_type(alignment_of<node_t>::value)))
       //Round the size to a power of two value.
       //This is the total memory size (including payload) that we want to
       //allocate from the general-purpose allocator
    ,  m_real_block_alignment
          (AlignOnly ?
             upper_power_of_2(HdrSize + m_real_node_size*nodes_per_block) :
-            calculate_alignment( overhead_percent, m_real_node_size
+            calculate_alignment( (size_type)overhead_percent, m_real_node_size
                                , HdrSize, HdrOffsetSize, PayloadPerAllocation))
       //This is the real number of nodes per block
    ,  m_num_subblocks(0)
@@ -198,7 +205,7 @@ class private_adaptive_node_pool_impl
             , nodes_per_block
             , m_num_subblocks
             , m_real_num_node
-            , overhead_percent
+            , (size_type)overhead_percent
             , HdrSize
             , HdrOffsetSize
             , PayloadPerAllocation);
@@ -209,7 +216,7 @@ class private_adaptive_node_pool_impl
    ~private_adaptive_node_pool_impl()
    {  priv_clear();  }
 
-   std::size_t get_real_num_node() const
+   size_type get_real_num_node() const
    {  return m_real_num_node; }
 
    //!Returns the segment manager. Never throws
@@ -243,10 +250,10 @@ class private_adaptive_node_pool_impl
 
    //!Allocates n nodes. 
    //!Can throw
-   multiallocation_chain allocate_nodes(const std::size_t n)
+   multiallocation_chain allocate_nodes(const size_type n)
    {
       multiallocation_chain chain;
-      std::size_t i = 0;
+      size_type i = 0;
       try{
          priv_invariants();
          while(i != n){
@@ -255,12 +262,12 @@ class private_adaptive_node_pool_impl
                priv_alloc_block(((n - i) - 1)/m_real_num_node + 1);
             }
             free_nodes_t &free_nodes = m_block_multiset.begin()->free_nodes;
-            const std::size_t free_nodes_count_before = free_nodes.size();
+            const size_type free_nodes_count_before = free_nodes.size();
             if(free_nodes_count_before == m_real_num_node){
                --m_totally_free_blocks;
             }
-            const std::size_t num_elems = ((n-i) < free_nodes_count_before) ? (n-i) : free_nodes_count_before;
-            for(std::size_t j = 0; j != num_elems; ++j){
+            const size_type num_elems = ((n-i) < free_nodes_count_before) ? (n-i) : free_nodes_count_before;
+            for(size_type j = 0; j != num_elems; ++j){
                void *new_node = &free_nodes.front();
                free_nodes.pop_front();
                chain.push_back(new_node);
@@ -273,11 +280,11 @@ class private_adaptive_node_pool_impl
          }
       }
       catch(...){
-         this->deallocate_nodes(BOOST_CONTAINER_MOVE_NAMESPACE::move(chain));
+         this->deallocate_nodes(boost::move(chain));
          throw;
       }
       priv_invariants();
-      return BOOST_CONTAINER_MOVE_NAMESPACE::move(chain);
+      return boost::move(chain);
    }
 
    //!Deallocates a linked list of nodes. Never throws
@@ -292,10 +299,10 @@ class private_adaptive_node_pool_impl
    void deallocate_free_blocks()
    {  this->priv_deallocate_free_blocks(0);   }
 
-   std::size_t num_free_nodes()
+   size_type num_free_nodes()
    {
       typedef typename block_multiset_t::const_iterator citerator;
-      std::size_t count = 0;
+      size_type count = 0;
       citerator it (m_block_multiset.begin()), itend(m_block_multiset.end());
       for(; it != itend; ++it){
          count += it->free_nodes.size();
@@ -319,7 +326,7 @@ class private_adaptive_node_pool_impl
    {  this->priv_deallocate_free_blocks(0);   }
 
    private:
-   void priv_deallocate_free_blocks(std::size_t max_free_blocks)
+   void priv_deallocate_free_blocks(size_type max_free_blocks)
    {
       priv_invariants();
       //Now check if we've reached the free nodes limit
@@ -337,7 +344,7 @@ class private_adaptive_node_pool_impl
       }
    }
 
-   void priv_reinsert_nodes_in_block(multiallocation_chain &chain, std::size_t n)
+   void priv_reinsert_nodes_in_block(multiallocation_chain &chain, size_type n)
    {
       block_iterator block_it(m_block_multiset.end());
       while(n--){
@@ -355,7 +362,7 @@ class private_adaptive_node_pool_impl
          ++next_block;
 
          //Cache the free nodes from the block
-         std::size_t this_block_free_nodes = this_block->free_nodes.size();
+         size_type this_block_free_nodes = this_block->free_nodes.size();
 
          if(this_block_free_nodes == 1){
             m_block_multiset.insert(m_block_multiset.begin(), *block_info);
@@ -364,7 +371,7 @@ class private_adaptive_node_pool_impl
             block_iterator next_block(this_block);
             ++next_block;
             if(next_block != block_it){
-               std::size_t next_free_nodes = next_block->free_nodes.size();
+               size_type next_free_nodes = next_block->free_nodes.size();
                if(this_block_free_nodes > next_free_nodes){
                   //Now move the block to the new position
                   m_block_multiset.erase(this_block);
@@ -386,7 +393,7 @@ class private_adaptive_node_pool_impl
       //We take the first free node the multiset can't be empty
       free_nodes_t &free_nodes = m_block_multiset.begin()->free_nodes;
       node_t *first_node = &free_nodes.front();
-      const std::size_t free_nodes_count = free_nodes.size();
+      const size_type free_nodes_count = free_nodes.size();
       BOOST_ASSERT(0 != free_nodes_count);
       free_nodes.pop_front();
       if(free_nodes_count == 1){
@@ -415,7 +422,7 @@ class private_adaptive_node_pool_impl
       private:
       void do_destroy(typename block_multiset_t::pointer to_deallocate, AlignOnlyTrue)
       {
-         std::size_t free_nodes = to_deallocate->free_nodes.size();
+         size_type free_nodes = to_deallocate->free_nodes.size();
          (void)free_nodes;
          BOOST_ASSERT(free_nodes == mp_impl->m_real_num_node);
          mp_impl->mp_segment_mngr_base->deallocate(to_deallocate);
@@ -423,7 +430,7 @@ class private_adaptive_node_pool_impl
 
       void do_destroy(typename block_multiset_t::pointer to_deallocate, AlignOnlyFalse)
       {
-         std::size_t free_nodes = to_deallocate->free_nodes.size();
+         size_type free_nodes = to_deallocate->free_nodes.size();
          (void)free_nodes;
          BOOST_ASSERT(free_nodes == mp_impl->m_real_num_node);
          BOOST_ASSERT(0 == to_deallocate->hdr_offset);
@@ -447,7 +454,7 @@ class private_adaptive_node_pool_impl
          for(++it; it != itend; ++it){
             block_iterator prev(it);
             --prev;
-            std::size_t sp = prev->free_nodes.size(),
+            size_type sp = prev->free_nodes.size(),
                         si = it->free_nodes.size();
             BOOST_ASSERT(sp <= si);
             (void)sp;   (void)si;
@@ -456,7 +463,7 @@ class private_adaptive_node_pool_impl
       //Check that the total free nodes are correct
       it    = m_block_multiset.begin();
       itend = m_block_multiset.end();
-      std::size_t total_free_nodes = 0;
+      size_type total_free_nodes = 0;
       for(; it != itend; ++it){
          total_free_nodes += it->free_nodes.size();
       }
@@ -476,9 +483,9 @@ class private_adaptive_node_pool_impl
          it = m_block_multiset.begin();
          for(; it != itend; ++it){
             hdr_offset_holder *hdr_off_holder = priv_first_subblock_from_block(&*it);
-            for(std::size_t i = 0, max = m_num_subblocks; i < max; ++i){
-               BOOST_ASSERT(hdr_off_holder->hdr_offset == std::size_t(reinterpret_cast<char*>(&*it)- reinterpret_cast<char*>(hdr_off_holder)));
-               BOOST_ASSERT(0 == ((std::size_t)hdr_off_holder & (m_real_block_alignment - 1)));
+            for(size_type i = 0, max = m_num_subblocks; i < max; ++i){
+               BOOST_ASSERT(hdr_off_holder->hdr_offset == size_type(reinterpret_cast<char*>(&*it)- reinterpret_cast<char*>(hdr_off_holder)));
+               BOOST_ASSERT(0 == ((size_type)hdr_off_holder & (m_real_block_alignment - 1)));
                BOOST_ASSERT(0 == (hdr_off_holder->hdr_offset & (m_real_block_alignment - 1)));
                hdr_off_holder = reinterpret_cast<hdr_offset_holder *>(reinterpret_cast<char*>(hdr_off_holder) + m_real_block_alignment);
             }
@@ -495,7 +502,7 @@ class private_adaptive_node_pool_impl
       #ifndef NDEBUG
       block_iterator it    = m_block_multiset.begin();
       block_iterator itend = m_block_multiset.end();
-      std::size_t num_free_nodes = 0;
+      size_type num_free_nodes = 0;
       for(; it != itend; ++it){
          //Check for memory leak
          BOOST_ASSERT(it->free_nodes.size() == m_real_num_node);
@@ -512,7 +519,7 @@ class private_adaptive_node_pool_impl
    block_info_t *priv_block_from_node(void *node, AlignOnlyFalse) const
    {
       hdr_offset_holder *hdr_off_holder =
-         reinterpret_cast<hdr_offset_holder*>((std::size_t)node & std::size_t(~(m_real_block_alignment - 1)));
+         reinterpret_cast<hdr_offset_holder*>((std::size_t)node & size_type(~(m_real_block_alignment - 1)));
       BOOST_ASSERT(0 == ((std::size_t)hdr_off_holder & (m_real_block_alignment - 1)));
       BOOST_ASSERT(0 == (hdr_off_holder->hdr_offset & (m_real_block_alignment - 1)));
       block_info_t *block = reinterpret_cast<block_info_t *>
@@ -533,17 +540,17 @@ class private_adaptive_node_pool_impl
    {
       hdr_offset_holder *hdr_off_holder = reinterpret_cast<hdr_offset_holder*>
             (reinterpret_cast<char*>(block) - (m_num_subblocks-1)*m_real_block_alignment);
-      BOOST_ASSERT(hdr_off_holder->hdr_offset == std::size_t(reinterpret_cast<char*>(block) - reinterpret_cast<char*>(hdr_off_holder)));
-      BOOST_ASSERT(0 == ((std::size_t)hdr_off_holder & (m_real_block_alignment - 1)));
+      BOOST_ASSERT(hdr_off_holder->hdr_offset == size_type(reinterpret_cast<char*>(block) - reinterpret_cast<char*>(hdr_off_holder)));
+     BOOST_ASSERT(0 == ((std::size_t)hdr_off_holder & (m_real_block_alignment - 1)));
       BOOST_ASSERT(0 == (hdr_off_holder->hdr_offset & (m_real_block_alignment - 1)));
       return hdr_off_holder;
    }
 
    //!Allocates a several blocks of nodes. Can throw
-   void priv_alloc_block(std::size_t n, AlignOnlyTrue)
+   void priv_alloc_block(size_type n, AlignOnlyTrue)
    {
-      std::size_t real_block_size = m_real_block_alignment - PayloadPerAllocation;
-      for(std::size_t i = 0; i != n; ++i){
+      size_type real_block_size = m_real_block_alignment - PayloadPerAllocation;
+      for(size_type i = 0; i != n; ++i){
          //We allocate a new NodeBlock and put it the last
          //element of the tree
          char *mem_address = static_cast<char*>
@@ -557,20 +564,20 @@ class private_adaptive_node_pool_impl
          //We initialize all Nodes in Node Block to insert 
          //them in the free Node list
          typename free_nodes_t::iterator prev_insert_pos = c_info->free_nodes.before_begin();
-         for(std::size_t i = 0; i < m_real_num_node; ++i){
+         for(size_type i = 0; i < m_real_num_node; ++i){
             prev_insert_pos = c_info->free_nodes.insert_after(prev_insert_pos, *(node_t*)mem_address);
             mem_address   += m_real_node_size;
          }
       }
    }
 
-   void priv_alloc_block(std::size_t n, AlignOnlyFalse)
+   void priv_alloc_block(size_type n, AlignOnlyFalse)
    {
-      std::size_t real_block_size = m_real_block_alignment*m_num_subblocks - PayloadPerAllocation;
-      std::size_t elements_per_subblock = (m_real_block_alignment - HdrOffsetSize)/m_real_node_size;
-      std::size_t hdr_subblock_elements = (m_real_block_alignment - HdrSize - PayloadPerAllocation)/m_real_node_size;
+      size_type real_block_size = m_real_block_alignment*m_num_subblocks - PayloadPerAllocation;
+      size_type elements_per_subblock = (m_real_block_alignment - HdrOffsetSize)/m_real_node_size;
+      size_type hdr_subblock_elements = (m_real_block_alignment - HdrSize - PayloadPerAllocation)/m_real_node_size;
 
-      for(std::size_t i = 0; i != n; ++i){
+      for(size_type i = 0; i != n; ++i){
          //We allocate a new NodeBlock and put it the last
          //element of the tree
          char *mem_address = static_cast<char*>
@@ -585,13 +592,13 @@ class private_adaptive_node_pool_impl
          BOOST_ASSERT(static_cast<void*>(&static_cast<hdr_offset_holder*>(c_info)->hdr_offset) ==
                 static_cast<void*>(c_info));
          typename free_nodes_t::iterator prev_insert_pos = c_info->free_nodes.before_begin();
-         for( std::size_t subblock = 0, maxsubblock = m_num_subblocks - 1
+         for( size_type subblock = 0, maxsubblock = m_num_subblocks - 1
             ; subblock < maxsubblock
             ; ++subblock, mem_address += m_real_block_alignment){
             //Initialize header offset mark
-            new(mem_address) hdr_offset_holder(std::size_t(hdr_addr - mem_address));
+            new(mem_address) hdr_offset_holder(size_type(hdr_addr - mem_address));
             char *pNode = mem_address + HdrOffsetSize;
-            for(std::size_t i = 0; i < elements_per_subblock; ++i){
+            for(size_type i = 0; i < elements_per_subblock; ++i){
                prev_insert_pos = c_info->free_nodes.insert_after(prev_insert_pos, *new (pNode) node_t);
                pNode   += m_real_node_size;
             }
@@ -600,7 +607,7 @@ class private_adaptive_node_pool_impl
             char *pNode = hdr_addr + HdrSize;
             //We initialize all Nodes in Node Block to insert 
             //them in the free Node list
-            for(std::size_t i = 0; i < hdr_subblock_elements; ++i){
+            for(size_type i = 0; i < hdr_subblock_elements; ++i){
                prev_insert_pos = c_info->free_nodes.insert_after(prev_insert_pos, *new (pNode) node_t);
                pNode   += m_real_node_size;
             }
@@ -611,25 +618,25 @@ class private_adaptive_node_pool_impl
    }
 
    //!Allocates a block of nodes. Can throw std::bad_alloc
-   void priv_alloc_block(std::size_t n)
+   void priv_alloc_block(size_type n)
    {  return priv_alloc_block(n, IsAlignOnly());   }
 
    private:
    typedef typename boost::pointer_to_other
       <void_pointer, segment_manager_base_type>::type   segment_mngr_base_ptr_t;
-   const std::size_t m_max_free_blocks;
-   const std::size_t m_real_node_size;
+   const size_type m_max_free_blocks;
+   const size_type m_real_node_size;
    //Round the size to a power of two value.
    //This is the total memory size (including payload) that we want to
    //allocate from the general-purpose allocator
-   const std::size_t m_real_block_alignment;
-   std::size_t m_num_subblocks;
+   const size_type m_real_block_alignment;
+   size_type m_num_subblocks;
    //This is the real number of nodes per block
    //const
-   std::size_t m_real_num_node;
+   size_type m_real_num_node;
    segment_mngr_base_ptr_t                mp_segment_mngr_base;   //Segment manager
    block_multiset_t                       m_block_multiset;       //Intrusive block list
-   std::size_t                            m_totally_free_blocks;  //Free blocks
+   size_type                            m_totally_free_blocks;  //Free blocks
 };
 
 }  //namespace containers_detail {

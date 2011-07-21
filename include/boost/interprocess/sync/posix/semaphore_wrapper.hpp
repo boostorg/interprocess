@@ -103,7 +103,7 @@ inline bool semaphore_unlink(const char *semname)
       #else
       detail::tmp_filename(semname, sem_str);
       #endif
-      return 0 != sem_unlink(sem_str.c_str());
+      return 0 == sem_unlink(sem_str.c_str());
    }
    catch(...){
       return false;

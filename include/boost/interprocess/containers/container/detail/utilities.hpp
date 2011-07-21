@@ -17,7 +17,8 @@
 #include <boost/type_traits/is_pointer.hpp>
 #include <boost/type_traits/is_enum.hpp>
 #include <boost/type_traits/is_member_pointer.hpp>
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/type_traits/is_class.hpp>
+#include <boost/move/move.hpp>
 #include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_TYPE_TRAITS_HPP
 #include <algorithm>
@@ -87,7 +88,8 @@ inline void do_swap(T& x, T& y)
 }
 
 //Rounds "orig_size" by excess to round_to bytes
-inline std::size_t get_rounded_size(std::size_t orig_size, std::size_t round_to)
+template<class SizeType>
+inline SizeType get_rounded_size(SizeType orig_size, SizeType round_to)
 {
    return ((orig_size-1)/round_to+1)*round_to;
 }
@@ -131,10 +133,10 @@ _C_val = sizeof (_C_yes)
 template<class T>
 struct move_const_ref_type
    : if_c
-   < ::boost::is_fundamental<T>::value || ::boost::is_pointer<T>::value ||
-     ::boost::is_member_pointer<T>::value || ::boost::is_enum<T>::value
+//   < ::boost::is_fundamental<T>::value || ::boost::is_pointer<T>::value || ::boost::is_member_pointer<T>::value || ::boost::is_enum<T>::value
+   < !::boost::is_class<T>::value
    ,const T &
-   ,BOOST_MOVE_MACRO_CATCH_CONST_RLVALUE(T)
+   ,BOOST_CATCH_CONST_RLVALUE(T)
    >
 {};
 

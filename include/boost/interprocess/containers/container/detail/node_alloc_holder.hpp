@@ -21,7 +21,7 @@
 #include <utility>
 #include <functional>
 
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/move/move.hpp>
 #include <boost/intrusive/options.hpp>
 
 #include INCLUDE_BOOST_CONTAINER_DETAIL_VERSION_TYPE_HPP
@@ -60,7 +60,7 @@ struct scoped_deallocator
    void priv_deallocate(allocator_v2)
    {  m_alloc.deallocate_one(m_ptr); }
 
-   BOOST_MOVE_MACRO_MOVABLE_BUT_NOT_COPYABLE(scoped_deallocator)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(scoped_deallocator)
 
    public:
 
@@ -74,7 +74,7 @@ struct scoped_deallocator
    ~scoped_deallocator()
    {  if (m_ptr)priv_deallocate(alloc_version());  }
 
-   scoped_deallocator(BOOST_MOVE_MACRO_RV_REF(scoped_deallocator) o)
+   scoped_deallocator(BOOST_RV_REF(scoped_deallocator) o)
       :  m_ptr(o.m_ptr), m_alloc(o.m_alloc)
    {  o.release();  }
 
@@ -128,7 +128,7 @@ class allocator_multialloc_chain_node_deallocator
    ~allocator_multialloc_chain_node_deallocator()
    {
       if(!c_.empty())
-         a_.deallocate_individual(BOOST_CONTAINER_MOVE_NAMESPACE::move(c_));
+         a_.deallocate_individual(boost::move(c_));
    }
 };
 
@@ -177,7 +177,7 @@ struct node_alloc_holder
    typedef allocator_destroyer<NodeAlloc>             Destroyer;
 
    private:
-   BOOST_MOVE_MACRO_COPYABLE_AND_MOVABLE(node_alloc_holder)
+   BOOST_COPYABLE_AND_MOVABLE(node_alloc_holder)
 
    public:
 
@@ -189,14 +189,14 @@ struct node_alloc_holder
       : members_(other.node_alloc())
    {}
 
-   node_alloc_holder(BOOST_MOVE_MACRO_RV_REF(node_alloc_holder) other)
-      : members_(BOOST_CONTAINER_MOVE_NAMESPACE::move(other.node_alloc()))
+   node_alloc_holder(BOOST_RV_REF(node_alloc_holder) other)
+      : members_(boost::move(other.node_alloc()))
    {  this->swap(other);  }
 
-   node_alloc_holder & operator=(BOOST_MOVE_MACRO_COPY_ASSIGN_REF(node_alloc_holder) other)
+   node_alloc_holder & operator=(BOOST_COPY_ASSIGN_REF(node_alloc_holder) other)
    {  members_.assign(other.node_alloc());   }
 
-   node_alloc_holder & operator=(BOOST_MOVE_MACRO_RV_REF(node_alloc_holder) other)
+   node_alloc_holder & operator=(BOOST_RV_REF(node_alloc_holder) other)
    {  members_.assign(other.node_alloc());   }
 
    template<class Pred>
@@ -205,7 +205,7 @@ struct node_alloc_holder
    {}
 
    template<class Pred>
-   node_alloc_holder(BOOST_MOVE_MACRO_RV_REF(ValAlloc) a, const Pred &c) 
+   node_alloc_holder(BOOST_RV_REF(ValAlloc) a, const Pred &c) 
       : members_(a, typename ICont::value_compare(c))
    {}
 
@@ -240,7 +240,7 @@ struct node_alloc_holder
 
    template<class Convertible1, class Convertible2>
    static void construct(const NodePtr &ptr,
-      BOOST_MOVE_MACRO_RV_REF_2_TEMPL_ARGS(std::pair, Convertible1, Convertible2) value)
+      BOOST_RV_REF_2_TEMPL_ARGS(std::pair, Convertible1, Convertible2) value)
    {  
       typedef typename Node::hook_type                hook_type;
       typedef typename Node::value_type::first_type   first_type;
@@ -251,9 +251,9 @@ struct node_alloc_holder
       new(static_cast<hook_type*>(nodeptr))hook_type();
       //Now construct pair members_holder
       value_type *valueptr = &nodeptr->get_data();
-      new((void*)&valueptr->first) first_type(BOOST_CONTAINER_MOVE_NAMESPACE::move(value.first));
+      new((void*)&valueptr->first) first_type(boost::move(value.first));
       BOOST_TRY{
-         new((void*)&valueptr->second) second_type(BOOST_CONTAINER_MOVE_NAMESPACE::move(value.second));
+         new((void*)&valueptr->second) second_type(boost::move(value.second));
       }
       BOOST_CATCH(...){
          valueptr->first.~first_type();
@@ -275,14 +275,14 @@ struct node_alloc_holder
 
    template<class ...Args>
    static void construct(const NodePtr &ptr, Args &&...args)
-   {  new((void*)containers_detail::get_pointer(ptr)) Node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...);  }
+   {  new((void*)containers_detail::get_pointer(ptr)) Node(boost::forward<Args>(args)...);  }
 
    template<class ...Args>
    NodePtr create_node(Args &&...args)
    {
       NodePtr p = this->allocate_one();
       Deallocator node_deallocator(p, this->node_alloc());
-      self_t::construct(p, BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...);
+      self_t::construct(p, boost::forward<Args>(args)...);
       node_deallocator.release();
       return (p);
    }
@@ -383,7 +383,7 @@ struct node_alloc_holder
             if(constructed){
                this->destroy(p);
             }
-            this->node_alloc().deallocate_individual(BOOST_CONTAINER_MOVE_NAMESPACE::move(mem));
+            this->node_alloc().deallocate_individual(boost::move(mem));
             BOOST_RETHROW
          }
          BOOST_CATCH_END
@@ -399,9 +399,9 @@ struct node_alloc_holder
       typename NodeAlloc::multiallocation_chain chain;
       allocator_destroyer_and_chain_builder<NodeAlloc> builder(this->node_alloc(), chain);
       this->icont().clear_and_dispose(builder);
-      BOOST_STATIC_ASSERT((::BOOST_CONTAINER_MOVE_NAMESPACE::is_movable<typename NodeAlloc::multiallocation_chain>::value == true));
+      //BOOST_STATIC_ASSERT((::boost::has_move_emulation_enabled<typename NodeAlloc::multiallocation_chain>::value == true));
       if(!chain.empty())
-         this->node_alloc().deallocate_individual(BOOST_CONTAINER_MOVE_NAMESPACE::move(chain));
+         this->node_alloc().deallocate_individual(boost::move(chain));
    }
 
    icont_iterator erase_range(icont_iterator first, icont_iterator last, allocator_v1)

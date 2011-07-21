@@ -53,7 +53,7 @@ class shared_memory_object
 {
    /// @cond
    //Non-copyable and non-assignable
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(shared_memory_object)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(shared_memory_object)
    /// @endcond
 
    public:
@@ -79,14 +79,14 @@ class shared_memory_object
    //!Moves the ownership of "moved"'s shared memory object to *this. 
    //!After the call, "moved" does not represent any shared memory object. 
    //!Does not throw
-   shared_memory_object(BOOST_INTERPROCESS_RV_REF(shared_memory_object) moved)
+   shared_memory_object(BOOST_RV_REF(shared_memory_object) moved)
       :  m_handle(file_handle_t(detail::invalid_file()))
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s shared memory to *this.
    //!After the call, "moved" does not represent any shared memory. 
    //!Does not throw
-   shared_memory_object &operator=(BOOST_INTERPROCESS_RV_REF(shared_memory_object) moved)
+   shared_memory_object &operator=(BOOST_RV_REF(shared_memory_object) moved)
    {  
       shared_memory_object tmp(boost::interprocess::move(moved));
       this->swap(tmp);

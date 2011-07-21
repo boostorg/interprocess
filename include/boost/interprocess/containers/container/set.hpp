@@ -23,10 +23,10 @@
 #include <functional>
 #include <memory>
 
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/move/move.hpp>
 #include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_TREE_HPP
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/move/move.hpp>
 #ifndef BOOST_CONTAINERS_PERFECT_FORWARDING
 #include INCLUDE_BOOST_CONTAINER_DETAIL_PREPROCESSOR_HPP
 #endif
@@ -62,7 +62,7 @@ class set
 {
    /// @cond
    private:
-   BOOST_MOVE_MACRO_COPYABLE_AND_MOVABLE(set)
+   BOOST_COPYABLE_AND_MOVABLE(set)
    typedef containers_detail::rbtree<T, T, 
                      containers_detail::identity<T>, Pred, Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing set
@@ -136,21 +136,21 @@ class set
    //! <b>Complexity</b>: Construct.
    //! 
    //! <b>Postcondition</b>: x is emptied.
-   set(BOOST_MOVE_MACRO_RV_REF(set) x) 
-      : m_tree(BOOST_CONTAINER_MOVE_NAMESPACE::move(x.m_tree))
+   set(BOOST_RV_REF(set) x) 
+      : m_tree(boost::move(x.m_tree))
    {}
 
    //! <b>Effects</b>: Makes *this a copy of x.
    //! 
    //! <b>Complexity</b>: Linear in x.size().
-   set& operator=(BOOST_MOVE_MACRO_COPY_ASSIGN_REF(set) x)
+   set& operator=(BOOST_COPY_ASSIGN_REF(set) x)
    {  m_tree = x.m_tree;   return *this;  }
 
    //! <b>Effects</b>: this->swap(x.get()).
    //! 
    //! <b>Complexity</b>: Constant.
-   set& operator=(BOOST_MOVE_MACRO_RV_REF(set) x)
-   {  m_tree = BOOST_CONTAINER_MOVE_NAMESPACE::move(x.m_tree);   return *this;  }
+   set& operator=(BOOST_RV_REF(set) x)
+   {  m_tree = boost::move(x.m_tree);   return *this;  }
 
    //! <b>Effects</b>: Returns the comparison object out
    //!   of which a was constructed.
@@ -330,7 +330,7 @@ class set
    { return this->insert(const_cast<const T &>(x)); }
 
    template<class U>
-   std::pair<iterator,bool> insert(const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::BOOST_CONTAINER_MOVE_NAMESPACE::is_movable<U>::value >::type* =0)
+   std::pair<iterator,bool> insert(const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::boost::has_move_emulation_enabled<U>::value >::type* =0)
    {  return priv_insert(u); }
    #endif
 
@@ -342,8 +342,8 @@ class set
    //!   points to the element with key equivalent to the key of x.
    //!
    //! <b>Complexity</b>: Logarithmic.
-   std::pair<iterator,bool> insert(BOOST_MOVE_MACRO_RV_REF(value_type) x) 
-   {  return m_tree.insert_unique(BOOST_CONTAINER_MOVE_NAMESPACE::move(x));  }
+   std::pair<iterator,bool> insert(BOOST_RV_REF(value_type) x) 
+   {  return m_tree.insert_unique(boost::move(x));  }
 
    //! <b>Effects</b>: Inserts a copy of x in the container if and only if there is 
    //!   no element in the container with key equivalent to the key of x.
@@ -362,7 +362,7 @@ class set
    { return this->insert(position, const_cast<const T &>(x)); }
 
    template<class U>
-   iterator insert(const_iterator position, const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::BOOST_CONTAINER_MOVE_NAMESPACE::is_movable<U>::value >::type* =0)
+   iterator insert(const_iterator position, const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::boost::has_move_emulation_enabled<U>::value >::type* =0)
    {  return priv_insert(position, u); }
    #endif
 
@@ -372,8 +372,8 @@ class set
    //! <b>Returns</b>: An iterator pointing to the element with key equivalent to the key of x.
    //!
    //! <b>Complexity</b>: Logarithmic.
-   iterator insert(const_iterator p, BOOST_MOVE_MACRO_RV_REF(value_type) x) 
-   {  return m_tree.insert_unique(p, BOOST_CONTAINER_MOVE_NAMESPACE::move(x)); }
+   iterator insert(const_iterator p, BOOST_RV_REF(value_type) x) 
+   {  return m_tree.insert_unique(p, boost::move(x)); }
 
    //! <b>Requires</b>: i, j are not iterators into *this.
    //!
@@ -399,7 +399,7 @@ class set
    //! <b>Complexity</b>: Logarithmic.
    template <class... Args>
    iterator emplace(Args&&... args)
-   {  return m_tree.emplace_unique(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...); }
+   {  return m_tree.emplace_unique(boost::forward<Args>(args)...); }
 
    //! <b>Effects</b>:  Inserts an object of type T constructed with
    //!   std::forward<Args>(args)... if and only if there is 
@@ -412,7 +412,7 @@ class set
    //! <b>Complexity</b>: Logarithmic.
    template <class... Args>
    iterator emplace_hint(const_iterator hint, Args&&... args)
-   {  return m_tree.emplace_hint_unique(hint, BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...); }
+   {  return m_tree.emplace_hint_unique(hint, boost::forward<Args>(args)...); }
 
    #else //#ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 
@@ -620,7 +620,7 @@ class multiset
 {
    /// @cond
    private:
-   BOOST_MOVE_MACRO_COPYABLE_AND_MOVABLE(multiset)
+   BOOST_COPYABLE_AND_MOVABLE(multiset)
    typedef containers_detail::rbtree<T, T, 
                      containers_detail::identity<T>, Pred, Alloc> tree_t;
    tree_t m_tree;  // red-black tree representing multiset
@@ -695,21 +695,21 @@ class multiset
    //! <b>Complexity</b>: Construct.
    //! 
    //! <b>Postcondition</b>: x is emptied.
-   multiset(BOOST_MOVE_MACRO_RV_REF(multiset) x) 
-      : m_tree(BOOST_CONTAINER_MOVE_NAMESPACE::move(x.m_tree))
+   multiset(BOOST_RV_REF(multiset) x) 
+      : m_tree(boost::move(x.m_tree))
    {}
 
    //! <b>Effects</b>: Makes *this a copy of x.
    //! 
    //! <b>Complexity</b>: Linear in x.size().
-   multiset& operator=(BOOST_MOVE_MACRO_COPY_ASSIGN_REF(multiset) x) 
+   multiset& operator=(BOOST_COPY_ASSIGN_REF(multiset) x) 
    {  m_tree = x.m_tree;   return *this;  }
 
    //! <b>Effects</b>: this->swap(x.get()).
    //! 
    //! <b>Complexity</b>: Constant.
-   multiset& operator=(BOOST_MOVE_MACRO_RV_REF(multiset) x) 
-   {  m_tree = BOOST_CONTAINER_MOVE_NAMESPACE::move(x.m_tree);   return *this;  }
+   multiset& operator=(BOOST_RV_REF(multiset) x) 
+   {  m_tree = boost::move(x.m_tree);   return *this;  }
 
    //! <b>Effects</b>: Returns the comparison object out
    //!   of which a was constructed.
@@ -885,7 +885,7 @@ class multiset
    { return this->insert(const_cast<const T &>(x)); }
 
    template<class U>
-   iterator insert(const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::BOOST_CONTAINER_MOVE_NAMESPACE::is_movable<U>::value >::type* =0)
+   iterator insert(const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::boost::has_move_emulation_enabled<U>::value >::type* =0)
    {  return priv_insert(u); }
    #endif
 
@@ -896,8 +896,8 @@ class multiset
    //!
    //! <b>Complexity</b>: Logarithmic in general, but amortized constant if t
    //!   is inserted right before p.
-   iterator insert(BOOST_MOVE_MACRO_RV_REF(value_type) x) 
-   {  return m_tree.insert_equal(BOOST_CONTAINER_MOVE_NAMESPACE::move(x));  }
+   iterator insert(BOOST_RV_REF(value_type) x) 
+   {  return m_tree.insert_equal(boost::move(x));  }
 
    //! <b>Effects</b>: Inserts a copy of x in the container.
    //!   p is a hint pointing to where the insert should start to search.
@@ -915,7 +915,7 @@ class multiset
    { return this->insert(position, const_cast<const T &>(x)); }
 
    template<class U>
-   iterator insert(const_iterator position, const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::BOOST_CONTAINER_MOVE_NAMESPACE::is_movable<U>::value >::type* =0)
+   iterator insert(const_iterator position, const U &u, typename containers_detail::enable_if_c<containers_detail::is_same<T, U>::value && !::boost::has_move_emulation_enabled<U>::value >::type* =0)
    {  return priv_insert(position, u); }
    #endif
 
@@ -927,8 +927,8 @@ class multiset
    //!
    //! <b>Complexity</b>: Logarithmic in general, but amortized constant if t
    //!   is inserted right before p.
-   iterator insert(const_iterator p, BOOST_MOVE_MACRO_RV_REF(value_type) x) 
-   {  return m_tree.insert_equal(p, BOOST_CONTAINER_MOVE_NAMESPACE::move(x));  }
+   iterator insert(const_iterator p, BOOST_RV_REF(value_type) x) 
+   {  return m_tree.insert_equal(p, boost::move(x));  }
 
    //! <b>Requires</b>: i, j are not iterators into *this.
    //!
@@ -948,7 +948,7 @@ class multiset
    //! <b>Complexity</b>: Logarithmic.
    template <class... Args>
    iterator emplace(Args&&... args)
-   {  return m_tree.emplace_equal(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...); }
+   {  return m_tree.emplace_equal(boost::forward<Args>(args)...); }
 
    //! <b>Effects</b>: Inserts an object of type T constructed with
    //!   std::forward<Args>(args)...
@@ -960,7 +960,7 @@ class multiset
    //!   is inserted right before p.
    template <class... Args>
    iterator emplace_hint(const_iterator hint, Args&&... args)
-   {  return m_tree.emplace_hint_equal(hint, BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...); }
+   {  return m_tree.emplace_hint_equal(hint, boost::forward<Args>(args)...); }
 
    #else //#ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 

@@ -18,7 +18,8 @@
 #include INCLUDE_BOOST_CONTAINER_DETAIL_TRANSFORM_ITERATOR_HPP
 #include <boost/intrusive/slist.hpp>
 #include <boost/pointer_to_other.hpp>
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/type_traits/make_unsigned.hpp>
+#include <boost/move/move.hpp>
 
 namespace boost {
 namespace container {
@@ -32,34 +33,39 @@ class basic_multiallocation_chain
                         ,bi::link_mode<bi::normal_link>
                         > node;
 
+   typedef typename boost::pointer_to_other<VoidPointer, char>::type   char_ptr;
+   typedef typename std::iterator_traits<char_ptr>::difference_type    difference_type;
+
    typedef bi::slist< node
                     , bi::linear<true>
                     , bi::cache_last<true>
+                    , bi::size_type<typename boost::make_unsigned<difference_type>::type>
                     > slist_impl_t;
    slist_impl_t slist_impl_;
 
    static node & to_node(VoidPointer p)
    {  return *static_cast<node*>(static_cast<void*>(containers_detail::get_pointer(p))); }
 
-   BOOST_MOVE_MACRO_MOVABLE_BUT_NOT_COPYABLE(basic_multiallocation_chain)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_multiallocation_chain)
 
    public:
 
 
    typedef VoidPointer  void_pointer;
    typedef typename slist_impl_t::iterator iterator;
+   typedef typename slist_impl_t::size_type size_type;
 
    basic_multiallocation_chain()
       :  slist_impl_()
    {}
 
-   basic_multiallocation_chain(BOOST_MOVE_MACRO_RV_REF(basic_multiallocation_chain) other)
+   basic_multiallocation_chain(BOOST_RV_REF(basic_multiallocation_chain) other)
       :  slist_impl_()
    {  slist_impl_.swap(other.slist_impl_); }
 
-   basic_multiallocation_chain& operator=(BOOST_MOVE_MACRO_RV_REF(basic_multiallocation_chain) other)
+   basic_multiallocation_chain& operator=(BOOST_RV_REF(basic_multiallocation_chain) other)
    {
-      basic_multiallocation_chain tmp(BOOST_CONTAINER_MOVE_NAMESPACE::move(other));
+      basic_multiallocation_chain tmp(boost::move(other));
       this->swap(tmp);
       return *this;
    }
@@ -67,7 +73,7 @@ class basic_multiallocation_chain
    bool empty() const
    {  return slist_impl_.empty(); }
 
-   std::size_t size() const
+   size_type size() const
    {  return slist_impl_.size();  }
 
    iterator before_begin()
@@ -103,7 +109,7 @@ class basic_multiallocation_chain
    void splice_after(iterator after_this, basic_multiallocation_chain &x, iterator before_begin, iterator before_end)
    {  slist_impl_.splice_after(after_this, x.slist_impl_, before_begin, before_end);   }
 
-   void splice_after(iterator after_this, basic_multiallocation_chain &x, iterator before_begin, iterator before_end, std::size_t n)
+   void splice_after(iterator after_this, basic_multiallocation_chain &x, iterator before_begin, iterator before_end, size_type n)
    {  slist_impl_.splice_after(after_this, x.slist_impl_, before_begin, before_end, n);   }
 
    void splice_after(iterator after_this, basic_multiallocation_chain &x)
@@ -112,7 +118,7 @@ class basic_multiallocation_chain
    void incorporate_after(iterator after_this, void_pointer begin , iterator before_end)
    {  slist_impl_.incorporate_after(after_this, &to_node(begin), &to_node(before_end));   }
 
-   void incorporate_after(iterator after_this, void_pointer begin, void_pointer before_end, std::size_t n)
+   void incorporate_after(iterator after_this, void_pointer begin, void_pointer before_end, size_type n)
    {  slist_impl_.incorporate_after(after_this, &to_node(begin), &to_node(before_end), n);   }
 
    void swap(basic_multiallocation_chain &x)
@@ -144,7 +150,7 @@ template<class MultiallocationChain, class T>
 class transform_multiallocation_chain
 {
    private:
-   BOOST_MOVE_MACRO_MOVABLE_BUT_NOT_COPYABLE(transform_multiallocation_chain)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(transform_multiallocation_chain)
 
    MultiallocationChain   holder_;
    typedef typename MultiallocationChain::void_pointer   void_pointer;
@@ -160,22 +166,23 @@ class transform_multiallocation_chain
    typedef transform_iterator
       < typename MultiallocationChain::iterator
       , containers_detail::cast_functor <T> >                 iterator;
+   typedef typename MultiallocationChain::size_type           size_type;
 
    transform_multiallocation_chain()
       : holder_()
    {}
 
-   transform_multiallocation_chain(BOOST_MOVE_MACRO_RV_REF(transform_multiallocation_chain) other)
+   transform_multiallocation_chain(BOOST_RV_REF(transform_multiallocation_chain) other)
       : holder_()
    {  this->swap(other); }
 
-   transform_multiallocation_chain(BOOST_MOVE_MACRO_RV_REF(MultiallocationChain) other)
-      : holder_(BOOST_CONTAINER_MOVE_NAMESPACE::move(other))
+   transform_multiallocation_chain(BOOST_RV_REF(MultiallocationChain) other)
+      : holder_(boost::move(other))
    {}
 
-   transform_multiallocation_chain& operator=(BOOST_MOVE_MACRO_RV_REF(transform_multiallocation_chain) other)
+   transform_multiallocation_chain& operator=(BOOST_RV_REF(transform_multiallocation_chain) other)
    {
-      transform_multiallocation_chain tmp(BOOST_CONTAINER_MOVE_NAMESPACE::move(other));
+      transform_multiallocation_chain tmp(boost::move(other));
       this->swap(tmp);
       return *this;
    }
@@ -186,10 +193,10 @@ class transform_multiallocation_chain
    void swap(transform_multiallocation_chain &other_chain)
    {  holder_.swap(other_chain.holder_); }
 
-   void splice_after(iterator after_this, transform_multiallocation_chain &x, iterator before_begin, iterator before_end, std::size_t n)
+   void splice_after(iterator after_this, transform_multiallocation_chain &x, iterator before_begin, iterator before_end, size_type n)
    {  holder_.splice_after(after_this.base(), x.holder_, before_begin.base(), before_end.base(), n);  }
 
-   void incorporate_after(iterator after_this, void_pointer begin, void_pointer before_end, std::size_t n)
+   void incorporate_after(iterator after_this, void_pointer begin, void_pointer before_end, size_type n)
    {  holder_.incorporate_after(after_this.base(), begin, before_end, n);  }
 
    void pop_front()
@@ -213,7 +220,7 @@ class transform_multiallocation_chain
    iterator last()
    {  return iterator(holder_.last());   }
 
-   std::size_t size() const
+   size_type size() const
    {  return holder_.size();  }
 
    void clear()
@@ -230,7 +237,7 @@ class transform_multiallocation_chain
 
    MultiallocationChain extract_multiallocation_chain()
    {
-      return MultiallocationChain(BOOST_CONTAINER_MOVE_NAMESPACE::move(holder_));
+      return MultiallocationChain(boost::move(holder_));
    }
 };
 

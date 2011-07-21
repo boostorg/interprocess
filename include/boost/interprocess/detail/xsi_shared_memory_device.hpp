@@ -45,7 +45,7 @@ namespace interprocess {
 class xsi_shared_memory_device
 {
    /// @cond
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(xsi_shared_memory_file_wrapper)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(xsi_shared_memory_file_wrapper)
    /// @endcond 
 
    public:
@@ -70,10 +70,10 @@ class xsi_shared_memory_device
    xsi_shared_memory_device(open_only_t, const char *filepath, boost::uint8_t id, mode_t mode)
    {  this->priv_open_or_create_name_id(detail::DoOpen, name, id, mode, 0);  }
 
-   xsi_shared_memory_device(BOOST_INTERPROCESS_RV_REF(xsi_shared_memory_device) moved)
+   xsi_shared_memory_device(BOOST_RV_REF(xsi_shared_memory_device) moved)
    {  this->swap(moved);   }
 
-   xsi_shared_memory_device &operator=(BOOST_INTERPROCESS_RV_REF(xsi_shared_memory_device) moved)
+   xsi_shared_memory_device &operator=(BOOST_RV_REF(xsi_shared_memory_device) moved)
    {  
       xsi_shared_memory_device tmp(boost::interprocess::move(moved));
       this->swap(tmp);

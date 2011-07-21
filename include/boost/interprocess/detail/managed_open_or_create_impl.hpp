@@ -11,6 +11,7 @@
 #ifndef BOOST_INTERPROCESS_MANAGED_OPEN_OR_CREATE_IMPL
 #define BOOST_INTERPROCESS_MANAGED_OPEN_OR_CREATE_IMPL
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/creation_tags.hpp>
@@ -23,6 +24,8 @@
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/permissions.hpp>
+#include <boost/type_traits/alignment_of.hpp>
+#include <boost/type_traits/type_with_alignment.hpp>
 #include <boost/cstdint.hpp>
 
 namespace boost {
@@ -86,7 +89,7 @@ class managed_open_or_create_impl
    : public managed_open_or_create_impl_device_holder<StoreDevice, DeviceAbstraction>
 {
    //Non-copyable
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(managed_open_or_create_impl)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(managed_open_or_create_impl)
 
    typedef typename managed_open_or_create_impl_device_id_t<DeviceAbstraction>::type device_id_t;
    typedef managed_open_or_create_impl_device_holder<StoreDevice, DeviceAbstraction> DevHolder;
@@ -103,7 +106,7 @@ class managed_open_or_create_impl
       ManagedOpenOrCreateUserOffset = 
          detail::ct_rounded_size
             < sizeof(boost::uint32_t)
-            , detail::alignment_of<detail::max_align>::value>::value;
+			, ::boost::alignment_of< ::boost::detail::max_align >::value >::value;
 
    managed_open_or_create_impl()
    {}
@@ -213,10 +216,10 @@ class managed_open_or_create_impl
          , construct_func);
    }
 
-   managed_open_or_create_impl(BOOST_INTERPROCESS_RV_REF(managed_open_or_create_impl) moved)
+   managed_open_or_create_impl(BOOST_RV_REF(managed_open_or_create_impl) moved)
    {  this->swap(moved);   }
 
-   managed_open_or_create_impl &operator=(BOOST_INTERPROCESS_RV_REF(managed_open_or_create_impl) moved)
+   managed_open_or_create_impl &operator=(BOOST_RV_REF(managed_open_or_create_impl) moved)
    {  
       managed_open_or_create_impl tmp(boost::interprocess::move(moved));
       this->swap(tmp);
@@ -260,12 +263,21 @@ class managed_open_or_create_impl
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
-   static void truncate_device(DeviceAbstraction &, std::size_t, detail::false_)
+   static void truncate_device(DeviceAbstraction &, offset_t, detail::false_)
    {} //Empty
 
    template<bool dummy>
-   static void truncate_device(DeviceAbstraction &dev, std::size_t size, detail::true_)
+   static void truncate_device(DeviceAbstraction &dev, offset_t size, detail::true_)
    {  dev.truncate(size);  }
+
+
+   template<bool dummy>
+   static bool check_offset_t_size(std::size_t , detail::false_)
+   { return true; } //Empty
+
+   template<bool dummy>
+   static bool check_offset_t_size(std::size_t size, detail::true_)
+   { return size == std::size_t(offset_t(size)); }
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
@@ -302,7 +314,10 @@ class managed_open_or_create_impl
       if(type != detail::DoOpen && size < ManagedOpenOrCreateUserOffset){
          throw interprocess_exception(error_info(size_error));
       }
-
+      //Check size can be represented by offset_t (used by truncate)
+      if(type != detail::DoOpen && !check_offset_t_size<FileBased>(size, file_like_t())){
+         throw interprocess_exception(error_info(size_error));
+      }
       if(type == detail::DoOpen && mode == read_write){
          DeviceAbstraction tmp(open_only, id, read_write);
          tmp.swap(dev);
@@ -452,5 +467,7 @@ inline void swap(managed_open_or_create_impl<DeviceAbstraction> &x
 
 }  //namespace interprocess {
 }  //namespace boost {
+
+#include <boost/interprocess/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_INTERPROCESS_MANAGED_OPEN_OR_CREATE_IMPL

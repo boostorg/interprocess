@@ -17,7 +17,7 @@
 
 #include "config_begin.hpp"
 #include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/move/move.hpp>
 #include <iterator>  //std::iterator_traits
 #include <new>       //placement new
 #include <boost/assert.hpp>
@@ -50,21 +50,21 @@ struct advanced_insert_aux_proxy
    {}
 
    virtual void copy_all_to(Iterator p)
-   {  ::BOOST_CONTAINER_MOVE_NAMESPACE::copy_or_move(first_, last_, p);  }
+   {  ::boost::copy_or_move(first_, last_, p);  }
 
    virtual void uninitialized_copy_all_to(Iterator p)
-   {  ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_copy_or_move(first_, last_, p);  }
+   {  ::boost::uninitialized_copy_or_move(first_, last_, p);  }
 
    virtual void uninitialized_copy_some_and_update(Iterator pos, difference_type division_count, bool first_n)
    {
       FwdIt mid = first_;
       std::advance(mid, division_count);
       if(first_n){
-         ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_copy_or_move(first_, mid, pos);
+         ::boost::uninitialized_copy_or_move(first_, mid, pos);
          first_ = mid;
       }
       else{
-         ::BOOST_CONTAINER_MOVE_NAMESPACE::uninitialized_copy_or_move(mid, last_, pos);
+         ::boost::uninitialized_copy_or_move(mid, last_, pos);
          last_ = mid;
       }
    }
@@ -74,11 +74,11 @@ struct advanced_insert_aux_proxy
       FwdIt mid = first_;
       std::advance(mid, division_count);
       if(first_n){
-         ::BOOST_CONTAINER_MOVE_NAMESPACE::copy_or_move(first_, mid, pos);
+         ::boost::copy_or_move(first_, mid, pos);
          first_ = mid;
       }
       else{
-         ::BOOST_CONTAINER_MOVE_NAMESPACE::copy_or_move(mid, last_, pos);
+         ::boost::copy_or_move(mid, last_, pos);
          last_ = mid;
       }
    }
@@ -164,7 +164,7 @@ struct default_construct_aux_proxy
 
 #include INCLUDE_BOOST_CONTAINER_DETAIL_VARIADIC_TEMPLATES_TOOLS_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_STORED_REF_HPP
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/move/move.hpp>
 #include <typeinfo>
 //#include <iostream> //For debugging purposes
 
@@ -205,7 +205,7 @@ struct advanced_insert_aux_emplace
    void priv_copy_all_to(const index_tuple<IdxPack...>&, Iterator p)
    {
       if(!used_){
-         *p = BOOST_CONTAINER_MOVE_NAMESPACE::move(T (::boost::container::containers_detail::stored_ref<Args>::forward(get<IdxPack>(args_))...));
+         *p = boost::move(T (::boost::container::containers_detail::stored_ref<Args>::forward(get<IdxPack>(args_))...));
          used_ = true;
       }
    }
@@ -237,7 +237,7 @@ struct advanced_insert_aux_emplace
       BOOST_ASSERT(division_count <=1);
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
-            *p = BOOST_CONTAINER_MOVE_NAMESPACE::move(T(::boost::container::containers_detail::stored_ref<Args>::forward(get<IdxPack>(args_))...));
+            *p = boost::move(T(::boost::container::containers_detail::stored_ref<Args>::forward(get<IdxPack>(args_))...));
             used_ = true;
          }
       }
@@ -274,7 +274,7 @@ struct advanced_insert_aux_emplace
    {
       if(!used_){
          value_init<T>v;
-         *p = BOOST_CONTAINER_MOVE_NAMESPACE::move(v.m_t);
+         *p = boost::move(v.m_t);
          used_ = true;
       }
    }
@@ -304,7 +304,7 @@ struct advanced_insert_aux_emplace
       if((first_n && division_count == 1) || (!first_n && division_count == 0)){
          if(!used_){
             value_init<T>v;
-            *p = BOOST_CONTAINER_MOVE_NAMESPACE::move(v.m_t);
+            *p = boost::move(v.m_t);
             used_ = true;
          }
       }
@@ -328,7 +328,7 @@ struct advanced_insert_aux_emplace
       {                                                                                \
          if(!used_){                                                                   \
             T v(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_MEMBER_FORWARD, _));            \
-            *p = BOOST_CONTAINER_MOVE_NAMESPACE::move(v);                                                 \
+            *p = boost::move(v);                                                 \
             used_ = true;                                                              \
          }                                                                             \
       }                                                                                \
@@ -362,7 +362,7 @@ struct advanced_insert_aux_emplace
          if((first_n && division_count == 1) || (!first_n && division_count == 0)){    \
             if(!used_){                                                                \
                T v(BOOST_PP_ENUM(n, BOOST_CONTAINERS_PP_MEMBER_FORWARD, _));         \
-               *p = BOOST_CONTAINER_MOVE_NAMESPACE::move(v);                                              \
+               *p = boost::move(v);                                              \
                used_ = true;                                                           \
             }                                                                          \
          }                                                                             \

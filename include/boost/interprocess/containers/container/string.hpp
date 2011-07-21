@@ -22,7 +22,7 @@
 #include INCLUDE_BOOST_CONTAINER_DETAIL_VERSION_TYPE_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_ALLOCATION_TYPE_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_MPL_HPP
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/move/move.hpp>
 #include <boost/static_assert.hpp>
 
 #include <functional>
@@ -42,6 +42,7 @@
 #include INCLUDE_BOOST_CONTAINER_DETAIL_TYPE_TRAITS_HPP
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
+#include <boost/aligned_storage.hpp>
 
 #ifdef BOOST_CONTAINER_DOXYGEN_INVOKED
 namespace boost {
@@ -67,7 +68,7 @@ template <class A>
 class basic_string_base
 {
    basic_string_base();
-   BOOST_MOVE_MACRO_MOVABLE_BUT_NOT_COPYABLE(basic_string_base)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_string_base)
 
  public:
    typedef A allocator_type;
@@ -81,14 +82,14 @@ class basic_string_base
       : members_(a)
    {  init(); }
 
-   basic_string_base(const allocator_type& a, std::size_t n)
+   basic_string_base(const allocator_type& a, size_type n)
       : members_(a)
    {  
       this->init(); 
       this->allocate_initial_block(n);
    }
 
-   basic_string_base(BOOST_MOVE_MACRO_RV_REF(basic_string_base) b)
+   basic_string_base(BOOST_RV_REF(basic_string_base) b)
       :  members_(b.members_)
    {  
       init();
@@ -134,14 +135,6 @@ class basic_string_base
       }
    };
 
-   //This basic type should have the same alignment as long_t
-//iG   typedef typename type_with_alignment<containers_detail::alignment_of<long_t>::value>::type
-//      long_alignment_type;
-   typedef void *long_alignment_type;
-   BOOST_STATIC_ASSERT((containers_detail::alignment_of<long_alignment_type>::value % 
-                        containers_detail::alignment_of<long_t>::value) == 0);
-
-
    //This type is the first part of the structure controlling a short string
    //The "data" member stores
    struct short_header
@@ -152,11 +145,9 @@ class basic_string_base
 
    //This type has the same alignment and size as long_t but it's POD
    //so, unlike long_t, it can be placed in a union
-   struct long_raw_t
-   {
-      long_alignment_type  a;
-      unsigned char        b[sizeof(long_t) - sizeof(long_alignment_type)];
-   };
+   
+   typedef typename boost::aligned_storage< sizeof(long_t), 
+       containers_detail::alignment_of<long_t>::value>::type   long_raw_t;
 
    protected:
    static const size_type  MinInternalBufferChars = 8;
@@ -284,7 +275,7 @@ class basic_string_base
    size_type next_capacity(size_type additional_objects) const
    {  return get_next_capacity(this->alloc().max_size(), this->priv_storage(), additional_objects);  }
 
-   void deallocate(pointer p, std::size_t n) 
+   void deallocate(pointer p, size_type n) 
    {  
       if (p && (n > InternalBufferChars))
          this->alloc().deallocate(p, n);
@@ -302,7 +293,7 @@ class basic_string_base
    void destroy(pointer p)
    {  containers_detail::get_pointer(p)->~value_type(); }
 
-   void allocate_initial_block(std::size_t n)
+   void allocate_initial_block(size_type n)
    {
       if (n <= this->max_size()) {
          if(n > InternalBufferChars){
@@ -321,7 +312,7 @@ class basic_string_base
    void deallocate_block() 
    {  this->deallocate(this->priv_addr(), this->priv_storage());  }
       
-   std::size_t max_size() const
+   size_type max_size() const
    {  return this->alloc().max_size() - 1; }
 
    // Helper functions for exception handling.
@@ -429,7 +420,7 @@ class basic_string
 {
    /// @cond
    private:
-   BOOST_MOVE_MACRO_COPYABLE_AND_MOVABLE(basic_string)
+   BOOST_COPYABLE_AND_MOVABLE(basic_string)
    typedef containers_detail::basic_string_base<A> base_t;
    static const typename base_t::size_type InternalBufferChars = base_t::InternalBufferChars;
 
@@ -509,7 +500,7 @@ class basic_string
    struct reserve_t {};
    /// @endcond
 
-   basic_string(reserve_t, std::size_t n,
+   basic_string(reserve_t, size_type n,
                const allocator_type& a = allocator_type())
       : base_t(a, n + 1)
    { this->priv_terminate_string(); }
@@ -535,8 +526,8 @@ class basic_string
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //! 
    //! <b>Complexity</b>: Constant.
-   basic_string(BOOST_MOVE_MACRO_RV_REF(basic_string) s) 
-      : base_t(BOOST_CONTAINER_MOVE_NAMESPACE::move((base_t&)s))
+   basic_string(BOOST_RV_REF(basic_string) s) 
+      : base_t(boost::move((base_t&)s))
    {}
 
    //! <b>Effects</b>: Constructs a basic_string taking the allocator as parameter,
@@ -584,7 +575,7 @@ class basic_string
       : base_t(a)
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = containers_detail::is_convertible<InputIterator, std::size_t>::value;
+      const bool aux_boolean = containers_detail::is_convertible<InputIterator, size_type>::value;
       typedef containers_detail::bool_<aux_boolean> Result;
       this->priv_initialize_dispatch(f, l, Result());
    }
@@ -602,7 +593,7 @@ class basic_string
    //! <b>Postcondition</b>: x == *this.
    //! 
    //! <b>Complexity</b>: Linear to the elements x contains.
-   basic_string& operator=(BOOST_MOVE_MACRO_COPY_ASSIGN_REF(basic_string) s)
+   basic_string& operator=(BOOST_COPY_ASSIGN_REF(basic_string) s)
    {
       if (&s != this) 
          this->assign(s.begin(), s.end());
@@ -614,7 +605,7 @@ class basic_string
    //! <b>Throws</b>: If allocator_type's copy constructor throws.
    //! 
    //! <b>Complexity</b>: Constant.
-   basic_string& operator=(BOOST_MOVE_MACRO_RV_REF(basic_string) ms)
+   basic_string& operator=(BOOST_RV_REF(basic_string) ms)
    {
       basic_string &s = ms;
       if (&s != this){
@@ -931,7 +922,7 @@ class basic_string
    {  return this->operator=(s); }
 
    //! <b>Effects</b>: Moves the resources from ms *this.
-   basic_string& assign(BOOST_MOVE_MACRO_RV_REF(basic_string) ms) 
+   basic_string& assign(BOOST_RV_REF(basic_string) ms) 
    {  return this->operator=(ms);}
 
    //! <b>Effects</b>: Assigns the range [pos, pos + n) from s to *this.
@@ -960,7 +951,7 @@ class basic_string
    basic_string& assign(InputIter first, InputIter last) 
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = containers_detail::is_convertible<InputIter, std::size_t>::value;
+      const bool aux_boolean = containers_detail::is_convertible<InputIter, size_type>::value;
       typedef containers_detail::bool_<aux_boolean> Result;
       return this->priv_assign_dispatch(first, last, Result());
    }
@@ -1050,7 +1041,7 @@ class basic_string
    }
 
    //! <b>Effects</b>: Inserts the character c n-times before position.
-   void insert(iterator position, std::size_t n, CharT c)
+   void insert(iterator position, size_type n, CharT c)
    {
       this->insert(position, cvalue_iterator(c, n),
                              cvalue_iterator());
@@ -1061,7 +1052,7 @@ class basic_string
    void insert(iterator p, InputIter first, InputIter last) 
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = containers_detail::is_convertible<InputIter, std::size_t>::value;
+      const bool aux_boolean = containers_detail::is_convertible<InputIter, size_type>::value;
       typedef containers_detail::bool_<aux_boolean> Result;
       this->priv_insert_dispatch(p, first, last, Result());
    }
@@ -1204,7 +1195,7 @@ class basic_string
                         InputIter f, InputIter l) 
    {
       //Dispatch depending on integer/iterator
-      const bool aux_boolean = containers_detail::is_convertible<InputIter, std::size_t>::value;
+      const bool aux_boolean = containers_detail::is_convertible<InputIter, size_type>::value;
       typedef containers_detail::bool_<aux_boolean> Result;
       return this->priv_replace_dispatch(first, last, f, l,  Result());
    }
@@ -1295,7 +1286,7 @@ class basic_string
    //!   substring of *this, beginning at character position min(pos, size()).
    size_type rfind(const CharT* s, size_type pos, size_type n) const
    {
-      const std::size_t len = size();
+      const size_type len = size();
 
       if (n > len)
          return npos;
@@ -1540,8 +1531,8 @@ class basic_string
    static int s_compare(const_pointer f1, const_pointer l1,
                         const_pointer f2, const_pointer l2) 
    {
-      const std::ptrdiff_t n1 = l1 - f1;
-      const std::ptrdiff_t n2 = l2 - f2;
+      const difference_type n1 = l1 - f1;
+      const difference_type n2 = l2 - f2;
       const int cmp = Traits::compare(containers_detail::get_pointer(f1), 
                                       containers_detail::get_pointer(f2), 
                                       containers_detail::min_value(n1, n2));
@@ -1900,19 +1891,19 @@ operator+(const basic_string<CharT,Traits,A>& x,
 }
 
 template <class CharT, class Traits, class A> inline
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
    operator+(
-   BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
+   BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
    , const basic_string<CharT,Traits,A>& y)
 {
    mx += y;
-   return BOOST_CONTAINER_MOVE_NAMESPACE::move(mx);
+   return boost::move(mx);
 }
 
 template <class CharT, class Traits, class A> inline
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
    operator+(const basic_string<CharT,Traits,A>& x,
-         BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
+         BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
    return my.replace(size_type(0), size_type(0), x);
@@ -1922,10 +1913,10 @@ template <class CharT, class Traits, class A>
 inline basic_string<CharT,Traits,A>
 operator+(const CharT* s, const basic_string<CharT,Traits,A>& y) 
 {
-   typedef basic_string<CharT,Traits,A> str_t;
+   typedef basic_string<CharT, Traits, A> str_t;
    typedef typename str_t::reserve_t reserve_t;
    reserve_t reserve;
-   const std::size_t n = Traits::length(s);
+   const typename str_t::size_type n = Traits::length(s);
    str_t result(reserve, n + y.size());
    result.append(s, s + n);
    result.append(y);
@@ -1933,12 +1924,12 @@ operator+(const CharT* s, const basic_string<CharT,Traits,A>& y)
 }
 
 template <class CharT, class Traits, class A> inline
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
 operator+(const CharT* s,
-         BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
+         BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
-   return BOOST_CONTAINER_MOVE_NAMESPACE::move(my.get().replace(size_type(0), size_type(0), s));
+   return boost::move(my.get().replace(size_type(0), size_type(0), s));
 }
 
 template <class CharT, class Traits, class A>
@@ -1955,9 +1946,9 @@ operator+(CharT c, const basic_string<CharT,Traits,A>& y)
 }
 
 template <class CharT, class Traits, class A> inline
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
 operator+(CharT c,
-         BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
+         BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) my)
 {
    typedef typename basic_string<CharT,Traits,A>::size_type size_type;
    return my.replace(size_type(0), size_type(0), &c, &c + 1);
@@ -1970,7 +1961,7 @@ operator+(const basic_string<CharT,Traits,A>& x, const CharT* s)
    typedef basic_string<CharT,Traits,A> str_t;
    typedef typename str_t::reserve_t reserve_t;
    reserve_t reserve;
-   const std::size_t n = Traits::length(s);
+   const typename str_t::size_type n = Traits::length(s);
    str_t result(reserve, x.size() + n, x.alloc());
    result.append(x);
    result.append(s, s + n);
@@ -1978,12 +1969,12 @@ operator+(const basic_string<CharT,Traits,A>& x, const CharT* s)
 }
 
 template <class CharT, class Traits, class A>
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
-operator+(BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
+BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+operator+(BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
          , const CharT* s)
 {
    mx += s;
-   return BOOST_CONTAINER_MOVE_NAMESPACE::move(mx);
+   return boost::move(mx);
 }
 
 template <class CharT, class Traits, class A>
@@ -2000,12 +1991,12 @@ operator+(const basic_string<CharT,Traits,A>& x, const CharT c)
 }
 
 template <class CharT, class Traits, class A>
-BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
-operator+( BOOST_MOVE_MACRO_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
+BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A)
+operator+( BOOST_RV_REF_3_TEMPL_ARGS(basic_string, CharT, Traits, A) mx
          , const CharT c)
 {
    mx += c;
-   return BOOST_CONTAINER_MOVE_NAMESPACE::move(mx);
+   return boost::move(mx);
 }
 
 // Operator== and operator!=
@@ -2023,7 +2014,7 @@ template <class CharT, class Traits, class A>
 inline bool
 operator==(const CharT* s, const basic_string<CharT,Traits,A>& y) 
 {
-   std::size_t n = Traits::length(s);
+   typename basic_string<CharT,Traits,A>::size_type n = Traits::length(s);
    return n == y.size() && Traits::compare(s, y.data(), n) == 0;
 }
 
@@ -2031,7 +2022,7 @@ template <class CharT, class Traits, class A>
 inline bool
 operator==(const basic_string<CharT,Traits,A>& x, const CharT* s) 
 {
-   std::size_t n = Traits::length(s);
+   typename basic_string<CharT,Traits,A>::size_type n = Traits::length(s);
    return x.size() == n && Traits::compare(x.data(), s, n) == 0;
 }
 
@@ -2068,7 +2059,7 @@ inline bool
 operator<(const CharT* s, const basic_string<CharT,Traits,A>& y) 
 {
    return y.compare(s) > 0;
-//   std::size_t n = Traits::length(s);
+//   basic_string<CharT,Traits,A>::size_type n = Traits::length(s);
 //   return basic_string<CharT,Traits,A>
 //          ::s_compare(s, s + n, y.begin(), y.end()) < 0;
 }
@@ -2079,7 +2070,7 @@ operator<(const basic_string<CharT,Traits,A>& x,
           const CharT* s) 
 {
    return x.compare(s) < 0;
-//   std::size_t n = Traits::length(s);
+//   basic_string<CharT,Traits,A>::size_type n = Traits::length(s);
 //   return basic_string<CharT,Traits,A>
 //      ::s_compare(x.begin(), x.end(), s, s + n) < 0;
 }
@@ -2174,8 +2165,8 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const basic_string<CharT,Trait
 
    if (sentry) {
       ok = true;
-      std::size_t n = s.size();
-      std::size_t pad_len = 0;
+      typename basic_string<CharT,Traits,A>::size_type n = s.size();
+      typename basic_string<CharT,Traits,A>::size_type pad_len = 0;
       const bool left = (os.flags() & std::ios::left) != 0;
       const std::size_t w = os.width(0);
       std::basic_streambuf<CharT, Traits>* buf = os.rdbuf();
@@ -2251,7 +2242,7 @@ template <class CharT, class Traits, class A>
 std::basic_istream<CharT, Traits>& 
 getline(std::istream& is, basic_string<CharT,Traits,A>& s,CharT delim)
 {
-   std::size_t nread = 0;
+   typename basic_string<CharT,Traits,A>::size_type nread = 0;
    typename std::basic_istream<CharT, Traits>::sentry sentry(is, true);
    if (sentry) {
       std::basic_streambuf<CharT, Traits>* buf = is.rdbuf();

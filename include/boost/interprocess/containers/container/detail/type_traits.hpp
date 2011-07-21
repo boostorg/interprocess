@@ -21,6 +21,8 @@
 
 #include "config_begin.hpp"
 
+#include <boost/move/move.hpp>
+
 namespace boost {
 namespace container { 
 namespace containers_detail {
@@ -80,6 +82,24 @@ struct remove_reference<T&>
 {
    typedef T type;
 };
+
+#ifndef BOOST_NO_RVALUE_REFERENCES
+
+template<class T>
+struct remove_reference<T&&>
+{
+   typedef T type;
+};
+
+#else
+
+template<class T>
+struct remove_reference< ::boost::rv<T> >
+{
+   typedef T type;
+};
+
+#endif
 
 template<class T>
 struct is_reference
@@ -156,11 +176,28 @@ struct is_same
    static const bool value = sizeof(yes_type) == sizeof(is_same_tester(t,u));
 };
 
+template<class T>
+struct remove_const
+{
+   typedef T type;
+};
+
+template<class T>
+struct remove_const< const T>
+{
+   typedef T type;
+};
+
+template<class T>
+struct remove_ref_const
+{
+   typedef typename remove_const< typename remove_reference<T>::type >::type type;
+};
+
 } // namespace containers_detail
 }  //namespace container { 
 }  //namespace boost {
 
-#endif   //#ifndef BOOST_CONTAINERS_CONTAINER_DETAIL_TYPE_TRAITS_HPP
-
 #include INCLUDE_BOOST_CONTAINER_DETAIL_CONFIG_END_HPP
 
+#endif   //#ifndef BOOST_CONTAINERS_CONTAINER_DETAIL_TYPE_TRAITS_HPP

@@ -20,7 +20,7 @@
 
 #include "config_begin.hpp"
 #include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/move/move.hpp>
 
 #ifdef BOOST_CONTAINERS_PERFECT_FORWARDING
 #include INCLUDE_BOOST_CONTAINER_DETAIL_VARIADIC_TEMPLATES_TOOLS_HPP
@@ -368,14 +368,15 @@ class repeat_iterator
    {  return m_num - other.m_num;   }
 };
 
-template <class T, class E>
+template <class T, class E, class Difference /*= std::ptrdiff_t*/>
 class emplace_iterator
   : public std::iterator
-      <std::random_access_iterator_tag, T, std::ptrdiff_t, const T*, const T &>
+      <std::random_access_iterator_tag, T, Difference, const T*, const T &>
 {
    typedef emplace_iterator this_type;
 
    public:
+   typedef Difference difference_type;
    explicit emplace_iterator(E&e)
       :  m_num(1), m_pe(&e){}
 
@@ -420,33 +421,33 @@ class emplace_iterator
    friend bool operator>= (const this_type& i, const this_type& i2)
    { return !(i < i2); }
 
-   friend std::ptrdiff_t operator- (const this_type& i, const this_type& i2)
+   friend difference_type operator- (const this_type& i, const this_type& i2)
    { return i2.distance_to(i); }
 
    //Arithmetic
-   this_type& operator+=(std::ptrdiff_t off)
+   this_type& operator+=(difference_type off)
    {  this->advance(off); return *this;   }
 
-   this_type operator+(std::ptrdiff_t off) const
+   this_type operator+(difference_type off) const
    {
       this_type other(*this);
       other.advance(off);
       return other;
    }
 
-   friend this_type operator+(std::ptrdiff_t off, const this_type& right)
+   friend this_type operator+(difference_type off, const this_type& right)
    {  return right + off; }
 
-   this_type& operator-=(std::ptrdiff_t off)
+   this_type& operator-=(difference_type off)
    {  this->advance(-off); return *this;   }
 
-   this_type operator-(std::ptrdiff_t off) const
+   this_type operator-(difference_type off) const
    {  return *this + (-off);  }
 
    const T& operator*() const
    { return dereference(); }
 
-   const T& operator[](std::ptrdiff_t) const
+   const T& operator[](difference_type) const
    { return dereference(); }
 
    const T* operator->() const
@@ -456,7 +457,7 @@ class emplace_iterator
    {  (*m_pe)(ptr);  }
 
    private:
-   std::ptrdiff_t m_num;
+   difference_type m_num;
    E *            m_pe;
 
    void increment()
@@ -477,11 +478,11 @@ class emplace_iterator
       return dummy;
    }
 
-   void advance(std::ptrdiff_t n)
+   void advance(difference_type n)
    {  m_num -= n; }
 
-   std::ptrdiff_t distance_to(const this_type &other)const
-   {  return m_num - other.m_num;   }
+   difference_type distance_to(const this_type &other)const
+   {  return difference_type(m_num - other.m_num);   }
 };
 
 #ifdef BOOST_CONTAINERS_PERFECT_FORWARDING

@@ -57,7 +57,7 @@ class upgradable_lock
    typedef upgradable_lock<UpgradableMutex> this_type;
    explicit upgradable_lock(scoped_lock<mutex_type>&);
    typedef bool this_type::*unspecified_bool_type;
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(upgradable_lock)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(upgradable_lock)
    /// @endcond
    public:
 
@@ -119,7 +119,7 @@ class upgradable_lock
    //!   signature. An non-moved upgradable_lock can be moved with the
    //!   expression: "boost::interprocess::move(lock);". This constructor does not alter the
    //!   state of the mutex, only potentially who owns it.
-   upgradable_lock(BOOST_INTERPROCESS_RV_REF(upgradable_lock<mutex_type>) upgr)
+   upgradable_lock(BOOST_RV_REF(upgradable_lock<mutex_type>) upgr)
       : mp_mutex(0), m_locked(upgr.owns())
    {  mp_mutex = upgr.release(); }
 
@@ -133,7 +133,7 @@ class upgradable_lock
    //!   signature. An non-moved sharable_lock can be moved with the
    //!   expression: "boost::interprocess::move(lock);".
    template<class T>
-   upgradable_lock(BOOST_INTERPROCESS_RV_REF(scoped_lock<T>) scop
+   upgradable_lock(BOOST_RV_REF(scoped_lock<T>) scop
                   , typename detail::enable_if< detail::is_same<T, UpgradableMutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
@@ -161,7 +161,7 @@ class upgradable_lock
    //!   "upgradable lock". If the "read lock" is held, then mutex transfer
    //!   occurs only if it can do so in a non-blocking manner.
    template<class T>
-   upgradable_lock( BOOST_INTERPROCESS_RV_REF(sharable_lock<T>) shar, try_to_lock_type
+   upgradable_lock( BOOST_RV_REF(sharable_lock<T>) shar, try_to_lock_type
                   , typename detail::enable_if< detail::is_same<T, UpgradableMutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
@@ -192,7 +192,7 @@ class upgradable_lock
    //!   mutex before the assignment. In this case, this will own the mutex
    //!   after the assignment (and upgr will not), but the mutex's upgradable lock
    //!   count will be decremented by one.
-   upgradable_lock &operator=(BOOST_INTERPROCESS_RV_REF(upgradable_lock) upgr)
+   upgradable_lock &operator=(BOOST_RV_REF(upgradable_lock) upgr)
    {
       if(this->owns())
          this->unlock();

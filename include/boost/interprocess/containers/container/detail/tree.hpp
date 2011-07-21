@@ -15,7 +15,7 @@
 #include INCLUDE_BOOST_CONTAINER_DETAIL_WORKAROUND_HPP
 #include INCLUDE_BOOST_CONTAINER_CONTAINER_FWD_HPP
 
-#include INCLUDE_BOOST_CONTAINER_MOVE_HPP
+#include <boost/move/move.hpp>
 #include <boost/pointer_to_other.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
@@ -26,6 +26,7 @@
 #include INCLUDE_BOOST_CONTAINER_DETAIL_NODE_ALLOC_HOLDER_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_DESTROYERS_HPP
 #include INCLUDE_BOOST_CONTAINER_DETAIL_PAIR_HPP
+#include INCLUDE_BOOST_CONTAINER_DETAIL_TYPE_TRAITS_HPP
 #ifndef BOOST_CONTAINERS_PERFECT_FORWARDING
 #include INCLUDE_BOOST_CONTAINER_DETAIL_PREPROCESSOR_HPP
 #endif
@@ -47,7 +48,7 @@ struct value_compare_impl
    typedef KeyOfValue   key_of_value;
    typedef Key          key_type;
 
-   value_compare_impl(key_compare kcomp)
+   value_compare_impl(const key_compare &kcomp)
       :  key_compare(kcomp)
    {}
 
@@ -57,9 +58,25 @@ struct value_compare_impl
    key_compare &key_comp()
    {  return static_cast<key_compare &>(*this);  }
 
-   template<class A, class B>
-   bool operator()(const A &a, const B &b) const
-   {  return key_compare::operator()(KeyOfValue()(a), KeyOfValue()(b)); }
+   template<class T>
+   struct is_key
+   {
+      static const bool value = is_same<const T, const key_type>::value;
+   };
+
+   template<class T>
+   typename enable_if_c<is_key<T>::value, const key_type &>::type
+      key_forward(const T &key) const
+   {  return key; }
+
+   template<class T>
+   typename enable_if_c<!is_key<T>::value, const key_type &>::type
+      key_forward(const T &key) const
+   {  return KeyOfValue()(key);  }
+
+   template<class KeyType, class KeyType2>
+   bool operator()(const KeyType &key1, const KeyType2 &key2) const
+   {  return key_compare::operator()(this->key_forward(key1), this->key_forward(key2));  }
 };
 
 template<class VoidPointer>
@@ -122,7 +139,7 @@ struct rbtree_node
 
    template<class ...Args>
    rbtree_node(Args &&...args)
-      : m_data(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...)
+      : m_data(boost::forward<Args>(args)...)
    {}
    #endif//#ifndef BOOST_CONTAINERS_PERFECT_FORWARDING
 
@@ -164,8 +181,8 @@ struct rbtree_node
 
    public:
    template<class Convertible>
-   static void construct(node_type *ptr, BOOST_MOVE_MACRO_FWD_REF(Convertible) convertible)
-   {  new(ptr) node_type(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Convertible>(convertible));  }
+   static void construct(node_type *ptr, BOOST_FWD_REF(Convertible) convertible)
+   {  new(ptr) node_type(boost::forward<Convertible>(convertible));  }
 };
 
 }//namespace containers_detail {
@@ -267,7 +284,7 @@ class rbtree
       AllocHolder &m_holder;
       Icont &m_icont;
    };
-   BOOST_MOVE_MACRO_COPYABLE_AND_MOVABLE(rbtree)
+   BOOST_COPYABLE_AND_MOVABLE(rbtree)
 
    public:
 
@@ -296,17 +313,29 @@ class rbtree
    struct key_node_compare
       :  private KeyValueCompare
    {
-      key_node_compare(KeyValueCompare comp)
+      key_node_compare(const KeyValueCompare &comp)
          :  KeyValueCompare(comp)
       {}
-      
-      template<class KeyType>
-      bool operator()(const Node &n, const KeyType &k) const
-      {  return KeyValueCompare::operator()(n.get_data(), k);  }
 
-      template<class KeyType>
-      bool operator()(const KeyType &k, const Node &n) const
-      {  return KeyValueCompare::operator()(k, n.get_data());  }
+      template<class T>
+      struct is_node
+      {
+         static const bool value = is_same<T, Node>::value;
+      };
+
+      template<class T>
+      typename enable_if_c<is_node<T>::value, const value_type &>::type
+         key_forward(const T &node) const
+      {  return node.get_data();  }
+
+      template<class T>
+      typename enable_if_c<!is_node<T>::value, const T &>::type
+         key_forward(const T &key) const
+      {  return key; }
+
+      template<class KeyType, class KeyType2>
+      bool operator()(const KeyType &key1, const KeyType2 &key2) const
+      {  return KeyValueCompare::operator()(this->key_forward(key1), this->key_forward(key2));  }
    };
 
    typedef key_node_compare<value_compare>  KeyNodeCompare;
@@ -437,14 +466,14 @@ class rbtree
          (x.icont(), typename AllocHolder::cloner(*this), Destroyer(this->node_alloc()));
    }
 
-   rbtree(BOOST_MOVE_MACRO_RV_REF(rbtree) x) 
+   rbtree(BOOST_RV_REF(rbtree) x) 
       :  AllocHolder(x, x.key_comp())
    {  this->swap(x);  }
 
    ~rbtree()
    {} //AllocHolder clears the tree
 
-   rbtree& operator=(BOOST_MOVE_MACRO_COPY_ASSIGN_REF(rbtree) x)
+   rbtree& operator=(BOOST_COPY_ASSIGN_REF(rbtree) x)
    {
       if (this != &x) {
          //Transfer all the nodes to a temporary tree
@@ -469,7 +498,7 @@ class rbtree
       return *this;
    }
 
-   rbtree& operator=(BOOST_MOVE_MACRO_RV_REF(rbtree) mx)
+   rbtree& operator=(BOOST_RV_REF(rbtree) mx)
    {  this->clear(); this->swap(mx);   return *this;  }
 
    public:    
@@ -589,9 +618,9 @@ class rbtree
 
    template<class MovableConvertible>
    iterator insert_unique_commit
-      (BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv, insert_commit_data &data)
+      (BOOST_FWD_REF(MovableConvertible) mv, insert_commit_data &data)
    {
-      NodePtr tmp = AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv));
+      NodePtr tmp = AllocHolder::create_node(boost::forward<MovableConvertible>(mv));
       iiterator it(this->icont().insert_unique_commit(*tmp, data));
       return iterator(it);
    }
@@ -608,7 +637,7 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   std::pair<iterator,bool> insert_unique(BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   std::pair<iterator,bool> insert_unique(BOOST_FWD_REF(MovableConvertible) mv)
    {
       insert_commit_data data;
       std::pair<iterator,bool> ret =
@@ -616,7 +645,7 @@ class rbtree
       if(!ret.second)
          return ret;
       return std::pair<iterator,bool>
-         (this->insert_unique_commit(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv), data), true);
+         (this->insert_unique_commit(boost::forward<MovableConvertible>(mv), data), true);
    }
 
    private:
@@ -652,23 +681,23 @@ class rbtree
 
    template <class... Args>
    iterator emplace_unique(Args&&... args)
-   {  return this->emplace_unique_impl(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));   }
+   {  return this->emplace_unique_impl(AllocHolder::create_node(boost::forward<Args>(args)...));   }
 
    template <class... Args>
    iterator emplace_hint_unique(const_iterator hint, Args&&... args)
-   {  return this->emplace_unique_hint_impl(hint, AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));   }
+   {  return this->emplace_unique_hint_impl(hint, AllocHolder::create_node(boost::forward<Args>(args)...));   }
 
    template <class... Args>
    iterator emplace_equal(Args&&... args)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));
+      NodePtr p(AllocHolder::create_node(boost::forward<Args>(args)...));
       return iterator(this->icont().insert_equal(this->icont().end(), *p));
    }
 
    template <class... Args>
    iterator emplace_hint_equal(const_iterator hint, Args&&... args)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<Args>(args)...));
+      NodePtr p(AllocHolder::create_node(boost::forward<Args>(args)...));
       return iterator(this->icont().insert_equal(hint.get(), *p));
    }
 
@@ -737,14 +766,14 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   iterator insert_unique(const_iterator hint, BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   iterator insert_unique(const_iterator hint, BOOST_FWD_REF(MovableConvertible) mv)
    {
       insert_commit_data data;
       std::pair<iterator,bool> ret =
          this->insert_unique_check(hint, KeyOfValue()(mv), data);
       if(!ret.second)
          return ret.first;
-      return this->insert_unique_commit(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv), data);
+      return this->insert_unique_commit(boost::forward<MovableConvertible>(mv), data);
    }
 
    template <class InputIterator>
@@ -770,9 +799,9 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   iterator insert_equal(BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   iterator insert_equal(BOOST_FWD_REF(MovableConvertible) mv)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv)));
+      NodePtr p(AllocHolder::create_node(boost::forward<MovableConvertible>(mv)));
       return iterator(this->icont().insert_equal(this->icont().end(), *p));
    }
 
@@ -783,9 +812,9 @@ class rbtree
    }
 
    template<class MovableConvertible>
-   iterator insert_equal(const_iterator hint, BOOST_MOVE_MACRO_FWD_REF(MovableConvertible) mv)
+   iterator insert_equal(const_iterator hint, BOOST_FWD_REF(MovableConvertible) mv)
    {
-      NodePtr p(AllocHolder::create_node(BOOST_CONTAINER_MOVE_NAMESPACE::forward<MovableConvertible>(mv)));
+      NodePtr p(AllocHolder::create_node(boost::forward<MovableConvertible>(mv)));
       return iterator(this->icont().insert_equal(hint.get(), *p));
    }
 

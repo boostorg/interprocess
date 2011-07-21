@@ -71,7 +71,7 @@ class map_index
 
    //!This reserves memory to optimize the insertion of n
    //!elements in the index
-   void reserve(std::size_t)
+   void reserve(typename segment_manager_base::size_type)
       {  /*Does nothing, map has not reserve or rehash*/  }
 
    //!This tries to free previously allocate

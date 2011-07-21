@@ -63,10 +63,15 @@ class basic_managed_multi_shared_memory
 
    typedef basic_managed_multi_shared_memory
                <CharType, MemoryAlgorithm, IndexType>    self_t;
+   typedef detail::basic_managed_memory_impl 
+      <CharType, MemoryAlgorithm, IndexType>             base_t;
+   
    typedef typename MemoryAlgorithm::void_pointer        void_pointer;
    typedef typename detail::
       managed_open_or_create_impl<shared_memory_object>  managed_impl;
    typedef typename void_pointer::segment_group_id       segment_group_id;
+   typedef typename base_t::size_type                   size_type;
+
    ////////////////////////////////////////////////////////////////////////
    //
    //               Some internal helper structs/functors
@@ -86,7 +91,7 @@ class basic_managed_multi_shared_memory
 //                      const void *addr)
 //      : m_shmem(shmem), m_mem_name(mem_name), m_addr(addr){}
 //
-//      void *operator()(std::size_t size)
+//      void *operator()(size_type size)
 //      {
 //         if(!m_shmem.create(m_mem_name, size, m_addr))
 //            return 0;
@@ -102,7 +107,7 @@ class basic_managed_multi_shared_memory
       :  public multi_segment_services
    {
       public:
-      typedef std::pair<void *, std::size_t>                result_type;
+      typedef std::pair<void *, size_type>                  result_type;
       typedef basic_managed_multi_shared_memory             frontend_t;
       typedef typename 
          basic_managed_multi_shared_memory::void_pointer    void_pointer;
@@ -110,7 +115,7 @@ class basic_managed_multi_shared_memory
       group_services(frontend_t *const frontend)
          :  mp_frontend(frontend), m_group(0), m_min_segment_size(0){}
 
-      virtual std::pair<void *, std::size_t> create_new_segment(std::size_t alloc_size)
+      virtual std::pair<void *, size_type> create_new_segment(size_type alloc_size)
       {  
          //We should allocate an extra byte so that the
          //[base_addr + alloc_size] byte belongs to this segment
@@ -138,17 +143,17 @@ class basic_managed_multi_shared_memory
       segment_group_id get_group() const
          {  return m_group;  }
 
-      void set_min_segment_size(std::size_t min_segment_size)
+      void set_min_segment_size(size_type min_segment_size)
          {  m_min_segment_size = min_segment_size;  }
 
-      std::size_t get_min_segment_size() const
+      size_type get_min_segment_size() const
          {  return m_min_segment_size;  }
 
       private:
 
       frontend_t * const   mp_frontend;
       segment_group_id     m_group;
-      std::size_t          m_min_segment_size;
+      size_type          m_min_segment_size;
    };
 
    //!Functor to execute atomically when opening or creating a shared memory
@@ -160,10 +165,10 @@ class basic_managed_multi_shared_memory
          basic_managed_multi_shared_memory::void_pointer   void_pointer;
 
       create_open_func(self_t * const    frontend,
-                       type_t type, std::size_t segment_number)
+                       type_t type, size_type segment_number)
          : mp_frontend(frontend), m_type(type), m_segment_number(segment_number){}
 
-      bool operator()(void *addr, std::size_t size, bool created) const
+      bool operator()(void *addr, size_type size, bool created) const
       {  
          if(((m_type == DoOpen)   &&  created) || 
             ((m_type == DoCreate) && !created))
@@ -203,7 +208,7 @@ class basic_managed_multi_shared_memory
       }
       self_t * const    mp_frontend;
       type_t            m_type;
-      std::size_t       m_segment_number;
+      size_type       m_segment_number;
    };
 
    //!Functor to execute atomically when closing a shared memory segment.
@@ -223,9 +228,6 @@ class basic_managed_multi_shared_memory
       self_t * const    mp_frontend;
    };
 
-   typedef detail::basic_managed_memory_impl 
-      <CharType, MemoryAlgorithm, IndexType>                   base_t;
-
    //Friend declarations
    friend struct basic_managed_multi_shared_memory::create_open_func;
    friend struct basic_managed_multi_shared_memory::close_func;
@@ -240,7 +242,7 @@ class basic_managed_multi_shared_memory
 
    basic_managed_multi_shared_memory(create_only_t,
                                      const char *name,
-                                     std::size_t size,
+                                     size_type size,
                                      const permissions &perm = permissions())
       :  m_group_services(get_this_pointer())
    {
@@ -249,7 +251,7 @@ class basic_managed_multi_shared_memory
 
    basic_managed_multi_shared_memory(open_or_create_t,
                                      const char *name,
-                                     std::size_t size,
+                                     size_type size,
                                      const permissions &perm = permissions())
       :  m_group_services(get_this_pointer())
    {
@@ -268,7 +270,7 @@ class basic_managed_multi_shared_memory
    private:
    bool  priv_open_or_create(typename create_open_func::type_t type, 
                              const char *name,
-                             std::size_t size,
+                             size_type size,
                              const permissions &perm)
    {
       if(!m_shmem_list.empty())
@@ -298,17 +300,17 @@ class basic_managed_multi_shared_memory
    }
 
    bool  priv_new_segment(typename create_open_func::type_t type,
-                          std::size_t size,
+                          size_type size,
                           const void *addr,
                           const permissions &perm)
    {
       BOOST_TRY{
          //Get the number of groups of this multi_segment group
-         std::size_t segment_id  = m_shmem_list.size();
+         size_type segment_id  = m_shmem_list.size();
          //Format the name of the shared memory: append segment number. 
          boost::interprocess::basic_ovectorstream<boost::interprocess::string> formatter;
          //Pre-reserve string size
-         std::size_t str_size = m_root_name.length()+10;
+         size_type str_size = m_root_name.length()+10;
          if(formatter.vector().size() < str_size){
             //This can throw.
             formatter.reserve(str_size);

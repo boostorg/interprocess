@@ -157,7 +157,8 @@ static const ec_xlate ec_table[] =
    { /*ERROR_DISK_FULL*/112L, out_of_space_error },
    { /*ERROR_OUTOFMEMORY*/14L, out_of_memory_error },
    { /*ERROR_NOT_ENOUGH_MEMORY*/8L, out_of_memory_error },
-   { /*ERROR_TOO_MANY_OPEN_FILES*/4L, out_of_resource_error }
+   { /*ERROR_TOO_MANY_OPEN_FILES*/4L, out_of_resource_error },
+   { /*ERROR_INVALID_ADDRESS*/487L, busy_error }
    #else    //#if (defined BOOST_INTERPROCESS_WINDOWS)
    { EACCES, security_error },
    { EROFS, read_only_error },

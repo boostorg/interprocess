@@ -89,7 +89,7 @@ struct scoped_destructor_n
    {
       if(!m_p) return;
       value_type *raw_ptr = containers_detail::get_pointer(m_p);
-      for(std::size_t i = 0; i < m_n; ++i, ++raw_ptr)
+      for(size_type i = 0; i < m_n; ++i, ++raw_ptr)
          raw_ptr->~value_type();
    }
 };

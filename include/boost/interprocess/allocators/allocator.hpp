@@ -95,8 +95,8 @@ class allocator
                      <value_type>::type         reference;
    typedef typename detail::add_reference
                      <const value_type>::type   const_reference;
-   typedef std::size_t                          size_type;
-   typedef std::ptrdiff_t                       difference_type;
+   typedef typename segment_manager::size_type               size_type;
+   typedef typename segment_manager::difference_type         difference_type;
 
    typedef boost::interprocess::version_type<allocator, 2>   version;
 
@@ -186,7 +186,7 @@ class allocator
    //!will be assigned to received_size. The elements must be deallocated
    //!with deallocate(...)
    multiallocation_chain allocate_many
-      (size_type elem_size, std::size_t num_elements)
+      (size_type elem_size, size_type num_elements)
    {
       return multiallocation_chain(mp_mngr->allocate_many(sizeof(T)*elem_size, num_elements));
    }
@@ -224,7 +224,7 @@ class allocator
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
    multiallocation_chain allocate_individual
-      (std::size_t num_elements)
+      (size_type num_elements)
    {  return this->allocate_many(1, num_elements); }
 
    //!Deallocates memory previously allocated with allocate_one().

@@ -49,6 +49,7 @@ class private_node_pool_impl
    typedef typename node_slist<void_pointer>::node_t              node_t;
    typedef typename node_slist<void_pointer>::node_slist_t        free_nodes_t;
    typedef typename SegmentManagerBase::multiallocation_chain     multiallocation_chain;
+   typedef typename SegmentManagerBase::size_type                 size_type;
 
    private:
    typedef typename bi::make_slist
@@ -61,9 +62,9 @@ class private_node_pool_impl
    typedef SegmentManagerBase segment_manager_base_type;
 
    //!Constructor from a segment manager. Never throws
-   private_node_pool_impl(segment_manager_base_type *segment_mngr_base, std::size_t node_size, std::size_t nodes_per_block)
+   private_node_pool_impl(segment_manager_base_type *segment_mngr_base, size_type node_size, size_type nodes_per_block)
    :  m_nodes_per_block(nodes_per_block)
-   ,  m_real_node_size(lcm(node_size, std::size_t(alignment_of<node_t>::value)))
+   ,  m_real_node_size(lcm(node_size, size_type(alignment_of<node_t>::value)))
       //General purpose allocator
    ,  mp_segment_mngr_base(segment_mngr_base)
    ,  m_blocklist()
@@ -76,7 +77,7 @@ class private_node_pool_impl
    ~private_node_pool_impl()
    {  this->purge_blocks();  }
 
-   std::size_t get_real_num_node() const
+   size_type get_real_num_node() const
    {  return m_nodes_per_block; }
 
    //!Returns the segment manager. Never throws
@@ -91,10 +92,10 @@ class private_node_pool_impl
    {  priv_dealloc_node(ptr); }
 
    //!Allocates a singly linked list of n nodes ending in null pointer. 
-   multiallocation_chain allocate_nodes(const std::size_t n)
+   multiallocation_chain allocate_nodes(const size_type n)
    {
       //Preallocate all needed blocks to fulfill the request
-      std::size_t cur_nodes = m_freelist.size();
+      size_type cur_nodes = m_freelist.size();
       if(cur_nodes < n){
          priv_alloc_block(((n - cur_nodes) - 1)/m_nodes_per_block + 1);
       }
@@ -102,7 +103,7 @@ class private_node_pool_impl
       //We just iterate the needed nodes to get the last we'll erase
       typedef typename free_nodes_t::iterator free_iterator;
       free_iterator before_last_new_it = m_freelist.before_begin();
-      for(std::size_t j = 0; j != n; ++j){
+      for(size_type j = 0; j != n; ++j){
          ++before_last_new_it;
       }
 
@@ -120,7 +121,7 @@ class private_node_pool_impl
       multiallocation_chain chain;
       chain.incorporate_after(chain.before_begin(), &*first_node, &*last_node, n);
       m_allocated += n;
-      return BOOST_CONTAINER_MOVE_NAMESPACE::move(chain);
+      return boost::move(chain);
    }
 
    void deallocate_nodes(multiallocation_chain chain)
@@ -145,8 +146,8 @@ class private_node_pool_impl
       nodelist_iterator backup_list_last = backup_list.before_begin();
 
       //Execute the algorithm and get an iterator to the last value
-      std::size_t blocksize = get_rounded_size
-         (m_real_node_size*m_nodes_per_block, alignment_of<node_t>::value);
+      size_type blocksize = get_rounded_size
+         (m_real_node_size*m_nodes_per_block, (size_type) alignment_of<node_t>::value);
 
       while(it != itend){
          //Collect all the nodes from the block pointed by it
@@ -196,7 +197,7 @@ class private_node_pool_impl
          , backup_list.size());
    }
 
-   std::size_t num_free_nodes()
+   size_type num_free_nodes()
    {  return m_freelist.size();  }
 
    //!Deallocates all used memory. Precondition: all nodes allocated from this pool should
@@ -205,8 +206,8 @@ class private_node_pool_impl
    {
       //check for memory leaks
       BOOST_ASSERT(m_allocated==0);
-      std::size_t blocksize = get_rounded_size
-         (m_real_node_size*m_nodes_per_block, alignment_of<node_t>::value);
+      size_type blocksize = get_rounded_size
+         (m_real_node_size*m_nodes_per_block, (size_type)alignment_of<node_t>::value);
       typename blockslist_t::iterator
          it(m_blocklist.begin()), itend(m_blocklist.end()), aux;
 
@@ -294,15 +295,15 @@ class private_node_pool_impl
    }
 
    //!Allocates several blocks of nodes. Can throw
-   void priv_alloc_block(std::size_t num_blocks = 1)
+   void priv_alloc_block(size_type num_blocks = 1)
    {
       if(!num_blocks)
          return;
-      std::size_t blocksize = 
-         get_rounded_size(m_real_node_size*m_nodes_per_block, alignment_of<node_t>::value);
+      size_type blocksize = 
+         get_rounded_size(m_real_node_size*m_nodes_per_block, (size_type)alignment_of<node_t>::value);
 
       try{
-         for(std::size_t i = 0; i != num_blocks; ++i){
+         for(size_type i = 0; i != num_blocks; ++i){
             //We allocate a new NodeBlock and put it as first
             //element in the free Node list
             char *pNode = reinterpret_cast<char*>
@@ -312,7 +313,7 @@ class private_node_pool_impl
 
             //We initialize all Nodes in Node Block to insert 
             //them in the free Node list
-            for(std::size_t i = 0; i < m_nodes_per_block; ++i, pNode += m_real_node_size){
+            for(size_type i = 0; i < m_nodes_per_block; ++i, pNode += m_real_node_size){
                m_freelist.push_front(*new (pNode) node_t);
             }
          }
@@ -333,13 +334,13 @@ class private_node_pool_impl
 
    private:
    //!Returns a reference to the block hook placed in the end of the block
-   static node_t & get_block_hook (void *block, std::size_t blocksize)
+   static node_t & get_block_hook (void *block, size_type blocksize)
    {  
       return *reinterpret_cast<node_t*>(reinterpret_cast<char*>(block) + blocksize);  
    }
 
    //!Returns the starting address of the block reference to the block hook placed in the end of the block
-   void *get_block_from_hook (node_t *hook, std::size_t blocksize)
+   void *get_block_from_hook (node_t *hook, size_type blocksize)
    {  
       return (reinterpret_cast<char*>(hook) - blocksize);
    }
@@ -348,12 +349,12 @@ class private_node_pool_impl
    typedef typename boost::pointer_to_other
       <void_pointer, segment_manager_base_type>::type   segment_mngr_base_ptr_t;
 
-   const std::size_t m_nodes_per_block;
-   const std::size_t m_real_node_size;
+   const size_type m_nodes_per_block;
+   const size_type m_real_node_size;
    segment_mngr_base_ptr_t mp_segment_mngr_base;   //Segment manager
    blockslist_t      m_blocklist;      //Intrusive container of blocks
    free_nodes_t      m_freelist;       //Intrusive container of free nods
-   std::size_t       m_allocated;      //Used nodes for debugging
+   size_type       m_allocated;      //Used nodes for debugging
 };
 
 

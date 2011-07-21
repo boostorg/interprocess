@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -14,7 +14,7 @@
 #include "config_begin.hpp"
 
 #if    !defined(BOOST_NO_RVALUE_REFERENCES) && !defined(BOOST_NO_VARIADIC_TEMPLATES)\
-    && !defined(BOOST_MOVE_MACRO_DISABLE_VARIADIC_TMPL)
+    && !defined(BOOST_INTERPROCESS_DISABLE_VARIADIC_TMPL)
 #define BOOST_CONTAINERS_PERFECT_FORWARDING
 
 #endif

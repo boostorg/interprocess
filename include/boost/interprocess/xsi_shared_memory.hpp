@@ -49,7 +49,7 @@ class xsi_shared_memory
 {
    /// @cond
    //Non-copyable and non-assignable
-   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(xsi_shared_memory)
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(xsi_shared_memory)
    /// @endcond
 
    public:
@@ -81,14 +81,14 @@ class xsi_shared_memory
    //!Moves the ownership of "moved"'s shared memory object to *this. 
    //!After the call, "moved" does not represent any shared memory object. 
    //!Does not throw
-   xsi_shared_memory(BOOST_INTERPROCESS_RV_REF(xsi_shared_memory) moved)
+   xsi_shared_memory(BOOST_RV_REF(xsi_shared_memory) moved)
       : m_shmid(-1)
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s shared memory to *this.
    //!After the call, "moved" does not represent any shared memory. 
    //!Does not throw
-   xsi_shared_memory &operator=(BOOST_INTERPROCESS_RV_REF(xsi_shared_memory) moved)
+   xsi_shared_memory &operator=(BOOST_RV_REF(xsi_shared_memory) moved)
    {  
       xsi_shared_memory tmp(boost::interprocess::move(moved));
       this->swap(tmp);
