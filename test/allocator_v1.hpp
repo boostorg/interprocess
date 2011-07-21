@@ -74,8 +74,8 @@ class allocator_v1
                      <value_type>::type         reference;
    typedef typename detail::add_reference
                      <const value_type>::type   const_reference;
-   typedef std::size_t                          size_type;
-   typedef std::ptrdiff_t                       difference_type;
+   typedef typename segment_manager::size_type           size_type;
+   typedef typename segment_manager::difference_type     difference_type;
 
    //!Obtains an allocator_v1 of other type
    template<class T2>

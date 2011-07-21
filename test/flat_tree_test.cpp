@@ -123,6 +123,7 @@ typedef flat_multimap<test::movable_and_copyable_int, test::movable_and_copyable
                 ,std::less<test::movable_and_copyable_int>
                 ,shmem_move_copy_pair_allocator_t>                        MyMoveCopyShmMultiMap;
 
+
 //Test recursive structures
 class recursive_flat_set
 {

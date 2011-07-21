@@ -48,7 +48,8 @@ int main()
    //->
 
    //Allocate at least 100 bytes, 1000 bytes if possible
-   std::size_t received_size, min_size = 100, preferred_size = 1000;
+   managed_shared_memory::size_type min_size = 100, preferred_size = 1000;
+   managed_shared_memory::size_type received_size;
    std::size_t *ptr = managed_shm.allocation_command<std::size_t>
       (boost::interprocess::allocate_new, min_size, preferred_size, received_size).first;
 
@@ -56,7 +57,7 @@ int main()
    assert(received_size >= min_size);
 
    //Get free memory
-   std::size_t free_memory_after_allocation = managed_shm.get_free_memory();
+   managed_shared_memory::size_type free_memory_after_allocation = managed_shm.get_free_memory();
 
    //Now write the data
    for(std::size_t i = 0; i < received_size; ++i) ptr[i] = i;
@@ -65,7 +66,7 @@ int main()
    //lower to the double of the original buffer.
    //This "should" be successful since no other class is allocating
    //memory from the segment
-   std::size_t expanded_size;
+   managed_shared_memory::size_type expanded_size;
    std::pair<std::size_t *, bool> ret = managed_shm.allocation_command
       (boost::interprocess::expand_fwd, received_size*2, received_size*3, expanded_size, ptr);
 
@@ -75,7 +76,7 @@ int main()
    assert(expanded_size >= received_size*2);
 
    //Get free memory and compare
-   std::size_t free_memory_after_expansion = managed_shm.get_free_memory();
+   managed_shared_memory::size_type free_memory_after_expansion = managed_shm.get_free_memory();
    assert(free_memory_after_expansion < free_memory_after_allocation);
 
    //Write new values
@@ -85,7 +86,7 @@ int main()
    //should be smaller than min_size*2.
    //This "should" be successful since no other class is allocating
    //memory from the segment
-   std::size_t shrunk_size;
+   managed_shared_memory::size_type shrunk_size;
    ret = managed_shm.allocation_command
       (boost::interprocess::shrink_in_place, min_size*2, min_size, shrunk_size, ptr);
 
@@ -96,7 +97,7 @@ int main()
    assert(shrunk_size >= min_size);
 
    //Get free memory and compare
-   std::size_t free_memory_after_shrinking = managed_shm.get_free_memory();
+   managed_shared_memory::size_type free_memory_after_shrinking = managed_shm.get_free_memory();
    assert(free_memory_after_shrinking > free_memory_after_expansion);
 
    //Deallocate the buffer

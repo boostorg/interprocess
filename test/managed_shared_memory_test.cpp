@@ -124,7 +124,7 @@ int main ()
    }
    #ifndef BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS_NO_GROW
    {
-      std::size_t old_free_memory;
+      managed_shared_memory::size_type old_free_memory;
       {
          //Map preexisting shmem again in memory
          managed_shared_memory shmem(open_only, ShmemName);
@@ -148,7 +148,7 @@ int main ()
          return -1;
    }
    {
-      std::size_t old_free_memory, next_free_memory,
+      managed_shared_memory::size_type old_free_memory, next_free_memory,
                   old_shmem_size, next_shmem_size, final_shmem_size;
       {
          //Map preexisting shmem again in memory

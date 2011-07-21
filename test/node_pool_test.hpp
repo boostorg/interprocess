@@ -31,7 +31,7 @@ struct test_node_pool
 template <class NodePool>
 bool test_node_pool<NodePool>::allocate_then_deallocate(NodePool &pool)
 {
-   const std::size_t num_alloc = 1 + 3*pool.get_real_num_node();
+   const typename NodePool::size_type num_alloc = 1 + 3*pool.get_real_num_node();
 
    std::vector<void*> nodes;
 
@@ -136,7 +136,7 @@ bool test_all_node_pool()
    typedef boost::interprocess::test::test_node_pool<node_pool_t> test_node_pool_t;
    shared_memory_object::remove(test::get_process_id_name());
    {
-      managed_shared_memory shm(create_only, test::get_process_id_name(), 4*1024*sizeof(void*));
+	  managed_shared_memory shm(create_only, test::get_process_id_name(), 4*1024*sizeof(segment_manager::void_pointer));
 
       typedef deleter<node_pool_t, segment_manager> deleter_t;
       typedef unique_ptr<node_pool_t, deleter_t> unique_ptr_t;

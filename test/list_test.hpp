@@ -145,8 +145,8 @@ int list_test (bool copied_allocators_equal = true)
          for(int i = 0; i < 50; ++i){
             aux_vect2[i] = -1;
          }
-         shmlist->assign(::boost::interprocess::make_move_iterator(&aux_vect[0])
-                        ,::boost::interprocess::make_move_iterator(&aux_vect[50]));
+         shmlist->assign(::boost::make_move_iterator(&aux_vect[0])
+                        ,::boost::make_move_iterator(&aux_vect[50]));
          stdlist->assign(&aux_vect2[0], &aux_vect2[50]);
          if(!CheckEqualContainers(shmlist, stdlist)) return 1;
       }
@@ -176,8 +176,8 @@ int list_test (bool copied_allocators_equal = true)
             aux_vect2[i] = -1;
          }
          shmlist->insert(shmlist->begin()
-                        ,::boost::interprocess::make_move_iterator(&aux_vect[0])
-                        ,::boost::interprocess::make_move_iterator(&aux_vect[50]));
+                        ,::boost::make_move_iterator(&aux_vect[0])
+                        ,::boost::make_move_iterator(&aux_vect[50]));
          stdlist->insert(stdlist->begin(), &aux_vect2[0], &aux_vect2[50]);
       }
 

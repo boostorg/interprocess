@@ -612,6 +612,8 @@ void test_alias()
          BOOST_TEST( !!p2 );
          BOOST_TEST( p2.use_count() == p.use_count() );
          BOOST_TEST( !( p < p2 ) && !( p2 < p ) );
+         int_shared_ptr p_nothrow(make_managed_shared_ptr
+            (shmem.construct<int>(anonymous_instance)(), shmem, std::nothrow));
       }
    }
    shared_memory_object::remove(process_name.c_str());

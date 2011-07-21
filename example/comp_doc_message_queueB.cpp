@@ -25,7 +25,7 @@ int main ()
          );
 
       unsigned int priority;
-      std::size_t recvd_size;
+      message_queue::size_type recvd_size;
 
       //Receive 100 numbers
       for(int i = 0; i < 100; ++i){

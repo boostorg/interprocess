@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
       #endif
       //->
 
-      std::pair<MyType*, std::size_t> res;
+      std::pair<MyType*, managed_shared_memory::size_type> res;
 
       //Find the array
       res = segment.find<MyType> ("MyType array");   

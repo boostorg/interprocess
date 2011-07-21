@@ -49,7 +49,7 @@ int main (int argc, char *argv[])
       //->
 
       //Allocate a portion of the segment (raw memory)
-      std::size_t free_memory = segment.get_free_memory();
+      managed_shared_memory::size_type free_memory = segment.get_free_memory();
       void * shptr = segment.allocate(1024/*bytes to allocate*/);
 
       //Check invariant

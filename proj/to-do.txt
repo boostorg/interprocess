@@ -97,7 +97,7 @@ All Fine
 
 -> operator >> and similar need moved_value
 
--> rvalue reference enabled compilers are not optimized with is_movable and move_iterator
+-> rvalue reference enabled compilers are not optimized with has_move_emulation_enabled and move_iterator
 
 -> Add allocator test template that test all new functions (allocate_many, etc.)
 

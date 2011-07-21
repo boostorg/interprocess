@@ -32,13 +32,13 @@ bool test_allocation(Allocator &a)
       ; t != EndDeallocationType
       ; t = (deallocation_type)((int)t + 1)){
       std::vector<void*> buffers;
-      std::size_t free_memory = a.get_free_memory();
+	  typename Allocator::size_type free_memory = a.get_free_memory();
 
       for(int i = 0; true; ++i){
          void *ptr = a.allocate(i, std::nothrow);
          if(!ptr)
             break;
-         std::size_t size = a.size(ptr);
+		 std::size_t size = a.size(ptr);
          std::memset(ptr, 0, size);
          buffers.push_back(ptr);
       }
@@ -96,7 +96,7 @@ bool test_allocation_shrink(Allocator &a)
       void *ptr = a.allocate(i*2, std::nothrow);
       if(!ptr)
          break;
-      std::size_t size = a.size(ptr);
+	  std::size_t size = a.size(ptr);
       std::memset(ptr, 0, size);
       buffers.push_back(ptr);
    }
@@ -105,7 +105,7 @@ bool test_allocation_shrink(Allocator &a)
    for(int i = 0, max = (int)buffers.size()
       ;i < max
       ; ++i){
-      std::size_t received_size;
+      typename Allocator::size_type received_size;
       if(a.template allocation_command<char>
          ( boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, i*2
          , i, received_size, static_cast<char*>(buffers[i])).first){
@@ -115,7 +115,7 @@ bool test_allocation_shrink(Allocator &a)
          if(received_size < std::size_t(i)){
             return false;
          }
-         std::memset(buffers[i], 0, a.size(buffers[i]));
+		 std::memset(buffers[i], 0, a.size(buffers[i]));
       }
    }
    
@@ -144,7 +144,7 @@ bool test_allocation_expand(Allocator &a)
       void *ptr = a.allocate(i, std::nothrow);
       if(!ptr)
          break;
-      std::size_t size = a.size(ptr);
+	  std::size_t size = a.size(ptr);
       std::memset(ptr, 0, size);
       buffers.push_back(ptr);
    }
@@ -153,7 +153,7 @@ bool test_allocation_expand(Allocator &a)
    for(int i = 0, max = (int)buffers.size()
       ;i < max
       ;++i){
-      std::size_t received_size;
+      typename Allocator::size_type received_size;
       std::size_t min_size = i+1;
       std::size_t preferred_size = i*2;
       preferred_size = min_size > preferred_size ? min_size : preferred_size;
@@ -166,7 +166,7 @@ bool test_allocation_expand(Allocator &a)
             return false;
          }
          //Now, try to expand further
-         min_size       = received_size+1;
+		 min_size       = received_size+1;
          preferred_size = min_size*2;
       }
    }
@@ -190,12 +190,12 @@ template<class Allocator>
 bool test_allocation_shrink_and_expand(Allocator &a)
 {
    std::vector<void*> buffers;
-   std::vector<std::size_t> received_sizes;
+   std::vector<typename Allocator::size_type> received_sizes;
    std::vector<bool>        size_reduced;
 
    //Allocate buffers wand store received sizes
    for(int i = 0; true; ++i){
-      std::size_t received_size;
+      typename Allocator::size_type received_size;
       void *ptr = a.template allocation_command<char>
          ( boost::interprocess::allocate_new | boost::interprocess::nothrow_allocation, i, i*2, received_size).first;
       if(!ptr){
@@ -212,7 +212,7 @@ bool test_allocation_shrink_and_expand(Allocator &a)
    for(int i = 0, max = (int)buffers.size()
       ; i < max
       ; ++i){
-      std::size_t received_size;
+      typename Allocator::size_type received_size;
       if(a.template allocation_command<char>
          ( boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, received_sizes[i]
          , i, received_size, static_cast<char*>(buffers[i])).first){
@@ -230,7 +230,7 @@ bool test_allocation_shrink_and_expand(Allocator &a)
    for(int i = 0, max = (int)buffers.size()
       ;i < max
       ;++i){
-      std::size_t received_size;
+      typename Allocator::size_type received_size;
       std::size_t request_size = received_sizes[i];
       if(a.template allocation_command<char>
          ( boost::interprocess::expand_fwd | boost::interprocess::nothrow_allocation, request_size
@@ -292,7 +292,7 @@ bool test_allocation_deallocation_expand(Allocator &a)
       ;++i){
       //
       if(buffers[i]){
-         std::size_t received_size;
+         typename Allocator::size_type received_size;
          std::size_t min_size = i+1;
          std::size_t preferred_size = i*2;
          preferred_size = min_size > preferred_size ? min_size : preferred_size;
@@ -363,7 +363,7 @@ bool test_allocation_with_reuse(Allocator &a)
       buffers.clear();
 
       //Now allocate with reuse
-      std::size_t received_size = 0;
+      typename Allocator::size_type received_size = 0;
       for(int i = 0; true; ++i){
          std::size_t min_size = (received_size + 1);
          std::size_t prf_size = (received_size + (i+1)*2);
@@ -540,16 +540,16 @@ bool test_grow_shrink_to_fit(Allocator &a)
 {
    std::vector<void*> buffers;
 
-   std::size_t original_size = a.get_size();
-   std::size_t original_free = a.get_free_memory();
+   typename Allocator::size_type original_size = a.get_size();
+   typename Allocator::size_type original_free = a.get_free_memory();
 
    a.shrink_to_fit();
 
    if(!a.all_memory_deallocated() && a.check_sanity())
       return false;
 
-   std::size_t shrunk_size          = a.get_size();
-   std::size_t shrunk_free_memory   = a.get_free_memory();
+   typename Allocator::size_type shrunk_size          = a.get_size();
+   typename Allocator::size_type shrunk_free_memory   = a.get_free_memory();
    if(shrunk_size != a.get_min_size())
       return 1;
 
@@ -595,7 +595,7 @@ bool test_grow_shrink_to_fit(Allocator &a)
          --pos;
       a.deallocate(buffers[pos]);
       buffers.erase(buffers.begin()+pos);
-      std::size_t old_free = a.get_free_memory();
+      typename Allocator::size_type old_free = a.get_free_memory();
       a.shrink_to_fit();
       if(!a.check_sanity())   return false;
       if(original_size < a.get_size())    return false;
@@ -640,7 +640,7 @@ bool test_many_equal_allocation(Allocator &a)
    for( deallocation_type t = DirectDeallocation
       ; t != EndDeallocationType
       ; t = (deallocation_type)((int)t + 1)){
-      std::size_t free_memory = a.get_free_memory();
+      typename Allocator::size_type free_memory = a.get_free_memory();
 
       std::vector<void*> buffers2;
 
@@ -649,7 +649,7 @@ bool test_many_equal_allocation(Allocator &a)
          void *ptr = a.allocate(i, std::nothrow);
          if(!ptr)
             break;
-         std::size_t size = a.size(ptr);
+		 std::size_t size = a.size(ptr);
          std::memset(ptr, 0, size);
          if(!a.check_sanity())
             return false;
@@ -677,7 +677,7 @@ bool test_many_equal_allocation(Allocator &a)
          if(chain.empty())
             break;
 
-         std::size_t n = chain.size();
+         typename multiallocation_chain::size_type n = chain.size();
          while(!chain.empty()){
             buffers.push_back(detail::get_pointer(chain.front()));
             chain.pop_front();
@@ -748,7 +748,7 @@ bool test_many_different_allocation(Allocator &a)
 {
    typedef typename Allocator::multiallocation_chain multiallocation_chain;
    const std::size_t ArraySize = 11;
-   std::size_t requested_sizes[ArraySize];
+   typename Allocator::size_type requested_sizes[ArraySize];
    for(std::size_t i = 0; i < ArraySize; ++i){
       requested_sizes[i] = 4*i;
    }
@@ -756,7 +756,7 @@ bool test_many_different_allocation(Allocator &a)
    for( deallocation_type t = DirectDeallocation
       ; t != EndDeallocationType
       ; t = (deallocation_type)((int)t + 1)){
-      std::size_t free_memory = a.get_free_memory();
+      typename Allocator::size_type free_memory = a.get_free_memory();
 
       std::vector<void*> buffers2;
 
@@ -765,7 +765,7 @@ bool test_many_different_allocation(Allocator &a)
          void *ptr = a.allocate(i, std::nothrow);
          if(!ptr)
             break;
-         std::size_t size = a.size(ptr);
+		 std::size_t size = a.size(ptr);
          std::memset(ptr, 0, size);
          buffers2.push_back(ptr);
       }
@@ -786,7 +786,7 @@ bool test_many_different_allocation(Allocator &a)
          multiallocation_chain chain(a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow));
          if(chain.empty())
             break;
-         std::size_t n = chain.size();
+         typename multiallocation_chain::size_type n = chain.size();
          while(!chain.empty()){
             buffers.push_back(detail::get_pointer(chain.front()));
             chain.pop_front();
@@ -855,11 +855,11 @@ bool test_many_deallocation(Allocator &a)
    typedef typename Allocator::multiallocation_chain multiallocation_chain;
    const std::size_t ArraySize = 11;
    vector<multiallocation_chain> buffers;
-   std::size_t requested_sizes[ArraySize];
+   typename Allocator::size_type requested_sizes[ArraySize];
    for(std::size_t i = 0; i < ArraySize; ++i){
       requested_sizes[i] = 4*i;
    }
-   std::size_t free_memory = a.get_free_memory();
+   typename Allocator::size_type free_memory = a.get_free_memory();
 
    {
       for(int i = 0; true; ++i){
