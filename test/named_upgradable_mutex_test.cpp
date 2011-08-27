@@ -37,7 +37,7 @@ class named_upgradable_mutex_lock_test_wrapper
    ~named_upgradable_mutex_lock_test_wrapper()
    {
       if(--count_){
-         detail::interprocess_tester::
+         ipcdetail::interprocess_tester::
             dont_close_on_destruction(static_cast<named_upgradable_mutex&>(*this));
       }
    }
@@ -72,7 +72,7 @@ class named_upgradable_mutex_creation_test_wrapper
    ~named_upgradable_mutex_creation_test_wrapper()
    {
       if(--count_){
-         detail::interprocess_tester::
+         ipcdetail::interprocess_tester::
             dont_close_on_destruction(static_cast<named_upgradable_mutex&>(*this));
       }
    }

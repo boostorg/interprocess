@@ -23,7 +23,7 @@ namespace test{
 inline void get_process_id_name(std::string &str)
 {
    std::stringstream sstr;
-   sstr << "process_" << boost::interprocess::detail::get_current_process_id() << std::ends;
+   sstr << "process_" << boost::interprocess::ipcdetail::get_current_process_id() << std::ends;
    str = sstr.str().c_str();
 }
 

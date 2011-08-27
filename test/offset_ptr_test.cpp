@@ -21,13 +21,13 @@ bool test_types_and_convertions()
    typedef offset_ptr<volatile int>       pvint_t;
    typedef offset_ptr<const volatile int> pcvint_t;
 
-   if(!detail::is_same<pint_t::value_type, int>::value)
+   if(!ipcdetail::is_same<pint_t::value_type, int>::value)
       return false;
-   if(!detail::is_same<pcint_t::value_type, const int>::value)
+   if(!ipcdetail::is_same<pcint_t::value_type, const int>::value)
       return false;
-   if(!detail::is_same<pvint_t::value_type, volatile int>::value)
+   if(!ipcdetail::is_same<pvint_t::value_type, volatile int>::value)
       return false;
-   if(!detail::is_same<pcvint_t::value_type, const volatile int>::value)
+   if(!ipcdetail::is_same<pcvint_t::value_type, const volatile int>::value)
       return false;
    int dummy_int = 9;
 

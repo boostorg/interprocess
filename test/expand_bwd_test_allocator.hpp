@@ -57,9 +57,9 @@ class expand_bwd_test_allocator
    typedef T                                    value_type;
    typedef T *                                  pointer;
    typedef const T *                            const_pointer;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <value_type>::type         reference;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <const value_type>::type   const_reference;
    typedef std::size_t                          size_type;
    typedef std::ptrdiff_t                       difference_type;
@@ -110,9 +110,9 @@ class expand_bwd_test_allocator
 
    friend void swap(self_t &alloc1, self_t &alloc2)
    {  
-      detail::do_swap(alloc1.mp_buffer, alloc2.mp_buffer);
-      detail::do_swap(alloc1.m_size,    alloc2.m_size);
-      detail::do_swap(alloc1.m_offset,  alloc2.m_offset);
+      ipcdetail::do_swap(alloc1.mp_buffer, alloc2.mp_buffer);
+      ipcdetail::do_swap(alloc1.m_size,    alloc2.m_size);
+      ipcdetail::do_swap(alloc1.m_offset,  alloc2.m_offset);
    }
 
    //Experimental version 2 expand_bwd_test_allocator functions

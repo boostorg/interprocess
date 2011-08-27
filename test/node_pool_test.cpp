@@ -17,7 +17,7 @@ typedef managed_shared_memory::segment_manager segment_manager_t;
 
 int main ()
 {
-   typedef detail::private_node_pool
+   typedef ipcdetail::private_node_pool
       <segment_manager_t, 4, 64> node_pool_t;
 
    if(!test::test_all_node_pool<node_pool_t>())

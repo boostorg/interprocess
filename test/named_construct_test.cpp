@@ -50,11 +50,11 @@ struct unique_name_generator
    typedef simple_pair     simple_type;
    typedef array_pair      array_type;
    typedef array_it_pair   array_it_type;
-   static const detail::unique_instance_t *get_simple_name()
+   static const ipcdetail::unique_instance_t *get_simple_name()
    {  return 0;  }
-   static const detail::unique_instance_t *get_array_name()
+   static const ipcdetail::unique_instance_t *get_array_name()
    {  return 0;  }
-   static const detail::unique_instance_t *get_array_it_name()
+   static const ipcdetail::unique_instance_t *get_array_it_name()
    {  return 0;  }
 };
 
@@ -65,11 +65,11 @@ struct anonymous_name_generator
    typedef simple_pair simple_type;
    typedef array_pair array_type;
    typedef array_it_pair array_it_type;
-   static const detail::anonymous_instance_t *get_simple_name()
+   static const ipcdetail::anonymous_instance_t *get_simple_name()
    {  return 0;  }
-   static const detail::anonymous_instance_t *get_array_name()
+   static const ipcdetail::anonymous_instance_t *get_array_name()
    {  return 0;  }
-   static const detail::anonymous_instance_t *get_array_it_name()
+   static const ipcdetail::anonymous_instance_t *get_array_it_name()
    {  return 0;  }
 };
 

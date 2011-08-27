@@ -51,7 +51,7 @@ int main ()
    //Define file names
    //<-
    #if 1
-   std::string mapped_file(boost::interprocess::detail::get_temporary_path());
+   std::string mapped_file(boost::interprocess::ipcdetail::get_temporary_path());
    mapped_file += "/"; mapped_file += test::get_process_id_name();
    const char *MappedFile = mapped_file.c_str();
    #else

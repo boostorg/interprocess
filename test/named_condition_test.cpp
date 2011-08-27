@@ -78,7 +78,7 @@ class named_condition_creation_test_wrapper
 
    ~named_condition_creation_test_wrapper()   {
       if(--count_){
-         detail::interprocess_tester::
+         ipcdetail::interprocess_tester::
             dont_close_on_destruction(static_cast<named_condition&>(*this));
       }
    }
