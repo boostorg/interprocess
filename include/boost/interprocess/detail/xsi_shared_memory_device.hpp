@@ -53,22 +53,22 @@ class xsi_shared_memory_device
    xsi_shared_memory_device();
 
    xsi_shared_memory_device(create_only_t, const char *name, mode_t mode, std::size_t size)
-   {  this->priv_open_or_create_name_only(detail::DoCreate, name, mode, size);  }
+   {  this->priv_open_or_create_name_only(ipcdetail::DoCreate, name, mode, size);  }
 
    xsi_shared_memory_device(open_or_create_t, const char *name, mode_t mode, std::size_t size)
-   {  this->priv_open_or_create_name_only(detail::DoOpenOrCreate, name, mode, size);  }
+   {  this->priv_open_or_create_name_only(ipcdetail::DoOpenOrCreate, name, mode, size);  }
 
    xsi_shared_memory_device(open_only_t, const char *name, mode_t mode)
-   {  this->priv_open_or_create_name_only(detail::DoOpen, name, mode, 0);  }
+   {  this->priv_open_or_create_name_only(ipcdetail::DoOpen, name, mode, 0);  }
 
    xsi_shared_memory_device(create_only_t, const char *filepath, boost::uint8_t id, mode_t mode, std::size_t size)
-   {  this->priv_open_or_create_name_id(detail::DoCreate, name, id, mode, size);  }
+   {  this->priv_open_or_create_name_id(ipcdetail::DoCreate, name, id, mode, size);  }
 
    xsi_shared_memory_device(open_or_create_t, const char *filepath, boost::uint8_t id, mode_t mode, std::size_t size)
-   {  this->priv_open_or_create_name_id(detail::DoOpenOrCreate, id, name, mode, size);  }
+   {  this->priv_open_or_create_name_id(ipcdetail::DoOpenOrCreate, id, name, mode, size);  }
 
    xsi_shared_memory_device(open_only_t, const char *filepath, boost::uint8_t id, mode_t mode)
-   {  this->priv_open_or_create_name_id(detail::DoOpen, name, id, mode, 0);  }
+   {  this->priv_open_or_create_name_id(ipcdetail::DoOpen, name, id, mode, 0);  }
 
    xsi_shared_memory_device(BOOST_RV_REF(xsi_shared_memory_device) moved)
    {  this->swap(moved);   }
@@ -135,11 +135,11 @@ class xsi_shared_memory_device
    static void priv_obtain_index(mapped_region &m, xsi_named_mutex &m, std::string &path);
    static bool priv_remove_dead_memory(info_t *info, const char *path);
 
-   bool priv_open_or_create_name_only( detail::create_enum_t type
+   bool priv_open_or_create_name_only( ipcdetail::create_enum_t type
                            , const char *shmname
                            , mode_t mode
                            , std::size_t size);
-   bool priv_open_or_create_name_id( detail::create_enum_t type
+   bool priv_open_or_create_name_id( ipcdetail::create_enum_t type
                            , const char *shmname
                            , boost::uint8_t id
                            , mode_t mode
@@ -197,8 +197,8 @@ inline void xsi_shared_memory_device::priv_obtain_index
    permissions p;
    p.set_unrestricted();
    std::string xsi_shm_emulation_file_path;
-   detail::create_tmp_and_clean_old_and_get_filename(filename, xsi_shm_emulation_file_path);
-   detail::create_or_open_file(xsi_shm_emulation_file_path.c_str(), read_write, p);
+   ipcdetail::create_tmp_and_clean_old_and_get_filename(filename, xsi_shm_emulation_file_path);
+   ipcdetail::create_or_open_file(xsi_shm_emulation_file_path.c_str(), read_write, p);
    const std::size_t MemSize = sizeof(info_t);
 
    xsi_shared_memory index_shm(open_or_create, xsi_shm_emulation_file_path.c_str(), 1, MemSize, 0666);
@@ -230,7 +230,7 @@ inline bool xsi_shared_memory_device::priv_remove_dead_memory
 }
 
 inline bool xsi_shared_memory_device::priv_open_or_create_name_id
-   (detail::create_enum_t type, const char *filepath, mode_t mode, std::size_t size)
+   (ipcdetail::create_enum_t type, const char *filepath, mode_t mode, std::size_t size)
 {
    //Set accesses
    if (mode != read_write && mode != read_only){
@@ -240,7 +240,7 @@ inline bool xsi_shared_memory_device::priv_open_or_create_name_id
 
    int perm = (mode == read_only) ? (0444) : (0666);
 
-   if(type == detail::DoOpen){
+   if(type == ipcdetail::DoOpen){
       if(!found){
          error_info err = not_found_error;
          throw interprocess_exception(err);
@@ -248,13 +248,13 @@ inline bool xsi_shared_memory_device::priv_open_or_create_name_id
       xsi_shared_memory temp(open_only, filepath, id, perm);
       m_shm = boost::interprocess::move(temp);
    }
-   else if(type == detail::DoCreate){
+   else if(type == ipcdetail::DoCreate){
       //Try to reuse slot
       xsi_shared_memory temp(create_only, filepath, id, size, perm);
       std::strcpy(info->names[target_entry].buf, shmname);
       m_shm = boost::interprocess::move(temp);
    }
-   else{ // if(type == detail::DoOpenOrCreate){
+   else{ // if(type == ipcdetail::DoOpenOrCreate){
       xsi_shared_memory temp(open_or_create, filepath, id, size, perm);
       m_shm = boost::interprocess::move(temp);
    }
@@ -265,7 +265,7 @@ inline bool xsi_shared_memory_device::priv_open_or_create_name_id
 }
 
 inline bool xsi_shared_memory_device::priv_open_or_create_name_only
-   (detail::create_enum_t type, const char *shmname, mode_t mode, std::size_t size)
+   (ipcdetail::create_enum_t type, const char *shmname, mode_t mode, std::size_t size)
 {
    //Set accesses
    if (mode != read_write && mode != read_only){
@@ -311,7 +311,7 @@ inline bool xsi_shared_memory_device::priv_open_or_create_name_only
       }
       //Now handle the result
       int perm = (mode == read_only) ? (0444) : (0666);
-      if(type == detail::DoOpen){
+      if(type == ipcdetail::DoOpen){
          if(!found){
             error_info err = not_found_error;
             throw interprocess_exception(err);
@@ -322,14 +322,14 @@ inline bool xsi_shared_memory_device::priv_open_or_create_name_only
       }
       else{
 
-         if(type == detail::DoCreate){
+         if(type == ipcdetail::DoCreate){
             //Try to reuse slot
             xsi_shared_memory temp( create_only, xsi_shm_emulation_file_path.c_str()
                                   , target_entry+info_constants_t<0>::FirstID, size, perm);
             std::strcpy(info->names[target_entry].buf, shmname);
             m_shm = boost::interprocess::move(temp);
          }
-         else{ // if(type == detail::DoOpenOrCreate){
+         else{ // if(type == ipcdetail::DoOpenOrCreate){
             xsi_shared_memory temp( open_or_create, xsi_shm_emulation_file_path.c_str()
                                   , target_entry+info_constants_t<0>::FirstID, size, perm);
             if(!found){

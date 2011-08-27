@@ -34,9 +34,9 @@ namespace interprocess {
    linked list of free buffers.*/
 template<class MutexFamily, class VoidPtr>
 class multi_simple_seq_fit 
-   : public detail::simple_seq_fit_impl<MutexFamily, VoidPtr>
+   : public ipcdetail::simple_seq_fit_impl<MutexFamily, VoidPtr>
 {
-   typedef detail::simple_seq_fit_impl<MutexFamily, VoidPtr> base_t;
+   typedef ipcdetail::simple_seq_fit_impl<MutexFamily, VoidPtr> base_t;
  public:
    /*!Constructor. "size" is the total size of the managed memory segment, 
       "extra_hdr_bytes" indicates the extra bytes beginning in the sizeof(multi_simple_seq_fit)

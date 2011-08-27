@@ -95,7 +95,7 @@ class interprocess_semaphore
    #if defined(BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
    volatile boost::uint32_t m_count;
    #else 
-   detail::semaphore_wrapper m_sem;
+   ipcdetail::semaphore_wrapper m_sem;
    #endif   //#if defined(BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
    /// @endcond
 };

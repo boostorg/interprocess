@@ -51,7 +51,7 @@ class segment_manager_base;
 //!instance constructed in memory
 enum instance_type {   anonymous_type, named_type, unique_type, max_allocation_type };
 
-namespace detail{
+namespace ipcdetail{
 
 template<class MemoryAlgorithm>
 class mem_algo_deallocator
@@ -207,7 +207,7 @@ struct block_header
    }
 };
 
-inline void array_construct(void *mem, std::size_t num, detail::in_place_interface &table)
+inline void array_construct(void *mem, std::size_t num, ipcdetail::in_place_interface &table)
 {
    //Try constructors
    std::size_t constructed = 0;
@@ -281,7 +281,7 @@ struct intrusive_value_type_impl
    {
       return const_cast<block_header<size_type>*>
          (reinterpret_cast<const block_header<size_type> *>(reinterpret_cast<const char*>(this) +
-            ::boost::interprocess::detail::get_rounded_size(size_type(sizeof(*this)), size_type(BlockHdrAlignment))));
+            ::boost::interprocess::ipcdetail::get_rounded_size(size_type(sizeof(*this)), size_type(BlockHdrAlignment))));
    }
 
    bool operator <(const intrusive_value_type_impl<Hook, CharType, SizeType> & other) const
@@ -314,11 +314,11 @@ class char_ptr_holder
       : m_name(name)
    {}
 
-   char_ptr_holder(const detail::anonymous_instance_t *) 
+   char_ptr_holder(const ipcdetail::anonymous_instance_t *) 
       : m_name(static_cast<CharType*>(0))
    {}
 
-   char_ptr_holder(const detail::unique_instance_t *) 
+   char_ptr_holder(const ipcdetail::unique_instance_t *) 
       : m_name(reinterpret_cast<CharType*>(-1))
    {}
 
@@ -357,8 +357,8 @@ struct index_key
       return (m_len < right.m_len) || 
                (m_len == right.m_len && 
                std::char_traits<char_type>::compare 
-                  (detail::get_pointer(mp_str)
-              ,detail::get_pointer(right.mp_str), m_len) < 0);
+                  (ipcdetail::get_pointer(mp_str)
+              ,ipcdetail::get_pointer(right.mp_str), m_len) < 0);
    }
 
    //!Equal to function for index ordering
@@ -366,8 +366,8 @@ struct index_key
    {
       return   m_len == right.m_len && 
                std::char_traits<char_type>::compare 
-                  (detail::get_pointer(mp_str),
-                   detail::get_pointer(right.mp_str), m_len) == 0;
+                  (ipcdetail::get_pointer(mp_str),
+                   ipcdetail::get_pointer(right.mp_str), m_len) == 0;
    }
 
    void name(const CharT *name)
@@ -377,7 +377,7 @@ struct index_key
    {  m_len = len; }
 
    const CharT *name() const
-   {  return detail::get_pointer(mp_str); }
+   {  return ipcdetail::get_pointer(mp_str); }
 
    size_type name_length() const
    {  return m_len; }
@@ -393,7 +393,7 @@ struct index_data
    index_data(void *ptr) : m_ptr(ptr){}
 
    void *value() const
-   {  return static_cast<void*>(detail::get_pointer(m_ptr));  }
+   {  return static_cast<void*>(ipcdetail::get_pointer(m_ptr));  }
 };
 
 template<class MemoryAlgorithm>
@@ -405,14 +405,14 @@ struct index_config
 {
    typedef typename MemoryAlgorithm::void_pointer        void_pointer;
    typedef CharT                                         char_type;
-   typedef detail::index_key<CharT, void_pointer>        key_type;
-   typedef detail::index_data<void_pointer>              mapped_type;
+   typedef ipcdetail::index_key<CharT, void_pointer>        key_type;
+   typedef ipcdetail::index_data<void_pointer>              mapped_type;
    typedef typename segment_manager_base_type
       <MemoryAlgorithm>::type                            segment_manager_base;
 
    template<class HeaderBase>
    struct intrusive_value_type
-   {  typedef detail::intrusive_value_type_impl<HeaderBase, CharT, typename segment_manager_base::size_type>  type; };
+   {  typedef ipcdetail::intrusive_value_type_impl<HeaderBase, CharT, typename segment_manager_base::size_type>  type; };
 
    typedef intrusive_compare_key<CharT>            intrusive_compare_key_type;
 };
@@ -464,7 +464,7 @@ class segment_manager_iterator_value_adaptor<Iterator, false>
    const void *value() const
    {
       return reinterpret_cast<block_header<size_type>*>
-         (detail::get_pointer(m_val->second.m_ptr))->value();
+         (ipcdetail::get_pointer(m_val->second.m_ptr))->value();
    }
 
    const typename Iterator::value_type *m_val;
@@ -481,14 +481,14 @@ struct segment_manager_iterator_transform
    {  return result_type(arg); }
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 
 //These pointers are the ones the user will use to 
 //indicate previous allocation types
-static const detail::anonymous_instance_t   * anonymous_instance = 0;
-static const detail::unique_instance_t      * unique_instance = 0;
+static const ipcdetail::anonymous_instance_t   * anonymous_instance = 0;
+static const ipcdetail::unique_instance_t      * unique_instance = 0;
 
-namespace detail_really_deep_namespace {
+namespace ipcdetail_really_deep_namespace {
 
 //Otherwise, gcc issues a warning of previously defined
 //anonymous_instance and unique_instance

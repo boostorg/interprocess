@@ -33,7 +33,7 @@
 
 namespace boost {
 namespace interprocess {
-namespace detail{
+namespace ipcdetail{
 
 template<class T, class VoidAllocator, class Deleter>
 class weak_count;
@@ -92,7 +92,7 @@ class shared_count
                         deallocator(m_pi, alloc);
             //It's more correct to use VoidAllocator::construct but
             //this needs copy constructor and we don't like it
-            new(detail::get_pointer(m_pi))counted_impl(p, a, d);
+            new(ipcdetail::get_pointer(m_pi))counted_impl(p, a, d);
             deallocator.release();
          }
       }
@@ -177,7 +177,7 @@ class shared_count
    }
 
    void swap(shared_count & r) // nothrow
-   {  detail::do_swap(m_px, r.m_px);   detail::do_swap(m_pi, r.m_pi);   }
+   {  ipcdetail::do_swap(m_px, r.m_px);   ipcdetail::do_swap(m_pi, r.m_pi);   }
 
    long use_count() const // nothrow
    {  return m_pi != 0? m_pi->use_count(): 0;  }
@@ -288,7 +288,7 @@ class weak_count
    }
 
    void swap(weak_count & r) // nothrow
-   {  detail::do_swap(m_px, r.m_px);  detail::do_swap(m_pi, r.m_pi);   }
+   {  ipcdetail::do_swap(m_px, r.m_px);  ipcdetail::do_swap(m_pi, r.m_pi);   }
 
    long use_count() const // nothrow
    {  return m_pi != 0? m_pi->use_count() : 0;   }
@@ -310,7 +310,7 @@ template<class T, class VoidAllocator, class Deleter, class T2, class VoidAlloca
 bool operator<(weak_count<T, VoidAllocator, Deleter> const & a, weak_count<T2, VoidAllocator2, Deleter2> const & b)
 {  return a.internal_less(b);   }
 
-} // namespace detail
+} // namespace ipcdetail
 } // namespace interprocess
 } // namespace boost
 

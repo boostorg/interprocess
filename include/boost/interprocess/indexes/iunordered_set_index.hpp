@@ -84,7 +84,7 @@ struct iunordered_set_index_aux
     {
         std::size_t operator()(const value_type &val) const
         {
-            const char_type *beg = detail::get_pointer(val.name()),
+            const char_type *beg = ipcdetail::get_pointer(val.name()),
                             *end = beg + val.name_length();
             return boost::hash_range(beg, end);
         }
@@ -181,8 +181,8 @@ class iunordered_set_index
          return old_size;
       }
 
-      for( bucket_type *p = detail::get_pointer(buckets) + received_size
-         , *pend = detail::get_pointer(buckets) + old_size
+      for( bucket_type *p = ipcdetail::get_pointer(buckets) + received_size
+         , *pend = ipcdetail::get_pointer(buckets) + old_size
          ; p != pend
          ; ++p){
          p->~bucket_type();

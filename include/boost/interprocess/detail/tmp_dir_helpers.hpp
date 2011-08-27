@@ -32,7 +32,7 @@
 
 namespace boost {
 namespace interprocess {
-namespace detail {
+namespace ipcdetail {
 
 #if defined (BOOST_INTERPROCESS_HAS_WINDOWS_KERNEL_BOOTTIME)
 inline void get_bootstamp(std::string &s, bool add = false)
@@ -166,7 +166,7 @@ inline void add_leading_slash(const char *name, std::string &new_name)
 
 }  //namespace boost{
 }  //namespace interprocess {
-}  //namespace detail {
+}  //namespace ipcdetail {
 
 #include <boost/interprocess/detail/config_end.hpp>
 

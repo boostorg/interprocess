@@ -16,7 +16,7 @@
 #endif
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/containers/container/flat_set.hpp>
+#include <boost/container/flat_set.hpp>
 #include <boost/interprocess/containers/containers_fwd.hpp>
 
 namespace boost {

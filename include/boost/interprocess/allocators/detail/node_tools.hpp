@@ -22,7 +22,7 @@
 
 namespace boost {
 namespace interprocess {
-namespace detail {
+namespace ipcdetail {
 
 
 template<class VoidPointer>
@@ -41,7 +41,7 @@ struct node_slist
       <node_t, bi::linear<true>, bi::base_hook<slist_hook_t> >::type node_slist_t;
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 }  //namespace interprocess {
 }  //namespace boost {
 

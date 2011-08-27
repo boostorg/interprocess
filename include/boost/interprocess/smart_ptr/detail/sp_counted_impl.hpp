@@ -32,7 +32,7 @@ namespace boost {
 
 namespace interprocess {
 
-namespace detail {
+namespace ipcdetail {
 
 //!A deleter for scoped_ptr that deallocates the memory
 //!allocated for an object using a STL allocator.
@@ -40,10 +40,10 @@ template <class Allocator>
 struct scoped_ptr_dealloc_functor
 {
    typedef typename Allocator::pointer pointer;
-   typedef detail::integral_constant<unsigned,
+   typedef ipcdetail::integral_constant<unsigned,
       boost::interprocess::version<Allocator>::value>                   alloc_version;
-   typedef detail::integral_constant<unsigned, 1>     allocator_v1;
-   typedef detail::integral_constant<unsigned, 2>     allocator_v2;
+   typedef ipcdetail::integral_constant<unsigned, 1>     allocator_v1;
+   typedef ipcdetail::integral_constant<unsigned, 2>     allocator_v2;
 
    private:
    void priv_deallocate(const typename Allocator::pointer &p, allocator_v1)
@@ -115,7 +115,7 @@ class sp_counted_impl_pd
       scoped_ptr< this_type, scoped_ptr_dealloc_functor<this_allocator> >
          deleter(this_ptr, a_copy);
       typedef typename this_allocator::value_type value_type;
-      detail::get_pointer(this_ptr)->~value_type();
+      ipcdetail::get_pointer(this_ptr)->~value_type();
    }
 
    void release() // nothrow
@@ -135,7 +135,7 @@ class sp_counted_impl_pd
 };
 
 
-} // namespace detail
+} // namespace ipcdetail
 
 } // namespace interprocess
 

@@ -32,10 +32,10 @@ namespace interprocess {
 //!linked list of free buffers.
 template<class MutexFamily, class VoidPointer>
 class simple_seq_fit 
-   : public detail::simple_seq_fit_impl<MutexFamily, VoidPointer>
+   : public ipcdetail::simple_seq_fit_impl<MutexFamily, VoidPointer>
 {
    /// @cond
-   typedef detail::simple_seq_fit_impl<MutexFamily, VoidPointer> base_t;
+   typedef ipcdetail::simple_seq_fit_impl<MutexFamily, VoidPointer> base_t;
    /// @endcond
 
    public:

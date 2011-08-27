@@ -38,10 +38,10 @@ template
          template<class IndexConfig> class IndexType
       >
 class basic_managed_external_buffer 
-   : public detail::basic_managed_memory_impl <CharType, AllocationAlgorithm, IndexType>
+   : public ipcdetail::basic_managed_memory_impl <CharType, AllocationAlgorithm, IndexType>
 {
    /// @cond
-   typedef detail::basic_managed_memory_impl 
+   typedef ipcdetail::basic_managed_memory_impl 
       <CharType, AllocationAlgorithm, IndexType>    base_t;
    BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_external_buffer)
    /// @endcond

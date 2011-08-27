@@ -41,23 +41,23 @@ template
          template<class IndexConfig> class IndexType
       >
 class basic_managed_xsi_shared_memory 
-   : public detail::basic_managed_memory_impl
+   : public ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType
-      ,detail::managed_open_or_create_impl<xsi_shared_memory_file_wrapper, false, true>::ManagedOpenOrCreateUserOffset>
-   , private detail::managed_open_or_create_impl<xsi_shared_memory_file_wrapper, false, true>
+      ,ipcdetail::managed_open_or_create_impl<xsi_shared_memory_file_wrapper, false, true>::ManagedOpenOrCreateUserOffset>
+   , private ipcdetail::managed_open_or_create_impl<xsi_shared_memory_file_wrapper, false, true>
 {
    /// @cond
    public:
    typedef xsi_shared_memory_file_wrapper device_type;
 
    public:
-   typedef detail::managed_open_or_create_impl
+   typedef ipcdetail::managed_open_or_create_impl
       <xsi_shared_memory_file_wrapper, false, true>            base2_t;
-   typedef detail::basic_managed_memory_impl 
+   typedef ipcdetail::basic_managed_memory_impl 
       <CharType, AllocationAlgorithm, IndexType,
       base2_t::ManagedOpenOrCreateUserOffset>   base_t;
 
-   typedef detail::create_open_func<base_t>        create_open_func_t;
+   typedef ipcdetail::create_open_func<base_t>        create_open_func_t;
 
    basic_managed_xsi_shared_memory *get_this_pointer()
    {  return this;   }
@@ -90,7 +90,7 @@ class basic_managed_xsi_shared_memory
                              std::size_t size, const void *addr = 0, const permissions& perm = permissions())
       : base_t()
       , base2_t(create_only, key, size, read_write, addr, 
-                create_open_func_t(get_this_pointer(), detail::DoCreate), perm)
+                create_open_func_t(get_this_pointer(), ipcdetail::DoCreate), perm)
    {}
 
    //!Creates shared memory and creates and places the segment manager if
@@ -103,7 +103,7 @@ class basic_managed_xsi_shared_memory
       : base_t()
       , base2_t(open_or_create, key, size, read_write, addr, 
                 create_open_func_t(get_this_pointer(), 
-                detail::DoOpenOrCreate), perm)
+                ipcdetail::DoOpenOrCreate), perm)
    {}
 
    //!Connects to a created shared memory and its segment manager.
@@ -114,7 +114,7 @@ class basic_managed_xsi_shared_memory
       : base_t()
       , base2_t(open_only, key, read_only, addr, 
                 create_open_func_t(get_this_pointer(), 
-                detail::DoOpen))
+                ipcdetail::DoOpen))
    {}
 
    //!Connects to a created shared memory and its segment manager.
@@ -124,7 +124,7 @@ class basic_managed_xsi_shared_memory
       : base_t()
       , base2_t(open_only, key, read_write, addr, 
                 create_open_func_t(get_this_pointer(), 
-                detail::DoOpen))
+                ipcdetail::DoOpen))
    {}
 
    //!Moves the ownership of "moved"'s managed memory to *this.

@@ -173,13 +173,13 @@ class message_queue_t
    //!Never throws
    static size_type get_mem_size(size_type max_msg_size, size_type max_num_msg);
 
-   detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
+   ipcdetail::managed_open_or_create_impl<shared_memory_object> m_shmem;
    /// @endcond
 };
 
 /// @cond
 
-namespace detail {
+namespace ipcdetail {
 
 //!This header is the prefix of each message in the queue
 template<class VoidPointer>
@@ -245,7 +245,7 @@ class priority_functor
 //!   the index structure.
 template<class VoidPointer>
 class mq_hdr_t
-   : public detail::priority_functor<VoidPointer>
+   : public ipcdetail::priority_functor<VoidPointer>
 {   
    typedef VoidPointer                                                    void_pointer;
    typedef msg_hdr_t<void_pointer>                                        msg_header;
@@ -312,11 +312,11 @@ class mq_hdr_t
       const size_type 
 		 msg_hdr_align  = ::boost::alignment_of<msg_header>::value,
 		 index_align    = ::boost::alignment_of<msg_hdr_ptr_t>::value,
-         r_hdr_size     = detail::ct_rounded_size<sizeof(mq_hdr_t), index_align>::value,
-         r_index_size   = detail::get_rounded_size(sizeof(msg_hdr_ptr_t)*max_num_msg, msg_hdr_align),
-         r_max_msg_size = detail::get_rounded_size(max_msg_size, msg_hdr_align) + sizeof(msg_header);
+         r_hdr_size     = ipcdetail::ct_rounded_size<sizeof(mq_hdr_t), index_align>::value,
+         r_index_size   = ipcdetail::get_rounded_size(sizeof(msg_hdr_ptr_t)*max_num_msg, msg_hdr_align),
+         r_max_msg_size = ipcdetail::get_rounded_size(max_msg_size, msg_hdr_align) + sizeof(msg_header);
       return r_hdr_size + r_index_size + (max_num_msg*r_max_msg_size) + 
-         detail::managed_open_or_create_impl<shared_memory_object>::ManagedOpenOrCreateUserOffset;
+         ipcdetail::managed_open_or_create_impl<shared_memory_object>::ManagedOpenOrCreateUserOffset;
    }
 
    //!Initializes the memory structures to preallocate messages and constructs the
@@ -326,9 +326,9 @@ class mq_hdr_t
       const size_type 
 		  msg_hdr_align  = ::boost::alignment_of<msg_header>::value,
 		  index_align    = ::boost::alignment_of<msg_hdr_ptr_t>::value,
-         r_hdr_size     = detail::ct_rounded_size<sizeof(mq_hdr_t), index_align>::value,
-         r_index_size   = detail::get_rounded_size(sizeof(msg_hdr_ptr_t)*m_max_num_msg, msg_hdr_align),
-         r_max_msg_size = detail::get_rounded_size(m_max_msg_size, msg_hdr_align) + sizeof(msg_header);
+         r_hdr_size     = ipcdetail::ct_rounded_size<sizeof(mq_hdr_t), index_align>::value,
+         r_index_size   = ipcdetail::get_rounded_size(sizeof(msg_hdr_ptr_t)*m_max_num_msg, msg_hdr_align),
+         r_max_msg_size = ipcdetail::get_rounded_size(m_max_msg_size, msg_hdr_align) + sizeof(msg_header);
 
       //Pointer to the index
       msg_hdr_ptr_t *index =  reinterpret_cast<msg_hdr_ptr_t*>
@@ -402,7 +402,7 @@ class initialization_func_t
    const size_type m_maxmsgsize;
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 
 template<class VoidPointer>
 inline message_queue_t<VoidPointer>::~message_queue_t()
@@ -411,7 +411,7 @@ inline message_queue_t<VoidPointer>::~message_queue_t()
 template<class VoidPointer>
 inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPointer>::get_mem_size
    (size_type max_msg_size, size_type max_num_msg)
-{  return detail::mq_hdr_t<VoidPointer>::get_mem_size(max_msg_size, max_num_msg);   }
+{  return ipcdetail::mq_hdr_t<VoidPointer>::get_mem_size(max_msg_size, max_num_msg);   }
 
 template<class VoidPointer>
 inline message_queue_t<VoidPointer>::message_queue_t(create_only_t create_only,
@@ -426,7 +426,7 @@ inline message_queue_t<VoidPointer>::message_queue_t(create_only_t create_only,
               read_write,
               static_cast<void*>(0),
               //Prepare initialization functor
-              detail::initialization_func_t<VoidPointer> (max_num_msg, max_msg_size),
+              ipcdetail::initialization_func_t<VoidPointer> (max_num_msg, max_msg_size),
               perm)
 {}
 
@@ -443,7 +443,7 @@ inline message_queue_t<VoidPointer>::message_queue_t(open_or_create_t open_or_cr
               read_write,
               static_cast<void*>(0),
               //Prepare initialization functor
-              detail::initialization_func_t<VoidPointer> (max_num_msg, max_msg_size),
+              ipcdetail::initialization_func_t<VoidPointer> (max_num_msg, max_msg_size),
               perm)
 {}
 
@@ -456,7 +456,7 @@ inline message_queue_t<VoidPointer>::message_queue_t(open_only_t open_only,
               read_write,
               static_cast<void*>(0),
               //Prepare initialization functor
-              detail::initialization_func_t<VoidPointer> ())
+              ipcdetail::initialization_func_t<VoidPointer> ())
 {}
 
 template<class VoidPointer>
@@ -486,7 +486,7 @@ inline bool message_queue_t<VoidPointer>::do_send(block_t block,
                                 const void *buffer,      size_type buffer_size, 
                                 unsigned int priority,   const boost::posix_time::ptime &abs_time)
 {
-   detail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<detail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
+   ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    //Check if buffer is smaller than maximum allowed
    if (buffer_size > p_hdr->m_max_msg_size) {
       throw interprocess_exception(size_error);
@@ -527,7 +527,7 @@ inline bool message_queue_t<VoidPointer>::do_send(block_t block,
       }
       
       //Get the first free message from free message queue
-      detail::msg_hdr_t<VoidPointer> *free_msg = p_hdr->free_msg();
+      ipcdetail::msg_hdr_t<VoidPointer> *free_msg = p_hdr->free_msg();
       if (free_msg == 0) {
          throw interprocess_exception("boost::interprocess::message_queue corrupted");
       }
@@ -583,7 +583,7 @@ inline bool
                           size_type &recvd_size,   unsigned int &priority,
                           const boost::posix_time::ptime &abs_time)
 {
-   detail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<detail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
+   ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    //Check if buffer is big enough for any message
    if (buffer_size < p_hdr->m_max_msg_size) {
       throw interprocess_exception(size_error);
@@ -625,7 +625,7 @@ inline bool
       }
 
       //Thre is at least message ready to pick, get the top one
-     detail::msg_hdr_t<VoidPointer> *top_msg = p_hdr->top_msg();
+     ipcdetail::msg_hdr_t<VoidPointer> *top_msg = p_hdr->top_msg();
 
       //Paranoia check
       if (top_msg == 0) {
@@ -656,20 +656,20 @@ inline bool
 template<class VoidPointer>
 inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPointer>::get_max_msg() const
 {  
-   detail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<detail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
+   ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    return p_hdr ? p_hdr->m_max_num_msg : 0;  }
 
 template<class VoidPointer>
 inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPointer>::get_max_msg_size() const
 {  
-   detail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<detail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
+   ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    return p_hdr ? p_hdr->m_max_msg_size : 0;  
 }
 
 template<class VoidPointer>
 inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPointer>::get_num_msg()
 {  
-   detail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<detail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
+   ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    if(p_hdr){
       //---------------------------------------------
       scoped_lock<interprocess_mutex> lock(p_hdr->m_mutex);

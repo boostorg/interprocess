@@ -17,7 +17,7 @@
 
 namespace boost {
 namespace interprocess {
-namespace detail {
+namespace ipcdetail {
 
 struct named_creation_functor_no_arg{};
 
@@ -26,7 +26,7 @@ class named_creation_functor
 {
    typedef named_creation_functor_no_arg no_arg_t;
    public:
-   named_creation_functor(detail::create_enum_t type, Arg arg = Arg())
+   named_creation_functor(ipcdetail::create_enum_t type, Arg arg = Arg())
       :  m_creation_type(type), m_arg(arg){}
 
    template<class ArgType>
@@ -40,11 +40,11 @@ class named_creation_functor
    bool operator()(void *address, std::size_t, bool created) const
    {   
       switch(m_creation_type){
-         case detail::DoOpen:
+         case ipcdetail::DoOpen:
             return true;
          break;
-         case detail::DoCreate:
-         case detail::DoOpenOrCreate:
+         case ipcdetail::DoCreate:
+         case ipcdetail::DoOpenOrCreate:
             if(created){
                construct<Arg>(address);
             }
@@ -57,11 +57,11 @@ class named_creation_functor
       }
    }
    private:
-   detail::create_enum_t m_creation_type;
+   ipcdetail::create_enum_t m_creation_type;
    Arg m_arg;
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 }  //namespace interprocess {
 }  //namespace boost {
 

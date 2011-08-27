@@ -56,9 +56,9 @@ class weak_ptr
    typedef weak_ptr<T, A, D> this_type;
    typedef typename boost::pointer_to_other
       <typename A::pointer, T>::type      pointer;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <T>::type            reference;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <T>::type            const_reference;
    /// @endcond
 
@@ -192,7 +192,7 @@ class weak_ptr
    //!
    //!Throws: nothing.
    void swap(this_type & other) // never throws
-   {  detail::do_swap(m_pn, other.m_pn);   }
+   {  ipcdetail::do_swap(m_pn, other.m_pn);   }
 
    /// @cond
    template<class T2, class A2, class D2> 
@@ -200,7 +200,7 @@ class weak_ptr
    {  return m_pn < rhs.m_pn;  }
    
    template<class Y>
-   void _internal_assign(const detail::shared_count<Y, A, D> & pn2)
+   void _internal_assign(const ipcdetail::shared_count<Y, A, D> & pn2)
    {
 
       m_pn = pn2;
@@ -211,7 +211,7 @@ class weak_ptr
    template<class T2, class A2, class D2> friend class shared_ptr;
    template<class T2, class A2, class D2> friend class weak_ptr;
 
-   detail::weak_count<T, A, D> m_pn;      // reference counter
+   ipcdetail::weak_count<T, A, D> m_pn;      // reference counter
    /// @endcond
 };  // weak_ptr
 

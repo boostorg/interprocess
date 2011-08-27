@@ -26,7 +26,7 @@
 
 namespace boost {
 namespace interprocess { 
-namespace detail {
+namespace ipcdetail {
 
 struct in_place_interface
 {
@@ -66,7 +66,7 @@ struct placement_destroy :  public in_place_interface
 
 }
 }
-}   //namespace boost { namespace interprocess { namespace detail {
+}   //namespace boost { namespace interprocess { namespace ipcdetail {
 
 #include <boost/interprocess/detail/config_end.hpp>
 

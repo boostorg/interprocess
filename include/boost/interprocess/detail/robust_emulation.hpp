@@ -28,7 +28,7 @@
 
 namespace boost{
 namespace interprocess{
-namespace detail{
+namespace ipcdetail{
 
 namespace robust_emulation_helpers {
 
@@ -236,7 +236,7 @@ inline void robust_emulation_mutex<Mutex>::lock()
       }
       else{
          //Do the dead owner checking each spin_threshold lock tries
-         detail::thread_yield();
+         ipcdetail::thread_yield();
          ++spin_count;
          if(spin_count > spin_threshold){
             //Check if owner dead and take ownership if possible
@@ -302,7 +302,7 @@ inline bool robust_emulation_mutex<Mutex>::timed_lock
          return this->try_lock();
       }
       // relinquish current time slice
-      detail::thread_yield();
+      ipcdetail::thread_yield();
    }while (true);
 
    return true;
@@ -425,12 +425,12 @@ inline bool robust_emulation_mutex<Mutex>::lock_own_unique_file()
 {
    //This function forces instantiation of the singleton
    robust_emulation_helpers::robust_mutex_lock_file* dummy = 
-      &detail::intermodule_singleton
+      &ipcdetail::intermodule_singleton
          <robust_emulation_helpers::robust_mutex_lock_file>::get();
    return dummy != 0;
 }
 
-}  //namespace detail{
+}  //namespace ipcdetail{
 }  //namespace interprocess{
 }  //namespace boost{
 

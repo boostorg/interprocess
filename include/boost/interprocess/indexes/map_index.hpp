@@ -25,7 +25,7 @@
 
 namespace boost {
 namespace interprocess {
-namespace detail{
+namespace ipcdetail{
 
 //!Helper class to define typedefs from IndexTraits
 template <class MapConfig>
@@ -46,17 +46,17 @@ struct map_index_aux
        key_less, allocator_type>                   index_t;
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 
 //!Index type based in boost::interprocess::map. Just derives from boost::interprocess::map 
 //!and defines the interface needed by managed memory segments
 template <class MapConfig>
 class map_index
    //Derive class from map specialization
-   : public detail::map_index_aux<MapConfig>::index_t
+   : public ipcdetail::map_index_aux<MapConfig>::index_t
 {
    /// @cond
-   typedef detail::map_index_aux<MapConfig>  index_aux;
+   typedef ipcdetail::map_index_aux<MapConfig>  index_aux;
    typedef typename index_aux::index_t       base_type;
    typedef typename MapConfig::
       segment_manager_base          segment_manager_base;

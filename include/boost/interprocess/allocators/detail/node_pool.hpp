@@ -24,7 +24,7 @@
 
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/allocators/detail/allocator_common.hpp>
-#include <boost/interprocess/containers/container/detail/node_pool_impl.hpp>
+#include <boost/container/detail/node_pool_impl.hpp>
 #include <cstddef>
 
 
@@ -33,7 +33,7 @@
 
 namespace boost {
 namespace interprocess {
-namespace detail {
+namespace ipcdetail {
 
 
 
@@ -86,12 +86,12 @@ template< class SegmentManager
         , std::size_t NodesPerBlock
         >
 class shared_node_pool 
-   :  public detail::shared_pool_impl
+   :  public ipcdetail::shared_pool_impl
       < private_node_pool
          <SegmentManager, NodeSize, NodesPerBlock>
       >
 {
-   typedef detail::shared_pool_impl
+   typedef ipcdetail::shared_pool_impl
       < private_node_pool
          <SegmentManager, NodeSize, NodesPerBlock>
       > base_t;
@@ -101,7 +101,7 @@ class shared_node_pool
    {}
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 }  //namespace interprocess {
 }  //namespace boost {
 

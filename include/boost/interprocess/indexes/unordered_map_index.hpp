@@ -48,7 +48,7 @@ struct unordered_map_index_aux
         std::size_t operator()(const key_type &val) const
         {
             typedef typename key_type::char_type    char_type;
-            const char_type *beg = detail::get_pointer(val.mp_str),
+            const char_type *beg = ipcdetail::get_pointer(val.mp_str),
                             *end = beg + val.m_len;
             return boost::hash_range(beg, end);
         }

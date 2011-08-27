@@ -36,16 +36,16 @@ namespace interprocess {
 
 /// @cond
 
-namespace detail {
+namespace ipcdetail {
 
 template < class T
          , class SegmentManager
          , std::size_t NodesPerBlock = 64
          >
 class cached_node_allocator_v1
-   :  public detail::cached_allocator_impl
+   :  public ipcdetail::cached_allocator_impl
          < T
-         , detail::shared_node_pool
+         , ipcdetail::shared_node_pool
             < SegmentManager
             , sizeof_value<T>::value
             , NodesPerBlock
@@ -53,9 +53,9 @@ class cached_node_allocator_v1
          , 1>
 {
    public:
-   typedef detail::cached_allocator_impl
+   typedef ipcdetail::cached_allocator_impl
          < T
-         , detail::shared_node_pool
+         , ipcdetail::shared_node_pool
             < SegmentManager
             , sizeof_value<T>::value
             , NodesPerBlock
@@ -84,7 +84,7 @@ class cached_node_allocator_v1
    {}
 };
 
-}  //namespace detail{
+}  //namespace ipcdetail{
 
 /// @endcond
 
@@ -94,9 +94,9 @@ template < class T
          >
 class cached_node_allocator
    /// @cond
-   :  public detail::cached_allocator_impl
+   :  public ipcdetail::cached_allocator_impl
          < T
-         , detail::shared_node_pool
+         , ipcdetail::shared_node_pool
             < SegmentManager
             , sizeof_value<T>::value
             , NodesPerBlock
@@ -107,9 +107,9 @@ class cached_node_allocator
 
    #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    public:
-   typedef detail::cached_allocator_impl
+   typedef ipcdetail::cached_allocator_impl
          < T
-         , detail::shared_node_pool
+         , ipcdetail::shared_node_pool
             < SegmentManager
             , sizeof_value<T>::value
             , NodesPerBlock
@@ -144,9 +144,9 @@ class cached_node_allocator
    typedef implementation_defined::pointer               pointer;
    typedef implementation_defined::const_pointer         const_pointer;
    typedef T                                             value_type;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <value_type>::type                  reference;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <const value_type>::type            const_reference;
    typedef typename SegmentManager::size_type            size_type;
    typedef typename SegmentManager::difference_type      difference_type;

@@ -21,7 +21,7 @@
 
 namespace boost {
 namespace interprocess { 
-namespace detail {
+namespace ipcdetail {
 
 struct nat{};
 
@@ -112,7 +112,7 @@ struct is_same
    static const bool value = sizeof(yes_type) == sizeof(is_same_tester(t,u));
 };
 
-} // namespace detail
+} // namespace ipcdetail
 }  //namespace interprocess { 
 }  //namespace boost {
 

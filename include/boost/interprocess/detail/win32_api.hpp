@@ -51,6 +51,7 @@ static const unsigned long error_no_more_files  = 18u;
 //Retries in CreateFile, see http://support.microsoft.com/kb/316609
 static const unsigned int  error_sharing_violation_tries = 3u;
 static const unsigned int  error_sharing_violation_sleep_ms = 250u;
+static const unsigned int  error_file_too_large = 223u;
 
 static const unsigned long semaphore_all_access = (0x000F0000L)|(0x00100000L)|0x3;
 static const unsigned long mutex_all_access     = (0x000F0000L)|(0x00100000L)|0x0001;
@@ -790,6 +791,7 @@ extern "C" __declspec(dllimport) int __stdcall GetProcessTimes
    , interprocess_filetime *lpUserTime );
 extern "C" __declspec(dllimport) void __stdcall Sleep(unsigned long);
 extern "C" __declspec(dllimport) unsigned long __stdcall GetLastError();
+extern "C" __declspec(dllimport) void __stdcall SetLastError(unsigned long);
 extern "C" __declspec(dllimport) void * __stdcall GetCurrentProcess();
 extern "C" __declspec(dllimport) int __stdcall CloseHandle(void*);
 extern "C" __declspec(dllimport) int __stdcall DuplicateHandle
@@ -898,6 +900,9 @@ namespace winapi {
 
 inline unsigned long get_last_error()
 {  return GetLastError();  }
+
+inline void set_last_error(unsigned long err)
+{  return SetLastError(err);  }
 
 inline unsigned long format_message
    (unsigned long dwFlags, const void *lpSource,

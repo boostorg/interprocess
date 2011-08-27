@@ -23,7 +23,7 @@
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/mem_algo/detail/mem_algo_common.hpp>
 #include <boost/interprocess/containers/allocation_type.hpp>
-#include <boost/interprocess/containers/container/detail/multiallocation_chain.hpp>
+#include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/exceptions.hpp>
@@ -153,9 +153,9 @@ class rbtree_best_fit
       size_type            m_size;
    }  m_header;
 
-   friend class detail::memory_algorithm_common<rbtree_best_fit>;
+   friend class ipcdetail::memory_algorithm_common<rbtree_best_fit>;
    
-   typedef detail::memory_algorithm_common<rbtree_best_fit> algo_impl_t;
+   typedef ipcdetail::memory_algorithm_common<rbtree_best_fit> algo_impl_t;
 
    public:
    /// @endcond
@@ -348,11 +348,11 @@ class rbtree_best_fit
    //Due to rbtree size optimizations, Alignment must have at least pointer alignment
    BOOST_STATIC_ASSERT((Alignment >= ::boost::alignment_of<void_pointer>::value));
    static const size_type AlignmentMask = (Alignment - 1);
-   static const size_type BlockCtrlBytes = detail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value;
+   static const size_type BlockCtrlBytes = ipcdetail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value;
    static const size_type BlockCtrlUnits = BlockCtrlBytes/Alignment;
-   static const size_type AllocatedCtrlBytes  = detail::ct_rounded_size<sizeof(SizeHolder), Alignment>::value;
+   static const size_type AllocatedCtrlBytes  = ipcdetail::ct_rounded_size<sizeof(SizeHolder), Alignment>::value;
    static const size_type AllocatedCtrlUnits  = AllocatedCtrlBytes/Alignment;
-   static const size_type EndCtrlBlockBytes   = detail::ct_rounded_size<sizeof(SizeHolder), Alignment>::value;
+   static const size_type EndCtrlBlockBytes   = ipcdetail::ct_rounded_size<sizeof(SizeHolder), Alignment>::value;
    static const size_type EndCtrlBlockUnits   = EndCtrlBlockBytes/Alignment;
    static const size_type MinBlockUnits       = BlockCtrlUnits;
    static const size_type UsableByPreviousChunk   = sizeof(size_type);
@@ -373,7 +373,7 @@ inline typename rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::size_ty
 {
    size_type uint_this      = (std::size_t)this_ptr;
    size_type main_hdr_end   = uint_this + sizeof(rbtree_best_fit) + extra_hdr_bytes;
-   size_type aligned_main_hdr_end = detail::get_rounded_size(main_hdr_end, Alignment);
+   size_type aligned_main_hdr_end = ipcdetail::get_rounded_size(main_hdr_end, Alignment);
    size_type block1_off = aligned_main_hdr_end -  uint_this;
    algo_impl_t::assert_alignment(aligned_main_hdr_end);
    algo_impl_t::assert_alignment(uint_this + block1_off);
@@ -979,13 +979,13 @@ std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>:
 
       if(it != m_header.m_imultiset.end()){
          return return_type(this->priv_check_and_allocate
-            (preferred_units, detail::get_pointer(&*it), received_size), false);
+            (preferred_units, ipcdetail::get_pointer(&*it), received_size), false);
       }
 
       if(it != m_header.m_imultiset.begin()&&
               (--it)->m_size >= limit_units){
          return return_type(this->priv_check_and_allocate
-            (it->m_size, detail::get_pointer(&*it), received_size), false);
+            (it->m_size, ipcdetail::get_pointer(&*it), received_size), false);
       }
    }
 
@@ -1022,7 +1022,7 @@ rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
 {
    if(userbytes < UsableByPreviousChunk)
       userbytes = UsableByPreviousChunk;
-   size_type units = detail::get_rounded_size(userbytes - UsableByPreviousChunk, Alignment)/Alignment + AllocatedCtrlUnits;
+   size_type units = ipcdetail::get_rounded_size(userbytes - UsableByPreviousChunk, Alignment)/Alignment + AllocatedCtrlUnits;
    if(units < BlockCtrlUnits) units = BlockCtrlUnits;
    return units;
 }

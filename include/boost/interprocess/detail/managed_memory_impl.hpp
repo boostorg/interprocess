@@ -43,7 +43,7 @@
 
 namespace boost {
 namespace interprocess {
-namespace detail {
+namespace ipcdetail {
 
 template<class BasicManagedMemoryImpl>
 class create_open_func;
@@ -583,7 +583,7 @@ class basic_managed_memory_impl
    //!For all theses reasons, classes with throwing destructors are not 
    //!recommended for  memory.
    template <class T>
-   bool destroy(const detail::unique_instance_t *const )
+   bool destroy(const ipcdetail::unique_instance_t *const )
    {   return mp_header->template destroy<T>(unique_instance);  }
 
    //!Destroys the object (named, unique, or anonymous)
@@ -724,13 +724,13 @@ template<class BasicManagedMemoryImpl>
 class create_open_func
 {
    public:
-   create_open_func(BasicManagedMemoryImpl * const frontend, detail::create_enum_t type)
+   create_open_func(BasicManagedMemoryImpl * const frontend, ipcdetail::create_enum_t type)
       : m_frontend(frontend), m_type(type){}
 
    bool operator()(void *addr, typename BasicManagedMemoryImpl::size_type size, bool created) const
    {  
-      if(((m_type == detail::DoOpen)   &&  created) || 
-         ((m_type == detail::DoCreate) && !created))
+      if(((m_type == ipcdetail::DoOpen)   &&  created) || 
+         ((m_type == ipcdetail::DoCreate) && !created))
          return false;
 
       if(created)
@@ -741,10 +741,10 @@ class create_open_func
 
    private:
    BasicManagedMemoryImpl *m_frontend;
-   detail::create_enum_t           m_type;
+   ipcdetail::create_enum_t           m_type;
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 }  //namespace interprocess {
 }  //namespace boost {
 

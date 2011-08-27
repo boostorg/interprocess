@@ -22,7 +22,7 @@
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/containers/allocation_type.hpp>
-#include <boost/interprocess/containers/container/detail/multiallocation_chain.hpp>
+#include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/interprocess/allocators/detail/allocator_common.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/containers/version_type.hpp>
@@ -91,9 +91,9 @@ class allocator
       <cvoid_ptr, T>::type                      pointer;
    typedef typename boost::
       pointer_to_other<pointer, const T>::type  const_pointer;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <value_type>::type         reference;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <const value_type>::type   const_reference;
    typedef typename segment_manager::size_type               size_type;
    typedef typename segment_manager::difference_type         difference_type;
@@ -118,7 +118,7 @@ class allocator
    //!Returns the segment manager.
    //!Never throws
    segment_manager* get_segment_manager()const
-   {  return detail::get_pointer(mp_mngr);   }
+   {  return ipcdetail::get_pointer(mp_mngr);   }
 
    //!Constructor from the segment manager.
    //!Never throws
@@ -149,7 +149,7 @@ class allocator
    //!Deallocates memory previously allocated.
    //!Never throws
    void deallocate(const pointer &ptr, size_type)
-   {  mp_mngr->deallocate((void*)detail::get_pointer(ptr));  }
+   {  mp_mngr->deallocate((void*)ipcdetail::get_pointer(ptr));  }
 
    //!Returns the number of elements that could be allocated.
    //!Never throws
@@ -159,14 +159,14 @@ class allocator
    //!Swap segment manager. Does not throw. If each allocator is placed in
    //!different memory segments, the result is undefined.
    friend void swap(self_t &alloc1, self_t &alloc2)
-   {  detail::do_swap(alloc1.mp_mngr, alloc2.mp_mngr);   }
+   {  ipcdetail::do_swap(alloc1.mp_mngr, alloc2.mp_mngr);   }
 
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold. This size only works for memory allocated with
    //!allocate, allocation_command and allocate_many.
    size_type size(const pointer &p) const
    {  
-      return (size_type)mp_mngr->size(detail::get_pointer(p))/sizeof(T);
+      return (size_type)mp_mngr->size(ipcdetail::get_pointer(p))/sizeof(T);
    }
 
    std::pair<pointer, bool>
@@ -176,7 +176,7 @@ class allocator
                          size_type &received_size, const pointer &reuse = 0)
    {
       return mp_mngr->allocation_command
-         (command, limit_size, preferred_size, received_size, detail::get_pointer(reuse));
+         (command, limit_size, preferred_size, received_size, ipcdetail::get_pointer(reuse));
    }
 
    //!Allocates many elements of size elem_size in a contiguous block
@@ -255,12 +255,12 @@ class allocator
    //!Copy construct an object
    //!Throws if T's copy constructor throws
    void construct(const pointer &ptr, const_reference v)
-   {  new((void*)detail::get_pointer(ptr)) value_type(v);  }
+   {  new((void*)ipcdetail::get_pointer(ptr)) value_type(v);  }
 
    //!Default construct an object. 
    //!Throws if T's default constructor throws
    void construct(const pointer &ptr)
-   {  new((void*)detail::get_pointer(ptr)) value_type;  }
+   {  new((void*)ipcdetail::get_pointer(ptr)) value_type;  }
 
    //!Destroys object. Throws if object's
    //!destructor throws
