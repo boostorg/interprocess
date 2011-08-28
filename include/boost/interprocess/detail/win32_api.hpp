@@ -790,6 +790,7 @@ extern "C" __declspec(dllimport) int __stdcall GetProcessTimes
    , interprocess_filetime *lpExitTime,interprocess_filetime *lpKernelTime
    , interprocess_filetime *lpUserTime );
 extern "C" __declspec(dllimport) void __stdcall Sleep(unsigned long);
+extern "C" __declspec(dllimport) int __stdcall SwitchToThread();
 extern "C" __declspec(dllimport) unsigned long __stdcall GetLastError();
 extern "C" __declspec(dllimport) void __stdcall SetLastError(unsigned long);
 extern "C" __declspec(dllimport) void * __stdcall GetCurrentProcess();
@@ -921,7 +922,11 @@ inline unsigned long make_lang_id(unsigned long p, unsigned long s)
 {  return ((((unsigned short)(s)) << 10) | (unsigned short)(p));   }
 
 inline void sched_yield()
-{  Sleep(1);   }
+{
+   if(!SwitchToThread()){
+      Sleep(1);
+   }
+}
 
 inline unsigned long get_current_thread_id()
 {  return GetCurrentThreadId();  }
