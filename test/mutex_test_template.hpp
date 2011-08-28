@@ -285,7 +285,7 @@ void test_mutex_lock_timeout()
    if (wait_time_s == 0 )
       wait_time_s = 1;
 
-   data<M> d1(1, wait_time_s * 2);
+   data<M> d1(1, wait_time_s * 3);
    data<M> d2(2, wait_time_s * 2);
 
    // Locker one launches, and holds the lock for wait_time_s * 2 seconds.
