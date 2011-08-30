@@ -5944,7 +5944,7 @@ to the segment manager. Because of this,
 in [*Boost.Interprocess] all managed memory segments derive from a common class that
 implements memory-independent (shared memory, memory mapped files) functions:
 [@../../boost/interprocess/detail/managed_memory_impl.hpp 
-boost::interprocess::detail::basic_managed_memory_impl]
+boost::interprocess::ipcdetail::basic_managed_memory_impl]
 
 Deriving from this class, [*Boost.Interprocess] implements several managed memory
 classes, for different memory backends:
@@ -6315,7 +6315,7 @@ that boost::interprocess::rbtree_best_fit class offers:
 *  The [*allocate()] function must return 0 if there is no more available memory. 
    The memory returned by [*my_algorithm]
    must be aligned to the most restrictive memory alignment of the system, for example,
-   to the value returned by *detail::alignment_of<boost::detail::max_align>::value*.
+   to the value returned by *ipcdetail::alignment_of<boost::detail::max_align>::value*.
    This function should be executed with the synchronization capabilities offered
    by `typename mutex_family::mutex_type` interprocess_mutex. That means, that if we define 
    `typedef mutex_family mutex_family;` then this function should offer
@@ -6602,7 +6602,7 @@ thank them:
 
 [section:release_notes Release Notes]
 
-[section:release_notes_boost_1_47_00 Boost 1.47 Release]
+[section:release_notes_boost_1_48_00 Boost 1.48 Release]
 
 *  Fixed bugs
   [@https://svn.boost.org/trac/boost/ticket/2796 #2796],
@@ -7036,6 +7036,18 @@ But the work to implement PF_UNIX-like sockets and doors would be huge
 [endsect]
 
 [endsect]
+
+[endsect]
+
+[include auto_index_helpers.qbk]
+
+[section:index Indexes]
+
+[named_index class_name Class Index]
+[named_index typedef_name Typedef Index]
+[named_index function_name Function Index]
+[/named_index macro_name Macro Index]
+[/index]
 
 [endsect]
 

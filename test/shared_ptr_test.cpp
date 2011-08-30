@@ -585,7 +585,7 @@ void test_alias()
          int_shared_ptr p;
          int_shared_ptr p2( p, &m );
 
-         BOOST_TEST( detail::get_pointer(p2.get()) == &m );
+         BOOST_TEST( ipcdetail::get_pointer(p2.get()) == &m );
          BOOST_TEST( p2? true: false );
          BOOST_TEST( !!p2 );
          BOOST_TEST( p2.use_count() == p.use_count() );
@@ -607,7 +607,7 @@ void test_alias()
             (shmem.construct<int>(anonymous_instance)(), shmem));
          const_int_shared_ptr p2( p, &m );
 
-         BOOST_TEST( detail::get_pointer(p2.get()) == &m );
+         BOOST_TEST( ipcdetail::get_pointer(p2.get()) == &m );
          BOOST_TEST( p2? true: false );
          BOOST_TEST( !!p2 );
          BOOST_TEST( p2.use_count() == p.use_count() );

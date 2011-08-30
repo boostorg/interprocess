@@ -171,7 +171,7 @@ int main ()
       test_move<multimap<recursive_multimap, recursive_multimap> >();
    }
 
-   using namespace boost::interprocess::detail;
+   using namespace boost::interprocess::ipcdetail;
 
    if(0 != test::set_test<my_managed_shared_memory
                         ,MyShmSet

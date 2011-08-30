@@ -140,125 +140,6 @@
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\containers\version_type.hpp">
 			</File>
-			<Filter
-				Name="container"
-				Filter="">
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\container\container_fwd.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\container\deque.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\container\flat_map.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\container\flat_set.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\container\list.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\container\map.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\container\set.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\container\slist.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\container\stable_vector.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\container\string.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\containers\container\vector.hpp">
-				</File>
-				<Filter
-					Name="detail"
-					Filter="">
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\adaptive_node_pool_impl.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\advanced_insert_int.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\algorithms.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\allocation_type.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\config_begin.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\config_end.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\destroyers.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\flat_tree.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\iterators.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\math_functions.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\mpl.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\multiallocation_chain.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\node_alloc_holder.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\node_pool_impl.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\pair.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\pool_common.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\preprocessor.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\stored_ref.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\transform_iterator.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\tree.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\type_traits.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\utilities.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\value_init.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\variadic_templates_tools.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\version_type.hpp">
-					</File>
-					<File
-						RelativePath="..\..\..\..\boost\interprocess\containers\container\detail\workaround.hpp">
-					</File>
-				</Filter>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Allocators"
@@ -613,6 +494,9 @@
 		<Filter
 			Name="Documentation"
 			Filter="">
+			<File
+				RelativePath="..\..\doc\index.idx">
+			</File>
 			<File
 				RelativePath="..\..\doc\interprocess.qbk">
 			</File>

@@ -26,14 +26,14 @@ using namespace boost::interprocess;
 typedef adaptive_pool
    <int, managed_shared_memory::segment_manager> shmem_node_allocator_t;
 
-typedef detail::adaptive_pool_v1
+typedef ipcdetail::adaptive_pool_v1
    <int, managed_shared_memory::segment_manager> shmem_node_allocator_v1_t;
 
 //Explicit instantiations to catch compilation errors
 template class adaptive_pool<int, managed_shared_memory::segment_manager>;
-template class detail::adaptive_pool_v1<int, managed_shared_memory::segment_manager>;
+template class ipcdetail::adaptive_pool_v1<int, managed_shared_memory::segment_manager>;
 template class adaptive_pool<void, managed_shared_memory::segment_manager>;
-template class detail::adaptive_pool_v1<void, managed_shared_memory::segment_manager>;
+template class ipcdetail::adaptive_pool_v1<void, managed_shared_memory::segment_manager>;
 
 //Alias list types
 typedef list<int, shmem_node_allocator_t>    MyShmList;

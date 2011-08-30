@@ -52,7 +52,7 @@ class xsi_shared_memory_remover
 
 inline std::string get_filename()
 {
-   std::string ret (detail::get_temporary_path());
+   std::string ret (ipcdetail::get_temporary_path());
    ret += "/";
    ret += test::get_process_id_name();
    return ret;
@@ -64,7 +64,7 @@ int main (int argc, char *argv[])
    const char *names[2] = { filename.c_str(), 0 };
 
    file_mapping::remove(names[0]);
-   {  detail::file_wrapper(create_only, names[0], read_write); }
+   {  ipcdetail::file_wrapper(create_only, names[0], read_write); }
    xsi_key key(names[0], 1);
    file_mapping::remove(names[0]);
    remove_shared_memory(key);

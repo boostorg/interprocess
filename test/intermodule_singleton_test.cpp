@@ -92,12 +92,12 @@ int intermodule_singleton_test()
 
 int main ()
 {
-   if(0 != intermodule_singleton_test<detail::portable_intermodule_singleton>()){
+   if(0 != intermodule_singleton_test<ipcdetail::portable_intermodule_singleton>()){
       return 1;
    }
 
    #ifdef BOOST_INTERPROCESS_WINDOWS
-   if(0 != intermodule_singleton_test<detail::windows_intermodule_singleton>()){
+   if(0 != intermodule_singleton_test<ipcdetail::windows_intermodule_singleton>()){
       return 1;
    }
    #endif

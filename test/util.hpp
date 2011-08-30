@@ -94,11 +94,12 @@ template <typename P>
 struct data
 {
    data(int id, int secs=0)
-      : m_id(id), m_value(-1), m_secs(secs)
+      : m_id(id), m_value(-1), m_secs(secs), m_error(no_error)
    {}
-   int m_id;
-   int m_value;
-   int m_secs;
+   int            m_id;
+   int            m_value;
+   int            m_secs;
+   error_code_t   m_error;
 };
 
 static int shared_val = 0;

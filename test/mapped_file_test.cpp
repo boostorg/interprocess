@@ -26,7 +26,7 @@ using namespace boost::interprocess;
 static const std::size_t FileSize = 1000;
 inline std::string get_filename()
 {
-   std::string ret (detail::get_temporary_path());
+   std::string ret (ipcdetail::get_temporary_path());
    ret += "/";
    ret += test::get_process_id_name();
    return ret;
@@ -45,11 +45,11 @@ struct file_destroyer
 //in generic named_creation_template functions
 class mapped_file_creation_test_wrapper
    : public file_destroyer
-   , public boost::interprocess::detail::managed_open_or_create_impl
-      <boost::interprocess::detail::file_wrapper>
+   , public boost::interprocess::ipcdetail::managed_open_or_create_impl
+      <boost::interprocess::ipcdetail::file_wrapper>
 {
-   typedef boost::interprocess::detail::managed_open_or_create_impl
-      <boost::interprocess::detail::file_wrapper> mapped_file;
+   typedef boost::interprocess::ipcdetail::managed_open_or_create_impl
+      <boost::interprocess::ipcdetail::file_wrapper> mapped_file;
    public:
    mapped_file_creation_test_wrapper(boost::interprocess::create_only_t)
       :  mapped_file(boost::interprocess::create_only, get_filename().c_str(), FileSize, read_write, 0, permissions())
@@ -66,8 +66,8 @@ class mapped_file_creation_test_wrapper
 
 int main ()
 {
-   typedef boost::interprocess::detail::managed_open_or_create_impl
-      <boost::interprocess::detail::file_wrapper> mapped_file;
+   typedef boost::interprocess::ipcdetail::managed_open_or_create_impl
+      <boost::interprocess::ipcdetail::file_wrapper> mapped_file;
    file_mapping::remove(get_filename().c_str());
    test::test_named_creation<mapped_file_creation_test_wrapper>();
 

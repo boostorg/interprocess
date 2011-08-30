@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
    using namespace boost::interprocess;
 
    return test::robust_mutex_test
-      < detail::robust_emulation_mutex<detail::emulation_recursive_mutex> >(argc, argv);
+      < ipcdetail::robust_emulation_mutex<ipcdetail::emulation_recursive_mutex> >(argc, argv);
 }
 
 #include <boost/interprocess/detail/config_end.hpp>

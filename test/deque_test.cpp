@@ -49,14 +49,14 @@ template class boost::interprocess::deque<test::movable_and_copyable_int,
 
 //Function to check if both sets are equal
 template<class V1, class V2>
-bool copyable_only(V1 *, V2 *, detail::false_type)
+bool copyable_only(V1 *, V2 *, ipcdetail::false_type)
 {
    return true;
 }
 
 //Function to check if both sets are equal
 template<class V1, class V2>
-bool copyable_only(V1 *shmdeque, V2 *stddeque, detail::true_type)
+bool copyable_only(V1 *shmdeque, V2 *stddeque, ipcdetail::true_type)
 {
    typedef typename V1::value_type IntType;
    std::size_t size = shmdeque->size();
@@ -256,7 +256,7 @@ bool do_test()
          }
 
          if(!copyable_only(shmdeque, stddeque
-                        ,detail::bool_<!detail::is_same<IntType, test::movable_int>::value>())){
+                        ,ipcdetail::bool_<!ipcdetail::is_same<IntType, test::movable_int>::value>())){
             return false;
          }
 

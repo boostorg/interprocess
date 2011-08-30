@@ -57,9 +57,9 @@ class dummy_test_allocator
    typedef T                                    value_type;
    typedef T *                                  pointer;
    typedef const T *                            const_pointer;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <value_type>::type         reference;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <const value_type>::type   const_reference;
    typedef std::size_t                          size_type;
    typedef std::ptrdiff_t                       difference_type;

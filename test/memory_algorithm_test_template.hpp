@@ -679,7 +679,7 @@ bool test_many_equal_allocation(Allocator &a)
 
          typename multiallocation_chain::size_type n = chain.size();
          while(!chain.empty()){
-            buffers.push_back(detail::get_pointer(chain.front()));
+            buffers.push_back(ipcdetail::get_pointer(chain.front()));
             chain.pop_front();
          }
          if(n != std::size_t((i+1)*2))
@@ -788,7 +788,7 @@ bool test_many_different_allocation(Allocator &a)
             break;
          typename multiallocation_chain::size_type n = chain.size();
          while(!chain.empty()){
-            buffers.push_back(detail::get_pointer(chain.front()));
+            buffers.push_back(ipcdetail::get_pointer(chain.front()));
             chain.pop_front();
          }
          if(n != ArraySize)

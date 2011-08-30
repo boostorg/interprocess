@@ -181,6 +181,28 @@ void lock_and_sleep(void *arg, M &sm)
 }
 
 template<typename M>
+void lock_and_catch_errors(void *arg, M &sm)
+{
+   data<M> *pdata = static_cast<data<M>*>(arg);
+   try
+   {
+      boost::interprocess::scoped_lock<M> l(sm);
+      if(pdata->m_secs){
+         boost::thread::sleep(xsecs(pdata->m_secs));
+      }
+      else{
+         boost::thread::sleep(xsecs(2*BaseSeconds));
+      }
+      ++shared_val;
+      pdata->m_value = shared_val;
+   }
+   catch(interprocess_exception const & e)
+   {
+      pdata->m_error = e.get_error_code();
+   }
+}
+
+template<typename M>
 void try_lock_and_sleep(void *arg, M &sm)
 {
    data<M> *pdata = static_cast<data<M>*>(arg);
@@ -241,6 +263,49 @@ void test_mutex_lock()
 
    assert(d1.m_value == 1);
    assert(d2.m_value == 2);
+}
+
+template<bool SameObject, typename M>
+void test_mutex_lock_timeout()
+{
+   shared_val = 0;
+   
+   M m1, m2;
+   M *pm1, *pm2;
+
+   if(SameObject){
+      pm1 = pm2 = &m1;
+   }
+   else{
+      pm1 = &m1;
+      pm2 = &m2;
+   }
+
+   int wait_time_s = BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS / 1000;
+   if (wait_time_s == 0 )
+      wait_time_s = 1;
+
+   data<M> d1(1, wait_time_s * 3);
+   data<M> d2(2, wait_time_s * 2);
+
+   // Locker one launches, and holds the lock for wait_time_s * 2 seconds.
+   boost::thread tm1(thread_adapter<M>(&lock_and_sleep, &d1, *pm1));
+
+   //Wait 1*BaseSeconds
+   boost::thread::sleep(xsecs(wait_time_s));
+
+   // Locker two launches, and attempts to hold the lock for wait_time_s * 2 seconds.
+   boost::thread tm2(thread_adapter<M>(&lock_and_catch_errors, &d2, *pm2));
+
+   //Wait completion
+   tm1.join();
+   boost::thread::sleep(xsecs(1*BaseSeconds));
+   tm2.join();
+
+   assert(d1.m_value == 1);
+   assert(d2.m_value == -1);
+   assert(d1.m_error == no_error);
+   assert(d2.m_error == boost::interprocess::timeout_when_locking_error);
 }
 
 template<bool SameObject, typename M>

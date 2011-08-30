@@ -238,4 +238,4 @@ MyRobustMutexLockFile()
    unlink(lockfilename)
 }
 
-detail::intermodule_singleton<MyRobustMutexLockFile>::get();
+ipcdetail::intermodule_singleton<MyRobustMutexLockFile>::get();

@@ -29,7 +29,7 @@ int main ()
    //Define file names
    //<-
    #if 1
-   std::string file(boost::interprocess::detail::get_temporary_path());
+   std::string file(boost::interprocess::ipcdetail::get_temporary_path());
    file += "/"; file += test::get_process_id_name();
    const char *FileName = file.c_str();
    #else

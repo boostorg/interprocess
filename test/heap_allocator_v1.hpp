@@ -70,9 +70,9 @@ class heap_allocator_v1
       <cvoid_ptr, T>::type                      pointer;
    typedef typename boost::
       pointer_to_other<pointer, const T>::type  const_pointer;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <value_type>::type         reference;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <const value_type>::type   const_reference;
    typedef typename SegmentManager::size_type            size_type;
    typedef typename SegmentManager::difference_type      difference_type;
@@ -86,7 +86,7 @@ class heap_allocator_v1
 
    //!Returns the segment manager. Never throws
    segment_manager* get_segment_manager()const
-   {  return detail::get_pointer(mp_mngr);   }
+   {  return ipcdetail::get_pointer(mp_mngr);   }
 /*
    //!Returns address of mutable object. Never throws
    pointer address(reference value) const
@@ -116,12 +116,12 @@ class heap_allocator_v1
 
    //!Deallocates memory previously allocated. Never throws
    void deallocate(const pointer &ptr, size_type)
-   {  return ::delete[] detail::get_pointer(ptr) ;  }
+   {  return ::delete[] ipcdetail::get_pointer(ptr) ;  }
 
    //!Construct object, calling constructor. 
    //!Throws if T(const T&) throws
    void construct(const pointer &ptr, const_reference value)
-   {  new((void*)detail::get_pointer(ptr)) value_type(value);  }
+   {  new((void*)ipcdetail::get_pointer(ptr)) value_type(value);  }
 
    //!Destroys object. Throws if object's destructor throws
    void destroy(const pointer &ptr)
@@ -134,7 +134,7 @@ class heap_allocator_v1
    //!Swap segment manager. Does not throw. If each heap_allocator_v1 is placed in
    //!different memory segments, the result is undefined.
    friend void swap(self_t &alloc1, self_t &alloc2)
-   {  detail::do_swap(alloc1.mp_mngr, alloc2.mp_mngr);   }
+   {  ipcdetail::do_swap(alloc1.mp_mngr, alloc2.mp_mngr);   }
 };
 
 //!Equality test for same type of heap_allocator_v1
