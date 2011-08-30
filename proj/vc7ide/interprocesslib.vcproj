@@ -495,6 +495,9 @@
 			Name="Documentation"
 			Filter="">
 			<File
+				RelativePath="..\..\doc\index.idx">
+			</File>
+			<File
 				RelativePath="..\..\doc\interprocess.qbk">
 			</File>
 			<File
