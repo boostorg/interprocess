@@ -37,32 +37,32 @@ namespace boost {
 namespace interprocess {
 
 /// @cond
-namespace detail{ class interprocess_tester; }
+namespace ipcdetail{ class interprocess_tester; }
 /// @endcond
 
-namespace detail {
+namespace ipcdetail {
 
 inline bool semaphore_open
-   (sem_t *&handle, detail::create_enum_t type, const char *origname, 
+   (sem_t *&handle, ipcdetail::create_enum_t type, const char *origname, 
     unsigned int count, const permissions &perm = permissions())
 {
    std::string name;
    #ifndef BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SEMAPHORES
-   detail::add_leading_slash(origname, name);
+   ipcdetail::add_leading_slash(origname, name);
    #else
-   detail::create_tmp_and_clean_old_and_get_filename(origname, name);
+   ipcdetail::create_tmp_and_clean_old_and_get_filename(origname, name);
    #endif
 
    //Create new mapping
    int oflag = 0;
    switch(type){
-      case detail::DoOpen:
+      case ipcdetail::DoOpen:
          //No addition
       break;
-      case detail::DoCreate:
+      case ipcdetail::DoCreate:
          oflag |= (O_CREAT | O_EXCL);
       break;
-      case detail::DoOpenOrCreate:
+      case ipcdetail::DoOpenOrCreate:
          oflag |= O_CREAT;
       break;
       default:
@@ -99,9 +99,9 @@ inline bool semaphore_unlink(const char *semname)
    try{
       std::string sem_str;
       #ifndef BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SEMAPHORES
-      detail::add_leading_slash(semname, sem_str);
+      ipcdetail::add_leading_slash(semname, sem_str);
       #else
-      detail::tmp_filename(semname, sem_str);
+      ipcdetail::tmp_filename(semname, sem_str);
       #endif
       return 0 == sem_unlink(sem_str.c_str());
    }
@@ -160,7 +160,7 @@ inline bool semaphore_try_wait(sem_t *handle)
 inline bool semaphore_timed_wait(sem_t *handle, const boost::posix_time::ptime &abs_time)
 {
    #ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
-   timespec tspec = detail::ptime_to_timespec(abs_time);
+   timespec tspec = ipcdetail::ptime_to_timespec(abs_time);
    for (;;){
       int res = sem_timedwait(handle, &tspec);
       if(res == 0)
@@ -195,7 +195,7 @@ class named_semaphore_wrapper
 
    public:
    named_semaphore_wrapper
-      (detail::create_enum_t type, const char *name, unsigned int count, const permissions &perm = permissions())
+      (ipcdetail::create_enum_t type, const char *name, unsigned int count, const permissions &perm = permissions())
    {  semaphore_open(mp_sem, type, name, count, perm);   }
 
    ~named_semaphore_wrapper()
@@ -220,7 +220,7 @@ class named_semaphore_wrapper
    {  return semaphore_unlink(name);   }
 
    private:
-   friend class detail::interprocess_tester;
+   friend class ipcdetail::interprocess_tester;
    void dont_close_on_destruction()
    {  mp_sem = BOOST_INTERPROCESS_POSIX_SEM_FAILED; }
 
@@ -256,7 +256,7 @@ class semaphore_wrapper
    sem_t       m_sem;
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 }  //namespace interprocess {
 }  //namespace boost {
 

@@ -38,7 +38,7 @@
 
 namespace boost {
 namespace interprocess {
-namespace detail {
+namespace ipcdetail {
 
 //!This class implements several allocation functions shared by different algorithms
 //!(aligned allocation, multiple allocation...).
@@ -73,13 +73,13 @@ class memory_algorithm_common
    {  return (((std::size_t)ptr) % Alignment == 0);   }
 
    static size_type ceil_units(size_type size)
-   {  return detail::get_rounded_size(size, Alignment)/Alignment; }
+   {  return ipcdetail::get_rounded_size(size, Alignment)/Alignment; }
 
    static size_type floor_units(size_type size)
    {  return size/Alignment;  }
 
    static size_type multiple_of_units(size_type size)
-   {  return detail::get_rounded_size(size, Alignment);  }
+   {  return ipcdetail::get_rounded_size(size, Alignment);  }
 
    static multiallocation_chain allocate_many
       (MemoryAlgorithm *memory_algo, size_type elem_bytes, size_type n_elements)
@@ -119,10 +119,10 @@ class memory_algorithm_common
          //If we want to use minbytes data to get a buffer between maxbytes
          //and minbytes if maxbytes can't be achieved, calculate the 
          //biggest of all possibilities
-         current_forward = detail::get_truncated_size_po2(received_size, backwards_multiple);
+         current_forward = ipcdetail::get_truncated_size_po2(received_size, backwards_multiple);
          needs_backwards = size_to_achieve - current_forward;
          BOOST_ASSERT((needs_backwards % backwards_multiple) == 0);
-         needs_backwards_lcmed = detail::get_rounded_size_po2(needs_backwards, lcm);
+         needs_backwards_lcmed = ipcdetail::get_rounded_size_po2(needs_backwards, lcm);
          lcm_out = lcm;
          needs_backwards_lcmed_out = needs_backwards_lcmed;
          return true;
@@ -130,7 +130,7 @@ class memory_algorithm_common
       //Check if it's multiple of alignment
       else if((backwards_multiple & (Alignment - 1u)) == 0){
          lcm = backwards_multiple;
-         current_forward = detail::get_truncated_size(received_size, backwards_multiple);
+         current_forward = ipcdetail::get_truncated_size(received_size, backwards_multiple);
          //No need to round needs_backwards because backwards_multiple == lcm
          needs_backwards_lcmed = needs_backwards = size_to_achieve - current_forward;
          BOOST_ASSERT((needs_backwards_lcmed & (Alignment - 1u)) == 0);
@@ -141,7 +141,7 @@ class memory_algorithm_common
       //Check if it's multiple of the half of the alignmment
       else if((backwards_multiple & ((Alignment/2u) - 1u)) == 0){
          lcm = backwards_multiple*2u;
-         current_forward = detail::get_truncated_size(received_size, backwards_multiple);
+         current_forward = ipcdetail::get_truncated_size(received_size, backwards_multiple);
          needs_backwards_lcmed = needs_backwards = size_to_achieve - current_forward;
          if(0 != (needs_backwards_lcmed & (Alignment-1)))
          //while(0 != (needs_backwards_lcmed & (Alignment-1)))
@@ -155,7 +155,7 @@ class memory_algorithm_common
       else if((backwards_multiple & ((Alignment/4u) - 1u)) == 0){
          size_type remainder;
          lcm = backwards_multiple*4u;
-         current_forward = detail::get_truncated_size(received_size, backwards_multiple);
+         current_forward = ipcdetail::get_truncated_size(received_size, backwards_multiple);
          needs_backwards_lcmed = needs_backwards = size_to_achieve - current_forward;
          //while(0 != (needs_backwards_lcmed & (Alignment-1)))
             //needs_backwards_lcmed += backwards_multiple;
@@ -173,15 +173,15 @@ class memory_algorithm_common
          return true;
       }
       else{
-         lcm = detail::lcm(max, min);
+         lcm = ipcdetail::lcm(max, min);
       }
       //If we want to use minbytes data to get a buffer between maxbytes
       //and minbytes if maxbytes can't be achieved, calculate the 
       //biggest of all possibilities
-      current_forward = detail::get_truncated_size(received_size, backwards_multiple);
+      current_forward = ipcdetail::get_truncated_size(received_size, backwards_multiple);
       needs_backwards = size_to_achieve - current_forward;
       BOOST_ASSERT((needs_backwards % backwards_multiple) == 0);
-      needs_backwards_lcmed = detail::get_rounded_size(needs_backwards, lcm);
+      needs_backwards_lcmed = ipcdetail::get_rounded_size(needs_backwards, lcm);
       lcm_out = lcm;
       needs_backwards_lcmed_out = needs_backwards_lcmed;
       return true;
@@ -538,14 +538,14 @@ class memory_algorithm_common
    static void priv_deallocate_many(MemoryAlgorithm *memory_algo, multiallocation_chain chain)
    {
       while(!chain.empty()){
-         void *addr = detail::get_pointer(chain.front());
+         void *addr = ipcdetail::get_pointer(chain.front());
          chain.pop_front();
          memory_algo->priv_deallocate(addr);
       }
    }
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 }  //namespace interprocess {
 }  //namespace boost {
 

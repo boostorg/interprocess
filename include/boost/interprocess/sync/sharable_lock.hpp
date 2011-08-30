@@ -139,7 +139,7 @@ class sharable_lock
    //!   "boost::interprocess::move(lock);".*/
    template<class T>
    sharable_lock(BOOST_RV_REF(upgradable_lock<T>) upgr
-      , typename detail::enable_if< detail::is_same<T, SharableMutex> >::type * = 0)
+      , typename ipcdetail::enable_if< ipcdetail::is_same<T, SharableMutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       upgradable_lock<mutex_type> &u_lock = upgr;
@@ -162,7 +162,7 @@ class sharable_lock
    //!   "boost::interprocess::move(lock);".
    template<class T>
    sharable_lock(BOOST_RV_REF(scoped_lock<T>) scop
-               , typename detail::enable_if< detail::is_same<T, SharableMutex> >::type * = 0)
+               , typename ipcdetail::enable_if< ipcdetail::is_same<T, SharableMutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       scoped_lock<mutex_type> &e_lock = scop;

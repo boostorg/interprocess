@@ -35,7 +35,7 @@
 
 namespace boost {
 namespace interprocess { 
-namespace detail {
+namespace ipcdetail {
 
 template<class SmartPtr>
 struct smart_ptr_type
@@ -119,7 +119,7 @@ struct ct_max_pow2_less<0, 0>
    static const std::size_t value = 0;
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 
 //!Trait class to detect if an index is a node
 //!index. This allows more efficient operations

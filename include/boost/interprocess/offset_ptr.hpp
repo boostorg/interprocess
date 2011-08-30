@@ -121,7 +121,7 @@ class offset_ptr
 
    public:
    typedef PointedType *                     pointer;
-   typedef typename detail::
+   typedef typename ipcdetail::
       add_reference<PointedType>::type       reference;
    typedef PointedType                       value_type;
    typedef DifferenceType                    difference_type;
@@ -154,25 +154,25 @@ class offset_ptr
    //!Emulates static_cast operator.
    //!Never throws.
    template<class T2, class P2, class O2, std::size_t A2>
-   offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, detail::static_cast_tag)
+   offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, ipcdetail::static_cast_tag)
    {  this->set_offset(static_cast<PointedType*>(r.get()));   }
 
    //!Emulates const_cast operator.
    //!Never throws.
    template<class T2, class P2, class O2, std::size_t A2>
-   offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, detail::const_cast_tag)
+   offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, ipcdetail::const_cast_tag)
    {  this->set_offset(const_cast<PointedType*>(r.get()));   }
 
    //!Emulates dynamic_cast operator.
    //!Never throws.
    template<class T2, class P2, class O2, std::size_t A2>
-   offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, detail::dynamic_cast_tag)
+   offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, ipcdetail::dynamic_cast_tag)
    {  this->set_offset(dynamic_cast<PointedType*>(r.get()));   }
 
    //!Emulates reinterpret_cast operator.
    //!Never throws.
    template<class T2, class P2, class O2, std::size_t A2>
-   offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, detail::reinterpret_cast_tag)
+   offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, ipcdetail::reinterpret_cast_tag)
    {  this->set_offset(reinterpret_cast<PointedType*>(r.get()));   }
 
    //!Obtains raw pointer from offset.
@@ -368,7 +368,7 @@ inline boost::interprocess::offset_ptr<T1, P1, O1, A1>
    static_pointer_cast(const boost::interprocess::offset_ptr<T2, P2, O2, A2> & r)
 {  
    return boost::interprocess::offset_ptr<T1, P1, O1, A1>
-            (r, boost::interprocess::detail::static_cast_tag());  
+            (r, boost::interprocess::ipcdetail::static_cast_tag());  
 }
 
 //!Simulation of const_cast between pointers. Never throws.
@@ -377,7 +377,7 @@ inline boost::interprocess::offset_ptr<T1, P1, O1, A1>
    const_pointer_cast(const boost::interprocess::offset_ptr<T2, P2, O2, A2> & r)
 {  
    return boost::interprocess::offset_ptr<T1, P1, O1, A1>
-            (r, boost::interprocess::detail::const_cast_tag());  
+            (r, boost::interprocess::ipcdetail::const_cast_tag());  
 }
 
 //!Simulation of dynamic_cast between pointers. Never throws.
@@ -386,7 +386,7 @@ inline boost::interprocess::offset_ptr<T1, P1, O1, A1>
    dynamic_pointer_cast(const boost::interprocess::offset_ptr<T2, P2, O2, A2> & r)
 {  
    return boost::interprocess::offset_ptr<T1, P1, O1, A1>
-            (r, boost::interprocess::detail::dynamic_cast_tag());  
+            (r, boost::interprocess::ipcdetail::dynamic_cast_tag());  
 }
 
 //!Simulation of reinterpret_cast between pointers. Never throws.
@@ -395,7 +395,7 @@ inline boost::interprocess::offset_ptr<T1, P1, O1, A1>
    reinterpret_pointer_cast(const boost::interprocess::offset_ptr<T2, P2, O2, A2> & r)
 {  
    return boost::interprocess::offset_ptr<T1, P1, O1, A1>
-            (r, boost::interprocess::detail::reinterpret_cast_tag());  
+            (r, boost::interprocess::ipcdetail::reinterpret_cast_tag());  
 }
 
 }  //namespace interprocess {
@@ -448,7 +448,7 @@ struct max_pointer_plus_bits<boost::interprocess::offset_ptr<void, P, O, A>, Off
 {
    //The offset ptr can embed one bit less than the alignment since it
    //uses offset == 1 to store the null pointer.
-   static const std::size_t value = ::boost::interprocess::detail::ls_zeros<OffsetAlignment>::value - 1;
+   static const std::size_t value = ::boost::interprocess::ipcdetail::ls_zeros<OffsetAlignment>::value - 1;
 };
 
 //Predeclaration

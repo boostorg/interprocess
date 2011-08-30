@@ -22,7 +22,7 @@
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/containers/allocation_type.hpp>
-#include <boost/interprocess/containers/container/detail/multiallocation_chain.hpp>
+#include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/exceptions.hpp>
@@ -46,7 +46,7 @@
 
 namespace boost {
 namespace interprocess {
-namespace detail {
+namespace ipcdetail {
 
 //!This class implements the simple sequential fit algorithm with a simply
 //!linked list of free buffers.
@@ -117,9 +117,9 @@ class simple_seq_fit_impl
       size_type         m_extra_hdr_bytes;
    }  m_header;
 
-   friend class detail::memory_algorithm_common<simple_seq_fit_impl>;
+   friend class ipcdetail::memory_algorithm_common<simple_seq_fit_impl>;
 
-   typedef detail::memory_algorithm_common<simple_seq_fit_impl> algo_impl_t;
+   typedef ipcdetail::memory_algorithm_common<simple_seq_fit_impl> algo_impl_t;
 
    public:
    //!Constructor. "size" is the total size of the managed memory segment, 
@@ -281,7 +281,7 @@ class simple_seq_fit_impl
    public:
 	static const size_type Alignment      = ::boost::alignment_of< ::boost::detail::max_align>::value;
    private:
-   static const size_type BlockCtrlBytes = detail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value;
+   static const size_type BlockCtrlBytes = ipcdetail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value;
    static const size_type BlockCtrlUnits = BlockCtrlBytes/Alignment;
    static const size_type MinBlockUnits  = BlockCtrlUnits;
    static const size_type MinBlockSize   = MinBlockUnits*Alignment;
@@ -303,7 +303,7 @@ simple_seq_fit_impl<MutexFamily, VoidPointer>
    size_type uint_aligned_this = uint_this/Alignment*Alignment;
    size_type this_disalignment = (uint_this - uint_aligned_this);
    size_type block1_off = 
-      detail::get_rounded_size(sizeof(simple_seq_fit_impl) + extra_hdr_bytes + this_disalignment, Alignment)
+      ipcdetail::get_rounded_size(sizeof(simple_seq_fit_impl) + extra_hdr_bytes + this_disalignment, Alignment)
       - this_disalignment;
    algo_impl_t::assert_alignment(this_disalignment + block1_off);
    return block1_off;
@@ -319,7 +319,7 @@ simple_seq_fit_impl<MutexFamily, VoidPointer>
    size_type uint_aligned_this = uint_this/Alignment*Alignment;
    size_type this_disalignment = (uint_this - uint_aligned_this);
    size_type old_end = 
-      detail::get_truncated_size(m_header.m_size + this_disalignment, Alignment)
+      ipcdetail::get_truncated_size(m_header.m_size + this_disalignment, Alignment)
       - this_disalignment;
    algo_impl_t::assert_alignment(old_end + this_disalignment);
    return old_end;
@@ -339,7 +339,7 @@ inline simple_seq_fit_impl<MutexFamily, VoidPointer>::
 
    m_header.m_root.m_next  = reinterpret_cast<block_ctrl*>
       ((reinterpret_cast<char*>(this) + block1_off));
-   algo_impl_t::assert_alignment(detail::get_pointer(m_header.m_root.m_next));
+   algo_impl_t::assert_alignment(ipcdetail::get_pointer(m_header.m_root.m_next));
    m_header.m_root.m_next->m_size  = (size - block1_off)/Alignment;
    m_header.m_root.m_next->m_next  = &m_header.m_root;
 }
@@ -384,7 +384,7 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::shrink_to_fit()
    //Get the root and the first memory block
    block_ctrl *prev                 = &m_header.m_root;
    block_ctrl *last                 = &m_header.m_root;
-   block_ctrl *block                = detail::get_pointer(last->m_next);
+   block_ctrl *block                = ipcdetail::get_pointer(last->m_next);
    block_ctrl *root                 = &m_header.m_root;
 
    //No free block?
@@ -394,7 +394,7 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::shrink_to_fit()
    while(block != root){
       prev  = last;
       last  = block;
-      block = detail::get_pointer(block->m_next);
+      block = ipcdetail::get_pointer(block->m_next);
    }
 
    char *last_free_end_address   = reinterpret_cast<char*>(last) + last->m_size*Alignment;
@@ -412,7 +412,7 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::shrink_to_fit()
       unique_block = priv_allocate(boost::interprocess::allocate_new, 0, 0, ignore).first;
       if(!unique_block)
          return;
-      last = detail::get_pointer(m_header.m_root.m_next);
+      last = ipcdetail::get_pointer(m_header.m_root.m_next);
       BOOST_ASSERT(last_free_end_address == (reinterpret_cast<char*>(last) + last->m_size*Alignment));
    }
    size_type last_units = last->m_size;
@@ -493,8 +493,8 @@ inline typename simple_seq_fit_impl<MutexFamily, VoidPointer>::size_type
 simple_seq_fit_impl<MutexFamily, VoidPointer>::
    get_min_size (size_type extra_hdr_bytes)
 {
-   return detail::get_rounded_size((size_type)sizeof(simple_seq_fit_impl),Alignment) +
-          detail::get_rounded_size(extra_hdr_bytes,Alignment)
+   return ipcdetail::get_rounded_size((size_type)sizeof(simple_seq_fit_impl),Alignment) +
+          ipcdetail::get_rounded_size(extra_hdr_bytes,Alignment)
           + MinBlockSize;
 }
 
@@ -506,7 +506,7 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
    boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
    //-----------------------
    return m_header.m_allocated == 0 &&
-          detail::get_pointer(m_header.m_root.m_next->m_next) == &m_header.m_root;
+          ipcdetail::get_pointer(m_header.m_root.m_next->m_next) == &m_header.m_root;
 }
 
 template<class MutexFamily, class VoidPointer>
@@ -515,7 +515,7 @@ inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::zero_free_memory()
    //-----------------------
    boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
    //-----------------------
-   block_ctrl *block = detail::get_pointer(m_header.m_root.m_next);
+   block_ctrl *block = ipcdetail::get_pointer(m_header.m_root.m_next);
 
    //Iterate through all free portions
    do{
@@ -523,7 +523,7 @@ inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::zero_free_memory()
       std::memset( priv_get_user_buffer(block)
                  , 0
              , block->get_user_bytes());
-      block = detail::get_pointer(block->m_next);
+      block = ipcdetail::get_pointer(block->m_next);
    }
    while(block != &m_header.m_root);
 }
@@ -535,7 +535,7 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
    //-----------------------
    boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
    //-----------------------
-   block_ctrl *block = detail::get_pointer(m_header.m_root.m_next);
+   block_ctrl *block = ipcdetail::get_pointer(m_header.m_root.m_next);
 
    size_type free_memory = 0;
 
@@ -545,7 +545,7 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
       if(!algo_impl_t::check_alignment(block))
          return false;
       //Free blocks's next must be always valid
-      block_ctrl *next = detail::get_pointer(block->m_next);
+      block_ctrl *next = ipcdetail::get_pointer(block->m_next);
       if(!next){
          return false;
       }
@@ -693,10 +693,10 @@ void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
       }
 
       size_type needs_backwards = 
-         detail::get_rounded_size(preferred_size - extra_forward, Alignment);
+         ipcdetail::get_rounded_size(preferred_size - extra_forward, Alignment);
    
       if(!only_preferred_backwards){
-            max_value(detail::get_rounded_size(min_size - extra_forward, Alignment)
+            max_value(ipcdetail::get_rounded_size(min_size - extra_forward, Alignment)
                      ,min_value(prev->get_user_bytes(), needs_backwards));
       }
 
@@ -757,7 +757,7 @@ inline typename simple_seq_fit_impl<MutexFamily, VoidPointer>::size_type
 simple_seq_fit_impl<MutexFamily, VoidPointer>::
    priv_get_total_units(size_type userbytes)
 {
-   size_type s = detail::get_rounded_size(userbytes, Alignment)/Alignment;
+   size_type s = ipcdetail::get_rounded_size(userbytes, Alignment)/Alignment;
    if(!s)   ++s;
    return BlockCtrlUnits + s;
 }
@@ -782,11 +782,11 @@ std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
       return return_type(static_cast<void*>(0), false);
 
    //Number of units to request (including block_ctrl header)
-   size_type nunits = detail::get_rounded_size(preferred_size, Alignment)/Alignment + BlockCtrlUnits;
+   size_type nunits = ipcdetail::get_rounded_size(preferred_size, Alignment)/Alignment + BlockCtrlUnits;
 
    //Get the root and the first memory block
    block_ctrl *prev                 = &m_header.m_root;
-   block_ctrl *block                = detail::get_pointer(prev->m_next);
+   block_ctrl *block                = ipcdetail::get_pointer(prev->m_next);
    block_ctrl *root                 = &m_header.m_root;
    block_ctrl *biggest_block        = 0;
    block_ctrl *prev_biggest_block   = 0;
@@ -821,13 +821,13 @@ std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
          }
          //Bad luck, let's check next block
          prev  = block;
-         block = detail::get_pointer(block->m_next);
+         block = ipcdetail::get_pointer(block->m_next);
       }
 
       //Bad luck finding preferred_size, now if we have any biggest_block
       //try with this block
       if(biggest_block){
-         size_type limit_units = detail::get_rounded_size(limit_size, Alignment)/Alignment + BlockCtrlUnits;
+         size_type limit_units = ipcdetail::get_rounded_size(limit_size, Alignment)/Alignment + BlockCtrlUnits;
          if(biggest_block->m_size < limit_units)
             return return_type(static_cast<void*>(0), false);
 
@@ -892,13 +892,13 @@ inline
    //Take the address where the previous block should go
    block_ctrl *root           = &m_header.m_root;
    block_ctrl *prev_2_block   = root;
-   block_ctrl *prev_block = detail::get_pointer(root->m_next);
+   block_ctrl *prev_block = ipcdetail::get_pointer(root->m_next);
 
    while((reinterpret_cast<char*>(prev_block) + prev_block->m_size*Alignment)
             != reinterpret_cast<char*>(ptr)
          && prev_block != root){
       prev_2_block = prev_block;
-      prev_block = detail::get_pointer(prev_block->m_next);
+      prev_block = ipcdetail::get_pointer(prev_block->m_next);
    }
 
    if(prev_block == root || !prev_block->m_next)
@@ -935,8 +935,8 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
    received_size = old_block_size*Alignment - BlockCtrlBytes;
 
    //Now translate it to Alignment units
-   min_size       = detail::get_rounded_size(min_size, Alignment)/Alignment;
-   preferred_size = detail::get_rounded_size(preferred_size, Alignment)/Alignment;
+   min_size       = ipcdetail::get_rounded_size(min_size, Alignment)/Alignment;
+   preferred_size = ipcdetail::get_rounded_size(preferred_size, Alignment)/Alignment;
 
    //Some parameter checks
    if(min_size > preferred_size)
@@ -968,8 +968,8 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
    
    //Find the previous free block of next_block
    block_ctrl *prev = &m_header.m_root;
-   while(detail::get_pointer(prev->m_next) != next_block){
-      prev = detail::get_pointer(prev->m_next);
+   while(ipcdetail::get_pointer(prev->m_next) != next_block){
+      prev = ipcdetail::get_pointer(prev->m_next);
    }
 
    //Now insert merged block in the free list
@@ -1056,7 +1056,7 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_deallocate(void* addr)
    //Pointer next always points to the first 
    //(lower address) block
    block_ctrl * prev  = &m_header.m_root;
-   block_ctrl * pos   = detail::get_pointer(m_header.m_root.m_next);
+   block_ctrl * pos   = ipcdetail::get_pointer(m_header.m_root.m_next);
    block_ctrl * block = reinterpret_cast<block_ctrl*>(priv_get_block(addr));
 
    //All used blocks' next is marked with 0 so check it
@@ -1075,16 +1075,16 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_deallocate(void* addr)
    //This ordering comparison must be done with original pointers
    //types since their mapping to raw pointers can be different
    //in each process
-   while((detail::get_pointer(pos) != &m_header.m_root) && (block > pos)){
+   while((ipcdetail::get_pointer(pos) != &m_header.m_root) && (block > pos)){
       prev = pos;
-      pos = detail::get_pointer(pos->m_next);
+      pos = ipcdetail::get_pointer(pos->m_next);
    }
 
    //Try to combine with upper block
-   char *block_char_ptr = reinterpret_cast<char*>(detail::get_pointer(block));
+   char *block_char_ptr = reinterpret_cast<char*>(ipcdetail::get_pointer(block));
 
    if ((block_char_ptr + Alignment*block->m_size) == 
-         reinterpret_cast<char*>(detail::get_pointer(pos))){
+         reinterpret_cast<char*>(ipcdetail::get_pointer(pos))){
       block->m_size += pos->m_size;
       block->m_next  = pos->m_next;
    }
@@ -1093,7 +1093,7 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_deallocate(void* addr)
    }
 
    //Try to combine with lower block
-   if ((reinterpret_cast<char*>(detail::get_pointer(prev))
+   if ((reinterpret_cast<char*>(ipcdetail::get_pointer(prev))
             + Alignment*prev->m_size) == 
         block_char_ptr){
 
@@ -1106,7 +1106,7 @@ void simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_deallocate(void* addr)
    }
 }
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 
 }  //namespace interprocess {
 

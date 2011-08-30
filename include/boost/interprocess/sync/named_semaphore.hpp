@@ -105,17 +105,17 @@ class named_semaphore
 
    /// @cond
    private:
-   friend class detail::interprocess_tester;
+   friend class ipcdetail::interprocess_tester;
    void dont_close_on_destruction();
 
    #if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
-   detail::named_semaphore_wrapper m_sem;
+   ipcdetail::named_semaphore_wrapper m_sem;
    #else
    interprocess_semaphore *semaphore() const
    {  return static_cast<interprocess_semaphore*>(m_shmem.get_user_address()); }
 
-   detail::managed_open_or_create_impl<shared_memory_object> m_shmem;
-   typedef detail::named_creation_functor<interprocess_semaphore, int> construct_func_t;
+   ipcdetail::managed_open_or_create_impl<shared_memory_object> m_shmem;
+   typedef ipcdetail::named_creation_functor<interprocess_semaphore, int> construct_func_t;
    #endif
    /// @endcond
 };
@@ -126,23 +126,23 @@ class named_semaphore
 
 inline named_semaphore::named_semaphore
    (create_only_t, const char *name, unsigned int initialCount, const permissions &perm)
-   :  m_sem(detail::DoCreate, name, initialCount, perm)
+   :  m_sem(ipcdetail::DoCreate, name, initialCount, perm)
 {}
 
 inline named_semaphore::named_semaphore
    (open_or_create_t, const char *name, unsigned int initialCount, const permissions &perm)
-   :  m_sem(detail::DoOpenOrCreate, name, initialCount, perm)
+   :  m_sem(ipcdetail::DoOpenOrCreate, name, initialCount, perm)
 {}
 
 inline named_semaphore::named_semaphore(open_only_t, const char *name)
-   :  m_sem(detail::DoOpen, name, 1, permissions())
+   :  m_sem(ipcdetail::DoOpen, name, 1, permissions())
 {}
 
 inline named_semaphore::~named_semaphore()
 {}
 
 inline void named_semaphore::dont_close_on_destruction()
-{  detail::interprocess_tester::dont_close_on_destruction(m_sem);  }
+{  ipcdetail::interprocess_tester::dont_close_on_destruction(m_sem);  }
 
 inline void named_semaphore::wait()
 {  m_sem.wait();  }
@@ -163,7 +163,7 @@ inline bool named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time
 }
 
 inline bool named_semaphore::remove(const char *name)
-{  return detail::named_semaphore_wrapper::remove(name);   }
+{  return ipcdetail::named_semaphore_wrapper::remove(name);   }
 
 #else
 
@@ -171,18 +171,18 @@ inline named_semaphore::~named_semaphore()
 {}
 
 inline void named_semaphore::dont_close_on_destruction()
-{  detail::interprocess_tester::dont_close_on_destruction(m_shmem);  }
+{  ipcdetail::interprocess_tester::dont_close_on_destruction(m_shmem);  }
 
 inline named_semaphore::named_semaphore
    (create_only_t, const char *name, unsigned int initialCount, const permissions &perm)
    :  m_shmem  (create_only
                ,name
                ,sizeof(interprocess_semaphore) +
-                  detail::managed_open_or_create_impl<shared_memory_object>::
+                  ipcdetail::managed_open_or_create_impl<shared_memory_object>::
                      ManagedOpenOrCreateUserOffset
                ,read_write
                ,0
-               ,construct_func_t(detail::DoCreate, initialCount)
+               ,construct_func_t(ipcdetail::DoCreate, initialCount)
                ,perm)
 {}
 
@@ -191,11 +191,11 @@ inline named_semaphore::named_semaphore
    :  m_shmem  (open_or_create
                ,name
                ,sizeof(interprocess_semaphore) +
-                  detail::managed_open_or_create_impl<shared_memory_object>::
+                  ipcdetail::managed_open_or_create_impl<shared_memory_object>::
                      ManagedOpenOrCreateUserOffset
                ,read_write
                ,0
-               ,construct_func_t(detail::DoOpenOrCreate, initialCount)
+               ,construct_func_t(ipcdetail::DoOpenOrCreate, initialCount)
                ,perm)
 {}
 
@@ -205,7 +205,7 @@ inline named_semaphore::named_semaphore
                ,name
                ,read_write
                ,0
-               ,construct_func_t(detail::DoOpen, 0))
+               ,construct_func_t(ipcdetail::DoOpen, 0))
 {}
 
 inline void named_semaphore::post()

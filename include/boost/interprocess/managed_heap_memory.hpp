@@ -39,12 +39,12 @@ template
          template<class IndexConfig> class IndexType
       >
 class basic_managed_heap_memory 
-   : public detail::basic_managed_memory_impl <CharType, AllocationAlgorithm, IndexType>
+   : public ipcdetail::basic_managed_memory_impl <CharType, AllocationAlgorithm, IndexType>
 {
    /// @cond
    private:
 
-   typedef detail::basic_managed_memory_impl 
+   typedef ipcdetail::basic_managed_memory_impl 
       <CharType, AllocationAlgorithm, IndexType>             base_t;
    BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_heap_memory)
    /// @endcond

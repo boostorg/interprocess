@@ -141,7 +141,7 @@ class scoped_lock
    //!   share ownership with an upgradable_lock).
    template<class T>
    explicit scoped_lock(BOOST_RV_REF(upgradable_lock<T>) upgr
-      , typename detail::enable_if< detail::is_same<T, Mutex> >::type * = 0)
+      , typename ipcdetail::enable_if< ipcdetail::is_same<T, Mutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       upgradable_lock<mutex_type> &u_lock = upgr;
@@ -169,7 +169,7 @@ class scoped_lock
    //!   do so in a non-blocking manner.
    template<class T>
    scoped_lock(BOOST_RV_REF(upgradable_lock<T>) upgr, try_to_lock_type
-         , typename detail::enable_if< detail::is_same<T, Mutex> >::type * = 0)
+         , typename ipcdetail::enable_if< ipcdetail::is_same<T, Mutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       upgradable_lock<mutex_type> &u_lock = upgr;
@@ -199,7 +199,7 @@ class scoped_lock
    //!   then mutex transfer occurs only if it can do so in a non-blocking manner.
    template<class T>
    scoped_lock(BOOST_RV_REF(upgradable_lock<T>) upgr, boost::posix_time::ptime &abs_time
-               , typename detail::enable_if< detail::is_same<T, Mutex> >::type * = 0)
+               , typename ipcdetail::enable_if< ipcdetail::is_same<T, Mutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       upgradable_lock<mutex_type> &u_lock = upgr;
@@ -230,7 +230,7 @@ class scoped_lock
    //!   do so in a non-blocking manner.
    template<class T>
    scoped_lock(BOOST_RV_REF(sharable_lock<T>) shar, try_to_lock_type
-      , typename detail::enable_if< detail::is_same<T, Mutex> >::type * = 0)
+      , typename ipcdetail::enable_if< ipcdetail::is_same<T, Mutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       sharable_lock<mutex_type> &s_lock = shar;

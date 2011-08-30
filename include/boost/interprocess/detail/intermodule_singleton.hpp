@@ -51,7 +51,7 @@
 
 namespace boost{
 namespace interprocess{
-namespace detail{
+namespace ipcdetail{
 
 namespace file_locking_helpers {
 
@@ -823,7 +823,7 @@ void intermodule_singleton_common<ManagedShMem>::initialize_singleton_logic
                break;
             }
             else if(previous_module_singleton_initialized == Initializing){
-               detail::thread_yield();
+               ipcdetail::thread_yield();
             }
             else{
                //This can't be happening!
@@ -1026,7 +1026,7 @@ class intermodule_singleton
 {};
 
 
-}  //namespace detail{
+}  //namespace ipcdetail{
 }  //namespace interprocess{
 }  //namespace boost{
 

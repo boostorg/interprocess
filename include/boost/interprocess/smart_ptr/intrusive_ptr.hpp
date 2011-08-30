@@ -72,7 +72,7 @@ class intrusive_ptr
    //!Does not throw
    intrusive_ptr(const pointer &p, bool add_ref = true): m_ptr(p)
    {
-      if(m_ptr != 0 && add_ref) intrusive_ptr_add_ref(detail::get_pointer(m_ptr));
+      if(m_ptr != 0 && add_ref) intrusive_ptr_add_ref(ipcdetail::get_pointer(m_ptr));
    }
 
    //!Copy constructor. Copies the internal pointer and if "p" is not
@@ -80,7 +80,7 @@ class intrusive_ptr
    intrusive_ptr(intrusive_ptr const & rhs)
       :  m_ptr(rhs.m_ptr)
    {
-      if(m_ptr != 0) intrusive_ptr_add_ref(detail::get_pointer(m_ptr));
+      if(m_ptr != 0) intrusive_ptr_add_ref(ipcdetail::get_pointer(m_ptr));
    }
 
    //!Constructor from related. Copies the internal pointer and if "p" is not
@@ -89,14 +89,14 @@ class intrusive_ptr
       (intrusive_ptr<U, VP> const & rhs)
       :  m_ptr(rhs.get())
    {
-      if(m_ptr != 0) intrusive_ptr_add_ref(detail::get_pointer(m_ptr));
+      if(m_ptr != 0) intrusive_ptr_add_ref(ipcdetail::get_pointer(m_ptr));
    }
 
    //!Destructor. If internal pointer is not 0, calls
    //!intrusive_ptr_release(get_pointer(m_ptr)). Does not throw
    ~intrusive_ptr()
    {
-      if(m_ptr != 0) intrusive_ptr_release(detail::get_pointer(m_ptr));
+      if(m_ptr != 0) intrusive_ptr_release(ipcdetail::get_pointer(m_ptr));
    }
 
    //!Assignment operator. Equivalent to intrusive_ptr(r).swap(*this). 
@@ -162,7 +162,7 @@ class intrusive_ptr
    //!Exchanges the contents of the two smart pointers.
    //!Does not throw
    void swap(intrusive_ptr & rhs)
-   {  detail::do_swap(m_ptr, rhs.m_ptr);  }
+   {  ipcdetail::do_swap(m_ptr, rhs.m_ptr);  }
 
    /// @cond
    private:

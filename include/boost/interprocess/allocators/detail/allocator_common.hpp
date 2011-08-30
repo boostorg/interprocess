@@ -25,7 +25,7 @@
 #include <boost/interprocess/exceptions.hpp> //bad_alloc
 #include <boost/interprocess/sync/scoped_lock.hpp> //scoped_lock
 #include <boost/interprocess/containers/allocation_type.hpp> //boost::interprocess::allocation_type
-#include <boost/interprocess/containers/container/detail/multiallocation_chain.hpp>
+#include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/interprocess/mem_algo/detail/mem_algo_common.hpp>
 #include <boost/interprocess/detail/segment_manager_helper.hpp>
 #include <algorithm> //std::swap
@@ -67,7 +67,7 @@ struct sizeof_value<const volatile void>
    static const std::size_t value = sizeof(void*);
 };
 
-namespace detail {
+namespace ipcdetail {
 
 //!Object function that creates the node allocator if it is not created and
 //!increments reference count if it is already created
@@ -99,7 +99,7 @@ struct get_or_create_node_pool_func
 template<class NodePool>
 inline NodePool *get_or_create_node_pool(typename NodePool::segment_manager *mgnr)
 {
-   detail::get_or_create_node_pool_func<NodePool> func(mgnr);
+   ipcdetail::get_or_create_node_pool_func<NodePool> func(mgnr);
    mgnr->atomic_func(func);
    return func.mp_node_pool;
 }
@@ -173,11 +173,11 @@ class cache_impl
    ~cache_impl()
    {
       this->deallocate_all_cached_nodes();
-      detail::destroy_node_pool_if_last_link(detail::get_pointer(mp_node_pool));   
+      ipcdetail::destroy_node_pool_if_last_link(ipcdetail::get_pointer(mp_node_pool));   
    }
 
    NodePool *get_node_pool() const
-   {  return detail::get_pointer(mp_node_pool); }
+   {  return ipcdetail::get_pointer(mp_node_pool); }
 
    segment_manager *get_segment_manager() const
    {  return mp_node_pool->get_segment_manager(); }
@@ -191,7 +191,7 @@ class cache_impl
       if(m_cached_nodes.empty()){
          m_cached_nodes = mp_node_pool->allocate_nodes(m_max_cached_nodes/2);
       }
-      void *ret = detail::get_pointer(m_cached_nodes.front());
+      void *ret = ipcdetail::get_pointer(m_cached_nodes.front());
       m_cached_nodes.pop_front();
       return ret;
    }
@@ -203,7 +203,7 @@ class cache_impl
       BOOST_TRY{
          //If don't have any cached node, we have to get a new list of free nodes from the pool
          while(!m_cached_nodes.empty() && count--){
-            void *ret = detail::get_pointer(m_cached_nodes.front());
+            void *ret = ipcdetail::get_pointer(m_cached_nodes.front());
             m_cached_nodes.pop_front();
             chain.push_back(ret);
             ++allocated;
@@ -296,9 +296,9 @@ class cache_impl
    public:
    void swap(cache_impl &other)
    {
-      detail::do_swap(mp_node_pool, other.mp_node_pool); 
+      ipcdetail::do_swap(mp_node_pool, other.mp_node_pool); 
       m_cached_nodes.swap(other.m_cached_nodes); 
-      detail::do_swap(m_max_cached_nodes, other.m_max_cached_nodes); 
+      ipcdetail::do_swap(m_max_cached_nodes, other.m_max_cached_nodes); 
    } 
 };
 
@@ -318,9 +318,9 @@ class array_allocation_impl
    typedef typename boost::
       pointer_to_other<void_pointer, const T>::type      const_pointer;
    typedef T                                             value_type;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <value_type>::type                  reference;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <const value_type>::type            const_reference;
    typedef typename SegmentManager::size_type            size_type;
    typedef typename SegmentManager::difference_type      difference_type;
@@ -334,7 +334,7 @@ class array_allocation_impl
    //!allocate, allocation_command and allocate_many.
    size_type size(const pointer &p) const
    {  
-      return (size_type)this->derived()->get_segment_manager()->size(detail::get_pointer(p))/sizeof(T);
+      return (size_type)this->derived()->get_segment_manager()->size(ipcdetail::get_pointer(p))/sizeof(T);
    }
 
    std::pair<pointer, bool>
@@ -344,7 +344,7 @@ class array_allocation_impl
                          size_type &received_size, const pointer &reuse = 0)
    {
       return this->derived()->get_segment_manager()->allocation_command
-         (command, limit_size, preferred_size, received_size, detail::get_pointer(reuse));
+         (command, limit_size, preferred_size, received_size, ipcdetail::get_pointer(reuse));
    }
 
    //!Allocates many elements of size elem_size in a contiguous block
@@ -393,12 +393,12 @@ class array_allocation_impl
    //!Default construct an object. 
    //!Throws if T's default constructor throws
    void construct(const pointer &ptr)
-   {  new((void*)detail::get_pointer(ptr)) value_type;  }
+   {  new((void*)ipcdetail::get_pointer(ptr)) value_type;  }
 
    //!Copy construct an object
    //!Throws if T's copy constructor throws
    void construct(const pointer &ptr, const_reference v)
-   {  new((void*)detail::get_pointer(ptr)) value_type(v);  }
+   {  new((void*)ipcdetail::get_pointer(ptr)) value_type(v);  }
 
    //!Destroys object. Throws if object's
    //!destructor throws
@@ -429,9 +429,9 @@ class node_pool_allocation_impl
    typedef typename boost::
       pointer_to_other<void_pointer, const T>::type      const_pointer;
    typedef T                                             value_type;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <value_type>::type                  reference;
-   typedef typename detail::add_reference
+   typedef typename ipcdetail::add_reference
                      <const value_type>::type            const_reference;
    typedef typename SegmentManager::size_type            size_type;
    typedef typename SegmentManager::difference_type      difference_type;
@@ -472,9 +472,9 @@ class node_pool_allocation_impl
       typedef typename node_pool<0>::type node_pool_t;
       node_pool_t *pool = node_pool<0>::get(this->derived()->get_node_pool());
       if(Version == 1 && count == 1)
-         pool->deallocate_node(detail::get_pointer(ptr));
+         pool->deallocate_node(ipcdetail::get_pointer(ptr));
       else
-         pool->get_segment_manager()->deallocate((void*)detail::get_pointer(ptr));
+         pool->get_segment_manager()->deallocate((void*)ipcdetail::get_pointer(ptr));
    }
 
    //!Allocates just one object. Memory allocated with this function
@@ -507,7 +507,7 @@ class node_pool_allocation_impl
    {
       typedef typename node_pool<0>::type node_pool_t;
       node_pool_t *pool = node_pool<0>::get(this->derived()->get_node_pool());
-      pool->deallocate_node(detail::get_pointer(p));
+      pool->deallocate_node(ipcdetail::get_pointer(p));
    }
 
    //!Allocates many elements of size == 1 in a contiguous block
@@ -618,10 +618,10 @@ class cached_allocator_impl
    {
       (void)count;
       if(Version == 1 && count == 1){
-         m_cache.cached_deallocation(detail::get_pointer(ptr));
+         m_cache.cached_deallocation(ipcdetail::get_pointer(ptr));
       }
       else{
-         this->get_segment_manager()->deallocate((void*)detail::get_pointer(ptr));
+         this->get_segment_manager()->deallocate((void*)ipcdetail::get_pointer(ptr));
       }
    }
 
@@ -644,7 +644,7 @@ class cached_allocator_impl
    //!You should never use deallocate_one to deallocate memory allocated
    //!with other functions different from allocate_one(). Never throws
    void deallocate_one(const pointer &p)
-   {  this->m_cache.cached_deallocation(detail::get_pointer(p)); }
+   {  this->m_cache.cached_deallocation(ipcdetail::get_pointer(p)); }
 
    //!Allocates many elements of size == 1 in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
@@ -850,7 +850,7 @@ class shared_pool_impl
    } m_header;
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 }  //namespace interprocess {
 }  //namespace boost {
 

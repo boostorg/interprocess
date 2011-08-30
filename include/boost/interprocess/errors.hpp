@@ -112,7 +112,8 @@ enum error_code_t
    size_error,
    corrupted_error,
    not_such_file_or_directory,
-   invalid_argument
+   invalid_argument,
+   timeout_when_locking_error,
 };
 
 typedef int    native_error_t;

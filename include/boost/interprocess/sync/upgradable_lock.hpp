@@ -134,7 +134,7 @@ class upgradable_lock
    //!   expression: "boost::interprocess::move(lock);".
    template<class T>
    upgradable_lock(BOOST_RV_REF(scoped_lock<T>) scop
-                  , typename detail::enable_if< detail::is_same<T, UpgradableMutex> >::type * = 0)
+                  , typename ipcdetail::enable_if< ipcdetail::is_same<T, UpgradableMutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       scoped_lock<mutex_type> &u_lock = scop;
@@ -162,7 +162,7 @@ class upgradable_lock
    //!   occurs only if it can do so in a non-blocking manner.
    template<class T>
    upgradable_lock( BOOST_RV_REF(sharable_lock<T>) shar, try_to_lock_type
-                  , typename detail::enable_if< detail::is_same<T, UpgradableMutex> >::type * = 0)
+                  , typename ipcdetail::enable_if< ipcdetail::is_same<T, UpgradableMutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       sharable_lock<mutex_type> &s_lock = shar;

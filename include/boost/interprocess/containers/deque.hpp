@@ -16,7 +16,7 @@
 #endif
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/containers/container/deque.hpp>
+#include <boost/container/deque.hpp>
 #include <boost/interprocess/containers/containers_fwd.hpp>
 
 namespace boost {

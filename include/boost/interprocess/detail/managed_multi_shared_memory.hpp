@@ -57,17 +57,17 @@ template
          template<class IndexConfig> class IndexType
       >
 class basic_managed_multi_shared_memory 
-   :  public detail::basic_managed_memory_impl
+   :  public ipcdetail::basic_managed_memory_impl
          <CharType, MemoryAlgorithm, IndexType>
 {
 
    typedef basic_managed_multi_shared_memory
                <CharType, MemoryAlgorithm, IndexType>    self_t;
-   typedef detail::basic_managed_memory_impl 
+   typedef ipcdetail::basic_managed_memory_impl 
       <CharType, MemoryAlgorithm, IndexType>             base_t;
    
    typedef typename MemoryAlgorithm::void_pointer        void_pointer;
-   typedef typename detail::
+   typedef typename ipcdetail::
       managed_open_or_create_impl<shared_memory_object>  managed_impl;
    typedef typename void_pointer::segment_group_id       segment_group_id;
    typedef typename base_t::size_type                   size_type;

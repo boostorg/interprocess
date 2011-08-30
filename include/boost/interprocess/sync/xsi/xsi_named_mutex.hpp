@@ -60,7 +60,7 @@ class xsi_named_mutex
    //!If the named mutex previously exists, it tries to open it.
    //!Otherwise throws an error.
    xsi_named_mutex(open_or_create_t, const char *path, boost::uint8_t id, int perm = 0666)
-   {  this->priv_open_or_create(detail::DoOpenOrCreate, path, id, perm);  }
+   {  this->priv_open_or_create(ipcdetail::DoOpenOrCreate, path, id, perm);  }
 
    //!Moves the ownership of "moved"'s named mutex to *this. 
    //!After the call, "moved" does not represent any named mutex 
@@ -112,7 +112,7 @@ class xsi_named_mutex
    void priv_close();
 
    //!Closes a previously opened file mapping. Never throws.
-   bool priv_open_or_create( detail::create_enum_t type
+   bool priv_open_or_create( ipcdetail::create_enum_t type
                            , const char *path
                            , boost::uint8_t id
                            , int perm);
@@ -152,7 +152,7 @@ inline int xsi_named_mutex::get_permissions() const
 {  return m_perm; }
 
 inline bool xsi_named_mutex::priv_open_or_create
-   (detail::create_enum_t type, const char *path, boost::uint8_t id, int perm)
+   (ipcdetail::create_enum_t type, const char *path, boost::uint8_t id, int perm)
 {
    key_t key;
    if(path){

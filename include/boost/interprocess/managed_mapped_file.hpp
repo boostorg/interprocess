@@ -38,22 +38,22 @@ template
          template<class IndexConfig> class IndexType
       >
 class basic_managed_mapped_file 
-   : public detail::basic_managed_memory_impl
+   : public ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType
-      ,detail::managed_open_or_create_impl<detail::file_wrapper>::ManagedOpenOrCreateUserOffset>
+      ,ipcdetail::managed_open_or_create_impl<ipcdetail::file_wrapper>::ManagedOpenOrCreateUserOffset>
 {
    /// @cond
    public:
-   typedef detail::basic_managed_memory_impl 
+   typedef ipcdetail::basic_managed_memory_impl 
       <CharType, AllocationAlgorithm, IndexType,
-      detail::managed_open_or_create_impl<detail::file_wrapper>::ManagedOpenOrCreateUserOffset>   base_t;
-   typedef detail::file_wrapper device_type;
+      ipcdetail::managed_open_or_create_impl<ipcdetail::file_wrapper>::ManagedOpenOrCreateUserOffset>   base_t;
+   typedef ipcdetail::file_wrapper device_type;
    typedef typename base_t::size_type              size_type;
 
    private:
 
-   typedef detail::create_open_func<base_t>        create_open_func_t;   
-   typedef detail::managed_open_or_create_impl<detail::file_wrapper> managed_open_or_create_type;
+   typedef ipcdetail::create_open_func<base_t>        create_open_func_t;   
+   typedef ipcdetail::managed_open_or_create_impl<ipcdetail::file_wrapper> managed_open_or_create_type;
 
    basic_managed_mapped_file *get_this_pointer()
    {  return this;   }
@@ -75,7 +75,7 @@ class basic_managed_mapped_file
    basic_managed_mapped_file(create_only_t create_only, const char *name,
                              size_type size, const void *addr = 0, const permissions &perm = permissions())
       : m_mfile(create_only, name, size, read_write, addr, 
-                create_open_func_t(get_this_pointer(), detail::DoCreate), perm)
+                create_open_func_t(get_this_pointer(), ipcdetail::DoCreate), perm)
    {}
 
    //!Creates mapped file and creates and places the segment manager if
@@ -87,7 +87,7 @@ class basic_managed_mapped_file
                               const void *addr = 0, const permissions &perm = permissions())
       : m_mfile(open_or_create, name, size, read_write, addr,
                 create_open_func_t(get_this_pointer(), 
-                detail::DoOpenOrCreate), perm)
+                ipcdetail::DoOpenOrCreate), perm)
    {}
 
    //!Connects to a created mapped file and its segment manager.
@@ -96,7 +96,7 @@ class basic_managed_mapped_file
                               const void *addr = 0)
       : m_mfile(open_only, name, read_write, addr,
                 create_open_func_t(get_this_pointer(), 
-                detail::DoOpen))
+                ipcdetail::DoOpen))
    {}
 
    //!Connects to a created mapped file and its segment manager
@@ -106,7 +106,7 @@ class basic_managed_mapped_file
                               const void *addr = 0)
       : m_mfile(open_only, name, copy_on_write, addr, 
                 create_open_func_t(get_this_pointer(), 
-                detail::DoOpen))
+                ipcdetail::DoOpen))
    {}
 
    //!Connects to a created mapped file and its segment manager
@@ -116,7 +116,7 @@ class basic_managed_mapped_file
                               const void *addr = 0)
       : m_mfile(open_only, name, read_only, addr, 
                 create_open_func_t(get_this_pointer(), 
-                detail::DoOpen))
+                ipcdetail::DoOpen))
    {}
 
    //!Moves the ownership of "moved"'s managed memory to *this.

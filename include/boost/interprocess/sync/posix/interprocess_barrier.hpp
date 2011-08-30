@@ -19,8 +19,8 @@ inline barrier::barrier(unsigned int count)
 {
    if (count == 0)
       throw std::invalid_argument("count cannot be zero.");
-   detail::barrierattr_wrapper barrier_attr;
-   detail::barrier_initializer barrier
+   ipcdetail::barrierattr_wrapper barrier_attr;
+   ipcdetail::barrier_initializer barrier
       (m_barrier, barrier_attr, static_cast<int>(count));
    barrier.release();
 }

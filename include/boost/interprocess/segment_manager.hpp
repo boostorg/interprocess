@@ -251,9 +251,9 @@ class segment_manager_base
    /// @cond
    protected:
    void * prot_anonymous_construct
-      (size_type num, bool dothrow, detail::in_place_interface &table)
+      (size_type num, bool dothrow, ipcdetail::in_place_interface &table)
    {
-      typedef detail::block_header<size_type> block_header_t;
+      typedef ipcdetail::block_header<size_type> block_header_t;
       block_header_t block_info (  size_type(table.size*num)
                                  , size_type(table.alignment)
                                  , anonymous_type
@@ -274,7 +274,7 @@ class segment_manager_base
       }
 
       //Build scoped ptr to avoid leaks with constructor exception
-      detail::mem_algo_deallocator<MemoryAlgorithm> mem(ptr_struct, *this);
+      ipcdetail::mem_algo_deallocator<MemoryAlgorithm> mem(ptr_struct, *this);
 
       //Now construct the header
       block_header_t * hdr = new(ptr_struct) block_header_t(block_info);
@@ -282,7 +282,7 @@ class segment_manager_base
       ptr = hdr->value();
 
       //Now call constructors
-      detail::array_construct(ptr, num, table);
+      ipcdetail::array_construct(ptr, num, table);
 
       //All constructors successful, we don't want erase memory
       mem.release();
@@ -290,11 +290,11 @@ class segment_manager_base
    }
 
    //!Calls the destructor and makes an anonymous deallocate
-   void prot_anonymous_destroy(const void *object, detail::in_place_interface &table)
+   void prot_anonymous_destroy(const void *object, ipcdetail::in_place_interface &table)
    {
 
       //Get control data from associated with this object    
-      typedef detail::block_header<size_type> block_header_t;
+      typedef ipcdetail::block_header<size_type> block_header_t;
       block_header_t *ctrl_data = block_header_t::block_header_from_value(object, table.size, table.alignment);
 
       //-------------------------------
@@ -358,22 +358,22 @@ class segment_manager
 
    /// @cond
    private:
-   typedef detail::block_header<size_type> block_header_t;
-   typedef detail::index_config<CharType, MemoryAlgorithm>  index_config_named;
-   typedef detail::index_config<char, MemoryAlgorithm>      index_config_unique;
+   typedef ipcdetail::block_header<size_type> block_header_t;
+   typedef ipcdetail::index_config<CharType, MemoryAlgorithm>  index_config_named;
+   typedef ipcdetail::index_config<char, MemoryAlgorithm>      index_config_unique;
    typedef IndexType<index_config_named>                    index_type;
-   typedef detail::bool_<is_intrusive_index<index_type>::value >    is_intrusive_t;
-   typedef detail::bool_<is_node_index<index_type>::value>          is_node_index_t;
+   typedef ipcdetail::bool_<is_intrusive_index<index_type>::value >    is_intrusive_t;
+   typedef ipcdetail::bool_<is_node_index<index_type>::value>          is_node_index_t;
 
    public:
    typedef IndexType<index_config_named>                    named_index_t;
    typedef IndexType<index_config_unique>                   unique_index_t;
-   typedef detail::char_ptr_holder<CharType>                char_ptr_holder_t;
-   typedef detail::segment_manager_iterator_transform
+   typedef ipcdetail::char_ptr_holder<CharType>                char_ptr_holder_t;
+   typedef ipcdetail::segment_manager_iterator_transform
       <typename named_index_t::const_iterator
       ,is_intrusive_index<index_type>::value>   named_transform;
 
-   typedef detail::segment_manager_iterator_transform
+   typedef ipcdetail::segment_manager_iterator_transform
       <typename unique_index_t::const_iterator
       ,is_intrusive_index<index_type>::value>   unique_transform;
    /// @endcond
@@ -391,14 +391,14 @@ class segment_manager
    template<class T>
    struct construct_proxy
    {
-      typedef detail::named_proxy<segment_manager, T, false>   type;
+      typedef ipcdetail::named_proxy<segment_manager, T, false>   type;
    };
 
    //!Constructor proxy object definition helper class
    template<class T>
    struct construct_iter_proxy
    {
-      typedef detail::named_proxy<segment_manager, T, true>   type;
+      typedef ipcdetail::named_proxy<segment_manager, T, true>   type;
    };
 
    /// @endcond
@@ -426,7 +426,7 @@ class segment_manager
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
-   std::pair<T*, size_type> find (const detail::unique_instance_t* name)
+   std::pair<T*, size_type> find (const ipcdetail::unique_instance_t* name)
    {  return this->priv_find_impl<T>(name, true);  }
 
    //!Tries to find a previous named allocation. Returns the address
@@ -440,7 +440,7 @@ class segment_manager
    //!and the object count. On failure the first member of the
    //!returned pair is 0. This search is not mutex-protected!
    template <class T>
-   std::pair<T*, size_type> find_no_lock (const detail::unique_instance_t* name)
+   std::pair<T*, size_type> find_no_lock (const ipcdetail::unique_instance_t* name)
    {  return this->priv_find_impl<T>(name, false);  }
 
    //!Returns throwing "construct" proxy
@@ -525,9 +525,9 @@ class segment_manager
    //!Destroys a previously created unique instance.
    //!Returns false if the object was not present.
    template <class T>
-   bool destroy(const detail::unique_instance_t *)
+   bool destroy(const ipcdetail::unique_instance_t *)
    {
-      detail::placement_destroy<T> dtor;
+      ipcdetail::placement_destroy<T> dtor;
       return this->priv_generic_named_destroy<char>
          (typeid(T).name(), m_header.m_unique_index, dtor, is_intrusive_t());
    }
@@ -537,7 +537,7 @@ class segment_manager
    template <class T>
    bool destroy(const CharType *name)
    {
-      detail::placement_destroy<T> dtor;
+      ipcdetail::placement_destroy<T> dtor;
       return this->priv_generic_named_destroy<CharType>
                (name, m_header.m_named_index, dtor, is_intrusive_t());
    }
@@ -548,8 +548,8 @@ class segment_manager
    void destroy_ptr(const T *p)
    {
       //If T is void transform it to char
-      typedef typename detail::char_if_void<T>::type data_t;
-      detail::placement_destroy<data_t> dtor;
+      typedef typename ipcdetail::char_if_void<T>::type data_t;
+      ipcdetail::placement_destroy<data_t> dtor;
       priv_destroy_ptr(p, dtor);
    }
 
@@ -701,7 +701,7 @@ class segment_manager
                         size_type num, 
                          bool try2find, 
                          bool dothrow,
-                         detail::in_place_interface &table)
+                         ipcdetail::in_place_interface &table)
    {
       return static_cast<T*>
          (priv_generic_construct(name, num, try2find, dothrow, table));
@@ -716,7 +716,7 @@ class segment_manager
    {  
       //The name can't be null, no anonymous object can be found by name
       BOOST_ASSERT(name != 0);
-      detail::placement_destroy<T> table;
+      ipcdetail::placement_destroy<T> table;
       size_type size;
       void *ret;
 
@@ -733,9 +733,9 @@ class segment_manager
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
-   std::pair<T*, size_type> priv_find__impl (const detail::unique_instance_t* name, bool lock)
+   std::pair<T*, size_type> priv_find__impl (const ipcdetail::unique_instance_t* name, bool lock)
    {
-      detail::placement_destroy<T> table;
+      ipcdetail::placement_destroy<T> table;
       size_type size;
       void *ret = priv_generic_find<char>(name, m_header.m_unique_index, table, size, is_intrusive_t(), lock); 
       return std::pair<T*, size_type>(static_cast<T*>(ret), size);
@@ -745,7 +745,7 @@ class segment_manager
                    size_type num, 
                          bool try2find, 
                          bool dothrow,
-                         detail::in_place_interface &table)
+                         ipcdetail::in_place_interface &table)
    {
       void *ret;
       //Security overflow check
@@ -769,7 +769,7 @@ class segment_manager
       return ret;
    }
 
-   void priv_destroy_ptr(const void *ptr, detail::in_place_interface &dtor)
+   void priv_destroy_ptr(const void *ptr, ipcdetail::in_place_interface &dtor)
    {
       block_header_t *ctrl_data = block_header_t::block_header_from_value(ptr, dtor.size, dtor.alignment);
       switch(ctrl_data->alloc_type()){
@@ -838,22 +838,22 @@ class segment_manager
    template <class CharT>
    void *priv_generic_find
       (const CharT* name, 
-       IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
-       detail::in_place_interface &table,
+       IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
+       ipcdetail::in_place_interface &table,
        size_type &length,
-       detail::true_ is_intrusive,
+       ipcdetail::true_ is_intrusive,
        bool use_lock)
    {
       (void)is_intrusive;
-      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >         index_type;
-      typedef detail::index_key<CharT, void_pointer>  index_key_t;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >         index_type;
+      typedef ipcdetail::index_key<CharT, void_pointer>  index_key_t;
       typedef typename index_type::iterator           index_it;
 
       //-------------------------------
       scoped_lock<rmutex> guard(priv_get_lock(use_lock));
       //-------------------------------
       //Find name in index
-      detail::intrusive_compare_key<CharT> key
+      ipcdetail::intrusive_compare_key<CharT> key
          (name, std::char_traits<CharT>::length(name));
       index_it it = index.find(key);
 
@@ -878,14 +878,14 @@ class segment_manager
    template <class CharT>
    void *priv_generic_find
       (const CharT* name, 
-       IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
-       detail::in_place_interface &table,
+       IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
+       ipcdetail::in_place_interface &table,
        size_type &length,
-       detail::false_ is_intrusive,
+       ipcdetail::false_ is_intrusive,
        bool use_lock)
    {
       (void)is_intrusive;
-      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >      index_type;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >      index_type;
       typedef typename index_type::key_type        key_type;
       typedef typename index_type::iterator        index_it;
 
@@ -903,7 +903,7 @@ class segment_manager
       if(it != index.end()){
          //Get header
          block_header_t *ctrl_data = reinterpret_cast<block_header_t*>
-                                    (detail::get_pointer(it->second.m_ptr));
+                                    (ipcdetail::get_pointer(it->second.m_ptr));
 
          //Sanity check
          BOOST_ASSERT((ctrl_data->m_value_bytes % table.size) == 0);
@@ -917,12 +917,12 @@ class segment_manager
    template <class CharT>
    bool priv_generic_named_destroy
      (block_header_t *block_header,
-      IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
-      detail::in_place_interface &table,
-      detail::true_ is_node_index)
+      IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
+      ipcdetail::in_place_interface &table,
+      ipcdetail::true_ is_node_index)
    {
       (void)is_node_index;
-      typedef typename IndexType<detail::index_config<CharT, MemoryAlgorithm> >::iterator index_it;
+      typedef typename IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >::iterator index_it;
 
       index_it *ihdr = block_header_t::template to_first_header<index_it>(block_header);
       return this->priv_generic_named_destroy_impl<CharT>(*ihdr, index, table);
@@ -931,9 +931,9 @@ class segment_manager
    template <class CharT>
    bool priv_generic_named_destroy
      (block_header_t *block_header,
-      IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
-      detail::in_place_interface &table,
-      detail::false_ is_node_index)
+      IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
+      ipcdetail::in_place_interface &table,
+      ipcdetail::false_ is_node_index)
    {
       (void)is_node_index;
       CharT *name = static_cast<CharT*>(block_header->template name<CharT>());
@@ -942,13 +942,13 @@ class segment_manager
 
    template <class CharT>
    bool priv_generic_named_destroy(const CharT *name, 
-                                   IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
-                                   detail::in_place_interface &table,
-                                   detail::true_ is_intrusive_index)
+                                   IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
+                                   ipcdetail::in_place_interface &table,
+                                   ipcdetail::true_ is_intrusive_index)
    {
       (void)is_intrusive_index;
-      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >         index_type;
-      typedef detail::index_key<CharT, void_pointer>  index_key_t;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >         index_type;
+      typedef ipcdetail::index_key<CharT, void_pointer>  index_key_t;
       typedef typename index_type::iterator           index_it;
       typedef typename index_type::value_type         intrusive_value_type;
       
@@ -956,7 +956,7 @@ class segment_manager
       scoped_lock<rmutex> guard(m_header);
       //-------------------------------
       //Find name in index
-      detail::intrusive_compare_key<CharT> key
+      ipcdetail::intrusive_compare_key<CharT> key
          (name, std::char_traits<CharT>::length(name));
       index_it it = index.find(key);
 
@@ -993,12 +993,12 @@ class segment_manager
 
    template <class CharT>
    bool priv_generic_named_destroy(const CharT *name, 
-                                   IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
-                                   detail::in_place_interface &table,
-                                   detail::false_ is_intrusive_index)
+                                   IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
+                                   ipcdetail::in_place_interface &table,
+                                   ipcdetail::false_ is_intrusive_index)
    {
       (void)is_intrusive_index;
-      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >            index_type;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >            index_type;
       typedef typename index_type::iterator              index_it;
       typedef typename index_type::key_type              key_type;
 
@@ -1020,16 +1020,16 @@ class segment_manager
 
    template <class CharT>
    bool priv_generic_named_destroy_impl
-      (const typename IndexType<detail::index_config<CharT, MemoryAlgorithm> >::iterator &it,
-      IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
-      detail::in_place_interface &table)
+      (const typename IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >::iterator &it,
+      IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
+      ipcdetail::in_place_interface &table)
    {
-      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >      index_type;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >      index_type;
       typedef typename index_type::iterator        index_it;
 
       //Get allocation parameters
       block_header_t *ctrl_data = reinterpret_cast<block_header_t*>
-                                 (detail::get_pointer(it->second.m_ptr));
+                                 (ipcdetail::get_pointer(it->second.m_ptr));
       char *stored_name       = static_cast<char*>(static_cast<void*>(const_cast<CharT*>(it->first.name())));
       (void)stored_name;
 
@@ -1073,9 +1073,9 @@ class segment_manager
                         size_type num, 
                                bool try2find, 
                                bool dothrow,
-                               detail::in_place_interface &table,
-                               IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
-                               detail::true_ is_intrusive)
+                               ipcdetail::in_place_interface &table,
+                               IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
+                               ipcdetail::true_ is_intrusive)
    {
       (void)is_intrusive;
      std::size_t namelen  = std::char_traits<CharT>::length(name);
@@ -1086,7 +1086,7 @@ class segment_manager
                                  , sizeof(CharT)
                                  , namelen);
 
-      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >            index_type;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >            index_type;
       typedef typename index_type::iterator              index_it;
       typedef std::pair<index_it, bool>                  index_ib;
 
@@ -1110,7 +1110,7 @@ class segment_manager
       typedef typename index_type::value_type   intrusive_value_type;
 
       BOOST_TRY{
-         detail::intrusive_compare_key<CharT> key(name, namelen);
+         ipcdetail::intrusive_compare_key<CharT> key(name, namelen);
          insert_ret = index.insert_check(key, commit_data);
       }
       //Ignore exceptions
@@ -1176,7 +1176,7 @@ class segment_manager
 
       //Avoid constructions if constructor is trivial
       //Build scoped ptr to avoid leaks with constructor exception
-      detail::mem_algo_deallocator<segment_manager_base_type> mem
+      ipcdetail::mem_algo_deallocator<segment_manager_base_type> mem
          (buffer_ptr, *static_cast<segment_manager_base_type*>(this));
 
       //Initialize the node value_eraser to erase inserted node
@@ -1186,7 +1186,7 @@ class segment_manager
       value_eraser<index_type> v_eraser(index, it);
       
       //Construct array, this can throw
-      detail::array_construct(ptr, num, table);
+      ipcdetail::array_construct(ptr, num, table);
 
       //Release rollbacks since construction was successful
       v_eraser.release();
@@ -1202,9 +1202,9 @@ class segment_manager
                         size_type num, 
                                bool try2find, 
                                bool dothrow,
-                               detail::in_place_interface &table,
-                               IndexType<detail::index_config<CharT, MemoryAlgorithm> > &index,
-                               detail::false_ is_intrusive)
+                               ipcdetail::in_place_interface &table,
+                               IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
+                               ipcdetail::false_ is_intrusive)
    {
       (void)is_intrusive;
       std::size_t namelen  = std::char_traits<CharT>::length(name);
@@ -1215,7 +1215,7 @@ class segment_manager
                                  , sizeof(CharT)
                                  , namelen);
 
-      typedef IndexType<detail::index_config<CharT, MemoryAlgorithm> >            index_type;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >            index_type;
       typedef typename index_type::key_type              key_type;
       typedef typename index_type::mapped_type           mapped_type;
       typedef typename index_type::value_type            value_type;
@@ -1255,7 +1255,7 @@ class segment_manager
       if(!insert_ret.second){
          if(try2find){
             block_header_t *hdr = static_cast<block_header_t*>
-               (detail::get_pointer(it->second.m_ptr));
+               (ipcdetail::get_pointer(it->second.m_ptr));
             return hdr->value();
          }
          return 0;
@@ -1309,11 +1309,11 @@ class segment_manager
       it->second.m_ptr  = hdr;
 
       //Build scoped ptr to avoid leaks with constructor exception
-      detail::mem_algo_deallocator<segment_manager_base_type> mem
+      ipcdetail::mem_algo_deallocator<segment_manager_base_type> mem
          (buffer_ptr, *static_cast<segment_manager_base_type*>(this));
 
       //Construct array, this can throw
-      detail::array_construct(ptr, num, table);
+      ipcdetail::array_construct(ptr, num, table);
 
       //All constructors successful, we don't want to release memory
       mem.release();

@@ -68,7 +68,7 @@ inline void interprocess_condition::do_wait(interprocess_mutex &mut)
 inline bool interprocess_condition::do_timed_wait
    (const boost::posix_time::ptime &abs_time, interprocess_mutex &mut)
 {
-   timespec ts = detail::ptime_to_timespec(abs_time);
+   timespec ts = ipcdetail::ptime_to_timespec(abs_time);
    pthread_mutex_t* pmutex = &mut.m_mut;
    int res = 0;
    res = pthread_cond_timedwait(&m_condition, pmutex, &ts);

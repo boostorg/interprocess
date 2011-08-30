@@ -24,7 +24,7 @@
 
 namespace boost {
 namespace interprocess {
-namespace detail {
+namespace ipcdetail {
 
 struct two {char _[2];};
 
@@ -61,10 +61,10 @@ template <class T, class D>
 struct pointer_type
 {
     typedef typename pointer_type_imp::pointer_type<T,
-        typename detail::remove_reference<D>::type>::type type;
+        typename ipcdetail::remove_reference<D>::type>::type type;
 };
 
-}  //namespace detail {
+}  //namespace ipcdetail {
 }  //namespace interprocess { 
 }  //namespace boost {
 
