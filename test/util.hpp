@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -22,9 +22,8 @@
 #define BOOST_INTERPROCESS_TEST_UTIL_HEADER
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
-#include <boost/interprocess/sync/interprocess_condition.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/xtime.hpp>
 
@@ -32,21 +31,14 @@
 #include <algorithm>
 #include <iostream>
 
-#ifndef DEFAULT_EXECUTION_MONITOR_TYPE
-#   define DEFAULT_EXECUTION_MONITOR_TYPE execution_monitor::use_condition
-#endif
-
 namespace boost {
 namespace interprocess {
 namespace test {
 
 inline void sleep(const boost::posix_time::ptime &xt)
 {
-   boost::interprocess::interprocess_mutex mx;
-   boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
-      lock(mx);
-   boost::interprocess::interprocess_condition cond;
-   cond.timed_wait(lock, xt);
+   boost::interprocess::ipcdetail::thread_sleep
+      ((xt - microsec_clock::universal_time()).total_milliseconds());
 }
 
 inline boost::posix_time::ptime delay(int secs, int msecs=0, int nsecs = 0)

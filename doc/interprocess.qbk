@@ -5109,7 +5109,7 @@ objects in the container, avoiding unnecessary copies.
 
 
 To transfer the contents of a container to another one, use 
-`boost::interprocess::move()` function, as shown in the example. For more details
+`boost::move()` function, as shown in the example. For more details
 about functions supporting move-semantics, see the reference section of
 Boost.Interprocess containers:
 

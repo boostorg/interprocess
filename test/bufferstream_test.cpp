@@ -13,13 +13,18 @@
 #include <sstream>
 #include <cstring>
 
-using namespace boost::interprocess;
+namespace boost{
+namespace interprocess{
 
 //Force instantiations to catch compile-time errors
 template class basic_bufferbuf<char>;
 template class basic_bufferstream<char>;
 template class basic_ibufferstream<char>;
 template class basic_obufferstream<char>;
+
+}}
+
+using namespace boost::interprocess;
 
 static int bufferstream_test()
 {

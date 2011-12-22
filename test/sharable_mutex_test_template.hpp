@@ -10,7 +10,7 @@
 // It is provided "as is" without express or implied warranty.
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -26,6 +26,7 @@
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/xtime.hpp>
+#include "boost_interprocess_check.hpp"
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/interprocess/sync/sharable_lock.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
@@ -152,9 +153,9 @@ void test_plain_sharable_mutex()
       tw1.join();
 
       //We can only assure that the writer will be first
-      assert(e1.m_value == 10);
+      BOOST_INTERPROCES_CHECK(e1.m_value == 10);
       //A that we will execute all
-      assert(s1.m_value == 20 || s2.m_value == 20 || e2.m_value == 20);
+      BOOST_INTERPROCES_CHECK(s1.m_value == 20 || s2.m_value == 20 || e2.m_value == 20);
    }
 
    {
@@ -193,9 +194,9 @@ void test_plain_sharable_mutex()
       tw1.join();
 
       //We can only assure that the shared will finish first...
-      assert(s1.m_value == 0 || s2.m_value == 0);
+      BOOST_INTERPROCES_CHECK(s1.m_value == 0 || s2.m_value == 0);
       //...and writers will be mutually excluded after readers
-      assert((e1.m_value == 10 && e2.m_value == 20) || 
+      BOOST_INTERPROCES_CHECK((e1.m_value == 10 && e2.m_value == 20) || 
              (e1.m_value == 20 && e2.m_value == 10) );
    }
 }
@@ -238,9 +239,9 @@ void test_try_sharable_mutex()
    thr1.join();
    tw1.join();
 
-   assert(e1.m_value == 10);
-   assert(s1.m_value == -1);        // Try would return w/o waiting
-   assert(e2.m_value == -1);        // Try would return w/o waiting
+   BOOST_INTERPROCES_CHECK(e1.m_value == 10);
+   BOOST_INTERPROCES_CHECK(s1.m_value == -1);        // Try would return w/o waiting
+   BOOST_INTERPROCES_CHECK(e2.m_value == -1);        // Try would return w/o waiting
 }
 
 template<bool SameObject, typename SM>
@@ -289,10 +290,10 @@ void test_timed_sharable_mutex()
    thr2.join();
    tw2.join();
 
-   assert(e1.m_value == 10);
-   assert(s1.m_value == -1);
-   assert(s2.m_value == 10);
-   assert(e2.m_value == -1);
+   BOOST_INTERPROCES_CHECK(e1.m_value == 10);
+   BOOST_INTERPROCES_CHECK(s1.m_value == -1);
+   BOOST_INTERPROCES_CHECK(s2.m_value == 10);
+   BOOST_INTERPROCES_CHECK(e2.m_value == -1);
 }
 
 template<bool SameObject, typename SM>

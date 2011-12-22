@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Peter Dimov 2002-2005, 2007.
-// (C) Copyright Ion Gaztanaga 2006-2009.
+// (C) Copyright Ion Gaztanaga 2006-2011.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -585,7 +585,7 @@ void test_alias()
          int_shared_ptr p;
          int_shared_ptr p2( p, &m );
 
-         BOOST_TEST( ipcdetail::get_pointer(p2.get()) == &m );
+         BOOST_TEST( ipcdetail::to_raw_pointer(p2.get()) == &m );
          BOOST_TEST( p2? true: false );
          BOOST_TEST( !!p2 );
          BOOST_TEST( p2.use_count() == p.use_count() );
@@ -607,7 +607,7 @@ void test_alias()
             (shmem.construct<int>(anonymous_instance)(), shmem));
          const_int_shared_ptr p2( p, &m );
 
-         BOOST_TEST( ipcdetail::get_pointer(p2.get()) == &m );
+         BOOST_TEST( ipcdetail::to_raw_pointer(p2.get()) == &m );
          BOOST_TEST( p2? true: false );
          BOOST_TEST( !!p2 );
          BOOST_TEST( p2.use_count() == p.use_count() );

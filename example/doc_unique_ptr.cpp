@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006-2009.
+// (C) Copyright Ion Gaztanaga 2006-2011.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -94,7 +94,7 @@ int main ()
       //Now insert all values
       for(int i = 0; i < 100; ++i){
          unique_ptr_type p(make_managed_unique_ptr(file.construct<MyType>(anonymous_instance)(i), file));
-         unique_vector->push_back(boost::interprocess::move(p));
+         unique_vector->push_back(boost::move(p));
          assert(unique_vector->back()->number_ == i);
       }
       
@@ -104,7 +104,7 @@ int main ()
    
       //Pass ownership of all values to the list
       for(int i = 99; !unique_vector->empty(); --i){
-         unique_list->push_front(boost::interprocess::move(unique_vector->back()));
+         unique_list->push_front(boost::move(unique_vector->back()));
          //The unique ptr of the vector is now empty...
          assert(unique_vector->back() == 0);
          unique_vector->pop_back();

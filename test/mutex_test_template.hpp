@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -26,9 +26,9 @@
 #include "boost_interprocess_check.hpp"
 #include "util.hpp"
 #include <boost/thread/thread.hpp>
-#include <iostream>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <iostream>
 
 namespace boost { namespace interprocess { namespace test {
 
@@ -261,8 +261,8 @@ void test_mutex_lock()
    boost::thread::sleep(xsecs(1*BaseSeconds));
    tm2.join();
 
-   assert(d1.m_value == 1);
-   assert(d2.m_value == 2);
+   BOOST_INTERPROCES_CHECK(d1.m_value == 1);
+   BOOST_INTERPROCES_CHECK(d2.m_value == 2);
 }
 
 template<bool SameObject, typename M>
@@ -302,10 +302,10 @@ void test_mutex_lock_timeout()
    boost::thread::sleep(xsecs(1*BaseSeconds));
    tm2.join();
 
-   assert(d1.m_value == 1);
-   assert(d2.m_value == -1);
-   assert(d1.m_error == no_error);
-   assert(d2.m_error == boost::interprocess::timeout_when_locking_error);
+   BOOST_INTERPROCES_CHECK(d1.m_value == 1);
+   BOOST_INTERPROCES_CHECK(d2.m_value == -1);
+   BOOST_INTERPROCES_CHECK(d1.m_error == no_error);
+   BOOST_INTERPROCES_CHECK(d2.m_error == boost::interprocess::timeout_when_locking_error);
 }
 
 template<bool SameObject, typename M>
@@ -340,8 +340,8 @@ void test_mutex_try_lock()
    tm1.join();
    tm2.join();
    //Only the first should succeed locking
-   assert(d1.m_value == 1);
-   assert(d2.m_value == -1);
+   BOOST_INTERPROCES_CHECK(d1.m_value == 1);
+   BOOST_INTERPROCES_CHECK(d2.m_value == -1);
 }
 
 template<bool SameObject, typename M>
@@ -378,8 +378,8 @@ void test_mutex_timed_lock()
    tm2.join();
 
    //Both should succeed locking
-   assert(d1.m_value == 1);
-   assert(d2.m_value == 2);
+   BOOST_INTERPROCES_CHECK(d1.m_value == 1);
+   BOOST_INTERPROCES_CHECK(d2.m_value == 2);
 }
 
 template <typename M>

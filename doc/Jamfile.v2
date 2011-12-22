@@ -31,11 +31,14 @@ doxygen autodoc
         <doxygen:param>EXPAND_ONLY_PREDEF=YES
         <doxygen:param>MACRO_EXPANSION=YES
         <doxygen:param>"PREDEFINED=\"BOOST_INTERPROCESS_DOXYGEN_INVOKED\" \\
+                                   \"BOOST_CONTAINER_NOEXCEPT_IF(a)=\" \\
+                                   \"BOOST_CONTAINER_NOEXCEPT=\" \\
                                    \"BOOST_INTERPROCESS_ENABLE_MOVE_EMULATION(a)= \" \\
                                    \"BOOST_RV_REF(a)=a &&\" \\
                                    \"BOOST_RV_REF_2_TEMPL_ARGS(a,b,c)=a &&\" \\
                                    \"BOOST_RV_REF_3_TEMPL_ARGS(a,b,c,d)=a &&\" \\
                                    \"BOOST_FWD_REF(a)=a &&\""
+
         <xsl:param>"boost.doxygen.reftitle=Boost.Interprocess Reference"
    ;
 

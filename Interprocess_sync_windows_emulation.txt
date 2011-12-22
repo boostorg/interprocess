@@ -1,0 +1,207 @@
+---------------
+---------------
+named_semaphore
+---------------
+---------------
+
+- Use a file for file lifetime semantics (create, open, unlink...)
+- Create on demand (open or create) a windows named semaphore with all access (permissions are on the file).
+- Use file id with a "prefix bips." to construct the mutex "Global\prefix bips.XXXXXXXXXXXXXXXXXXX"
+- Add getvalue as implemented by cygwin
+- Write sem status to file at file close. Use native file locking to serialize.
+- See cygwin-1.7.5-1\winsup\cygwin\posix_ipc.cc and thread.cc
+
+
+
+
+-----------
+-----------
+named_mutex
+-----------
+-----------
+
+- Don't serialize
+
+---------------
+---------------
+named_condition
+---------------
+---------------
+
+
+---------------
+---------------
+Process shared resources. Use lock reduced versions?
+---------------
+---------------
+
+what about fast_semaphore (http://www.tech-archive.net/Archive/Development/microsoft.public.win32.programmer.kernel/2005-03/0041.html):
+
+class fast_semaphore
+{
+
+public:
+
+    fast_semaphore( LONG init )
+        : m_state( init ),
+          m_waitset( CreateSemaphore( 0, 0, LONG_MAX, 0 ) )
+    { if ( ! m_waitset ) { throw; } }
+
+    ~fast_semaphore()
+    { if ( ! CloseHandle( m_waitset ) ) { abort(); } }
+
+public:
+
+    void inc()
+    {
+        if ( InterlockedIncrement( &m_state ) < 1 )
+        {
+            if ( ! ReleaseSemaphore( m_waitset, 1, 0 ) )
+            {
+                throw;
+            }
+        }
+    }
+
+    void dec()
+    {
+        if ( InterlockedDecrement( &m_state ) < 0 )
+        {
+            if ( WaitForSingleObject( m_waitset, INFINITE ) !=
+WAIT_OBJECT_0 )
+            {
+                throw;
+            }
+        }
+    }
+
+private:
+
+    volatile LONG m_state;
+    HANDLE m_waitset;
+
+};
+
+class mutex_from_semaphore
+{
+
+public:
+
+    mutex_from_semaphore() : m_waitset( 1 ) {}
+
+public:
+
+    void enter() { m_waitset.dec(); }
+    void leave() { m_waitset.inc(); }
+
+private:
+
+    fast_semaphore m_waitset;
+
+}; 
+
+Or see Java implemenation (http://www.google.com/codesearch/p?hl=es#5qy3uURTOpU/trunk/JobRunner/src/org/ivoa/util/concurrent/FastSemaphore.java&q=%22fast%20semaphore%22&sa=N&cd=1&ct=rc&l=10)
+
+
+For mutex, usefast mutex (see fast_mutex.h in cygwin): 
+
+
+class fast_mutex
+{
+public:
+  fast_mutex () :
+    lock_counter (0), win32_obj_id (0)
+  {
+  }
+
+  ~fast_mutex ()
+  {
+    if(win32_obj_id)
+      CloseHandle (win32_obj_id);
+  }
+
+  bool init ()
+  {
+    lock_counter = 0;
+    win32_obj_id = ::CreateEvent (&sec_none_nih, false, false, NULL);
+    if (!win32_obj_id)
+      {
+	debug_printf ("CreateEvent failed. %E");
+	return false;
+      }
+    return true;
+  }
+
+  void lock ()
+  {
+    if (InterlockedIncrement ((long *) &lock_counter) != 1)
+      cancelable_wait (win32_obj_id, INFINITE, cw_no_cancel, cw_sig_resume);
+  }
+
+  void unlock ()
+  {
+    if (InterlockedDecrement ((long *) &lock_counter))
+      ::SetEvent (win32_obj_id);
+  }
+
+private:
+  unsigned long lock_counter;
+  HANDLE win32_obj_id;
+};
+
+
+Or this one (http://www.tech-archive.net/Archive/Development/microsoft.public.win32.programmer.kernel/2005-03/0067.html):
+
+
+class fast_mutex
+{
+
+public:
+
+    fast_mutex
+        : m_state( 0 ),
+          m_waitset( CreateEvent( 0, FALSE, FALSE 0 ) )
+    { if ( ! m_waitset ) { throw; } }
+
+    ~fast_mutex
+    { if ( ! CloseHandle( m_waitset ) ) { abort(); } }
+
+public:
+
+    void enter
+    {
+        if ( InterlockedExchange( &m_state, 1 ) )
+        {
+            _asm pause; /* masm */
+
+            while ( InterlockedExchange( &m_state, 2 ) )
+            {
+                if ( WaitForSingleObject
+                        ( m_waitset,
+                          INFINITE ) !=
+                     WAIT_OBJECT_0 )
+                {
+                    throw;
+                }
+            }
+        }
+    }
+
+    void leave()
+    {
+        if ( InterlockedExchange( &m_state, 0 ) == 2 )
+        {
+            if ( ! SetEvent( m_waitset ) )
+            {
+                throw;
+            }
+        }
+    }
+
+private:
+
+    volatile LONG m_state;
+    HANDLE m_waitset;
+
+}; 
+

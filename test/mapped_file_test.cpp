@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -79,9 +79,9 @@ int main ()
       std::memset(file1.get_user_address(), 0, file1.get_user_size());
 
       //Now test move semantics
-      mapped_file move_ctor(boost::interprocess::move(file1));
+      mapped_file move_ctor(boost::move(file1));
       mapped_file move_assign;
-      move_assign = boost::interprocess::move(move_ctor);
+      move_assign = boost::move(move_ctor);
    }
 //   file_mapping::remove(get_filename().c_str());
    return 0;

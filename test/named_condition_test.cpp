@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -13,10 +13,10 @@
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/lexical_cast.hpp>
 #include "condition_test_template.hpp"
 #include "named_creation_template.hpp"
 #include <string>
+#include <sstream>
 #include "get_process_id_name.hpp"
 
 using namespace boost::interprocess;
@@ -34,6 +34,9 @@ struct condition_deleter
    }
 };
 
+inline std::string num_to_string(int n)
+{  std::stringstream s; s << n; return s.str(); }
+
 //This wrapper is necessary to have a default constructor
 //in generic mutex_test_template functions
 class named_condition_test_wrapper
@@ -43,10 +46,10 @@ class named_condition_test_wrapper
 
    named_condition_test_wrapper()
       :  named_condition(open_or_create, 
-             (test::add_to_process_id_name("test_cond") + boost::lexical_cast<std::string>(count)).c_str())
+             (test::add_to_process_id_name("test_cond") + num_to_string(count)).c_str())
    {
       condition_deleter::name += test::add_to_process_id_name("test_cond");
-      condition_deleter::name += boost::lexical_cast<std::string>(count);
+      condition_deleter::name += num_to_string(count);
       ++count;
    }
 
@@ -108,10 +111,10 @@ class named_mutex_test_wrapper
    public:
    named_mutex_test_wrapper()
       :  named_mutex(open_or_create, 
-             (test::add_to_process_id_name("test_mutex") + boost::lexical_cast<std::string>(count)).c_str())
+             (test::add_to_process_id_name("test_mutex") + num_to_string(count)).c_str())
    {
       mutex_deleter::name += test::add_to_process_id_name("test_mutex");
-      mutex_deleter::name += boost::lexical_cast<std::string>(count);
+      mutex_deleter::name += num_to_string(count);
       ++count;
    }
 

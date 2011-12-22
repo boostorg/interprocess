@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -32,7 +32,7 @@ inline std::string get_filename()
 file_mapping get_file_mapping()
 {
    file_mapping f;
-   return file_mapping(boost::interprocess::move(f));
+   return file_mapping(boost::move(f));
 }
 
 int main ()
@@ -138,9 +138,9 @@ int main ()
       {
          //Now test move semantics
          file_mapping mapping(get_filename().c_str(), read_only);
-         file_mapping move_ctor(boost::interprocess::move(mapping));
+         file_mapping move_ctor(boost::move(mapping));
          file_mapping move_assign;
-         move_assign = boost::interprocess::move(move_ctor);
+         move_assign = boost::move(move_ctor);
          mapping.swap(move_assign);
          file_mapping ret(get_file_mapping());
       }
