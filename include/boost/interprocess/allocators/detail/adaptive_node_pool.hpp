@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -45,10 +45,10 @@ template< class SegmentManager
         , unsigned char OverheadPercent
         >
 class private_adaptive_node_pool
-   :  public boost::container::containers_detail::private_adaptive_node_pool_impl
+   :  public boost::container::container_detail::private_adaptive_node_pool_impl
          <typename SegmentManager::segment_manager_base_type>
 {
-   typedef boost::container::containers_detail::private_adaptive_node_pool_impl
+   typedef boost::container::container_detail::private_adaptive_node_pool_impl
       <typename SegmentManager::segment_manager_base_type> base_t;
    //Non-copyable
    private_adaptive_node_pool();

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -89,7 +89,7 @@ class windows_shared_memory
    //!Does not throw
    windows_shared_memory &operator=(BOOST_RV_REF(windows_shared_memory) moved)
    {  
-      windows_shared_memory tmp(boost::interprocess::move(moved));
+      windows_shared_memory tmp(boost::move(moved));
       this->swap(tmp);
       return *this;  
    }

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -8,12 +8,99 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#ifndef BOOST_INTERPROCESS_DETAIL_SPIN_CONDITION_HPP
+#define BOOST_INTERPROCESS_DETAIL_SPIN_CONDITION_HPP
+
+#include <boost/interprocess/detail/config_begin.hpp>
+#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/interprocess/detail/atomic.hpp>
+#include <boost/interprocess/sync/spin/mutex.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/interprocess/exceptions.hpp>
+#include <boost/interprocess/detail/os_thread_functions.hpp>
+#include <boost/move/move.hpp>
+#include <boost/cstdint.hpp>
+
 namespace boost {
 namespace interprocess {
+namespace ipcdetail {
 
-inline interprocess_condition::interprocess_condition()
+class spin_condition
+{
+   spin_condition(const spin_condition &);
+   spin_condition &operator=(const spin_condition &);
+   public:
+   spin_condition();
+   ~spin_condition();
+
+   void notify_one();
+   void notify_all();
+
+   template <typename L>
+   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time)
+   {
+      if(abs_time == boost::posix_time::pos_infin){
+         this->wait(lock);
+         return true;
+      }
+      if (!lock)
+         throw lock_exception();
+      return this->do_timed_wait(abs_time, *lock.mutex());
+   }
+
+   template <typename L, typename Pr>
+   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
+   {
+      if(abs_time == boost::posix_time::pos_infin){
+         this->wait(lock, pred);
+         return true;
+      }
+      if (!lock)
+         throw lock_exception();
+      while (!pred()){
+         if (!this->do_timed_wait(abs_time, *lock.mutex()))
+            return pred();
+      }
+      return true;
+   }
+
+   template <typename L>
+   void wait(L& lock)
+   {
+      if (!lock)
+         throw lock_exception();
+      do_wait(*lock.mutex());
+   }
+
+   template <typename L, typename Pr>
+   void wait(L& lock, Pr pred)
+   {
+      if (!lock)
+         throw lock_exception();
+
+      while (!pred())
+         do_wait(*lock.mutex());
+   }
+
+   template<class InterprocessMutex>
+   void do_wait(InterprocessMutex &mut);
+
+   template<class InterprocessMutex>
+   bool do_timed_wait(const boost::posix_time::ptime &abs_time, InterprocessMutex &mut);
+
+   private:
+   template<class InterprocessMutex>
+   bool do_timed_wait(bool tout_enabled, const boost::posix_time::ptime &abs_time, InterprocessMutex &mut);
+
+   enum { SLEEP = 0, NOTIFY_ONE, NOTIFY_ALL };
+   ipcdetail::spin_mutex  m_enter_mut;
+   volatile boost::uint32_t    m_command;
+   volatile boost::uint32_t    m_num_waiters;
+   void notify(boost::uint32_t command);
+};
+
+inline spin_condition::spin_condition()
 {
    //Note that this class is initialized to zero.
    //So zeroed memory can be interpreted as an initialized
@@ -22,28 +109,28 @@ inline interprocess_condition::interprocess_condition()
    m_num_waiters  = 0;
 }
 
-inline interprocess_condition::~interprocess_condition()
+inline spin_condition::~spin_condition()
 {  
    //Trivial destructor
 }
 
-inline void interprocess_condition::notify_one()
+inline void spin_condition::notify_one()
 {
    this->notify(NOTIFY_ONE);
 }
 
-inline void interprocess_condition::notify_all()
+inline void spin_condition::notify_all()
 {
    this->notify(NOTIFY_ALL);
 }
 
-inline void interprocess_condition::notify(boost::uint32_t command)
+inline void spin_condition::notify(boost::uint32_t command)
 {
-   //This interprocess_mutex guarantees that no other thread can enter to the 
+   //This mutex guarantees that no other thread can enter to the 
    //do_timed_wait method logic, so that thread count will be
    //constant until the function writes a NOTIFY_ALL command.
    //It also guarantees that no other notification can be signaled 
-   //on this interprocess_condition before this one ends
+   //on this spin_condition before this one ends
    m_enter_mut.lock();
 
    //Return if there are no waiters
@@ -62,23 +149,26 @@ inline void interprocess_condition::notify(boost::uint32_t command)
       ipcdetail::thread_yield();
    }
 */
-   //The enter interprocess_mutex will rest locked until the last waiting thread unlocks it
+   //The enter mutex will rest locked until the last waiting thread unlocks it
 }
 
-inline void interprocess_condition::do_wait(interprocess_mutex &mut)
+template<class InterprocessMutex>
+inline void spin_condition::do_wait(InterprocessMutex &mut)
 {
    this->do_timed_wait(false, boost::posix_time::ptime(), mut);
 }
 
-inline bool interprocess_condition::do_timed_wait
-   (const boost::posix_time::ptime &abs_time, interprocess_mutex &mut)
+template<class InterprocessMutex>
+inline bool spin_condition::do_timed_wait
+   (const boost::posix_time::ptime &abs_time, InterprocessMutex &mut)
 {
    return this->do_timed_wait(true, abs_time, mut);
 }
 
-inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
+template<class InterprocessMutex>
+inline bool spin_condition::do_timed_wait(bool tout_enabled,
                                      const boost::posix_time::ptime &abs_time, 
-                                     interprocess_mutex &mut)
+                                     InterprocessMutex &mut)
 {
    boost::posix_time::ptime now = microsec_clock::universal_time();
    
@@ -86,19 +176,19 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
       if(now >= abs_time) return false;
    }
 
-   typedef boost::interprocess::scoped_lock<interprocess_mutex> InternalLock;
-   //The enter interprocess_mutex guarantees that while executing a notification, 
+   typedef boost::interprocess::scoped_lock<ipcdetail::spin_mutex> InternalLock;
+   //The enter mutex guarantees that while executing a notification, 
    //no other thread can execute the do_timed_wait method. 
    {
       //---------------------------------------------------------------
       InternalLock lock;
       if(tout_enabled){
          InternalLock dummy(m_enter_mut, abs_time);
-         lock = boost::interprocess::move(dummy);
+         lock = boost::move(dummy);
       }
       else{
          InternalLock dummy(m_enter_mut);
-         lock = boost::interprocess::move(dummy);
+         lock = boost::move(dummy);
       }
 
       if(!lock)
@@ -106,10 +196,10 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
       //---------------------------------------------------------------
       //We increment the waiting thread count protected so that it will be
       //always constant when another thread enters the notification logic.
-      //The increment marks this thread as "waiting on interprocess_condition"
+      //The increment marks this thread as "waiting on spin_condition"
       ipcdetail::atomic_inc32(const_cast<boost::uint32_t*>(&m_num_waiters));
 
-      //We unlock the external interprocess_mutex atomically with the increment
+      //We unlock the external mutex atomically with the increment
       mut.unlock();
    }
 
@@ -119,8 +209,8 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
    //Loop until a notification indicates that the thread should 
    //exit or timeout occurs
    while(1){
-      //The thread sleeps/spins until a interprocess_condition commands a notification
-      //Notification occurred, we will lock the checking interprocess_mutex so that
+      //The thread sleeps/spins until a spin_condition commands a notification
+      //Notification occurred, we will lock the checking mutex so that
       while(ipcdetail::atomic_read32(&m_command) == SLEEP){
          ipcdetail::thread_yield();
 
@@ -129,8 +219,8 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
             now = microsec_clock::universal_time();
 
             if(now >= abs_time){
-               //If we can lock the interprocess_mutex it means that no notification
-               //is being executed in this interprocess_condition variable
+               //If we can lock the mutex it means that no notification
+               //is being executed in this spin_condition variable
                timed_out = m_enter_mut.try_lock();
 
                //If locking fails, indicates that another thread is executing
@@ -139,15 +229,15 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
                   //There is an ongoing notification, we will try again later
                   continue;
                }
-               //No notification in execution, since enter interprocess_mutex is locked. 
+               //No notification in execution, since enter mutex is locked. 
                //We will execute time-out logic, so we will decrement count, 
-               //release the enter interprocess_mutex and return false.
+               //release the enter mutex and return false.
                break;
             }
          }
       }
 
-      //If a timeout occurred, the interprocess_mutex will not execute checking logic
+      //If a timeout occurred, the mutex will not execute checking logic
       if(tout_enabled && timed_out){
          //Decrement wait count
          ipcdetail::atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
@@ -176,7 +266,7 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
             //from do_timed_wait function. Decrement wait count. 
             unlock_enter_mut = 1 == ipcdetail::atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
             //Check if this is the last thread of notify_all waiters
-            //Only the last thread will release the interprocess_mutex
+            //Only the last thread will release the mutex
             if(unlock_enter_mut){
                ipcdetail::atomic_cas32(const_cast<boost::uint32_t*>(&m_command), SLEEP, NOTIFY_ALL);
             }
@@ -185,7 +275,7 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
       }
    }
 
-   //Unlock the enter interprocess_mutex if it is a single notification, if this is 
+   //Unlock the enter mutex if it is a single notification, if this is 
    //the last notified thread in a notify_all or a timeout has occurred
    if(unlock_enter_mut){
       m_enter_mut.unlock();
@@ -196,5 +286,10 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
    return !timed_out;
 }
 
+}  //namespace ipcdetail
 }  //namespace interprocess
-}  // namespace boost
+}  //namespace boost
+
+#include <boost/interprocess/detail/config_end.hpp>
+
+#endif   //BOOST_INTERPROCESS_DETAIL_SPIN_CONDITION_HPP

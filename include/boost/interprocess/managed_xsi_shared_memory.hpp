@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2008-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2008-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -26,6 +26,11 @@
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/detail/xsi_shared_memory_file_wrapper.hpp>
 #include <boost/interprocess/creation_tags.hpp>
+//These includes needed to fulfill default template parameters of
+//predeclarations in interprocess_fwd.hpp
+#include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>  
+#include <boost/interprocess/sync/mutex_family.hpp>
+#include <boost/interprocess/indexes/iset_index.hpp>
 
 namespace boost {
 
@@ -43,8 +48,11 @@ template
 class basic_managed_xsi_shared_memory 
    : public ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType
-      ,ipcdetail::managed_open_or_create_impl<xsi_shared_memory_file_wrapper, false, true>::ManagedOpenOrCreateUserOffset>
-   , private ipcdetail::managed_open_or_create_impl<xsi_shared_memory_file_wrapper, false, true>
+      ,ipcdetail::managed_open_or_create_impl
+         < xsi_shared_memory_file_wrapper, AllocationAlgorithm::Alignment
+         , false, true>::ManagedOpenOrCreateUserOffset>
+   , private ipcdetail::managed_open_or_create_impl
+      <xsi_shared_memory_file_wrapper, AllocationAlgorithm::Alignment, false, true>
 {
    /// @cond
    public:
@@ -52,7 +60,7 @@ class basic_managed_xsi_shared_memory
 
    public:
    typedef ipcdetail::managed_open_or_create_impl
-      <xsi_shared_memory_file_wrapper, false, true>            base2_t;
+      <xsi_shared_memory_file_wrapper, AllocationAlgorithm::Alignment, false, true>            base2_t;
    typedef ipcdetail::basic_managed_memory_impl 
       <CharType, AllocationAlgorithm, IndexType,
       base2_t::ManagedOpenOrCreateUserOffset>   base_t;
@@ -140,7 +148,7 @@ class basic_managed_xsi_shared_memory
    //!Does not throw
    basic_managed_xsi_shared_memory &operator=(BOOST_RV_REF(basic_managed_xsi_shared_memory) moved)
    {
-      basic_managed_xsi_shared_memory tmp(boost::interprocess::move(moved));
+      basic_managed_xsi_shared_memory tmp(boost::move(moved));
       this->swap(tmp);
       return *this;
    }

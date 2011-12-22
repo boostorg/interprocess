@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2007-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2007-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -26,7 +26,7 @@ class named_creation_functor
 {
    typedef named_creation_functor_no_arg no_arg_t;
    public:
-   named_creation_functor(ipcdetail::create_enum_t type, Arg arg = Arg())
+   named_creation_functor(create_enum_t type, Arg arg = Arg())
       :  m_creation_type(type), m_arg(arg){}
 
    template<class ArgType>
@@ -40,11 +40,11 @@ class named_creation_functor
    bool operator()(void *address, std::size_t, bool created) const
    {   
       switch(m_creation_type){
-         case ipcdetail::DoOpen:
+         case DoOpen:
             return true;
          break;
-         case ipcdetail::DoCreate:
-         case ipcdetail::DoOpenOrCreate:
+         case DoCreate:
+         case DoOpenOrCreate:
             if(created){
                construct<Arg>(address);
             }
@@ -57,7 +57,7 @@ class named_creation_functor
       }
    }
    private:
-   ipcdetail::create_enum_t m_creation_type;
+   create_enum_t m_creation_type;
    Arg m_arg;
 };
 

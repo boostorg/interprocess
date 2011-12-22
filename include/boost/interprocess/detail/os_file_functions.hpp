@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -128,12 +128,13 @@ inline bool truncate_file (file_handle_t hnd, std::size_t size)
    if(!winapi::get_file_size(hnd, filesize))
       return false;
 
-   if(size > (std::numeric_limits<offset_t>::max)()){
+   const offset_t max_filesize = (std::numeric_limits<offset_t>::max)();
+   if( sizeof(std::size_t) >= sizeof(offset_t) && size > std::size_t(max_filesize) ){
       winapi::set_last_error(winapi::error_file_too_large);
       return false;
    }
 
-   if(size > (unsigned long long)filesize){
+   if(offset_t(size) > filesize){
       if(!winapi::set_file_pointer_ex(hnd, filesize, 0, winapi::file_begin)){
          return false;
       }      

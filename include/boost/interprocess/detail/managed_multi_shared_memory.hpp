@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -34,6 +34,10 @@
 #include <boost/interprocess/streams/vectorstream.hpp>
 #include <memory>
 #include <boost/assert.hpp>
+//These includes needed to fulfill default template parameters of
+//predeclarations in interprocess_fwd.hpp
+#include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>  
+#include <boost/interprocess/sync/mutex_family.hpp>
 
 //!\file
 //!Describes a named shared memory object allocation user class.
@@ -68,7 +72,7 @@ class basic_managed_multi_shared_memory
    
    typedef typename MemoryAlgorithm::void_pointer        void_pointer;
    typedef typename ipcdetail::
-      managed_open_or_create_impl<shared_memory_object>  managed_impl;
+      managed_open_or_create_impl<shared_memory_object, MemoryAlgorithm::Alignment>  managed_impl;
    typedef typename void_pointer::segment_group_id       segment_group_id;
    typedef typename base_t::size_type                   size_type;
 
@@ -116,7 +120,8 @@ class basic_managed_multi_shared_memory
          :  mp_frontend(frontend), m_group(0), m_min_segment_size(0){}
 
       virtual std::pair<void *, size_type> create_new_segment(size_type alloc_size)
-      {  
+      {  (void)alloc_size;
+         /*
          //We should allocate an extra byte so that the
          //[base_addr + alloc_size] byte belongs to this segment
          alloc_size += 1;
@@ -126,9 +131,9 @@ class basic_managed_multi_shared_memory
                        m_min_segment_size : alloc_size;
          if(mp_frontend->priv_new_segment(create_open_func::DoCreate,
                                           alloc_size, 0, permissions())){
-            shmem_list_t::value_type &m_impl = *mp_frontend->m_shmem_list.rbegin();
+            typename shmem_list_t::value_type &m_impl = *mp_frontend->m_shmem_list.rbegin();
             return result_type(m_impl.get_real_address(), m_impl.get_real_size()-1);
-         }
+         }*/
          return result_type(static_cast<void *>(0), 0);  
       }
 
@@ -153,7 +158,7 @@ class basic_managed_multi_shared_memory
 
       frontend_t * const   mp_frontend;
       segment_group_id     m_group;
-      size_type          m_min_segment_size;
+      size_type            m_min_segment_size;
    };
 
    //!Functor to execute atomically when opening or creating a shared memory
@@ -328,21 +333,21 @@ class basic_managed_multi_shared_memory
             case create_open_func::DoCreate:
             {
                managed_impl shm(create_only, name, size, read_write, addr, func, perm);
-               mshm = boost::interprocess::move(shm);
+               mshm = boost::move(shm);
             }
             break;
 
             case create_open_func::DoOpen:
             {
                managed_impl shm(open_only, name,read_write, addr, func);
-               mshm = boost::interprocess::move(shm);
+               mshm = boost::move(shm);
             }
             break;
 
             case create_open_func::DoOpenOrCreate:
             {
                managed_impl shm(open_or_create, name, size, read_write, addr, func, perm);
-               mshm = boost::interprocess::move(shm);
+               mshm = boost::move(shm);
             }
             break;
 
@@ -352,7 +357,7 @@ class basic_managed_multi_shared_memory
          }
 
          //This can throw.
-         m_shmem_list.push_back(boost::interprocess::move(mshm));
+         m_shmem_list.push_back(boost::move(mshm));
          return true;
       }
       BOOST_CATCH(const std::bad_alloc&){
@@ -369,12 +374,13 @@ class basic_managed_multi_shared_memory
          //Obtain group identifier
          segment_group_id group = m_group_services.get_group();
          //Erase main segment and its resources
-         shmem_list_t::iterator  itbeg = m_shmem_list.begin(),
-                                 itend = m_shmem_list.end(),
-                                 it    = itbeg;
+         //typename shmem_list_t::iterator  itbeg = m_shmem_list.begin(),
+         //                        itend = m_shmem_list.end(),
+         //                        it    = itbeg;
          //(*itbeg)->close_with_func(close_func(this));
          //Delete group. All mappings are erased too.
          ret = void_pointer::delete_group(group);
+         (void)ret;
          BOOST_ASSERT(ret);
          m_shmem_list.clear();
       }

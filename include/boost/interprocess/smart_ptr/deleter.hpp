@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2007-2009.
+// (C) Copyright Ion Gaztanaga 2007-2011.
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at
@@ -51,7 +51,7 @@ class deleter
    {}
 
    void operator()(const pointer &p)
-   {  mp_mngr->destroy_ptr(ipcdetail::get_pointer(p));   }
+   {  mp_mngr->destroy_ptr(ipcdetail::to_raw_pointer(p));   }
 };
 
 }  //namespace interprocess { 

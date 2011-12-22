@@ -18,7 +18,7 @@
 #error "This header can't be used in Windows operating systems"
 #endif
 
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/move.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
@@ -73,7 +73,7 @@ class xsi_named_mutex
    //!Does not throw
    xsi_named_mutex &operator=(BOOST_RV_REF(xsi_named_mutex) moved)
    {  
-      xsi_named_mutex tmp(boost::interprocess::move(moved));
+      xsi_named_mutex tmp(boost::move(moved));
       this->swap(tmp);
       return *this;  
    }

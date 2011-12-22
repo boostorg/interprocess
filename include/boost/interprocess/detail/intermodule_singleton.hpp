@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2009-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2009-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -18,10 +18,22 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/interprocess/managed_shared_memory.hpp>
-#ifdef BOOST_INTERPROCESS_WINDOWS
-#include <boost/interprocess/managed_windows_shared_memory.hpp>
+#if defined(BOOST_INTERPROCESS_WINDOWS)
+#include <boost/interprocess/windows_shared_memory.hpp>
 #endif
+
+#include <boost/interprocess/shared_memory_object.hpp>
+
+#include <boost/interprocess/sync/spin/mutex.hpp>
+#include <boost/interprocess/sync/spin/recursive_mutex.hpp>
+#include <boost/interprocess/detail/managed_memory_impl.hpp>
+#include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
+#include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>  
+#include <boost/interprocess/indexes/iset_index.hpp>
+#include <boost/interprocess/creation_tags.hpp>
+#include <boost/interprocess/permissions.hpp>
+
+
 #include <boost/interprocess/detail/atomic.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/interprocess/detail/tmp_dir_helpers.hpp>
@@ -38,7 +50,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#if defined (BOOST_INTERPROCESS_WINDOWS)
+#if defined(BOOST_INTERPROCESS_WINDOWS)
 #include <fcntl.h>
 #include <io.h>
 
@@ -52,6 +64,130 @@
 namespace boost{
 namespace interprocess{
 namespace ipcdetail{
+
+struct intermodule_singleton_mutex_family
+{
+   typedef boost::interprocess::ipcdetail::spin_mutex              mutex_type;
+   typedef boost::interprocess::ipcdetail::spin_recursive_mutex    recursive_mutex_type;
+};
+
+struct intermodule_types
+{
+   typedef rbtree_best_fit<intermodule_singleton_mutex_family, void*> mem_algo;
+   template<class Device, bool FileBased>
+   struct open_or_create
+   {
+      typedef managed_open_or_create_impl
+            <Device, mem_algo::Alignment, FileBased> type;
+   };
+};
+
+template<class Device, bool FileBased>
+class basic_managed_global_memory 
+   : public basic_managed_memory_impl
+      < char
+      , intermodule_types::mem_algo
+      , iset_index
+      , intermodule_types::open_or_create<Device, FileBased>::type::ManagedOpenOrCreateUserOffset
+      >
+   , private intermodule_types::open_or_create<Device, FileBased>::type
+{
+   /// @cond
+   typedef typename intermodule_types::template open_or_create<Device, FileBased>::type base2_t;
+
+   typedef basic_managed_memory_impl
+      < char
+      , intermodule_types::mem_algo
+      , iset_index
+      , base2_t::ManagedOpenOrCreateUserOffset
+      > base_t;
+
+   typedef create_open_func<base_t>        create_open_func_t;
+
+   basic_managed_global_memory *get_this_pointer()
+   {  return this;   }
+
+   public:
+   typedef typename base_t::size_type              size_type;
+
+   private:
+   typedef typename base_t::char_ptr_holder_t   char_ptr_holder_t;
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_global_memory)
+   /// @endcond
+
+   public: //functions
+/*
+   basic_managed_global_memory()
+   {}
+
+   basic_managed_global_memory(create_only_t create_only, const char *name,
+                             size_type size, const void *addr = 0, const permissions& perm = permissions())
+      : base_t()
+      , base2_t(create_only, name, size, read_write, addr, 
+                create_open_func_t(get_this_pointer(), DoCreate), perm)
+   {}
+*/
+   basic_managed_global_memory (open_or_create_t open_or_create,
+                              const char *name, size_type size, 
+                              const void *addr = 0, const permissions& perm = permissions())
+      : base_t()
+      , base2_t(open_or_create, name, size, read_write, addr, 
+                create_open_func_t(get_this_pointer(), 
+                DoOpenOrCreate), perm)
+   {}
+
+   basic_managed_global_memory (open_only_t open_only, const char* name, 
+                                const void *addr = 0)
+      : base_t()
+      , base2_t(open_only, name, read_write, addr, 
+                create_open_func_t(get_this_pointer(), 
+                DoOpen))
+   {}
+
+/*
+   basic_managed_global_memory (open_copy_on_write_t, const char* name, 
+                                const void *addr = 0)
+      : base_t()
+      , base2_t(open_only, name, copy_on_write, addr, 
+                create_open_func_t(get_this_pointer(), 
+                DoOpen))
+   {}
+
+   //!Connects to a created shared memory and its segment manager.
+   //!in read-only mode.
+   //!This can throw.
+   basic_managed_global_memory (open_read_only_t, const char* name, 
+                                const void *addr = 0)
+      : base_t()
+      , base2_t(open_only, name, read_only, addr, 
+                create_open_func_t(get_this_pointer(), 
+                DoOpen))
+   {}
+
+   //!Moves the ownership of "moved"'s managed memory to *this.
+   //!Does not throw
+   basic_managed_global_memory(BOOST_RV_REF(basic_managed_global_memory) moved)
+   {
+      basic_managed_global_memory tmp;
+      this->swap(moved);
+      tmp.swap(moved);
+   }
+
+   //!Moves the ownership of "moved"'s managed memory to *this.
+   //!Does not throw
+   basic_managed_global_memory &operator=(BOOST_RV_REF(basic_managed_global_memory) moved)
+   {
+      basic_managed_global_memory tmp(boost::move(moved));
+      this->swap(tmp);
+      return *this;
+   }*/
+};
+
+#if defined(BOOST_INTERPROCESS_WINDOWS)
+typedef basic_managed_global_memory<windows_shared_memory, false>  windows_managed_global_memory;
+#endif
+
+typedef basic_managed_global_memory<shared_memory_object, true>    managed_global_memory;
 
 namespace file_locking_helpers {
 
@@ -172,10 +308,10 @@ struct managed_sh_dependant
    }
 };
 
-#if (defined BOOST_INTERPROCESS_WINDOWS)
+#if defined(BOOST_INTERPROCESS_WINDOWS)
 
 template<>
-struct managed_sh_dependant<managed_windows_shared_memory>
+struct managed_sh_dependant<windows_managed_global_memory>
 {
    static void apply_gmem_erase_logic(const char *, const char *){}
 
@@ -581,12 +717,12 @@ struct lock_file_logic
    bool retry_with_new_shm;
 };
 
-#if defined (BOOST_INTERPROCESS_WINDOWS)
+#if defined(BOOST_INTERPROCESS_WINDOWS)
 
 template<>
-struct lock_file_logic<managed_windows_shared_memory>
+struct lock_file_logic<windows_managed_global_memory>
 {
-   lock_file_logic(managed_windows_shared_memory &)
+   lock_file_logic(windows_managed_global_memory &)
       : retry_with_new_shm(false)
    {}
 
@@ -634,10 +770,10 @@ class intermodule_singleton_common
    private:
    static ManagedShMem &get_shm()
    {
-      return *static_cast<ManagedShMem *>(static_cast<void *>(&shm_mem));
+      return *static_cast<ManagedShMem *>(static_cast<void *>(&mem_holder.shm_mem));
    }
 
-   enum { MemSize = ((sizeof(ManagedShMem)-1)/sizeof(::boost::detail::max_align))+1u };
+   static const std::size_t MemSize = ((sizeof(ManagedShMem)-1)/sizeof(::boost::detail::max_align))+1u;
 
    static void initialize_shm();
    static void destroy_shm();
@@ -646,7 +782,10 @@ class intermodule_singleton_common
    static volatile boost::uint32_t this_module_singleton_count;
    //this_module_shm_initialized is the state of this module's shm class object
    static volatile boost::uint32_t this_module_shm_initialized;
-   static ::boost::detail::max_align shm_mem[MemSize];
+   static struct mem_holder_t
+   {
+      ::boost::detail::max_align shm_mem[MemSize];
+   } mem_holder;
 };
 
 template<class ManagedShMem>
@@ -656,7 +795,11 @@ template<class ManagedShMem>
 volatile boost::uint32_t intermodule_singleton_common<ManagedShMem>::this_module_shm_initialized;
 
 template<class ManagedShMem>
-::boost::detail::max_align intermodule_singleton_common<ManagedShMem>::shm_mem[intermodule_singleton_common<ManagedShMem>::MemSize];
+const std::size_t intermodule_singleton_common<ManagedShMem>::MemSize;
+
+template<class ManagedShMem>
+typename intermodule_singleton_common<ManagedShMem>::mem_holder_t
+   intermodule_singleton_common<ManagedShMem>::mem_holder;
 
 template<class ManagedShMem>
 void intermodule_singleton_common<ManagedShMem>::initialize_shm()
@@ -734,12 +877,12 @@ struct unlink_shmlogic
    ManagedShMem &mshm_;
 };
 
-#if defined (BOOST_INTERPROCESS_WINDOWS)
+#if defined(BOOST_INTERPROCESS_WINDOWS)
 
 template<>
-struct unlink_shmlogic<managed_windows_shared_memory>
+struct unlink_shmlogic<windows_managed_global_memory>
 {
-   unlink_shmlogic(managed_windows_shared_memory &)
+   unlink_shmlogic(windows_managed_global_memory &)
    {}
    void operator()(){}
 };
@@ -823,7 +966,7 @@ void intermodule_singleton_common<ManagedShMem>::initialize_singleton_logic
                break;
             }
             else if(previous_module_singleton_initialized == Initializing){
-               ipcdetail::thread_yield();
+               thread_yield();
             }
             else{
                //This can't be happening!
@@ -985,14 +1128,14 @@ class intermodule_singleton_impl
 };
 
 template <typename C, bool L, class ManagedShMem>
-volatile int intermodule_singleton_impl<C, L, ManagedShMem>::lifetime_type_lazy::m_dummy;
+volatile int intermodule_singleton_impl<C, L, ManagedShMem>::lifetime_type_lazy::m_dummy = 0;
 
 //These will be zero-initialized by the loader
 template <typename C, bool L, class ManagedShMem>
-void *intermodule_singleton_impl<C, L, ManagedShMem>::this_module_singleton_ptr;
+void *intermodule_singleton_impl<C, L, ManagedShMem>::this_module_singleton_ptr = 0;
 
 template <typename C, bool L, class ManagedShMem>
-volatile boost::uint32_t intermodule_singleton_impl<C, L, ManagedShMem>::this_module_singleton_initialized;
+volatile boost::uint32_t intermodule_singleton_impl<C, L, ManagedShMem>::this_module_singleton_initialized = 0;
 
 template <typename C, bool L, class ManagedShMem>
 typename intermodule_singleton_impl<C, L, ManagedShMem>::lifetime_type
@@ -1000,14 +1143,18 @@ typename intermodule_singleton_impl<C, L, ManagedShMem>::lifetime_type
 
 template<typename C, bool LazyInit = false>
 class portable_intermodule_singleton
-   : public intermodule_singleton_impl<C, LazyInit, managed_shared_memory>
+   : public intermodule_singleton_impl<C, LazyInit, managed_global_memory>
 {};
 
-#ifdef BOOST_INTERPROCESS_WINDOWS
+#if defined(BOOST_INTERPROCESS_WINDOWS)
 
 template<typename C, bool LazyInit = false>
 class windows_intermodule_singleton
-   : public intermodule_singleton_impl<C, LazyInit, managed_windows_shared_memory>
+   : public intermodule_singleton_impl
+      < C
+      , LazyInit
+      , windows_managed_global_memory
+      >
 {};
 
 #endif
@@ -1019,7 +1166,6 @@ template<typename C, bool LazyInit = false>
 class intermodule_singleton
    #ifdef BOOST_INTERPROCESS_WINDOWS
    : public windows_intermodule_singleton<C, LazyInit>
-//   : public portable_intermodule_singleton<C, LazyInit>
    #else
    : public portable_intermodule_singleton<C, LazyInit>
    #endif

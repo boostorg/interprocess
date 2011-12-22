@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -96,7 +96,7 @@ class adaptive_pool_base
    typedef typename segment_manager::difference_type     difference_type;
 
    typedef boost::interprocess::version_type<adaptive_pool_base, Version>   version;
-   typedef boost::container::containers_detail::transform_multiallocation_chain
+   typedef boost::container::container_detail::transform_multiallocation_chain
       <typename SegmentManager::multiallocation_chain, T>multiallocation_chain;
 
    //!Obtains adaptive_pool_base from 
@@ -128,7 +128,7 @@ class adaptive_pool_base
    adaptive_pool_base(const adaptive_pool_base &other) 
       : mp_node_pool(other.get_node_pool()) 
    {  
-      node_pool<0>::get(ipcdetail::get_pointer(mp_node_pool))->inc_ref_count();   
+      node_pool<0>::get(ipcdetail::to_raw_pointer(mp_node_pool))->inc_ref_count();   
    }
 
    //!Assignment from other adaptive_pool_base
@@ -150,17 +150,17 @@ class adaptive_pool_base
    //!Destructor, removes node_pool_t from memory
    //!if its reference count reaches to zero. Never throws
    ~adaptive_pool_base() 
-   {  ipcdetail::destroy_node_pool_if_last_link(node_pool<0>::get(ipcdetail::get_pointer(mp_node_pool)));   }
+   {  ipcdetail::destroy_node_pool_if_last_link(node_pool<0>::get(ipcdetail::to_raw_pointer(mp_node_pool)));   }
 
    //!Returns a pointer to the node pool.
    //!Never throws
    void* get_node_pool() const
-   {  return ipcdetail::get_pointer(mp_node_pool);   }
+   {  return ipcdetail::to_raw_pointer(mp_node_pool);   }
 
    //!Returns the segment manager.
    //!Never throws
    segment_manager* get_segment_manager()const
-   {  return node_pool<0>::get(ipcdetail::get_pointer(mp_node_pool))->get_segment_manager();  }
+   {  return node_pool<0>::get(ipcdetail::to_raw_pointer(mp_node_pool))->get_segment_manager();  }
 
    //!Swaps allocators. Does not throw. If each allocator is placed in a
    //!different memory segment, the result is undefined.
@@ -372,7 +372,7 @@ class adaptive_pool
    //!Returns address of non mutable object.
    //!Never throws
    const_pointer address(const_reference value) const;
-
+/*
    //!Copy construct an object. 
    //!Throws if T's copy constructor throws
    void construct(const pointer &ptr, const_reference v);
@@ -380,7 +380,7 @@ class adaptive_pool
    //!Destroys object. Throws if object's
    //!destructor throws
    void destroy(const pointer &ptr);
-
+*/
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold. This size only works for memory allocated with
    //!allocate, allocation_command and allocate_many.

@@ -82,7 +82,7 @@ class scoped_ptr
    //!Deletes the object pointed to by the stored pointer and then
    //!stores a copy of p and a copy of d.
    void reset(const pointer &p, const Deleter &d) // never throws
-   {  BOOST_ASSERT(p == 0 || p != m_ptr); this_type(p).swap(*this);  }
+   {  BOOST_ASSERT(p == 0 || p != m_ptr); this_type(p, d).swap(*this);  }
 
    //!Assigns internal pointer as 0 and returns previous pointer. This will
    //!avoid deletion on destructor
@@ -146,7 +146,7 @@ void swap(scoped_ptr<T, D> & a, scoped_ptr<T, D> & b)
 //!Returns a copy of the stored pointer
 //!Never throws
 template<class T, class D> inline
-typename scoped_ptr<T, D>::pointer get_pointer(scoped_ptr<T, D> const & p)
+typename scoped_ptr<T, D>::pointer to_raw_pointer(scoped_ptr<T, D> const & p)
 {  return p.get();   }
 
 } // namespace interprocess
@@ -155,7 +155,7 @@ typename scoped_ptr<T, D>::pointer get_pointer(scoped_ptr<T, D> const & p)
 
 #if defined(_MSC_VER) && (_MSC_VER < 1400)
 template<class T, class D> inline
-T *get_pointer(boost::interprocess::scoped_ptr<T, D> const & p)
+T *to_raw_pointer(boost::interprocess::scoped_ptr<T, D> const & p)
 {  return p.get();   }
 #endif
 

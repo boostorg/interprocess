@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -21,9 +21,14 @@
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/file_wrapper.hpp>
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/move.hpp>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/permissions.hpp>
+//These includes needed to fulfill default template parameters of
+//predeclarations in interprocess_fwd.hpp
+#include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>  
+#include <boost/interprocess/sync/mutex_family.hpp>
+#include <boost/interprocess/indexes/iset_index.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -40,20 +45,25 @@ template
 class basic_managed_mapped_file 
    : public ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType
-      ,ipcdetail::managed_open_or_create_impl<ipcdetail::file_wrapper>::ManagedOpenOrCreateUserOffset>
+      ,ipcdetail::managed_open_or_create_impl< ipcdetail::file_wrapper
+                                             , AllocationAlgorithm::Alignment>::ManagedOpenOrCreateUserOffset
+      >
 {
    /// @cond
    public:
    typedef ipcdetail::basic_managed_memory_impl 
       <CharType, AllocationAlgorithm, IndexType,
-      ipcdetail::managed_open_or_create_impl<ipcdetail::file_wrapper>::ManagedOpenOrCreateUserOffset>   base_t;
+      ipcdetail::managed_open_or_create_impl
+         <ipcdetail::file_wrapper, AllocationAlgorithm::Alignment>::ManagedOpenOrCreateUserOffset
+      >   base_t;
    typedef ipcdetail::file_wrapper device_type;
    typedef typename base_t::size_type              size_type;
 
    private:
 
    typedef ipcdetail::create_open_func<base_t>        create_open_func_t;   
-   typedef ipcdetail::managed_open_or_create_impl<ipcdetail::file_wrapper> managed_open_or_create_type;
+   typedef ipcdetail::managed_open_or_create_impl< ipcdetail::file_wrapper
+                                                 , AllocationAlgorithm::Alignment> managed_open_or_create_type;
 
    basic_managed_mapped_file *get_this_pointer()
    {  return this;   }
@@ -130,7 +140,7 @@ class basic_managed_mapped_file
    //!Does not throw
    basic_managed_mapped_file &operator=(BOOST_RV_REF(basic_managed_mapped_file) moved)
    {
-      basic_managed_mapped_file tmp(boost::interprocess::move(moved));
+      basic_managed_mapped_file tmp(boost::move(moved));
       this->swap(tmp);
       return *this;
    }

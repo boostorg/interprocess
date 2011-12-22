@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -28,6 +28,7 @@
 #include <boost/pointer_to_other.hpp>
 #include <boost/type_traits/make_unsigned.hpp>
 #include <boost/type_traits/alignment_of.hpp>
+#include <boost/intrusive/pointer_traits.hpp>
 #include <algorithm> //std::lower_bound
 #include <cstddef>   //std::size_t
 #include <cstring>   //memcpy
@@ -55,7 +56,7 @@ class message_queue_t
    public:
    typedef VoidPointer                                                 void_pointer;
    typedef typename boost::pointer_to_other<void_pointer, char>::type  char_ptr;
-   typedef typename std::iterator_traits<char_ptr>::difference_type    difference_type;
+   typedef typename boost::intrusive::pointer_traits<char_ptr>::difference_type difference_type;
    typedef typename boost::make_unsigned<difference_type>::type        size_type;
 
    //!Creates a process shared message queue with name "name". For this message queue,
@@ -185,11 +186,11 @@ namespace ipcdetail {
 template<class VoidPointer>
 class msg_hdr_t 
 {
-   typedef VoidPointer                                                    void_pointer;
+   typedef VoidPointer                                                           void_pointer;
    typedef typename boost::
-      pointer_to_other<VoidPointer, char>::type                          char_ptr;
-   typedef typename std::iterator_traits<char_ptr>::difference_type       difference_type;
-   typedef typename boost::make_unsigned<difference_type>::type           size_type;
+      pointer_to_other<VoidPointer, char>::type                                  char_ptr;
+   typedef typename boost::intrusive::pointer_traits<char_ptr>::difference_type  difference_type;
+   typedef typename boost::make_unsigned<difference_type>::type                  size_type;
 
    public:
    size_type               len;     // Message length
@@ -247,12 +248,13 @@ template<class VoidPointer>
 class mq_hdr_t
    : public ipcdetail::priority_functor<VoidPointer>
 {   
-   typedef VoidPointer                                                    void_pointer;
-   typedef msg_hdr_t<void_pointer>                                        msg_header;
+   typedef VoidPointer                                                     void_pointer;
+   typedef msg_hdr_t<void_pointer>                                         msg_header;
    typedef typename boost::
-      pointer_to_other<void_pointer, msg_header>::type                   msg_hdr_ptr_t;
-   typedef typename std::iterator_traits<msg_hdr_ptr_t>::difference_type  difference_type;
-   typedef typename boost::make_unsigned<difference_type>::type           size_type;
+      pointer_to_other<void_pointer, msg_header>::type                     msg_hdr_ptr_t;
+   typedef typename boost::intrusive::pointer_traits
+      <msg_hdr_ptr_t>::difference_type                                     difference_type;
+   typedef typename boost::make_unsigned<difference_type>::type            size_type;
    typedef typename boost::
       pointer_to_other<void_pointer, msg_hdr_ptr_t>::type                msg_hdr_ptr_ptr_t;
 
@@ -374,7 +376,7 @@ class initialization_func_t
 {
    public:
    typedef typename boost::pointer_to_other<VoidPointer, char>::type   char_ptr;
-   typedef typename std::iterator_traits<char_ptr>::difference_type    difference_type;
+   typedef typename boost::intrusive::pointer_traits<char_ptr>::difference_type difference_type;
    typedef typename boost::make_unsigned<difference_type>::type        size_type;
 
    initialization_func_t(size_type maxmsg = 0, 

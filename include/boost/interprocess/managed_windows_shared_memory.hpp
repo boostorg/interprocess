@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -22,7 +22,12 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/permissions.hpp>
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/move.hpp>
+//These includes needed to fulfill default template parameters of
+//predeclarations in interprocess_fwd.hpp
+#include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>  
+#include <boost/interprocess/sync/mutex_family.hpp>
+#include <boost/interprocess/indexes/iset_index.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -46,14 +51,19 @@ template
       >
 class basic_managed_windows_shared_memory 
    : public ipcdetail::basic_managed_memory_impl
-      <CharType, AllocationAlgorithm, IndexType
-      ,ipcdetail::managed_open_or_create_impl<windows_shared_memory>::ManagedOpenOrCreateUserOffset>
+      < CharType, AllocationAlgorithm, IndexType
+      , ipcdetail::managed_open_or_create_impl
+         < windows_shared_memory
+         , AllocationAlgorithm::Alignment
+         , false>::ManagedOpenOrCreateUserOffset
+      >
 {
    /// @cond
    private:
    typedef ipcdetail::basic_managed_memory_impl 
       <CharType, AllocationAlgorithm, IndexType,
-      ipcdetail::managed_open_or_create_impl<windows_shared_memory>::ManagedOpenOrCreateUserOffset>   base_t;
+      ipcdetail::managed_open_or_create_impl
+         <windows_shared_memory, AllocationAlgorithm::Alignment, false>::ManagedOpenOrCreateUserOffset>   base_t;
    typedef ipcdetail::create_open_func<base_t>        create_open_func_t;
 
    basic_managed_windows_shared_memory *get_this_pointer()
@@ -133,7 +143,7 @@ class basic_managed_windows_shared_memory
    //!Does not throw
    basic_managed_windows_shared_memory &operator=(BOOST_RV_REF(basic_managed_windows_shared_memory) moved)
    {
-      basic_managed_windows_shared_memory tmp(boost::interprocess::move(moved));
+      basic_managed_windows_shared_memory tmp(boost::move(moved));
       this->swap(tmp);
       return *this;
    }
@@ -171,7 +181,8 @@ class basic_managed_windows_shared_memory
    }
 
    private:
-   ipcdetail::managed_open_or_create_impl<windows_shared_memory, false> m_wshm;
+   ipcdetail::managed_open_or_create_impl< windows_shared_memory
+                                         , AllocationAlgorithm::Alignment, false> m_wshm;
    /// @endcond
 };
 
