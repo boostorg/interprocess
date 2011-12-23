@@ -39,6 +39,9 @@ int main()
    #endif
    //->
    } remover;
+   //<-
+   (void)remover;
+   //->
 
    {
       //Create a managed shared memory

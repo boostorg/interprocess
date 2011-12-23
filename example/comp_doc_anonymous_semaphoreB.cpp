@@ -23,6 +23,9 @@ int main ()
    {
       ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
    } remover;
+   //<-
+   (void)remover;
+   //->
 
    //Create a shared memory object.
    shared_memory_object shm

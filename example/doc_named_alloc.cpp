@@ -40,6 +40,9 @@ int main(int argc, char *argv[])
       #endif
       //->
       } remover;
+      //<-
+      (void)remover;
+      //->
 
       //Construct managed shared memory
       //<-

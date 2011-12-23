@@ -48,6 +48,9 @@ int main(int argc, char *argv[])
       #endif
       //->
       } remover;
+      //<-
+      (void)remover;
+      //->
 
       //Create a new segment with given name and size
       //<-

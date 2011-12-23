@@ -35,6 +35,9 @@ int main ()
    #endif
    //->
    } remover;
+   //<-
+   (void)remover;
+   //->
 
    //A managed shared memory where we can construct objects
    //associated with a c-string

@@ -51,6 +51,9 @@ int main ()
       #endif
       //->
       } remover;
+      //<-
+      (void)remover;
+      //->
 
       //Open or create the named mutex
    //<-

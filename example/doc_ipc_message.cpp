@@ -36,6 +36,9 @@ int main (int argc, char *argv[])
       #endif
       //->
       } remover;
+      //<-
+      (void)remover;
+      //->
 
       //Create a managed shared memory segment
       //<-

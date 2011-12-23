@@ -47,6 +47,9 @@ int main ()
    #endif
    //->
    } remover;
+   //<-
+   (void)remover;
+   //->
 
    //<-
    #if 1

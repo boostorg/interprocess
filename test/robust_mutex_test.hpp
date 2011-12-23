@@ -45,6 +45,7 @@ int robust_mutex_test(int argc, char *argv[])
          ~shm_remove(){ shared_memory_object::remove
             (::boost::interprocess::test::get_process_id_name()); }
       } remover;
+      (void)remover;
 
       //Construct managed shared memory
       managed_shared_memory segment(create_only, get_process_id_name(), 65536);

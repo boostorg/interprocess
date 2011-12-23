@@ -38,6 +38,9 @@ int main(int argc, char *argv[])
       #endif
       //->
       } remover;
+      //<-
+      (void)remover;
+      //->
 
       //Create a shared memory object.
       //<-

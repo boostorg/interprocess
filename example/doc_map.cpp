@@ -38,6 +38,9 @@ int main ()
    #endif
    //->
    } remover;
+   //<-
+   (void)remover;
+   //->
 
    //Shared memory front-end that is able to construct objects
    //associated with a c-string. Erase previous shared memory with the name

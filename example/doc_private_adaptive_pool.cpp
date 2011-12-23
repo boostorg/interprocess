@@ -36,6 +36,9 @@ int main ()
    #endif
    //->
    } remover;
+   //<-
+   (void)remover;
+   //->
 
    //Create shared memory
    //<-

@@ -34,6 +34,9 @@ int main()
    #endif
    //->
    } remover;
+   //<-
+   (void)remover;
+   //->
 
    //Managed memory segment that allocates portions of a shared memory
    //segment with the default management algorithm
