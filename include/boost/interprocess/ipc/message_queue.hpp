@@ -80,7 +80,7 @@ class message_queue_t
                  const permissions &perm = permissions());
 
    //!Opens a previously created process shared message queue with name "name". 
-   //!If the was not previously created or there are no free resources, 
+   //!If the queue was not previously created or there are no free resources, 
    //!throws an error.
    message_queue_t(open_only_t open_only,
                  const char *name);
