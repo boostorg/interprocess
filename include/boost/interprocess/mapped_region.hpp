@@ -75,7 +75,7 @@ class mapped_region
                 ,std::size_t size = 0
                 ,const void *address = 0);
 
-   //!Default constructor. Address and size and offset will be 0.
+   //!Default constructor. Size and offset will be 0.
    //!Does not throw
    mapped_region();
 
@@ -91,7 +91,6 @@ class mapped_region
    :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0), m_mode(read_only), m_is_xsi(false)
    #endif
    {  this->swap(other);   }
-
 
    //!Destroys the mapped region.
    //!Does not throw
