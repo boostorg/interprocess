@@ -75,7 +75,8 @@ class mapped_region
                 ,std::size_t size = 0
                 ,const void *address = 0);
 
-   //!Default constructor. Size and offset will be 0.
+   //!Default constructor. Address will be invalid_address().
+   //!Size and offset will be 0.
    //!Does not throw
    mapped_region();
 
@@ -121,6 +122,10 @@ class mapped_region
    //!Returns the mode of the mapping used to construct the mapped file.
    //!Never throws.
    mode_t get_mode() const;
+
+   //!Returns the value that represents an invalid mapping address
+   //!Never throws.
+   static void* invalid_address();
 
    //!Flushes to the disk a byte range within the mapped memory. 
    //!Never throws
@@ -370,6 +375,9 @@ inline void mapped_region::priv_close()
    #endif
 }
 
+inline void* mapped_region::invalid_address()  
+{  return 0; }
+
 inline void mapped_region::dont_close_on_destruction()
 {}
 
@@ -558,6 +566,9 @@ inline void mapped_region::priv_close()
       m_base = MAP_FAILED;
    }
 }
+
+inline void* mapped_region::invalid_address()
+{  return MAP_FAILED; }
 
 inline void mapped_region::dont_close_on_destruction()
 {  m_base = MAP_FAILED;   }

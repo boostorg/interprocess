@@ -129,6 +129,8 @@ inline bool truncate_file (file_handle_t hnd, std::size_t size)
       return false;
 
    const offset_t max_filesize = (std::numeric_limits<offset_t>::max)();
+   //Avoid unused variable warnings in 32 bit systems
+   (void)max_filesize;
    if( sizeof(std::size_t) >= sizeof(offset_t) && size > std::size_t(max_filesize) ){
       winapi::set_last_error(winapi::error_file_too_large);
       return false;
