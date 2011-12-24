@@ -1668,10 +1668,10 @@ inline bool get_wmi_class_attribute( std::wstring& strValue, const wchar_t *wmi_
             pWbemServices,
             RPC_C_AUTHN_DEFAULT_BIPC,
             RPC_C_AUTHZ_DEFAULT_BIPC,
-            NULL,
+            0,
             RPC_C_AUTHN_LEVEL_PKT_BIPC,
             RPC_C_IMP_LEVEL_IMPERSONATE_BIPC,
-            NULL,
+            0,
             EOAC_NONE_BIPC
             )
          ){
