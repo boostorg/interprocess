@@ -18,6 +18,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/pointer_type.hpp>
+#include <boost/interprocess/detail/utilities.hpp>
 #include <boost/assert.hpp>
 #include <boost/pointer_to_other.hpp>
 
