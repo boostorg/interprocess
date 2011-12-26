@@ -10,35 +10,36 @@
 
 #include<boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-#include <boost/assert.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
 
 namespace boost {
 namespace interprocess {
 
 inline barrier::barrier(unsigned int count)
+   : m_threshold(count), m_count(count), m_generation(0)
 {
    if (count == 0)
       throw std::invalid_argument("count cannot be zero.");
-   ipcdetail::barrierattr_wrapper barrier_attr;
-   ipcdetail::barrier_initializer barrier
-      (m_barrier, barrier_attr, static_cast<int>(count));
-   barrier.release();
 }
 
-inline barrier::~barrier()
-{
-   int res = pthread_barrier_destroy(&m_barrier);
-   BOOST_ASSERT(res  == 0);(void)res;
-}
+inline barrier::~barrier(){}
 
 inline bool barrier::wait()
 {
-   int res = pthread_barrier_wait(&m_barrier);
+   scoped_lock<interprocess_mutex> lock(m_mutex);
+   unsigned int gen = m_generation;
 
-   if (res != PTHREAD_BARRIER_SERIAL_THREAD && res != 0){
-      throw interprocess_exception(res);
+   if (--m_count == 0){
+      m_generation++;
+      m_count = m_threshold;
+      m_cond.notify_all();
+      return true;
    }
-   return res == PTHREAD_BARRIER_SERIAL_THREAD;
+
+   while (gen == m_generation){
+      m_cond.wait(lock);
+   }
+   return false;
 }
 
 }  //namespace interprocess {

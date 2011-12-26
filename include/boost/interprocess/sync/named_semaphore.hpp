@@ -1,6 +1,6 @@
  //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -24,12 +24,9 @@
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 #if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
-#include <boost/interprocess/sync/posix/semaphore_wrapper.hpp>
+#include <boost/interprocess/sync/posix/named_semaphore.hpp>
 #else
-#include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
-#include <boost/interprocess/sync/interprocess_semaphore.hpp>
-#include <boost/interprocess/sync/emulation/named_creation_functor.hpp>
+#include <boost/interprocess/sync/shm/named_semaphore.hpp>
 #endif
 
 //!\file
@@ -109,33 +106,28 @@ class named_semaphore
    void dont_close_on_destruction();
 
    #if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
-   ipcdetail::named_semaphore_wrapper m_sem;
+      typedef ipcdetail::posix_named_semaphore  impl_t;
    #else
-   interprocess_semaphore *semaphore() const
-   {  return static_cast<interprocess_semaphore*>(m_shmem.get_user_address()); }
-
-   ipcdetail::managed_open_or_create_impl<shared_memory_object> m_shmem;
-   typedef ipcdetail::named_creation_functor<interprocess_semaphore, int> construct_func_t;
+      typedef ipcdetail::shm_named_semaphore    impl_t;
    #endif
+   impl_t m_sem;
    /// @endcond
 };
 
 /// @cond
 
-#if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
-
 inline named_semaphore::named_semaphore
    (create_only_t, const char *name, unsigned int initialCount, const permissions &perm)
-   :  m_sem(ipcdetail::DoCreate, name, initialCount, perm)
+   :  m_sem(create_only, name, initialCount, perm)
 {}
 
 inline named_semaphore::named_semaphore
    (open_or_create_t, const char *name, unsigned int initialCount, const permissions &perm)
-   :  m_sem(ipcdetail::DoOpenOrCreate, name, initialCount, perm)
+   :  m_sem(open_or_create, name, initialCount, perm)
 {}
 
 inline named_semaphore::named_semaphore(open_only_t, const char *name)
-   :  m_sem(ipcdetail::DoOpen, name, 1, permissions())
+   :  m_sem(open_only, name)
 {}
 
 inline named_semaphore::~named_semaphore()
@@ -163,73 +155,7 @@ inline bool named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time
 }
 
 inline bool named_semaphore::remove(const char *name)
-{  return ipcdetail::named_semaphore_wrapper::remove(name);   }
-
-#else
-
-inline named_semaphore::~named_semaphore()
-{}
-
-inline void named_semaphore::dont_close_on_destruction()
-{  ipcdetail::interprocess_tester::dont_close_on_destruction(m_shmem);  }
-
-inline named_semaphore::named_semaphore
-   (create_only_t, const char *name, unsigned int initialCount, const permissions &perm)
-   :  m_shmem  (create_only
-               ,name
-               ,sizeof(interprocess_semaphore) +
-                  ipcdetail::managed_open_or_create_impl<shared_memory_object>::
-                     ManagedOpenOrCreateUserOffset
-               ,read_write
-               ,0
-               ,construct_func_t(ipcdetail::DoCreate, initialCount)
-               ,perm)
-{}
-
-inline named_semaphore::named_semaphore
-   (open_or_create_t, const char *name, unsigned int initialCount, const permissions &perm)
-   :  m_shmem  (open_or_create
-               ,name
-               ,sizeof(interprocess_semaphore) +
-                  ipcdetail::managed_open_or_create_impl<shared_memory_object>::
-                     ManagedOpenOrCreateUserOffset
-               ,read_write
-               ,0
-               ,construct_func_t(ipcdetail::DoOpenOrCreate, initialCount)
-               ,perm)
-{}
-
-inline named_semaphore::named_semaphore
-   (open_only_t, const char *name)
-   :  m_shmem  (open_only
-               ,name
-               ,read_write
-               ,0
-               ,construct_func_t(ipcdetail::DoOpen, 0))
-{}
-
-inline void named_semaphore::post()
-{  semaphore()->post();   }
-
-inline void named_semaphore::wait()
-{  semaphore()->wait();   }
-
-inline bool named_semaphore::try_wait()
-{  return semaphore()->try_wait();   }
-
-inline bool named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
-{
-   if(abs_time == boost::posix_time::pos_infin){
-      this->wait();
-      return true;
-   }
-   return semaphore()->timed_wait(abs_time);
-}
-
-inline bool named_semaphore::remove(const char *name)
-{  return shared_memory_object::remove(name); }
-
-#endif
+{  return impl_t::remove(name);   }
 
 /// @endcond
 

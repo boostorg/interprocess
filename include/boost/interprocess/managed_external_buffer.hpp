@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -19,8 +19,13 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/move.hpp>
 #include <boost/assert.hpp>
+//These includes needed to fulfill default template parameters of
+//predeclarations in interprocess_fwd.hpp
+#include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>  
+#include <boost/interprocess/sync/mutex_family.hpp>
+#include <boost/interprocess/indexes/iset_index.hpp>
 
 //!\file
 //!Describes a named user memory allocation user class. 
@@ -85,7 +90,7 @@ class basic_managed_external_buffer
    //!Moves the ownership of "moved"'s managed memory to *this. Does not throw
    basic_managed_external_buffer &operator=(BOOST_RV_REF(basic_managed_external_buffer) moved)
    {
-      basic_managed_external_buffer tmp(boost::interprocess::move(moved));
+      basic_managed_external_buffer tmp(boost::move(moved));
       this->swap(tmp);
       return *this;
    }
