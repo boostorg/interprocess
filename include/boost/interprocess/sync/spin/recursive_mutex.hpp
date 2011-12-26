@@ -163,8 +163,7 @@ inline void spin_recursive_mutex::take_ownership()
    typedef ipcdetail::OS_systemwide_thread_id_t handle_t;
    this->m_nLockCount = 1;
    const handle_t thr_id(ipcdetail::get_current_systemwide_thread_id());
-   ipcdetail::systemwide_thread_id_copy
-      (thr_id, m_nOwner);
+   ipcdetail::systemwide_thread_id_copy(thr_id, m_nOwner);
 }
 
 }  //namespace ipcdetail {

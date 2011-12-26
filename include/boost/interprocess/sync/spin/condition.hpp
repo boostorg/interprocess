@@ -13,9 +13,9 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/sync/spin/mutex.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/detail/atomic.hpp>
-#include <boost/interprocess/sync/spin/mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
@@ -94,7 +94,7 @@ class spin_condition
    bool do_timed_wait(bool tout_enabled, const boost::posix_time::ptime &abs_time, InterprocessMutex &mut);
 
    enum { SLEEP = 0, NOTIFY_ONE, NOTIFY_ALL };
-   ipcdetail::spin_mutex  m_enter_mut;
+   spin_mutex  m_enter_mut;
    volatile boost::uint32_t    m_command;
    volatile boost::uint32_t    m_num_waiters;
    void notify(boost::uint32_t command);
@@ -134,19 +134,19 @@ inline void spin_condition::notify(boost::uint32_t command)
    m_enter_mut.lock();
 
    //Return if there are no waiters
-   if(!ipcdetail::atomic_read32(&m_num_waiters)) { 
+   if(!atomic_read32(&m_num_waiters)) { 
       m_enter_mut.unlock();
       return;
    }
 
    //Notify that all threads should execute wait logic
-   while(SLEEP != ipcdetail::atomic_cas32(const_cast<boost::uint32_t*>(&m_command), command, SLEEP)){
-      ipcdetail::thread_yield();
+   while(SLEEP != atomic_cas32(const_cast<boost::uint32_t*>(&m_command), command, SLEEP)){
+      thread_yield();
    }
 /*
    //Wait until the threads are woken
-   while(SLEEP != ipcdetail::atomic_cas32(const_cast<boost::uint32_t*>(&m_command), 0)){
-      ipcdetail::thread_yield();
+   while(SLEEP != atomic_cas32(const_cast<boost::uint32_t*>(&m_command), 0)){
+      thread_yield();
    }
 */
    //The enter mutex will rest locked until the last waiting thread unlocks it
@@ -176,7 +176,7 @@ inline bool spin_condition::do_timed_wait(bool tout_enabled,
       if(now >= abs_time) return false;
    }
 
-   typedef boost::interprocess::scoped_lock<ipcdetail::spin_mutex> InternalLock;
+   typedef boost::interprocess::scoped_lock<spin_mutex> InternalLock;
    //The enter mutex guarantees that while executing a notification, 
    //no other thread can execute the do_timed_wait method. 
    {
@@ -197,7 +197,7 @@ inline bool spin_condition::do_timed_wait(bool tout_enabled,
       //We increment the waiting thread count protected so that it will be
       //always constant when another thread enters the notification logic.
       //The increment marks this thread as "waiting on spin_condition"
-      ipcdetail::atomic_inc32(const_cast<boost::uint32_t*>(&m_num_waiters));
+      atomic_inc32(const_cast<boost::uint32_t*>(&m_num_waiters));
 
       //We unlock the external mutex atomically with the increment
       mut.unlock();
@@ -211,8 +211,8 @@ inline bool spin_condition::do_timed_wait(bool tout_enabled,
    while(1){
       //The thread sleeps/spins until a spin_condition commands a notification
       //Notification occurred, we will lock the checking mutex so that
-      while(ipcdetail::atomic_read32(&m_command) == SLEEP){
-         ipcdetail::thread_yield();
+      while(atomic_read32(&m_command) == SLEEP){
+         thread_yield();
 
          //Check for timeout
          if(tout_enabled){
@@ -240,12 +240,12 @@ inline bool spin_condition::do_timed_wait(bool tout_enabled,
       //If a timeout occurred, the mutex will not execute checking logic
       if(tout_enabled && timed_out){
          //Decrement wait count
-         ipcdetail::atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
+         atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
          unlock_enter_mut = true;
          break;
       }
       else{
-         boost::uint32_t result = ipcdetail::atomic_cas32
+         boost::uint32_t result = atomic_cas32
                         (const_cast<boost::uint32_t*>(&m_command), SLEEP, NOTIFY_ONE);
          if(result == SLEEP){
             //Other thread has been notified and since it was a NOTIFY one
@@ -258,17 +258,17 @@ inline bool spin_condition::do_timed_wait(bool tout_enabled,
             //so no other thread will exit.
             //Decrement wait count.
             unlock_enter_mut = true;
-            ipcdetail::atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
+            atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
             break;
          }
          else{
             //If it is a NOTIFY_ALL command, all threads should return 
             //from do_timed_wait function. Decrement wait count. 
-            unlock_enter_mut = 1 == ipcdetail::atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
+            unlock_enter_mut = 1 == atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
             //Check if this is the last thread of notify_all waiters
             //Only the last thread will release the mutex
             if(unlock_enter_mut){
-               ipcdetail::atomic_cas32(const_cast<boost::uint32_t*>(&m_command), SLEEP, NOTIFY_ALL);
+               atomic_cas32(const_cast<boost::uint32_t*>(&m_command), SLEEP, NOTIFY_ALL);
             }
             break;
          }

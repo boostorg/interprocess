@@ -109,8 +109,6 @@ inline bool posix_recursive_mutex::timed_lock(const boost::posix_time::ptime &ab
    //Obtain current count and target time
    boost::posix_time::ptime now = microsec_clock::universal_time();
 
-   if(now >= abs_time) return false;
-
    do{
       if(this->try_lock()){
          break;

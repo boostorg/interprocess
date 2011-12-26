@@ -104,22 +104,17 @@ inline bool windows_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
    boost::posix_time::ptime now
       = boost::posix_time::microsec_clock::universal_time();
 
-   if(abs_time < now){
-      return false;
+   unsigned long ms = (unsigned long)(abs_time-now).total_milliseconds();
+   sync_handles &handles =
+      intermodule_singleton<sync_handles>::get();
+   //This can throw
+   void *hnd = handles.obtain_mutex(this->id_);
+   unsigned long ret = winapi::wait_for_single_object(hnd, ms);
+   if(ret == winapi::wait_failed){
+      error_info err(winapi::get_last_error());
+      throw interprocess_exception(err);
    }
-   else{
-      unsigned long ms = (unsigned long)(abs_time-now).total_milliseconds();
-      sync_handles &handles =
-         intermodule_singleton<sync_handles>::get();
-      //This can throw
-      void *hnd = handles.obtain_mutex(this->id_);
-      unsigned long ret = winapi::wait_for_single_object(hnd, ms);
-      if(ret == winapi::wait_failed){
-         error_info err(winapi::get_last_error());
-         throw interprocess_exception(err);
-      }
-      return ret != winapi::wait_timeout;
-   }
+   return ret != winapi::wait_timeout;
 }
 
 inline void windows_mutex::unlock(void)

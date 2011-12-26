@@ -103,22 +103,17 @@ inline bool windows_semaphore::timed_wait(const boost::posix_time::ptime &abs_ti
    boost::posix_time::ptime now
       = boost::posix_time::microsec_clock::universal_time();
 
-   if(abs_time < now){
-      return false;
+   unsigned long ms = (unsigned long)(abs_time-now).total_milliseconds();
+   sync_handles &handles =
+      intermodule_singleton<sync_handles>::get();
+   //This can throw
+   void *hnd = handles.obtain_semaphore(this->id_, 0);
+   unsigned long ret = winapi::wait_for_single_object(hnd, ms);
+   if(ret == winapi::wait_failed){
+      error_info err(winapi::get_last_error());
+      throw interprocess_exception(err);
    }
-   else{
-      unsigned long ms = (unsigned long)(abs_time-now).total_milliseconds();
-      sync_handles &handles =
-         intermodule_singleton<sync_handles>::get();
-      //This can throw
-      void *hnd = handles.obtain_semaphore(this->id_, 0);
-      unsigned long ret = winapi::wait_for_single_object(hnd, ms);
-      if(ret == winapi::wait_failed){
-         error_info err(winapi::get_last_error());
-         throw interprocess_exception(err);
-      }
-      return ret != winapi::wait_timeout;
-   }
+   return ret != winapi::wait_timeout;
 }
 
 inline void windows_semaphore::post(long release_count)

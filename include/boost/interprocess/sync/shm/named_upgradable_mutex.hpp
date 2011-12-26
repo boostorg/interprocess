@@ -8,8 +8,8 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef BOOST_INTERPROCESS_named_upgradable_mutex_HPP
-#define BOOST_INTERPROCESS_named_upgradable_mutex_HPP
+#ifndef BOOST_INTERPROCESS_NAMED_UPGRADABLE_MUTEX_HPP
+#define BOOST_INTERPROCESS_NAMED_UPGRADABLE_MUTEX_HPP
 
 #if (defined _MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
@@ -369,4 +369,4 @@ inline bool named_upgradable_mutex::remove(const char *name)
 
 #include <boost/interprocess/detail/config_end.hpp>
 
-#endif   //BOOST_INTERPROCESS_named_upgradable_mutex_HPP
+#endif   //BOOST_INTERPROCESS_NAMED_UPGRADABLE_MUTEX_HPP

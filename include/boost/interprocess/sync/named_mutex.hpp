@@ -106,10 +106,15 @@ class named_mutex
 
    #if defined(BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
    typedef ipcdetail::posix_named_mutex   impl_t;
+   impl_t m_mut;
    #else
    typedef ipcdetail::shm_named_mutex     impl_t;
-   #endif
    impl_t m_mut;
+   public:
+   interprocess_mutex *mutex() const
+   {  return m_mut.mutex(); }
+   #endif
+
    /// @endcond
 };
 

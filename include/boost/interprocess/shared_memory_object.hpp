@@ -275,7 +275,7 @@ inline bool shared_memory_object::priv_open_or_create
    #if defined(BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
    const bool add_leading_slash = false;
    #elif defined(BOOST_INTERPROCESS_RUNTIME_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
-   const bool add_leading_slash = !shared_memory_object_ipcdetail::use_filesystem_based_posix();
+   const bool add_leading_slash = !shared_memory_object_detail::use_filesystem_based_posix();
    #else
    const bool add_leading_slash = true;
    #endif
@@ -361,7 +361,7 @@ inline bool shared_memory_object::remove(const char *filename)
       #if defined(BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
       const bool add_leading_slash = false;
       #elif defined(BOOST_INTERPROCESS_RUNTIME_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
-      const bool add_leading_slash = !shared_memory_object_ipcdetail::use_filesystem_based_posix();
+      const bool add_leading_slash = !shared_memory_object_detail::use_filesystem_based_posix();
       #else
       const bool add_leading_slash = true;
       #endif

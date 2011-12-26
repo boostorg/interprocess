@@ -18,6 +18,7 @@
 
 #include <string>
 #include <limits>
+#include <climits>
 
 #if (defined BOOST_INTERPROCESS_WINDOWS)
 #  include <boost/interprocess/detail/win32_api.hpp>
@@ -448,11 +449,13 @@ inline bool delete_file(const char *name)
 
 inline bool truncate_file (file_handle_t hnd, std::size_t size)
 {
-   if(off_t(size) < 0){
-      errno = EINVAL;
-      return false;
+   if(sizeof(off_t) == sizeof(std::size_t)){
+      if(size > ((~std::size_t(0)) >> 1)){
+         errno = EINVAL;
+         return false;
+      }
    }
-   return 0 == ::ftruncate(hnd, size);
+   return 0 == ::ftruncate(hnd, off_t(size));
 }
 
 inline bool get_file_size(file_handle_t hnd, offset_t &size)

@@ -100,12 +100,12 @@ class shm_named_mutex
    static bool remove(const char *name);
 
    /// @cond
+   interprocess_mutex *mutex() const
+   {  return static_cast<interprocess_mutex*>(m_shmem.get_user_address()); }
+
    private:
    friend class ipcdetail::interprocess_tester;
    void dont_close_on_destruction();
-
-   interprocess_mutex *mutex() const
-   {  return static_cast<interprocess_mutex*>(m_shmem.get_user_address()); }
 
    ipcdetail::managed_open_or_create_impl<shared_memory_object> m_shmem;
    typedef ipcdetail::named_creation_functor<interprocess_mutex> construct_func_t;
