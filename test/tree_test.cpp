@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -105,72 +105,9 @@ typedef multimap<test::movable_and_copyable_int
                 ,test::movable_and_copyable_int
                 ,std::less<test::movable_and_copyable_int>
                 ,shmem_move_copy_node_pair_allocator_t>        MyMoveCopyShmMultiMap;
-//Test recursive structures
-class recursive_set
-{
-public:
-   int id_;
-   set<recursive_set> set_;
-   friend bool operator< (const recursive_set &a, const recursive_set &b)
-   {  return a.id_ < b.id_;   }
-};
-
-class recursive_map
-{
-   public:
-   int id_;
-   map<recursive_map, recursive_map> map_;
-   friend bool operator< (const recursive_map &a, const recursive_map &b)
-   {  return a.id_ < b.id_;   }
-};
-
-//Test recursive structures
-class recursive_multiset
-{
-public:
-   int id_;
-   multiset<recursive_multiset> multiset_;
-   friend bool operator< (const recursive_multiset &a, const recursive_multiset &b)
-   {  return a.id_ < b.id_;   }
-};
-
-class recursive_multimap
-{
-public:
-   int id_;
-   multimap<recursive_multimap, recursive_multimap> multimap_;
-   friend bool operator< (const recursive_multimap &a, const recursive_multimap &b)
-   {  return a.id_ < b.id_;   }
-};
-
-template<class C>
-void test_move()
-{
-   //Now test move semantics
-   C original;
-   C move_ctor(boost::interprocess::move(original));
-   C move_assign;
-   move_assign = boost::interprocess::move(move_ctor);
-   move_assign.swap(original);
-}
 
 int main ()
 {
-   //Recursive container instantiation
-   {
-      set<recursive_set> set_;
-      multiset<recursive_multiset> multiset_;
-      map<recursive_map, recursive_map> map_;
-      multimap<recursive_multimap, recursive_multimap> multimap_;
-   }
-   //Now test move semantics
-   {
-      test_move<set<recursive_set> >();
-      test_move<multiset<recursive_multiset> >();
-      test_move<map<recursive_map, recursive_map> >();
-      test_move<multimap<recursive_multimap, recursive_multimap> >();
-   }
-
    using namespace boost::interprocess::ipcdetail;
 
    if(0 != test::set_test<my_managed_shared_memory

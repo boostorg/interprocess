@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -86,7 +86,7 @@ class allocator_v1
 
    //!Returns the segment manager. Never throws
    segment_manager* get_segment_manager()const
-   {  return ipcdetail::get_pointer(mp_mngr);   }
+   {  return ipcdetail::to_raw_pointer(mp_mngr);   }
 /*
    //!Returns address of mutable object. Never throws
    pointer address(reference value) const
@@ -116,12 +116,12 @@ class allocator_v1
 
    //!Deallocates memory previously allocated. Never throws
    void deallocate(const pointer &ptr, size_type)
-   {  mp_mngr->deallocate((void*)ipcdetail::get_pointer(ptr));  }
+   {  mp_mngr->deallocate((void*)ipcdetail::to_raw_pointer(ptr));  }
 
    //!Construct object, calling constructor. 
    //!Throws if T(const T&) throws
    void construct(const pointer &ptr, const_reference value)
-   {  new((void*)ipcdetail::get_pointer(ptr)) value_type(value);  }
+   {  new((void*)ipcdetail::to_raw_pointer(ptr)) value_type(value);  }
 
    //!Destroys object. Throws if object's destructor throws
    void destroy(const pointer &ptr)

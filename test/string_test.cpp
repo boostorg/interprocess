@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -36,13 +36,6 @@ typedef test::dummy_test_allocator<DummyString>    DummyStringAllocator;
 typedef test::dummy_test_allocator<wchar_t>              DummyWCharAllocator; 
 typedef basic_string<wchar_t, std::char_traits<wchar_t>, DummyWCharAllocator> DummyWString;
 typedef test::dummy_test_allocator<DummyWString>         DummyWStringAllocator;
-
-//Explicit instantiations of interprocess::basic_string
-template class basic_string<char, std::char_traits<char>, DummyCharAllocator>;
-template class basic_string<wchar_t, std::char_traits<wchar_t>, DummyWCharAllocator>;
-//Explicit instantiation of interprocess::vectors of interprocess::strings
-template class vector<DummyString, DummyStringAllocator>;
-template class vector<DummyWString, DummyWStringAllocator>;
 
 struct StringEqual
 {
@@ -127,7 +120,7 @@ int string_test()
          std::sprintf(buffer, "%i", i);
          auxShmString += buffer;
          auxStdString += buffer;
-         shmStringVect->push_back(boost::interprocess::move(auxShmString));
+         shmStringVect->push_back(boost::move(auxShmString));
          stdStringVect->push_back(auxStdString);
       }
 
@@ -157,7 +150,7 @@ int string_test()
          std::sprintf(buffer, "%i", i);
          auxShmString += buffer;
          auxStdString += buffer;
-         shmStringVect->insert(shmStringVect->begin(), boost::interprocess::move(auxShmString));
+         shmStringVect->insert(shmStringVect->begin(), boost::move(auxShmString));
          stdStringVect->insert(stdStringVect->begin(), auxStdString);
       }
 

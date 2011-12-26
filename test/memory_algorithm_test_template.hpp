@@ -679,7 +679,7 @@ bool test_many_equal_allocation(Allocator &a)
 
          typename multiallocation_chain::size_type n = chain.size();
          while(!chain.empty()){
-            buffers.push_back(ipcdetail::get_pointer(chain.front()));
+            buffers.push_back(ipcdetail::to_raw_pointer(chain.front()));
             chain.pop_front();
          }
          if(n != std::size_t((i+1)*2))
@@ -788,7 +788,7 @@ bool test_many_different_allocation(Allocator &a)
             break;
          typename multiallocation_chain::size_type n = chain.size();
          while(!chain.empty()){
-            buffers.push_back(ipcdetail::get_pointer(chain.front()));
+            buffers.push_back(ipcdetail::to_raw_pointer(chain.front()));
             chain.pop_front();
          }
          if(n != ArraySize)
@@ -866,10 +866,10 @@ bool test_many_deallocation(Allocator &a)
          multiallocation_chain chain = a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow);
          if(chain.empty())
             break;
-         buffers.push_back(boost::interprocess::move(chain));
+         buffers.push_back(boost::move(chain));
       }
       for(int i = 0, max = (int)buffers.size(); i != max; ++i){
-         a.deallocate_many(boost::interprocess::move(buffers[i]));
+         a.deallocate_many(boost::move(buffers[i]));
       }
       buffers.clear();
       bool ok = free_memory == a.get_free_memory() && 
@@ -882,10 +882,10 @@ bool test_many_deallocation(Allocator &a)
          multiallocation_chain chain(a.allocate_many(i*4, ArraySize, std::nothrow));
          if(chain.empty())
             break;
-         buffers.push_back(boost::interprocess::move(chain));
+         buffers.push_back(boost::move(chain));
       }
       for(int i = 0, max = (int)buffers.size(); i != max; ++i){
-         a.deallocate_many(boost::interprocess::move(buffers[i]));
+         a.deallocate_many(boost::move(buffers[i]));
       }
       buffers.clear();
 

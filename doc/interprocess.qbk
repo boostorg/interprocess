@@ -1,5 +1,5 @@
 [/
- / Copyright (c) 2007-2009 Ion Gaztanaga
+ / Copyright (c) 2005-2011 Ion Gaztanaga
  /
  / Distributed under the Boost Software License, Version 1.0. (See accompanying
  / file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -8,7 +8,7 @@
 [library Boost.Interprocess
     [quickbook 1.4]
     [authors [Gaztanaga, Ion]]
-    [copyright 2005- 2010 Ion Gaztanaga]
+    [copyright 2005- 2011 Ion Gaztanaga]
     [id interprocess]
     [dirname interprocess]
     [purpose Interprocess communication utilities]
@@ -73,14 +73,9 @@ your system's documentation to know which library implements them.
 
 [*Boost.Interprocess] has been tested in the following compilers/platforms:
 
-*  Visual 7.1 Windows XP
-*  Visual 8.0 Windows XP
-*  GCC 4.1.1 MinGW
-*  GCC 3.4.4 Cygwin
-*  Intel 9.1 Windows XP
-*  GCC 4.1.2 Linux
-*  GCC 3.4.3 Solaris 11
-*  GCC 4.0 MacOs 10.4.1
+*  Visual >= 7.1
+*  GCC >= 4.1
+*  Intel 11
 
 [endsect]
 
@@ -5109,7 +5104,7 @@ objects in the container, avoiding unnecessary copies.
 
 
 To transfer the contents of a container to another one, use 
-`boost::interprocess::move()` function, as shown in the example. For more details
+`boost::move()` function, as shown in the example. For more details
 about functions supporting move-semantics, see the reference section of
 Boost.Interprocess containers:
 
@@ -6523,7 +6518,7 @@ specialization of `boost::interprocess::is_node_index<...>` defined in
    struct is_node_index
       <my_index<MapConfig> >
    {
-      enum {   value = true };
+      static const bool value = true;
    };
 
 Interprocess also defines other index types:
@@ -6601,6 +6596,29 @@ thank them:
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_49_00 Boost 1.49 Release]
+
+*  Fixed bugs
+  [@https://svn.boost.org/trac/boost/ticket/6233 #6233],
+  [@https://svn.boost.org/trac/boost/ticket/6287 #6287],
+  [@https://svn.boost.org/trac/boost/ticket/6054 #6054],
+  [@https://svn.boost.org/trac/boost/ticket/5772 #5772],
+  [@https://svn.boost.org/trac/boost/ticket/5738 #5738],
+  [@https://svn.boost.org/trac/boost/ticket/5622 #5622],
+  [@https://svn.boost.org/trac/boost/ticket/5552 #5552],
+  [@https://svn.boost.org/trac/boost/ticket/5518 #5518],
+  [@https://svn.boost.org/trac/boost/ticket/4655 #4655],
+  [@https://svn.boost.org/trac/boost/ticket/4452 #4452],
+  [@https://svn.boost.org/trac/boost/ticket/4383 #4383],
+  [@https://svn.boost.org/trac/boost/ticket/4297 #4297].
+
+* Fixed timed functions in mutex implementations to fulfill POSIX requirements:
+   ['Under no circumstance shall the function fail with a timeout if the mutex can be locked
+     immediately. The validity of the abs_timeout parameter need not be checked if the mutex
+     can be locked immediately.]
+
+[endsect]
 
 [section:release_notes_boost_1_48_00 Boost 1.48 Release]
 

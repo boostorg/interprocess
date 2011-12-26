@@ -8,6 +8,15 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+Remove std::iterator_traits and use pointer_traits
+
+What values should take shared memory allocators:
+
+propagate_on_container_copy_assignment
+propagate_on_container_move_assignment
+propagate_on_container_swap
+
+
 
 //////////////////////////////////////////////////////////////////////////////
 Platform conformance
@@ -239,3 +248,4 @@ MyRobustMutexLockFile()
 }
 
 ipcdetail::intermodule_singleton<MyRobustMutexLockFile>::get();
+

@@ -9,12 +9,12 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
-
 #include <boost/interprocess/detail/intersegment_ptr.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/mapped_region.hpp> //mapped_region
 #include <boost/interprocess/anonymous_shared_memory.hpp>   //anonymous_shared_memory
 #include <boost/interprocess/detail/managed_multi_shared_memory.hpp>   //managed_multi_shared_memory
+#include <boost/static_assert.hpp>   //static_assert
 #include <cstddef>   //std::size_t
 
 
@@ -27,14 +27,10 @@ bool test_types_and_convertions()
    typedef intersegment_ptr<volatile int>       pvint_t;
    typedef intersegment_ptr<const volatile int> pcvint_t;
 
-   if(!ipcdetail::is_same<pint_t::value_type, int>::value)
-      return false;
-   if(!ipcdetail::is_same<pcint_t::value_type, const int>::value)
-      return false;
-   if(!ipcdetail::is_same<pvint_t::value_type, volatile int>::value)
-      return false;
-   if(!ipcdetail::is_same<pcvint_t::value_type, const volatile int>::value)
-      return false;
+   BOOST_STATIC_ASSERT((ipcdetail::is_same<pint_t::value_type, int>::value));
+   BOOST_STATIC_ASSERT((ipcdetail::is_same<pcint_t::value_type, const int>::value));
+   BOOST_STATIC_ASSERT((ipcdetail::is_same<pvint_t::value_type, volatile int>::value));
+   BOOST_STATIC_ASSERT((ipcdetail::is_same<pcvint_t::value_type, const volatile int>::value));
    int dummy_int = 9;
 
    {  pint_t pint(&dummy_int);   pcint_t  pcint(pint);
