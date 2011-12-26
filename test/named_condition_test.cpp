@@ -9,10 +9,9 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/sync/named_condition.hpp>
+#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/interprocess/sync/named_condition.hpp>
 #include "condition_test_template.hpp"
 #include "named_creation_template.hpp"
 #include <string>
@@ -55,6 +54,79 @@ class named_condition_test_wrapper
 
    ~named_condition_test_wrapper()
    {  --count; }
+
+
+   template<class Lock>
+   class lock_wrapper
+   {
+      typedef void (lock_wrapper::*unspecified_bool_type)();
+      public:
+
+      typedef named_mutex mutex_type;
+
+      lock_wrapper(Lock &l)
+         : l_(l)
+      {}
+
+      mutex_type* mutex() const
+      {  return l_.mutex();  }
+
+      void lock()    { l_.lock(); }
+
+      void unlock()  { l_.unlock(); }
+
+      operator unspecified_bool_type() const
+      {  return l_ ? &lock_wrapper::lock : 0;  }
+
+      private:
+      Lock &l_;
+   };
+/*
+   template<class Lock>
+   class lock_wrapper
+   {
+      public:
+
+      typedef named_mutex mutex_type;
+
+      lock_wrapper(Lock &l)
+        : l_(l)
+      {}
+
+      mutex_type* mutex() const
+      {  return l_.mutex();  }
+
+      private:
+      Lock &l_;
+   };
+*/
+   template <typename L>
+   void wait(L& lock)
+   {
+      lock_wrapper<L> newlock(lock);
+      named_condition::wait(newlock);
+   }
+
+   template <typename L, typename Pr>
+   void wait(L& lock, Pr pred)
+   {
+      lock_wrapper<L> newlock(lock);
+      named_condition::wait(newlock, pred);
+   }
+
+   template <typename L>
+   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time)
+   {
+      lock_wrapper<L> newlock(lock);
+      return named_condition::timed_wait(newlock, abs_time);
+   }
+
+   template <typename L, typename Pr>
+   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
+   {
+      lock_wrapper<L> newlock(lock);
+      return named_condition::timed_wait(newlock, abs_time, pred);
+   }
 
    static int count;
 };

@@ -9,6 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
+#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include "mutex_test_template.hpp"
 

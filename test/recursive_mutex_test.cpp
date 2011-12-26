@@ -9,9 +9,10 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
+#include <boost/interprocess/detail/workaround.hpp>
 #if defined(BOOST_INTERPROCESS_WINDOWS)
-#include <boost/interprocess/sync/windows/windows_recursive_mutex.hpp>
-#include <boost/interprocess/sync/windows/spin_recursive_mutex.hpp>
+#include <boost/interprocess/sync/windows/recursive_mutex.hpp>
+#include <boost/interprocess/sync/spin/recursive_mutex.hpp>
 #endif
 #include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>

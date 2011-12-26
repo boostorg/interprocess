@@ -24,12 +24,10 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include "boost_interprocess_check.hpp"
 #include <boost/thread/detail/config.hpp>
-#include <boost/interprocess/sync/interprocess_condition.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/thread/xtime.hpp>
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <iostream>
 
 namespace boost{
