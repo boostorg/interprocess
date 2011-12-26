@@ -21,7 +21,7 @@
 #include <boost/assert.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/pointer_type.hpp>
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/move.hpp>
 #include <boost/compressed_pair.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
@@ -143,7 +143,7 @@ class unique_ptr
    //!
    //!After the construction, u no longer owns a pointer.
    //![ Note: The deleter constructor can be implemented with
-   //!   boost::interprocess::forward<D>. -end note ]
+   //!   boost::forward<D>. -end note ]
    //!
    //!Postconditions: get() == value u.get() had before the construction.
    //!get_deleter() returns a reference to the internally stored deleter which
@@ -152,7 +152,7 @@ class unique_ptr
    //!
    //!Throws: nothing.
    unique_ptr(BOOST_RV_REF(unique_ptr) u)
-      : ptr_(u.release(), boost::interprocess::forward<D>(u.get_deleter()))
+      : ptr_(u.release(), boost::forward<D>(u.get_deleter()))
    {}
 
    //!Requires: If D is not a reference type, construction of the deleter
@@ -186,7 +186,7 @@ class unique_ptr
             ,
             nat
             >::type = nat())
-      : ptr_(const_cast<unique_ptr<U,E>&>(u).release(), boost::interprocess::move<D>(u.get_deleter()))
+      : ptr_(const_cast<unique_ptr<U,E>&>(u).release(), boost::move<D>(u.get_deleter()))
    {}
 
    //!Effects: If get() == 0 there are no effects. Otherwise get_deleter()(get()).
@@ -211,7 +211,7 @@ class unique_ptr
    unique_ptr& operator=(BOOST_RV_REF(unique_ptr) u)
    {
       reset(u.release());
-      ptr_.second() = boost::interprocess::move(u.get_deleter());
+      ptr_.second() = boost::move(u.get_deleter());
       return *this;
    }
 
@@ -233,7 +233,7 @@ class unique_ptr
    unique_ptr& operator=(BOOST_RV_REF_2_TEMPL_ARGS(unique_ptr, U, E) u)
    {
       reset(u.release());
-      ptr_.second() = boost::interprocess::move(u.get_deleter());
+      ptr_.second() = boost::move(u.get_deleter());
       return *this;
    }
 

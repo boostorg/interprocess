@@ -15,7 +15,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/creation_tags.hpp>
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/move.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 
 namespace boost {
@@ -61,7 +61,7 @@ class file_wrapper
    //!Does not throw
    file_wrapper &operator=(BOOST_RV_REF(file_wrapper) moved)
    {  
-      file_wrapper tmp(boost::interprocess::move(moved));
+      file_wrapper tmp(boost::move(moved));
       this->swap(tmp);
       return *this;  
    }

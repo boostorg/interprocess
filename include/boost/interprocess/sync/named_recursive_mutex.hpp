@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -18,13 +18,9 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/creation_tags.hpp>
-#include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-#include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
-#include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
-#include <boost/interprocess/sync/emulation/named_creation_functor.hpp>
 #include <boost/interprocess/permissions.hpp>
+#include <boost/interprocess/sync/shm/named_recursive_mutex.hpp>
 
 //!\file
 //!Describes a named named_recursive_mutex class for inter-process synchronization
@@ -101,11 +97,9 @@ class named_recursive_mutex
    friend class ipcdetail::interprocess_tester;
    void dont_close_on_destruction();
 
-   interprocess_recursive_mutex *mutex() const
-   {  return static_cast<interprocess_recursive_mutex*>(m_shmem.get_user_address()); }
+   typedef ipcdetail::shm_named_recursive_mutex impl_t;
+   impl_t m_mut;
 
-   ipcdetail::managed_open_or_create_impl<shared_memory_object> m_shmem;
-   typedef ipcdetail::named_creation_functor<interprocess_recursive_mutex> construct_func_t;
    /// @endcond
 };
 
@@ -115,48 +109,28 @@ inline named_recursive_mutex::~named_recursive_mutex()
 {}
 
 inline void named_recursive_mutex::dont_close_on_destruction()
-{  ipcdetail::interprocess_tester::dont_close_on_destruction(m_shmem);  }
+{  ipcdetail::interprocess_tester::dont_close_on_destruction(m_mut);  }
 
 inline named_recursive_mutex::named_recursive_mutex(create_only_t, const char *name, const permissions &perm)
-   :  m_shmem  (create_only
-               ,name
-               ,sizeof(interprocess_recursive_mutex) +
-                  ipcdetail::managed_open_or_create_impl<shared_memory_object>::
-                     ManagedOpenOrCreateUserOffset
-               ,read_write
-               ,0
-               ,construct_func_t(ipcdetail::DoCreate)
-               ,perm)
+   :  m_mut  (create_only, name, perm)
 {}
 
 inline named_recursive_mutex::named_recursive_mutex(open_or_create_t, const char *name, const permissions &perm)
-   :  m_shmem  (open_or_create
-               ,name
-               ,sizeof(interprocess_recursive_mutex) +
-                  ipcdetail::managed_open_or_create_impl<shared_memory_object>::
-                     ManagedOpenOrCreateUserOffset
-               ,read_write
-               ,0
-               ,construct_func_t(ipcdetail::DoOpenOrCreate)
-               ,perm)
+   :  m_mut  (open_or_create, name, perm)
 {}
 
 inline named_recursive_mutex::named_recursive_mutex(open_only_t, const char *name)
-   :  m_shmem  (open_only
-               ,name
-               ,read_write
-               ,0
-               ,construct_func_t(ipcdetail::DoOpen))
+   :  m_mut   (open_only, name)
 {}
 
 inline void named_recursive_mutex::lock()
-{  this->mutex()->lock();  }
+{  m_mut.lock();  }
 
 inline void named_recursive_mutex::unlock()
-{  this->mutex()->unlock();  }
+{  m_mut.unlock();  }
 
 inline bool named_recursive_mutex::try_lock()
-{  return this->mutex()->try_lock();  }
+{  return m_mut.try_lock();  }
 
 inline bool named_recursive_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
 {
@@ -164,11 +138,11 @@ inline bool named_recursive_mutex::timed_lock(const boost::posix_time::ptime &ab
       this->lock();
       return true;
    }
-   return this->mutex()->timed_lock(abs_time);
+   return m_mut.timed_lock(abs_time);
 }
 
 inline bool named_recursive_mutex::remove(const char *name)
-{  return shared_memory_object::remove(name); }
+{  return impl_t::remove(name); }
 
 /// @endcond
 

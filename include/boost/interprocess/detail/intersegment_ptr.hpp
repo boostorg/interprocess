@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -226,7 +226,7 @@ struct flat_map_intersegment
 
    //!Obtains the address pointed
    //!by the object
-   void *get_pointer() const
+   void *to_raw_pointer() const
    {
       if(is_null()){
          return 0;
@@ -259,23 +259,23 @@ struct flat_map_intersegment
    //!This only works with two basic_intersegment_ptr pointing
    //!to the same segment. Otherwise undefined
    std::ptrdiff_t diff(const self_t &other) const
-   {  return static_cast<char*>(this->get_pointer()) - static_cast<char*>(other.get_pointer());   }
+   {  return static_cast<char*>(this->to_raw_pointer()) - static_cast<char*>(other.to_raw_pointer());   }
 
    //!Returns true if both point to
    //!the same object
    bool equal(const self_t &y) const
-   {  return this->get_pointer() == y.get_pointer();  }
+   {  return this->to_raw_pointer() == y.to_raw_pointer();  }
 
    //!Returns true if *this is less than other.
    //!This only works with two basic_intersegment_ptr pointing
    //!to the same segment group. Otherwise undefined. Never throws
    bool less(const self_t &y) const
-   {  return this->get_pointer() < y.get_pointer(); }
+   {  return this->to_raw_pointer() < y.to_raw_pointer(); }
 
    void swap(self_t &other)
    {
-      void *ptr_this  = this->get_pointer();
-      void *ptr_other = other.get_pointer();
+      void *ptr_this  = this->to_raw_pointer();
+      void *ptr_other = other.to_raw_pointer();
       other.set_from_pointer(ptr_this);
       this->set_from_pointer(ptr_other);
    }
@@ -344,21 +344,21 @@ struct flat_map_intersegment
    //!by another flat_map_intersegment
    void set_from_other(const self_t &other)
    {
-      this->set_from_pointer(other.get_pointer());
+      this->set_from_pointer(other.to_raw_pointer());
    }
 
    //!Increments internal
    //!offset
    void inc_offset(std::ptrdiff_t bytes)
    {
-      this->set_from_pointer(static_cast<char*>(this->get_pointer()) + bytes);
+      this->set_from_pointer(static_cast<char*>(this->to_raw_pointer()) + bytes);
    }
 
    //!Decrements internal
    //!offset
    void dec_offset(std::ptrdiff_t bytes)
    {
-      this->set_from_pointer(static_cast<char*>(this->get_pointer()) - bytes);
+      this->set_from_pointer(static_cast<char*>(this->to_raw_pointer()) - bytes);
    }
 
    //////////////////////////////////////
@@ -659,7 +659,7 @@ class intersegment_ptr : public flat_map_intersegment<interprocess_mutex>
    //!Obtains raw pointer from offset.
    //!Never throws.
    pointer get()const
-   {  return static_cast<pointer>(base_t::get_pointer());   }
+   {  return static_cast<pointer>(base_t::to_raw_pointer());   }
 
    //!Pointer-like -> operator. It can return 0 pointer.
    //!Never throws.
@@ -865,10 +865,10 @@ void swap (boost::interprocess::intersegment_ptr<T> &pt,
            boost::interprocess::intersegment_ptr<T> &pt2)
 {  pt.swap(pt2);  }
 
-//!get_pointer() enables boost::mem_fn to recognize intersegment_ptr. 
+//!to_raw_pointer() enables boost::mem_fn to recognize intersegment_ptr. 
 //!Never throws.
 template<class T> inline
-T * get_pointer(boost::interprocess::intersegment_ptr<T> const & p)
+T * to_raw_pointer(boost::interprocess::intersegment_ptr<T> const & p)
 {  return p.get();   }
 
 //!Simulation of static_cast between pointers.
@@ -907,10 +907,10 @@ struct is_multisegment_ptr
 }  //namespace interprocess {
 
 #if defined(_MSC_VER) && (_MSC_VER < 1400)
-//!get_pointer() enables boost::mem_fn to recognize intersegment_ptr. 
+//!to_raw_pointer() enables boost::mem_fn to recognize intersegment_ptr. 
 //!Never throws.
 template<class T> inline
-T * get_pointer(boost::interprocess::intersegment_ptr<T> const & p)
+T * to_raw_pointer(boost::interprocess::intersegment_ptr<T> const & p)
 {  return p.get();   }
 #endif
 
@@ -929,8 +929,6 @@ struct has_trivial_destructor
    : public true_type{};
 
 }  //namespace boost {
-
-#include <boost/interprocess/detail/config_end.hpp>
 
 #if 0
 
@@ -982,7 +980,7 @@ struct has_trivial_destructor
 
 //!Obtains the address pointed by the
 //!object
-void *get_pointer() const
+void *to_raw_pointer() const
 {
    if(this->is_pointee_outside() || this->is_in_stack()){
       return raw_address();
@@ -1033,7 +1031,7 @@ void set_from_pointer(const void *ptr)
 }
 
 void set_from_other(const self_t &other)
-{  this->set_from_pointer(other.get_pointer()); }
+{  this->set_from_pointer(other.to_raw_pointer()); }
 
 #endif
 

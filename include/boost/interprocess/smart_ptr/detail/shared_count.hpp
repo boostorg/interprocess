@@ -4,7 +4,7 @@
 //
 // (C) Copyright Peter Dimov and Multi Media Ltd. 2001, 2002, 2003
 // (C) Copyright Peter Dimov 2004-2005
-// (C) Copyright Ion Gaztanaga 2006-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -92,7 +92,7 @@ class shared_count
                         deallocator(m_pi, alloc);
             //It's more correct to use VoidAllocator::construct but
             //this needs copy constructor and we don't like it
-            new(ipcdetail::get_pointer(m_pi))counted_impl(p, a, d);
+            new(ipcdetail::to_raw_pointer(m_pi))counted_impl(p, a, d);
             deallocator.release();
          }
       }
@@ -105,7 +105,7 @@ class shared_count
 
    ~shared_count() // nothrow
    {  
-      if( m_pi != 0 ) 
+      if(m_pi)
          m_pi->release();
    }
 
@@ -145,10 +145,10 @@ class shared_count
       }
    }
 
-   const pointer &get_pointer() const
+   const pointer &to_raw_pointer() const
    {  return m_px;   }
 
-   pointer &get_pointer()
+   pointer &to_raw_pointer()
    {  return m_px;   }
 
    shared_count & operator= (shared_count const & r) // nothrow

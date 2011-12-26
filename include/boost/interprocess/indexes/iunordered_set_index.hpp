@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -16,7 +16,7 @@
 
 #include <functional>
 #include <utility>
-#include <boost/get_pointer.hpp>
+
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/intrusive/unordered_set.hpp>
@@ -84,7 +84,7 @@ struct iunordered_set_index_aux
     {
         std::size_t operator()(const value_type &val) const
         {
-            const char_type *beg = ipcdetail::get_pointer(val.name()),
+            const char_type *beg = ipcdetail::to_raw_pointer(val.name()),
                             *end = beg + val.name_length();
             return boost::hash_range(beg, end);
         }
@@ -156,7 +156,7 @@ class iunordered_set_index
    typedef typename index_aux::
       segment_manager_base             segment_manager_base;
 
-   enum {   InitBufferSize = 64};
+   static const std::size_t InitBufferSize = 64;
 
    static bucket_ptr create_buckets(allocator_type &alloc, size_type num)
    {
@@ -164,7 +164,7 @@ class iunordered_set_index
       bucket_ptr buckets = alloc.allocate(num);
       bucket_ptr buckets_init = buckets;
       for(size_type i = 0; i < num; ++i){
-         new(get_pointer(buckets_init++))bucket_type();
+         new(to_raw_pointer(buckets_init++))bucket_type();
       }
       return buckets;
    }
@@ -181,8 +181,8 @@ class iunordered_set_index
          return old_size;
       }
 
-      for( bucket_type *p = ipcdetail::get_pointer(buckets) + received_size
-         , *pend = ipcdetail::get_pointer(buckets) + old_size
+      for( bucket_type *p = ipcdetail::to_raw_pointer(buckets) + received_size
+         , *pend = ipcdetail::to_raw_pointer(buckets) + old_size
          ; p != pend
          ; ++p){
          p->~bucket_type();
@@ -194,7 +194,7 @@ class iunordered_set_index
 
       bucket_ptr buckets_init = buckets + received_size;
       for(size_type i = 0; i < (old_size - received_size); ++i){
-         get_pointer(buckets_init++)->~bucket_type();
+         to_raw_pointer(buckets_init++)->~bucket_type();
       }
       return received_size;
    }
@@ -210,13 +210,13 @@ class iunordered_set_index
       if(ret.first == old_buckets){
          bucket_ptr buckets_init = old_buckets + old_num;
          for(size_type i = 0; i < (new_num - old_num); ++i){
-            new(get_pointer(buckets_init++))bucket_type();
+            new(to_raw_pointer(buckets_init++))bucket_type();
          }
       }
       else{
          bucket_ptr buckets_init = ret.first;
          for(size_type i = 0; i < new_num; ++i){
-            new(get_pointer(buckets_init++))bucket_type();
+            new(to_raw_pointer(buckets_init++))bucket_type();
          }
       }
 
@@ -228,7 +228,7 @@ class iunordered_set_index
    {
       bucket_ptr buckets_destroy = buckets;
       for(size_type i = 0; i < num; ++i){
-         get_pointer(buckets_destroy++)->~bucket_type();
+         to_raw_pointer(buckets_destroy++)->~bucket_type();
       }
       alloc.deallocate(buckets, num);
    }
@@ -357,7 +357,7 @@ template<class MapConfig>
 struct is_intrusive_index
    <boost::interprocess::iunordered_set_index<MapConfig> >
 {
-   enum{ value = true };
+   static const bool value = true;
 };
 /// @endcond
 

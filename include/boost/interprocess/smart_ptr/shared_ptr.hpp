@@ -4,7 +4,7 @@
 //
 // (C) Copyright Greg Colvin and Beman Dawes 1998, 1999.
 // (C) Copyright Peter Dimov 2001, 2002, 2003
-// (C) Copyright Ion Gaztanaga 2006-2009.
+// (C) Copyright Ion Gaztanaga 2006-2011.
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -24,7 +24,7 @@
 #include <boost/assert.hpp>
 #include <boost/interprocess/smart_ptr/detail/shared_count.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/move.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
@@ -128,7 +128,7 @@ class shared_ptr
       typedef typename boost::pointer_to_other<pointer, T>::type ParameterPointer;
       BOOST_STATIC_ASSERT((ipcdetail::is_same<pointer, ParameterPointer>::value) ||
                           (ipcdetail::is_pointer<pointer>::value));
-      ipcdetail::sp_enable_shared_from_this<T, VoidAllocator, Deleter>( m_pn, ipcdetail::get_pointer(p), ipcdetail::get_pointer(p) ); 
+      ipcdetail::sp_enable_shared_from_this<T, VoidAllocator, Deleter>( m_pn, ipcdetail::to_raw_pointer(p), ipcdetail::to_raw_pointer(p) ); 
    }
 
 
@@ -163,22 +163,22 @@ class shared_ptr
    /// @cond
    template<class Y>
    shared_ptr(shared_ptr<Y, VoidAllocator, Deleter> const & r, ipcdetail::static_cast_tag)
-      :  m_pn( pointer(static_cast<T*>(ipcdetail::get_pointer(r.m_pn.get_pointer())))
+      :  m_pn( pointer(static_cast<T*>(ipcdetail::to_raw_pointer(r.m_pn.to_raw_pointer())))
              , r.m_pn) 
    {}
 
    template<class Y>
    shared_ptr(shared_ptr<Y, VoidAllocator, Deleter> const & r, ipcdetail::const_cast_tag)
-      :  m_pn( pointer(const_cast<T*>(ipcdetail::get_pointer(r.m_pn.get_pointer())))
+      :  m_pn( pointer(const_cast<T*>(ipcdetail::to_raw_pointer(r.m_pn.to_raw_pointer())))
              , r.m_pn) 
    {}
 
    template<class Y>
    shared_ptr(shared_ptr<Y, VoidAllocator, Deleter> const & r, ipcdetail::dynamic_cast_tag)
-      :  m_pn( pointer(dynamic_cast<T*>(ipcdetail::get_pointer(r.m_pn.get_pointer())))
+      :  m_pn( pointer(dynamic_cast<T*>(ipcdetail::to_raw_pointer(r.m_pn.to_raw_pointer())))
              , r.m_pn) 
    {
-      if(!m_pn.get_pointer()){ // need to allocate new counter -- the cast failed
+      if(!m_pn.to_raw_pointer()){ // need to allocate new counter -- the cast failed
          m_pn = ipcdetail::shared_count<T, VoidAllocator, Deleter>();
       }
    }
@@ -238,17 +238,17 @@ class shared_ptr
    //!Returns a reference to the
    //!pointed type
    reference operator* () const // never throws
-   {  BOOST_ASSERT(m_pn.get_pointer() != 0);  return *m_pn.get_pointer(); }
+   {  BOOST_ASSERT(m_pn.to_raw_pointer() != 0);  return *m_pn.to_raw_pointer(); }
 
    //!Returns the pointer pointing 
    //!to the owned object
    pointer operator-> () const // never throws
-   {  BOOST_ASSERT(m_pn.get_pointer() != 0);  return m_pn.get_pointer();  }
+   {  BOOST_ASSERT(m_pn.to_raw_pointer() != 0);  return m_pn.to_raw_pointer();  }
 
    //!Returns the pointer pointing 
    //!to the owned object
    pointer get() const  // never throws
-   {  return m_pn.get_pointer();  }
+   {  return m_pn.to_raw_pointer();  }
 
    /// @cond
    // implicit conversion to "bool"
@@ -256,13 +256,13 @@ class shared_ptr
    typedef void (this_type::*unspecified_bool_type)() const;
 
    operator unspecified_bool_type() const // never throws
-   {  return !m_pn.get_pointer() ? 0 : &this_type::unspecified_bool_type_func;  }
+   {  return !m_pn.to_raw_pointer() ? 0 : &this_type::unspecified_bool_type_func;  }
    /// @endcond
 
    //!Not operator.
    //!Returns true if this->get() != 0, false otherwise
    bool operator! () const // never throws
-   {  return !m_pn.get_pointer();   }
+   {  return !m_pn.to_raw_pointer();   }
 
    //!Returns use_count() == 1.
    //!unique() might be faster than use_count()
@@ -331,9 +331,9 @@ template<class T, class VoidAllocator, class Deleter, class U> inline
 shared_ptr<T, VoidAllocator, Deleter> dynamic_pointer_cast(shared_ptr<U, VoidAllocator, Deleter> const & r)
 {  return shared_ptr<T, VoidAllocator, Deleter>(r, ipcdetail::dynamic_cast_tag());  }
 
-// get_pointer() enables boost::mem_fn to recognize shared_ptr
+// to_raw_pointer() enables boost::mem_fn to recognize shared_ptr
 template<class T, class VoidAllocator, class Deleter> inline
-T * get_pointer(shared_ptr<T, VoidAllocator, Deleter> const & p)
+T * to_raw_pointer(shared_ptr<T, VoidAllocator, Deleter> const & p)
 {  return p.get();   }
 
 // operator<<
@@ -394,9 +394,9 @@ inline typename managed_shared_ptr<T, ManagedMemory>::type
 /// @cond
 
 #if defined(_MSC_VER) && (_MSC_VER < 1400)
-// get_pointer() enables boost::mem_fn to recognize shared_ptr
+// to_raw_pointer() enables boost::mem_fn to recognize shared_ptr
 template<class T, class VoidAllocator, class Deleter> inline
-T * get_pointer(boost::interprocess::shared_ptr<T, VoidAllocator, Deleter> const & p)
+T * to_raw_pointer(boost::interprocess::shared_ptr<T, VoidAllocator, Deleter> const & p)
 {  return p.get();   }
 #endif
 

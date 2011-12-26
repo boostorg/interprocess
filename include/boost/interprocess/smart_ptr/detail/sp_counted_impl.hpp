@@ -115,7 +115,7 @@ class sp_counted_impl_pd
       scoped_ptr< this_type, scoped_ptr_dealloc_functor<this_allocator> >
          deleter(this_ptr, a_copy);
       typedef typename this_allocator::value_type value_type;
-      ipcdetail::get_pointer(this_ptr)->~value_type();
+      ipcdetail::to_raw_pointer(this_ptr)->~value_type();
    }
 
    void release() // nothrow
