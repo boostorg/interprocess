@@ -1,5 +1,5 @@
 [/
- / Copyright (c) 2007-2009 Ion Gaztanaga
+ / Copyright (c) 2005-2011 Ion Gaztanaga
  /
  / Distributed under the Boost Software License, Version 1.0. (See accompanying
  / file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -8,7 +8,7 @@
 [library Boost.Interprocess
     [quickbook 1.4]
     [authors [Gaztanaga, Ion]]
-    [copyright 2005- 2010 Ion Gaztanaga]
+    [copyright 2005- 2011 Ion Gaztanaga]
     [id interprocess]
     [dirname interprocess]
     [purpose Interprocess communication utilities]
