@@ -66,7 +66,7 @@ class mapped_region
 
    //!Creates a mapping region of the mapped memory "mapping", starting in
    //!offset "offset", and the mapping's size will be "size". The mapping 
-   //!can be opened for read-only "read_only" or read-write 
+   //!can be opened for read-only "read_only" or read-write
    //!"read_write.
    template<class MemoryMappable>
    mapped_region(const MemoryMappable& mapping
@@ -75,12 +75,12 @@ class mapped_region
                 ,std::size_t size = 0
                 ,const void *address = 0);
 
-   //!Default constructor. Address will be invalid_address().
+   //!Default constructor. Default constructor. Address will be 0 (nullptr).
    //!Size and offset will be 0.
    //!Does not throw
    mapped_region();
 
-   //!Move constructor. *this will be constructed taking ownership of "other"'s 
+   //!Move constructor. *this will be constructed taking ownership of "other"'s
    //!region and "other" will be left in default constructor state.
    mapped_region(BOOST_RV_REF(mapped_region) other)
    #if defined (BOOST_INTERPROCESS_WINDOWS)
@@ -89,7 +89,7 @@ class mapped_region
    ,  m_mode(read_only)
    ,  m_file_mapping_hnd(ipcdetail::invalid_file())
    #else
-   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0), m_mode(read_only), m_is_xsi(false)
+   :  m_base(0), m_size(0), m_offset(0),  m_extra_offset(0), m_mode(read_only), m_is_xsi(false)
    #endif
    {  this->swap(other);   }
 
@@ -122,10 +122,6 @@ class mapped_region
    //!Returns the mode of the mapping used to construct the mapped file.
    //!Never throws.
    mode_t get_mode() const;
-
-   //!Returns the value that represents an invalid mapping address
-   //!Never throws.
-   static void* invalid_address();
 
    //!Flushes to the disk a byte range within the mapped memory. 
    //!Never throws
@@ -173,19 +169,19 @@ class mapped_region
 inline void swap(mapped_region &x, mapped_region &y)
 {  x.swap(y);  }
 
-inline mapped_region::~mapped_region() 
+inline mapped_region::~mapped_region()
 {  this->priv_close(); }
 
-inline std::size_t mapped_region::get_size()  const  
+inline std::size_t mapped_region::get_size()  const
 {  return m_size; }
 
-inline offset_t mapped_region::get_offset()  const  
+inline offset_t mapped_region::get_offset()  const 
 {  return m_offset;   }
 
-inline mode_t mapped_region::get_mode()  const  
+inline mode_t mapped_region::get_mode()  const
 {  return m_mode;   }
 
-inline void*    mapped_region::get_address()  const  
+inline void*    mapped_region::get_address()  const
 {  return m_base; }
 
 #if defined (BOOST_INTERPROCESS_WINDOWS)
@@ -254,7 +250,7 @@ inline mapped_region::mapped_region
             throw interprocess_exception(err);
          }
 
-         if(static_cast<unsigned __int64>(total_size) > 
+         if(static_cast<unsigned __int64>(total_size) >
             (std::numeric_limits<std::size_t>::max)()){
             error_info err(size_error);
             throw interprocess_exception(err);
@@ -263,7 +259,7 @@ inline mapped_region::mapped_region
       }
 
       //Create file mapping
-      native_mapping_handle = 
+      native_mapping_handle =
          winapi::create_file_mapping
          (ipcdetail::file_handle_from_mapping_handle(mapping.get_mapping_handle()), file_map_access, 0, 0, 0, 0);
 
@@ -275,7 +271,7 @@ inline mapped_region::mapped_region
       }
    }
 
-   //We can't map any offset so we have to obtain system's 
+   //We can't map any offset so we have to obtain system's
    //memory granularity
    unsigned long granularity = 0;
    unsigned long foffset_low;
@@ -315,10 +311,10 @@ inline mapped_region::mapped_region
    //Map with new offsets and size
    m_base = winapi::map_view_of_file_ex
                                (native_mapping_handle,
-                                map_access, 
+                                map_access,
                                 foffset_high,
-                                foffset_low, 
-                                m_size ? static_cast<std::size_t>(m_extra_offset + m_size) : 0, 
+                                foffset_low,
+                                m_size ? static_cast<std::size_t>(m_extra_offset + m_size) : 0,
                                 const_cast<void*>(address));
 
    if(!mhandle.is_shm){
@@ -357,7 +353,7 @@ inline bool mapped_region::flush(std::size_t mapping_offset, std::size_t numbyte
 
    //Flush it all
    return winapi::flush_view_of_file
-      (static_cast<char*>(m_base)+mapping_offset, 
+      (static_cast<char*>(m_base)+mapping_offset,
        static_cast<std::size_t>(numbytes));
 }
 
@@ -375,16 +371,13 @@ inline void mapped_region::priv_close()
    #endif
 }
 
-inline void* mapped_region::invalid_address()  
-{  return 0; }
-
 inline void mapped_region::dont_close_on_destruction()
 {}
 
 #else    //#if (defined BOOST_INTERPROCESS_WINDOWS)
 
 inline mapped_region::mapped_region()
-   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0), m_mode(read_only), m_is_xsi(false)
+   :  m_base(0), m_size(0), m_offset(0), m_extra_offset(0), m_mode(read_only), m_is_xsi(false)
 {}
 
 template<int dummy>
@@ -393,12 +386,12 @@ inline std::size_t mapped_region::page_size_holder<dummy>::get_page_size()
 
 template<class MemoryMappable>
 inline mapped_region::mapped_region
-   (const MemoryMappable &mapping,
-   mode_t mode,
-   offset_t offset,
-   std::size_t size,
-   const void *address)
-   :  m_base(MAP_FAILED), m_size(0), m_offset(0),  m_extra_offset(0), m_mode(mode), m_is_xsi(false)
+   ( const MemoryMappable &mapping
+   , mode_t mode
+   , offset_t offset
+   , std::size_t size
+   , const void *address)
+   : m_base(0), m_size(0), m_offset(0), m_extra_offset(0), m_mode(mode), m_is_xsi(false)
 {
    mapping_handle_t map_hnd = mapping.get_mapping_handle();
 
@@ -497,40 +490,37 @@ inline mapped_region::mapped_region
 
    //We calculate the difference between demanded and valid offset
    std::size_t page_size = this->get_page_size();
-   m_extra_offset = (offset - (offset / page_size) * page_size);
+   offset_t extra_offset = offset - (offset / page_size) * page_size;
 
-   //Store user values in memory
-   m_offset = offset;
-   m_size   = size;
 
    //Update the mapping address
    if(address){
-      address = static_cast<const char*>(address) - m_extra_offset;
+      address = static_cast<const char*>(address) - extra_offset;
    }
 
    //Map it to the address space
-   m_base   = mmap  ( const_cast<void*>(address)
-                    , static_cast<std::size_t>(m_extra_offset + m_size)
-                    , prot
-                    , flags
-                    , mapping.get_mapping_handle().handle
-                    , offset - m_extra_offset);
+   void* base = mmap ( const_cast<void*>(address)
+                     , static_cast<std::size_t>(extra_offset + size)
+                     , prot
+                     , flags
+                     , mapping.get_mapping_handle().handle
+                     , offset - extra_offset);
 
    //Check if mapping was successful
-   if(m_base == MAP_FAILED){
+   if(base == MAP_FAILED){
       error_info err = system_error_code();
       this->priv_close();
       throw interprocess_exception(err);
    }
 
    //Calculate new base for the user
-   const void *old_base = m_base;
-   m_base = static_cast<char*>(m_base) + m_extra_offset;
+   m_base = static_cast<char*>(base) + extra_offset; 
+   m_extra_offset = extra_offset;
    m_offset = offset;
    m_size   = size;
 
    //Check for fixed mapping error
-   if(address && (old_base != address)){
+   if(address && (base != address)){
       error_info err(busy_error);
       this->priv_close();
       throw interprocess_exception(err);
@@ -547,13 +537,12 @@ inline bool mapped_region::flush(std::size_t mapping_offset, std::size_t numbyte
       numbytes = m_size - mapping_offset;
    }
    //Flush it all
-   return msync(static_cast<char*>(m_base)+mapping_offset, 
-                numbytes, MS_ASYNC) == 0;
+   return msync(static_cast<char*>(m_base)+mapping_offset, numbytes, MS_ASYNC) == 0;
 }
 
 inline void mapped_region::priv_close()
 {
-   if(m_base != MAP_FAILED){
+   if(m_base != 0){
       #ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
       if(m_is_xsi){
          int ret = ::shmdt(m_base);
@@ -563,15 +552,12 @@ inline void mapped_region::priv_close()
       }
       #endif //#ifdef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
       munmap(static_cast<char*>(m_base) - m_extra_offset, m_size + m_extra_offset);
-      m_base = MAP_FAILED;
+      m_base = 0;
    }
 }
 
-inline void* mapped_region::invalid_address()
-{  return MAP_FAILED; }
-
 inline void mapped_region::dont_close_on_destruction()
-{  m_base = MAP_FAILED;   }
+{  m_base = 0;   }
 
 #endif   //##if (defined BOOST_INTERPROCESS_WINDOWS)
 
