@@ -18,6 +18,7 @@
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/creation_tags.hpp>
