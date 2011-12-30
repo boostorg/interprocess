@@ -20,7 +20,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/pointer_to_other.hpp>
+#include <boost/intrusive/pointer_traits.hpp>
 
 //!\file
 //!Describes the functor to delete objects from the segment.
@@ -36,12 +36,14 @@ template<class T, class SegmentManager>
 class deleter
 {
    public:
-   typedef typename boost::pointer_to_other
-      <typename SegmentManager::void_pointer, T>::type   pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<typename SegmentManager::void_pointer>::template
+         rebind_pointer<T>::type                pointer;
 
    private:
-   typedef typename boost::pointer_to_other
-      <pointer, SegmentManager>::type   segment_manager_pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<pointer>::template
+         rebind_pointer<SegmentManager>::type                segment_manager_pointer;
 
    segment_manager_pointer mp_mngr;
 

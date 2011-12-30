@@ -14,7 +14,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/pointer_to_other.hpp>
+#include <boost/intrusive/pointer_traits.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/detail/utilities.hpp> //to_raw_pointer
@@ -146,8 +146,9 @@ class cache_impl
 {
    typedef typename NodePool::segment_manager::
       void_pointer                                          void_pointer;
-   typedef typename pointer_to_other
-      <void_pointer, NodePool>::type                        node_pool_ptr;
+   typedef typename boost::intrusive::
+      pointer_traits<void_pointer>::template
+         rebind_pointer<NodePool>::type                     node_pool_ptr;
    typedef typename NodePool::multiallocation_chain         multiallocation_chain;
    typedef typename NodePool::segment_manager::size_type    size_type;
    node_pool_ptr                 mp_node_pool;
@@ -312,10 +313,12 @@ class array_allocation_impl
    typedef typename SegmentManager::void_pointer         void_pointer;
 
    public:
-   typedef typename boost::
-      pointer_to_other<void_pointer, T>::type            pointer;
-   typedef typename boost::
-      pointer_to_other<void_pointer, const T>::type      const_pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<void_pointer>::template
+         rebind_pointer<T>::type                         pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<void_pointer>::template
+         rebind_pointer<const T>::type                   const_pointer;
    typedef T                                             value_type;
    typedef typename ipcdetail::add_reference
                      <value_type>::type                  reference;
@@ -416,14 +419,17 @@ class node_pool_allocation_impl
    {  return static_cast<Derived*>(this); }
 
    typedef typename SegmentManager::void_pointer         void_pointer;
-   typedef typename boost::
-      pointer_to_other<void_pointer, const void>::type   cvoid_pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<void_pointer>::template
+         rebind_pointer<const void>::type                cvoid_pointer;
 
    public:
-   typedef typename boost::
-      pointer_to_other<void_pointer, T>::type            pointer;
-   typedef typename boost::
-      pointer_to_other<void_pointer, const T>::type      const_pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<void_pointer>::template
+         rebind_pointer<T>::type                         pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<void_pointer>::template
+         rebind_pointer<const T>::type                   const_pointer;
    typedef T                                             value_type;
    typedef typename ipcdetail::add_reference
                      <value_type>::type                  reference;
@@ -544,8 +550,9 @@ class cached_allocator_impl
    typedef NodePool                                      node_pool_t;
    typedef typename NodePool::segment_manager            segment_manager;
    typedef typename segment_manager::void_pointer        void_pointer;
-   typedef typename boost::
-      pointer_to_other<void_pointer, const void>::type   cvoid_pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<void_pointer>::template
+         rebind_pointer<const void>::type                cvoid_pointer;
    typedef typename base_t::pointer                      pointer;
    typedef typename base_t::size_type                    size_type;
    typedef typename base_t::multiallocation_chain        multiallocation_chain;

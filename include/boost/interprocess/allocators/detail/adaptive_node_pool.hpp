@@ -17,7 +17,6 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/pointer_to_other.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/math_functions.hpp>
 #include <boost/intrusive/set.hpp>

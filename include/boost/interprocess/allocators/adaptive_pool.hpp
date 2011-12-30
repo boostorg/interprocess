@@ -18,7 +18,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/pointer_to_other.hpp>
+#include <boost/intrusive/pointer_traits.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/assert.hpp>
@@ -83,10 +83,12 @@ class adaptive_pool_base
 
    public:
    //-------
-   typedef typename boost::
-      pointer_to_other<void_pointer, T>::type            pointer;
-   typedef typename boost::
-      pointer_to_other<void_pointer, const T>::type      const_pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<void_pointer>::template
+         rebind_pointer<T>::type                         pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<void_pointer>::template
+         rebind_pointer<const T>::type                   const_pointer;
    typedef T                                             value_type;
    typedef typename ipcdetail::add_reference
                      <value_type>::type                  reference;

@@ -26,7 +26,7 @@
 #include <boost/interprocess/smart_ptr/detail/sp_counted_base.hpp>
 #include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/pointer_to_other.hpp>
+#include <boost/intrusive/pointer_traits.hpp>
 
 namespace boost {
 
@@ -79,11 +79,12 @@ class sp_counted_impl_pd
    sp_counted_impl_pd( sp_counted_impl_pd const & );
    sp_counted_impl_pd & operator= ( sp_counted_impl_pd const & );
 
-   typedef typename boost::pointer_to_other
-            <typename A::pointer, const D>::type   const_deleter_pointer;
-
-   typedef typename boost::pointer_to_other
-            <typename A::pointer, const A>::type   const_allocator_pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<typename A::pointer>::template
+         rebind_pointer<const D>::type                   const_deleter_pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<typename A::pointer>::template
+         rebind_pointer<const A>::type                   const_allocator_pointer;
 
    typedef typename D::pointer   pointer;
    pointer m_ptr;

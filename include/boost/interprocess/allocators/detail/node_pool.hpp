@@ -20,7 +20,6 @@
 
 #include <boost/intrusive/slist.hpp>
 #include <boost/math/common_factor_ct.hpp>
-#include <boost/pointer_to_other.hpp>
 
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/allocators/detail/allocator_common.hpp>

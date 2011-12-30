@@ -18,7 +18,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/pointer_to_other.hpp>
+#include <boost/intrusive/pointer_traits.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/mem_algo/detail/mem_algo_common.hpp>
@@ -73,10 +73,13 @@ class rbtree_best_fit
 
    private:
    struct block_ctrl;
-   typedef typename boost::
-      pointer_to_other<VoidPointer, block_ctrl>::type   block_ctrl_ptr;
-   typedef typename boost::
-      pointer_to_other<VoidPointer, char>::type         char_ptr;
+   typedef typename boost::intrusive::
+      pointer_traits<VoidPointer>::template
+         rebind_pointer<block_ctrl>::type                   block_ctrl_ptr;
+
+   typedef typename boost::intrusive::
+      pointer_traits<VoidPointer>::template
+         rebind_pointer<char>::type                         char_ptr;
 
    /// @endcond
 

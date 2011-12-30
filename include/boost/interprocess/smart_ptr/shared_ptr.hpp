@@ -29,7 +29,7 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <boost/static_assert.hpp>
-#include <boost/pointer_to_other.hpp>
+#include <boost/intrusive/pointer_traits.hpp>
 
 #include <algorithm>            // for std::swap
 #include <functional>           // for std::less
@@ -97,16 +97,19 @@ class shared_ptr
 
    typedef T                                                   element_type;
    typedef T                                                   value_type;
-   typedef typename boost::pointer_to_other
-      <typename VoidAllocator::pointer, T>::type               pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<typename VoidAllocator::pointer>::template
+         rebind_pointer<T>::type                               pointer;
    typedef typename ipcdetail::add_reference
                      <value_type>::type                        reference;
    typedef typename ipcdetail::add_reference
                      <const value_type>::type                  const_reference;
-   typedef typename boost::pointer_to_other
-            <typename VoidAllocator::pointer, const Deleter>::type         const_deleter_pointer;
-   typedef typename boost::pointer_to_other
-            <typename VoidAllocator::pointer, const VoidAllocator>::type   const_allocator_pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<typename VoidAllocator::pointer>::template
+         rebind_pointer<const Deleter>::type                               const_deleter_pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<typename VoidAllocator::pointer>::template
+         rebind_pointer<const VoidAllocator>::type                         const_allocator_pointer;
 
    BOOST_COPYABLE_AND_MOVABLE(shared_ptr)
    public:
@@ -125,7 +128,10 @@ class shared_ptr
    {  
       //Check that the pointer passed is of the same type that
       //the pointer the allocator defines or it's a raw pointer
-      typedef typename boost::pointer_to_other<pointer, T>::type ParameterPointer;
+      typedef typename boost::intrusive::
+         pointer_traits<pointer>::template
+            rebind_pointer<T>::type                         ParameterPointer;
+
       BOOST_STATIC_ASSERT((ipcdetail::is_same<pointer, ParameterPointer>::value) ||
                           (ipcdetail::is_pointer<pointer>::value));
       ipcdetail::sp_enable_shared_from_this<T, VoidAllocator, Deleter>( m_pn, ipcdetail::to_raw_pointer(p), ipcdetail::to_raw_pointer(p) ); 
@@ -223,7 +229,9 @@ class shared_ptr
    {  
       //Check that the pointer passed is of the same type that
       //the pointer the allocator defines or it's a raw pointer
-      typedef typename boost::pointer_to_other<Pointer, T>::type ParameterPointer;
+      typedef typename boost::intrusive::
+         pointer_traits<Pointer>::template
+            rebind_pointer<T>::type                         ParameterPointer;
       BOOST_STATIC_ASSERT((ipcdetail::is_same<pointer, ParameterPointer>::value) ||
                           (ipcdetail::is_pointer<Pointer>::value));
       this_type(p, a, d).swap(*this);  
