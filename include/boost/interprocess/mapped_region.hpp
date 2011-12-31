@@ -489,8 +489,8 @@ inline mapped_region::mapped_region
    }
 
    //We calculate the difference between demanded and valid offset
-   std::size_t page_size = this->get_page_size();
-   offset_t extra_offset = offset - (offset / page_size) * page_size;
+   const std::size_t page_size = this->get_page_size();
+   const offset_t extra_offset = offset - (offset / page_size) * page_size;
 
 
    //Update the mapping address

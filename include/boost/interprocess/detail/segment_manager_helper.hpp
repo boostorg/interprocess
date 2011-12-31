@@ -18,7 +18,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/pointer_to_other.hpp>
+#include <boost/intrusive/pointer_traits.hpp>
 
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
@@ -335,8 +335,9 @@ class char_ptr_holder
 template<class CharT, class VoidPointer>
 struct index_key
 {
-   typedef typename boost::
-      pointer_to_other<VoidPointer, const CharT>::type   const_char_ptr_t;
+   typedef typename boost::intrusive::
+      pointer_traits<VoidPointer>::template
+         rebind_pointer<const CharT>::type               const_char_ptr_t;
    typedef CharT                                         char_type;
    typedef typename boost::intrusive::pointer_traits<const_char_ptr_t>::difference_type difference_type;
    typedef typename boost::make_unsigned<difference_type>::type size_type;

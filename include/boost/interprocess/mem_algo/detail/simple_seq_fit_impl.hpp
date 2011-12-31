@@ -18,7 +18,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/pointer_to_other.hpp>
+#include <boost/intrusive/pointer_traits.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/containers/allocation_type.hpp>
@@ -61,7 +61,9 @@ class simple_seq_fit_impl
    simple_seq_fit_impl(const simple_seq_fit_impl &);
    simple_seq_fit_impl &operator=(const simple_seq_fit_impl &);
    
-   typedef typename boost::pointer_to_other<VoidPointer, char>::type char_ptr;
+   typedef typename boost::intrusive::
+      pointer_traits<VoidPointer>::template
+         rebind_pointer<char>::type                         char_ptr;
 
    public:
 
@@ -78,8 +80,9 @@ class simple_seq_fit_impl
 
    private:
    class block_ctrl;
-   typedef typename boost::
-      pointer_to_other<void_pointer, block_ctrl>::type block_ctrl_ptr;
+   typedef typename boost::intrusive::
+      pointer_traits<VoidPointer>::template
+         rebind_pointer<block_ctrl>::type                   block_ctrl_ptr;
 
    class block_ctrl;
    friend class block_ctrl;

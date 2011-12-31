@@ -510,11 +510,14 @@ struct pointer_plus_bits<boost::interprocess::offset_ptr<T, P, O, A>, NumBits>
 template<class T, class U>
 struct pointer_to_other;
 
+
+
 //Backwards compatibility with pointer_to_other
-template<class T, class T2, class T3, std::size_t A, class U>
-struct pointer_to_other< ::boost::interprocess::offset_ptr<T, T2, T3, A>, U >
+template <class PointedType, class DifferenceType, class OffsetType, std::size_t OffsetAlignment, class U>
+struct pointer_to_other
+   < ::boost::interprocess::offset_ptr<PointedType, DifferenceType, OffsetType, OffsetAlignment>, U >
 {
-   typedef ::boost::interprocess::offset_ptr<U, T2, T3, A> type;
+   typedef ::boost::interprocess::offset_ptr<U, DifferenceType, OffsetType, OffsetAlignment> type;
 };
 
 }  //namespace boost{

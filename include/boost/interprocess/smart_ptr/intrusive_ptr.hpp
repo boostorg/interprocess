@@ -22,7 +22,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/pointer_to_other.hpp>
+#include <boost/intrusive/pointer_traits.hpp>
 
 #include <functional>           // for std::less
 #include <iosfwd>               // for std::basic_ostream
@@ -50,7 +50,9 @@ class intrusive_ptr
 {
    public:
    //!Provides the type of the internal stored pointer.
-   typedef typename boost::pointer_to_other<VoidPointer, T>::type pointer;
+   typedef typename boost::intrusive::
+      pointer_traits<VoidPointer>::template
+         rebind_pointer<T>::type                pointer;
    //!Provides the type of the stored pointer.
    typedef T element_type;
 
