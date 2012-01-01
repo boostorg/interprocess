@@ -28,6 +28,7 @@
 #include <boost/interprocess/smart_ptr/detail/bad_weak_ptr.hpp>
 #include <boost/interprocess/smart_ptr/detail/sp_counted_impl.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/container/allocator/allocator_traits.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 #include <functional>       // std::less
 
@@ -54,9 +55,12 @@ class shared_count
          rebind_pointer<counted_impl>::type                         counted_impl_ptr;
    typedef typename boost::intrusive::
       pointer_traits<typename VoidAllocator::pointer>::template
-         rebind_pointer<sp_counted_base>::type                         counted_base_ptr;
-   typedef typename VoidAllocator::template rebind
-      <counted_impl>::other                        counted_impl_allocator;
+         rebind_pointer<sp_counted_base>::type                       counted_base_ptr;
+
+   typedef boost::container::allocator_traits<VoidAllocator>         vallocator_traits;
+
+   typedef typename vallocator_traits::template
+      portable_rebind_alloc<counted_impl>::type                      counted_impl_allocator;
 
    typedef typename boost::intrusive::
       pointer_traits<typename VoidAllocator::pointer>::template
