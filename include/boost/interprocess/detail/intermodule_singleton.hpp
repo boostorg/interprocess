@@ -24,6 +24,7 @@
 
 #include <boost/interprocess/shared_memory_object.hpp>
 
+#include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/sync/spin/mutex.hpp>
 #include <boost/interprocess/sync/spin/recursive_mutex.hpp>
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
@@ -73,7 +74,9 @@ struct intermodule_singleton_mutex_family
 
 struct intermodule_types
 {
-   typedef rbtree_best_fit<intermodule_singleton_mutex_family, void*> mem_algo;
+   //We must use offset_ptr since a loaded DLL can map the singleton holder shared memory
+   //at a different address than other DLLs/main executables
+   typedef rbtree_best_fit<intermodule_singleton_mutex_family, offset_ptr<void> > mem_algo;
    template<class Device, bool FileBased>
    struct open_or_create
    {
@@ -773,8 +776,6 @@ class intermodule_singleton_common
       return *static_cast<ManagedShMem *>(static_cast<void *>(&mem_holder.shm_mem));
    }
 
-   static const std::size_t MemSize = ((sizeof(ManagedShMem)-1)/sizeof(::boost::detail::max_align))+1u;
-
    static void initialize_shm();
    static void destroy_shm();
    //Static data, zero-initalized without any dependencies
@@ -784,7 +785,8 @@ class intermodule_singleton_common
    static volatile boost::uint32_t this_module_shm_initialized;
    static struct mem_holder_t
    {
-      ::boost::detail::max_align shm_mem[MemSize];
+      ::boost::detail::max_align aligner;
+      char shm_mem [sizeof(ManagedShMem)];
    } mem_holder;
 };
 
@@ -795,9 +797,6 @@ template<class ManagedShMem>
 volatile boost::uint32_t intermodule_singleton_common<ManagedShMem>::this_module_shm_initialized;
 
 template<class ManagedShMem>
-const std::size_t intermodule_singleton_common<ManagedShMem>::MemSize;
-
-template<class ManagedShMem>
 typename intermodule_singleton_common<ManagedShMem>::mem_holder_t
    intermodule_singleton_common<ManagedShMem>::mem_holder;
 
@@ -806,9 +805,6 @@ void intermodule_singleton_common<ManagedShMem>::initialize_shm()
 {
    //Obtain unique shm name and size
    std::string s;
-   intermodule_singleton_helpers::get_shm_name(s);
-   const char *ShmName = s.c_str();
-   const std::size_t ShmSize = intermodule_singleton_helpers::get_shm_size();;
    while(1){
       //Try to pass shm state to initializing
       ::boost::uint32_t tmp = atomic_cas32(&this_module_shm_initialized, Initializing, Uninitialized);
@@ -824,6 +820,13 @@ void intermodule_singleton_common<ManagedShMem>::initialize_shm()
          try{
             //Remove old shared memory from the system
             intermodule_singleton_helpers::managed_sh_dependant<ManagedShMem>::remove_old_gmem();
+            //
+            if(s.empty()){
+               intermodule_singleton_helpers::get_shm_name(s);
+            }
+            const char *ShmName = s.c_str();
+            const std::size_t ShmSize = intermodule_singleton_helpers::get_shm_size();;
+
             //in-place construction of the shared memory class
             ::new (&get_shm())ManagedShMem(open_or_create, ShmName, ShmSize);
             //Use shared memory internal lock to initialize the lock file

@@ -971,7 +971,7 @@ class segment_manager
       intrusive_value_type *iv = intrusive_value_type::get_intrusive_value_type(ctrl_data);
       void *memory = iv;
       void *values = ctrl_data->value();
-     std::size_t num = ctrl_data->m_value_bytes/table.size;
+      std::size_t num = ctrl_data->m_value_bytes/table.size;
       
       //Sanity check
       BOOST_ASSERT((ctrl_data->m_value_bytes % table.size) == 0);
