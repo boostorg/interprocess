@@ -6600,8 +6600,13 @@ thank them:
 [section:release_notes_boost_1_49_00 Boost 1.49 Release]
 
 *  Fixed bugs
-  [@https://svn.boost.org/trac/boost/ticket/6233 #6233],
+  [@https://svn.boost.org/trac/boost/ticket/6398 #6398],
+  [@https://svn.boost.org/trac/boost/ticket/6319 #6319],
   [@https://svn.boost.org/trac/boost/ticket/6287 #6287],
+  [@https://svn.boost.org/trac/boost/ticket/6265 #6265],
+  [@https://svn.boost.org/trac/boost/ticket/6233 #6233],
+  [@https://svn.boost.org/trac/boost/ticket/6134 #6134],
+  [@https://svn.boost.org/trac/boost/ticket/6058 #6058],
   [@https://svn.boost.org/trac/boost/ticket/6054 #6054],
   [@https://svn.boost.org/trac/boost/ticket/5772 #5772],
   [@https://svn.boost.org/trac/boost/ticket/5738 #5738],
