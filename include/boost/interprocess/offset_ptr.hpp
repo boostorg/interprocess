@@ -316,7 +316,7 @@ class offset_ptr
    #if defined(_MSC_VER)
    __declspec(noinline) //this workaround is needed for MSVC compilers
    #elif defined (__GNUC__)//this workaround is needed for GCC
-   __attribute__((noinline))
+   __attribute__((__noinline__))
    #endif
    void set_offset(const PointedType *ptr)
    {
@@ -336,7 +336,7 @@ class offset_ptr
    #if defined(_MSC_VER) && (_MSC_VER >= 1400)
    __declspec(noinline)
    #elif defined (__GNUC__)
-   __attribute__((noinline))
+   __attribute__((__noinline__))
    #endif
    PointedType * to_raw_pointer() const
    {
