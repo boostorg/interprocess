@@ -1403,6 +1403,9 @@ All the mutex types from [*Boost.Interprocess] implement the following operation
 
 [*Throws:] An exception derived from *interprocess_exception* on error.
 
+[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
+are UTC time points, not local time points]
+
 [endsect]
 
 [section:mutexes_interprocess_mutexes Boost.Interprocess Mutex Types And Headers]
@@ -1499,6 +1502,9 @@ try_lock, timed_lock a mutex or not to lock it at all.
 
 For more information, check the 
 [classref boost::interprocess::scoped_lock scoped_lock's reference].
+
+[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
+are UTC time points, not local time points]
 
 [endsect]
 
@@ -2023,6 +2029,9 @@ returns false.
 
 [*Throws:] An exception derived from *interprocess_exception* on error.
 
+[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
+are UTC time points, not local time points]
+
 [endsect]
 
 [endsect]
@@ -2185,6 +2194,9 @@ try_lock, timed_lock a mutex or not to lock it at all.
 [classref boost::interprocess::sharable_lock sharable_lock] offer
 more features and operations, see their reference for more informations
 
+[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
+are UTC time points, not local time points]
+
 [endsect]
 
 [/section:upgradable_mutexes_example Anonymous Upgradable Mutex Example]
@@ -2338,6 +2350,9 @@ is permitted:
       //This calls try_unlock_sharable_and_lock()
       scoped_lock<Mutex>      e_lock(move(s_lock, try_to_lock));
    }
+
+[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
+are UTC time points, not local time points]
 
 [endsect]
 
@@ -2661,6 +2676,9 @@ returns false.
 
 For more file locking methods, please
 [classref boost::interprocess::file_lock file_lock reference].
+
+[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
+are UTC time points, not local time points]
 
 [endsect]
 
@@ -6603,6 +6621,7 @@ thank them:
   [@https://svn.boost.org/trac/boost/ticket/6531 #6531],
   [@https://svn.boost.org/trac/boost/ticket/6412 #6412],
   [@https://svn.boost.org/trac/boost/ticket/6398 #6398],
+  [@https://svn.boost.org/trac/boost/ticket/6340 #6340],
   [@https://svn.boost.org/trac/boost/ticket/6319 #6319],
   [@https://svn.boost.org/trac/boost/ticket/6287 #6287],
   [@https://svn.boost.org/trac/boost/ticket/6265 #6265],
