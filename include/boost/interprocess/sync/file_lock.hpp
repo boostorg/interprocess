@@ -99,7 +99,7 @@ class file_lock
    bool try_lock();
 
    //!Effects: The calling thread tries to acquire exclusive ownership of the mutex
-   //!   waiting if necessary until no other thread has has exclusive, or sharable
+   //!   waiting if necessary until no other thread has exclusive, or sharable
    //!   ownership of the mutex or abs_time is reached.
    //!Returns: If acquires exclusive ownership, returns true. Otherwise returns false. 
    //!Throws: interprocess_exception on error.
@@ -119,7 +119,7 @@ class file_lock
    void lock_sharable();
 
    //!Effects: The calling thread tries to acquire sharable ownership of the mutex
-   //!   without waiting. If no other thread has has exclusive ownership of the
+   //!   without waiting. If no other thread has exclusive ownership of the
    //!   mutex this succeeds. 
    //!Returns: If it can acquire sharable ownership immediately returns true. If it
    //!   has to wait, returns false. 
@@ -127,7 +127,7 @@ class file_lock
    bool try_lock_sharable();
 
    //!Effects: The calling thread tries to acquire sharable ownership of the mutex
-   //!   waiting if necessary until no other thread has has exclusive ownership of
+   //!   waiting if necessary until no other thread has exclusive ownership of
    //!   the mutex or abs_time is reached. 
    //!Returns: If acquires sharable ownership, returns true. Otherwise returns false. 
    //!Throws: interprocess_exception on error.

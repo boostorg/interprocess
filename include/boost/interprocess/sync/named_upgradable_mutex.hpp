@@ -94,7 +94,7 @@ class named_upgradable_mutex
    bool try_lock();
 
    //!Effects: The calling thread tries to acquire exclusive ownership of the mutex
-   //!   waiting if necessary until no other thread has has exclusive, sharable or
+   //!   waiting if necessary until no other thread has exclusive, sharable or
    //!   upgradable ownership of the mutex or abs_time is reached. 
    //!Returns: If acquires exclusive ownership, returns true. Otherwise returns false. 
    //!Throws: interprocess_exception on error.
@@ -108,13 +108,13 @@ class named_upgradable_mutex
    //Sharable locking
 
    //!Effects: The calling thread tries to obtain sharable ownership of the mutex,
-   //!   and if another thread has exclusive or upgradable ownership of the mutex,
+   //!   and if another thread has exclusive ownership of the mutex,
    //!   waits until it can obtain the ownership.
    //!Throws: interprocess_exception on error.
    void lock_sharable();
 
    //!Effects: The calling thread tries to acquire sharable ownership of the mutex
-   //!   without waiting. If no other thread has has exclusive or upgradable ownership
+   //!   without waiting. If no other thread has exclusive ownership
    //!   of the mutex this succeeds. 
    //!Returns: If it can acquire sharable ownership immediately returns true. If it
    //!   has to wait, returns false. 
@@ -122,7 +122,7 @@ class named_upgradable_mutex
    bool try_lock_sharable();
 
    //!Effects: The calling thread tries to acquire sharable ownership of the mutex
-   //!   waiting if necessary until no other thread has has exclusive or upgradable
+   //!   waiting if necessary until no other thread has exclusive
    //!   ownership of the mutex or abs_time is reached. 
    //!Returns: If acquires sharable ownership, returns true. Otherwise returns false. 
    //!Throws: interprocess_exception on error.
@@ -142,7 +142,7 @@ class named_upgradable_mutex
    void lock_upgradable();
 
    //!Effects: The calling thread tries to acquire upgradable ownership of the mutex
-   //!   without waiting. If no other thread has has exclusive or upgradable ownership
+   //!   without waiting. If no other thread has exclusive or upgradable ownership
    //!   of the mutex this succeeds. 
    //!Returns: If it can acquire upgradable ownership immediately returns true.
    //!   If it has to wait, returns false.
@@ -150,7 +150,7 @@ class named_upgradable_mutex
    bool try_lock_upgradable();
 
    //!Effects: The calling thread tries to acquire upgradable ownership of the mutex
-   //!   waiting if necessary until no other thread has has exclusive or upgradable
+   //!   waiting if necessary until no other thread has exclusive or upgradable
    //!   ownership of the mutex or abs_time is reached.
    //!Returns: If acquires upgradable ownership, returns true. Otherwise returns false. 
    //!Throws: interprocess_exception on error.
