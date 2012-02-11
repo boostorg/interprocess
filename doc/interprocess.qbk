@@ -1829,7 +1829,7 @@ If it has to wait, returns false.
 
 [*Effects:] 
 The calling thread tries to acquire exclusive ownership of the mutex
-waiting if necessary until no other thread has has exclusive,
+waiting if necessary until no other thread has exclusive,
 sharable or upgradable ownership of the mutex or abs_time is reached.
 
 [*Returns:] If acquires exclusive ownership, returns true. Otherwise 
@@ -1853,7 +1853,7 @@ returns false.
 
 [*Effects:]
 The calling thread tries to obtain sharable ownership of the mutex, and if 
-another thread has exclusive or upgradable ownership of the mutex, 
+another thread has exclusive ownership of the mutex, 
 waits until it can obtain the ownership.
 
 [*Throws:] *interprocess_exception* on error.
@@ -1862,7 +1862,7 @@ waits until it can obtain the ownership.
 
 [*Effects:] 
 The calling thread tries to acquire sharable ownership of the mutex without
-waiting. If no other thread has has exclusive or upgradable ownership of 
+waiting. If no other thread has exclusive ownership of 
 the mutex this succeeds.
 
 [*Returns:] If it can acquire sharable ownership immediately returns true. 
@@ -1874,8 +1874,8 @@ If it has to wait, returns false.
 
 [*Effects:] 
 The calling thread tries to acquire sharable ownership of the mutex
-waiting if necessary until no other thread has has exclusive
-or upgradable ownership of the mutex or abs_time is reached.
+waiting if necessary until no other thread has exclusive
+ownership of the mutex or abs_time is reached.
 
 [*Returns:] If acquires sharable ownership, returns true. Otherwise 
 returns false.
@@ -1907,7 +1907,7 @@ waits until it can obtain the ownership.
 
 [*Effects:] 
 The calling thread tries to acquire upgradable ownership of the mutex without
-waiting. If no other thread has has exclusive or upgradable ownership of 
+waiting. If no other thread has exclusive or upgradable ownership of 
 the mutex this succeeds.
 
 [*Returns:] If it can acquire upgradable ownership immediately returns true. 
@@ -1919,8 +1919,8 @@ If it has to wait, returns false.
 
 [*Effects:] 
 The calling thread tries to acquire upgradable ownership of the mutex
-waiting if necessary until no other thread has has exclusive
-or upgradable ownership of the mutex or abs_time is reached.
+waiting if necessary until no other thread has exclusive
+ownership of the mutex or abs_time is reached.
 
 [*Returns:] If acquires upgradable ownership, returns true. Otherwise 
 returns false.
@@ -2602,7 +2602,7 @@ If it has to wait, returns false.
 
 [*Effects:] 
 The calling thread tries to acquire exclusive ownership of the file lock
-waiting if necessary until no other thread has has exclusive or
+waiting if necessary until no other thread has exclusive or
 sharable ownership of the file lock or abs_time is reached.
 
 [*Returns:] If acquires exclusive ownership, returns true. Otherwise 
@@ -2631,7 +2631,7 @@ waits until it can obtain the ownership.
 
 [*Effects:] 
 The calling thread tries to acquire sharable ownership of the file
-lock without waiting. If no other thread has has exclusive ownership of 
+lock without waiting. If no other thread has exclusive ownership of 
 the file lock, this succeeds.
 
 [*Returns:] If it can acquire sharable ownership immediately returns true. 
@@ -2643,7 +2643,7 @@ If it has to wait, returns false.
 
 [*Effects:] 
 The calling thread tries to acquire sharable ownership of the file lock
-waiting if necessary until no other thread has has exclusive
+waiting if necessary until no other thread has exclusive
 ownership of the file lock or abs_time is reached.
 
 [*Returns:] If acquires sharable ownership, returns true. Otherwise 
@@ -6600,6 +6600,7 @@ thank them:
 [section:release_notes_boost_1_49_00 Boost 1.49 Release]
 
 *  Fixed bugs
+  [@https://svn.boost.org/trac/boost/ticket/6531 #6531],
   [@https://svn.boost.org/trac/boost/ticket/6412 #6412],
   [@https://svn.boost.org/trac/boost/ticket/6398 #6398],
   [@https://svn.boost.org/trac/boost/ticket/6319 #6319],
