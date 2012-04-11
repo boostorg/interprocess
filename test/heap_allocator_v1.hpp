@@ -90,7 +90,7 @@ class heap_allocator_v1
    //!Returns the segment manager. Never throws
    segment_manager* get_segment_manager()const
    {  return ipcdetail::to_raw_pointer(mp_mngr);   }
-/*
+
    //!Returns address of mutable object. Never throws
    pointer address(reference value) const
    {  return pointer(addressof(value));  }
@@ -98,7 +98,7 @@ class heap_allocator_v1
    //!Returns address of non mutable object. Never throws
    const_pointer address(const_reference value) const
    {  return const_pointer(addressof(value));  }
-*/
+
    //!Constructor from the segment manager. Never throws
    heap_allocator_v1(segment_manager *segment_mngr) 
       : mp_mngr(segment_mngr) { }
@@ -115,7 +115,11 @@ class heap_allocator_v1
    //!Allocates memory for an array of count elements. 
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate(size_type count, cvoid_ptr hint = 0)
-   {  (void)hint; return ::new value_type[count];  }
+   {
+      (void)hint;
+      char *raw_mem = ::new char[sizeof(value_type)*count];
+      return boost::intrusive::pointer_traits<pointer>::pointer_to(reinterpret_cast<value_type &>(*raw_mem));
+   }
 
    //!Deallocates memory previously allocated. Never throws
    void deallocate(const pointer &ptr, size_type)
