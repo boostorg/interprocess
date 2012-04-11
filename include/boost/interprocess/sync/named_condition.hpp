@@ -22,7 +22,12 @@
 #include <boost/interprocess/detail/interprocess_tester.hpp>
 #include <boost/interprocess/permissions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
-#include <boost/interprocess/sync/shm/named_condition.hpp>
+#if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
+   #include <boost/interprocess/sync/windows/named_condition.hpp>
+   #define BOOST_INTERPROCESS_USE_WINDOWS
+#else
+   #include <boost/interprocess/sync/shm/named_condition.hpp>
+#endif
 
 //!\file
 //!Describes a named condition class for inter-process synchronization
@@ -110,7 +115,12 @@ class named_condition
 
    /// @cond
    private:
-   ipcdetail::shm_named_condition m_cond;
+   #if defined(BOOST_INTERPROCESS_USE_WINDOWS)
+   typedef ipcdetail::windows_named_condition   condition_type;
+   #else
+   typedef ipcdetail::shm_named_condition       condition_type;
+   #endif
+   condition_type m_cond;
 
    friend class ipcdetail::interprocess_tester;
    void dont_close_on_destruction()
@@ -160,7 +170,7 @@ inline bool named_condition::timed_wait
 {  return m_cond.timed_wait(lock, abs_time, pred);  }
 
 inline bool named_condition::remove(const char *name)
-{  return ipcdetail::shm_named_condition::remove(name); }
+{  return condition_type::remove(name); }
 
 /// @endcond
 

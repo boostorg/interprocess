@@ -20,7 +20,12 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/permissions.hpp>
-#include <boost/interprocess/sync/shm/named_recursive_mutex.hpp>
+#if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
+   #include <boost/interprocess/sync/windows/named_recursive_mutex.hpp>
+   #define BOOST_INTERPROCESS_USE_WINDOWS
+#else
+   #include <boost/interprocess/sync/shm/named_recursive_mutex.hpp>
+#endif
 
 //!\file
 //!Describes a named named_recursive_mutex class for inter-process synchronization
@@ -97,7 +102,12 @@ class named_recursive_mutex
    friend class ipcdetail::interprocess_tester;
    void dont_close_on_destruction();
 
-   typedef ipcdetail::shm_named_recursive_mutex impl_t;
+   #if defined(BOOST_INTERPROCESS_USE_WINDOWS)
+      typedef ipcdetail::windows_named_recursive_mutex   impl_t;
+      #undef BOOST_INTERPROCESS_USE_WINDOWS
+   #else
+      typedef ipcdetail::shm_named_recursive_mutex impl_t;
+   #endif
    impl_t m_mut;
 
    /// @endcond

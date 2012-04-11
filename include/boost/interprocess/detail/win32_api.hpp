@@ -574,6 +574,12 @@ struct interprocess_overlapped
    void *h_event;
 };
 
+struct interprocess_semaphore_basic_information
+{
+	unsigned int count;		// current semaphore count
+	unsigned int limit;		// max semaphore count
+};
+
 struct interprocess_filetime
 {  
    unsigned long  dwLowDateTime;  
@@ -620,7 +626,7 @@ struct system_info {
     unsigned short wProcessorRevision;
 };
 
-struct interprocess_memory_basic_information
+typedef struct _interprocess_memory_basic_information
 {
    void *         BaseAddress;  
    void *         AllocationBase;
@@ -629,7 +635,7 @@ struct interprocess_memory_basic_information
    unsigned long  State;
    unsigned long  Protect;
    unsigned long  Type;
-};
+} interprocess_memory_basic_information;
 
 typedef struct _interprocess_acl
 {
@@ -693,6 +699,10 @@ enum file_information_class_t {
    file_inherit_content_index_information,
    file_ole_information,
    file_maximum_information
+};
+
+enum semaphore_information_class {
+   semaphore_basic_information = 0
 };
 
 struct file_name_information_t {
@@ -844,6 +854,7 @@ extern "C" __declspec(dllimport) int __stdcall UnlockFile(void *hnd, unsigned lo
 extern "C" __declspec(dllimport) int __stdcall LockFileEx(void *hnd, unsigned long flags, unsigned long reserved, unsigned long size_low, unsigned long size_high, interprocess_overlapped* overlapped);
 extern "C" __declspec(dllimport) int __stdcall UnlockFileEx(void *hnd, unsigned long reserved, unsigned long size_low, unsigned long size_high, interprocess_overlapped* overlapped);
 extern "C" __declspec(dllimport) int __stdcall WriteFile(void *hnd, const void *buffer, unsigned long bytes_to_write, unsigned long *bytes_written, interprocess_overlapped* overlapped);
+extern "C" __declspec(dllimport) int __stdcall ReadFile(void *hnd, void *buffer, unsigned long bytes_to_read, unsigned long *bytes_read, interprocess_overlapped* overlapped);
 extern "C" __declspec(dllimport) int __stdcall InitializeSecurityDescriptor(interprocess_security_descriptor *pSecurityDescriptor, unsigned long dwRevision);
 extern "C" __declspec(dllimport) int __stdcall SetSecurityDescriptorDacl(interprocess_security_descriptor *pSecurityDescriptor, int bDaclPresent, interprocess_acl *pDacl, int bDaclDefaulted);
 extern "C" __declspec(dllimport) void *__stdcall LoadLibraryA(const char *);
@@ -891,8 +902,9 @@ extern "C" __declspec(dllimport) void __stdcall CoUninitialize(void);
 //Pointer to functions
 typedef long (__stdcall *NtDeleteFile_t)(object_attributes_t *ObjectAttributes); 
 typedef long (__stdcall *NtSetInformationFile_t)(void *FileHandle, io_status_block_t *IoStatusBlock, void *FileInformation, unsigned long Length, int FileInformationClass ); 
-typedef long (__stdcall * NtQuerySystemInformation_t)(int, void*, unsigned long, unsigned long *); 
-typedef long (__stdcall * NtQueryObject_t)(void*, object_information_class, void *, unsigned long, unsigned long *); 
+typedef long (__stdcall *NtQuerySystemInformation_t)(int, void*, unsigned long, unsigned long *); 
+typedef long (__stdcall *NtQueryObject_t)(void*, object_information_class, void *, unsigned long, unsigned long *); 
+typedef long (__stdcall *NtQuerySemaphore_t)(void*, unsigned int info_class, interprocess_semaphore_basic_information *pinfo, unsigned int info_size, unsigned int *ret_len);
 typedef long (__stdcall *NtQueryInformationFile_t)(void *,io_status_block_t *,void *, long, int);
 typedef long (__stdcall *NtOpenFile_t)(void*,unsigned long ,object_attributes_t*,io_status_block_t*,unsigned long,unsigned long);
 typedef long (__stdcall *NtClose_t) (void*);
@@ -1051,7 +1063,7 @@ inline void *create_file(const char *name, unsigned long access, unsigned long c
       if (error_sharing_violation != get_last_error()){
          return handle;
       }
-      Sleep(error_sharing_violation_sleep_ms);
+      sleep(error_sharing_violation_sleep_ms);
    }
    return invalid_handle_value;
 }
@@ -1100,6 +1112,9 @@ inline bool unlock_file_ex(void *hnd, unsigned long reserved, unsigned long size
 
 inline bool write_file(void *hnd, const void *buffer, unsigned long bytes_to_write, unsigned long *bytes_written, interprocess_overlapped* overlapped)
 {  return 0 != WriteFile(hnd, buffer, bytes_to_write, bytes_written, overlapped);  }
+
+inline bool read_file(void *hnd, void *buffer, unsigned long bytes_to_read, unsigned long *bytes_read, interprocess_overlapped* overlapped)
+{  return 0 != ReadFile(hnd, buffer, bytes_to_read, bytes_read, overlapped);  }
 
 inline bool get_file_information_by_handle(void *hnd, interprocess_by_handle_file_information *info)
 {  return 0 != GetFileInformationByHandle(hnd, info);  }
@@ -1176,7 +1191,7 @@ inline void rtl_init_empty_unicode_string(unicode_string_t *ucStr, wchar_t *buf,
 template<int Dummy>
 struct function_address_holder
 {
-   enum { NtSetInformationFile, NtQuerySystemInformation, NtQueryObject, NumFunction };
+   enum { NtSetInformationFile, NtQuerySystemInformation, NtQueryObject, NtQuerySemaphore, NumFunction };
    enum { NtDll_dll, NumModule };
 
    private:
@@ -1213,7 +1228,7 @@ struct function_address_holder
    static void *get_address_from_dll(const unsigned int id)
    {
       assert(id < (unsigned int)NumFunction);
-      const char *function[] = { "NtSetInformationFile", "NtQuerySystemInformation", "NtQueryObject" };
+      const char *function[] = { "NtSetInformationFile", "NtQuerySystemInformation", "NtQueryObject", "NtQuerySemaphore" };
       bool compile_check[sizeof(function)/sizeof(function[0]) == NumFunction];
       (void)compile_check;
       return get_proc_address(get_module(NtDll_dll), function[id]);

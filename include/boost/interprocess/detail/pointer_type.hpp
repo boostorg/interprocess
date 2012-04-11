@@ -61,7 +61,7 @@ template <class T, class D>
 struct pointer_type
 {
     typedef typename pointer_type_imp::pointer_type<T,
-        typename ipcdetail::remove_reference<D>::type>::type type;
+        typename remove_reference<D>::type>::type type;
 };
 
 }  //namespace ipcdetail {

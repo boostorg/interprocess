@@ -25,6 +25,10 @@
 
 #if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
 #include <boost/interprocess/sync/posix/named_semaphore.hpp>
+//Experimental...
+#elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
+   #include <boost/interprocess/sync/windows/named_semaphore.hpp>
+   #define BOOST_INTERPROCESS_USE_WINDOWS
 #else
 #include <boost/interprocess/sync/shm/named_semaphore.hpp>
 #endif
@@ -106,9 +110,12 @@ class named_semaphore
    void dont_close_on_destruction();
 
    #if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
-      typedef ipcdetail::posix_named_semaphore  impl_t;
+      typedef ipcdetail::posix_named_semaphore   impl_t;
+   #elif defined(BOOST_INTERPROCESS_USE_WINDOWS)
+      #undef BOOST_INTERPROCESS_USE_WINDOWS
+      typedef ipcdetail::windows_named_semaphore impl_t;
    #else
-      typedef ipcdetail::shm_named_semaphore    impl_t;
+      typedef ipcdetail::shm_named_semaphore     impl_t;
    #endif
    impl_t m_sem;
    /// @endcond

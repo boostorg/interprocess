@@ -137,8 +137,13 @@ class shared_ptr
       ipcdetail::sp_enable_shared_from_this<T, VoidAllocator, Deleter>( m_pn, ipcdetail::to_raw_pointer(p), ipcdetail::to_raw_pointer(p) ); 
    }
 
+   //!Copy constructs a shared_ptr. If r is empty, constructs an empty shared_ptr. Otherwise, constructs 
+   //!a shared_ptr that shares ownership with r. Never throws.
+   shared_ptr(const shared_ptr &r)
+      :  m_pn(r.m_pn) // never throws
+   {}
 
-   //!Constructs a shared_ptr that shares ownership with r and stores p.
+   //!Constructs a shared_ptr that shares ownership with other and stores p.
    //!Postconditions: get() == p && use_count() == r.use_count().
    //!Throws: nothing.
    shared_ptr(const shared_ptr &other, const pointer &p)
