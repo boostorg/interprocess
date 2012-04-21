@@ -24,7 +24,11 @@
 #include <boost/interprocess/permissions.hpp>
 
 #if defined(BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
-#include <boost/interprocess/sync/posix/named_mutex.hpp>
+   #include <boost/interprocess/sync/posix/named_mutex.hpp>
+   #define BOOST_INTERPROCESS_USE_POSIX_SEMAPHORES
+#elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
+   #include <boost/interprocess/sync/windows/named_mutex.hpp>
+   #define BOOST_INTERPROCESS_USE_WINDOWS
 #else
 #include <boost/interprocess/sync/shm/named_mutex.hpp>
 #endif
@@ -104,15 +108,20 @@ class named_mutex
    friend class ipcdetail::interprocess_tester;
    void dont_close_on_destruction();
 
-   #if defined(BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
-   typedef ipcdetail::posix_named_mutex   impl_t;
-   impl_t m_mut;
+   #if defined(BOOST_INTERPROCESS_USE_POSIX_SEMAPHORES)
+      typedef ipcdetail::posix_named_mutex   impl_t;
+      impl_t m_mut;
+      #undef BOOST_INTERPROCESS_USE_POSIX_SEMAPHORES
+   #elif defined(BOOST_INTERPROCESS_USE_WINDOWS)
+      typedef ipcdetail::windows_named_mutex   impl_t;
+      impl_t m_mut;
+      #undef BOOST_INTERPROCESS_USE_WINDOWS
    #else
-   typedef ipcdetail::shm_named_mutex     impl_t;
-   impl_t m_mut;
-   public:
-   interprocess_mutex *mutex() const
-   {  return m_mut.mutex(); }
+      typedef ipcdetail::shm_named_mutex     impl_t;
+      impl_t m_mut;
+      public:
+      interprocess_mutex *mutex() const
+      {  return m_mut.mutex(); }
    #endif
 
    /// @endcond

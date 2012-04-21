@@ -43,9 +43,9 @@
    #include <boost/interprocess/sync/posix/recursive_mutex.hpp>
    #define BOOST_INTERPROCESS_USE_POSIX
 //Experimental...
-//#elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
-//   #include <boost/interprocess/sync/windows/recursive_mutex.hpp>
-//   #define BOOST_INTERPROCESS_USE_WINDOWS
+#elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
+   #include <boost/interprocess/sync/windows/recursive_mutex.hpp>
+   #define BOOST_INTERPROCESS_USE_WINDOWS
 #elif !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    #include <boost/interprocess/sync/spin/recursive_mutex.hpp>
    #define BOOST_INTERPROCESS_USE_GENERIC_EMULATION

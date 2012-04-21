@@ -140,7 +140,7 @@ inline bool truncate_file (file_handle_t hnd, std::size_t size)
    if(offset_t(size) > filesize){
       if(!winapi::set_file_pointer_ex(hnd, filesize, 0, winapi::file_begin)){
          return false;
-      }      
+      }
       //We will write zeros in the end of the file
       //since set_end_of_file does not guarantee this
       for(std::size_t remaining = size - filesize, write_size = 0
@@ -191,7 +191,7 @@ inline bool close_file(file_handle_t hnd)
 inline bool acquire_file_lock(file_handle_t hnd)
 {  
    static winapi::interprocess_overlapped overlapped;
-   const unsigned long len = 0xffffffff;
+   const unsigned long len = ~((unsigned long)(0u));
 //   winapi::interprocess_overlapped overlapped;
 //   std::memset(&overlapped, 0, sizeof(overlapped));
    return winapi::lock_file_ex
@@ -200,7 +200,7 @@ inline bool acquire_file_lock(file_handle_t hnd)
 
 inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
 {  
-   const unsigned long len = 0xffffffff;
+   const unsigned long len = ~((unsigned long)(0u));
    winapi::interprocess_overlapped overlapped;
    std::memset(&overlapped, 0, sizeof(overlapped));
    if(!winapi::lock_file_ex
@@ -215,7 +215,7 @@ inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
 
 inline bool release_file_lock(file_handle_t hnd)
 {  
-   const unsigned long len = 0xffffffff;
+   const unsigned long len = ~((unsigned long)(0u));
    winapi::interprocess_overlapped overlapped;
    std::memset(&overlapped, 0, sizeof(overlapped));
    return winapi::unlock_file_ex(hnd, 0, len, len, &overlapped);
@@ -223,7 +223,7 @@ inline bool release_file_lock(file_handle_t hnd)
 
 inline bool acquire_file_lock_sharable(file_handle_t hnd)
 {  
-   const unsigned long len = 0xffffffff;
+   const unsigned long len = ~((unsigned long)(0u));
    winapi::interprocess_overlapped overlapped;
    std::memset(&overlapped, 0, sizeof(overlapped));
    return winapi::lock_file_ex(hnd, 0, 0, len, len, &overlapped);
@@ -231,7 +231,7 @@ inline bool acquire_file_lock_sharable(file_handle_t hnd)
 
 inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
 {  
-   const unsigned long len = 0xffffffff;
+   const unsigned long len = ~((unsigned long)(0u));
    winapi::interprocess_overlapped overlapped;
    std::memset(&overlapped, 0, sizeof(overlapped));
    if(!winapi::lock_file_ex

@@ -97,6 +97,30 @@ class recursive_named_semaphore_test_wrapper
 
 int recursive_named_semaphore_test_wrapper::count_ = 0;
 
+bool test_named_semaphore_specific()
+{
+   //Test persistance
+   {
+      named_semaphore sem(create_only, SemName, 3);
+   }
+   {
+      named_semaphore sem(open_only, SemName);
+      BOOST_INTERPROCES_CHECK(sem.try_wait() == true);
+      BOOST_INTERPROCES_CHECK(sem.try_wait() == true);
+      BOOST_INTERPROCES_CHECK(sem.try_wait() == true);
+      BOOST_INTERPROCES_CHECK(sem.try_wait() == false);
+      sem.post();
+   }
+   {
+      named_semaphore sem(open_only, SemName);
+      BOOST_INTERPROCES_CHECK(sem.try_wait() == true);
+      BOOST_INTERPROCES_CHECK(sem.try_wait() == false);
+   }
+
+   named_semaphore::remove(SemName);
+   return true;
+}
+
 int main ()
 {
    try{
@@ -105,6 +129,7 @@ int main ()
       test::test_all_lock<named_semaphore_test_wrapper>();
       test::test_all_recursive_lock<recursive_named_semaphore_test_wrapper>();
       test::test_all_mutex<false, named_semaphore_test_wrapper>();
+      test_named_semaphore_specific();
    }
    catch(std::exception &ex){
       named_semaphore::remove(SemName);

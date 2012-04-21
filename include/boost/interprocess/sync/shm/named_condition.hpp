@@ -28,7 +28,7 @@
 #include <boost/interprocess/sync/shm/named_creation_functor.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/interprocess/permissions.hpp>
-#if defined BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES
+#if defined (BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #endif
@@ -42,7 +42,7 @@ namespace interprocess {
 namespace ipcdetail {
 
 /// @cond
-namespace ipcdetail{ class interprocess_tester; }
+class interprocess_tester;
 /// @endcond
 
 //! A global condition variable that can be created by name.
@@ -147,6 +147,9 @@ class shm_named_condition
       void unlock()  {   l_.lock();     }
    };
 
+   //If named mutex uses POSIX semaphores, then the shm based condition variable
+   //must use it's internal lock to wait, as sem_t does not store a pthread_mutex_t
+   //instance needed by pthread_mutex_cond_t
    #if defined (BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
       interprocess_mutex *mutex() const
       {  return &static_cast<condition_holder*>(m_shmem.get_user_address())->mutex_; }
@@ -184,7 +187,7 @@ class shm_named_condition
          internal_lock.swap(internal_unlock);  
          return this->condition()->timed_wait(internal_unlock, abs_time);  
       }
-   #else
+   #else //defined (BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
       template<class Lock>
       class lock_wrapper
       {
@@ -210,7 +213,7 @@ class shm_named_condition
          private:
          Lock &l_;
       };
-   #endif
+   #endif   //defined (BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
 
    friend class boost::interprocess::ipcdetail::interprocess_tester;
    void dont_close_on_destruction();

@@ -20,7 +20,8 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <stdio.h>
 
-using namespace boost::interprocess;
+namespace boost {
+namespace interprocess {
 
 //Force instantiations to catch compile-time errors
 typedef basic_string<char> my_string;
@@ -29,6 +30,10 @@ typedef vector<char> my_vector;
 typedef basic_vectorstream<my_vector>  my_vectorstream_t;
 template class basic_vectorstream<my_string>;
 template class basic_vectorstream<std::vector<char> >;
+
+}}
+
+using namespace boost::interprocess;
 
 static int vectorstream_test()
 {

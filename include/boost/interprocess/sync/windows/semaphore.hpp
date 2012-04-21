@@ -19,8 +19,9 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/detail/win32_api.hpp>
-#include <boost/interprocess/detail/intermodule_singleton.hpp>
+#include <boost/interprocess/detail/windows_intermodule_singleton.hpp>
 #include <boost/interprocess/sync/windows/sync_utils.hpp>
+#include <boost/interprocess/sync/windows/winapi_semaphore_wrapper.hpp>
 #include <boost/interprocess/exceptions.hpp>
 
 
@@ -50,7 +51,7 @@ inline windows_semaphore::windows_semaphore(unsigned int initialCount)
    : id_()
 {
    sync_handles &handles =
-      intermodule_singleton<sync_handles>::get();
+      windows_intermodule_singleton<sync_handles>::get();
    //Force smeaphore creation with the initial count
    bool open_or_created;
    handles.obtain_semaphore(this->id_, initialCount, &open_or_created);
@@ -63,69 +64,43 @@ inline windows_semaphore::windows_semaphore(unsigned int initialCount)
 inline windows_semaphore::~windows_semaphore() 
 {
    sync_handles &handles =
-      intermodule_singleton<sync_handles>::get();
+      windows_intermodule_singleton<sync_handles>::get();
    handles.destroy_handle(this->id_);
 }
 
 inline void windows_semaphore::wait(void)
 {
    sync_handles &handles =
-      intermodule_singleton<sync_handles>::get();
+      windows_intermodule_singleton<sync_handles>::get();
    //This can throw
-   void *hnd = handles.obtain_semaphore(this->id_, 0);
-   unsigned long ret = winapi::wait_for_single_object(hnd, winapi::infinite_time);
-   if(ret == winapi::wait_failed){
-      error_info err(winapi::get_last_error());
-      throw interprocess_exception(err);
-   }
+   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, 0));
+   sem.wait();
 }
 
 inline bool windows_semaphore::try_wait(void)
 {
    sync_handles &handles =
-      intermodule_singleton<sync_handles>::get();
+      windows_intermodule_singleton<sync_handles>::get();
    //This can throw
-   void *hnd = handles.obtain_semaphore(this->id_, 0);
-   unsigned long ret = winapi::wait_for_single_object(hnd, 0);
-   if(ret == winapi::wait_failed){
-      error_info err(winapi::get_last_error());
-      throw interprocess_exception(err);
-   }
-   return ret != winapi::wait_timeout;
+   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, 0));
+   return sem.try_wait();
 }
 
 inline bool windows_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
 {
-   if(abs_time == boost::posix_time::pos_infin){
-      this->wait();
-      return true;
-   }
-   boost::posix_time::ptime now
-      = boost::posix_time::microsec_clock::universal_time();
-
-   unsigned long ms = (unsigned long)(abs_time-now).total_milliseconds();
    sync_handles &handles =
-      intermodule_singleton<sync_handles>::get();
+      windows_intermodule_singleton<sync_handles>::get();
    //This can throw
-   void *hnd = handles.obtain_semaphore(this->id_, 0);
-   unsigned long ret = winapi::wait_for_single_object(hnd, ms);
-   if(ret == winapi::wait_failed){
-      error_info err(winapi::get_last_error());
-      throw interprocess_exception(err);
-   }
-   return ret != winapi::wait_timeout;
+   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, 0));
+   return sem.timed_wait(abs_time);
 }
 
 inline void windows_semaphore::post(long release_count)
 {
    sync_handles &handles =
-      intermodule_singleton<sync_handles>::get();
-   //This can throw
-   void *hnd = handles.obtain_semaphore(this->id_, 0);
-   long prev_count;
-   int ret = winapi::release_semaphore(hnd, release_count, &prev_count);
-   (void)ret;
-   assert(ret);
+      windows_intermodule_singleton<sync_handles>::get();
+   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, 0));
+   sem.post(release_count);
 }
 
 }  //namespace ipcdetail {

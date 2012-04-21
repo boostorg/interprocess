@@ -21,6 +21,8 @@
 #include <boost/interprocess/sync/spin/mutex.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/interprocess/sync/windows/winapi_semaphore_wrapper.hpp>
+#include <boost/interprocess/sync/windows/winapi_mutex_wrapper.hpp>
 #include <boost/unordered/unordered_map.hpp>
 #include <cstddef>
 
@@ -32,6 +34,7 @@ inline bool bytes_to_str(const void *mem, const std::size_t mem_length, char *ou
 {
    const std::size_t need_mem = mem_length*2+1;
    if(out_length < need_mem){
+      out_length = need_mem;
       return false;
    }
 
@@ -51,10 +54,14 @@ inline bool bytes_to_str(const void *mem, const std::size_t mem_length, char *ou
 
 struct sync_id
 {
+   typedef __int64 internal_type;
+   internal_type rand;
+
    sync_id()
    {  winapi::query_performance_counter(&rand);  }
 
-   __int64 rand;
+   explicit sync_id(internal_type val)
+   {  rand = val;  }
 
    friend std::size_t hash_value(const sync_id &m)
    {  return boost::hash_value(m.rand);  }
@@ -62,16 +69,7 @@ struct sync_id
    friend bool operator==(const sync_id &l, const sync_id &r)
    {  return l.rand == r.rand;  }
 };
-/*
-#define BOOST_NO_LONG_LONG ss
 
-#if defined(BOOST_NO_LONG_LONG)
-
-#error "defined(BOOST_NO_LONG_LONG)"
-#else
-#error "NOT defined(BOOST_NO_LONG_LONG)"
-#endif
-*/
 class sync_handles
 {
    public:
@@ -108,20 +106,24 @@ class sync_handles
    {
       NameBuf name;
       fill_name(name, id);
-      void *hnd_val = winapi::open_or_create_semaphore
-         (name, (long)initial_count, (long)(((unsigned long)(-1))>>1), unrestricted_security.get_attributes());
-      erase_and_throw_if_error(hnd_val, id);
-      return hnd_val;
+      permissions unrestricted_security;
+      unrestricted_security.set_unrestricted();
+      winapi_semaphore_wrapper sem_wrapper;
+      sem_wrapper.open_or_create(name, (long)initial_count, unrestricted_security);
+      erase_and_throw_if_error(sem_wrapper.handle(), id);
+      return sem_wrapper.release();
    }
 
    void* open_or_create_mutex(const sync_id &id)
    {
       NameBuf name;
       fill_name(name, id);
-      void *hnd_val = winapi::open_or_create_mutex
-            (name, false, unrestricted_security.get_attributes());
-      erase_and_throw_if_error(hnd_val, id);
-      return hnd_val;
+      permissions unrestricted_security;
+      unrestricted_security.set_unrestricted();
+      winapi_mutex_wrapper mtx_wrapper;
+      mtx_wrapper.open_or_create(name, unrestricted_security);
+      erase_and_throw_if_error(mtx_wrapper.handle(), id);
+      return mtx_wrapper.release();
    }
 
    public:
@@ -158,7 +160,6 @@ class sync_handles
    }
 
    private:
-   winapi::interprocess_all_access_security unrestricted_security;
    spin_mutex mtx_;
    map_type map_;
 };

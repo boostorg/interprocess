@@ -26,7 +26,7 @@
 #include <boost/interprocess/smart_ptr/detail/sp_counted_base.hpp>
 #include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/container/allocator/allocator_traits.hpp>
+#include <boost/container/allocator_traits.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
 
 namespace boost {
