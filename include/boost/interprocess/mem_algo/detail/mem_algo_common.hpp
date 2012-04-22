@@ -362,7 +362,7 @@ class memory_algorithm_common
          return true;
 
       size_type shrunk_user_units = 
-         ((BlockCtrlUnits - AllocatedCtrlUnits) > preferred_user_units)
+         ((BlockCtrlUnits - AllocatedCtrlUnits) >= preferred_user_units)
          ? (BlockCtrlUnits - AllocatedCtrlUnits)
          : preferred_user_units;
 
