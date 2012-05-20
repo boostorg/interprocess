@@ -130,7 +130,7 @@ class winapi_semaphore_wrapper
    {  this->close(); }
 
    void *release()
-   {  
+   { 
       void *hnd = m_sem_hnd;
       m_sem_hnd = winapi::invalid_handle_value;
       return hnd;
@@ -153,7 +153,7 @@ class winapi_semaphore_wrapper
       else{
          return false;
       }
-   }   
+   }  
 
    void close()
    {

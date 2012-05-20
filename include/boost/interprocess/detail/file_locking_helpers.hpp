@@ -287,7 +287,7 @@ inline bool compare_file_serial(int fd, const locking_file_serial_id &id)
             id.st_ino == info.st_ino;
 }
 
-#endif   
+#endif  
 
 }  //namespace ipcdetail{
 }  //namespace interprocess{

@@ -48,7 +48,7 @@ class windows_named_condition
 
    ~windows_named_condition();
 
-   //!If there is a thread waiting on *this, change that 
+   //!If there is a thread waiting on *this, change that
    //!thread's state to ready. Otherwise there is no effect.*/
    void notify_one();
 
@@ -56,8 +56,8 @@ class windows_named_condition
    //!If there are no waiting threads, notify_all() has no effect.
    void notify_all();
 
-   //!Releases the lock on the named_mutex object associated with lock, blocks 
-   //!the current thread of execution until readied by a call to 
+   //!Releases the lock on the named_mutex object associated with lock, blocks
+   //!the current thread of execution until readied by a call to
    //!this->notify_one() or this->notify_all(), and then reacquires the lock.
    template <typename L>
    void wait(L& lock);
@@ -67,16 +67,16 @@ class windows_named_condition
    template <typename L, typename Pr>
    void wait(L& lock, Pr pred);
 
-   //!Releases the lock on the named_mutex object associated with lock, blocks 
-   //!the current thread of execution until readied by a call to 
-   //!this->notify_one() or this->notify_all(), or until time abs_time is reached, 
+   //!Releases the lock on the named_mutex object associated with lock, blocks
+   //!the current thread of execution until readied by a call to
+   //!this->notify_one() or this->notify_all(), or until time abs_time is reached,
    //!and then reacquires the lock.
    //!Returns: false if time abs_time is reached, otherwise true.
    template <typename L>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time);
 
-   //!The same as:   while (!pred()) { 
-   //!                  if (!timed_wait(lock, abs_time)) return pred(); 
+   //!The same as:   while (!pred()) {
+   //!                  if (!timed_wait(lock, abs_time)) return pred();
    //!               } return true;
    template <typename L, typename Pr>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred);

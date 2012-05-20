@@ -40,7 +40,7 @@ class xsi_shared_memory_file_wrapper
 {
    /// @cond
    BOOST_MOVABLE_BUT_NOT_COPYABLE(xsi_shared_memory_file_wrapper)
-   /// @endcond   
+   /// @endcond  
    public:
 
    xsi_shared_memory_file_wrapper() : xsi_shared_memory() {}
@@ -61,10 +61,10 @@ class xsi_shared_memory_file_wrapper
    {  this->swap(moved);   }
 
    xsi_shared_memory_file_wrapper &operator=(BOOST_RV_REF(xsi_shared_memory_file_wrapper) moved)
-   {  
+   { 
       xsi_shared_memory_file_wrapper tmp(boost::move(moved));
       this->swap(tmp);
-      return *this;  
+      return *this; 
    }
 
    //!Swaps two xsi_shared_memory_file_wrapper. Does not throw

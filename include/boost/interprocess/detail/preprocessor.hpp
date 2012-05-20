@@ -21,7 +21,7 @@
 #error "This file is not needed when perfect forwarding is available"
 #endif
 
-#include <boost/preprocessor/iteration/local.hpp> 
+#include <boost/preprocessor/iteration/local.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/repetition/enum.hpp>

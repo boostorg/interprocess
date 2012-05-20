@@ -61,7 +61,7 @@ class shm_named_condition
    //!If the condition can't be created throws interprocess_exception
    shm_named_condition(create_only_t create_only, const char *name, const permissions &perm = permissions());
 
-   //!Opens or creates a global condition with a name. 
+   //!Opens or creates a global condition with a name.
    //!If the condition is created, this call is equivalent to
    //!shm_named_condition(create_only_t, ... )
    //!If the condition is already created, this call is equivalent
@@ -82,7 +82,7 @@ class shm_named_condition
    //!use remove().
    ~shm_named_condition();
 
-   //!If there is a thread waiting on *this, change that 
+   //!If there is a thread waiting on *this, change that
    //!thread's state to ready. Otherwise there is no effect.*/
    void notify_one();
 
@@ -90,8 +90,8 @@ class shm_named_condition
    //!If there are no waiting threads, notify_all() has no effect.
    void notify_all();
 
-   //!Releases the lock on the named_mutex object associated with lock, blocks 
-   //!the current thread of execution until readied by a call to 
+   //!Releases the lock on the named_mutex object associated with lock, blocks
+   //!the current thread of execution until readied by a call to
    //!this->notify_one() or this->notify_all(), and then reacquires the lock.
    template <typename L>
    void wait(L& lock);
@@ -101,16 +101,16 @@ class shm_named_condition
    template <typename L, typename Pr>
    void wait(L& lock, Pr pred);
 
-   //!Releases the lock on the named_mutex object associated with lock, blocks 
-   //!the current thread of execution until readied by a call to 
-   //!this->notify_one() or this->notify_all(), or until time abs_time is reached, 
+   //!Releases the lock on the named_mutex object associated with lock, blocks
+   //!the current thread of execution until readied by a call to
+   //!this->notify_one() or this->notify_all(), or until time abs_time is reached,
    //!and then reacquires the lock.
    //!Returns: false if time abs_time is reached, otherwise true.
    template <typename L>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time);
 
-   //!The same as:   while (!pred()) { 
-   //!                  if (!timed_wait(lock, abs_time)) return pred(); 
+   //!The same as:   while (!pred()) {
+   //!                  if (!timed_wait(lock, abs_time)) return pred();
    //!               } return true;
    template <typename L, typename Pr>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred);
@@ -159,7 +159,7 @@ class shm_named_condition
       {
          //shm_named_condition only works with named_mutex
          BOOST_STATIC_ASSERT((is_convertible<typename Lock::mutex_type&, named_mutex&>::value == true));
-         
+        
          //lock internal before unlocking external to avoid race with a notifier
          scoped_lock<interprocess_mutex>     internal_lock(*this->mutex());
          lock_inverter<Lock> inverted_lock(lock);
@@ -176,16 +176,16 @@ class shm_named_condition
       {
          //shm_named_condition only works with named_mutex
          BOOST_STATIC_ASSERT((is_convertible<typename Lock::mutex_type&, named_mutex&>::value == true));
-         //lock internal before unlocking external to avoid race with a notifier  
-         scoped_lock<interprocess_mutex>     internal_lock(*this->mutex(), abs_time);  
+         //lock internal before unlocking external to avoid race with a notifier 
+         scoped_lock<interprocess_mutex>     internal_lock(*this->mutex(), abs_time); 
          if(!internal_lock) return false;
-         lock_inverter<Lock> inverted_lock(lock);  
-         scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);  
+         lock_inverter<Lock> inverted_lock(lock); 
+         scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock); 
 
-         //unlock internal first to avoid deadlock with near simultaneous waits  
-         scoped_lock<interprocess_mutex>     internal_unlock;  
-         internal_lock.swap(internal_unlock);  
-         return this->condition()->timed_wait(internal_unlock, abs_time);  
+         //unlock internal first to avoid deadlock with near simultaneous waits 
+         scoped_lock<interprocess_mutex>     internal_unlock; 
+         internal_lock.swap(internal_unlock); 
+         return this->condition()->timed_wait(internal_unlock, abs_time); 
       }
    #else //defined (BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
       template<class Lock>

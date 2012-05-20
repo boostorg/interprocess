@@ -38,7 +38,7 @@ class named_creation_functor
    {  new(address)T(m_arg); }
 
    bool operator()(void *address, std::size_t, bool created) const
-   {   
+   {  
       switch(m_creation_type){
          case DoOpen:
             return true;

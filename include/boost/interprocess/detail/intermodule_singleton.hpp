@@ -30,12 +30,12 @@ namespace ipcdetail{
 //Now this class is a singleton, initializing the singleton in
 //the first get() function call if LazyInit is false. If true
 //then the singleton will be initialized when loading the module.
-template<typename C, bool LazyInit = false>
+template<typename C, bool LazyInit = true, bool Phoenix = true>
 class intermodule_singleton
    #ifdef BOOST_INTERPROCESS_WINDOWS
-   : public windows_intermodule_singleton<C, LazyInit>
+   : public windows_intermodule_singleton<C, LazyInit, Phoenix>
    #else
-   : public portable_intermodule_singleton<C, LazyInit>
+   : public portable_intermodule_singleton<C, LazyInit, Phoenix>
    #endif
 {};
 

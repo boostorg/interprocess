@@ -54,7 +54,7 @@ static void create_tmp_subdir_and_get_pid_based_filepath
    s += "/";
    s += file_prefix;
    if(creation_time){
-      std::string sstamp;   
+      std::string sstamp;  
       get_pid_creation_time_str(sstamp);
       s += sstamp;
    }
@@ -137,13 +137,12 @@ struct managed_sh_dependant<managed_global_memory>
          delete_file(singleton_lock_file_path_);
          shared_memory_object::remove(shm_name_);
       }
-      
+     
       const char * const shm_name_;
       const char * const singleton_lock_file_path_;
       managed_global_memory & shm_;
    };
 
-   public:
    //This function applies shared memory erasure logic based on the passed lock file.
    static void apply_gmem_erase_logic(const char *filepath, const char *filename)
    {
@@ -182,6 +181,8 @@ struct managed_sh_dependant<managed_global_memory>
          close_lock_file(fd);
       }
    }
+
+   public:
 
    static bool remove_old_gmem()
    {
@@ -307,9 +308,9 @@ struct managed_sh_dependant<managed_global_memory>
 
 }  //namespace intermodule_singleton_helpers {
 
-template<typename C, bool LazyInit = false>
+template<typename C, bool LazyInit = true, bool Phoenix = true>
 class portable_intermodule_singleton
-   : public intermodule_singleton_impl<C, LazyInit, managed_global_memory>
+   : public intermodule_singleton_impl<C, LazyInit, Phoenix, managed_global_memory>
 {};
 
 }  //namespace ipcdetail{
