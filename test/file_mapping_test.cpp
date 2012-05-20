@@ -62,7 +62,7 @@ int main ()
                               ,FileSize - FileSize/2
                               );
 
-         //Fill two regions with a pattern   
+         //Fill two regions with a pattern  
          unsigned char *filler = static_cast<unsigned char*>(region.get_address());
          for(std::size_t i = 0
             ;i < FileSize/2
@@ -85,7 +85,7 @@ int main ()
 
          //Create a memory buffer
          std::auto_ptr<unsigned char> memory (new unsigned char [FileSize/2 +1]);
-         
+        
          //Fill buffer
          file.read(static_cast<char*>(static_cast<void*>(memory.get()))
                   , FileSize/2);

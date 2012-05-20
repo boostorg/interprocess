@@ -37,7 +37,7 @@ using namespace boost::interprocess;
 
 static int vectorstream_test()
 {
-   {  //Test high watermarking initialization   
+   {  //Test high watermarking initialization  
       my_stringstream_t my_stringstream;
       int a (0);
       my_stringstream << 11;
@@ -45,7 +45,7 @@ static int vectorstream_test()
       if(a != 11)
          return 1;
    }
-   {  //Test high watermarking initialization   
+   {  //Test high watermarking initialization  
       my_vectorstream_t my_stringstream;
       int a (0);
       my_stringstream << 13;
@@ -66,7 +66,7 @@ static int vectorstream_test()
          my_stringstream  << "testline: " << i << std::endl;
          std_stringstream << "testline: " << i << std::endl;
       }
-   
+  
       if(std::strcmp(my_stringstream.vector().c_str(), std_stringstream.str().c_str()) != 0){
          return 1;
       }
@@ -75,10 +75,10 @@ static int vectorstream_test()
          my_stringstream  >> str1 >> number1;
          std_stringstream >> str2 >> number2;
          if((str1 != str2) || (str1 != str3)){
-            assert(0); return 1;  
+            assert(0); return 1; 
          }
          if((number1 != number2) || (number1 != i)){
-            assert(0); return 1;   
+            assert(0); return 1;  
          }
       }
    }
@@ -105,10 +105,10 @@ static int vectorstream_test()
          my_vectorstream  >> str1 >> number1;
          std_stringstream >> str2 >> number2;
          if((str1 != str2) || (str1 != str3)){
-            assert(0); return 1;  
+            assert(0); return 1; 
          }
          if((number1 != number2) || (number1 != i)){
-            assert(0); return 1;   
+            assert(0); return 1;  
          }
       }
    }
@@ -131,10 +131,10 @@ static int vectorstream_test()
          my_stringstream  >> str1 >> number1;
          std_stringstream >> str2 >> number2;
          if((str1 != str2) || (str1 != str3)){
-            assert(0); return 1;  
+            assert(0); return 1; 
          }
          if((number1 != number2) || (number1 != i)){
-            assert(0); return 1;   
+            assert(0); return 1;  
          }
       }
    }

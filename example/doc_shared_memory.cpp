@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 
    if(argc == 1){  //Parent process
       //Remove shared memory on construction and destruction
-      struct shm_remove 
+      struct shm_remove
       {
       //<-
       #if 1

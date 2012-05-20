@@ -111,7 +111,7 @@ int main()
       m_segment.deallocate(ptrs.back());
       ptrs.pop_back();
       ptrs.push_back(m_segment.allocate_aligned(128, 128));
-   }   
+   } 
    return 0;
 }
 */

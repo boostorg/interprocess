@@ -49,12 +49,12 @@ int main ()
    //Create shared memory
    //<-
    #if 1
-   managed_shared_memory segment(create_only, 
+   managed_shared_memory segment(create_only,
                                  test::get_process_id_name(),  //segment name
                                  65536);
    #else
    //->
-   managed_shared_memory segment(create_only, 
+   managed_shared_memory segment(create_only,
                                  "MySharedMemory",  //segment name
                                  65536);
    //<-

@@ -219,7 +219,7 @@ int list_test (bool copied_allocators_equal = true)
             shmlist->splice(shmlist->begin(), othershmlist);
             stdlist->splice(stdlist->begin(), otherstdlist);
             if(!CheckEqualContainers(shmlist, stdlist))
-               return 1;   
+               return 1;  
          }
 
          listsize = (int)shmlist->size();

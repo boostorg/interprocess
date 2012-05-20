@@ -48,8 +48,8 @@ void PrintContainers(MyShmCont *shmcont, MyStdCont *stdcont)
    for(; itshm != itshmend; ++itshm){
       std::cout << *itshm << std::endl;
    }
-   std::cout << "MyStdCont" << std::endl; 
-  
+   std::cout << "MyStdCont" << std::endl;
+ 
    for(; itstd != itstdend; ++itstd){
       std::cout << *itstd << std::endl;
    }

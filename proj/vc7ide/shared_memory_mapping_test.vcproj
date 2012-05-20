@@ -13,7 +13,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="../../Bin/Win32/Debug"
-			IntermediateDirectory="Debug/shared_memory_mappable_test"
+			IntermediateDirectory="Debug/shared_memory_mapping_test"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -38,11 +38,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/mapped_file_test_d.exe"
+				OutputFile="$(OutDir)/shared_memory_mapping_test_d.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/shared_memory_mappable_test.pdb"
+				ProgramDatabaseFile="$(OutDir)/shared_memory_mapping_test.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 				FixedBaseAddress="1"/>
@@ -70,7 +70,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="../../Bin/Win32/Release"
-			IntermediateDirectory="Release/shared_memory_mappable_test"
+			IntermediateDirectory="Release/shared_memory_mapping_test"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -90,7 +90,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/shared_memory_mappable_test.exe"
+				OutputFile="$(OutDir)/shared_memory_mapping_test.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"

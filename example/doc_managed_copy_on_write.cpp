@@ -81,7 +81,7 @@ int main()
    {
       //Now create a read-only version
       managed_mapped_file managed_file_ro(open_read_only, ManagedFile);
-      
+    
       //Check the original is intact
       if(!managed_file_ro.find<int>("MyInt").first && managed_file_ro.find<int>("MyInt2").first)
          throw int(0);

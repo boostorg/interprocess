@@ -201,7 +201,7 @@ int main ()
    heaplist->merge(otherheaplist, std::greater<int>());
    stdlist->merge(otherstdlist, std::greater<int>());
    if(!CheckEqual(userlist, stdlist, heaplist)) return 1;
-   
+  
    user_buffer.destroy<MyUserList>(L"MyUserList");
    delete stdlist;
 
@@ -212,10 +212,10 @@ int main ()
       }
    }
    catch(boost::interprocess::bad_alloc &){}
-   
+  
    MyHeapList::size_type heap_list_size = heaplist->size();
 
-   //Copy heap buffer to another 
+   //Copy heap buffer to another
    const char *insert_beg = static_cast<char*>(heap_buffer.get_address());
    const char *insert_end = insert_beg + heap_buffer.get_size();
    std::vector<char> grow_copy (insert_beg, insert_end);
@@ -246,7 +246,7 @@ int main ()
    }
    catch(boost::interprocess::bad_alloc &){}
 
-   MyUserList::size_type user_list_size = userlist->size();  
+   MyUserList::size_type user_list_size = userlist->size(); 
 
    if(user_list_size <= heap_list_size){
       return 1;

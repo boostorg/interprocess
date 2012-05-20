@@ -25,11 +25,11 @@ struct condition_deleter
    std::string name;
 
    ~condition_deleter()
-   {  
+   { 
       if(name.empty())
          named_condition::remove(test::add_to_process_id_name("named_condition"));
       else
-         named_condition::remove(name.c_str()); 
+         named_condition::remove(name.c_str());
    }
 };
 
@@ -44,7 +44,7 @@ class named_condition_test_wrapper
    public:
 
    named_condition_test_wrapper()
-      :  named_condition(open_or_create, 
+      :  named_condition(open_or_create,
              (test::add_to_process_id_name("test_cond") + num_to_string(count)).c_str())
    {
       condition_deleter::name += test::add_to_process_id_name("test_cond");
@@ -167,11 +167,11 @@ struct mutex_deleter
    std::string name;
 
    ~mutex_deleter()
-   {  
+   { 
       if(name.empty())
          named_mutex::remove(test::add_to_process_id_name("named_mutex"));
       else
-         named_mutex::remove(name.c_str()); 
+         named_mutex::remove(name.c_str());
    }
 };
 
@@ -182,7 +182,7 @@ class named_mutex_test_wrapper
 {
    public:
    named_mutex_test_wrapper()
-      :  named_mutex(open_or_create, 
+      :  named_mutex(open_or_create,
              (test::add_to_process_id_name("test_mutex") + num_to_string(count)).c_str())
    {
       mutex_deleter::name += test::add_to_process_id_name("test_mutex");

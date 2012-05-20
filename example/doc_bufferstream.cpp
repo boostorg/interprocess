@@ -48,7 +48,7 @@ int main ()
    managed_shared_memory segment(create_only,test::get_process_id_name(), 65536);
    #else
    //->
-   managed_shared_memory segment(create_only, 
+   managed_shared_memory segment(create_only,
                                  "MySharedMemory",  //segment name
                                  65536);
    //<-
@@ -64,7 +64,7 @@ int main ()
    const std::size_t BufferSize = 100*5;
 
    //Allocate a buffer in shared memory to write data
-   char *my_cstring = 
+   char *my_cstring =
       segment.construct<char>("MyCString")[BufferSize](0);
    bufferstream mybufstream(my_cstring, BufferSize);
 
@@ -82,7 +82,7 @@ int main ()
    std::istream_iterator<int> it(mybufstream), itend;
    std::copy(it, itend, std::back_inserter(data2));
 
-   //This extraction should have ended will fail error since 
+   //This extraction should have ended will fail error since
    //the numbers formatted in the buffer end before the end
    //of the buffer. (Otherwise it would trigger eofbit)
    assert(mybufstream.fail());
@@ -93,7 +93,7 @@ int main ()
    //Clear errors and rewind
    mybufstream.clear();
    mybufstream.seekp(0, std::ios::beg);
-   
+ 
    //Now write again the data trying to do a buffer overflow
    for(int i = 0, m = data.size()*5; i < m; ++i){
       mybufstream << data[i%5] << std::endl;

@@ -86,7 +86,7 @@ int main ()
       managed_xsi_shared_memory shmem(create_only, key, ShmemSize);
       shmid = shmem.get_shmid();
       int i;
-      //Let's allocate some memory 
+      //Let's allocate some memory
       for(i = 0; i < max; ++i){
          array[i] = shmem.allocate(i+1);
       }

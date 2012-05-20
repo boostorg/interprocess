@@ -37,7 +37,7 @@ struct file_destroyer
    ~file_destroyer()
    {
       //The last destructor will destroy the file
-      file_mapping::remove(get_filename().c_str());  
+      file_mapping::remove(get_filename().c_str()); 
    }
 };
 
@@ -72,7 +72,7 @@ int main ()
    test::test_named_creation<mapped_file_creation_test_wrapper>();
 
    //Create and get name, size and address
-   {  
+   { 
       mapped_file file1(create_only, get_filename().c_str(), FileSize, read_write, 0, permissions());
 
       //Overwrite all memory

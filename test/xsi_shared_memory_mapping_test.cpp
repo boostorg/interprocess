@@ -93,7 +93,7 @@ int main (int argc, char *argv[])
                //Create a mapped region
                mapped_region region (mapping, read_write, 0, FileSize, 0);
 
-               //Fill two regions with a pattern   
+               //Fill two regions with a pattern  
                unsigned char *filler = static_cast<unsigned char*>(region.get_address());
                for(std::size_t i = 0; i < FileSize; ++i){
                   *filler++ = static_cast<unsigned char>(i);

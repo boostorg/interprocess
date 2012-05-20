@@ -21,11 +21,11 @@
 //->
 
 using namespace boost::interprocess;
-typedef list<int, allocator<int, managed_mapped_file::segment_manager> > 
+typedef list<int, allocator<int, managed_mapped_file::segment_manager> >
    MyList;
 
 int main ()
-{   
+{ 
    //Define file names
    //<-
    #if 1
@@ -77,7 +77,7 @@ int main ()
          //so use previously obtained handle to find the new pointer.
          MyList *mylist = static_cast<MyList *>
                            (mfile_memory.get_address_from_handle(list_handle));
-         
+       
          //Fill list until there is no more room in the file
          try{
             while(1) {
@@ -88,7 +88,7 @@ int main ()
             //mapped file is full
          }
 
-         //Let's obtain the new size of the list      
+         //Let's obtain the new size of the list    
          MyList::size_type new_size = mylist->size();
 
          assert(new_size > old_size);

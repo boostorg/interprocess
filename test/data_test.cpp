@@ -52,7 +52,7 @@ int main ()
    //----   ALLOC, NAMED_ALLOC, NAMED_NEW TEST   ----//
    {
       int i;
-      //Let's allocate some memory 
+      //Let's allocate some memory
       for(i = 0; i < max; ++i){
          array[i] = segment.allocate(i+1);
       }

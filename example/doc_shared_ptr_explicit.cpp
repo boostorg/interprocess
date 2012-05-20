@@ -62,7 +62,7 @@ int main ()
    //<-
    #endif
    //->
-   
+ 
    //Create a shared pointer in shared memory
    //pointing to a newly created object in the segment
    my_shared_ptr &shared_ptr_instance =

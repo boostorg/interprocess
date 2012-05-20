@@ -39,7 +39,7 @@ int main ()
       managed_shared_memory shmem(create_only, ShmemName, ShmemSize);
 
       int i;
-      //Let's allocate some memory 
+      //Let's allocate some memory
       for(i = 0; i < max; ++i){
          array[i] = shmem.allocate(i+1);
       }

@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
       xsi_shared_memory shm (create_only, key, 1000);
 
       //Remove shared memory on destruction
-      struct shm_remove 
+      struct shm_remove
       {
          int shmid_;
          shm_remove(int shmid) : shmid_(shmid){}

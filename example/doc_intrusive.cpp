@@ -62,13 +62,13 @@ class reference_counted_class
 //A class that has an intrusive pointer to reference_counted_class
 class intrusive_ptr_owner
 {
-   typedef intrusive_ptr<N::reference_counted_class, 
+   typedef intrusive_ptr<N::reference_counted_class,
                            offset_ptr<void> > intrusive_ptr_t;
    intrusive_ptr_t m_intrusive_ptr;
 
    public:
    //Takes a pointer to the reference counted class
-   intrusive_ptr_owner(N::reference_counted_class *ptr) 
+   intrusive_ptr_owner(N::reference_counted_class *ptr)
       : m_intrusive_ptr(ptr){}
 };
 
@@ -105,12 +105,12 @@ int main()
    //->
 
    //Create the unique reference counted object in shared memory
-   N::reference_counted_class *ref_counted = 
+   N::reference_counted_class *ref_counted =
       shmem.construct<N::reference_counted_class>
          ("ref_counted")(shmem.get_segment_manager());
 
    //Create an array of ten intrusive pointer owners in shared memory
-   intrusive_ptr_owner *intrusive_owner_array = 
+   intrusive_ptr_owner *intrusive_owner_array =
       shmem.construct<intrusive_ptr_owner>
          (anonymous_instance)[10](ref_counted);
 

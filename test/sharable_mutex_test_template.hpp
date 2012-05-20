@@ -87,7 +87,7 @@ void timed_exclusive(void *arg, SM &sm)
 {
    data<SM> *pdata = static_cast<data<SM>*>(arg);
    boost::posix_time::ptime pt(delay(pdata->m_secs));
-   boost::interprocess::scoped_lock<SM> 
+   boost::interprocess::scoped_lock<SM>
       l (sm, boost::interprocess::defer_lock);
    if (l.timed_lock(pt)){
       boost::thread::sleep(xsecs(3*BaseSeconds));
@@ -101,7 +101,7 @@ void timed_shared(void *arg, SM &sm)
 {
    data<SM> *pdata = static_cast<data<SM>*>(arg);
    boost::posix_time::ptime pt(delay(pdata->m_secs));
-   boost::interprocess::sharable_lock<SM> 
+   boost::interprocess::sharable_lock<SM>
       l(sm, boost::interprocess::defer_lock);
    if (l.timed_lock(pt)){
       if(pdata->m_secs){
@@ -196,7 +196,7 @@ void test_plain_sharable_mutex()
       //We can only assure that the shared will finish first...
       BOOST_INTERPROCES_CHECK(s1.m_value == 0 || s2.m_value == 0);
       //...and writers will be mutually excluded after readers
-      BOOST_INTERPROCES_CHECK((e1.m_value == 10 && e2.m_value == 20) || 
+      BOOST_INTERPROCES_CHECK((e1.m_value == 10 && e2.m_value == 20) ||
              (e1.m_value == 20 && e2.m_value == 10) );
    }
 }

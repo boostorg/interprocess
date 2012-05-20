@@ -42,19 +42,19 @@ typedef basic_managed_shared_memory
 
 //We will work with narrow characters for shared memory objects
 //Alias an integer node allocator type
-typedef allocator<int, my_managed_shared_memory::segment_manager>   
+typedef allocator<int, my_managed_shared_memory::segment_manager>  
    shmem_allocator_t;
-typedef allocator<std::pair<const int, int>, my_managed_shared_memory::segment_manager>   
+typedef allocator<std::pair<const int, int>, my_managed_shared_memory::segment_manager>  
    shmem_node_pair_allocator_t;
-typedef allocator<test::movable_int, my_managed_shared_memory::segment_manager>   
+typedef allocator<test::movable_int, my_managed_shared_memory::segment_manager>  
    shmem_movable_allocator_t;
-typedef allocator<std::pair<const test::movable_int, test::movable_int>, my_managed_shared_memory::segment_manager>   
+typedef allocator<std::pair<const test::movable_int, test::movable_int>, my_managed_shared_memory::segment_manager>  
    shmem_movable_node_pair_allocator_t;
-typedef allocator<test::movable_and_copyable_int, my_managed_shared_memory::segment_manager>   
+typedef allocator<test::movable_and_copyable_int, my_managed_shared_memory::segment_manager>  
    shmem_move_copy_allocator_t;
-typedef allocator<test::copyable_int, my_managed_shared_memory::segment_manager>   
+typedef allocator<test::copyable_int, my_managed_shared_memory::segment_manager>  
    shmem_copy_allocator_t;
-typedef allocator<std::pair<const test::movable_and_copyable_int, test::movable_and_copyable_int>, my_managed_shared_memory::segment_manager>   
+typedef allocator<std::pair<const test::movable_and_copyable_int, test::movable_and_copyable_int>, my_managed_shared_memory::segment_manager>  
    shmem_move_copy_node_pair_allocator_t;
 
 //Alias standard types
@@ -72,28 +72,28 @@ typedef multimap<int, int, std::less<int>, shmem_node_pair_allocator_t>  MyShmMu
 //Alias movable types
 typedef set<test::movable_int, std::less<test::movable_int>
             ,shmem_movable_allocator_t>                   MyMovableShmSet;
-typedef multiset<test::movable_int, 
-      std::less<test::movable_int>, 
+typedef multiset<test::movable_int,
+      std::less<test::movable_int>,
       shmem_movable_allocator_t>                          MyMovableShmMultiSet;
-typedef map<test::movable_int, test::movable_int, 
-      std::less<test::movable_int>, 
+typedef map<test::movable_int, test::movable_int,
+      std::less<test::movable_int>,
       shmem_movable_node_pair_allocator_t>                     MyMovableShmMap;
-typedef multimap<test::movable_int, test::movable_int, 
-      std::less<test::movable_int>, 
+typedef multimap<test::movable_int, test::movable_int,
+      std::less<test::movable_int>,
       shmem_movable_node_pair_allocator_t>                     MyMovableShmMultiMap;
 
 typedef set<test::movable_and_copyable_int
            ,std::less<test::movable_and_copyable_int>
            ,shmem_move_copy_allocator_t>                  MyMoveCopyShmSet;
-typedef multiset<test::movable_and_copyable_int, 
-      std::less<test::movable_and_copyable_int>, 
+typedef multiset<test::movable_and_copyable_int,
+      std::less<test::movable_and_copyable_int>,
       shmem_move_copy_allocator_t>                        MyMoveCopyShmMultiSet;
 
 typedef set<test::copyable_int
            ,std::less<test::copyable_int>
            ,shmem_copy_allocator_t>                  MyCopyShmSet;
-typedef multiset<test::copyable_int, 
-      std::less<test::copyable_int>, 
+typedef multiset<test::copyable_int,
+      std::less<test::copyable_int>,
       shmem_copy_allocator_t>                        MyCopyShmMultiSet;
 
 

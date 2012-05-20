@@ -219,7 +219,7 @@ void timed_lock_and_sleep(void *arg, M &sm)
 {
    data<M> *pdata = static_cast<data<M>*>(arg);
    boost::posix_time::ptime pt(delay(pdata->m_secs));
-   boost::interprocess::scoped_lock<M> 
+   boost::interprocess::scoped_lock<M>
       l (sm, boost::interprocess::defer_lock);
    if (l.timed_lock(pt)){
       boost::thread::sleep(xsecs(2*BaseSeconds));
@@ -232,7 +232,7 @@ template<bool SameObject, typename M>
 void test_mutex_lock()
 {
    shared_val = 0;
-   
+  
    M m1, m2;
    M *pm1, *pm2;
 
@@ -269,7 +269,7 @@ template<bool SameObject, typename M>
 void test_mutex_lock_timeout()
 {
    shared_val = 0;
-   
+  
    M m1, m2;
    M *pm1, *pm2;
 
@@ -392,7 +392,7 @@ inline void test_all_lock()
    test_trylock<M>()();
    std::cout << "test_timedlock<" << typeid(M).name() << ">" << std::endl;
    test_timedlock<M>()();
-} 
+}
 
 template <typename M>
 inline void test_all_recursive_lock()

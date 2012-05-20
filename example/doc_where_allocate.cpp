@@ -22,12 +22,12 @@ int main ()
 {
    using namespace boost::interprocess;
    //Typedefs
-   typedef allocator<char, managed_shared_memory::segment_manager> 
+   typedef allocator<char, managed_shared_memory::segment_manager>
       CharAllocator;
    typedef basic_string<char, std::char_traits<char>, CharAllocator>
       MyShmString;
    typedef allocator<MyShmString, managed_shared_memory::segment_manager>
-      StringAllocator;      
+      StringAllocator;    
    typedef vector<MyShmString, StringAllocator>
       MyShmStringVector;
 
@@ -66,17 +66,17 @@ int main ()
    StringAllocator   stringallocator(shm.get_segment_manager());
 
    //This string is in only in this process (the pointer pointing to the
-   //buffer that will hold the text is not in shared memory). 
-   //But the buffer that will hold "this is my text" is allocated from 
+   //buffer that will hold the text is not in shared memory).
+   //But the buffer that will hold "this is my text" is allocated from
    //shared memory
    MyShmString mystring(charallocator);
    mystring = "this is my text";
 
    //This vector is only in this process (the pointer pointing to the
-   //buffer that will hold the MyShmString-s is not in shared memory). 
-   //But the buffer that will hold 10 MyShmString-s is allocated from 
-   //shared memory using StringAllocator. Since strings use a shared 
-   //memory allocator (CharAllocator) the 10 buffers that hold 
+   //buffer that will hold the MyShmString-s is not in shared memory).
+   //But the buffer that will hold 10 MyShmString-s is allocated from
+   //shared memory using StringAllocator. Since strings use a shared
+   //memory allocator (CharAllocator) the 10 buffers that hold
    //"this is my text" text are also in shared memory.
    MyShmStringVector myvector(stringallocator);
    myvector.insert(myvector.begin(), 10, mystring);
@@ -84,7 +84,7 @@ int main ()
    //This vector is fully constructed in shared memory. All pointers
    //buffers are constructed in the same shared memory segment
    //This vector can be safely accessed from other processes.
-   MyShmStringVector *myshmvector = 
+   MyShmStringVector *myshmvector =
       shm.construct<MyShmStringVector>("myshmvector")(stringallocator);
    myshmvector->insert(myshmvector->begin(), 10, mystring);
 

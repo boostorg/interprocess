@@ -46,7 +46,7 @@ int main ()
    managed_shared_memory segment(create_only, test::get_process_id_name(), 65536);
    #else
    //->
-   managed_shared_memory segment(create_only, 
+   managed_shared_memory segment(create_only,
                                  "MySharedMemory",  //segment name
                                  65536);
    //<-
