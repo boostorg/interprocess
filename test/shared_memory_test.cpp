@@ -62,7 +62,7 @@ int main ()
       test::test_named_creation<shared_memory_creation_test_wrapper>();
 
       //Create and get name, size and address
-      {  
+      { 
          shared_memory_object::remove(ShmName);
          shared_memory shm1(create_only, ShmName, ShmSize, read_write, 0, permissions());
 

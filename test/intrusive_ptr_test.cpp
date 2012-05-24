@@ -456,12 +456,12 @@ namespace n_report_1
 {
 
 class foo: public N::base
-{ 
+{
    public:
 
    foo(): m_self(this)
    {
-   } 
+   }
 
    void suicide()
    {
@@ -471,13 +471,13 @@ class foo: public N::base
    private:
 
    boost::interprocess::intrusive_ptr<foo, VP> m_self;
-}; 
+};
 
 void test()
 {
    boost::interprocess::offset_ptr<foo> foo_ptr = new foo;
    foo_ptr->suicide();
-} 
+}
 
 } // namespace n_report_1
 

@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 {
    if(argc == 1){ //Parent process
       //Remove shared memory on construction and destruction
-      struct shm_remove 
+      struct shm_remove
       {
       //<-
       #if 1
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
       managed_shared_memory segment(open_only, argv[2]);
       #else
       //->
-      managed_shared_memory segment(open_only, "MySharedMemory");  
+      managed_shared_memory segment(open_only, "MySharedMemory");
       //<-
       #endif
       //->

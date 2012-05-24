@@ -76,7 +76,7 @@ bool test_allocation(Allocator &a)
          default:
          break;
       }
-      bool ok = free_memory == a.get_free_memory() && 
+      bool ok = free_memory == a.get_free_memory() &&
                a.all_memory_deallocated() && a.check_sanity();
       if(!ok)  return ok;
    }
@@ -118,7 +118,7 @@ bool test_allocation_shrink(Allocator &a)
 		 std::memset(buffers[i], 0, a.size(buffers[i]));
       }
    }
-   
+  
    //Deallocate it in non sequential order
    for(int j = 0, max = (int)buffers.size()
       ;j < max
@@ -170,7 +170,7 @@ bool test_allocation_expand(Allocator &a)
          preferred_size = min_size*2;
       }
    }
-   
+  
    //Deallocate it in non sequential order
    for(int j = 0, max = (int)buffers.size()
       ;j < max
@@ -243,7 +243,7 @@ bool test_allocation_shrink_and_expand(Allocator &a)
          return false;
       }
    }
-   
+  
    //Deallocate it in non sequential order
    for(int j = 0, max = (int)buffers.size()
       ;j < max
@@ -310,7 +310,7 @@ bool test_allocation_deallocation_expand(Allocator &a)
          }
       }
    }
-   
+  
    //Now erase null values from the vector
    buffers.erase( std::remove(buffers.begin(), buffers.end(), static_cast<void*>(0))
                 , buffers.end());
@@ -349,7 +349,7 @@ bool test_allocation_with_reuse(Allocator &a)
          std::memset(ptr, 0, size);
          buffers.push_back(ptr);
       }
-      
+     
       //Now deallocate all except the latest
       //Now try to expand to the double of the sizeof_object
       for(int i = 0, max = (int)buffers.size() - 1
@@ -381,7 +381,7 @@ bool test_allocation_with_reuse(Allocator &a)
       }
       //There is only a single block so deallocate it
       a.deallocate(ptr);
-      
+     
       if(!a.all_memory_deallocated() || !a.check_sanity())
          return false;
    }
@@ -405,7 +405,7 @@ bool test_aligned_allocation(Allocator &a)
                continue_loop = false;
             break;
          }
-         
+        
          if(((std::size_t)ptr & (j - 1)) != 0)
             return false;
          a.deallocate(ptr);
@@ -441,7 +441,7 @@ bool test_continuous_aligned_allocation(Allocator &a)
             else{
                any_allocated = true;
             }
-            
+           
             if(((std::size_t)ptr & (j - 1)) != 0)
                return false;
          }
@@ -734,7 +734,7 @@ bool test_many_equal_allocation(Allocator &a)
          buffers2.erase(buffers2.begin()+pos);
       }
 
-      bool ok = free_memory == a.get_free_memory() && 
+      bool ok = free_memory == a.get_free_memory() &&
                a.all_memory_deallocated() && a.check_sanity();
       if(!ok)  return ok;
    }
@@ -840,7 +840,7 @@ bool test_many_different_allocation(Allocator &a)
          buffers2.erase(buffers2.begin()+pos);
       }
 
-      bool ok = free_memory == a.get_free_memory() && 
+      bool ok = free_memory == a.get_free_memory() &&
                a.all_memory_deallocated() && a.check_sanity();
       if(!ok)  return ok;
    }
@@ -872,7 +872,7 @@ bool test_many_deallocation(Allocator &a)
          a.deallocate_many(boost::move(buffers[i]));
       }
       buffers.clear();
-      bool ok = free_memory == a.get_free_memory() && 
+      bool ok = free_memory == a.get_free_memory() &&
                a.all_memory_deallocated() && a.check_sanity();
       if(!ok)  return ok;
    }
@@ -889,7 +889,7 @@ bool test_many_deallocation(Allocator &a)
       }
       buffers.clear();
 
-      bool ok = free_memory == a.get_free_memory() && 
+      bool ok = free_memory == a.get_free_memory() &&
                a.all_memory_deallocated() && a.check_sanity();
       if(!ok)  return ok;
    }

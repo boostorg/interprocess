@@ -45,7 +45,7 @@ int main ()
    managed_shared_memory segment(create_only, shMemName, memsize);
 
    //STL compatible allocator object, uses allocate(), deallocate() functions
-   typedef allocator<InstanceCounter, 
+   typedef allocator<InstanceCounter,
                      managed_shared_memory::segment_manager>
       inst_allocator_t;
    const inst_allocator_t myallocator (segment.get_segment_manager());
@@ -59,7 +59,7 @@ int main ()
       int i;
       for(i = 0; true; ++i){
          myvec.push_back(InstanceCounter());
-      }  
+      } 
    }
    catch(boost::interprocess::bad_alloc &){
       if(InstanceCounter::counter != 0)
@@ -74,7 +74,7 @@ int main ()
       InstanceCounter ic;
       for(i = 0; true; ++i){
          myvec.insert(myvec.begin(), i, ic);
-      }  
+      } 
    }
    catch(boost::interprocess::bad_alloc &){
       if(InstanceCounter::counter != 0)

@@ -37,7 +37,7 @@ int robust_mutex_test(int argc, char *argv[])
       std::cout << "robust mutex recovery test" << std::endl;
 
       //Remove shared memory on construction and destruction
-      class shm_remove 
+      class shm_remove
       {
          public:
          shm_remove(){ shared_memory_object::remove
@@ -69,7 +69,7 @@ int robust_mutex_test(int argc, char *argv[])
       while(!*go_ahead){
          ipcdetail::thread_yield();
       }
-      
+     
       std::cout << "... recovering mutex[0]" << std::endl;
       //First try to recover lock[0], put into consistent
       //state and relock it again

@@ -44,15 +44,15 @@ int main(int argc, char *argv[])
       {  //Create a file
          file_mapping::remove(FileName);
          std::filebuf fbuf;
-         fbuf.open(FileName, std::ios_base::in | std::ios_base::out 
-                              | std::ios_base::trunc | std::ios_base::binary); 
+         fbuf.open(FileName, std::ios_base::in | std::ios_base::out
+                              | std::ios_base::trunc | std::ios_base::binary);
          //Set the size
          fbuf.pubseekoff(FileSize-1, std::ios_base::beg);
          fbuf.sputc(0);
       }
 
       //Remove on exit
-      struct file_remove 
+      struct file_remove
       {
          file_remove(const char *FileName)
             : FileName_(FileName) {}
@@ -109,10 +109,10 @@ int main(int argc, char *argv[])
          std::filebuf fbuf;
          //<-
          #if 1
-         fbuf.open(argv[2], std::ios_base::in | std::ios_base::binary); 
+         fbuf.open(argv[2], std::ios_base::in | std::ios_base::binary);
          #else
          //->
-         fbuf.open(FileName, std::ios_base::in | std::ios_base::binary); 
+         fbuf.open(FileName, std::ios_base::in | std::ios_base::binary);
          //<-
          #endif
          //->

@@ -102,15 +102,15 @@ int vector_test()
 
          shmvector->resize(100);
          stdvector->resize(100);
-         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;         
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;        
 
          shmvector->resize(200);
          stdvector->resize(200);
-         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;         
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;        
 
          shmvector->resize(0);
          stdvector->resize(0);
-         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;         
+         if(!test::CheckEqualContainers(shmvector, stdvector)) return 1;        
 
          for(int i = 0; i < max; ++i){
             IntType new_int(i);

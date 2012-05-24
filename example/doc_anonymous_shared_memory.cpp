@@ -23,7 +23,7 @@ int main ()
 
       //Write all the memory to 1
       std::memset(region.get_address(), 1, region.get_size());
-     
+   
       //The segment is unmapped when "region" goes out of scope
    }
    catch(interprocess_exception &ex){

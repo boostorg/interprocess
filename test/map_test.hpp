@@ -55,19 +55,19 @@ int map_test ()
 
       //Shared memory allocator must be always be initialized
       //since it has no default constructor
-      MyShmMap *shmmap = 
+      MyShmMap *shmmap =
          segment.template construct<MyShmMap>("MyShmMap")
             (std::less<IntType>(), segment.get_segment_manager());
 
       MyStdMap *stdmap = new MyStdMap;
 
-      MyShmMultiMap *shmmultimap = 
+      MyShmMultiMap *shmmultimap =
          segment.template construct<MyShmMultiMap>("MyShmMultiMap")
             (std::less<IntType>(), segment.get_segment_manager());
 
       MyStdMultiMap *stdmultimap = new MyStdMultiMap;
 
-      //Test construction from a range   
+      //Test construction from a range  
       {
          //This is really nasty, but we have no other simple choice
          IntPairType aux_vect[50];
@@ -92,7 +92,7 @@ int map_test ()
             new(&aux_vect3[i])IntPairType(boost::move(i1), boost::move(i2));
          }
 
-         MyShmMap *shmmap2 = 
+         MyShmMap *shmmap2 =
             segment.template construct<MyShmMap>("MyShmMap2")
                ( ::boost::make_move_iterator(&aux_vect[0])
                , ::boost::make_move_iterator(aux_vect + 50)
@@ -100,7 +100,7 @@ int map_test ()
 
          MyStdMap *stdmap2 = new MyStdMap(aux_vect2, aux_vect2 + 50);
 
-         MyShmMultiMap *shmmultimap2 = 
+         MyShmMultiMap *shmmultimap2 =
             segment.template construct<MyShmMultiMap>("MyShmMultiMap2")
                ( ::boost::make_move_iterator(&aux_vect3[0])
                , ::boost::make_move_iterator(aux_vect3 + 50)
@@ -128,7 +128,7 @@ int map_test ()
             new(&aux_vect3[i])IntPairType(boost::move(i1), boost::move(i2));
          }
 
-         MyShmMap *shmmap3 = 
+         MyShmMap *shmmap3 =
             segment.template construct<MyShmMap>("MyShmMap3")
                ( ordered_unique_range
                , ::boost::make_move_iterator(&aux_vect[0])
@@ -137,7 +137,7 @@ int map_test ()
 
          MyStdMap *stdmap3 = new MyStdMap(aux_vect2, aux_vect2 + 50);
 
-         MyShmMultiMap *shmmultimap3 = 
+         MyShmMultiMap *shmmultimap3 =
             segment.template construct<MyShmMultiMap>("MyShmMultiMap3")
                ( ordered_range
                , ::boost::make_move_iterator(&aux_vect3[0])
@@ -508,13 +508,13 @@ int map_test_copyable ()
 
    //Shared memory allocator must be always be initialized
    //since it has no default constructor
-   MyShmMap *shmmap = 
+   MyShmMap *shmmap =
       segment.template construct<MyShmMap>("MyShmMap")
          (std::less<IntType>(), segment.get_segment_manager());
 
    MyStdMap *stdmap = new MyStdMap;
 
-   MyShmMultiMap *shmmultimap = 
+   MyShmMultiMap *shmmultimap =
       segment.template construct<MyShmMultiMap>("MyShmMultiMap")
          (std::less<IntType>(), segment.get_segment_manager());
 
@@ -555,7 +555,7 @@ int map_test_copyable ()
          stdmapcopy  = *stdmap;
          shmmmapcopy = *shmmultimap;
          stdmmapcopy = *stdmultimap;
-         
+        
          if(!CheckEqualContainers(&shmmapcopy, &stdmapcopy))
             return 1;
          if(!CheckEqualContainers(&shmmmapcopy, &stdmmapcopy))

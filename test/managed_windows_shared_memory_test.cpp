@@ -40,7 +40,7 @@ int main ()
       managed_windows_shared_memory w_shm(create_only, MemName, MemSize);
 
       int i;
-      //Let's allocate some memory 
+      //Let's allocate some memory
       for(i = 0; i < max; ++i){
          array[i] = w_shm.allocate(i+1);
       }
@@ -123,7 +123,7 @@ int main ()
             if(!shmem_vect)
                return -1;
          }
-      
+     
          //Destroy and check it is not present
          w_shm_new.destroy_ptr(w_shm_vect);
          if(0 != w_shm_new.find<MyVect>("MyVector").first)

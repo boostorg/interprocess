@@ -43,12 +43,12 @@ int main ()
    //Create shared memory
    //<-
    #if 1
-   managed_shared_memory segment(create_only, 
+   managed_shared_memory segment(create_only,
                                  test::get_process_id_name(),  //segment name
                                  65536);
    #else
    //->
-   managed_shared_memory segment(create_only, 
+   managed_shared_memory segment(create_only,
                                  "MySharedMemory",  //segment name
                                  65536);
    //<-
@@ -68,7 +68,7 @@ int main ()
    //is the same, this private_node_allocator will have its own pool so
    //"allocator_instance2" CAN'T deallocate nodes allocated by "allocator_instance".
    //"allocator_instance2" is NOT equal to "allocator_instance"
-   assert(allocator_instance != allocator_instance2);   
+   assert(allocator_instance != allocator_instance2); 
 
    //Create another node_allocator using copy-constructor.
    private_node_allocator_t allocator_instance3(allocator_instance2);

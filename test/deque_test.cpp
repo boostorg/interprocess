@@ -261,11 +261,11 @@ bool do_test()
 
          shmdeque->resize(100);
          stddeque->resize(100);
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;         
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;        
 
          shmdeque->resize(200);
          stddeque->resize(200);
-         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;         
+         if(!test::CheckEqualContainers(shmdeque, stddeque)) return 1;        
 
          segment.template destroy<MyShmDeque>("MyShmDeque");
          delete stddeque;
@@ -278,7 +278,7 @@ bool do_test()
          std::cout << ex.what() << std::endl;
          return false;
       }*/
-      
+     
       std::cout << std::endl << "Test OK!" << std::endl;
    }/*
    catch(...){

@@ -46,19 +46,19 @@ int set_test ()
 
       //Shared memory allocator must be always be initialized
       //since it has no default constructor
-      MyShmSet *shmset = 
+      MyShmSet *shmset =
          segment.template construct<MyShmSet>("MyShmSet")
             (std::less<IntType>(), segment.get_segment_manager());
 
       MyStdSet *stdset = new MyStdSet;
 
-      MyShmMultiSet *shmmultiset = 
+      MyShmMultiSet *shmmultiset =
          segment.template construct<MyShmMultiSet>("MyShmMultiSet")
             (std::less<IntType>(), segment.get_segment_manager());
 
       MyStdMultiSet *stdmultiset = new MyStdMultiSet;
 
-      //Test construction from a range   
+      //Test construction from a range  
       {
          IntType aux_vect[50];
          for(int i = 0; i < 50; ++i){
@@ -75,7 +75,7 @@ int set_test ()
             aux_vect3[i] = boost::move(move_me);
          }
 
-         MyShmSet *shmset2 = 
+         MyShmSet *shmset2 =
             segment.template construct<MyShmSet>("MyShmSet2")
                ( ::boost::make_move_iterator(&aux_vect[0])
                , ::boost::make_move_iterator(aux_vect + 50)
@@ -83,7 +83,7 @@ int set_test ()
 
          MyStdSet *stdset2 = new MyStdSet(aux_vect2, aux_vect2 + 50);
 
-         MyShmMultiSet *shmmultiset2 = 
+         MyShmMultiSet *shmmultiset2 =
             segment.template construct<MyShmMultiSet>("MyShmMultiSet2")
                ( ::boost::make_move_iterator(&aux_vect3[0])
                , ::boost::make_move_iterator(aux_vect3 + 50)
@@ -114,7 +114,7 @@ int set_test ()
             aux_vect3[i] = boost::move(move_me);
          }
 
-         MyShmSet *shmset3 = 
+         MyShmSet *shmset3 =
             segment.template construct<MyShmSet>("MyShmSet3")
                ( ordered_unique_range
                , ::boost::make_move_iterator(&aux_vect[0])
@@ -123,7 +123,7 @@ int set_test ()
 
          MyStdSet *stdset3 = new MyStdSet(aux_vect2, aux_vect2 + 50);
 
-         MyShmMultiSet *shmmultiset3 = 
+         MyShmMultiSet *shmmultiset3 =
             segment.template construct<MyShmMultiSet>("MyShmMultiSet3")
                ( ordered_range
                , ::boost::make_move_iterator(&aux_vect3[0])
@@ -520,13 +520,13 @@ int set_test_copyable ()
 
       //Shared memory allocator must be always be initialized
       //since it has no default constructor
-      MyShmSet *shmset = 
+      MyShmSet *shmset =
          segment.template construct<MyShmSet>("MyShmSet")
             (std::less<IntType>(), segment.get_segment_manager());
 
       MyStdSet *stdset = new MyStdSet;
 
-      MyShmMultiSet *shmmultiset = 
+      MyShmMultiSet *shmmultiset =
          segment.template construct<MyShmMultiSet>("MyShmMultiSet")
             (std::less<IntType>(), segment.get_segment_manager());
 
@@ -567,7 +567,7 @@ int set_test_copyable ()
 
          shmmsetcopy = *shmmultiset;
          stdmsetcopy = *stdmultiset;
-         
+        
          if(!CheckEqualContainers(&shmmsetcopy, &stdmsetcopy))
             return 1;
       }

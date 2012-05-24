@@ -38,12 +38,12 @@ namespace boost {
 namespace interprocess {
 namespace test {
 
-//!An STL compatible allocator_v1 that uses a segment manager as 
+//!An STL compatible allocator_v1 that uses a segment manager as
 //!memory source. The internal pointer type will of the same type (raw, smart) as
 //!"typename SegmentManager::void_pointer" type. This allows
 //!placing the allocator_v1 in shared memory, memory mapped-files, etc...*/
 template<class T, class SegmentManager>
-class allocator_v1 
+class allocator_v1
 {
  private:
    typedef allocator_v1<T, SegmentManager>         self_t;
@@ -86,7 +86,7 @@ class allocator_v1
    //!Obtains an allocator_v1 of other type
    template<class T2>
    struct rebind
-   {   
+   {  
       typedef allocator_v1<T2, SegmentManager>     other;
    };
 
@@ -103,19 +103,19 @@ class allocator_v1
    {  return const_pointer(addressof(value));  }
 */
    //!Constructor from the segment manager. Never throws
-   allocator_v1(segment_manager *segment_mngr) 
+   allocator_v1(segment_manager *segment_mngr)
       : mp_mngr(segment_mngr) { }
 
    //!Constructor from other allocator_v1. Never throws
-   allocator_v1(const allocator_v1 &other) 
+   allocator_v1(const allocator_v1 &other)
       : mp_mngr(other.get_segment_manager()){ }
 
    //!Constructor from related allocator_v1. Never throws
    template<class T2>
-   allocator_v1(const allocator_v1<T2, SegmentManager> &other) 
+   allocator_v1(const allocator_v1<T2, SegmentManager> &other)
       : mp_mngr(other.get_segment_manager()){}
 
-   //!Allocates memory for an array of count elements. 
+   //!Allocates memory for an array of count elements.
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate(size_type count, cvoid_ptr hint = 0)
    {  (void)hint; return pointer(static_cast<value_type*>(mp_mngr->allocate(count*sizeof(value_type))));  }
@@ -124,7 +124,7 @@ class allocator_v1
    void deallocate(const pointer &ptr, size_type)
    {  mp_mngr->deallocate((void*)ipcdetail::to_raw_pointer(ptr));  }
 
-   //!Construct object, calling constructor. 
+   //!Construct object, calling constructor.
    //!Throws if T(const T&) throws
    void construct(const pointer &ptr, const_reference value)
    {  new((void*)ipcdetail::to_raw_pointer(ptr)) value_type(value);  }
@@ -145,13 +145,13 @@ class allocator_v1
 
 //!Equality test for same type of allocator_v1
 template<class T, class SegmentManager> inline
-bool operator==(const allocator_v1<T , SegmentManager>  &alloc1, 
+bool operator==(const allocator_v1<T , SegmentManager>  &alloc1,
                 const allocator_v1<T, SegmentManager>  &alloc2)
    {  return alloc1.get_segment_manager() == alloc2.get_segment_manager(); }
 
 //!Inequality test for same type of allocator_v1
 template<class T, class SegmentManager> inline
-bool operator!=(const allocator_v1<T, SegmentManager>  &alloc1, 
+bool operator!=(const allocator_v1<T, SegmentManager>  &alloc1,
                 const allocator_v1<T, SegmentManager>  &alloc2)
    {  return alloc1.get_segment_manager() != alloc2.get_segment_manager(); }
 

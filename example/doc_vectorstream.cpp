@@ -22,9 +22,9 @@
 
 using namespace boost::interprocess;
 
-typedef allocator<int, managed_shared_memory::segment_manager> 
+typedef allocator<int, managed_shared_memory::segment_manager>
    IntAllocator;
-typedef allocator<char, managed_shared_memory::segment_manager> 
+typedef allocator<char, managed_shared_memory::segment_manager>
    CharAllocator;
 typedef vector<int, IntAllocator>   MyVector;
 typedef basic_string
@@ -55,13 +55,13 @@ int main ()
    //<-
    #if 1
    managed_shared_memory segment(
-      create_only, 
+      create_only,
       test::get_process_id_name(), //segment name
       65536);           //segment size in bytes
    #else
    //->
    managed_shared_memory segment(
-      create_only, 
+      create_only,
       "MySharedMemory", //segment name
       65536);           //segment size in bytes
    //<-
@@ -69,7 +69,7 @@ int main ()
    //->
 
    //Construct shared memory vector
-   MyVector *myvector = 
+   MyVector *myvector =
       segment.construct<MyVector>("MyVector")
       (IntAllocator(segment.get_segment_manager()));
 
@@ -102,7 +102,7 @@ int main ()
    //Avoid reallocations
    myvector2->reserve(100);
 
-   //Extract all values from the internal 
+   //Extract all values from the internal
    //string directly to a shared memory vector.
    std::istream_iterator<int> it(myvectorstream), itend;
    std::copy(it, itend, std::back_inserter(*myvector2));
@@ -114,7 +114,7 @@ int main ()
    MyString stringcopy (myvectorstream.vector());
 
    //Now we create a new empty shared memory string...
-   MyString *mystring = 
+   MyString *mystring =
       segment.construct<MyString>("MyString")
       (CharAllocator(segment.get_segment_manager()));
 

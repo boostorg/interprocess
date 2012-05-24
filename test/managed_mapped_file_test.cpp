@@ -48,7 +48,7 @@ int main ()
       managed_mapped_file mfile(create_only, FileName, FileSize);
 
       int i;
-      //Let's allocate some memory 
+      //Let's allocate some memory
       for(i = 0; i < max; ++i){
          array[i] = mfile.allocate(i+1);
       }
@@ -83,7 +83,7 @@ int main ()
 
       //Construct a vector in the memory-mapped file
       mfile_vect = mfile.construct<MyVect> ("MyVector") (myallocator);
-      
+     
       //Flush cached data from memory-mapped file to disk
       mfile.flush();
    }
