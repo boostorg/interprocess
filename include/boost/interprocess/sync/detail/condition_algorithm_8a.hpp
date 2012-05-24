@@ -23,12 +23,12 @@ namespace ipcdetail {
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
-// 
+//
 // Condition variable algorithm taken from pthreads-win32 discussion.
 //
 // The algorithm was developed by Alexander Terekhov in colaboration with
 // Louis Thomas.
-// 
+//
 //     Algorithm 8a / IMPL_SEM,UNBLOCK_STRATEGY == UNBLOCK_ALL
 //
 // semBlockLock - bin.semaphore
@@ -38,20 +38,20 @@ namespace ipcdetail {
 // nWaitersGone - int
 // nWaitersBlocked - int
 // nWaitersToUnblock - int
-// 
+//
 // wait( timeout ) {
-// 
+//
 //   [auto: register int result          ]     // error checking omitted
 //   [auto: register int nSignalsWasLeft ]
 //   [auto: register int nWaitersWasGone ]
-// 
+//
 //   sem_wait( semBlockLock );
 //   nWaitersBlocked++;
 //   sem_post( semBlockLock );
-// 
+//
 //   unlock( mtxExternal );
 //   bTimedOut = sem_wait( semBlockQueue,timeout );
-// 
+//
 //   lock( mtxUnblockLock );
 //   if ( 0 != (nSignalsWasLeft = nWaitersToUnblock) ) {
 //     if ( bTimedOut ) {                       // timeout (or canceled)
@@ -82,7 +82,7 @@ namespace ipcdetail {
 //     nWaitersGone = 0;
 //   }
 //   unlock( mtxUnblockLock );
-// 
+//
 //   if ( 1 == nSignalsWasLeft ) {
 //     if ( 0 != nWaitersWasGone ) {
 //       // sem_adjust( semBlockQueue,-nWaitersWasGone );
@@ -91,19 +91,19 @@ namespace ipcdetail {
 //       }
 //     } sem_post( semBlockLock );          // open the gate
 //   }
-// 
+//
 //   lock( mtxExternal );
-// 
+//
 //   return ( bTimedOut ) ? ETIMEOUT : 0;
 // }
-// 
+//
 // signal(bAll) {
-// 
+//
 //   [auto: register int result         ]
 //   [auto: register int nSignalsToIssue]
-// 
+//
 //   lock( mtxUnblockLock );
-// 
+//
 //   if ( 0 != nWaitersToUnblock ) {        // the gate is closed!!!
 //     if ( 0 == nWaitersBlocked ) {        // NO-OP
 //       return unlock( mtxUnblockLock );
@@ -136,7 +136,7 @@ namespace ipcdetail {
 //   else { // NO-OP
 //     return unlock( mtxUnblockLock );
 //   }
-// 
+//
 //   unlock( mtxUnblockLock );
 //   sem_post( semBlockQueue,nSignalsToIssue );
 //   return result;
@@ -160,7 +160,7 @@ namespace ipcdetail {
 //    semaphore_type  &get_sem_block_lock()
 //    mutex_type      &get_mtx_unblock_lock()
 // };
-// 
+//
 template<class ConditionMembers>
 class condition_algorithm_8a
 {
@@ -197,7 +197,7 @@ inline void condition_algorithm_8a<ConditionMembers>::signal(ConditionMembers &d
 
       if ( 0 != data.get_nwaiters_to_unblock() ) {        // the gate is closed!!!
          if ( 0 == data.get_nwaiters_blocked() ) {        // NO-OP
-            //locker's destructor triggers data.get_mtx_unblock_lock().unlock() 
+            //locker's destructor triggers data.get_mtx_unblock_lock().unlock()
             return;
          }
          if (broadcast) {
@@ -226,10 +226,10 @@ inline void condition_algorithm_8a<ConditionMembers>::signal(ConditionMembers &d
          }
       }
       else { // NO-OP
-         //locker's destructor triggers data.get_mtx_unblock_lock().unlock() 
+         //locker's destructor triggers data.get_mtx_unblock_lock().unlock()
          return;
       }
-      //locker's destructor triggers data.get_mtx_unblock_lock().unlock() 
+      //locker's destructor triggers data.get_mtx_unblock_lock().unlock()
    }
    data.get_sem_block_queue().post(nsignals_to_issue);
 }
@@ -242,7 +242,7 @@ inline bool condition_algorithm_8a<ConditionMembers>::wait
    //Initialize to avoid warnings
    integer_type nsignals_was_left = 0;
    integer_type nwaiters_was_gone = 0;
- 
+
    data.get_sem_block_lock().wait();
    ++data.get_nwaiters_blocked();
    data.get_sem_block_lock().post();
@@ -257,10 +257,10 @@ inline bool condition_algorithm_8a<ConditionMembers>::wait
       ~scoped_unlock()
       {  mut.lock();  }
    } unlocker(mtxExternal);
- 
+
 
    bool bTimedOut = tout_enabled ? !data.get_sem_block_queue().timed_wait(abs_time) : (data.get_sem_block_queue().wait(), false);
- 
+
    {
       scoped_lock<mutex_type> locker(data.get_mtx_unblock_lock());
       if ( 0 != (nsignals_was_left = data.get_nwaiters_to_unblock()) ) {
@@ -289,9 +289,9 @@ inline bool condition_algorithm_8a<ConditionMembers>::wait
          data.get_sem_block_lock().post();
          data.get_nwaiters_gone() = 0;
       }
-      //locker's destructor triggers data.get_mtx_unblock_lock().unlock() 
-   }  
- 
+      //locker's destructor triggers data.get_mtx_unblock_lock().unlock()
+   } 
+
    if ( 1 == nsignals_was_left ) {
       if ( 0 != nwaiters_was_gone ) {
          // sem_adjust( data.get_sem_block_queue(),-nwaiters_was_gone );
@@ -301,9 +301,9 @@ inline bool condition_algorithm_8a<ConditionMembers>::wait
       }
       data.get_sem_block_lock().post(); // open the gate
    }
- 
+
    //mtxExternal.lock(); called from unlocker
- 
+
    return ( bTimedOut ) ? false : true;
 }
 

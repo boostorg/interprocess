@@ -23,7 +23,7 @@
 #include <boost/interprocess/sync/spin/recursive_mutex.hpp>
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
-#include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>  
+#include <boost/interprocess/mem_algo/rbtree_best_fit.hpp> 
 #include <boost/interprocess/indexes/iset_index.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/permissions.hpp>
@@ -53,7 +53,7 @@ struct intermodule_types
 
 //we must implement our own managed shared memory to avoid circular dependencies
 template<class Device, bool FileBased>
-class basic_managed_global_memory 
+class basic_managed_global_memory
    : public basic_managed_memory_impl
       < char
       , intermodule_types::mem_algo
@@ -88,19 +88,19 @@ class basic_managed_global_memory
    public: //functions
 
    basic_managed_global_memory (open_or_create_t open_or_create,
-                              const char *name, size_type size, 
+                              const char *name, size_type size,
                               const void *addr = 0, const permissions& perm = permissions())
       : base_t()
-      , base2_t(open_or_create, name, size, read_write, addr, 
-                create_open_func_t(get_this_pointer(), 
+      , base2_t(open_or_create, name, size, read_write, addr,
+                create_open_func_t(get_this_pointer(),
                 DoOpenOrCreate), perm)
    {}
 
-   basic_managed_global_memory (open_only_t open_only, const char* name, 
+   basic_managed_global_memory (open_only_t open_only, const char* name,
                                 const void *addr = 0)
       : base_t()
-      , base2_t(open_only, name, read_write, addr, 
-                create_open_func_t(get_this_pointer(), 
+      , base2_t(open_only, name, read_write, addr,
+                create_open_func_t(get_this_pointer(),
                 DoOpen))
    {}
 };

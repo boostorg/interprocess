@@ -69,7 +69,7 @@ class unordered_map_index
    /// @cond
    typedef unordered_map_index_aux<MapConfig>   index_aux;
    typedef typename index_aux::index_t          base_type;
-   typedef typename 
+   typedef typename
       MapConfig::segment_manager_base     segment_manager_base;
    /// @endcond
 

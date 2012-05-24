@@ -63,10 +63,10 @@ struct scoped_ptr_dealloc_functor
    {  if (ptr) priv_deallocate(ptr, alloc_version());  }
 };
 
-   
+  
 
 template<class A, class D>
-class sp_counted_impl_pd 
+class sp_counted_impl_pd
    :  public sp_counted_base
    ,  boost::container::allocator_traits<A>::template
          portable_rebind_alloc< sp_counted_impl_pd<A, D> >::type

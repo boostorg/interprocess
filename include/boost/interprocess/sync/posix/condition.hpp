@@ -19,7 +19,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <pthread.h>
-#include <errno.h>   
+#include <errno.h>  
 #include <boost/interprocess/sync/posix/pthread_helpers.hpp>
 #include <boost/interprocess/sync/posix/ptime_to_timespec.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
@@ -44,7 +44,7 @@ class posix_condition
    //!liberating system resources.
    ~posix_condition();
 
-   //!If there is a thread waiting on *this, change that 
+   //!If there is a thread waiting on *this, change that
    //!thread's state to ready. Otherwise there is no effect.
    void notify_one();
 
@@ -52,8 +52,8 @@ class posix_condition
    //!If there are no waiting threads, notify_all() has no effect.
    void notify_all();
 
-   //!Releases the lock on the posix_mutex object associated with lock, blocks 
-   //!the current thread of execution until readied by a call to 
+   //!Releases the lock on the posix_mutex object associated with lock, blocks
+   //!the current thread of execution until readied by a call to
    //!this->notify_one() or this->notify_all(), and then reacquires the lock.
    template <typename L>
    void wait(L& lock)
@@ -75,9 +75,9 @@ class posix_condition
          this->do_wait(*lock.mutex());
    }
 
-   //!Releases the lock on the posix_mutex object associated with lock, blocks 
-   //!the current thread of execution until readied by a call to 
-   //!this->notify_one() or this->notify_all(), or until time abs_time is reached, 
+   //!Releases the lock on the posix_mutex object associated with lock, blocks
+   //!the current thread of execution until readied by a call to
+   //!this->notify_one() or this->notify_all(), or until time abs_time is reached,
    //!and then reacquires the lock.
    //!Returns: false if time abs_time is reached, otherwise true.
    template <typename L>
@@ -92,8 +92,8 @@ class posix_condition
       return this->do_timed_wait(abs_time, *lock.mutex());
    }
 
-   //!The same as:   while (!pred()) { 
-   //!                  if (!timed_wait(lock, abs_time)) return pred(); 
+   //!The same as:   while (!pred()) {
+   //!                  if (!timed_wait(lock, abs_time)) return pred();
    //!               } return true;
    template <typename L, typename Pr>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)

@@ -37,7 +37,7 @@ namespace interprocess {
 namespace ipcdetail{ class interprocess_tester; }
 /// @endcond
 
-//!A recursive mutex with a global name, so it can be found from different 
+//!A recursive mutex with a global name, so it can be found from different
 //!processes. This mutex can't be placed in shared memory, and
 //!each process should have it's own named_recursive_mutex.
 class named_recursive_mutex
@@ -54,7 +54,7 @@ class named_recursive_mutex
    //!If the recursive_mutex can't be created throws interprocess_exception
    named_recursive_mutex(create_only_t create_only, const char *name, const permissions &perm = permissions());
 
-   //!Opens or creates a global recursive_mutex with a name. 
+   //!Opens or creates a global recursive_mutex with a name.
    //!If the recursive_mutex is created, this call is equivalent to
    //!named_recursive_mutex(create_only_t, ... )
    //!If the recursive_mutex is already created, this call is equivalent
@@ -83,7 +83,7 @@ class named_recursive_mutex
    //!Throws interprocess_exception if a severe error is found.
    void lock();
 
-   //!Tries to lock the named_recursive_mutex, returns false when named_recursive_mutex 
+   //!Tries to lock the named_recursive_mutex, returns false when named_recursive_mutex
    //!is already locked, returns true when success.
    //!Throws interprocess_exception if a severe error is found.
    bool try_lock();

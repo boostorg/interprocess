@@ -20,7 +20,7 @@
 
 
 /*!\file
-   Describes a named shared memory allocation user class. 
+   Describes a named shared memory allocation user class.
 */
 
 namespace boost {

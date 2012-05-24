@@ -112,10 +112,10 @@ inline void windows_named_sync::open_or_create
       m_file_hnd = winapi::create_file
          ( aux_str.c_str()
          , winapi::generic_read | winapi::generic_write
-         , creation_type == DoOpen ? winapi::open_existing : 
+         , creation_type == DoOpen ? winapi::open_existing :
                (creation_type == DoCreate ? winapi::create_new : winapi::open_always)
          , 0
-         , (winapi::interprocess_security_attributes*)perm.get_permissions()); 
+         , (winapi::interprocess_security_attributes*)perm.get_permissions());
 
       //Obtain OS error in case something has failed
       error_info err;

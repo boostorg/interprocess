@@ -63,11 +63,12 @@ struct managed_sh_dependant<windows_managed_global_memory>
 
 }  //namespace intermodule_singleton_helpers {
 
-template<typename C, bool LazyInit = false>
+template<typename C, bool LazyInit = true, bool Phoenix = true>
 class windows_intermodule_singleton
    : public intermodule_singleton_impl
       < C
       , LazyInit
+      , Phoenix
       , windows_managed_global_memory
       >
 {};

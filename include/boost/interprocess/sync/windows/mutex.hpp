@@ -48,7 +48,7 @@ class windows_mutex
    const sync_id id_;
 };
 
-inline windows_mutex::windows_mutex() 
+inline windows_mutex::windows_mutex()
    : id_()
 {
    sync_handles &handles =
@@ -62,7 +62,7 @@ inline windows_mutex::windows_mutex()
    (void)open_or_created;
 }
 
-inline windows_mutex::~windows_mutex() 
+inline windows_mutex::~windows_mutex()
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();

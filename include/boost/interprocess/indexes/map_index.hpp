@@ -48,7 +48,7 @@ struct map_index_aux
 
 }  //namespace ipcdetail {
 
-//!Index type based in boost::interprocess::map. Just derives from boost::interprocess::map 
+//!Index type based in boost::interprocess::map. Just derives from boost::interprocess::map
 //!and defines the interface needed by managed memory segments
 template <class MapConfig>
 class map_index

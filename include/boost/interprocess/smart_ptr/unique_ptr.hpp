@@ -272,20 +272,20 @@ class unique_ptr
    //!Returns: A reference to the stored deleter.
    //!
    //!Throws: nothing.
-   deleter_reference       get_deleter()       
+   deleter_reference       get_deleter()      
    {  return ptr_.second();   }
 
    //!Returns: A const reference to the stored deleter.
    //!
    //!Throws: nothing.
-   deleter_const_reference get_deleter() const 
+   deleter_const_reference get_deleter() const
    {  return ptr_.second();   }
 
    //!Returns: An unspecified value that, when used in boolean
    //!contexts, is equivalent to get() != 0.
    //!
    //!Throws: nothing.
-   operator int nat::*() const 
+   operator int nat::*() const
    {  return ptr_.first() ? &nat::for_bool_ : 0;   }
 
    //!Postcondition: get() == 0.
@@ -328,7 +328,7 @@ class unique_ptr
    BOOST_MOVABLE_BUT_NOT_COPYABLE(unique_ptr)
    template <class U, class E> unique_ptr(unique_ptr<U, E>&);
    template <class U> unique_ptr(U&, typename ipcdetail::unique_ptr_error<U>::type = 0);
-   
+  
    template <class U, class E> unique_ptr& operator=(unique_ptr<U, E>&);
    template <class U> typename ipcdetail::unique_ptr_error<U>::type operator=(U&);
    /// @endcond
@@ -539,7 +539,7 @@ template<class T, class ManagedMemory>
 inline typename managed_unique_ptr<T, ManagedMemory>::type
    make_managed_unique_ptr(T *constructed_object, ManagedMemory &managed_memory)
 {
-   return typename managed_unique_ptr<T, ManagedMemory>::type 
+   return typename managed_unique_ptr<T, ManagedMemory>::type
       (constructed_object, managed_memory.template get_deleter<T>());
 }
 

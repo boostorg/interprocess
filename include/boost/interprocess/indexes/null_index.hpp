@@ -16,7 +16,7 @@
 #include <boost/interprocess/offset_ptr.hpp>
 
 //!\file
-//!Describes a null index adaptor, so that if we don't want to construct 
+//!Describes a null index adaptor, so that if we don't want to construct
 //!named objects, we can use this null index type to save resources.
 
 namespace boost {

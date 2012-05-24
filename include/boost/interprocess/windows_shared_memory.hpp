@@ -72,26 +72,26 @@ class windows_shared_memory
    windows_shared_memory(open_or_create_t, const char *name, mode_t mode, std::size_t size, const permissions& perm = permissions())
    {  this->priv_open_or_create(ipcdetail::DoOpenOrCreate, name, mode, size, perm);  }
 
-   //!Tries to open a shared memory object with name "name", with the access mode "mode". 
+   //!Tries to open a shared memory object with name "name", with the access mode "mode".
    //!If the file does not previously exist, it throws an error.
    windows_shared_memory(open_only_t, const char *name, mode_t mode)
    {  this->priv_open_or_create(ipcdetail::DoOpen, name, mode, 0, permissions());  }
 
-   //!Moves the ownership of "moved"'s shared memory object to *this. 
-   //!After the call, "moved" does not represent any shared memory object. 
+   //!Moves the ownership of "moved"'s shared memory object to *this.
+   //!After the call, "moved" does not represent any shared memory object.
    //!Does not throw
    windows_shared_memory(BOOST_RV_REF(windows_shared_memory) moved)
       : m_handle(0)
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s shared memory to *this.
-   //!After the call, "moved" does not represent any shared memory. 
+   //!After the call, "moved" does not represent any shared memory.
    //!Does not throw
    windows_shared_memory &operator=(BOOST_RV_REF(windows_shared_memory) moved)
-   {  
+   { 
       windows_shared_memory tmp(boost::move(moved));
       this->swap(tmp);
-      return *this;  
+      return *this; 
    }
 
    //!Swaps to shared_memory_objects. Does not throw
@@ -129,21 +129,21 @@ class windows_shared_memory
 
 /// @cond
 
-inline windows_shared_memory::windows_shared_memory() 
+inline windows_shared_memory::windows_shared_memory()
    :  m_handle(0)
 {}
 
-inline windows_shared_memory::~windows_shared_memory() 
+inline windows_shared_memory::~windows_shared_memory()
 {  this->priv_close(); }
 
 inline const char *windows_shared_memory::get_name() const
 {  return m_name.c_str(); }
 
 inline void windows_shared_memory::swap(windows_shared_memory &other)
-{  
+{ 
    std::swap(m_handle,  other.m_handle);
    std::swap(m_mode,    other.m_mode);
-   m_name.swap(other.m_name);   
+   m_name.swap(other.m_name);  
 }
 
 inline mapping_handle_t windows_shared_memory::get_mapping_handle() const

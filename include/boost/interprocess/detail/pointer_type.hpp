@@ -65,7 +65,7 @@ struct pointer_type
 };
 
 }  //namespace ipcdetail {
-}  //namespace interprocess { 
+}  //namespace interprocess {
 }  //namespace boost {
 
 #include <boost/interprocess/detail/config_end.hpp>

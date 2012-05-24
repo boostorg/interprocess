@@ -15,9 +15,9 @@
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
    #define BOOST_INTERPROCESS_WINDOWS
-   //#define BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION
+   #define BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION
    #define BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME
-#else 
+#else
    #include <unistd.h>
 
    #if defined(_POSIX_THREAD_PROCESS_SHARED) && ((_POSIX_THREAD_PROCESS_SHARED - 0) > 0)
@@ -27,7 +27,7 @@
          #define BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
       #endif
    #endif
-   
+  
    #if defined(_POSIX_BARRIERS) && ((_POSIX_BARRIERS - 0) > 0)
       #define BOOST_INTERPROCESS_POSIX_BARRIERS
    #endif
@@ -39,8 +39,8 @@
       #endif
    //Some platforms have a limited (name length) named semaphore support
    #elif (defined(__FreeBSD__) && (__FreeBSD__ >= 4)) || defined(__APPLE__)
-      #define BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES   
-   #endif 
+      #define BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES  
+   #endif
 
    #if ((defined _V6_ILP32_OFFBIG)  &&(_V6_ILP32_OFFBIG   - 0 > 0)) ||\
        ((defined _V6_LP64_OFF64)    &&(_V6_LP64_OFF64     - 0 > 0)) ||\
@@ -81,14 +81,14 @@
 
    #if defined(_POSIX_TIMEOUTS) && ((_POSIX_TIMEOUTS - 0) > 0)
       #define BOOST_INTERPROCESS_POSIX_TIMEOUTS
-   #endif 
+   #endif
 
    #ifdef BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
       //Some systems have filesystem-based resources, so the
       //portable "/shmname" format does not work due to permission issues
       //For those systems we need to form a path to a temporary directory:
       //          hp-ux               tru64               vms               freebsd
-      #if defined(__hpux) || defined(__osf__) || defined(__vms) || (defined(__FreeBSD__) && (__FreeBSD__ < 7)) 
+      #if defined(__hpux) || defined(__osf__) || defined(__vms) || (defined(__FreeBSD__) && (__FreeBSD__ < 7))
          #define BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY
       #elif defined(__FreeBSD__)
          #define BOOST_INTERPROCESS_RUNTIME_FILESYSTEM_BASED_POSIX_SHARED_MEMORY

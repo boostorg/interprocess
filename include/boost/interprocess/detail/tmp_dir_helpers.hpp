@@ -42,7 +42,7 @@ namespace ipcdetail {
 
       inline void get_bootstamp(std::string &s, bool add = false)
       {
-         const windows_bootstamp &bootstamp = windows_intermodule_singleton<windows_bootstamp, true>::get();
+         const windows_bootstamp &bootstamp = windows_intermodule_singleton<windows_bootstamp>::get();
          if(add){
             s += bootstamp.stamp;
          }

@@ -51,7 +51,7 @@ class shm_named_recursive_mutex
    //!If the recursive_mutex can't be created throws interprocess_exception
    shm_named_recursive_mutex(create_only_t create_only, const char *name, const permissions &perm = permissions());
 
-   //!Opens or creates a global recursive_mutex with a name. 
+   //!Opens or creates a global recursive_mutex with a name.
    //!If the recursive_mutex is created, this call is equivalent to
    //!shm_named_recursive_mutex(create_only_t, ... )
    //!If the recursive_mutex is already created, this call is equivalent
@@ -80,7 +80,7 @@ class shm_named_recursive_mutex
    //!Throws interprocess_exception if a severe error is found.
    void lock();
 
-   //!Tries to lock the shm_named_recursive_mutex, returns false when shm_named_recursive_mutex 
+   //!Tries to lock the shm_named_recursive_mutex, returns false when shm_named_recursive_mutex
    //!is already locked, returns true when success.
    //!Throws interprocess_exception if a severe error is found.
    bool try_lock();

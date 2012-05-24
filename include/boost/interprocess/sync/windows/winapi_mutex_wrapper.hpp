@@ -140,7 +140,7 @@ class winapi_mutex_wrapper
       else{
          return false;
       }
-   }   
+   }  
 
    void close()
    {
