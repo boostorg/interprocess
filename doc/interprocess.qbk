@@ -6622,6 +6622,11 @@ thank them:
   [@https://svn.boost.org/trac/boost/ticket/6727 #6727],
   [@https://svn.boost.org/trac/boost/ticket/6648 #6648],
 
+*  Shared memory in windows has again kernel persistence: kernel bootstamp
+   and WMI has received some fixes and optimizations. This causes incompatibility
+   with Boost 1.48 and 1.49 but the user can comment `#define BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME`
+   in the windows configuration part to get Boost 1.48 & Boost 1.49 behaviour.
+
 [endsect]
 
 [section:release_notes_boost_1_49_00 Boost 1.49 Release]
