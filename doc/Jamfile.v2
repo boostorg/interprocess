@@ -91,4 +91,4 @@ boostbook standalone
    ;
 
 install pdf-install : standalone : <location>. <name>interprocess.pdf <install-type>PDF <format>pdf ;
-
+explicit pdf-install ;
