@@ -63,7 +63,7 @@ inline bool in_range(const boost::posix_time::ptime& xt, int secs=1)
 boost::xtime xsecs(int secs)
 {
    boost::xtime ret;
-   boost::xtime_get(&ret, boost::TIME_UTC);
+   boost::xtime_get(&ret, boost::TIME_UTC_);
    ret.sec += secs;
    return ret;
 }
