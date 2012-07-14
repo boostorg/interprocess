@@ -76,6 +76,13 @@ int main ()
             ;++i){
             *filler++ = static_cast<unsigned char>(i);
          }
+         if(!region.flush(0, 0, false)){
+            return 1;
+         }
+
+         if(!region2.flush(0, 0, true)){
+            return 1;
+         }
       }
 
       //See if the pattern is correct in the file

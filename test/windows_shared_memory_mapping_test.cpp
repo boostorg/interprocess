@@ -9,6 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
+#include <boost/interprocess/detail/workaround.hpp>
 
 #ifdef BOOST_INTERPROCESS_WINDOWS
 
@@ -60,6 +61,13 @@ int main ()
                ;i < FileSize
                ;++i){
                *filler++ = static_cast<unsigned char>(i);
+            }
+            if(!region.flush(0, 0, false)){
+               return 1;
+            }
+
+            if(!region2.flush(0, 0, true)){
+               return 1;
             }
          }
 
