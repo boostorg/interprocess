@@ -47,8 +47,8 @@ inline boost::xtime delay(int secs, int msecs=0, int nsecs=0)
     const int NANOSECONDS_PER_MILLISECOND = 1000000;
 
     boost::xtime xt;
-    int ret = boost::xtime_get(&xt, boost::TIME_UTC_);
-    BOOST_INTERPROCES_CHECK(ret == static_cast<int>(boost::TIME_UTC_));(void)ret;
+    int ret = boost::xtime_get(&xt, boost::TIME_UTC);
+    BOOST_INTERPROCES_CHECK(ret == static_cast<int>(boost::TIME_UTC));(void)ret;
     nsecs += xt.nsec;
     msecs += nsecs / NANOSECONDS_PER_MILLISECOND;
     secs += msecs / MILLISECONDS_PER_SECOND;
