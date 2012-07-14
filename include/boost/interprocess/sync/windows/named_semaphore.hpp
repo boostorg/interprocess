@@ -90,7 +90,10 @@ class windows_named_semaphore
          //
          permissions sem_perm;
          sem_perm.set_unrestricted();
-         return m_sem_wrapper.open_or_create(aux_str.c_str(), static_cast<long>(m_sem_count), sem_perm);
+         bool created;
+         return m_sem_wrapper.open_or_create
+            ( aux_str.c_str(), static_cast<long>(m_sem_count)
+            , winapi_semaphore_wrapper::MaxCount, sem_perm, created);
       }
 
       virtual void close()

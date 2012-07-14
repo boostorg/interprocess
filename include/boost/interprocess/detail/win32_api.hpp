@@ -46,6 +46,7 @@ namespace winapi {
 //Some used constants
 static const unsigned long infinite_time        = 0xFFFFFFFF;
 static const unsigned long error_already_exists = 183L;
+static const unsigned long error_invalid_handle = 6L;
 static const unsigned long error_sharing_violation = 32L;
 static const unsigned long error_file_not_found = 2u;
 static const unsigned long error_no_more_files  = 18u;
@@ -137,7 +138,14 @@ static const unsigned long lang_neutral         = (unsigned long)0x00;
 static const unsigned long sublang_default      = (unsigned long)0x01;
 static const unsigned long invalid_file_size    = (unsigned long)0xFFFFFFFF;
 static const unsigned long invalid_file_attributes =  ((unsigned long)-1);
-static       void * const  invalid_handle_value = (void*)(long)(-1);
+static       void * const  invalid_handle_value = ((void*)(long)(-1));
+
+static const unsigned long file_type_char    =  0x0002L;
+static const unsigned long file_type_disk    =  0x0001L;
+static const unsigned long file_type_pipe    =  0x0003L;
+static const unsigned long file_type_remote  =  0x8000L;
+static const unsigned long file_type_unknown =  0x0000L;
+
 static const unsigned long create_new        = 1;
 static const unsigned long create_always     = 2;
 static const unsigned long open_existing     = 3;
@@ -580,6 +588,13 @@ struct interprocess_semaphore_basic_information
 	unsigned int limit;		// max semaphore count
 };
 
+struct interprocess_section_basic_information
+{
+  void *          base_address;
+  unsigned long   section_attributes;
+  __int64         section_size;
+};
+
 struct interprocess_filetime
 { 
    unsigned long  dwLowDateTime; 
@@ -789,6 +804,12 @@ enum object_information_class
    object_data_information
 };
 
+enum section_information_class
+{
+   section_basic_information,
+   section_image_information
+};
+
 struct object_name_information_t
 {
    unicode_string_t Name;
@@ -813,6 +834,7 @@ extern "C" __declspec(dllimport) int __stdcall DuplicateHandle
    , void *hTargetProcessHandle,    void **lpTargetHandle
    , unsigned long dwDesiredAccess, int bInheritHandle
    , unsigned long dwOptions);
+extern "C" __declspec(dllimport) long __stdcall GetFileType(void *hFile);
 extern "C" __declspec(dllimport) void *__stdcall FindFirstFileA(const char *lpFileName, win32_find_data_t *lpFindFileData);
 extern "C" __declspec(dllimport) int   __stdcall FindNextFileA(void *hFindFile, win32_find_data_t *lpFindFileData);
 extern "C" __declspec(dllimport) int   __stdcall FindClose(void *hFindFile);
@@ -905,6 +927,7 @@ typedef long (__stdcall *NtSetInformationFile_t)(void *FileHandle, io_status_blo
 typedef long (__stdcall *NtQuerySystemInformation_t)(int, void*, unsigned long, unsigned long *);
 typedef long (__stdcall *NtQueryObject_t)(void*, object_information_class, void *, unsigned long, unsigned long *);
 typedef long (__stdcall *NtQuerySemaphore_t)(void*, unsigned int info_class, interprocess_semaphore_basic_information *pinfo, unsigned int info_size, unsigned int *ret_len);
+typedef long (__stdcall *NtQuerySection_t)(void*, section_information_class, interprocess_section_basic_information *pinfo, unsigned long info_size, unsigned long *ret_len);
 typedef long (__stdcall *NtQueryInformationFile_t)(void *,io_status_block_t *,void *, long, int);
 typedef long (__stdcall *NtOpenFile_t)(void*,unsigned long ,object_attributes_t*,io_status_block_t*,unsigned long,unsigned long);
 typedef long (__stdcall *NtClose_t) (void*);
@@ -989,6 +1012,12 @@ inline bool duplicate_current_process_handle
       , lpTargetHandle,       0,                0
       , duplicate_same_access);
 }
+
+inline long get_file_type(void *hFile)
+{
+   return GetFileType(hFile);
+}
+
 /*
 inline void get_system_time_as_file_time(interprocess_filetime *filetime)
 {  GetSystemTimeAsFileTime(filetime);  }
@@ -1011,6 +1040,9 @@ inline int unmap_view_of_file(void *address)
 
 inline void *open_or_create_semaphore(const char *name, long initial_count, long maximum_count, interprocess_security_attributes *attr)
 {  return CreateSemaphoreA(attr, initial_count, maximum_count, name);  }
+
+inline void *open_semaphore(const char *name)
+{  return OpenSemaphoreA(semaphore_all_access, 0, name);  }
 
 inline int release_semaphore(void *handle, long release_count, long *prev_count)
 {  return ReleaseSemaphore(handle, release_count, prev_count); }
@@ -1039,16 +1071,21 @@ class interprocess_all_access_security
    {  return &sa; }
 };
 
-inline void * create_file_mapping (void * handle, unsigned long access, unsigned long high_size, unsigned long low_size, const char * name, interprocess_security_attributes *psec)
+inline void * create_file_mapping (void * handle, unsigned long access, unsigned __int64 file_offset, const char * name, interprocess_security_attributes *psec)
 {
+   const unsigned long high_size(file_offset >> 32), low_size((boost::uint32_t)file_offset);
    return CreateFileMappingA (handle, psec, access, high_size, low_size, name);
 }
 
 inline void * open_file_mapping (unsigned long access, const char *name)
 {  return OpenFileMappingA (access, 0, name);   }
 
-inline void *map_view_of_file_ex(void *handle, unsigned long file_access, unsigned long highoffset, unsigned long lowoffset, std::size_t numbytes, void *base_addr)
-{  return MapViewOfFileEx(handle, file_access, highoffset, lowoffset, numbytes, base_addr);  }
+inline void *map_view_of_file_ex(void *handle, unsigned long file_access, unsigned __int64 offset, std::size_t numbytes, void *base_addr)
+{
+   const unsigned long offset_low  = (unsigned long)(offset & ((unsigned __int64)0xFFFFFFFF));
+   const unsigned long offset_high = offset >> 32;
+   return MapViewOfFileEx(handle, file_access, offset_high, offset_low, numbytes, base_addr);
+}
 
 inline void *create_file(const char *name, unsigned long access, unsigned long creation_flags, unsigned long attributes, interprocess_security_attributes *psec)
 {
@@ -1191,7 +1228,7 @@ inline void rtl_init_empty_unicode_string(unicode_string_t *ucStr, wchar_t *buf,
 template<int Dummy>
 struct function_address_holder
 {
-   enum { NtSetInformationFile, NtQuerySystemInformation, NtQueryObject, NtQuerySemaphore, NumFunction };
+   enum { NtSetInformationFile, NtQuerySystemInformation, NtQueryObject, NtQuerySemaphore, NtQuerySection, NumFunction };
    enum { NtDll_dll, NumModule };
 
    private:
@@ -1228,7 +1265,7 @@ struct function_address_holder
    static void *get_address_from_dll(const unsigned int id)
    {
       assert(id < (unsigned int)NumFunction);
-      const char *function[] = { "NtSetInformationFile", "NtQuerySystemInformation", "NtQueryObject", "NtQuerySemaphore" };
+      const char *function[] = { "NtSetInformationFile", "NtQuerySystemInformation", "NtQueryObject", "NtQuerySemaphore", "NtQuerySection" };
       bool compile_check[sizeof(function)/sizeof(function[0]) == NumFunction];
       (void)compile_check;
       return get_proc_address(get_module(NtDll_dll), function[id]);
@@ -1300,10 +1337,10 @@ inline bool get_file_name_from_handle_function
    bool bSuccess = false;
 
    // Create a file mapping object.
-   void * hFileMap = create_file_mapping(hFile, page_readonly, 0, 1, 0, 0);
+   void * hFileMap = create_file_mapping(hFile, page_readonly, 1, 0, 0);
    if(hFileMap){
       // Create a file mapping to get the file name.
-      void* pMem = map_view_of_file_ex(hFileMap, file_map_read, 0, 0, 1, 0);
+      void* pMem = map_view_of_file_ex(hFileMap, file_map_read, 0, 1, 0);
 
       if (pMem){
          //out_length = pfGMFN(get_current_process(), pMem, pszFilename, MaxPath);
@@ -1398,9 +1435,12 @@ inline bool get_boot_and_system_time_wstr(wchar_t *bootsystemstamp, std::size_t 
 class handle_closer
 {
    void *handle_;
+   handle_closer(const handle_closer &);
+   handle_closer& operator=(const handle_closer &);
    public:
-   handle_closer(void *handle) : handle_(handle){}
-   ~handle_closer(){ close_handle(handle_);  }
+   explicit handle_closer(void *handle) : handle_(handle){}
+   ~handle_closer()
+   {  close_handle(handle_);  }
 };
 
 union ntquery_mem_t
@@ -1728,6 +1768,37 @@ inline bool is_directory(const char *path)
 	return (attrib != invalid_file_attributes &&
 	        (attrib & file_attribute_directory));
 }
+
+inline bool get_file_mapping_size(void *file_mapping_hnd, __int64 &size)
+{
+   NtQuerySection_t pNtQuerySection =
+      (NtQuerySection_t)dll_func::get(dll_func::NtQuerySection);
+   //Obtain file name
+   interprocess_section_basic_information info;
+   unsigned long ntstatus =
+      pNtQuerySection(file_mapping_hnd, section_basic_information, &info, sizeof(info), 0);
+   if(ntstatus){
+      return false;
+   }
+   size = info.section_size;
+   return true;
+}
+
+inline bool get_semaphore_info(void *handle, long &count, long &limit)
+{
+   winapi::interprocess_semaphore_basic_information info;
+   winapi::NtQuerySemaphore_t pNtQuerySemaphore =
+         (winapi::NtQuerySemaphore_t)dll_func::get(winapi::dll_func::NtQuerySemaphore);
+   unsigned int ret_len;
+   long status = pNtQuerySemaphore(handle, winapi::semaphore_basic_information, &info, sizeof(info), &ret_len);
+   if(status){
+      return false;
+   }
+   count = info.count;
+   limit = info.limit;
+   return true;
+}
+
 
 }  //namespace winapi
 }  //namespace interprocess

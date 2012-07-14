@@ -176,14 +176,17 @@ class windows_named_condition
          //sem_block_queue
          aux_str += "_bq";
          winapi_semaphore_wrapper sem_block_queue;
-         if(!sem_block_queue.open_or_create(aux_str.c_str(), sem_counts[0], perm))
+         bool created;
+         if(!sem_block_queue.open_or_create
+            (aux_str.c_str(), sem_counts[0], winapi_semaphore_wrapper::MaxCount, perm, created))
             return false;
          aux_str.erase(pos);
 
          //sem_block_lock
          aux_str += "_bl";
          winapi_semaphore_wrapper sem_block_lock;
-         if(!sem_block_lock.open_or_create(aux_str.c_str(), sem_counts[1], perm))
+         if(!sem_block_lock.open_or_create
+            (aux_str.c_str(), sem_counts[1], winapi_semaphore_wrapper::MaxCount, perm, created))
             return false;
          aux_str.erase(pos);
 
