@@ -157,22 +157,26 @@ inline bool windows_shared_memory::priv_open_or_create
 {
    m_name = filename ? filename : "";
 
-   unsigned long file_map_access = 0;
+   unsigned long protection = 0;
    unsigned long map_access = 0;
 
    switch(mode)
    {
+      //"protection" is for "create_file_mapping"
+      //"map_access" is for "open_file_mapping"
+      //Add section query (strange that read or access does not grant it...)
+      //to obtain the size of the mapping. copy_on_write is equal to section_query.
       case read_only:
-         file_map_access   |= winapi::page_readonly;
-         map_access        |= winapi::file_map_read;
+         protection   |= winapi::page_readonly;
+         map_access   |= winapi::file_map_read | winapi::section_query;
       break;
       case read_write:
-         file_map_access   |= winapi::page_readwrite;
-         map_access        |= winapi::file_map_write;
+         protection   |= winapi::page_readwrite;
+         map_access   |= winapi::file_map_write | winapi::section_query;
       break;
       case copy_on_write:
-         file_map_access   |= winapi::page_writecopy;
-         map_access        |= winapi::file_map_copy;
+         protection   |= winapi::page_writecopy;
+         map_access   |= winapi::file_map_copy;
       break;
       default:
          {
@@ -184,16 +188,13 @@ inline bool windows_shared_memory::priv_open_or_create
 
    switch(type){
       case ipcdetail::DoOpen:
-         m_handle = winapi::open_file_mapping
-            (map_access, filename);
+         m_handle = winapi::open_file_mapping(map_access, filename);
       break;
       case ipcdetail::DoCreate:
       case ipcdetail::DoOpenOrCreate:
       {
-         __int64 s = size;
-         unsigned long high_size(s >> 32), low_size((boost::uint32_t)s);
          m_handle = winapi::create_file_mapping
-            ( winapi::invalid_handle_value, file_map_access, high_size, low_size, filename
+            ( winapi::invalid_handle_value, protection, size, filename
             , (winapi::interprocess_security_attributes*)perm.get_permissions());
       }
       break;
