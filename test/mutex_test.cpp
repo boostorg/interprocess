@@ -24,13 +24,13 @@ int main ()
 
    #if defined(BOOST_INTERPROCESS_WINDOWS)
       test::test_all_lock<ipcdetail::windows_mutex>();
-      test::test_all_mutex<true, ipcdetail::windows_mutex>();
+      test::test_all_mutex<ipcdetail::windows_mutex>();
       test::test_all_lock<ipcdetail::spin_mutex>();
-      test::test_all_mutex<true, ipcdetail::spin_mutex>();
+      test::test_all_mutex<ipcdetail::spin_mutex>();
    #endif
 
    test::test_all_lock<interprocess_mutex>();
-   test::test_all_mutex<true, interprocess_mutex>();
+   test::test_all_mutex<interprocess_mutex>();
    return 0;
 }
 

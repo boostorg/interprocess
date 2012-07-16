@@ -63,7 +63,7 @@ int main ()
 
    test::test_all_lock<semaphore_test_wrapper>();
    test::test_all_recursive_lock<recursive_semaphore_test_wrapper>();
-   test::test_all_mutex<true, semaphore_test_wrapper>();
+   test::test_all_mutex<semaphore_test_wrapper>();
    return 0;
 }
 

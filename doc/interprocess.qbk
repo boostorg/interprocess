@@ -6615,6 +6615,14 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_51_00 Boost 1.51 Release]
+
+*  Synchronous and asynchronous flushing for `mapped_region::flush`.
+*  Source & ABI breaking: Removed `get_offset` method from `mapped_region` as
+   it has no practical utility and `m_offset` member was not for anything else.
+
+[endsect]
+
 [section:release_notes_boost_1_50_00 Boost 1.50 Release]
 
 *  Fixed bugs

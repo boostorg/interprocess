@@ -23,8 +23,8 @@ int main ()
    using namespace boost::interprocess;
 
    test::test_all_lock<interprocess_upgradable_mutex>();
-   test::test_all_mutex<true, interprocess_upgradable_mutex>();
-   test::test_all_sharable_mutex<true, interprocess_upgradable_mutex>();
+   test::test_all_mutex<interprocess_upgradable_mutex>();
+   test::test_all_sharable_mutex<interprocess_upgradable_mutex>();
 
    //Test lock transition
    {

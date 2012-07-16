@@ -86,10 +86,10 @@ int main ()
 {
    try{
       named_upgradable_mutex::remove(test::get_process_id_name());
-      test::test_named_creation<named_upgradable_mutex_creation_test_wrapper>();
-      test::test_all_lock<named_upgradable_mutex_lock_test_wrapper>();
-      test::test_all_mutex<true, named_upgradable_mutex_lock_test_wrapper>();
-      test::test_all_sharable_mutex<true, named_upgradable_mutex_lock_test_wrapper>();
+      test::test_named_creation< test::named_sync_creation_test_wrapper<named_upgradable_mutex> >();
+      test::test_all_lock< test::named_sync_wrapper<named_upgradable_mutex> >();
+      test::test_all_mutex<test::named_sync_wrapper<named_upgradable_mutex> >();
+      test::test_all_sharable_mutex<test::named_sync_wrapper<named_upgradable_mutex> >();
    }
    catch(std::exception &ex){
       named_upgradable_mutex::remove(test::get_process_id_name());

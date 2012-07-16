@@ -14,6 +14,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include "boost_interprocess_check.hpp"
+#include "get_process_id_name.hpp"
 #include <iostream>
 #include <typeinfo>
 #include <boost/interprocess/creation_tags.hpp>
@@ -76,6 +77,53 @@ inline void test_named_creation()
                << typeid(NamedResource).name() << ">" << std::endl;
    dont_create_and_open<NamedResource>();
 }
+
+template<class NamedSync>
+class named_sync_wrapper
+   : public NamedSync
+{
+   public:
+   named_sync_wrapper()
+      :  NamedSync(open_or_create, test::get_process_id_ptr_name(this))
+   {}
+
+   ~named_sync_wrapper()
+   {
+      NamedSync::remove(test::get_process_id_ptr_name(this));
+   }
+};
+
+template<class NamedSync>
+struct named_sync_deleter
+{
+   ~named_sync_deleter()
+   {  NamedSync::remove(test::get_process_id_name()); }
+};
+
+
+//This wrapper is necessary to have a common constructor
+//in generic named_creation_template functions
+template<class NamedSync>
+class named_sync_creation_test_wrapper
+   : public test::named_sync_deleter<NamedSync>, public NamedSync
+{
+   public:
+   named_sync_creation_test_wrapper(create_only_t)
+      :  NamedSync(create_only, test::get_process_id_name())
+   {}
+
+   named_sync_creation_test_wrapper(open_only_t)
+      :  NamedSync(open_only, test::get_process_id_name())
+   {}
+
+   named_sync_creation_test_wrapper(open_or_create_t)
+      :  NamedSync(open_or_create, test::get_process_id_name())
+   {}
+
+   ~named_sync_creation_test_wrapper()
+   {}
+};
+
 
 }}}   //namespace boost { namespace interprocess { namespace test {
 

@@ -30,6 +30,7 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <algorithm>
 #include <iostream>
+#include <boost/version.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -63,7 +64,11 @@ inline bool in_range(const boost::posix_time::ptime& xt, int secs=1)
 boost::xtime xsecs(int secs)
 {
    boost::xtime ret;
+   #if BOOST_VERSION >= 105100 //TIME_UTC is a macro in C11, breaking change in Boost.Thread
    boost::xtime_get(&ret, boost::TIME_UTC_);
+   #else
+   boost::xtime_get(&ret, boost::TIME_UTC);
+   #endif
    ret.sec += secs;
    return ret;
 }

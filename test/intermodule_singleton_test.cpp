@@ -18,17 +18,17 @@ class MyClass
    public:
    MyClass()
    {
-      std::cout << "Constructor\n";
+      std::cout << "MyClass()\n" << std::endl;
    }
 
    void shout() const
    {
-      std::cout << "Shout\n";
+      std::cout << "Shout\n" << std::endl;
    }
 
    ~MyClass()
    {
-      std::cout << "Destructor\n";
+      std::cout << "~MyClass()\n" << std::endl;
    }
 };
 
@@ -101,6 +101,7 @@ class Logger
    Logger()
    {
       ++constructed_times;
+      std::cout << "Logger(),tag:" << typeid(Tag).name() << "(construct #" << constructed_times << ")\n" << std::endl;
    }
 
    void log_it()
@@ -109,6 +110,7 @@ class Logger
    ~Logger()
    {
       ++destroyed_times;
+      std::cout << "~Logger(),tag:" << typeid(Tag).name() << "(destroy #" << destroyed_times << ")\n" << std::endl;
    }
 
    static unsigned int constructed_times;
@@ -130,13 +132,18 @@ class LogUser
 {
    public:
    LogUser()
-   {}
+   {
+      std::cout << "LogUser(),tag:" << typeid(LogSingleton).name() << "\n" << std::endl;
+   }
 
    void function_using_log()
    {  LogSingleton::get().log_it();  }
 
    ~LogUser()
-   {  LogSingleton::get().log_it();  }
+   {
+      std::cout << "~LogUser(),tag:" << typeid(LogSingleton).name() << "\n" << std::endl;
+      LogSingleton::get().log_it();
+   }
 };
 
 //A class that tests the correct
@@ -147,7 +154,9 @@ class LogPhoenixTester
 {
    public:
    LogPhoenixTester()
-   {}
+   {
+      std::cout << "LogPhoenixTester(), tag: " << typeid(Tag).name() << "\n" << std::endl;
+   }
 
    void dummy()
    {}
@@ -157,12 +166,24 @@ class LogPhoenixTester
       //Test Phoenix singleton was correctly executed:
       //created and destroyed two times
       //This test will be executed after main ends
+      std::cout << "~LogPhoenixTester(), tag: " << typeid(Tag).name() << "\n" << std::endl;
       if(Logger<Tag>::constructed_times != Logger<Tag>::destroyed_times ||
          Logger<Tag>::constructed_times != 2)
       {
-         std::string s("LogPhoenixTester failed for tag ");
-         s += typeid(Tag).name();
-         throw std::runtime_error(s.c_str());
+         std::stringstream sstr;
+         sstr << "LogPhoenixTester failed for tag ";
+         sstr << typeid(Tag).name();
+         sstr << "\n";
+         if(Logger<Tag>::constructed_times != 2){
+            sstr << "Logger<Tag>::constructed_times != 2\n";
+            sstr << "(";
+            sstr << Logger<Tag>::constructed_times << ")\n";
+         }
+         else{
+            sstr << "Logger<Tag>::constructed_times != Logger<Tag>::destroyed_times\n";
+            sstr << "(" << Logger<Tag>::constructed_times << " vs. " << Logger<Tag>::destroyed_times << ")\n";
+         }
+         throw std::runtime_error(sstr.str().c_str());
       }
    }
 };
@@ -176,15 +197,18 @@ class LogDeadReferenceUser
 {
    public:
    LogDeadReferenceUser()
-   {}
+   {
+      std::cout << "LogDeadReferenceUser(), LogSingleton: " << typeid(LogSingleton).name() << "\n" << std::endl;
+   }
 
    void function_using_log()
    {  LogSingleton::get().log_it();  }
 
    ~LogDeadReferenceUser()
    {
+      std::cout << "~LogDeadReferenceUser(), LogSingleton: " << typeid(LogSingleton).name() << "\n" << std::endl;
       //Make sure the exception is thrown as we are
-      //try to use a dead non-phoenix singleton
+      //trying to use a dead non-phoenix singleton
       try{
          LogSingleton::get().log_it();
          std::string s("LogDeadReferenceUser failed for LogSingleton ");
@@ -254,30 +278,43 @@ int dead_reference_singleton_test()
    return 0;
 }
 
+//reduce name length
+template<typename C, bool LazyInit = true, bool Phoenix = true>
+class port_singleton
+   : public ipcdetail::portable_intermodule_singleton<C, LazyInit, Phoenix>
+{};
+
+#ifdef BOOST_INTERPROCESS_WINDOWS
+template<typename C, bool LazyInit = true, bool Phoenix = true>
+class win_singleton
+   : public ipcdetail::windows_intermodule_singleton< C, LazyInit, Phoenix>
+{};
+#endif
+
 int main ()
 {
-   if(0 != intermodule_singleton_test<ipcdetail::portable_intermodule_singleton>()){
+   if(0 != intermodule_singleton_test<port_singleton>()){
       return 1;
    }
 
    #ifdef BOOST_INTERPROCESS_WINDOWS
-   if(0 != intermodule_singleton_test<ipcdetail::windows_intermodule_singleton>()){
+   if(0 != intermodule_singleton_test<win_singleton>()){
       return 1;
    }
    #endif
 
    //Phoenix singletons are tested after main ends,
    //LogPhoenixTester does the work
-   phoenix_singleton_test<ipcdetail::portable_intermodule_singleton>();
+   phoenix_singleton_test<port_singleton>();
    #ifdef BOOST_INTERPROCESS_WINDOWS
-   phoenix_singleton_test<ipcdetail::windows_intermodule_singleton>();
+   phoenix_singleton_test<win_singleton>();
    #endif
 
    //Dead reference singletons are tested after main ends,
    //LogDeadReferenceUser does the work
-   dead_reference_singleton_test<ipcdetail::portable_intermodule_singleton>();
+   dead_reference_singleton_test<port_singleton>();
    #ifdef BOOST_INTERPROCESS_WINDOWS
-   dead_reference_singleton_test<ipcdetail::windows_intermodule_singleton>();
+   dead_reference_singleton_test<win_singleton>();
    #endif
 
    return 0;

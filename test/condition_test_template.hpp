@@ -28,6 +28,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/thread/xtime.hpp>
+#include <boost/version.hpp>
 #include <iostream>
 
 namespace boost{
@@ -47,8 +48,14 @@ inline boost::xtime delay(int secs, int msecs=0, int nsecs=0)
     const int NANOSECONDS_PER_MILLISECOND = 1000000;
 
     boost::xtime xt;
+   
+    #if BOOST_VERSION >= 105100 //TIME_UTC is a macro in C11, breaking change in Boost.Thread
     int ret = boost::xtime_get(&xt, boost::TIME_UTC_);
     BOOST_INTERPROCES_CHECK(ret == static_cast<int>(boost::TIME_UTC_));(void)ret;
+    #else
+    int ret = boost::xtime_get(&xt, boost::TIME_UTC);
+    BOOST_INTERPROCES_CHECK(ret == static_cast<int>(boost::TIME_UTC));(void)ret;
+    #endif
     nsecs += xt.nsec;
     msecs += nsecs / NANOSECONDS_PER_MILLISECOND;
     secs += msecs / MILLISECONDS_PER_SECOND;
