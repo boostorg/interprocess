@@ -48,7 +48,7 @@ class windows_semaphore
 };
 
 inline windows_semaphore::windows_semaphore(unsigned int initialCount)
-   : id_()
+   : id_(this)
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();

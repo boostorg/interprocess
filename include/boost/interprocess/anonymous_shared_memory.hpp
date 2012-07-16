@@ -43,12 +43,10 @@ namespace ipcdetail{
    {
       public:
       static mapped_region
-         create_posix_mapped_region(void *address, offset_t offset, std::size_t size)
+         create_posix_mapped_region(void *address, std::size_t size)
       {
          mapped_region region;
          region.m_base = address;
-         region.m_offset = offset;
-         region.m_extra_offset = 0;
          region.m_size = size;
          return region;
       }
@@ -101,7 +99,7 @@ anonymous_shared_memory(std::size_t size, void *address = 0)
    if(fd != -1)  
       close(fd);
 
-   return ipcdetail::raw_mapped_region_creator::create_posix_mapped_region(address, 0, size);
+   return ipcdetail::raw_mapped_region_creator::create_posix_mapped_region(address, size);
 }
 #else
 {

@@ -102,7 +102,6 @@ inline void windows_named_sync::open_or_create
    , windows_named_sync_interface &sync_interface)
 {
    std::string aux_str(name);
-   sync_id::internal_type unique_id_val;
    m_file_hnd  = winapi::invalid_handle_value;
    //Use a file to emulate POSIX lifetime semantics. After this logic
    //we'll obtain the ID of the native handle to open in aux_str
@@ -123,7 +122,8 @@ inline void windows_named_sync::open_or_create
       if(m_file_hnd != winapi::invalid_handle_value){
          //Now lock the file
          const std::size_t buflen = sync_interface.get_data_size();
-         const std::size_t sizeof_file_info = sizeof(unique_id_val) + buflen;
+         typedef __int64 unique_id_type;
+         const std::size_t sizeof_file_info = sizeof(unique_id_type) + buflen;
          winapi::interprocess_overlapped overlapped;
          if(winapi::lock_file_ex
             (m_file_hnd, winapi::lockfile_exclusive_lock, 0, sizeof_file_info, 0, &overlapped)){
@@ -132,10 +132,10 @@ inline void windows_named_sync::open_or_create
             //If file size was created
             if(winapi::get_file_size(m_file_hnd, filesize)){
                unsigned long written_or_read = 0;
+               unique_id_type unique_id_val;
                if(static_cast<std::size_t>(filesize) != sizeof_file_info){
                   winapi::set_end_of_file(m_file_hnd);
-                  sync_id unique_id;
-                  unique_id_val = unique_id.rand;
+                  winapi::query_performance_counter(&unique_id_val);
                   const void *buf = sync_interface.buffer_with_init_data_to_file();
                   //Write unique ID in file. This ID will be used to calculate the semaphore name
                   if(winapi::write_file(m_file_hnd, &unique_id_val, sizeof(unique_id_val), &written_or_read, 0)  &&
@@ -145,7 +145,7 @@ inline void windows_named_sync::open_or_create
                      success = true;
                   }
                   winapi::get_file_size(m_file_hnd, filesize);
-                  assert(filesize == sizeof_file_info);
+                  assert(std::size_t(filesize) == sizeof_file_info);
                }
                else{
                   void *buf = sync_interface.buffer_to_store_init_data_from_file();
