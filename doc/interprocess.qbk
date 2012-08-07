@@ -622,14 +622,9 @@ to shared memory created with other process that don't use
 Windows shared memory creation is a bit different from portable shared memory
 creation: the size of the segment must be specified when creating the object and
 can't be specified through `truncate` like with the shared memory object.
-
 Take in care that when the last process attached to a shared memory is destroyed
 [*the shared memory is destroyed] so there is [*no persistency] with native windows
-shared memory. Native windows shared memory has also another limitation: a process can
-open and map the whole shared memory created by another process but it can't know
-which is the size of that memory. This limitation is imposed by the Windows API so
-the user must somehow transmit the size of the segment to processes opening the
-segment.
+shared memory.
 
 Sharing memory between services and user applications is also different. To share memory
 between services and user applications the name of the shared memory must start with the
@@ -865,7 +860,7 @@ to create `mapped_region` objects. A mapped region created from a shared memory
 object or a file mapping are the same class and this has many advantages.
 
 One can, for example, mix in STL containers mapped regions from shared memory
-and memory mapped files. The libraries that only depend on mapped regions can
+and memory mapped files. Libraries that only depend on mapped regions can
 be used to work with shared memory or memory mapped files without recompiling them.
 
 [endsect]
@@ -881,7 +876,7 @@ surely different in each process. Since each process might have used its address
 in a different way (allocation of more or less dynamic memory, for example), there is
 no guarantee that the file/shared memory is going to be mapped in the same address.
 
-If two processes map the same object in different addresses, this invalids the use
+If two processes map the same object in different addresses, this invalidates the use
 of pointers in that memory, since the pointer (which is an absolute address) would
 only make sense for the process that wrote it. The solution for this is to use offsets
 (distance) between objects instead of pointers: If two objects are placed in the same
@@ -6574,6 +6569,8 @@ example, a new managed shared memory that uses the new index:
 
 [section:notes_windows Notes for Windows users]
 
+[section:notes_windows_com_init COM Initialization]
+
 [*Boost.Interprocess] uses the COM library to implement some features and initializes
 the COM library with concurrency model `COINIT_APARTMENTTHREADED`.
 If the COM library was already initialized by the calling thread for other model, [*Boost.Interprocess]
@@ -6585,6 +6582,44 @@ might want [*Boost.Interprocess] to initialize the COM library with another mode
 * `COINIT_MULTITHREADED_BIPC`
 * `COINIT_DISABLE_OLE1DDE_BIPC`
 * `COINIT_SPEED_OVER_MEMORY_BIPC`
+
+[endsect]
+
+[section:notes_windows_shm_folder Shared memory emulation folder]
+
+Shared memory (`shared_memory_object`) is implemented in windows using memory mapped files, placed in a
+directory in the shared documents folder (`SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\Common AppData`).
+This directory name is the last bootup time (obtained via COM calls), so that each bootup shared memory is created in a new
+folder obtaining kernel persistence shared memory.
+
+Unfortunately, due to COM implementation related errors, in Boost 1.48 & Boost 1.49 the bootup-time folder was dumped and files
+were directly created in shared documents folder, reverting to filesystem persistence shared memory. Boost 1.50 fixed those issues
+and recovered bootup time directory and kernel persistence. If you need to reproduce Boost 1.48 & Boost 1.49 behaviour to communicate
+with applications compiled with that version, comment `#define BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME` directive
+in the Windows configuration part of `boost/interprocess/detail/workaround.hpp`.
+
+[endsect]
+
+[endsect]
+
+[section:notes_linux Notes for Linux users]
+
+[section:notes_linux_overcommit Overcommit]
+
+The committed address space is the total amount of virtual memory (swap or physical memory/RAM) that the kernel might have to supply
+if all applications decide to access all of the memory they've requested from the kernel.
+By default, Linux allows processes to commmit more virtual memory than available in the system. If that memory is not
+accessed, no physical memory + swap is actually used.
+
+The reason for this behaviour is that Linux tries to optimize memory usage on forked processes; fork() creates a full copy of
+the process space, but with overcommitted memory, in this new forked instance only pages which have been written to actually need
+to be allocated by the kernel. If applications access more memory than available, then the kernel must free memory in the hard way:
+the OOM (Out Of Memory)-killer picks some processes to kill in order to recover memory.
+
+[*Boost.Interprocess] has no way to change this behaviour and users might suffer the OOM-killer when accessing shared memory.
+According to the [@http://www.kernel.org/doc/Documentation/vm/overcommit-accounting Kernel documentation], the
+Linux kernel supports several overcommit modes. If you need non-kill guarantees in your application, you should
+change this overcommit behaviour.
 
 [endsect]
 
@@ -6634,6 +6669,19 @@ thank them:
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_52_00 Boost 1.52 Release]
+
+*  Added `shrink_by` and `advise` functions in `mapped_region`.
+*  Reimplemented `message_queue` with a circular buffer index (the
+   old behavior used an ordered array, leading to excessive copies). This
+   should greatly increase performance but breaks ABI. Old behaviour/ABI can be used
+   undefining macro `BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX` in `boost/interprocess/detail/workaround.hpp`
+*  Improved `message_queue` insertion time avoiding priority search for common cases
+   (both array and circular buffer configurations).
+
+[endsect]
+
 
 [section:release_notes_boost_1_51_00 Boost 1.51 Release]
 
