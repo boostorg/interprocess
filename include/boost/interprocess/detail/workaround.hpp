@@ -27,7 +27,7 @@
          #define BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
       #endif
    #endif
-  
+
    #if defined(_POSIX_BARRIERS) && ((_POSIX_BARRIERS - 0) > 0)
       #define BOOST_INTERPROCESS_POSIX_BARRIERS
    #endif
@@ -39,7 +39,7 @@
       #endif
    //Some platforms have a limited (name length) named semaphore support
    #elif (defined(__FreeBSD__) && (__FreeBSD__ >= 4)) || defined(__APPLE__)
-      #define BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES  
+      #define BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES
    #endif
 
    #if ((defined _V6_ILP32_OFFBIG)  &&(_V6_ILP32_OFFBIG   - 0 > 0)) ||\
@@ -129,6 +129,13 @@
 #ifndef BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS
    #define BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS 10000
 #endif
+
+//Other switches
+//BOOST_INTERPROCESS_MSG_QUEUE_USES_CIRC_INDEX
+//message queue uses a circular queue as index instead of an array (better performance)
+//Boost version < 1.52 uses an array, so undef this if you want to communicate
+//with processes compiled with those versions.
+#define BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX
 
 #include <boost/interprocess/detail/config_end.hpp>
 
