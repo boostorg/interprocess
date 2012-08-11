@@ -697,13 +697,13 @@ inline bool message_queue_t<VoidPointer>::do_send(block_t block,
       throw interprocess_exception(size_error);
    }
 
+   bool was_empty = false;
    //---------------------------------------------
    scoped_lock<interprocess_mutex> lock(p_hdr->m_mutex);
    //---------------------------------------------
    {
       //If the queue is full execute blocking logic
       if (p_hdr->is_full()) {
-
          switch(block){
             case non_blocking :
                return false;
@@ -724,7 +724,6 @@ inline bool message_queue_t<VoidPointer>::do_send(block_t block,
                      break;
                   }
                }
-
                while (p_hdr->is_full());
             break;
             default:
@@ -732,10 +731,7 @@ inline bool message_queue_t<VoidPointer>::do_send(block_t block,
          }
       }
 
-      //Get the first free message from free message queue
-      //ipcdetail::msg_hdr_t<VoidPointer> &free_msg_hdr = p_hdr->first_free_msg_hdr();
-
-//      bool was_empty = p_hdr->is_empty();
+      was_empty = p_hdr->is_empty();
       //Insert the first free message in the priority queue
       ipcdetail::msg_hdr_t<VoidPointer> &free_msg_hdr = p_hdr->queue_free_msg(priority);
 
@@ -749,12 +745,14 @@ inline bool message_queue_t<VoidPointer>::do_send(block_t block,
 
       //Copy user buffer to the message
       std::memcpy(free_msg_hdr.data(), buffer, buffer_size);
-
-      //If this message changes the queue empty state, notify it to receivers
-//      if (was_empty){
-         p_hdr->m_cond_recv.notify_one();
-//      }
    }  // Lock end
+
+   //Notify outside lock to avoid contention. This might produce some
+   //spurious wakeups, but it's usually far better than notifying inside.
+   //If this message changes the queue empty state, notify it to receivers
+   if (was_empty){
+      p_hdr->m_cond_recv.notify_one();
+   }
 
    return true;
 }
@@ -796,6 +794,7 @@ inline bool
       throw interprocess_exception(size_error);
    }
 
+   bool was_full = false;
    //---------------------------------------------
    scoped_lock<interprocess_mutex> lock(p_hdr->m_mutex);
    //---------------------------------------------
@@ -845,16 +844,18 @@ inline bool
       //Copy data to receiver's bufers
       std::memcpy(buffer, top_msg.data(), recvd_size);
 
-//      bool was_full = p_hdr->is_full();
+      was_full = p_hdr->is_full();
 
       //Free top message and put it in the free message list
       p_hdr->free_top_msg();
-
-      //If this reception changes the queue full state, notify senders
-//      if (was_full){
-         p_hdr->m_cond_send.notify_one();
-//      }
    }  //Lock end
+
+   //Notify outside lock to avoid contention. This might produce some
+   //spurious wakeups, but it's usually far better than notifying inside.
+   //If this reception changes the queue full state, notify senders
+   if (was_full){
+      p_hdr->m_cond_send.notify_one();
+   }
 
    return true;
 }
