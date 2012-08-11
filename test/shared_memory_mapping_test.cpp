@@ -168,7 +168,7 @@ int main ()
          }
          #endif
 
-         #if defined(POSIX_MADV_DONTNEED) || defined(MADV_DONTNEED)
+         #if defined(POSIX_MADV_DONTNEED) || (defined(MADV_DONTNEED) && defined(BOOST_INTERPROCESS_MADV_DONTNEED_HAS_NONDESTRUCTIVE_SEMANTICS))
          std::cout << "Advice 'dont't need'" << std::endl;
          if(!region.advise(mapped_region::advice_dontneed)){
             return 1;

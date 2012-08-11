@@ -658,9 +658,6 @@
 				RelativePath="..\..\test\heap_allocator_v1.hpp">
 			</File>
 			<File
-				RelativePath="..\..\test\Jamfile.v2">
-			</File>
-			<File
 				RelativePath="..\..\test\list_test.hpp">
 			</File>
 			<File
