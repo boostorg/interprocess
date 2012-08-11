@@ -21,6 +21,18 @@
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <string>
 #include <boost/cstdint.hpp>
+//Some Unixes use caddr_t instead of void * in madvise
+//              SunOS                                 Tru64                               HP-UX                    AIX
+#if defined(sun) || defined(__sun) || defined(__osf__) || defined(__osf) || defined(_hpux) || defined(hpux) || defined(_AIX)
+#define BOOST_INTERPROCESS_MADVISE_USES_CADDR_T
+#include <sys/types.h>
+#endif
+
+//A lot of UNIXes have destructive semantics for MADV_DONTNEED, so
+//we need to be careful to allow it.
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
+#define BOOST_INTERPROCESS_MADV_DONTNEED_HAS_NONDESTRUCTIVE_SEMANTICS
+#endif
 
 #if defined (BOOST_INTERPROCESS_WINDOWS)
 #  include <boost/interprocess/detail/win32_api.hpp>
@@ -49,6 +61,13 @@ namespace boost {
 namespace interprocess {
 
 /// @cond
+
+//Solaris declares madvise only in some configurations but defines MADV_XXX, a bit confusing.
+//Predeclare it here to avoid any compilation error
+#if (defined(sun) || defined(__sun)) && defined(MADV_NORMAL)
+extern "C" int madvise(caddr_t, size_t, int);
+#endif
+
 namespace ipcdetail{ class interprocess_tester; }
 namespace ipcdetail{ class raw_mapped_region_creator; }
 
@@ -744,7 +763,7 @@ inline bool mapped_region::advise(advice_types advice)
          #if defined(POSIX_MADV_DONTNEED)
          unix_advice = POSIX_MADV_DONTNEED;
          mode = mode_padv;
-         #elif defined(MADV_DONTNEED)
+         #elif defined(MADV_DONTNEED) && defined(BOOST_INTERPROCESS_MADV_DONTNEED_HAS_NONDESTRUCTIVE_SEMANTICS)
          unix_advice = MADV_DONTNEED;
          mode = mode_madv;
          #endif
@@ -759,7 +778,11 @@ inline bool mapped_region::advise(advice_types advice)
       #endif
       #if defined(MADV_NORMAL)
          case mode_madv:
-         return 0 == madvise(this->priv_map_address(), this->priv_map_size(), unix_advice);
+         return 0 == madvise(
+            #if defined(BOOST_INTERPROCESS_MADVISE_USES_CADDR_T)
+            (caddr_t)
+            #endif
+            this->priv_map_address(), this->priv_map_size(), unix_advice);
       #endif
       default:
       return false;
