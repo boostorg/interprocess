@@ -471,6 +471,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "condition_any_test", "condi
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "named_sharable_mutex_test", "named_sharable_mutex.vcproj", "{4FB82CC8-9671-FA47-48FE-723BA0D91604}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "named_condition_any_test", "named_condition_any_test.vcproj", "{58CC2563-6092-48FE-FAF7-BA046A792658}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -951,6 +959,14 @@ Global
 		{5875E186-48F8-0992-26A7-D34F4A053798}.Debug.Build.0 = Debug|Win32
 		{5875E186-48F8-0992-26A7-D34F4A053798}.Release.ActiveCfg = Release|Win32
 		{5875E186-48F8-0992-26A7-D34F4A053798}.Release.Build.0 = Release|Win32
+		{4FB82CC8-9671-FA47-48FE-723BA0D91604}.Debug.ActiveCfg = Debug|Win32
+		{4FB82CC8-9671-FA47-48FE-723BA0D91604}.Debug.Build.0 = Debug|Win32
+		{4FB82CC8-9671-FA47-48FE-723BA0D91604}.Release.ActiveCfg = Release|Win32
+		{4FB82CC8-9671-FA47-48FE-723BA0D91604}.Release.Build.0 = Release|Win32
+		{58CC2563-6092-48FE-FAF7-BA046A792658}.Debug.ActiveCfg = Debug|Win32
+		{58CC2563-6092-48FE-FAF7-BA046A792658}.Debug.Build.0 = Debug|Win32
+		{58CC2563-6092-48FE-FAF7-BA046A792658}.Release.ActiveCfg = Release|Win32
+		{58CC2563-6092-48FE-FAF7-BA046A792658}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
