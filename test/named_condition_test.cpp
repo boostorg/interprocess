@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -25,7 +25,7 @@ struct condition_deleter
    std::string name;
 
    ~condition_deleter()
-   { 
+   {
       if(name.empty())
          named_condition::remove(test::add_to_process_id_name("named_condition"));
       else
@@ -167,7 +167,7 @@ struct mutex_deleter
    std::string name;
 
    ~mutex_deleter()
-   { 
+   {
       if(name.empty())
          named_mutex::remove(test::add_to_process_id_name("named_mutex"));
       else

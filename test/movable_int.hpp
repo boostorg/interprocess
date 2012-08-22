@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -93,7 +93,7 @@ class movable_and_copyable_int
    movable_and_copyable_int(const movable_and_copyable_int& mmi)
       :  m_int(mmi.m_int)
    {}
-  
+
    movable_and_copyable_int &operator= (BOOST_COPY_ASSIGN_REF(movable_and_copyable_int) mi)
    {  this->m_int = mi.m_int;    return *this;  }
 
@@ -155,7 +155,7 @@ class copyable_int
    copyable_int(const copyable_int& mmi)
       :  m_int(mmi.m_int)
    {}
-  
+
    copyable_int & operator= (const copyable_int &mi)
    {  this->m_int = mi.m_int; return *this;  }
 
