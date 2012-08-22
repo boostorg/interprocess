@@ -594,6 +594,10 @@ inline bool interprocess_upgradable_mutex::try_unlock_upgradable_and_lock()
 inline bool interprocess_upgradable_mutex::timed_unlock_upgradable_and_lock
    (const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->unlock_upgradable_and_lock();
+      return true;
+   }
    scoped_lock_t lock(m_mut, abs_time);
    if(!lock.owns())   return false;
 

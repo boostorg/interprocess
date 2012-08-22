@@ -108,21 +108,20 @@ class named_mutex
    friend class ipcdetail::interprocess_tester;
    void dont_close_on_destruction();
 
+   public:
    #if defined(BOOST_INTERPROCESS_USE_POSIX_SEMAPHORES)
-      typedef ipcdetail::posix_named_mutex   impl_t;
-      impl_t m_mut;
+      typedef ipcdetail::posix_named_mutex      internal_mutex_type;
       #undef BOOST_INTERPROCESS_USE_POSIX_SEMAPHORES
    #elif defined(BOOST_INTERPROCESS_USE_WINDOWS)
-      typedef ipcdetail::windows_named_mutex   impl_t;
-      impl_t m_mut;
+      typedef ipcdetail::windows_named_mutex    internal_mutex_type;
       #undef BOOST_INTERPROCESS_USE_WINDOWS
    #else
-      typedef ipcdetail::shm_named_mutex     impl_t;
-      impl_t m_mut;
-      public:
-      interprocess_mutex *mutex() const
-      {  return m_mut.mutex(); }
+      typedef ipcdetail::shm_named_mutex        internal_mutex_type;
    #endif
+   internal_mutex_type &internal_mutex()
+   {  return m_mut; }
+
+   internal_mutex_type m_mut;
 
    /// @endcond
 };
@@ -160,7 +159,7 @@ inline bool named_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
 {  return m_mut.timed_lock(abs_time);  }
 
 inline bool named_mutex::remove(const char *name)
-{  return impl_t::remove(name);   }
+{  return internal_mutex_type::remove(name);   }
 
 /// @endcond
 
