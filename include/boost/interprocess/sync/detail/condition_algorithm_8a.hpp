@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -161,6 +161,15 @@ namespace ipcdetail {
 //    mutex_type      &get_mtx_unblock_lock()
 // };
 //
+// Must be initialized as following
+//
+//    get_nwaiters_blocked() == 0
+//    get_nwaiters_gone() == 0
+//    get_nwaiters_to_unblock() == 0
+//    get_sem_block_queue() == initial count 0
+//    get_sem_block_lock() == initial count 1
+//    get_mtx_unblock_lock() (unlocked)
+//
 template<class ConditionMembers>
 class condition_algorithm_8a
 {
@@ -174,16 +183,10 @@ class condition_algorithm_8a
    typedef typename ConditionMembers::mutex_type      mutex_type;
    typedef typename ConditionMembers::integer_type    integer_type;
 
-   // nwaiters_blocked == 0
-   // nwaiters_gone() == 0
-   // nwaiters_to_unblock == 0
-   // sem_block_queue() == initial count 0
-   // sem_block_lock() == initial count 1
-   // mtx_unblock_lock (unlocked)
-
    public:
    template<class InterprocessMutex>
-   static bool wait  (ConditionMembers &data, bool timeout_enabled, const boost::posix_time::ptime &abs_time, InterprocessMutex &mut);
+   static bool wait  ( ConditionMembers &data, bool timeout_enabled
+                     , const boost::posix_time::ptime &abs_time, InterprocessMutex &mut);
    static void signal(ConditionMembers &data, bool broadcast);
 };
 
@@ -237,7 +240,10 @@ inline void condition_algorithm_8a<ConditionMembers>::signal(ConditionMembers &d
 template<class ConditionMembers>
 template<class InterprocessMutex>
 inline bool condition_algorithm_8a<ConditionMembers>::wait
-   (ConditionMembers &data, bool tout_enabled, const boost::posix_time::ptime &abs_time, InterprocessMutex &mtxExternal)
+   ( ConditionMembers &data
+   , bool tout_enabled
+   , const boost::posix_time::ptime &abs_time
+   , InterprocessMutex &mtxExternal)
 {
    //Initialize to avoid warnings
    integer_type nsignals_was_left = 0;
@@ -290,7 +296,7 @@ inline bool condition_algorithm_8a<ConditionMembers>::wait
          data.get_nwaiters_gone() = 0;
       }
       //locker's destructor triggers data.get_mtx_unblock_lock().unlock()
-   } 
+   }
 
    if ( 1 == nsignals_was_left ) {
       if ( 0 != nwaiters_was_gone ) {

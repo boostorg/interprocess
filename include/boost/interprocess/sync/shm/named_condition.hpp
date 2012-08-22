@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -159,7 +159,7 @@ class shm_named_condition
       {
          //shm_named_condition only works with named_mutex
          BOOST_STATIC_ASSERT((is_convertible<typename Lock::mutex_type&, named_mutex&>::value == true));
-        
+
          //lock internal before unlocking external to avoid race with a notifier
          scoped_lock<interprocess_mutex>     internal_lock(*this->mutex());
          lock_inverter<Lock> inverted_lock(lock);
@@ -176,16 +176,16 @@ class shm_named_condition
       {
          //shm_named_condition only works with named_mutex
          BOOST_STATIC_ASSERT((is_convertible<typename Lock::mutex_type&, named_mutex&>::value == true));
-         //lock internal before unlocking external to avoid race with a notifier 
-         scoped_lock<interprocess_mutex>     internal_lock(*this->mutex(), abs_time); 
+         //lock internal before unlocking external to avoid race with a notifier
+         scoped_lock<interprocess_mutex>     internal_lock(*this->mutex(), abs_time);
          if(!internal_lock) return false;
-         lock_inverter<Lock> inverted_lock(lock); 
-         scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock); 
+         lock_inverter<Lock> inverted_lock(lock);
+         scoped_lock<lock_inverter<Lock> >   external_unlock(inverted_lock);
 
-         //unlock internal first to avoid deadlock with near simultaneous waits 
-         scoped_lock<interprocess_mutex>     internal_unlock; 
-         internal_lock.swap(internal_unlock); 
-         return this->condition()->timed_wait(internal_unlock, abs_time); 
+         //unlock internal first to avoid deadlock with near simultaneous waits
+         scoped_lock<interprocess_mutex>     internal_unlock;
+         internal_lock.swap(internal_unlock);
+         return this->condition()->timed_wait(internal_unlock, abs_time);
       }
    #else //defined (BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
       template<class Lock>

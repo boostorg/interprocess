@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -131,12 +131,12 @@ class offset_ptr
 
    //!Pointer-like -> operator. It can return 0 pointer.
    //!Never throws.
-   pointer operator->() const          
+   pointer operator->() const
    {  return this->get(); }
 
    //!Dereferencing operator, if it is a null offset_ptr behavior
    //!   is undefined. Never throws.
-   reference operator* () const          
+   reference operator* () const
    {
       pointer p = this->get();
       reference r = *p;
@@ -146,7 +146,7 @@ class offset_ptr
    //!Indexing operator.
    //!Never throws.
    template<class T>
-   reference operator[](T idx) const  
+   reference operator[](T idx) const
    {  return this->get()[idx];  }
 
    //!Assignment from pointer (saves extra conversion).
@@ -199,7 +199,7 @@ class offset_ptr
 
    //!safe bool conversion operator.
    //!Never throws.
-   operator unspecified_bool_type() const 
+   operator unspecified_bool_type() const
    {  return this->get()? &self_t::unspecified_bool_type_func : 0;   }
 
    //!Not operator. Not needed in theory, but improves portability.
@@ -387,36 +387,36 @@ inline std::basic_istream<E, T> & operator>>
 template<class T1, class P1, class O1, std::size_t A1, class T2, class P2, class O2, std::size_t A2>
 inline boost::interprocess::offset_ptr<T1, P1, O1, A1>
    static_pointer_cast(const boost::interprocess::offset_ptr<T2, P2, O2, A2> & r)
-{ 
+{
    return boost::interprocess::offset_ptr<T1, P1, O1, A1>
-            (r, boost::interprocess::ipcdetail::static_cast_tag()); 
+            (r, boost::interprocess::ipcdetail::static_cast_tag());
 }
 
 //!Simulation of const_cast between pointers. Never throws.
 template<class T1, class P1, class O1, std::size_t A1, class T2, class P2, class O2, std::size_t A2>
 inline boost::interprocess::offset_ptr<T1, P1, O1, A1>
    const_pointer_cast(const boost::interprocess::offset_ptr<T2, P2, O2, A2> & r)
-{ 
+{
    return boost::interprocess::offset_ptr<T1, P1, O1, A1>
-            (r, boost::interprocess::ipcdetail::const_cast_tag()); 
+            (r, boost::interprocess::ipcdetail::const_cast_tag());
 }
 
 //!Simulation of dynamic_cast between pointers. Never throws.
 template<class T1, class P1, class O1, std::size_t A1, class T2, class P2, class O2, std::size_t A2>
 inline boost::interprocess::offset_ptr<T1, P1, O1, A1>
    dynamic_pointer_cast(const boost::interprocess::offset_ptr<T2, P2, O2, A2> & r)
-{ 
+{
    return boost::interprocess::offset_ptr<T1, P1, O1, A1>
-            (r, boost::interprocess::ipcdetail::dynamic_cast_tag()); 
+            (r, boost::interprocess::ipcdetail::dynamic_cast_tag());
 }
 
 //!Simulation of reinterpret_cast between pointers. Never throws.
 template<class T1, class P1, class O1, std::size_t A1, class T2, class P2, class O2, std::size_t A2>
 inline boost::interprocess::offset_ptr<T1, P1, O1, A1>
    reinterpret_pointer_cast(const boost::interprocess::offset_ptr<T2, P2, O2, A2> & r)
-{ 
+{
    return boost::interprocess::offset_ptr<T1, P1, O1, A1>
-            (r, boost::interprocess::ipcdetail::reinterpret_cast_tag()); 
+            (r, boost::interprocess::ipcdetail::reinterpret_cast_tag());
 }
 
 }  //namespace interprocess {

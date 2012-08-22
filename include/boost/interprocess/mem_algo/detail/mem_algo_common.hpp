@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -199,7 +199,7 @@ class memory_algorithm_common
    static void* allocate_aligned
       (MemoryAlgorithm *memory_algo, size_type nbytes, size_type alignment)
    {
-     
+
       //Ensure power of 2
       if ((alignment & (alignment - size_type(1u))) != 0){
          //Alignment is not power of two
@@ -215,7 +215,7 @@ class memory_algorithm_common
 
       if(nbytes > UsableByPreviousChunk)
          nbytes -= UsableByPreviousChunk;
-     
+
       //We can find a aligned portion if we allocate a block that has alignment
       //nbytes + alignment bytes or more.
       size_type minimum_allocation = max_value
@@ -528,7 +528,7 @@ class memory_algorithm_common
          //Sanity check
          BOOST_ASSERT(total_used_units == received_units);
       }
-     
+
       if(low_idx != n_elements){
          priv_deallocate_many(memory_algo, boost::move(chain));
       }

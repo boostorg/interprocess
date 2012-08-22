@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2011.
+// (C) Copyright Ion Gaztanaga 2005-2012.
 // (C) Copyright Gennaro Prota 2003 - 2004.
 //
 // Distributed under the Boost Software License, Version 1.0.
@@ -140,7 +140,7 @@ class value_eraser
    public:
    value_eraser(Cont & cont, typename Cont::iterator it)
       : m_cont(cont), m_index_it(it), m_erase(true){}
-   ~value_eraser() 
+   ~value_eraser()
    {  if(m_erase) m_cont.erase(m_index_it);  }
 
    void release() {  m_erase = false;  }

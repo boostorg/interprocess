@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -115,7 +115,7 @@ class allocator
    //!objects of type T2
    template<class T2>
    struct rebind
-   {  
+   {
       typedef allocator<T2, SegmentManager>     other;
    };
 
@@ -169,7 +169,7 @@ class allocator
    //!pointed by p can hold. This size only works for memory allocated with
    //!allocate, allocation_command and allocate_many.
    size_type size(const pointer &p) const
-   { 
+   {
       return (size_type)mp_mngr->size(ipcdetail::to_raw_pointer(p))/sizeof(T);
    }
 

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2008-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -73,7 +73,7 @@ namespace ipcdetail {
 template<class NodePool>
 struct get_or_create_node_pool_func
 {
-  
+
    //!This connects or constructs the unique instance of node_pool_t
    //!Can throw boost::interprocess::bad_alloc
    void operator()()
@@ -90,7 +90,7 @@ struct get_or_create_node_pool_func
    //!object parameters
    get_or_create_node_pool_func(typename NodePool::segment_manager *mngr)
       : mp_segment_manager(mngr){}
-  
+
    NodePool                            *mp_node_pool;
    typename NodePool::segment_manager  *mp_segment_manager;
 };
@@ -118,7 +118,7 @@ struct destroy_if_last_link_func
 
       //Last link, let's destroy the segment_manager
       mp_node_pool->get_segment_manager()->template destroy<NodePool>(boost::interprocess::unique_instance);
-   } 
+   }
 
    //!Constructor. Initializes function
    //!object parameters
@@ -173,7 +173,7 @@ class cache_impl
    ~cache_impl()
    {
       this->deallocate_all_cached_nodes();
-      ipcdetail::destroy_node_pool_if_last_link(ipcdetail::to_raw_pointer(mp_node_pool));  
+      ipcdetail::destroy_node_pool_if_last_link(ipcdetail::to_raw_pointer(mp_node_pool));
    }
 
    NodePool *get_node_pool() const
@@ -335,7 +335,7 @@ class array_allocation_impl
    //!pointed by p can hold. This size only works for memory allocated with
    //!allocate, allocation_command and allocate_many.
    size_type size(const pointer &p) const
-   { 
+   {
       return (size_type)this->derived()->get_segment_manager()->size(ipcdetail::to_raw_pointer(p))/sizeof(T);
    }
 
@@ -612,7 +612,7 @@ class cached_allocator_impl
       }
       else{
          ret = this->get_segment_manager()->allocate(sizeof(T)*count);
-      }  
+      }
       return pointer(static_cast<T*>(ret));
    }
 
@@ -699,7 +699,7 @@ bool operator!=(const cached_allocator_impl<T, N, V> &alloc1,
 
 
 //!Pooled shared memory allocator using adaptive pool. Includes
-//!a reference count but the class does not delete itself, this is 
+//!a reference count but the class does not delete itself, this is
 //!responsibility of user classes. Node size (NodeSize) and the number of
 //!nodes allocated per block (NodesPerBlock) are known at compile time
 template<class private_node_allocator_t>
@@ -736,7 +736,7 @@ class shared_pool_impl
       //-----------------------
       return private_node_allocator_t::allocate_node();
    }
-  
+
    //!Deallocates an array pointed by ptr. Never throws
    void deallocate_node(void *ptr)
    {
