@@ -117,8 +117,8 @@ class interprocess_sharable_mutex
    //to use atomic instructions in the future
    struct control_word_t
    {
-      unsigned exclusive_in         : 1;
-      unsigned num_upr_shar         : sizeof(unsigned)*CHAR_BIT-1;
+      unsigned exclusive_in   : 1;
+      unsigned num_shared     : sizeof(unsigned)*CHAR_BIT-1;
    }                       m_ctrl;
 
    interprocess_mutex      m_mut;
@@ -166,7 +166,7 @@ const unsigned interprocess_sharable_mutex::base_constants_t<Dummy>::max_readers
 inline interprocess_sharable_mutex::interprocess_sharable_mutex()
 {
    this->m_ctrl.exclusive_in  = 0;
-   this->m_ctrl.num_upr_shar   = 0;
+   this->m_ctrl.num_shared   = 0;
 }
 
 inline interprocess_sharable_mutex::~interprocess_sharable_mutex()
@@ -189,7 +189,7 @@ inline void interprocess_sharable_mutex::lock()
    exclusive_rollback rollback(this->m_ctrl, this->m_first_gate);
 
    //Now wait until all readers are gone
-   while (this->m_ctrl.num_upr_shar){
+   while (this->m_ctrl.num_shared){
       this->m_second_gate.wait(lock);
    }
    rollback.release();
@@ -203,7 +203,7 @@ inline bool interprocess_sharable_mutex::try_lock()
    //or sharable mark return false;
    if(!lock.owns()
       || this->m_ctrl.exclusive_in
-      || this->m_ctrl.num_upr_shar){
+      || this->m_ctrl.num_shared){
       return false;
    }
    this->m_ctrl.exclusive_in = 1;
@@ -223,8 +223,12 @@ inline bool interprocess_sharable_mutex::timed_lock
    //The exclusive lock must block in the first gate
    //if an exclusive lock has been acquired
    while (this->m_ctrl.exclusive_in){
-      if(!this->m_first_gate.timed_wait(lock, abs_time))
-         return !this->m_ctrl.exclusive_in;
+      if(!this->m_first_gate.timed_wait(lock, abs_time)){
+         if(this->m_ctrl.exclusive_in){
+            return false;
+         }
+         break;
+      }
    }
 
    //Mark that exclusive lock has been acquired
@@ -234,9 +238,12 @@ inline bool interprocess_sharable_mutex::timed_lock
    exclusive_rollback rollback(this->m_ctrl, this->m_first_gate);
 
    //Now wait until all readers are gone
-   while (this->m_ctrl.num_upr_shar){
+   while (this->m_ctrl.num_shared){
       if(!this->m_second_gate.timed_wait(lock, abs_time)){
-         return !(this->m_ctrl.num_upr_shar);
+         if(this->m_ctrl.num_shared){
+            return false;
+         }
+         break;
       }
    }
    rollback.release();
@@ -260,12 +267,12 @@ inline void interprocess_sharable_mutex::lock_sharable()
    //if an exclusive lock has been acquired
    //or there are too many sharable locks
    while(this->m_ctrl.exclusive_in
-        || this->m_ctrl.num_upr_shar == constants::max_readers){
+        || this->m_ctrl.num_shared == constants::max_readers){
       this->m_first_gate.wait(lock);
    }
 
    //Increment sharable count
-   ++this->m_ctrl.num_upr_shar;
+   ++this->m_ctrl.num_shared;
 }
 
 inline bool interprocess_sharable_mutex::try_lock_sharable()
@@ -277,12 +284,12 @@ inline bool interprocess_sharable_mutex::try_lock_sharable()
    //or there are too many sharable locks
    if(!lock.owns()
       || this->m_ctrl.exclusive_in
-      || this->m_ctrl.num_upr_shar == constants::max_readers){
+      || this->m_ctrl.num_shared == constants::max_readers){
       return false;
    }
 
    //Increment sharable count
-   ++this->m_ctrl.num_upr_shar;
+   ++this->m_ctrl.num_shared;
    return true;
 }
 
@@ -300,15 +307,18 @@ inline bool interprocess_sharable_mutex::timed_lock_sharable
    //if an exclusive lock has been acquired
    //or there are too many sharable locks
    while (this->m_ctrl.exclusive_in
-         || this->m_ctrl.num_upr_shar == constants::max_readers){
+         || this->m_ctrl.num_shared == constants::max_readers){
       if(!this->m_first_gate.timed_wait(lock, abs_time)){
-         return!(this->m_ctrl.exclusive_in
-               || this->m_ctrl.num_upr_shar == constants::max_readers);
+         if(this->m_ctrl.exclusive_in
+               || this->m_ctrl.num_shared == constants::max_readers){
+            return false;
+         }
+         break;
       }
    }
 
    //Increment sharable count
-   ++this->m_ctrl.num_upr_shar;
+   ++this->m_ctrl.num_shared;
    return true;
 }
 
@@ -316,13 +326,13 @@ inline void interprocess_sharable_mutex::unlock_sharable()
 {
    scoped_lock_t lock(m_mut);
    //Decrement sharable count
-   --this->m_ctrl.num_upr_shar;
-   if (this->m_ctrl.num_upr_shar == 0){
+   --this->m_ctrl.num_shared;
+   if (this->m_ctrl.num_shared == 0){
       this->m_second_gate.notify_one();
    }
    //Check if there are blocked sharables because of
    //there were too many sharables
-   else if(this->m_ctrl.num_upr_shar == (constants::max_readers-1)){
+   else if(this->m_ctrl.num_shared == (constants::max_readers-1)){
       this->m_first_gate.notify_all();
    }
 }
