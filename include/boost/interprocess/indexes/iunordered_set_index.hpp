@@ -190,7 +190,7 @@ class iunordered_set_index
 
       bucket_ptr shunk_p = alloc.allocation_command
          (boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, received_size, received_size, received_size, buckets).first;
-      BOOST_ASSERT(buckets == shunk_p);
+      BOOST_ASSERT(buckets == shunk_p); (void)shunk_p;
 
       bucket_ptr buckets_init = buckets + received_size;
       for(size_type i = 0; i < (old_size - received_size); ++i){

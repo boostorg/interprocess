@@ -140,6 +140,7 @@ inline void posix_mutex::unlock()
 {
    int res = 0;
    res = pthread_mutex_unlock(&m_mut);
+   (void)res;
    BOOST_ASSERT(res == 0);
 }
 

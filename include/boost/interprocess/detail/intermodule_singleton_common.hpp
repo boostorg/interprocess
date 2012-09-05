@@ -199,7 +199,7 @@ class intermodule_singleton_common
    private:
    static ThreadSafeGlobalMap &get_map()
    {
-      return *static_cast<ThreadSafeGlobalMap *>(static_cast<void *>(&mem_holder.map_mem));
+      return *static_cast<ThreadSafeGlobalMap *>(static_cast<void *>(&mem_holder.map_mem[0]));
    }
 
    static void initialize_global_map_handle()

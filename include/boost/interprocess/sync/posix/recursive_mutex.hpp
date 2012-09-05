@@ -130,7 +130,7 @@ inline void posix_recursive_mutex::unlock()
 {
    int res = 0;
    res = pthread_mutex_unlock(&m_mut);
-   BOOST_ASSERT(res == 0);
+   BOOST_ASSERT(res == 0); (void)res;
 }
 
 }  //namespace ipcdetail {

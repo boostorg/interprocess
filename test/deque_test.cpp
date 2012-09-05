@@ -57,7 +57,7 @@ bool copyable_only(V1 *shmdeque, V2 *stddeque, ipcdetail::true_type)
    typedef typename V1::value_type IntType;
    std::size_t size = shmdeque->size();
    stddeque->insert(stddeque->end(), 50, 1);
-   shmdeque->insert(shmdeque->end(), 50, 1);
+   shmdeque->insert(shmdeque->end(), 50, IntType(1));
    if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
    {
       IntType move_me(1);

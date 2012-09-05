@@ -145,21 +145,21 @@ inline posix_condition::~posix_condition()
 {
     int res = 0;
     res = pthread_cond_destroy(&m_condition);
-    BOOST_ASSERT(res == 0);
+    BOOST_ASSERT(res == 0); (void)res;
 }
 
 inline void posix_condition::notify_one()
 {
     int res = 0;
     res = pthread_cond_signal(&m_condition);
-    BOOST_ASSERT(res == 0);
+    BOOST_ASSERT(res == 0); (void)res;
 }
 
 inline void posix_condition::notify_all()
 {
     int res = 0;
     res = pthread_cond_broadcast(&m_condition);
-    BOOST_ASSERT(res == 0);
+    BOOST_ASSERT(res == 0); (void)res;
 }
 
 inline void posix_condition::do_wait(posix_mutex &mut)
@@ -167,7 +167,7 @@ inline void posix_condition::do_wait(posix_mutex &mut)
    pthread_mutex_t* pmutex = &mut.m_mut;
    int res = 0;
    res = pthread_cond_wait(&m_condition, pmutex);
-   BOOST_ASSERT(res == 0);
+   BOOST_ASSERT(res == 0); (void)res;
 }
 
 inline bool posix_condition::do_timed_wait
