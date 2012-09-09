@@ -6615,11 +6615,11 @@ example, a new managed shared memory that uses the new index:
 
 [section:notes_windows_com_init COM Initialization]
 
-[*Boost.Interprocess] uses the COM library to implement some features and initializes
-the COM library with concurrency model `COINIT_APARTMENTTHREADED`.
-If the COM library was already initialized by the calling thread for other model, [*Boost.Interprocess]
+[*Boost.Interprocess] uses the Windows COM library to implement some features and initializes
+it with concurrency model `COINIT_APARTMENTTHREADED`.
+If the COM library was already initialized by the calling thread for another concurrency model, [*Boost.Interprocess]
 handles this gracefully and uses COM calls for the already initialized model. If for some reason, you
-might want [*Boost.Interprocess] to initialize the COM library with another model, define the macro
+want [*Boost.Interprocess] to initialize the COM library with another model, define the macro
 `BOOST_INTERPROCESS_WINDOWS_COINIT_MODEL` before including [*Boost.Interprocess] to one of these values:
 
 * `COINIT_APARTMENTTHREADED_BIPC`
@@ -6652,7 +6652,7 @@ in the Windows configuration part of `boost/interprocess/detail/workaround.hpp`.
 
 The committed address space is the total amount of virtual memory (swap or physical memory/RAM) that the kernel might have to supply
 if all applications decide to access all of the memory they've requested from the kernel.
-By default, Linux allows processes to commmit more virtual memory than available in the system. If that memory is not
+By default, Linux allows processes to commit more virtual memory than available in the system. If that memory is not
 accessed, no physical memory + swap is actually used.
 
 The reason for this behaviour is that Linux tries to optimize memory usage on forked processes; fork() creates a full copy of
