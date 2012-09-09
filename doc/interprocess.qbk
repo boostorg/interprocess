@@ -2079,8 +2079,6 @@ Boost.Interprocess offers the following sharable mutex types:
 * [classref boost::interprocess::named_sharable_mutex named_sharable_mutex]: A non-recursive,
   named sharable mutex.
 
-[endsect]
-
 Boost.Interprocess offers the following upgradable mutex types:
 
 [c++]
@@ -6666,6 +6664,8 @@ the OOM (Out Of Memory)-killer picks some processes to kill in order to recover 
 According to the [@http://www.kernel.org/doc/Documentation/vm/overcommit-accounting Kernel documentation], the
 Linux kernel supports several overcommit modes. If you need non-kill guarantees in your application, you should
 change this overcommit behaviour.
+
+[endsect]
 
 [endsect]
 
