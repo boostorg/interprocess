@@ -444,7 +444,7 @@ namespace interprocess {
 //!Never throws.
 template <class T, class P, class O, std::size_t A>
 inline T * to_raw_pointer(boost::interprocess::offset_ptr<T, P, O, A> const & p)
-{  return p.get();   }
+{  return ipcdetail::to_raw_pointer(p);   }
 //#if !defined(_MSC_VER) || (_MSC_VER >= 1400)
 }  //namespace interprocess
 //#endif

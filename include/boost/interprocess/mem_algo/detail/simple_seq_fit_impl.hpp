@@ -750,9 +750,7 @@ inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::
    boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
    //-----------------------
    while(!chain.empty()){
-      void *addr = chain.front();
-      chain.pop_front();
-      this->priv_deallocate(addr);
+      this->priv_deallocate(to_raw_pointer(chain.pop_front()));
    }
 }
 

@@ -512,7 +512,7 @@ class mq_hdr_t
 		 msg_hdr_align  = ::boost::alignment_of<msg_header>::value,
 		 index_align    = ::boost::alignment_of<msg_hdr_ptr_t>::value,
          r_hdr_size     = ipcdetail::ct_rounded_size<sizeof(mq_hdr_t), index_align>::value,
-         r_index_size   = ipcdetail::get_rounded_size(sizeof(msg_hdr_ptr_t)*max_num_msg, msg_hdr_align),
+         r_index_size   = ipcdetail::get_rounded_size(max_num_msg*sizeof(msg_hdr_ptr_t), msg_hdr_align),
          r_max_msg_size = ipcdetail::get_rounded_size(max_msg_size, msg_hdr_align) + sizeof(msg_header);
       return r_hdr_size + r_index_size + (max_num_msg*r_max_msg_size) +
          ipcdetail::managed_open_or_create_impl<shared_memory_object>::ManagedOpenOrCreateUserOffset;
@@ -526,7 +526,7 @@ class mq_hdr_t
 		  msg_hdr_align  = ::boost::alignment_of<msg_header>::value,
 		  index_align    = ::boost::alignment_of<msg_hdr_ptr_t>::value,
          r_hdr_size     = ipcdetail::ct_rounded_size<sizeof(mq_hdr_t), index_align>::value,
-         r_index_size   = ipcdetail::get_rounded_size(sizeof(msg_hdr_ptr_t)*m_max_num_msg, msg_hdr_align),
+         r_index_size   = ipcdetail::get_rounded_size(m_max_num_msg*sizeof(msg_hdr_ptr_t), msg_hdr_align),
          r_max_msg_size = ipcdetail::get_rounded_size(m_max_msg_size, msg_hdr_align) + sizeof(msg_header);
 
       //Pointer to the index
@@ -627,7 +627,7 @@ inline message_queue_t<VoidPointer>::message_queue_t(create_only_t create_only,
       //Create shared memory and execute functor atomically
    :  m_shmem(create_only,
               name,
-           get_mem_size(max_msg_size, max_num_msg),
+              get_mem_size(max_msg_size, max_num_msg),
               read_write,
               static_cast<void*>(0),
               //Prepare initialization functor

@@ -191,8 +191,7 @@ class cache_impl
       if(m_cached_nodes.empty()){
          m_cached_nodes = mp_node_pool->allocate_nodes(m_max_cached_nodes/2);
       }
-      void *ret = ipcdetail::to_raw_pointer(m_cached_nodes.front());
-      m_cached_nodes.pop_front();
+      void *ret = ipcdetail::to_raw_pointer(m_cached_nodes.pop_front());
       return ret;
    }
 
@@ -203,8 +202,7 @@ class cache_impl
       BOOST_TRY{
          //If don't have any cached node, we have to get a new list of free nodes from the pool
          while(!m_cached_nodes.empty() && count--){
-            void *ret = ipcdetail::to_raw_pointer(m_cached_nodes.front());
-            m_cached_nodes.pop_front();
+            void *ret = ipcdetail::to_raw_pointer(m_cached_nodes.pop_front());
             chain.push_back(ret);
             ++allocated;
          }
@@ -357,7 +355,10 @@ class array_allocation_impl
    //!with deallocate(...)
    multiallocation_chain allocate_many(size_type elem_size, size_type num_elements)
    {
-      return this->derived()->get_segment_manager()->allocate_many(sizeof(T)*elem_size, num_elements);
+      if(size_overflows<sizeof(T)>(elem_size)){
+         throw bad_alloc();
+      }
+      return this->derived()->get_segment_manager()->allocate_many(elem_size*sizeof(T), num_elements);
    }
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
@@ -457,14 +458,17 @@ class node_pool_allocation_impl
       (void)hint;
       typedef typename node_pool<0>::type node_pool_t;
       node_pool_t *pool = node_pool<0>::get(this->derived()->get_node_pool());
-      if(count > this->max_size())
+      if(size_overflows<sizeof(T)>(count)){
          throw bad_alloc();
-      else if(Version == 1 && count == 1)
+      }
+      else if(Version == 1 && count == 1){
          return pointer(static_cast<value_type*>
          (pool->allocate_node()));
-      else
+      }
+      else{
          return pointer(static_cast<value_type*>
-            (pool->get_segment_manager()->allocate(sizeof(T)*count)));
+            (pool->get_segment_manager()->allocate(count*sizeof(T))));
+      }
    }
 
    //!Deallocate allocated memory. Never throws
@@ -605,13 +609,14 @@ class cached_allocator_impl
    {
       (void)hint;
       void * ret;
-      if(count > this->max_size())
+      if(size_overflows<sizeof(T)>(count)){
          throw bad_alloc();
+      }
       else if(Version == 1 && count == 1){
          ret = m_cache.cached_allocation();
       }
       else{
-         ret = this->get_segment_manager()->allocate(sizeof(T)*count);
+         ret = this->get_segment_manager()->allocate(count*sizeof(T));
       }
       return pointer(static_cast<T*>(ret));
    }

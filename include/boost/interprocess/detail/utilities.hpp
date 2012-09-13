@@ -31,8 +31,10 @@
 #include <boost/interprocess/containers/version_type.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
 #include <boost/move/move.hpp>
+#include <boost/static_assert.hpp>
 #include <utility>
 #include <algorithm>
+#include <climits>
 
 namespace boost {
 namespace interprocess {
@@ -86,7 +88,10 @@ inline SizeType get_truncated_size_po2(SizeType orig_size, SizeType multiple)
 template <std::size_t OrigSize, std::size_t RoundTo>
 struct ct_rounded_size
 {
-   static const std::size_t value = ((OrigSize-1)/RoundTo+1)*RoundTo;
+   BOOST_STATIC_ASSERT((RoundTo != 0));
+   static const std::size_t intermediate_value = (OrigSize-1)/RoundTo+1;
+   BOOST_STATIC_ASSERT(intermediate_value <= std::size_t(-1)/RoundTo);
+   static const std::size_t value = intermediate_value*RoundTo;
 };
 
 // Gennaro Prota wrote this. Thanks!
@@ -132,6 +137,36 @@ addressof(T& v)
   return reinterpret_cast<T*>(
        &const_cast<char&>(reinterpret_cast<const volatile char &>(v)));
 }
+
+template<class SizeType>
+struct sqrt_size_type_max
+{
+   static const SizeType value = (SizeType(1) << (sizeof(SizeType)*(CHAR_BIT/2)))-1;
+};
+
+template<class SizeType>
+inline bool multiplication_overflows(SizeType a, SizeType b)
+{
+   const SizeType sqrt_size_max = sqrt_size_type_max<SizeType>::value;
+   return   //Fast runtime check 
+         (  (a | b) > sqrt_size_max &&
+            //Slow division check 
+            b && a > SizeType(-1)/b
+         );
+}
+
+template<std::size_t SztSizeOfType, class SizeType>
+inline bool size_overflows(SizeType count)
+{
+   //Compile time-check
+   BOOST_STATIC_ASSERT(SztSizeOfType <= SizeType(-1));
+   //Runtime check
+   return multiplication_overflows(SizeType(SztSizeOfType), count);
+}
+
+template<class SizeType>
+inline bool sum_overflows(SizeType a, SizeType b)
+{  return SizeType(-1) - a > b;  }
 
 //Anti-exception node eraser
 template<class Cont>

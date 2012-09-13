@@ -145,8 +145,9 @@ class allocator
    pointer allocate(size_type count, cvoid_ptr hint = 0)
    {
       (void)hint;
-      if(count > this->max_size())
+      if(size_overflows<sizeof(T)>(count)){
          throw bad_alloc();
+      }
       return pointer(static_cast<value_type*>(mp_mngr->allocate(count*sizeof(T))));
    }
 
@@ -192,7 +193,10 @@ class allocator
    multiallocation_chain allocate_many
       (size_type elem_size, size_type num_elements)
    {
-      return multiallocation_chain(mp_mngr->allocate_many(sizeof(T)*elem_size, num_elements));
+      if(size_overflows<sizeof(T)>(elem_size)){
+         throw bad_alloc();
+      }
+      return multiallocation_chain(mp_mngr->allocate_many(elem_size*sizeof(T), num_elements));
    }
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
