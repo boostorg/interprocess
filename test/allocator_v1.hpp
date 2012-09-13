@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <stdexcept>
+#include <boost/static_assert.hpp>
 
 //!\file
 //!Describes an allocator_v1 that allocates portions of fixed size
@@ -118,7 +119,12 @@ class allocator_v1
    //!Allocates memory for an array of count elements.
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate(size_type count, cvoid_ptr hint = 0)
-   {  (void)hint; return pointer(static_cast<value_type*>(mp_mngr->allocate(count*sizeof(value_type))));  }
+   {
+      if(size_overflows<sizeof(T)>(count)){
+         throw bad_alloc();
+      }
+      (void)hint; return pointer(static_cast<T*>(mp_mngr->allocate(count*sizeof(T))));
+   }
 
    //!Deallocates memory previously allocated. Never throws
    void deallocate(const pointer &ptr, size_type)
