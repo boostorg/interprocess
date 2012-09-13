@@ -407,7 +407,7 @@ class segment_manager
    //!"size" is the size of the memory segment where
    //!the segment manager is being constructed.
    //!Can throw
-   segment_manager(size_type size)
+   explicit segment_manager(size_type size)
       :  Base(size, priv_get_reserved_bytes())
       ,  m_header(static_cast<Base*>(get_this_pointer()))
    {
