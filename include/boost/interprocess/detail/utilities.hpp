@@ -164,6 +164,29 @@ inline bool size_overflows(SizeType count)
    return multiplication_overflows(SizeType(SztSizeOfType), count);
 }
 
+template<class RawPointer>
+class pointer_size_t_caster
+{
+   public:
+   explicit pointer_size_t_caster(std::size_t sz)
+      : m_ptr(reinterpret_cast<RawPointer>(sz))
+   {}
+
+   explicit pointer_size_t_caster(RawPointer p)
+      : m_ptr(p)
+   {}
+
+   std::size_t size() const
+   {   return reinterpret_cast<std::size_t>(m_ptr);   }
+
+   RawPointer pointer() const
+   {   return m_ptr;   }
+
+   private:
+   RawPointer m_ptr;
+};
+
+
 template<class SizeType>
 inline bool sum_overflows(SizeType a, SizeType b)
 {  return SizeType(-1) - a > b;  }
