@@ -1037,7 +1037,7 @@ inline bool duplicate_current_process_handle
       , duplicate_same_access);
 }
 
-inline long get_file_type(void *hFile)
+inline unsigned long get_file_type(void *hFile)
 {
    return GetFileType(hFile);
 }
