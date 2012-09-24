@@ -88,8 +88,7 @@ class rbtree_best_fit
    typedef MutexFamily        mutex_family;
    //!Pointer type to be used with the rest of the Interprocess framework
    typedef VoidPointer        void_pointer;
-   typedef boost::container::container_detail::
-      basic_multiallocation_chain<VoidPointer>  multiallocation_chain;
+   typedef ipcdetail::basic_multiallocation_chain<VoidPointer>  multiallocation_chain;
 
    typedef typename boost::intrusive::pointer_traits<char_ptr>::difference_type difference_type;
    typedef typename boost::make_unsigned<difference_type>::type     size_type;

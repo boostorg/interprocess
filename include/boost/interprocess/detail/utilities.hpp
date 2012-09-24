@@ -189,7 +189,7 @@ class pointer_size_t_caster
 
 template<class SizeType>
 inline bool sum_overflows(SizeType a, SizeType b)
-{  return SizeType(-1) - a > b;  }
+{  return SizeType(-1) - a < b;  }
 
 //Anti-exception node eraser
 template<class Cont>

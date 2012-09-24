@@ -64,8 +64,7 @@ int main()
 
    //Initialize our data
    while(!chain.empty()){
-      void *buf = chain.front();
-      chain.pop_front();
+      void *buf = chain.pop_front();
       allocated_buffers.push_back(buf);
       //The iterator must be incremented before overwriting memory
       //because otherwise, the iterator is invalidated.

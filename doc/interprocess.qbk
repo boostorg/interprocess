@@ -6719,23 +6719,24 @@ thank them:
 [section:release_notes_boost_1_52_00 Boost 1.52 Release]
 
 *  Added `shrink_by` and `advise` functions in `mapped_region`.
-*  Reimplemented `message_queue` with a circular buffer index (the
+*  [*ABI breaking]Reimplemented `message_queue` with a circular buffer index (the
    old behavior used an ordered array, leading to excessive copies). This
    should greatly increase performance but breaks ABI. Old behaviour/ABI can be used
    undefining macro `BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX` in `boost/interprocess/detail/workaround.hpp`
 *  Improved `message_queue` insertion time avoiding priority search for common cases
    (both array and circular buffer configurations).
 *  Implemented `sharable_mutex` and `interproces_condition_any`.
+*  Improved `offset_ptr` performance.
+*  Added integer overflow checks.
 
 [endsect]
-
 
 [section:release_notes_boost_1_51_00 Boost 1.51 Release]
 
 *  Synchronous and asynchronous flushing for `mapped_region::flush`.
-*  Source & ABI breaking: Removed `get_offset` method from `mapped_region` as
+*  [*Source & ABI breaking]: Removed `get_offset` method from `mapped_region` as
    it has no practical utility and `m_offset` member was not for anything else.
-*  Source & ABI breaking: Removed `flush` from `managed_shared_memory`.
+*  [*Source & ABI breaking]: Removed `flush` from `managed_shared_memory`.
    as it is unspecified according to POSIX:
    [@http://pubs.opengroup.org/onlinepubs/009695399/functions/msync.html
    ['"The effect of msync() on a shared memory object or a typed memory object is unspecified"] ].

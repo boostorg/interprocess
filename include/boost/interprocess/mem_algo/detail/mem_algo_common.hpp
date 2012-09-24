@@ -26,6 +26,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/move/move.hpp>
 #include <boost/interprocess/detail/min_max.hpp>
+#include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/assert.hpp>
 #include <boost/static_assert.hpp>
 #include <algorithm>
@@ -39,6 +40,37 @@
 namespace boost {
 namespace interprocess {
 namespace ipcdetail {
+
+template<class VoidPointer>
+class basic_multiallocation_chain
+   : public boost::container::container_detail::
+      basic_multiallocation_chain<VoidPointer>
+{
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_multiallocation_chain)
+   typedef boost::container::container_detail::
+      basic_multiallocation_chain<VoidPointer> base_t;
+   public:
+
+   basic_multiallocation_chain()
+      :  base_t()
+   {}
+
+   basic_multiallocation_chain(BOOST_RV_REF(basic_multiallocation_chain) other)
+      :  base_t(::boost::move(static_cast<base_t&>(other)))
+   {}
+
+   basic_multiallocation_chain& operator=(BOOST_RV_REF(basic_multiallocation_chain) other)
+   {
+      this->base_t::operator=(::boost::move(static_cast<base_t&>(other)));
+      return *this;
+   }
+
+   void *pop_front()
+   {
+      return boost::interprocess::ipcdetail::to_raw_pointer(this->base_t::pop_front());
+   }
+};
+
 
 //!This class implements several allocation functions shared by different algorithms
 //!(aligned allocation, multiple allocation...).
