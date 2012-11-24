@@ -176,8 +176,8 @@ class message_queue_t
    //!Returns the needed memory size for the shared message queue.
    //!Never throws
    static size_type get_mem_size(size_type max_msg_size, size_type max_num_msg);
-
-   ipcdetail::managed_open_or_create_impl<shared_memory_object> m_shmem;
+   typedef ipcdetail::managed_open_or_create_impl<shared_memory_object, 0, true, false> open_create_impl_t;
+   open_create_impl_t m_shmem;
    /// @endcond
 };
 
@@ -283,6 +283,7 @@ class mq_hdr_t
    typedef typename boost::intrusive::
       pointer_traits<void_pointer>::template
          rebind_pointer<msg_hdr_ptr_t>::type                              msg_hdr_ptr_ptr_t;
+   typedef ipcdetail::managed_open_or_create_impl<shared_memory_object, 0, true, false> open_create_impl_t;
 
    public:
    //!Constructor. This object must be constructed in the beginning of the
@@ -363,13 +364,13 @@ class mq_hdr_t
 
    msg_header & insert_at(iterator where)
    {
-      iterator inserted_ptr_end = this->inserted_ptr_end();
-      iterator inserted_ptr_beg = this->inserted_ptr_begin();
-      if(where == inserted_ptr_end){
+      iterator it_inserted_ptr_end = this->inserted_ptr_end();
+      iterator it_inserted_ptr_beg = this->inserted_ptr_begin();
+      if(where == it_inserted_ptr_end){
          ++m_cur_num_msg;
-         return **inserted_ptr_end;
+         return **it_inserted_ptr_end;
       }
-      else if(where == inserted_ptr_beg){
+      else if(where == it_inserted_ptr_beg){
          //unsigned integer guarantees underflow
          m_cur_first_msg = m_cur_first_msg ? m_cur_first_msg : m_max_num_msg;
          --m_cur_first_msg;
@@ -391,10 +392,10 @@ class mq_hdr_t
                --where;
             }
             const bool unique_segment = m_cur_first_msg && m_cur_first_msg <= pos;
-            size_type first_segment_beg  = unique_segment ? m_cur_first_msg : 1u;
-            size_type first_segment_end  = pos;
-            size_type second_segment_beg = unique_segment || !m_cur_first_msg ? m_max_num_msg : m_cur_first_msg;
-            size_type second_segment_end = m_max_num_msg;
+            const size_type first_segment_beg  = unique_segment ? m_cur_first_msg : 1u;
+            const size_type first_segment_end  = pos;
+            const size_type second_segment_beg = unique_segment || !m_cur_first_msg ? m_max_num_msg : m_cur_first_msg;
+            const size_type second_segment_end = m_max_num_msg;
             const msg_hdr_ptr_t backup   = *(&mp_index[0] + (unique_segment ?  first_segment_beg : second_segment_beg) - 1);
 
             //First segment
@@ -416,13 +417,13 @@ class mq_hdr_t
          else{
             //The queue can't be full so end_pos < m_cur_first_msg
             //indicates two step insertion
-            const size_type end_pos = this->end_pos();
-            const bool unique_segment = pos < end_pos;
-            size_type first_segment_beg  = pos;
-            size_type first_segment_end  = unique_segment  ? end_pos : m_max_num_msg-1;
-            size_type second_segment_beg = 0u;
-            size_type second_segment_end = unique_segment ? 0u : end_pos;
-            const msg_hdr_ptr_t backup   = *inserted_ptr_end;
+            const size_type pos_end = this->end_pos();
+            const bool unique_segment = pos < pos_end;
+            const size_type first_segment_beg  = pos;
+            const size_type first_segment_end  = unique_segment  ? pos_end : m_max_num_msg-1;
+            const size_type second_segment_beg = 0u;
+            const size_type second_segment_end = unique_segment ? 0u : pos_end;
+            const msg_hdr_ptr_t backup   = *it_inserted_ptr_end;
 
             //First segment
             if(!unique_segment){
@@ -515,7 +516,7 @@ class mq_hdr_t
          r_index_size   = ipcdetail::get_rounded_size(max_num_msg*sizeof(msg_hdr_ptr_t), msg_hdr_align),
          r_max_msg_size = ipcdetail::get_rounded_size(max_msg_size, msg_hdr_align) + sizeof(msg_header);
       return r_hdr_size + r_index_size + (max_num_msg*r_max_msg_size) +
-         ipcdetail::managed_open_or_create_impl<shared_memory_object>::ManagedOpenOrCreateUserOffset;
+         open_create_impl_t::ManagedOpenOrCreateUserOffset;
    }
 
    //!Initializes the memory structures to preallocate messages and constructs the
@@ -619,7 +620,7 @@ inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPoin
 {  return ipcdetail::mq_hdr_t<VoidPointer>::get_mem_size(max_msg_size, max_num_msg);   }
 
 template<class VoidPointer>
-inline message_queue_t<VoidPointer>::message_queue_t(create_only_t create_only,
+inline message_queue_t<VoidPointer>::message_queue_t(create_only_t,
                                     const char *name,
                                     size_type max_num_msg,
                                     size_type max_msg_size,
@@ -636,7 +637,7 @@ inline message_queue_t<VoidPointer>::message_queue_t(create_only_t create_only,
 {}
 
 template<class VoidPointer>
-inline message_queue_t<VoidPointer>::message_queue_t(open_or_create_t open_or_create,
+inline message_queue_t<VoidPointer>::message_queue_t(open_or_create_t,
                                     const char *name,
                                     size_type max_num_msg,
                                     size_type max_msg_size,
@@ -653,8 +654,7 @@ inline message_queue_t<VoidPointer>::message_queue_t(open_or_create_t open_or_cr
 {}
 
 template<class VoidPointer>
-inline message_queue_t<VoidPointer>::message_queue_t(open_only_t open_only,
-                                    const char *name)
+inline message_queue_t<VoidPointer>::message_queue_t(open_only_t, const char *name)
    //Create shared memory and execute functor atomically
    :  m_shmem(open_only,
               name,
