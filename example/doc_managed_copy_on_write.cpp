@@ -25,12 +25,14 @@ int main()
    //Define file names
    //<-
    #if 1
-   std::string managed_file(boost::interprocess::ipcdetail::get_temporary_path());
-   managed_file += "/"; managed_file += test::get_process_id_name();
-   const char *ManagedFile = managed_file.c_str();
-   std::string managed_file2(boost::interprocess::ipcdetail::get_temporary_path());
-   managed_file2 += "/"; managed_file2 += test::get_process_id_name();  managed_file2 += "_2";
-   const char *ManagedFile2 = managed_file2.c_str();
+   const char *ManagedFile  = 0;
+   const char *ManagedFile2 = 0;
+   std::string managed_file_name(boost::interprocess::ipcdetail::get_temporary_path());
+   managed_file_name += "/"; managed_file_name += test::get_process_id_name();
+   ManagedFile = managed_file_name.c_str();
+   std::string managed_file2_name(boost::interprocess::ipcdetail::get_temporary_path());
+   managed_file2_name += "/"; managed_file2_name += test::get_process_id_name();  managed_file2_name += "_2";
+   ManagedFile2 = managed_file2_name.c_str();
    #else
    //->
    const char *ManagedFile  = "MyManagedFile";

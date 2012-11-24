@@ -70,8 +70,8 @@ template <typename F, typename T>
 class binder
 {
 public:
-    binder(const F& func, const T& param)
-        : func(func), param(param) { }
+    binder(const F& f, const T& p)
+        : func(f), param(p) { }
     void operator()() const { func(param); }
 
 private:

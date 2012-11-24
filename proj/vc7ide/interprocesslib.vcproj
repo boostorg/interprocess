@@ -488,6 +488,12 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\config_end.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\config_external_begin.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\config_external_end.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\file_locking_helpers.hpp">
 			</File>
 			<File

@@ -72,7 +72,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
+				Optimization="3"
 				InlineFunctionExpansion="0"
 				AdditionalIncludeDirectories="../../../.."
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;BOOST_DATE_TIME_NO_LIB"
