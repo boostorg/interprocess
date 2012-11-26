@@ -154,7 +154,7 @@
    #define BOOST_INTERPROCESS_NEVER_INLINE __attribute__((__noinline__))
 #endif
 
-#if defined(BOOST_NO_NOEXCEPT)
+#if defined(BOOST_NO_CXX11_NOEXCEPT)
    #if defined(BOOST_MSVC)
       #define BOOST_INTERPROCESS_NOEXCEPT throw()
    #else
