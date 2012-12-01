@@ -8,7 +8,7 @@
 [library Boost.Interprocess
     [quickbook 1.4]
     [authors [Gaztanaga, Ion]]
-    [copyright 2005- 2011 Ion Gaztanaga]
+    [copyright 2005-2012 Ion Gaztanaga]
     [id interprocess]
     [dirname interprocess]
     [purpose Interprocess communication utilities]
@@ -3898,6 +3898,8 @@ Here is a small example showing how aligned allocation is used:
 
 [section:managed_memory_segment_multiple_allocations Multiple allocation functions]
 
+[caution This feature is experimental, interface and ABI are unstable]
+
 If an application needs to allocate a lot of memory buffers but it needs
 to deallocate them independently, the application is normally forced to loop
 calling `allocate()`. Managed memory segments offer an alternative function
@@ -3917,33 +3919,26 @@ There are 2 types of `allocate_many` functions:
 
 [c++]
 
-   //!Allocates n_elements of elem_size bytes.
-   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements);
+   //!Allocates n_elements of elem_bytes bytes. 
+   //!Throws bad_alloc on failure. chain.size() is not increased on failure.
+   void allocate_many(size_type elem_bytes, size_type n_elements, multiallocation_chain &chain);
 
-   //!Allocates n_elements, each one of elem_sizes[i] bytes.
-   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements);
+   //!Allocates n_elements, each one of element_lengths[i]*sizeof_element bytes.
+   //!Throws bad_alloc on failure. chain.size() is not increased on failure.
+   void allocate_many(const size_type *element_lengths, size_type n_elements, size_type sizeof_element, multiallocation_chain &chain);
 
-   //!Allocates n_elements of elem_size bytes. No throwing version.
-   multiallocation_iterator allocate_many(std::size_t elem_size, std::size_t min_elements, std::size_t preferred_elements, std::size_t &received_elements, std::nothrow_t nothrow);
+   //!Allocates n_elements of elem_bytes bytes. 
+   //!Non-throwing version. chain.size() is not increased on failure.
+   void allocate_many(std::nothrow_t, size_type elem_bytes, size_type n_elements, multiallocation_chain &chain);
 
-   //!Allocates n_elements, each one of elem_sizes[i] bytes. No throwing version.
-   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::nothrow_t nothrow);
+   //!Allocates n_elements, each one of
+   //!element_lengths[i]*sizeof_element bytes.
+   //!Non-throwing version. chain.size() is not increased on failure.
+   void allocate_many(std::nothrow_t, const size_type *elem_sizes, size_type n_elements, size_type sizeof_element, multiallocation_chain &chain);
 
-All functions return a `multiallocation iterator` that can be used to obtain
-pointers to memory the user can overwrite. A `multiallocation_iterator`:
-
-*  Becomes invalidated if the memory is pointing to is deallocated or
-   the next iterators (which previously were reachable with `operator++`)
-   become invalid.
-*  Returned from `allocate_many` can be checked in a boolean expression to
-   know if the allocation has been successful.
-*  A default constructed `multiallocation iterator` indicates
-   both an invalid iterator and the "end" iterator.
-*  Dereferencing an iterator (`operator *()`) returns a `char &`
-   referencing the first byte user can overwrite
-   in the memory buffer.
-*  The iterator category depends on the memory allocation algorithm,
-   but it's at least a forward iterator.
+   //!Deallocates all elements contained in chain.
+   //!Never throws.
+   void deallocate_many(multiallocation_chain &chain);
 
 Here is a small example showing all this functionality:
 
@@ -6716,16 +6711,25 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_53_00 Boost 1.53 Release]
+
+*  Fixed GCC -Wshadow warnings.
+*  Experimental multiple allocation interface improved and changed again. Still unstable.
+*  Replaced deprecated BOOST_NO_XXXX with newer BOOST_NO_CXX11_XXX macros.
+*  [*ABI breaking]: changed node pool allocators internals for improved efficiency.
+
+[endsect]
+
 [section:release_notes_boost_1_52_00 Boost 1.52 Release]
 
 *  Added `shrink_by` and `advise` functions in `mapped_region`.
-*  [*ABI breaking]Reimplemented `message_queue` with a circular buffer index (the
+*  [*ABI breaking:] Reimplemented `message_queue` with a circular buffer index (the
    old behavior used an ordered array, leading to excessive copies). This
    should greatly increase performance but breaks ABI. Old behaviour/ABI can be used
    undefining macro `BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX` in `boost/interprocess/detail/workaround.hpp`
 *  Improved `message_queue` insertion time avoiding priority search for common cases
    (both array and circular buffer configurations).
-*  Implemented `sharable_mutex` and `interproces_condition_any`.
+*  Implemented `interproces_sharable_mutex` and `interproces_condition_any`.
 *  Improved `offset_ptr` performance.
 *  Added integer overflow checks.
 

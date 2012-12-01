@@ -673,7 +673,8 @@ bool test_many_equal_allocation(Allocator &a)
       typedef typename Allocator::multiallocation_chain multiallocation_chain;
       std::vector<void*> buffers;
       for(int i = 0; true; ++i){
-         multiallocation_chain chain(a.allocate_many(i+1, (i+1)*2, std::nothrow));
+         multiallocation_chain chain;
+         a.allocate_many(std::nothrow, i+1, (i+1)*2, chain);
          if(chain.empty())
             break;
 
@@ -782,7 +783,8 @@ bool test_many_different_allocation(Allocator &a)
 
       std::vector<void*> buffers;
       for(int i = 0; true; ++i){
-         multiallocation_chain chain(a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow));
+         multiallocation_chain chain;
+         a.allocate_many(std::nothrow, requested_sizes, ArraySize, 1, chain);
          if(chain.empty())
             break;
          typename multiallocation_chain::size_type n = chain.size();
@@ -851,6 +853,8 @@ template<class Allocator>
 bool test_many_deallocation(Allocator &a)
 {
    typedef typename Allocator::multiallocation_chain multiallocation_chain;
+
+   typedef typename Allocator::multiallocation_chain multiallocation_chain;
    const std::size_t ArraySize = 11;
    vector<multiallocation_chain> buffers;
    typename Allocator::size_type requested_sizes[ArraySize];
@@ -861,13 +865,14 @@ bool test_many_deallocation(Allocator &a)
 
    {
       for(int i = 0; true; ++i){
-         multiallocation_chain chain = a.allocate_many(requested_sizes, ArraySize, 1, std::nothrow);
+         multiallocation_chain chain;
+         a.allocate_many(std::nothrow, requested_sizes, ArraySize, 1, chain);
          if(chain.empty())
             break;
          buffers.push_back(boost::move(chain));
       }
       for(int i = 0, max = (int)buffers.size(); i != max; ++i){
-         a.deallocate_many(boost::move(buffers[i]));
+         a.deallocate_many(buffers[i]);
       }
       buffers.clear();
       bool ok = free_memory == a.get_free_memory() &&
@@ -877,13 +882,14 @@ bool test_many_deallocation(Allocator &a)
 
    {
       for(int i = 0; true; ++i){
-         multiallocation_chain chain(a.allocate_many(i*4, ArraySize, std::nothrow));
+         multiallocation_chain chain;
+         a.allocate_many(std::nothrow, i*4, ArraySize, chain);
          if(chain.empty())
             break;
          buffers.push_back(boost::move(chain));
       }
       for(int i = 0, max = (int)buffers.size(); i != max; ++i){
-         a.deallocate_many(boost::move(buffers[i]));
+         a.deallocate_many(buffers[i]);
       }
       buffers.clear();
 

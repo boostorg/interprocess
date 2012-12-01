@@ -72,7 +72,7 @@ class basic_managed_multi_shared_memory
 
    typedef typename MemoryAlgorithm::void_pointer        void_pointer;
    typedef typename ipcdetail::
-      managed_open_or_create_impl<shared_memory_object, MemoryAlgorithm::Alignment>  managed_impl;
+      managed_open_or_create_impl<shared_memory_object, MemoryAlgorithm::Alignment, true, false>  managed_impl;
    typedef typename void_pointer::segment_group_id       segment_group_id;
    typedef typename base_t::size_type                   size_type;
 
