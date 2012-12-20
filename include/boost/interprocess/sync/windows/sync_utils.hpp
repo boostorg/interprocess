@@ -168,6 +168,9 @@ class sync_handles
          hnd_val = open_or_create_mutex(id);
          if(popen_created) *popen_created = true;
       }
+      else if(popen_created){
+         *popen_created = false;
+      }
       return hnd_val;
    }
 
@@ -181,6 +184,9 @@ class sync_handles
          map_[&it->first] = it;
          hnd_val = open_or_create_semaphore(id, initial_count);
          if(popen_created) *popen_created = true;
+      }
+      else if(popen_created){
+         *popen_created = false;
       }
       return hnd_val;
    }
