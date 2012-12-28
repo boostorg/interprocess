@@ -725,20 +725,40 @@ class basic_managed_memory_impl
 template<class BasicManagedMemoryImpl>
 class create_open_func
 {
+   typedef typename BasicManagedMemoryImpl::size_type size_type;
+
    public:
+
    create_open_func(BasicManagedMemoryImpl * const frontend, create_enum_t type)
       : m_frontend(frontend), m_type(type){}
 
-   bool operator()(void *addr, typename BasicManagedMemoryImpl::size_type size, bool created) const
+   bool operator()(void *addr, std::size_t size, bool created) const
    {
-      if(((m_type == DoOpen)   &&  created) ||
-         ((m_type == DoCreate) && !created))
+      if( ((m_type == DoOpen)   &&  created) ||
+          ((m_type == DoCreate) && !created) ||
+          //Check for overflow
+          size_type(-1) < size ){
          return false;
+      }
+      else if(created){
+         return m_frontend->create_impl(addr, static_cast<size_type>(size));
+      }
+      else{
+         return m_frontend->open_impl  (addr, static_cast<size_type>(size));
+      }
+   }
 
-      if(created)
-         return m_frontend->create_impl(addr, size);
-      else
-         return m_frontend->open_impl  (addr, size);
+   std::size_t get_min_size() const
+   {
+      const size_type sz = m_frontend->get_segment_manager()->get_min_size();
+      if(sz > std::size_t(-1)){
+         //The minimum size is not representable by std::size_t
+         BOOST_ASSERT(false);
+         return std::size_t(-1);
+      }
+      else{
+         return static_cast<std::size_t>(sz);
+      }
    }
 
    private:

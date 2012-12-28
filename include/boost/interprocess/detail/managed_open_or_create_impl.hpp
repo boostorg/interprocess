@@ -315,8 +315,13 @@ class managed_open_or_create_impl
       bool cow     = false;
       DeviceAbstraction dev;
 
-      if(type != DoOpen && size < ManagedOpenOrCreateUserOffset){
-         throw interprocess_exception(error_info(size_error));
+      if(type != DoOpen){
+         //Check if the requested size is enough to build the managed metadata
+         const std::size_t func_min_size = construct_func.get_min_size();
+         if( (std::size_t(-1) - ManagedOpenOrCreateUserOffset) < func_min_size ||
+             size < (func_min_size + ManagedOpenOrCreateUserOffset) ){
+            throw interprocess_exception(error_info(size_error));
+         }
       }
       //Check size can be represented by offset_t (used by truncate)
       if(type != DoOpen && !check_offset_t_size<FileBased>(size, file_like_t())){

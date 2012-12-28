@@ -211,9 +211,23 @@ class basic_managed_multi_shared_memory
          }
          return false;
       }
+
+      std::size_t get_min_size() const
+      {
+         const size_type sz = mp_frontend->get_segment_manager()->get_min_size();
+         if(sz > std::size_t(-1)){
+            //The minimum size is not representable by std::size_t
+            BOOST_ASSERT(false);
+            return std::size_t(-1);
+         }
+         else{
+            return static_cast<std::size_t>(sz);
+         }
+      }
+
       self_t * const    mp_frontend;
       type_t            m_type;
-      size_type       m_segment_number;
+      size_type         m_segment_number;
    };
 
    //!Functor to execute atomically when closing a shared memory segment.
