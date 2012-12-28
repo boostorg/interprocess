@@ -42,6 +42,12 @@
 
 namespace boost{  namespace interprocess{
 
+namespace ipcdetail
+{
+   template<class VoidPointer>
+   class msg_queue_initialization_func_t;
+}
+
 //!A class that allows sending messages
 //!between processes.
 template<class VoidPointer>
@@ -164,6 +170,9 @@ class message_queue_t
    /// @cond
    private:
    typedef boost::posix_time::ptime ptime;
+
+   friend class ipcdetail::msg_queue_initialization_func_t<VoidPointer>;
+
    bool do_receive(block_t block,
                    void *buffer,         size_type buffer_size,
                    size_type &recvd_size, unsigned int &priority,
@@ -574,7 +583,7 @@ class mq_hdr_t
 //!This is the atomic functor to be executed when creating or opening
 //!shared memory. Never throws
 template<class VoidPointer>
-class initialization_func_t
+class msg_queue_initialization_func_t
 {
    public:
    typedef typename boost::intrusive::
@@ -583,7 +592,7 @@ class initialization_func_t
    typedef typename boost::intrusive::pointer_traits<char_ptr>::difference_type difference_type;
    typedef typename boost::make_unsigned<difference_type>::type        size_type;
 
-   initialization_func_t(size_type maxmsg = 0,
+   msg_queue_initialization_func_t(size_type maxmsg = 0,
                          size_type maxmsgsize = 0)
       : m_maxmsg (maxmsg), m_maxmsgsize(maxmsgsize) {}
 
@@ -604,6 +613,13 @@ class initialization_func_t
       }
       return true;
    }
+
+   std::size_t get_min_size() const
+   {
+      return mq_hdr_t<VoidPointer>::get_mem_size(m_maxmsgsize, m_maxmsg)
+      - message_queue_t<VoidPointer>::open_create_impl_t::ManagedOpenOrCreateUserOffset;
+   }
+
    const size_type m_maxmsg;
    const size_type m_maxmsgsize;
 };
@@ -632,7 +648,7 @@ inline message_queue_t<VoidPointer>::message_queue_t(create_only_t,
               read_write,
               static_cast<void*>(0),
               //Prepare initialization functor
-              ipcdetail::initialization_func_t<VoidPointer> (max_num_msg, max_msg_size),
+              ipcdetail::msg_queue_initialization_func_t<VoidPointer> (max_num_msg, max_msg_size),
               perm)
 {}
 
@@ -649,7 +665,7 @@ inline message_queue_t<VoidPointer>::message_queue_t(open_or_create_t,
               read_write,
               static_cast<void*>(0),
               //Prepare initialization functor
-              ipcdetail::initialization_func_t<VoidPointer> (max_num_msg, max_msg_size),
+              ipcdetail::msg_queue_initialization_func_t<VoidPointer> (max_num_msg, max_msg_size),
               perm)
 {}
 
@@ -661,7 +677,7 @@ inline message_queue_t<VoidPointer>::message_queue_t(open_only_t, const char *na
               read_write,
               static_cast<void*>(0),
               //Prepare initialization functor
-              ipcdetail::initialization_func_t<VoidPointer> ())
+              ipcdetail::msg_queue_initialization_func_t<VoidPointer> ())
 {}
 
 template<class VoidPointer>
