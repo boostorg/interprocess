@@ -6717,6 +6717,7 @@ thank them:
 *  Experimental multiple allocation interface improved and changed again. Still unstable.
 *  Replaced deprecated BOOST_NO_XXXX with newer BOOST_NO_CXX11_XXX macros.
 *  [*ABI breaking]: changed node pool allocators internals for improved efficiency.
+*  Fixed bug [@https://svn.boost.org/trac/boost/ticket/7795 #7795].
 
 [endsect]
 
