@@ -81,6 +81,7 @@ class shared_memory_object
    //!Does not throw
    shared_memory_object(BOOST_RV_REF(shared_memory_object) moved)
       :  m_handle(file_handle_t(ipcdetail::invalid_file()))
+      ,  m_mode(read_only)
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s shared memory to *this.
@@ -144,6 +145,7 @@ class shared_memory_object
 
 inline shared_memory_object::shared_memory_object()
    :  m_handle(file_handle_t(ipcdetail::invalid_file()))
+   ,  m_mode(read_only)
 {}
 
 inline shared_memory_object::~shared_memory_object()
