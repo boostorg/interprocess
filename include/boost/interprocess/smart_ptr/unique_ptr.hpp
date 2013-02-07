@@ -83,7 +83,7 @@ class unique_ptr
 {
    /// @cond
    struct nat  {int for_bool;};
-   struct nat2 {int for_bool;};
+   struct nat2 {int for_nullptr;};
    typedef int nat2::*nullptr_t;
    typedef typename ipcdetail::add_reference<D>::type deleter_reference;
    typedef typename ipcdetail::add_reference<const D>::type deleter_const_reference;
@@ -288,7 +288,7 @@ class unique_ptr
    //!
    //!Throws: nothing.
    operator int nat::*() const
-   {  return ptr_.first() ? &nat::for_bool_ : 0;   }
+   {  return ptr_.first() ? &nat::for_bool : 0;   }
 
    //!Postcondition: get() == 0.
    //!
@@ -459,7 +459,7 @@ public:
     pointer get()        const {return ptr_.first();}
     deleter_reference       get_deleter()       {return ptr_.second();}
     deleter_const_reference get_deleter() const {return ptr_.second();}
-    operator int nat::*() const {return ptr_.first() ? &nat::for_bool_ : 0;}
+    operator int nat::*() const {return ptr_.first() ? &nat::for_bool : 0;}
 
     // modifiers
     pointer release()
