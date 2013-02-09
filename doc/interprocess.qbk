@@ -6714,7 +6714,9 @@ thank them:
 [section:release_notes_boost_1_54_00 Boost 1.54 Release]
 
 *  Fixed bugs [@https://svn.boost.org/trac/boost/ticket/7484 #7484],
-              [@https://svn.boost.org/trac/boost/ticket/7598 #7598].
+              [@https://svn.boost.org/trac/boost/ticket/7598 #7598],
+              [@https://svn.boost.org/trac/boost/ticket/7682 #7682],
+              [@https://svn.boost.org/trac/boost/ticket/7923 #7923].
 [endsect]
 
 [section:release_notes_boost_1_53_00 Boost 1.53 Release]

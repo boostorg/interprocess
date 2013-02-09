@@ -527,9 +527,6 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\managed_open_or_create_impl.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\math_functions.hpp">
-			</File>
-			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\min_max.hpp">
 			</File>
 			<File
