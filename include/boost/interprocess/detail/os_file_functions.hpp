@@ -278,7 +278,7 @@ inline bool delete_subdirectories_recursive
                //if(::SetFileAttributes(strFilePath.c_str(), winapi::file_attribute_normal) == 0)
                //return winapi::get_last_error();
                // Delete file
-               winapi::delete_file(strFilePath.c_str());
+               winapi::unlink_file(strFilePath.c_str());
             }
          }
       //Go to the next file
