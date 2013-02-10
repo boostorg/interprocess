@@ -320,20 +320,27 @@ inline bool shared_memory_object::priv_open_or_create
       break;
       case ipcdetail::DoOpenOrCreate:
       {
-         oflag |= O_CREAT;
-         //We need a loop to change permissions correctly using fchmod, since
-         //with "O_CREAT only" shm_open we don't know if we've created or opened the file.
+         oflag |= (O_CREAT | O_EXCL);
+         //We need a create/open loop to change permissions correctly using fchmod, since
+         //with "O_CREAT" only we don't know if we've created or opened the shm.
          while(1){
+            //Try to create shared memory
             m_handle = shm_open(m_filename.c_str(), oflag, unix_perm);
+            //If successful change real permissions
             if(m_handle >= 0){
                ::fchmod(m_handle, unix_perm);
-               break;
             }
+            //If already exists, try to open
             else if(errno == EEXIST){
-               if((m_handle = shm_open(m_filename.c_str(), oflag, unix_perm)) >= 0 || errno != ENOENT){
-                  break;
+               m_handle = shm_open(m_filename.c_str(), oflag, unix_perm);
+               //If open fails and errno tells the file does not exist
+               //(shm was removed between creation and opening tries), just retry
+               if(m_handle < 0 && errno == ENOENT){
+                  continue;
                }
             }
+            //Exit retries
+            break;
          }
       }
       break;
@@ -345,7 +352,7 @@ inline bool shared_memory_object::priv_open_or_create
    }
 
    //Check for error
-   if(m_handle == -1){
+   if(m_handle < 0){
       error_info err = errno;
       this->priv_close();
       throw interprocess_exception(err);
