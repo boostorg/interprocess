@@ -52,8 +52,8 @@ boostbook standalone
    :
       interprocess
    :
-        <xsl:param>boost.root=../../../..
-        <xsl:param>boost.libraries=../../../../libs/libraries.htm
+        <format>html:<xsl:param>boost.root=../../../..
+        <format>html:<xsl:param>boost.libraries=../../../../libs/libraries.htm
         <xsl:param>toc.max.depth=1
         <xsl:param>toc.section.depth=2
         <xsl:param>chunk.first.sections=1
@@ -75,6 +75,7 @@ boostbook standalone
 
         # Choose indexing method for html:
         <format>html:<auto-index-internal>on
+        <format>docbook:<auto-index-internal>on
 
         # Set the name of the script file to use (index.idx is popular):
         <auto-index-script>$(here)/index.idx
@@ -92,3 +93,5 @@ boostbook standalone
 
 install pdfinstall : standalone/<format>pdf : <location>. <name>interprocess.pdf <install-type>PDF <format>pdf ;
 explicit pdfinstall ;
+
+
