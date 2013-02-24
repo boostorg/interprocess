@@ -67,6 +67,9 @@ typedef enum { file_begin     = winapi::file_begin
              , file_current   = winapi::file_current
              } file_pos_t;
 
+typedef unsigned long      map_options_t;
+static const map_options_t default_map_options = map_options_t(-1);
+
 namespace ipcdetail{
 
 inline mapping_handle_t mapping_handle_from_file_handle(file_handle_t hnd)
@@ -375,6 +378,9 @@ typedef enum { file_begin     = SEEK_SET
              , file_end       = SEEK_END
              , file_current   = SEEK_CUR
              } file_pos_t;
+
+typedef int map_options_t;
+static const map_options_t default_map_options = map_options_t(-1);
 
 namespace ipcdetail{
 

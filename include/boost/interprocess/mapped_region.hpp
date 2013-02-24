@@ -95,6 +95,22 @@ class mapped_region
    //!If an address is specified, both the offset and the address must be
    //!multiples of the page size.
    //!
+   //!The map is created using "default_map_options". This flag is OS
+   //!dependant and it should not be changed unless the user needs to
+   //!specify special options.
+   //!
+   //!In Windows systems "map_options" is a DWORD value passed as
+   //!"dwDesiredAccess" to "MapViewOfFileEx". If "default_map_options" is passed
+   //!it's initialized to zero. "map_options" is XORed with FILE_MAP_[COPY|READ|WRITE].
+   //!
+   //!In UNIX systems and POSIX mappings "map_options" is an int value passed as "flags"
+   //!to "mmap". If "default_map_options" is specified it's initialized to MAP_NOSYNC
+   //!if that option exists and to zero otherwise. "map_options" XORed with MAP_PRIVATE or MAP_SHARED.
+   //!
+   //!In UNIX systems and XSI mappings "map_options" is an int value passed as "shmflg"
+   //!to "shmat". If "default_map_options" is specified it's initialized to zero.
+   //!"map_options" is XORed with SHM_RDONLY if needed.
+   //!
    //!The OS could allocate more pages than size/page_size(), but get_address()
    //!will always return the address passed in this function (if not null) and
    //!get_size() will return the specified size.
@@ -103,7 +119,8 @@ class mapped_region
                 ,mode_t mode
                 ,offset_t offset = 0
                 ,std::size_t size = 0
-                ,const void *address = 0);
+                ,const void *address = 0
+                ,map_options_t map_options = default_map_options);
 
    //!Default constructor. Address will be 0 (nullptr).
    //!Size will be 0.
@@ -366,7 +383,8 @@ inline mapped_region::mapped_region
    ,mode_t mode
    ,offset_t offset
    ,std::size_t size
-   ,const void *address)
+   ,const void *address
+   ,map_options_t map_options)
    :  m_base(0), m_size(0), m_page_offset(0), m_mode(mode)
    ,  m_file_or_mapping_hnd(ipcdetail::invalid_file())
 {
@@ -378,7 +396,7 @@ inline mapped_region::mapped_region
       //For "create_file_mapping"
       unsigned long protection = 0;
       //For "mapviewoffile"
-      unsigned long map_access = 0;
+      unsigned long map_access = map_options == default_map_options ? 0 : map_options;
 
       switch(mode)
       {
@@ -443,7 +461,6 @@ inline mapped_region::mapped_region
          //This can throw
          priv_size_from_mapping_size(mapping_size, offset, page_offset, size);
       }
-
 
       //Map with new offsets and size
       void *base = winapi::map_view_of_file_ex
@@ -559,7 +576,8 @@ inline mapped_region::mapped_region
    , mode_t mode
    , offset_t offset
    , std::size_t size
-   , const void *address)
+   , const void *address
+   , map_options_t map_options)
    : m_base(0), m_size(0), m_page_offset(0), m_mode(mode), m_is_xsi(false)
 {
    mapping_handle_t map_hnd = mapping.get_mapping_handle();
@@ -583,7 +601,7 @@ inline mapped_region::mapped_region
          throw interprocess_exception(err);
       }
       //Calculate flag
-      int flag = 0;
+      int flag = map_options == default_map_options ? 0 : map_options;
       if(m_mode == read_only){
          flag |= SHM_RDONLY;
       }
@@ -620,15 +638,17 @@ inline mapped_region::mapped_region
       priv_size_from_mapping_size(buf.st_size, offset, page_offset, size);
    }
 
+   #ifdef MAP_NOSYNC
+      #define BOOST_INTERPROCESS_MAP_NOSYNC MAP_NOSYNC
+   #else
+      #define BOOST_INTERPROCESS_MAP_NOSYNC 0
+   #endif   //MAP_NOSYNC
+
    //Create new mapping
    int prot    = 0;
-   int flags   = 
-      #ifdef MAP_NOSYNC
-      //Avoid excessive syncing in BSD systems
-      MAP_NOSYNC;
-      #else
-      0;
-      #endif
+   int flags   = map_options == default_map_options ? BOOST_INTERPROCESS_MAP_NOSYNC : map_options;
+
+   #undef BOOST_INTERPROCESS_MAP_NOSYNC
 
    switch(mode)
    {
