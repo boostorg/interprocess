@@ -161,7 +161,7 @@ class message_queue_t
 
    //!Returns the number of messages currently stored.
    //!Never throws
-   size_type get_num_msg();
+   size_type get_num_msg() const;
 
    //!Removes the message queue from the system.
    //!Returns false on error. Never throws
@@ -890,7 +890,7 @@ inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPoin
 }
 
 template<class VoidPointer>
-inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPointer>::get_num_msg()
+inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPointer>::get_num_msg() const
 {
    ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    if(p_hdr){
