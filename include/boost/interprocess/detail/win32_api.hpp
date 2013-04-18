@@ -16,7 +16,7 @@
 #include <boost/date_time/filetime_functions.hpp>
 #include <cstddef>
 #include <cstring>
-#include <cassert>
+#include <boost/assert.hpp>
 #include <string>
 #include <vector>
 #include <memory>
@@ -1254,13 +1254,13 @@ struct function_address_holder
 
    static void *get_module_from_id(unsigned int id)
    {
-      assert(id < (unsigned int)NumModule);
+      BOOST_ASSERT(id < (unsigned int)NumModule);
       return get_module_handle(ModuleNames[id]);
    }
 
    static void *get_module(const unsigned int id)
    {
-      assert(id < (unsigned int)NumModule);
+      BOOST_ASSERT(id < (unsigned int)NumModule);
       while(ModuleStates[id] < 2){
          if(interlocked_compare_exchange(&ModuleStates[id], 1, 0) == 0){
             ModuleAddresses[id] = get_module_from_id(id);
@@ -1276,14 +1276,14 @@ struct function_address_holder
 
    static void *get_address_from_dll(const unsigned int id)
    {
-      assert(id < (unsigned int)NumFunction);
+      BOOST_ASSERT(id < (unsigned int)NumFunction);
       return get_proc_address(get_module(FunctionModules[id]), FunctionNames[id]);
    }
 
    public:
    static void *get(const unsigned int id)
    {
-      assert(id < (unsigned int)NumFunction);
+      BOOST_ASSERT(id < (unsigned int)NumFunction);
       while(FunctionStates[id] < 2){
          if(interlocked_compare_exchange(&FunctionStates[id], 1, 0) == 0){
             FunctionAddresses[id] = get_address_from_dll(id);
