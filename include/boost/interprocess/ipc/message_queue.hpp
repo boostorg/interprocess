@@ -30,6 +30,7 @@
 #include <boost/type_traits/make_unsigned.hpp>
 #include <boost/type_traits/alignment_of.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
+#include <boost/assert.hpp>
 #include <algorithm> //std::lower_bound
 #include <cstddef>   //std::size_t
 #include <cstring>   //memcpy
@@ -161,7 +162,7 @@ class message_queue_t
 
    //!Returns the number of messages currently stored.
    //!Never throws
-   size_type get_num_msg();
+   size_type get_num_msg() const;
 
    //!Removes the message queue from the system.
    //!Returns false on error. Never throws
@@ -358,8 +359,8 @@ class mq_hdr_t
             iterator idx_beg = &mp_index[0];
             ret = std::lower_bound(idx_beg, end, value, func);
             //sanity check, these cases should not call lower_bound (optimized out)
-            assert(ret != end);
-            assert(ret != begin);
+            BOOST_ASSERT(ret != end);
+            BOOST_ASSERT(ret != begin);
             return ret;
          }
          else{
@@ -752,8 +753,8 @@ inline bool message_queue_t<VoidPointer>::do_send(block_t block,
       ipcdetail::msg_hdr_t<VoidPointer> &free_msg_hdr = p_hdr->queue_free_msg(priority);
 
       //Sanity check, free msgs are always cleaned when received
-      assert(free_msg_hdr.priority == 0);
-      assert(free_msg_hdr.len == 0);
+      BOOST_ASSERT(free_msg_hdr.priority == 0);
+      BOOST_ASSERT(free_msg_hdr.len == 0);
 
       //Copy control data to the free message
       free_msg_hdr.priority = priority;
@@ -890,7 +891,7 @@ inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPoin
 }
 
 template<class VoidPointer>
-inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPointer>::get_num_msg()
+inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPointer>::get_num_msg() const
 {
    ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    if(p_hdr){
