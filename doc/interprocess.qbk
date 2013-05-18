@@ -4751,6 +4751,7 @@ An example using [classref boost::interprocess::cached_node_allocator cached_nod
 [doc_cached_node_allocator]
 
 [endsect]
+
 [endsect]
 
 [section:stl_allocators_adaptive Adaptive pool node allocators]
@@ -6002,6 +6003,7 @@ classes, for different memory backends:
 * [classref boost::interprocess::basic_managed_external_buffer basic_managed_external_buffer] (for user provided external buffer).
 
 [endsect]
+
 [endsect]
 
 [section:allocators_containers Allocators and containers]
@@ -6711,6 +6713,18 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_54_00 Boost 1.54 Release]
+
+*  Added support for platform-specific flags to mapped_region (ticket #8030)
+*  Fixed bugs [@https://svn.boost.org/trac/boost/ticket/7484 #7484],
+              [@https://svn.boost.org/trac/boost/ticket/7598 #7598],
+              [@https://svn.boost.org/trac/boost/ticket/7682 #7682],
+              [@https://svn.boost.org/trac/boost/ticket/7923 #7923],
+              [@https://svn.boost.org/trac/boost/ticket/7924 #7924],
+              [@https://svn.boost.org/trac/boost/ticket/7928 #7928].
+
+[endsect]
+
 [section:release_notes_boost_1_53_00 Boost 1.53 Release]
 
 *  Fixed GCC -Wshadow warnings.
@@ -6828,9 +6842,10 @@ thank them:
 [section:release_notes_boost_1_46_00 Boost 1.46 Release]
 
 *  Fixed bugs
+  [@https://svn.boost.org/trac/boost/ticket/4557 #4557],
   [@https://svn.boost.org/trac/boost/ticket/4979 #4979],
   [@https://svn.boost.org/trac/boost/ticket/4907 #4907],
-  [@https://svn.boost.org/trac/boost/ticket/4895 #4895]
+  [@https://svn.boost.org/trac/boost/ticket/4895 #4895].
 
 [endsect]
 
@@ -7235,6 +7250,8 @@ But the work to implement PF_UNIX-like sockets and doors would be huge
 
 [include auto_index_helpers.qbk]
 
+[section:indexes_reference Indexes and Reference]
+
 [section:index Indexes]
 
 [named_index class_name Class Index]
@@ -7246,3 +7263,5 @@ But the work to implement PF_UNIX-like sockets and doors would be huge
 [endsect]
 
 [xinclude autodoc.xml]
+
+[endsect]
