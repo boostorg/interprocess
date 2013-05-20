@@ -504,7 +504,7 @@ inline bool mapped_region::flush(std::size_t mapping_offset, std::size_t numbyte
    }
    //m_file_or_mapping_hnd can be a file handle or a mapping handle.
    //so flushing file buffers has only sense for files...
-   else if(async && m_file_or_mapping_hnd != winapi::invalid_handle_value &&
+   else if(!async && m_file_or_mapping_hnd != winapi::invalid_handle_value &&
            winapi::get_file_type(m_file_or_mapping_hnd) == winapi::file_type_disk){
       return winapi::flush_file_buffers(m_file_or_mapping_hnd);
    }
