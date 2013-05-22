@@ -16,14 +16,18 @@
 #include <boost/date_time/filetime_functions.hpp>
 #include <cstddef>
 #include <cstring>
+#include <cstdlib>
+#include <cstdio>
+
 #include <boost/assert.hpp>
 #include <string>
 #include <vector>
 #include <memory>
 
+
 #if defined (_MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
-#  pragma comment( lib, "advapi32.lib" )
+#  pragma comment( lib, "Advapi32.lib" )
 #  pragma comment( lib, "oleaut32.lib" )
 #  pragma comment( lib, "Ole32.lib" )
 #  pragma comment( lib, "Psapi.lib" )
@@ -52,10 +56,11 @@ static const unsigned long error_file_not_found = 2u;
 static const unsigned long error_no_more_files  = 18u;
 static const unsigned long error_not_locked     = 158L;
 //Retries in CreateFile, see http://support.microsoft.com/kb/316609
-static const unsigned int  error_sharing_violation_tries = 3u;
-static const unsigned int  error_sharing_violation_sleep_ms = 250u;
-static const unsigned int  error_file_too_large = 223u;
-
+static const unsigned long error_sharing_violation_tries = 3L;
+static const unsigned long error_sharing_violation_sleep_ms = 250L;
+static const unsigned long error_file_too_large = 223L;
+static const unsigned long error_insufficient_buffer = 122L;
+static const unsigned long error_handle_eof = 38L;
 static const unsigned long semaphore_all_access = (0x000F0000L)|(0x00100000L)|0x3;
 static const unsigned long mutex_all_access     = (0x000F0000L)|(0x00100000L)|0x0001;
 
@@ -163,6 +168,8 @@ static const unsigned long lockfile_fail_immediately  = 1;
 static const unsigned long lockfile_exclusive_lock    = 2;
 static const unsigned long error_lock_violation       = 33;
 static const unsigned long security_descriptor_revision = 1;
+
+const unsigned long max_record_buffer_size = 0x10000L;   // 64K
 
 //Own defines
 static const long SystemTimeOfDayInfoLength  = 48;
@@ -835,6 +842,37 @@ struct object_name_information_t
    wchar_t NameBuffer[1];
 };
 
+struct interprocess_eventlogrecord
+{
+    unsigned long  Length;        // Length of full record
+    unsigned long  Reserved;      // Used by the service
+    unsigned long  RecordNumber;  // Absolute record number
+    unsigned long  TimeGenerated; // Seconds since 1-1-1970
+    unsigned long  TimeWritten;   // Seconds since 1-1-1970
+    unsigned long  EventID;
+    unsigned short EventType;
+    unsigned short NumStrings;
+    unsigned short EventCategory;
+    unsigned short ReservedFlags; // For use with paired events (auditing)
+    unsigned long  ClosingRecordNumber; // For use with paired events (auditing)
+    unsigned long  StringOffset;  // Offset from beginning of record
+    unsigned long  UserSidLength;
+    unsigned long  UserSidOffset;
+    unsigned long  DataLength;
+    unsigned long  DataOffset;    // Offset from beginning of record
+    //
+    // Then follow:
+    //
+    // wchar_t SourceName[]
+    // wchar_t Computername[]
+    // SID   UserSid
+    // wchar_t Strings[]
+    // BYTE  Data[]
+    // CHAR  Pad[]
+    // unsigned long Length;
+    //
+};
+
 //Kernel32.dll
 
 //Some windows API declarations
@@ -940,6 +978,27 @@ extern "C" __declspec(dllimport) void __stdcall CoUninitialize(void);
 
 //OleAut32.dll
 extern "C" __declspec(dllimport) long __stdcall VariantClear(wchar_variant * pvarg);
+
+
+//EventLog access functions
+
+static const unsigned long eventlog_sequential_read = 0x0001;
+static const unsigned long eventlog_backwards_read  = 0x0008;
+
+extern "C" __declspec(dllimport) void* __stdcall OpenEventLogA
+   (const char* lpUNCServerName, const char* lpSourceName);
+
+extern "C" __declspec(dllimport) int __stdcall CloseEventLog(void *hEventLog);
+
+extern "C" __declspec(dllimport) int __stdcall ReadEventLogA
+   (void *hEventLog,
+    unsigned long dwReadFlags,
+    unsigned long dwRecordOffset,
+    void *lpBuffer,
+    unsigned long nNumberOfBytesToRead,
+    unsigned long *pnBytesRead,
+    unsigned long *pnMinNumberOfBytesNeeded
+   );
 
 
 //ntdll.dll
@@ -1451,6 +1510,17 @@ class handle_closer
    {  close_handle(handle_);  }
 };
 
+class eventlog_handle_closer
+{
+   void *handle_;
+   eventlog_handle_closer(const handle_closer &);
+   eventlog_handle_closer& operator=(const eventlog_handle_closer &);
+   public:
+   explicit eventlog_handle_closer(void *handle) : handle_(handle){}
+   ~eventlog_handle_closer()
+   {  CloseEventLog(handle_);  }
+};
+
 union ntquery_mem_t
 {
    object_name_information_t name;
@@ -1500,6 +1570,34 @@ class nt_query_mem_deleter
    private:
    std::size_t m_size;
    char *m_buf;
+};
+
+class c_heap_deleter
+{
+   public:
+   c_heap_deleter(std::size_t size)
+      : m_buf(::malloc(size))
+   {}
+
+   ~c_heap_deleter()
+   {
+      if(m_buf) ::free(m_buf);
+   }
+
+   void realloc(std::size_t num_bytes)
+   {
+      void *buf = ::realloc(m_buf, num_bytes);
+      if(!buf){
+         free(m_buf);
+         m_buf = 0;
+      }
+   }
+
+   void *get() const
+   {  return m_buf;  }
+
+   private:
+   void *m_buf;
 };
 
 inline bool unlink_file(const char *filename)
@@ -1824,6 +1922,10 @@ inline bool get_wmi_class_attribute( std::wstring& strValue, const wchar_t *wmi_
    return bRet;
 }
 
+#ifdef BOOST_INTERPROCESS_BOOTSTAMP_IS_LASTBOOTUPTIME
+
+//Obtains the bootup time from WMI LastBootUpTime.
+//This time seems to change with hibernation and clock synchronization so avoid it.
 inline bool get_last_bootup_time( std::wstring& strValue )
 {
    bool ret = get_wmi_class_attribute(strValue, L"Win32_OperatingSystem", L"LastBootUpTime");
@@ -1848,6 +1950,104 @@ inline bool get_last_bootup_time( std::string& str )
    }
    return ret;
 }
+
+#else
+
+// Loop through the buffer and print the contents of each record 
+// in the buffer.
+inline bool find_record_in_buffer( const void* pBuffer, unsigned long dwBytesRead, const char *provider_name
+                                 , unsigned int id_to_find, interprocess_eventlogrecord *&pevent_log_record)
+{
+   const unsigned char * pRecord = static_cast<const unsigned char*>(pBuffer);
+   const unsigned char * pEndOfRecords = pRecord + dwBytesRead;
+
+   while (pRecord < pEndOfRecords){
+      interprocess_eventlogrecord *pTypedRecord = (interprocess_eventlogrecord*)pRecord;
+      // Check provider, written at the end of the fixed-part of the record
+      if (0 == std::strcmp(provider_name, (char*)(pRecord + sizeof(interprocess_eventlogrecord))))
+      {
+         // Check event id
+         if(id_to_find == (pTypedRecord->EventID & 0xFFFF)){
+            pevent_log_record = pTypedRecord;
+            return true;
+         }
+      }
+
+      pRecord += pTypedRecord->Length;
+   }
+   pevent_log_record = 0;
+   return false;
+}
+
+//Obtains the bootup time from the System Event Log,
+//event ID == 6005 (event log started).
+//Adapted from http://msdn.microsoft.com/en-us/library/windows/desktop/bb427356.aspx
+inline bool get_last_bootup_time(std::string &stamp)
+{
+   const char *source_name = "System";
+   const char *provider_name = "EventLog";
+   const unsigned short event_id = 6005u;
+
+   unsigned long status = 0;
+   unsigned long dwBytesToRead = 0;
+   unsigned long dwBytesRead = 0;
+   unsigned long dwMinimumBytesToRead = 0;
+
+   // The source name (provider) must exist as a subkey of Application.
+   void *hEventLog = OpenEventLogA(0, source_name);
+   if (hEventLog){
+      eventlog_handle_closer hnd_closer(hEventLog); (void)hnd_closer;
+      // Allocate an initial block of memory used to read event records. The number 
+      // of records read into the buffer will vary depending on the size of each event.
+      // The size of each event will vary based on the size of the user-defined
+      // data included with each event, the number and length of insertion 
+      // strings, and other data appended to the end of the event record.
+      dwBytesToRead = max_record_buffer_size;
+      c_heap_deleter heap_deleter(dwBytesToRead);
+
+      // Read blocks of records until you reach the end of the log or an 
+      // error occurs. The records are read from newest to oldest. If the buffer
+      // is not big enough to hold a complete event record, reallocate the buffer.
+      if (heap_deleter.get() != 0){
+         while (0 == status){
+            if (!ReadEventLogA(hEventLog, 
+                  eventlog_sequential_read | eventlog_backwards_read,
+                  0, 
+                  heap_deleter.get(),
+                  dwBytesToRead,
+                  &dwBytesRead,
+                  &dwMinimumBytesToRead)) {
+               status = get_last_error();
+               if (error_insufficient_buffer == status) {
+                  status = 0;
+                  dwBytesToRead = dwMinimumBytesToRead;
+                  heap_deleter.realloc(dwMinimumBytesToRead);
+                  if (!heap_deleter.get()){
+                     return false;
+                  }
+               }
+               else{  //Not found or EOF
+                  return false;
+               }
+            }
+            else
+            {
+               interprocess_eventlogrecord *pTypedRecord;
+               // Print the contents of each record in the buffer.
+               if(find_record_in_buffer(heap_deleter.get(), dwBytesRead, provider_name, event_id, pTypedRecord)){
+                  char stamp_str[sizeof(unsigned long)*3+1];
+                  std::sprintf(&stamp_str[0], "%u", ((unsigned int)pTypedRecord->TimeGenerated));
+                  stamp = stamp_str;
+                  break;
+               }
+            }
+         }
+      }
+   }
+   return true;
+}
+
+#endif
 
 inline bool is_directory(const char *path)
 {
