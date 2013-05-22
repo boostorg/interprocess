@@ -1953,8 +1953,8 @@ inline bool get_last_bootup_time( std::string& str )
 
 #else
 
-// Loop through the buffer and print the contents of each record 
-// in the buffer.
+// Loop through the buffer and obtain the contents of the
+// requested record in the buffer.
 inline bool find_record_in_buffer( const void* pBuffer, unsigned long dwBytesRead, const char *provider_name
                                  , unsigned int id_to_find, interprocess_eventlogrecord *&pevent_log_record)
 {
