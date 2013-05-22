@@ -6722,13 +6722,16 @@ thank them:
               [@https://svn.boost.org/trac/boost/ticket/7923 #7923],
               [@https://svn.boost.org/trac/boost/ticket/7924 #7924],
               [@https://svn.boost.org/trac/boost/ticket/7928 #7928],
+              [@https://svn.boost.org/trac/boost/ticket/7936 #7936],
               [@https://svn.boost.org/trac/boost/ticket/8521 #8521],
               [@https://svn.boost.org/trac/boost/ticket/8595 #8595].
+
 *  [*ABI breaking]: Changed bootstamp function in Windows to use EventLog service start time
    as system bootup time. Previously used `LastBootupTime` from WMI was unstable with
    time synchronization and hibernation and unusable in practice. If you really need
    to obtain pre Boost 1.54 behaviour define `BOOST_INTERPROCESS_BOOTSTAMP_IS_LASTBOOTUPTIME`
    from command line or `detail/workaround.hpp`.
+
 [endsect]
 
 [section:release_notes_boost_1_53_00 Boost 1.53 Release]
