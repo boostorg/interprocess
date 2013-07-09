@@ -309,7 +309,7 @@ struct ref_count_ptr
 
 
 //Now this class is a singleton, initializing the singleton in
-//the first get() function call if LazyInit is false. If true
+//the first get() function call if LazyInit is true. If false
 //then the singleton will be initialized when loading the module.
 template<typename C, bool LazyInit, bool Phoenix, class ThreadSafeGlobalMap>
 class intermodule_singleton_impl
