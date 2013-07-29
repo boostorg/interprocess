@@ -6715,7 +6715,8 @@ thank them:
 
 [section:release_notes_boost_1_55_00 Boost 1.55 Release]
 
-*  Fixed bug [@https://svn.boost.org/trac/boost/ticket/8277 #8277].
+*  Fixed bugs [@https://svn.boost.org/trac/boost/ticket/7164 #7164],
+              [@https://svn.boost.org/trac/boost/ticket/8277 #8277].
 
 [endsect]
 
