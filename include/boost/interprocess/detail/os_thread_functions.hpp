@@ -15,8 +15,9 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
+#include <boost/interprocess/detail/yield_k.hpp>
 
-#if (defined BOOST_INTERPROCESS_WINDOWS)
+#if defined(BOOST_INTERPROCESS_WINDOWS)
 #  include <boost/interprocess/detail/win32_api.hpp>
 #else
 #  ifdef BOOST_HAS_UNISTD_H

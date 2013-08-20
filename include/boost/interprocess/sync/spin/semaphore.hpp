@@ -59,9 +59,10 @@ inline void spin_semaphore::post()
 
 inline void spin_semaphore::wait()
 {
+   unsigned k = 0;
    while(!ipcdetail::atomic_add_unless32(&m_count, boost::uint32_t(-1), boost::uint32_t(0))){
       while(ipcdetail::atomic_read32(&m_count) == 0){
-         ipcdetail::thread_yield();
+         ipcdetail::yield(k++);
       }
    }
 }
@@ -80,6 +81,7 @@ inline bool spin_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
    //Obtain current count and target time
    boost::posix_time::ptime now(microsec_clock::universal_time());
 
+   unsigned k = 0;
    do{
       if(this->try_wait()){
          break;
@@ -90,7 +92,7 @@ inline bool spin_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
          return this->try_wait();
       }
       // relinquish current time slice
-      ipcdetail::thread_yield();
+      ipcdetail::yield(k++);
    }while (true);
    return true;
 }

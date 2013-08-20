@@ -108,7 +108,7 @@ inline bool posix_recursive_mutex::timed_lock(const boost::posix_time::ptime &ab
 
    //Obtain current count and target time
    boost::posix_time::ptime now = microsec_clock::universal_time();
-
+   unsigned k = 0;
    do{
       if(this->try_lock()){
          break;
@@ -119,7 +119,7 @@ inline bool posix_recursive_mutex::timed_lock(const boost::posix_time::ptime &ab
          return false;
       }
       // relinquish current time slice
-     thread_yield();
+      yield(k++);
    }while (true);
    return true;
 

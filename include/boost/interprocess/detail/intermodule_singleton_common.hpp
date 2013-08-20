@@ -145,6 +145,7 @@ class intermodule_singleton_common
          //If previous state was initializing, this means that another winner thread is
          //trying to initialize the singleton. Just wait until completes its work.
          else if(previous_module_singleton_initialized == Initializing){
+            unsigned int k = 0;
             while(1){
                previous_module_singleton_initialized = atomic_read32(&this_module_singleton_initialized);
                if(previous_module_singleton_initialized >= Initialized){
@@ -152,7 +153,7 @@ class intermodule_singleton_common
                   break;
                }
                else if(previous_module_singleton_initialized == Initializing){
-                  thread_yield();
+                  yield(k++);
                }
                else{
                   //This can't be happening!
@@ -206,6 +207,7 @@ class intermodule_singleton_common
    static void initialize_global_map_handle()
    {
       //Obtain unique map name and size
+      unsigned k = 0;
       while(1){
          //Try to pass map state to initializing
          ::boost::uint32_t tmp = atomic_cas32(&this_module_map_initialized, Initializing, Uninitialized);
@@ -218,7 +220,7 @@ class intermodule_singleton_common
          }
          //If some other thread is doing the work wait
          else if(tmp == Initializing){
-            thread_yield();
+            yield(k++);
          }
          else{ //(tmp == Uninitialized)
             //If not initialized try it again?

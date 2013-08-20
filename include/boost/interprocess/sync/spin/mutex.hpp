@@ -60,6 +60,7 @@ inline spin_mutex::~spin_mutex()
 
 inline void spin_mutex::lock(void)
 {
+   unsigned k = 0;
    do{
       boost::uint32_t prev_s = ipcdetail::atomic_cas32(const_cast<boost::uint32_t*>(&m_s), 1, 0);
 
@@ -67,7 +68,7 @@ inline void spin_mutex::lock(void)
             break;
       }
       // relinquish current timeslice
-      ipcdetail::thread_yield();
+      ipcdetail::yield(k++);
    }while (true);
 }
 
@@ -86,6 +87,7 @@ inline bool spin_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
    //Obtain current count and target time
    boost::posix_time::ptime now = microsec_clock::universal_time();
 
+   unsigned k = 0;
    do{
       if(this->try_lock()){
          break;
@@ -96,7 +98,7 @@ inline bool spin_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
          return false;
       }
       // relinquish current time slice
-     ipcdetail::thread_yield();
+      ipcdetail::yield(k++);
    }while (true);
 
    return true;
