@@ -149,7 +149,7 @@ class file_lock
       using namespace boost::detail;
 
       if(now >= abs_time) return false;
-
+      unsigned k = 0;
       do{
          if(!ipcdetail::try_acquire_file_lock(hnd, acquired))
             return false;
@@ -164,7 +164,7 @@ class file_lock
                return true;
             }
             // relinquish current time slice
-            ipcdetail::thread_yield();
+            ipcdetail::yield(k++);
          }
       }while (true);
    }
@@ -178,6 +178,7 @@ class file_lock
 
       if(now >= abs_time) return false;
 
+      unsigned k = 0;
       do{
          if(!ipcdetail::try_acquire_file_lock_sharable(hnd, acquired))
             return false;
@@ -192,7 +193,7 @@ class file_lock
                return true;
             }
             // relinquish current time slice
-            ipcdetail::thread_yield();
+            ipcdetail::yield(k++);
          }
       }while (true);
    }

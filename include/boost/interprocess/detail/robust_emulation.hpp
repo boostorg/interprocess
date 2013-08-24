@@ -236,7 +236,7 @@ inline void robust_spin_mutex<Mutex>::lock()
       }
       else{
          //Do the dead owner checking each spin_threshold lock tries
-         ipcdetail::thread_yield();
+         yield(spin_count);
          ++spin_count;
          if(spin_count > spin_threshold){
             //Check if owner dead and take ownership if possible
@@ -292,6 +292,7 @@ inline bool robust_spin_mutex<Mutex>::timed_lock
    if(now >= abs_time)
       return this->try_lock();
 
+   unsigned k = 0;
    do{
       if(this->try_lock()){
          break;
@@ -302,7 +303,7 @@ inline bool robust_spin_mutex<Mutex>::timed_lock
          return this->try_lock();
       }
       // relinquish current time slice
-      ipcdetail::thread_yield();
+      ipcdetail::yield(k++);
    }while (true);
 
    return true;

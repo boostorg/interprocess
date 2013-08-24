@@ -195,10 +195,11 @@ inline bool semaphore_timed_wait(sem_t *handle, const boost::posix_time::ptime &
    return false;
    #else //#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
    boost::posix_time::ptime now;
+   unsigned k = 0;
    do{
       if(semaphore_try_wait(handle))
          return true;
-      thread_yield();
+      yield(k++);
    }while((now = microsec_clock::universal_time()) < abs_time);
    return false;
    #endif   //#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS

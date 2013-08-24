@@ -66,8 +66,9 @@ int robust_mutex_test(int argc, char *argv[])
          return 1;
 
       //Wait until child locks the mutexes and dies
+      unsigned k = 0;
       while(!*go_ahead){
-         ipcdetail::thread_yield();
+         ipcdetail::yield(k++);
       }
 
       std::cout << "... recovering mutex[0]" << std::endl;
@@ -163,8 +164,9 @@ int robust_mutex_test(int argc, char *argv[])
          }
 
          //Wait until child locks the 2nd mutex and dies
+         unsigned k = 0;
          while(!*go_ahead2){
-            ipcdetail::thread_yield();
+            ipcdetail::yield(k++);
          }
 
          //Done, now try to lock number 3 to see if robust

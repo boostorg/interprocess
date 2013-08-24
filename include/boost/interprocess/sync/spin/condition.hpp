@@ -140,15 +140,10 @@ inline void spin_condition::notify(boost::uint32_t command)
    }
 
    //Notify that all threads should execute wait logic
+   unsigned k = 0;
    while(SLEEP != atomic_cas32(const_cast<boost::uint32_t*>(&m_command), command, SLEEP)){
-      thread_yield();
+      yield(k++);
    }
-/*
-   //Wait until the threads are woken
-   while(SLEEP != atomic_cas32(const_cast<boost::uint32_t*>(&m_command), 0)){
-      thread_yield();
-   }
-*/
    //The enter mutex will rest locked until the last waiting thread unlocks it
 }
 
@@ -211,8 +206,9 @@ inline bool spin_condition::do_timed_wait(bool tout_enabled,
    while(1){
       //The thread sleeps/spins until a spin_condition commands a notification
       //Notification occurred, we will lock the checking mutex so that
+      unsigned k = 0;
       while(atomic_read32(&m_command) == SLEEP){
-         thread_yield();
+         yield(k++);
 
          //Check for timeout
          if(tout_enabled){
