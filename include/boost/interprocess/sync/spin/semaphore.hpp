@@ -20,6 +20,7 @@
 #include <boost/interprocess/detail/atomic.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
+#include <boost/interprocess/sync/spin/wait.hpp>
 #include <boost/cstdint.hpp>
 
 namespace boost {
@@ -59,11 +60,9 @@ inline void spin_semaphore::post()
 
 inline void spin_semaphore::wait()
 {
-   unsigned k = 0;
+   spin_wait swait;
    while(!ipcdetail::atomic_add_unless32(&m_count, boost::uint32_t(-1), boost::uint32_t(0))){
-      while(ipcdetail::atomic_read32(&m_count) == 0){
-         ipcdetail::yield(k++);
-      }
+      swait.yield();
    }
 }
 
@@ -81,7 +80,7 @@ inline bool spin_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
    //Obtain current count and target time
    boost::posix_time::ptime now(microsec_clock::universal_time());
 
-   unsigned k = 0;
+   spin_wait swait;
    do{
       if(this->try_wait()){
          break;
@@ -92,7 +91,7 @@ inline bool spin_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
          return this->try_wait();
       }
       // relinquish current time slice
-      ipcdetail::yield(k++);
+      swait.yield();
    }while (true);
    return true;
 }

@@ -19,6 +19,7 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
+#include <boost/interprocess/sync/spin/wait.hpp>
 #include <boost/move/move.hpp>
 #include <boost/cstdint.hpp>
 
@@ -140,9 +141,9 @@ inline void spin_condition::notify(boost::uint32_t command)
    }
 
    //Notify that all threads should execute wait logic
-   unsigned k = 0;
+   spin_wait swait;
    while(SLEEP != atomic_cas32(const_cast<boost::uint32_t*>(&m_command), command, SLEEP)){
-      yield(k++);
+      swait.yield();
    }
    //The enter mutex will rest locked until the last waiting thread unlocks it
 }
@@ -206,9 +207,9 @@ inline bool spin_condition::do_timed_wait(bool tout_enabled,
    while(1){
       //The thread sleeps/spins until a spin_condition commands a notification
       //Notification occurred, we will lock the checking mutex so that
-      unsigned k = 0;
+      spin_wait swait;
       while(atomic_read32(&m_command) == SLEEP){
-         yield(k++);
+         swait.yield();
 
          //Check for timeout
          if(tout_enabled){
