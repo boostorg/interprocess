@@ -47,11 +47,8 @@ namespace boost{
 namespace interprocess{
 namespace ipcdetail {
 
-template<int Dummy>
-class num_core_holder;
-
-template<>
-class num_core_holder<0>
+template<int Dummy = 0>
+class num_core_holder
 {
    public:
    static unsigned int get()
@@ -68,7 +65,8 @@ class num_core_holder<0>
    static unsigned int num_cores;
 };
 
-unsigned int num_core_holder<0>::num_cores = ipcdetail::get_num_cores();
+template<int Dummy>
+unsigned int num_core_holder<Dummy>::num_cores = ipcdetail::get_num_cores();
 
 }  //namespace ipcdetail {
 
