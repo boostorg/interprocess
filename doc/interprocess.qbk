@@ -6718,8 +6718,9 @@ thank them:
 *  Fixed bugs [@https://svn.boost.org/trac/boost/ticket/7156 #7156],
               [@https://svn.boost.org/trac/boost/ticket/7164 #7164],
               [@https://svn.boost.org/trac/boost/ticket/8277 #8277],
-              [@https://svn.boost.org/trac/boost/ticket/8277 #9908],
-              [@https://svn.boost.org/trac/boost/ticket/9065 #9065].
+              [@https://svn.boost.org/trac/boost/ticket/8976 #8976],
+              [@https://svn.boost.org/trac/boost/ticket/9065 #9065],
+              [@https://svn.boost.org/trac/boost/ticket/8277 #9908].
 
 [endsect]
 
