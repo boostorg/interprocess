@@ -1584,7 +1584,7 @@ class nt_query_mem_deleter
       delete[]m_buf;
    }
 
-   void realloc(std::size_t num_bytes)
+   void realloc_mem(std::size_t num_bytes)
    {
       num_bytes += rename_suffix + rename_offset;
       char *buf = m_buf;
@@ -1619,7 +1619,7 @@ class c_heap_deleter
       if(m_buf) ::free(m_buf);
    }
 
-   void realloc(std::size_t num_bytes)
+   void realloc_mem(std::size_t num_bytes)
    {
       void *buf = ::realloc(m_buf, num_bytes);
       if(!buf){
@@ -1674,7 +1674,7 @@ inline bool unlink_file(const char *filename)
          //Obtain file name with guessed length
          if(pNtQueryObject(fh, object_name_information, nt_query_mem.query_mem(), nt_query_mem.object_name_information_size(), &size)){
             //Obtain file name with exact length buffer
-            nt_query_mem.realloc(size);
+            nt_query_mem.realloc_mem(size);
             if(pNtQueryObject(fh, object_name_information, nt_query_mem.query_mem(), nt_query_mem.object_name_information_size(), &size)){
                return false;
             }
@@ -2056,7 +2056,7 @@ inline bool get_last_bootup_time(std::string &stamp)
                if (error_insufficient_buffer == status) {
                   status = 0;
                   dwBytesToRead = dwMinimumBytesToRead;
-                  heap_deleter.realloc(dwMinimumBytesToRead);
+                  heap_deleter.realloc_mem(dwMinimumBytesToRead);
                   if (!heap_deleter.get()){
                      return false;
                   }
