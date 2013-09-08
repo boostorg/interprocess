@@ -25,6 +25,7 @@
 #include <boost/interprocess/permissions.hpp>
 #include <boost/type_traits/alignment_of.hpp>
 #include <boost/type_traits/type_with_alignment.hpp>
+#include <boost/interprocess/sync/spin/wait.hpp>
 #include <boost/move/move.hpp>
 #include <boost/cstdint.hpp>
 
@@ -354,7 +355,7 @@ class managed_open_or_create_impl
          //file and know if we have really created it or just open it
          //drop me a e-mail!
          bool completed = false;
-         unsigned k = 0;
+         spin_wait swait;
          while(!completed){
             try{
                create_device<FileBased>(dev, id, size, perm, file_like_t());
@@ -385,7 +386,7 @@ class managed_open_or_create_impl
             catch(...){
                throw;
             }
-            yield(k++);
+            swait.yield();
          }
       }
 
@@ -432,12 +433,12 @@ class managed_open_or_create_impl
       else{
          if(FileBased){
             offset_t filesize = 0;
-            unsigned k = 0;
+            spin_wait swait;
             while(filesize == 0){
                if(!get_file_size(file_handle_from_mapping_handle(dev.get_mapping_handle()), filesize)){
                   throw interprocess_exception(error_info(system_error_code()));
                }
-               yield(k++);
+               swait.yield();
             }
             if(filesize == 1){
                throw interprocess_exception(error_info(corrupted_error));
@@ -449,9 +450,9 @@ class managed_open_or_create_impl
          boost::uint32_t *patomic_word = static_cast<boost::uint32_t*>(region.get_address());
          boost::uint32_t value = atomic_read32(patomic_word);
 
-         unsigned k = 0;
+         spin_wait swait;
          while(value == InitializingSegment || value == UninitializedSegment){
-            yield(k++);
+            swait.yield();
             value = atomic_read32(patomic_word);
          }
 

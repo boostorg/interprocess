@@ -22,6 +22,7 @@
 #include <boost/interprocess/detail/atomic.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
+#include <boost/interprocess/sync/spin/wait.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -60,7 +61,7 @@ inline spin_mutex::~spin_mutex()
 
 inline void spin_mutex::lock(void)
 {
-   unsigned k = 0;
+   spin_wait swait;
    do{
       boost::uint32_t prev_s = ipcdetail::atomic_cas32(const_cast<boost::uint32_t*>(&m_s), 1, 0);
 
@@ -68,7 +69,7 @@ inline void spin_mutex::lock(void)
             break;
       }
       // relinquish current timeslice
-      ipcdetail::yield(k++);
+      swait.yield();
    }while (true);
 }
 
@@ -87,7 +88,7 @@ inline bool spin_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
    //Obtain current count and target time
    boost::posix_time::ptime now = microsec_clock::universal_time();
 
-   unsigned k = 0;
+   spin_wait swait;
    do{
       if(this->try_lock()){
          break;
@@ -98,7 +99,7 @@ inline bool spin_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
          return false;
       }
       // relinquish current time slice
-      ipcdetail::yield(k++);
+      swait.yield();
    }while (true);
 
    return true;
