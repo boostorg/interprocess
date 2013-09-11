@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Peter Dimov 2008.
-// (C) Copyright Ion Gaztanaga 2013. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2013-2013. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -73,13 +73,11 @@ unsigned int num_core_holder<Dummy>::num_cores = ipcdetail::get_num_cores();
 class spin_wait
 {
    public:
+
+   static const unsigned int nop_pause_limit = 32u;
    spin_wait()
-      : m_k(0u)
-   {
-      (void)m_nop_pause_limit;
-      (void)m_yield_only_counts;
-      (void)m_count_start;
-   }
+      : m_count_start(), m_ul_yield_only_counts(), m_k()
+   {}
 
    #ifdef BOOST_INTERPROCESS_SPIN_WAIT_DEBUG
    ~spin_wait()
@@ -101,19 +99,19 @@ class spin_wait
          this->init_limits();
       }
       //Nop tries
-      if( m_k < (m_nop_pause_limit >> 2) ){
+      if( m_k < (nop_pause_limit >> 2) ){
 
       }
       //Pause tries if the processor supports it
       #if defined(BOOST_INTERPROCESS_SMT_PAUSE)
-      else if( m_k < m_nop_pause_limit ){
+      else if( m_k < nop_pause_limit ){
          BOOST_INTERPROCESS_SMT_PAUSE
       }
       #endif
       //Yield/Sleep strategy
       else{
          //Lazy initialization of tick information
-         if(m_k == m_nop_pause_limit){
+         if(m_k == nop_pause_limit){
             this->init_tick_info();
          }
          else if( this->yield_or_sleep() ){
@@ -129,7 +127,6 @@ class spin_wait
    void reset()
    {
       m_k = 0u;
-      m_count_start = ipcdetail::get_current_system_highres_count();
    }
 
    private:
@@ -137,45 +134,43 @@ class spin_wait
    void init_limits()
    {
       unsigned int num_cores = ipcdetail::num_core_holder<0>::get();
-      m_nop_pause_limit = num_cores > 1u ? 32u : 0u;
+      m_k = num_cores > 1u ? 0u : nop_pause_limit;
    }
 
    void init_tick_info()
    {
-      m_yield_only_counts = ipcdetail::get_system_tick_in_highres_counts();
+      m_ul_yield_only_counts = ipcdetail::get_system_tick_in_highres_counts();
       m_count_start = ipcdetail::get_current_system_highres_count();
    }
 
    //Returns true if yield must be called, false is sleep must be called
    bool yield_or_sleep()
    {
-      if(ipcdetail::is_highres_count_zero(m_yield_only_counts)){  //If yield-only limit was reached then yield one in every two tries
+      if(!m_ul_yield_only_counts){  //If yield-only limit was reached then yield one in every two tries
          return (m_k & 1u) != 0;
       }
       else{ //Try to see if we've reched yield-only time limit
          const ipcdetail::OS_highres_count_t now = ipcdetail::get_current_system_highres_count();
          const ipcdetail::OS_highres_count_t elapsed = ipcdetail::system_highres_count_subtract(now, m_count_start);
-         if(!ipcdetail::system_highres_count_less(elapsed, m_yield_only_counts)){
+         if(!ipcdetail::system_highres_count_less_ul(elapsed, m_ul_yield_only_counts)){
             #ifdef BOOST_INTERPROCESS_SPIN_WAIT_DEBUG
             std::cout << "elapsed!\n"
-                      << "  m_yield_only_counts: ";
-                     ipcdetail::ostream_highres_count(std::cout, m_yield_only_counts)
+                      << "  m_ul_yield_only_counts: " << m_ul_yield_only_counts
                      << " system tick(us): " << ipcdetail::get_system_tick_us() << '\n'
                       << "  m_k: " << m_k << " elapsed counts: ";
                      ipcdetail::ostream_highres_count(std::cout, elapsed) << std::endl;
             #endif
             //Yield-only time reached, now it's time to sleep
-            ipcdetail::zero_highres_count(m_yield_only_counts);
+            m_ul_yield_only_counts = 0ul;
             return false;
          }
       }
       return true;   //Otherwise yield
    }
 
-   unsigned int m_k;
-   unsigned int m_nop_pause_limit;
-   ipcdetail::OS_highres_count_t m_yield_only_counts;
    ipcdetail::OS_highres_count_t m_count_start;
+   unsigned long m_ul_yield_only_counts;
+   unsigned int  m_k;
 };
 
 } // namespace interprocess
