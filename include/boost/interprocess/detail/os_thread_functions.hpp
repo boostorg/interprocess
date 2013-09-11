@@ -95,7 +95,7 @@ inline unsigned long get_system_tick_us()
 
 typedef unsigned __int64 OS_highres_count_t;
 
-inline OS_highres_count_t get_system_tick_in_highres_counts()
+inline unsigned long get_system_tick_in_highres_counts()
 {
    __int64 freq;
    unsigned long curres;
@@ -103,13 +103,13 @@ inline OS_highres_count_t get_system_tick_in_highres_counts()
    //Frequency in counts per second
    if(!winapi::query_performance_frequency(&freq)){
       //Tick resolution in ms
-      return (curres-1)/10000u + 1;
+      return (curres-1ul)/10000ul + 1ul;
    }
    else{
       //In femtoseconds
-      __int64 count_fs    = __int64(1000000000000000LL - 1LL)/freq + 1LL;
-      __int64 tick_counts = (__int64(curres)*100000000LL - 1LL)/count_fs + 1LL;
-      return static_cast<OS_highres_count_t>(tick_counts);
+      __int64 count_fs    = (1000000000000000LL - 1LL)/freq + 1LL;
+      __int64 tick_counts = (static_cast<__int64>(curres)*100000000LL - 1LL)/count_fs + 1LL;
+      return static_cast<unsigned long>(tick_counts);
    }
 }
 
@@ -140,6 +140,9 @@ inline OS_highres_count_t system_highres_count_subtract(const OS_highres_count_t
 
 inline bool system_highres_count_less(const OS_highres_count_t &l, const OS_highres_count_t &r)
 {  return l < r;  } 
+
+inline bool system_highres_count_less_ul(const OS_highres_count_t &l, unsigned long r)
+{  return l < static_cast<OS_highres_count_t>(r);  }
 
 inline void thread_sleep_tick()
 {  winapi::sleep_tick();   }
@@ -278,18 +281,15 @@ inline unsigned long get_system_tick_ns()
    #endif
 }
 
-inline OS_highres_count_t get_system_tick_in_highres_counts()
+inline unsigned long get_system_tick_in_highres_counts()
 {
    #ifndef BOOST_INTERPROCESS_MATCH_ABSOLUTE_TIME
-   struct timespec ts;
-   ts.tv_sec = 0;
-   ts.tv_nsec = get_system_tick_ns();
-   return ts;
+   return get_system_tick_ns();
    #else
    mach_timebase_info_data_t info;
    mach_timebase_info(&info);
             //ns
-   return static_cast<OS_highres_count_t>
+   return static_cast<unsigned long>
    (  
       static_cast<double>(get_system_tick_ns()) 
          / (static_cast<double>(info.numer) / info.denom)
@@ -346,7 +346,10 @@ inline OS_highres_count_t system_highres_count_subtract(const OS_highres_count_t
 }
 
 inline bool system_highres_count_less(const OS_highres_count_t &l, const OS_highres_count_t &r)
-{  return l.tv_sec < r.tv_sec || (l.tv_sec == r.tv_sec && l.tv_nsec < r.tv_nsec);  } 
+{  return l.tv_sec < r.tv_sec || (l.tv_sec == r.tv_sec && l.tv_nsec < r.tv_nsec);  }
+
+inline bool system_highres_count_less_ul(const OS_highres_count_t &l, unsigned long r)
+{  return !l.tv_sec && (static_cast<unsigned long>(l.tv_nsec) < r);  } 
 
 #else
 
@@ -367,7 +370,10 @@ inline OS_highres_count_t system_highres_count_subtract(const OS_highres_count_t
 {  return l - r;  }
 
 inline bool system_highres_count_less(const OS_highres_count_t &l, const OS_highres_count_t &r)
-{  return l < r;  } 
+{  return l < r;  }
+
+inline bool system_highres_count_less_ul(const OS_highres_count_t &l, unsigned long r)
+{  return l < static_cast<OS_highres_count_t>(r);  }
 
 #endif
 
