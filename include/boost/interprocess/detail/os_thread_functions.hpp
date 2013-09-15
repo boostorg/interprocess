@@ -1,12 +1,23 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2012. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2013. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+
+//Thread launching functions are adapted from boost/detail/lightweight_thread.hpp
+//
+//  boost/detail/lightweight_thread.hpp
+//
+//  Copyright (c) 2002 Peter Dimov and Multi Media Ltd.
+//  Copyright (c) 2008 Peter Dimov
+//
+//  Distributed under the Boost Software License, Version 1.0.
+//  See accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt
 
 #ifndef BOOST_INTERPROCESS_DETAIL_OS_THREAD_FUNCTIONS_HPP
 #define BOOST_INTERPROCESS_DETAIL_OS_THREAD_FUNCTIONS_HPP
@@ -16,9 +27,11 @@
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <cstddef>
+#include <memory>
 
 #if defined(BOOST_INTERPROCESS_WINDOWS)
 #  include <boost/interprocess/detail/win32_api.hpp>
+#  include <process.h>
 #else
 #  include <pthread.h>
 #  include <unistd.h>
@@ -56,6 +69,7 @@ namespace ipcdetail{
 
 typedef unsigned long OS_process_id_t;
 typedef unsigned long OS_thread_id_t;
+typedef void*         OS_thread_t;
 typedef OS_thread_id_t OS_systemwide_thread_id_t;
 
 //process
@@ -198,6 +212,7 @@ inline unsigned int get_num_cores()
 
 #else    //#if (defined BOOST_INTERPROCESS_WINDOWS)
 
+typedef pthread_t OS_thread_t;
 typedef pthread_t OS_thread_id_t;
 typedef pid_t     OS_process_id_t;
 
@@ -446,6 +461,12 @@ inline unsigned int get_num_cores()
    #endif
 }
 
+inline int thread_create(OS_thread_t * thread, void *(*start_routine)(void*), void* arg)
+{  return pthread_create(thread, 0, start_routine, arg); }
+
+inline void thread_join(OS_thread_t thread)
+{  (void)pthread_join(thread, 0);  }
+
 #endif   //#if (defined BOOST_INTERPROCESS_WINDOWS)
 
 typedef char pid_str_t[sizeof(OS_process_id_t)*3+1];
@@ -458,6 +479,87 @@ inline void get_pid_str(pid_str_t &pid_str, OS_process_id_t pid)
 
 inline void get_pid_str(pid_str_t &pid_str)
 {  get_pid_str(pid_str, get_current_process_id());  }
+
+#if defined(BOOST_INTERPROCESS_WINDOWS)
+
+inline int thread_create( OS_thread_t * thread, unsigned (__stdcall * start_routine) (void*), void* arg )
+{
+   void* h = (void*)_beginthreadex( 0, 0, start_routine, arg, 0, 0 );
+
+   if( h != 0 ){
+      *thread = h;
+      return 0;
+   }
+   else{
+      return EAGAIN;
+   }
+}
+
+inline void thread_join( OS_thread_t thread)
+{
+   winapi::wait_for_single_object( thread, winapi::infinite_time );
+   winapi::close_handle( thread );
+}
+
+#endif
+
+class abstract_thread
+{
+   public:
+   virtual ~abstract_thread() {}
+   virtual void run() = 0;
+};
+
+#if defined(BOOST_INTERPROCESS_WINDOWS)
+
+inline unsigned __stdcall launch_thread_routine( void * pv )
+{
+   std::auto_ptr<abstract_thread> pt( static_cast<abstract_thread *>( pv ) );
+   pt->run();
+   return 0;
+}
+
+#else
+
+extern "C" void * launch_thread_routine( void * pv );
+
+inline void * launch_thread_routine( void * pv )
+{
+   std::auto_ptr<abstract_thread> pt( static_cast<abstract_thread *>( pv ) );
+   pt->run();
+   return 0;
+}
+
+#endif
+
+template<class F>
+class launch_thread_impl
+   : public abstract_thread
+{
+   public:
+   explicit launch_thread_impl( F f )
+      : f_( f )
+   {}
+
+   void run()
+   {  f_();  }
+
+   private:
+   F f_;
+};
+
+template<class F>
+inline int thread_launch( OS_thread_t & pt, F f )
+{
+   std::auto_ptr<abstract_thread> p( new launch_thread_impl<F>( f ) );
+
+   int r = thread_create(&pt, launch_thread_routine, p.get());
+   if( r == 0 ){
+      p.release();
+   }
+
+   return r;
+}
 
 }  //namespace ipcdetail{
 }  //namespace interprocess {
