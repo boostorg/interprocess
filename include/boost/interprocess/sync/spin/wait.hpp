@@ -30,7 +30,7 @@
 
 // BOOST_INTERPROCESS_SMT_PAUSE
 
-#if defined(_MSC_VER) && _MSC_VER >= 1310 && ( defined(_M_IX86) || defined(_M_X64) )
+#if defined(_MSC_VER) && ( defined(_M_IX86) || defined(_M_X64) )
 
 extern "C" void _mm_pause();
 #pragma intrinsic( _mm_pause )
