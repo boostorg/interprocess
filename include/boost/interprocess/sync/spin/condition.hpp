@@ -112,7 +112,9 @@ inline spin_condition::spin_condition()
 
 inline spin_condition::~spin_condition()
 {
-   //Trivial destructor
+   //Notify all waiting threads
+   //to allow POSIX semantics on condition destruction
+   this->notify_all();
 }
 
 inline void spin_condition::notify_one()

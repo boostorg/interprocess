@@ -324,7 +324,8 @@ class condition_8a_wrapper
 
    condition_8a_wrapper(){}
 
-   ~condition_8a_wrapper(){}
+   //Compiler-generated destructor is OK
+   //~condition_8a_wrapper(){}
 
    ConditionMembers & get_members()
    {  return m_data; }

@@ -134,8 +134,6 @@ class windows_named_condition_any
       winapi_mutex_wrapper       m_mtx_unblock_lock;
    };
 
-   ipcdetail::condition_8a_wrapper<condition_data> m_condition_data;
-
    class named_cond_callbacks : public windows_named_sync_interface
    {
       typedef __int64 sem_count_t;
@@ -229,6 +227,7 @@ class windows_named_condition_any
    };
 
    windows_named_sync   m_named_sync;
+   ipcdetail::condition_8a_wrapper<condition_data> m_condition_data;
    /// @endcond
 };
 
