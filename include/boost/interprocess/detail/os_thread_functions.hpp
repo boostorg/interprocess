@@ -491,7 +491,7 @@ inline int thread_create( OS_thread_t * thread, unsigned (__stdcall * start_rout
       return 0;
    }
    else{
-      return EAGAIN;
+      return 1;
    }
 }
 
