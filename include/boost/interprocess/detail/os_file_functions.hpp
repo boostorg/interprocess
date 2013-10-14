@@ -273,8 +273,10 @@ inline bool delete_subdirectories_recursive
             //If it's a directory, go recursive
             if(FileInformation.dwFileAttributes & winapi::file_attribute_directory){
                // Delete subdirectory
-               if(!delete_subdirectories_recursive(strFilePath, dont_delete_this, count+1))
+               if(!delete_subdirectories_recursive(strFilePath, dont_delete_this, count+1)){
+                  winapi::find_close(hFile);
                   return false;
+               }
             }
             //If it's a file, just delete it
             else{
