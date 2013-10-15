@@ -6715,11 +6715,12 @@ thank them:
 
 [section:release_notes_boost_1_56_00 Boost 1.56 Release]
 *  Fixed bugs: 
-   * [@https://svn.boost.org/trac/boost/ticket/9221 #9221 ("message_queue deadlock on linux")].
-      
+   * [@https://svn.boost.org/trac/boost/ticket/9221 #9221 (['"message_queue deadlock on linux"])].
+   * [@https://svn.boost.org/trac/boost/ticket/9226 #9226 (['"On some computers, Common Appdata is empty in registry, so boost interprocess cannot work"])].
+
 *  [*ABI breaking]: [@https://svn.boost.org/trac/boost/ticket/9221 #9221] showed
    that `BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX` option of message queue,
-   was completely broken so a ABI break was necessary to have a working implementation.
+   was completely broken so an ABI break was necessary to have a working implementation.
 
 [endsect]
 
