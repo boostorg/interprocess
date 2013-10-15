@@ -6713,6 +6713,16 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_56_00 Boost 1.56 Release]
+*  Fixed bugs: 
+   * [@https://svn.boost.org/trac/boost/ticket/9221 #9221 ("message_queue deadlock on linux")].
+      
+*  [*ABI breaking]: [@https://svn.boost.org/trac/boost/ticket/9221 #9221] showed
+   that `BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX` option of message queue,
+   was completely broken so a ABI break was necessary to have a working implementation.
+
+[endsect]
+
 [section:release_notes_boost_1_55_00 Boost 1.55 Release]
 
 *  Fixed bugs [@https://svn.boost.org/trac/boost/ticket/7156 #7156],
