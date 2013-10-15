@@ -509,7 +509,6 @@ class mq_hdr_t
             //Check where the free message should be placed
             it = this->lower_bound(dummy_ptr, static_cast<priority_functor<VoidPointer>&>(*this));
          }
-         assert(0);  
       }
       //Insert the free message in the correct position
       return this->insert_at(it);
