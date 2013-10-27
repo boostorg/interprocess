@@ -77,18 +77,23 @@ class winapi_mutex_functions
          this->lock();
          return true;
       }
-
-      unsigned long ret = winapi::wait_for_single_object
-         (m_mtx_hnd, (abs_time - microsec_clock::universal_time()).total_milliseconds());
-      if(ret == winapi::wait_object_0){
-         return true;
-      }
-      else if(ret == winapi::wait_timeout){
+      const boost::posix_time::ptime cur_time = microsec_clock::universal_time();
+      if(abs_time < cur_time){
          return false;
       }
       else{
-         error_info err = system_error_code();
-         throw interprocess_exception(err);
+         unsigned long ret = winapi::wait_for_single_object
+            (m_mtx_hnd, (abs_time - cur_time).total_milliseconds());
+         if(ret == winapi::wait_object_0){
+            return true;
+         }
+         else if(ret == winapi::wait_timeout){
+            return false;
+         }
+         else{
+            error_info err = system_error_code();
+            throw interprocess_exception(err);
+         }
       }
    }
 
@@ -109,8 +114,11 @@ class winapi_mutex_wrapper
    winapi_mutex_wrapper &operator=(const winapi_mutex_wrapper &);
    /// @endcond
 
+   //Note that Windows API does not return winapi::invalid_handle_value
+   //when failing to create/open a mutex, but a nullptr
+
    public:
-   winapi_mutex_wrapper(void *mtx_hnd = winapi::invalid_handle_value)
+   winapi_mutex_wrapper(void *mtx_hnd = 0)
       : winapi_mutex_functions(mtx_hnd)
    {}
 
@@ -120,7 +128,7 @@ class winapi_mutex_wrapper
    void *release()
    {
       void *hnd = m_mtx_hnd;
-      m_mtx_hnd = winapi::invalid_handle_value;
+      m_mtx_hnd = 0;
       return hnd;
    }
 
@@ -129,13 +137,13 @@ class winapi_mutex_wrapper
 
    bool open_or_create(const char *name, const permissions &perm)
    {
-      if(m_mtx_hnd == winapi::invalid_handle_value){
+      if(m_mtx_hnd == 0){
          m_mtx_hnd = winapi::open_or_create_mutex
             ( name
             , false
             , (winapi::interprocess_security_attributes*)perm.get_permissions()
             );
-         return m_mtx_hnd != winapi::invalid_handle_value;
+         return m_mtx_hnd != 0;
       }
       else{
          return false;
@@ -144,9 +152,9 @@ class winapi_mutex_wrapper
 
    void close()
    {
-      if(m_mtx_hnd != winapi::invalid_handle_value){
+      if(m_mtx_hnd != 0){
          winapi::close_handle(m_mtx_hnd);
-         m_mtx_hnd = winapi::invalid_handle_value;
+         m_mtx_hnd = 0;
       }
    }
 
