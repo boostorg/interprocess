@@ -79,17 +79,23 @@ class winapi_semaphore_functions
          return true;
       }
 
-      unsigned long ret = winapi::wait_for_single_object
-         (m_sem_hnd, (abs_time - microsec_clock::universal_time()).total_milliseconds());
-      if(ret == winapi::wait_object_0){
-         return true;
-      }
-      else if(ret == winapi::wait_timeout){
+      boost::posix_time::ptime cur_time = microsec_clock::universal_time();
+      if(abs_time < cur_time){
          return false;
       }
       else{
-         error_info err = system_error_code();
-         throw interprocess_exception(err);
+         unsigned long ret = winapi::wait_for_single_object
+            (m_sem_hnd, (abs_time - cur_time).total_milliseconds());
+         if(ret == winapi::wait_object_0){
+            return true;
+         }
+         else if(ret == winapi::wait_timeout){
+            return false;
+         }
+         else{
+            error_info err = system_error_code();
+            throw interprocess_exception(err);
+         }
       }
    }
 
