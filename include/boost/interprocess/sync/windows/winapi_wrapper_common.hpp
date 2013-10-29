@@ -29,9 +29,16 @@ namespace ipcdetail {
 
 inline void winapi_wrapper_wait_for_single_object(void *handle)
 {
-   if(winapi::wait_for_single_object(handle, winapi::infinite_time) != winapi::wait_object_0){
-      error_info err = system_error_code();
-      throw interprocess_exception(err);
+   unsigned long ret = winapi::wait_for_single_object(handle, winapi::infinite_time);
+   if(ret != winapi::wait_object_0){
+      if(ret != winapi::wait_abandoned){
+         error_info err = system_error_code();
+         throw interprocess_exception(err);
+      }
+      else{ //Special case for orphaned mutexes
+         winapi::release_mutex(handle);
+         throw interprocess_exception(owner_dead_error);
+      }
    }
 }
 
