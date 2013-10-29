@@ -97,7 +97,7 @@ class windows_named_condition_any
    /// @cond
    private:
 
-   void windows_named_condition_any::dont_close_on_destruction()
+   void dont_close_on_destruction()
    {}
 
    friend class interprocess_tester;

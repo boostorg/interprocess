@@ -21,6 +21,7 @@
 #include <boost/interprocess/permissions.hpp>
 #include <boost/interprocess/detail/win32_api.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
+#include <boost/interprocess/sync/windows/winapi_wrapper_common.hpp>
 #include <boost/interprocess/errors.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <limits>
@@ -44,58 +45,16 @@ class winapi_mutex_functions
    {}
 
    void unlock()
-   {
-      winapi::release_mutex(m_mtx_hnd);
-   }
+   {  winapi::release_mutex(m_mtx_hnd);   }
 
    void lock()
-   {
-      if(winapi::wait_for_single_object(m_mtx_hnd, winapi::infinite_time) != winapi::wait_object_0){
-         error_info err = system_error_code();
-         throw interprocess_exception(err);
-      }
-   }
+   {  return winapi_wrapper_wait_for_single_object(m_mtx_hnd);  }
 
    bool try_lock()
-   {
-      unsigned long ret = winapi::wait_for_single_object(m_mtx_hnd, 0);
-      if(ret == winapi::wait_object_0){
-         return true;
-      }
-      else if(ret == winapi::wait_timeout){
-         return false;
-      }
-      else{
-         error_info err = system_error_code();
-         throw interprocess_exception(err);
-      }
-   }
+   {  return winapi_wrapper_try_wait_for_single_object(m_mtx_hnd);  }
 
    bool timed_lock(const boost::posix_time::ptime &abs_time)
-   {
-      if(abs_time == boost::posix_time::pos_infin){
-         this->lock();
-         return true;
-      }
-      const boost::posix_time::ptime cur_time = microsec_clock::universal_time();
-      if(abs_time < cur_time){
-         return false;
-      }
-      else{
-         unsigned long ret = winapi::wait_for_single_object
-            (m_mtx_hnd, (abs_time - cur_time).total_milliseconds());
-         if(ret == winapi::wait_object_0){
-            return true;
-         }
-         else if(ret == winapi::wait_timeout){
-            return false;
-         }
-         else{
-            error_info err = system_error_code();
-            throw interprocess_exception(err);
-         }
-      }
-   }
+   {  return winapi_wrapper_timed_wait_for_single_object(m_mtx_hnd, abs_time);  }
 
    /// @cond
    protected:

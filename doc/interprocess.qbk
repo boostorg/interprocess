@@ -6717,10 +6717,15 @@ thank them:
 *  Fixed bugs: 
    * [@https://svn.boost.org/trac/boost/ticket/9221 #9221 (['"message_queue deadlock on linux"])].
    * [@https://svn.boost.org/trac/boost/ticket/9226 #9226 (['"On some computers, Common Appdata is empty in registry, so boost interprocess cannot work"])].
+   * [@https://svn.boost.org/trac/boost/ticket/9285 #9285 (['"CreateMutex returns NULL if fails"])].
+   * [@https://svn.boost.org/trac/boost/ticket/9288 #9288 (['"timed_wait does not check if it has expired"])].
 
 *  [*ABI breaking]: [@https://svn.boost.org/trac/boost/ticket/9221 #9221] showed
    that `BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX` option of message queue,
    was completely broken so an ABI break was necessary to have a working implementation.
+
+*  Simplified, refactored and unified (timed_)lock code based on try_lock().
+   There were several bugs in when handling timeout expirations.
 
 [endsect]
 

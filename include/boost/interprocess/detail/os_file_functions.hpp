@@ -136,7 +136,7 @@ inline bool truncate_file (file_handle_t hnd, std::size_t size)
    typedef boost::make_unsigned<offset_t>::type uoffset_t;
    const uoffset_t max_filesize = uoffset_t((std::numeric_limits<offset_t>::max)());
    //Avoid unused variable warnings in 32 bit systems
-   if(size > max_filesize){
+   if(uoffset_t(size) > max_filesize){
       winapi::set_last_error(winapi::error_file_too_large);
       return false;
    }

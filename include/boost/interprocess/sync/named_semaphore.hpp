@@ -153,13 +153,7 @@ inline bool named_semaphore::try_wait()
 {  return m_sem.try_wait();  }
 
 inline bool named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
-{
-   if(abs_time == boost::posix_time::pos_infin){
-      this->wait();
-      return true;
-   }
-   return m_sem.timed_wait(abs_time);
-}
+{  return m_sem.timed_wait(abs_time);  }
 
 inline bool named_semaphore::remove(const char *name)
 {  return impl_t::remove(name);   }
