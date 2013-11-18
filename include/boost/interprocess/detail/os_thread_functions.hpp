@@ -512,9 +512,33 @@ class abstract_thread
 
 #if defined(BOOST_INTERPROCESS_WINDOWS)
 
+template<class T>
+class os_thread_func_ptr_deleter
+{
+   public:
+   explicit os_thread_func_ptr_deleter(T* p)
+      : m_p(p)
+   {}
+
+   T *release()
+   {  T *p = m_p; m_p = 0; return p;  }
+
+   T *get() const
+   {  return m_p;  }
+
+   T *operator ->() const
+   {  return m_p;  }
+
+   ~os_thread_func_ptr_deleter()
+   {  delete m_p; }
+
+   private:
+   T *m_p;
+};
+
 inline unsigned __stdcall launch_thread_routine( void * pv )
 {
-   std::auto_ptr<abstract_thread> pt( static_cast<abstract_thread *>( pv ) );
+   os_thread_func_ptr_deleter<abstract_thread> pt( static_cast<abstract_thread *>( pv ) );
    pt->run();
    return 0;
 }
@@ -525,7 +549,7 @@ extern "C" void * launch_thread_routine( void * pv );
 
 inline void * launch_thread_routine( void * pv )
 {
-   std::auto_ptr<abstract_thread> pt( static_cast<abstract_thread *>( pv ) );
+   os_thread_func_ptr_deleter<abstract_thread> pt( static_cast<abstract_thread *>( pv ) );
    pt->run();
    return 0;
 }
@@ -551,7 +575,7 @@ class launch_thread_impl
 template<class F>
 inline int thread_launch( OS_thread_t & pt, F f )
 {
-   std::auto_ptr<abstract_thread> p( new launch_thread_impl<F>( f ) );
+   os_thread_func_ptr_deleter<abstract_thread> p( new launch_thread_impl<F>( f ) );
 
    int r = thread_create(&pt, launch_thread_routine, p.get());
    if( r == 0 ){
