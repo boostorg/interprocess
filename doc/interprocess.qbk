@@ -6730,6 +6730,13 @@ thank them:
 
 [endsect]
 
+[section:release_notes_boost_1_56_00 Boost 1.56 Release]
+
+*  Fixed bugs:
+   *  [@https://svn.boost.org/trac/boost/ticket/9408 #9408: ['"Android does not support XSI_SHARED_MEMORY_OBJECTS"]].
+
+[endsect]
+
 [section:release_notes_boost_1_55_00 Boost 1.55 Release]
 
 *  Fixed bugs [@https://svn.boost.org/trac/boost/ticket/7156 #7156],
