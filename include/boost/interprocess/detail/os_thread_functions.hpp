@@ -510,8 +510,6 @@ class abstract_thread
    virtual void run() = 0;
 };
 
-#if defined(BOOST_INTERPROCESS_WINDOWS)
-
 template<class T>
 class os_thread_func_ptr_deleter
 {
@@ -535,6 +533,8 @@ class os_thread_func_ptr_deleter
    private:
    T *m_p;
 };
+
+#if defined(BOOST_INTERPROCESS_WINDOWS)
 
 inline unsigned __stdcall launch_thread_routine( void * pv )
 {
