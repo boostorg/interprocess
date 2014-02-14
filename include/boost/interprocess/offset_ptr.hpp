@@ -11,7 +11,7 @@
 #ifndef BOOST_INTERPROCESS_OFFSET_PTR_HPP
 #define BOOST_INTERPROCESS_OFFSET_PTR_HPP
 
-#if (defined _MSC_VER) && (_MSC_VER >= 1200)
+#if defined(_MSC_VER)
 #  pragma once
 #endif
 
@@ -26,6 +26,7 @@
 #include <ostream>
 #include <istream>
 #include <iterator>
+#include <iostream>
 #include <boost/aligned_storage.hpp>
 #include <boost/type_traits/alignment_of.hpp>
 
@@ -75,6 +76,7 @@ namespace ipcdetail {
    ////////////////////////////////////////////////////////////////////////
    #define BOOST_INTERPROCESS_OFFSET_PTR_INLINE_TO_PTR
    #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_PTR
+   #define BOOST_INTERPROCESS_OFFSET_PTR_USE_NEG_MASK
 
    template<int Dummy>
    #ifndef BOOST_INTERPROCESS_OFFSET_PTR_INLINE_TO_PTR
@@ -95,7 +97,14 @@ namespace ipcdetail {
          }
       #else
          const caster_t caster((void*)this_ptr);
-         return caster_t((caster.size() + offset) & -std::size_t(offset != 1)).pointer();
+         std::size_t target_offset = caster.size() + offset;
+         #ifdef BOOST_INTERPROCESS_OFFSET_PTR_USE_NEG_MASK
+         std::size_t mask = -std::size_t(offset != 1);
+         #else
+         std::size_t mask = (offset != 1) ? std::size_t(-1) : std::size_t(0);
+         #endif
+         target_offset &= mask;
+         return caster_t(target_offset).pointer();
       #endif
    }
 

@@ -25,7 +25,7 @@
 #include <memory>
 
 
-#if defined (_MSC_VER) && (_MSC_VER >= 1200)
+#if defined(_MSC_VER)
 #  pragma once
 #  pragma comment( lib, "Advapi32.lib" )
 #  pragma comment( lib, "oleaut32.lib" )
