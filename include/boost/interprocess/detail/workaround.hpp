@@ -73,7 +73,7 @@
    #endif
 
    //Check for XSI shared memory objects. They are available in nearly all UNIX platforms
-   #if !defined(__QNXNTO__)
+   #if !defined(__QNXNTO__) && !defined(__ANDROID__)
       #define BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
    #endif
 

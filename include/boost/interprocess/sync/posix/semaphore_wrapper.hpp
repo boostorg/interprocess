@@ -35,7 +35,8 @@
 #include <boost/interprocess/sync/posix/ptime_to_timespec.hpp>
 #else
 #include <boost/interprocess/detail/os_thread_functions.hpp>
-#include <boost/interprocess/sync/spin/wait.hpp>
+#include <boost/interprocess/sync/detail/locks.hpp>
+#include <boost/interprocess/sync/detail/common_algorithms.hpp>
 #endif
 
 namespace boost {
@@ -172,13 +173,35 @@ inline bool semaphore_try_wait(sem_t *handle)
    return false;
 }
 
+#ifndef BOOST_INTERPROCESS_POSIX_TIMEOUTS
+
+struct semaphore_wrapper_try_wrapper
+{
+   explicit semaphore_wrapper_try_wrapper(sem_t *handle)
+      : m_handle(handle)
+   {}
+
+   void wait()
+   {  semaphore_wait(m_handle);  }
+
+   bool try_wait()
+   {  return semaphore_try_wait(m_handle);  }
+
+   private:
+   sem_t *m_handle;
+};
+
+#endif
+
 inline bool semaphore_timed_wait(sem_t *handle, const boost::posix_time::ptime &abs_time)
 {
+   #ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
+   //Posix does not support infinity absolute time so handle it here
    if(abs_time == boost::posix_time::pos_infin){
       semaphore_wait(handle);
       return true;
    }
-   #ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
+
    timespec tspec = ptime_to_timespec(abs_time);
    for (;;){
       int res = sem_timedwait(handle, &tspec);
@@ -195,14 +218,11 @@ inline bool semaphore_timed_wait(sem_t *handle, const boost::posix_time::ptime &
    }
    return false;
    #else //#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
-   boost::posix_time::ptime now;
-   spin_wait swait;
-   do{
-      if(semaphore_try_wait(handle))
-         return true;
-      swait.yield();
-   }while((now = microsec_clock::universal_time()) < abs_time);
-   return false;
+
+   semaphore_wrapper_try_wrapper swtw(handle);
+   ipcdetail::lock_to_wait<semaphore_wrapper_try_wrapper> lw(swtw);
+   return ipcdetail::try_based_timed_lock(lw, abs_time);
+
    #endif   //#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
 }
 

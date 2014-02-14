@@ -41,24 +41,26 @@ class spin_condition
    template <typename L>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time)
    {
+      if (!lock)
+         throw lock_exception();
+      //Handle infinity absolute time here to avoid complications in do_timed_wait
       if(abs_time == boost::posix_time::pos_infin){
          this->wait(lock);
          return true;
       }
-      if (!lock)
-         throw lock_exception();
       return this->do_timed_wait(abs_time, *lock.mutex());
    }
 
    template <typename L, typename Pr>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
    {
+      if (!lock)
+         throw lock_exception();
+      //Handle infinity absolute time here to avoid complications in do_timed_wait
       if(abs_time == boost::posix_time::pos_infin){
          this->wait(lock, pred);
          return true;
       }
-      if (!lock)
-         throw lock_exception();
       while (!pred()){
          if (!this->do_timed_wait(abs_time, *lock.mutex()))
             return pred();

@@ -161,13 +161,7 @@ inline bool shm_named_mutex::try_lock()
 {  return this->internal_mutex().try_lock();  }
 
 inline bool shm_named_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
-{
-   if(abs_time == boost::posix_time::pos_infin){
-      this->lock();
-      return true;
-   }
-   return this->internal_mutex().timed_lock(abs_time);
-}
+{  return this->internal_mutex().timed_lock(abs_time);   }
 
 inline bool shm_named_mutex::remove(const char *name)
 {  return shared_memory_object::remove(name); }

@@ -136,7 +136,7 @@ inline bool truncate_file (file_handle_t hnd, std::size_t size)
    typedef boost::make_unsigned<offset_t>::type uoffset_t;
    const uoffset_t max_filesize = uoffset_t((std::numeric_limits<offset_t>::max)());
    //Avoid unused variable warnings in 32 bit systems
-   if(size > max_filesize){
+   if(uoffset_t(size) > max_filesize){
       winapi::set_last_error(winapi::error_file_too_large);
       return false;
    }
@@ -273,8 +273,10 @@ inline bool delete_subdirectories_recursive
             //If it's a directory, go recursive
             if(FileInformation.dwFileAttributes & winapi::file_attribute_directory){
                // Delete subdirectory
-               if(!delete_subdirectories_recursive(strFilePath, dont_delete_this, count+1))
+               if(!delete_subdirectories_recursive(strFilePath, dont_delete_this, count+1)){
+                  winapi::find_close(hFile);
                   return false;
+               }
             }
             //If it's a file, just delete it
             else{

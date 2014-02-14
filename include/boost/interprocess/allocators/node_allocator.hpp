@@ -232,7 +232,7 @@ class node_allocator_v1
 //!This node allocator shares a segregated storage between all instances
 //!of node_allocator with equal sizeof(T) placed in the same segment
 //!group. NodesPerBlock is the number of nodes allocated at once when the allocator
-//!needs runs out of nodes
+//!runs out of nodes
 template < class T
          , class SegmentManager
          , std::size_t NodesPerBlock

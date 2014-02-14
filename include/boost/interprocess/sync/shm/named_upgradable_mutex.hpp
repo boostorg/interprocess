@@ -287,13 +287,7 @@ inline bool named_upgradable_mutex::try_lock()
 
 inline bool named_upgradable_mutex::timed_lock
    (const boost::posix_time::ptime &abs_time)
-{
-   if(abs_time == boost::posix_time::pos_infin){
-      this->lock();
-      return true;
-   }
-   return this->mutex()->timed_lock(abs_time);
-}
+{  return this->mutex()->timed_lock(abs_time);  }
 
 inline void named_upgradable_mutex::lock_upgradable()
 {  this->mutex()->lock_upgradable();  }
@@ -306,13 +300,7 @@ inline bool named_upgradable_mutex::try_lock_upgradable()
 
 inline bool named_upgradable_mutex::timed_lock_upgradable
    (const boost::posix_time::ptime &abs_time)
-{
-   if(abs_time == boost::posix_time::pos_infin){
-      this->lock_upgradable();
-      return true;
-   }
-   return this->mutex()->timed_lock_upgradable(abs_time);
-}
+{  return this->mutex()->timed_lock_upgradable(abs_time);   }
 
 inline void named_upgradable_mutex::lock_sharable()
 {  this->mutex()->lock_sharable();  }
@@ -325,13 +313,7 @@ inline bool named_upgradable_mutex::try_lock_sharable()
 
 inline bool named_upgradable_mutex::timed_lock_sharable
    (const boost::posix_time::ptime &abs_time)
-{
-   if(abs_time == boost::posix_time::pos_infin){
-      this->lock_sharable();
-      return true;
-   }
-   return this->mutex()->timed_lock_sharable(abs_time);
-}
+{  return this->mutex()->timed_lock_sharable(abs_time);  }
 
 inline void named_upgradable_mutex::unlock_and_lock_upgradable()
 {  this->mutex()->unlock_and_lock_upgradable();  }
