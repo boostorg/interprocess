@@ -14,7 +14,7 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_POINTER_TYPE_HPP
 #define BOOST_INTERPROCESS_DETAIL_POINTER_TYPE_HPP
 
-#if defined(_MSC_VER)
+#if (defined _MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
 #endif
 

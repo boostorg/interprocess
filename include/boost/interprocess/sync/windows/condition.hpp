@@ -38,11 +38,7 @@ class windows_condition
    {}
 
    ~windows_condition()
-   {
-      //Notify all waiting threads
-      //to allow POSIX semantics on condition destruction
-      this->notify_all();
-   }
+   {}
 
    void notify_one()
    {  m_condition_data.notify_one();   }
