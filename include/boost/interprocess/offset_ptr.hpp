@@ -26,6 +26,7 @@
 #include <ostream>
 #include <istream>
 #include <iterator>
+#include <iostream>
 #include <boost/aligned_storage.hpp>
 #include <boost/type_traits/alignment_of.hpp>
 
@@ -74,8 +75,11 @@ namespace ipcdetail {
    //
    ////////////////////////////////////////////////////////////////////////
    #define BOOST_INTERPROCESS_OFFSET_PTR_INLINE_TO_PTR
-   #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_PTR
-
+   #if defined(_MSC_VER) && (_MSC_VER >= 1700) && (defined(_M_AMD64) || defined(_M_X64))
+      //Visual 2013 x64 optimizes more than we desire, so disable branchless option
+   #else
+      #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_PTR
+   #endif
    template<int Dummy>
    #ifndef BOOST_INTERPROCESS_OFFSET_PTR_INLINE_TO_PTR
       BOOST_INTERPROCESS_NEVER_INLINE
@@ -95,7 +99,10 @@ namespace ipcdetail {
          }
       #else
          const caster_t caster((void*)this_ptr);
-         return caster_t((caster.size() + offset) & -std::size_t(offset != 1)).pointer();
+         std::size_t target_offset = caster.size() + offset;
+         std::size_t mask = -std::size_t(offset != 1);
+         target_offset &= mask;
+         return caster_t(target_offset).pointer();
       #endif
    }
 

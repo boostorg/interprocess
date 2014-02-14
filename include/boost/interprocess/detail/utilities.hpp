@@ -168,6 +168,8 @@ template<class RawPointer>
 class pointer_size_t_caster
 {
    public:
+   BOOST_STATIC_ASSERT(sizeof(std::size_t) == sizeof(void*));
+
    explicit pointer_size_t_caster(std::size_t sz)
       : m_ptr(reinterpret_cast<RawPointer>(sz))
    {}
