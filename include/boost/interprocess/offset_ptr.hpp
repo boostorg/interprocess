@@ -75,9 +75,11 @@ namespace ipcdetail {
    //
    ////////////////////////////////////////////////////////////////////////
    #define BOOST_INTERPROCESS_OFFSET_PTR_INLINE_TO_PTR
-   #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_PTR
-   #define BOOST_INTERPROCESS_OFFSET_PTR_USE_NEG_MASK
-
+   #if defined(_MSC_VER) && (_MSC_VER >= 1700) && (defined(_M_AMD64) || defined(_M_X64))
+      //Visual 2013 x64 optimizes more than we desire, so disable branchless option
+   #else
+      #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_PTR
+   #endif
    template<int Dummy>
    #ifndef BOOST_INTERPROCESS_OFFSET_PTR_INLINE_TO_PTR
       BOOST_INTERPROCESS_NEVER_INLINE
@@ -98,11 +100,7 @@ namespace ipcdetail {
       #else
          const caster_t caster((void*)this_ptr);
          std::size_t target_offset = caster.size() + offset;
-         #ifdef BOOST_INTERPROCESS_OFFSET_PTR_USE_NEG_MASK
          std::size_t mask = -std::size_t(offset != 1);
-         #else
-         std::size_t mask = (offset != 1) ? std::size_t(-1) : std::size_t(0);
-         #endif
          target_offset &= mask;
          return caster_t(target_offset).pointer();
       #endif
