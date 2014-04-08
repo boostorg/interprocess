@@ -34,7 +34,7 @@
 #  pragma comment( lib, "Shell32.lib" )   //SHGetSpecialFolderPathA
 #endif
 
-#if (defined BOOST_INTERPROCESS_WINDOWS)
+#if defined (BOOST_INTERPROCESS_WINDOWS)
 #  include <cstdarg>
 #  include <boost/detail/interlocked.hpp>
 #else
