@@ -75,7 +75,7 @@ namespace ipcdetail {
    //
    ////////////////////////////////////////////////////////////////////////
    #define BOOST_INTERPROCESS_OFFSET_PTR_INLINE_TO_PTR
-   #if defined(_MSC_VER) && (_MSC_VER >= 1700) && (defined(_M_AMD64) || defined(_M_X64))
+   #if defined(_MSC_VER) && (_MSC_VER >= 1800) && (defined(_M_AMD64) || defined(_M_X64))
       //Visual 2013 x64 optimizes more than we desire, so disable branchless option
    #else
       #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_PTR

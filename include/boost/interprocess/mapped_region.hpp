@@ -741,6 +741,9 @@ inline bool mapped_region::advise(advice_types advice)
    const unsigned int mode_none = 0;
    const unsigned int mode_padv = 1;
    const unsigned int mode_madv = 2;
+   // Suppress "unused variable" warnings
+   (void)mode_padv;
+   (void)mode_madv;
    unsigned int mode = mode_none;
    //Choose advice either from POSIX (preferred) or native Unix
    switch(advice){
