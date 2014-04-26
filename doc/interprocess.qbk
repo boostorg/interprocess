@@ -6722,6 +6722,7 @@ thank them:
    * [@https://svn.boost.org/trac/boost/ticket/9288 #9288 (['"timed_wait does not check if it has expired"])].
    * [@https://svn.boost.org/trac/boost/ticket/9408 #9408: ['"Android does not support XSI_SHARED_MEMORY_OBJECTS"]].
    * [@https://svn.boost.org/trac/boost/ticket/9835 #9835 (['"Boost Interprocess fails to compile with Android NDK GCC 4.8, -Werror=unused-variable"])].
+   * [@https://svn.boost.org/trac/boost/ticket/9946 #9946 (['"ret_ptr uninitialized in init_atomic_func, fini_atomic_func"])].
 
 *  [*ABI breaking]: [@https://svn.boost.org/trac/boost/ticket/9221 #9221] showed
    that `BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX` option of message queue,
