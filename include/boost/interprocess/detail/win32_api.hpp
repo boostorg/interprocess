@@ -985,6 +985,8 @@ extern "C" __declspec(dllimport) long __stdcall VariantClear(wchar_variant * pva
 extern "C" __declspec(dllimport) int __stdcall SHGetSpecialFolderPathA
    (void* hwnd, const char *pszPath, int csidl, int fCreate);
 
+extern "C" __declspec(dllimport) int __stdcall SHGetFolderPathA(void *hwnd, int csidl, void *hToken, unsigned long dwFlags, const char *pszPath);
+
 //EventLog access functions
 
 static const unsigned long eventlog_sequential_read = 0x0001;
@@ -1793,12 +1795,16 @@ inline void get_shared_documents_folder(std::string &s)
       }
    }
    #else //registry alternative: SHGetSpecialFolderPathA
-   const int IG_CSIDL_COMMON_APPDATA = 0x0023; // All Users\Application Data
+   const int IG_CSIDL_COMMON_APPDATA = 0x0023;  // All Users\Application Data
+   const int IG_CSIDL_FLAG_CREATE = 0x8000;     // new for Win2K, or this in to force creation of folder
+   const int IG_SHGFP_TYPE_CURRENT  = 0;        // current value for user, verify it exists
+
    s.clear();
    char szPath[max_path];
-   if(SHGetSpecialFolderPathA(0, szPath, IG_CSIDL_COMMON_APPDATA, 1)) {
+   if(0 == SHGetFolderPathA(0, IG_CSIDL_COMMON_APPDATA | IG_CSIDL_FLAG_CREATE, 0, IG_SHGFP_TYPE_CURRENT, szPath)){
       s = szPath;
    }
+
    #endif
 }
 

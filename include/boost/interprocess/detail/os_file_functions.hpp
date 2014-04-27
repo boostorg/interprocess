@@ -94,9 +94,22 @@ inline file_handle_t file_handle_from_mapping_handle(mapping_handle_t hnd)
 inline bool create_directory(const char *path)
 {  return winapi::create_directory(path); }
 
-inline const char *get_temporary_path()
-{  return std::getenv("TMP"); }
-
+inline bool get_temporary_path(char *buffer, std::size_t buf_len, std::size_t &required_len)
+{
+   required_len = 0;
+   //std::size_t is always bigger or equal than unsigned long in Windows systems
+   //In case std::size_t is bigger than unsigned long
+   unsigned long buf = buf_len;
+   if(buf_len != buf){   //maybe overflowed
+      return false;
+   }
+   required_len = winapi::get_temp_path(buf_len, buffer);
+   const bool ret = !(buf_len < required_len);
+   if(ret && buffer[required_len-1] == '\\'){
+      buffer[required_len-1] = 0;
+   }
+   return ret;
+}
 
 inline file_handle_t create_new_file
    (const char *name, mode_t mode, const permissions & perm = permissions(), bool temporary = false)
@@ -400,17 +413,15 @@ inline file_handle_t file_handle_from_mapping_handle(mapping_handle_t hnd)
 inline bool create_directory(const char *path)
 {  return ::mkdir(path, 0777) == 0 && ::chmod(path, 0777) == 0; }
 
-inline const char *get_temporary_path()
+inline bool get_temporary_path(char *buffer, std::size_t buf_len, std::size_t &required_len)
 {
-   const char *names[] = {"/tmp", "TMPDIR", "TMP", "TEMP" };
-   const int names_size = sizeof(names)/sizeof(names[0]);
-   struct stat data;
-   for(int i = 0; i != names_size; ++i){
-      if(::stat(names[i], &data) == 0){
-         return names[i];
-      }
+   required_len = 5u;
+   if(buf_len < required_len)
+      return false;
+   else{
+      std::strcpy(buffer, "/tmp");
    }
-   return "/tmp";
+   return true;
 }
 
 inline file_handle_t create_new_file
@@ -694,6 +705,18 @@ inline bool open_or_create_directory(const char *dir_name)
    return true;
 }
 
+inline std::string get_temporary_path()
+{
+   std::size_t required_len = 0;
+   get_temporary_path(0, 0, required_len);
+   std::string ret_str(required_len, char(0));
+   get_temporary_path(&ret_str[0], ret_str.size(), required_len);
+   while(!ret_str.empty() && !ret_str[ret_str.size()-1]){
+      ret_str.erase(ret_str.size()-1);
+   }
+
+   return ret_str;
+}
 
 }  //namespace ipcdetail{
 }  //namespace interprocess {

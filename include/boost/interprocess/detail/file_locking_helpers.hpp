@@ -26,7 +26,7 @@
 #include <cstddef>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 
-#include <boost/interprocess/detail/tmp_dir_helpers.hpp>
+#include <boost/interprocess/detail/shared_dir_helpers.hpp>
 
 #if defined(BOOST_INTERPROCESS_WINDOWS)
 

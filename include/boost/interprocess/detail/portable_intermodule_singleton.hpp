@@ -23,7 +23,7 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/detail/atomic.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
-#include <boost/interprocess/detail/tmp_dir_helpers.hpp>
+#include <boost/interprocess/detail/shared_dir_helpers.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/file_locking_helpers.hpp>
 #include <boost/assert.hpp>
@@ -45,7 +45,7 @@ static void create_tmp_subdir_and_get_pid_based_filepath
 {
    //Let's create a lock file for each process gmem that will mark if
    //the process is alive or not
-   create_tmp_and_clean_old(s);
+   create_shared_dir_and_clean_old(s);
    s += "/";
    s += subdir_name;
    if(!open_or_create_directory(s.c_str())){
@@ -187,7 +187,7 @@ struct thread_safe_global_map_dependant<managed_global_memory>
    static bool remove_old_gmem()
    {
       std::string refcstrRootDirectory;
-      tmp_folder(refcstrRootDirectory);
+      get_shared_dir(refcstrRootDirectory);
       refcstrRootDirectory += "/";
       refcstrRootDirectory += get_lock_file_subdir_name();
       return for_each_file_in_dir(refcstrRootDirectory.c_str(), apply_gmem_erase_logic);
