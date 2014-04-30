@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2007-2012. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2007-2014. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -8,8 +8,8 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef BOOST_INTERPROCESS_DETAIL_TMP_DIR_HELPERS_HPP
-#define BOOST_INTERPROCESS_DETAIL_TMP_DIR_HELPERS_HPP
+#ifndef BOOST_INTERPROCESS_DETAIL_SHARED_DIR_HELPERS_HPP
+#define BOOST_INTERPROCESS_DETAIL_SHARED_DIR_HELPERS_HPP
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
@@ -33,7 +33,11 @@ namespace ipcdetail {
       {
          windows_bootstamp()
          {
-            winapi::get_last_bootup_time(stamp);
+            //Throw if bootstamp not available
+            if(!winapi::get_last_bootup_time(stamp)){
+               error_info err = system_error_code();
+               throw interprocess_exception(err);
+            }
          }
          //Use std::string. Even if this will be constructed in shared memory, all
          //modules/dlls are from this process so internal raw pointers to heap are always valid
@@ -90,78 +94,84 @@ namespace ipcdetail {
    #endif
 #endif   //#if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME)
 
-inline void get_tmp_base_dir(std::string &tmp_name)
+inline void get_shared_dir_root(std::string &dir_path)
 {
    #if defined (BOOST_INTERPROCESS_WINDOWS)
-      winapi::get_shared_documents_folder(tmp_name);
-      if(tmp_name.empty() || !winapi::is_directory(tmp_name.c_str())){
-         tmp_name = get_temporary_path();
-      }
+      winapi::get_shared_documents_folder(dir_path);
    #else
-      tmp_name = get_temporary_path();
+      dir_path = "/tmp";
    #endif
-   if(tmp_name.empty()){
+   //We always need this path, so throw on error
+   if(dir_path.empty()){
       error_info err = system_error_code();
       throw interprocess_exception(err);
    }
    //Remove final null.
-   tmp_name += "/boost_interprocess";
+   dir_path += "/boost_interprocess";
 }
 
-inline void tmp_folder(std::string &tmp_name)
+inline void get_shared_dir(std::string &shared_dir)
 {
-   get_tmp_base_dir(tmp_name);
-   #if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME)
-      tmp_name += "/";
-      get_bootstamp(tmp_name, true);
+   #if defined(BOOST_INTERPROCESS_SHARED_DIR_PATH)
+      shared_dir = BOOST_INTERPROCESS_SHARED_DIR_PATH;
+   #else
+      get_shared_dir_root(shared_dir);
+      #if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME)
+         shared_dir += "/";
+         get_bootstamp(shared_dir, true);
+      #endif
    #endif
 }
 
-inline void tmp_filename(const char *filename, std::string &tmp_name)
+inline void shared_filepath(const char *filename, std::string &filepath)
 {
-   tmp_folder(tmp_name);
-   tmp_name += "/";
-   tmp_name += filename;
+   get_shared_dir(filepath);
+   filepath += "/";
+   filepath += filename;
 }
 
-inline void create_tmp_and_clean_old(std::string &tmp_name)
+inline void create_shared_dir_and_clean_old(std::string &shared_dir)
 {
-   //First get the temp directory
-   std::string root_tmp_name;
-   get_tmp_base_dir(root_tmp_name);
-
-   //If fails, check that it's because already exists
-   if(!create_directory(root_tmp_name.c_str())){
-      error_info info(system_error_code());
-      if(info.get_error_code() != already_exists_error){
-         throw interprocess_exception(info);
-      }
-   }
-
-   #if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME)
-      tmp_folder(tmp_name);
+   #if defined(BOOST_INTERPROCESS_SHARED_DIR_PATH)
+      shared_dir = BOOST_INTERPROCESS_SHARED_DIR_PATH;
+   #else
+      //First get the temp directory
+      std::string root_shared_dir;
+      get_shared_dir_root(root_shared_dir);
 
       //If fails, check that it's because already exists
-      if(!create_directory(tmp_name.c_str())){
+      if(!create_directory(root_shared_dir.c_str())){
          error_info info(system_error_code());
          if(info.get_error_code() != already_exists_error){
             throw interprocess_exception(info);
          }
       }
-      //Now erase all old directories created in the previous boot sessions
-      std::string subdir = tmp_name;
-      subdir.erase(0, root_tmp_name.size()+1);
-      delete_subdirectories(root_tmp_name, subdir.c_str());
-   #else
-      tmp_name = root_tmp_name;
+
+      #if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME)
+         get_shared_dir(shared_dir);
+
+         //If fails, check that it's because already exists
+         if(!create_directory(shared_dir.c_str())){
+            error_info info(system_error_code());
+            if(info.get_error_code() != already_exists_error){
+               throw interprocess_exception(info);
+            }
+         }
+         //Now erase all old directories created in the previous boot sessions
+         std::string subdir = shared_dir;
+         subdir.erase(0, root_shared_dir.size()+1);
+         delete_subdirectories(root_shared_dir, subdir.c_str());
+      #else
+         shared_dir = root_shared_dir;
+      #endif
    #endif
 }
 
-inline void create_tmp_and_clean_old_and_get_filename(const char *filename, std::string &tmp_name)
+inline void create_shared_dir_cleaning_old_and_get_filepath(const char *filename, std::string &shared_dir)
 {
-   create_tmp_and_clean_old(tmp_name);
-   tmp_name += "/";
-   tmp_name += filename;
+   create_shared_dir_and_clean_old(shared_dir);
+   shared_dir += "/";
+   shared_dir += filename;
 }
 
 inline void add_leading_slash(const char *name, std::string &new_name)
@@ -178,4 +188,4 @@ inline void add_leading_slash(const char *name, std::string &new_name)
 
 #include <boost/interprocess/detail/config_end.hpp>
 
-#endif   //ifndef BOOST_INTERPROCESS_DETAIL_TMP_DIR_HELPERS_HPP
+#endif   //ifndef BOOST_INTERPROCESS_DETAIL_SHARED_DIR_HELPERS_HPP

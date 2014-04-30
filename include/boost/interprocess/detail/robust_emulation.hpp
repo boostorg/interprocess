@@ -21,7 +21,7 @@
 #include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
 #include <boost/interprocess/detail/atomic.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
-#include <boost/interprocess/detail/tmp_dir_helpers.hpp>
+#include <boost/interprocess/detail/shared_dir_helpers.hpp>
 #include <boost/interprocess/detail/intermodule_singleton.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/sync/spin/wait.hpp>
@@ -63,7 +63,7 @@ inline const char *robust_lock_prefix()
 
 inline void robust_lock_path(std::string &s)
 {
-   tmp_folder(s);
+   get_shared_dir(s);
    s += "/";
    s += robust_lock_subdir_path();
 }

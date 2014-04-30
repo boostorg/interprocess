@@ -575,7 +575,7 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\segment_manager_helper.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\tmp_dir_helpers.hpp">
+				RelativePath="..\..\..\..\boost\interprocess\detail\shared_dir_helpers.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\transform_iterator.hpp">

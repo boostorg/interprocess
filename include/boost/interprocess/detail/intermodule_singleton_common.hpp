@@ -388,7 +388,7 @@ class intermodule_singleton_impl
    struct init_atomic_func
    {
       init_atomic_func(ThreadSafeGlobalMap &m)
-         : m_map(m)
+         : m_map(m), ret_ptr()
       {}
 
       void operator()()
@@ -450,12 +450,9 @@ class intermodule_singleton_impl
             delete pc;
          }
       }
-      void *data() const
-         { return ret_ptr;  }
 
       private:
       ThreadSafeGlobalMap &m_map;
-      void *ret_ptr;
    };
 
    //A wrapper to execute init_atomic_func

@@ -15,7 +15,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
-#include <boost/interprocess/detail/tmp_dir_helpers.hpp>
+#include <boost/interprocess/detail/shared_dir_helpers.hpp>
 #include <boost/interprocess/permissions.hpp>
 
 #include <fcntl.h>      //O_CREAT, O_*...
@@ -51,7 +51,7 @@ inline bool semaphore_open
    #ifndef BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SEMAPHORES
    add_leading_slash(origname, name);
    #else
-   create_tmp_and_clean_old_and_get_filename(origname, name);
+   create_shared_dir_cleaning_old_and_get_filepath(origname, name);
    #endif
 
    //Create new mapping
@@ -117,7 +117,7 @@ inline bool semaphore_unlink(const char *semname)
       #ifndef BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SEMAPHORES
       add_leading_slash(semname, sem_str);
       #else
-      tmp_filename(semname, sem_str);
+      shared_filepath(semname, sem_str);
       #endif
       return 0 == sem_unlink(sem_str.c_str());
    }
