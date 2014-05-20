@@ -93,7 +93,7 @@ inline boost::uint32_t atomic_cas32
 }  //namespace interprocess{
 }  //namespace boost{
 
-#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)) && !defined(_CRAYC)
 
 namespace boost {
 namespace interprocess {
