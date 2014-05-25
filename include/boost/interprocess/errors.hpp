@@ -52,7 +52,7 @@ namespace interprocess {
 /// @cond
 inline int system_error_code() // artifact of POSIX and WINDOWS error reporting
 {
-   #if (defined BOOST_INTERPROCESS_WINDOWS)
+   #if defined (BOOST_INTERPROCESS_WINDOWS)
    return winapi::get_last_error();
    #else
    return errno; // GCC 3.1 won't accept ::errno
