@@ -53,7 +53,7 @@
 #    error Unknown platform
 #  endif
 
-#endif   //#if (defined BOOST_INTERPROCESS_WINDOWS)
+#endif   //#if defined (BOOST_INTERPROCESS_WINDOWS)
 
 //!\file
 //!Describes mapped region class
@@ -561,7 +561,7 @@ inline void mapped_region::priv_close()
 inline void mapped_region::dont_close_on_destruction()
 {}
 
-#else    //#if (defined BOOST_INTERPROCESS_WINDOWS)
+#else    //#if defined (BOOST_INTERPROCESS_WINDOWS)
 
 inline mapped_region::mapped_region()
    :  m_base(0), m_size(0), m_page_offset(0), m_mode(read_only), m_is_xsi(false)
@@ -833,7 +833,7 @@ inline void mapped_region::priv_close()
 inline void mapped_region::dont_close_on_destruction()
 {  m_base = 0;   }
 
-#endif   //##if (defined BOOST_INTERPROCESS_WINDOWS)
+#endif   //#if defined (BOOST_INTERPROCESS_WINDOWS)
 
 template<int dummy>
 const std::size_t mapped_region::page_size_holder<dummy>::PageSize
@@ -853,7 +853,7 @@ inline void mapped_region::swap(mapped_region &other)
    ipcdetail::do_swap(this->m_size, other.m_size);
    ipcdetail::do_swap(this->m_page_offset, other.m_page_offset);
    ipcdetail::do_swap(this->m_mode,  other.m_mode);
-   #if (defined BOOST_INTERPROCESS_WINDOWS)
+   #if defined (BOOST_INTERPROCESS_WINDOWS)
    ipcdetail::do_swap(this->m_file_or_mapping_hnd, other.m_file_or_mapping_hnd);
    #else
    ipcdetail::do_swap(this->m_is_xsi, other.m_is_xsi);

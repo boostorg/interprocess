@@ -49,7 +49,8 @@ static void create_tmp_subdir_and_get_pid_based_filepath
    s += "/";
    s += subdir_name;
    if(!open_or_create_directory(s.c_str())){
-      throw interprocess_exception(error_info(system_error_code()));
+      error_info err = system_error_code();
+      throw interprocess_exception(err);
    }
    s += "/";
    s += file_prefix;

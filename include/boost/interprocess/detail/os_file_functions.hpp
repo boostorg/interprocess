@@ -21,7 +21,7 @@
 #include <climits>
 #include <boost/type_traits/make_unsigned.hpp>
 
-#if (defined BOOST_INTERPROCESS_WINDOWS)
+#if defined (BOOST_INTERPROCESS_WINDOWS)
 #  include <boost/interprocess/detail/win32_api.hpp>
 #else
 #  ifdef BOOST_HAS_UNISTD_H
@@ -46,7 +46,7 @@
 namespace boost {
 namespace interprocess {
 
-#if (defined BOOST_INTERPROCESS_WINDOWS)
+#if defined (BOOST_INTERPROCESS_WINDOWS)
 
 typedef void *             file_handle_t;
 typedef long long          offset_t;
@@ -371,7 +371,7 @@ inline bool for_each_file_in_dir(const char *dir, Function f)
 }
 
 
-#else    //#if (defined BOOST_INTERPROCESS_WINDOWS)
+#else    //#if defined (BOOST_INTERPROCESS_WINDOWS)
 
 typedef int       file_handle_t;
 typedef off_t     offset_t;
@@ -691,7 +691,7 @@ inline bool delete_subdirectories(const std::string &refcstrRootDirectory, const
    return delete_subdirectories_recursive(refcstrRootDirectory, dont_delete_this );
 }
 
-#endif   //#if (defined BOOST_INTERPROCESS_WINDOWS)
+#endif   //#if defined (BOOST_INTERPROCESS_WINDOWS)
 
 inline bool open_or_create_directory(const char *dir_name)
 {

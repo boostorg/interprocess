@@ -6746,6 +6746,7 @@ thank them:
    * [@https://svn.boost.org/trac/boost/ticket/9911 Trac #9911 (['"get_tmp_base_dir(...) failure"])].
    * [@https://svn.boost.org/trac/boost/ticket/9946 Trac #9946 (['"ret_ptr uninitialized in init_atomic_func, fini_atomic_func"])].
    * [@https://github.com/boostorg/interprocess/pull/2 GitHub #2] (['"Provide support for the Cray C++ compiler. The Cray compiler defines __GNUC__"]]).
+   * [@https://github.com/boostorg/interprocess/pull/3 GitHub #3] (['"Fix/mingw interprocess_exception throw in file_wrapper::priv_open_or_create"]]).
 
 *  [*ABI breaking]: [@https://svn.boost.org/trac/boost/ticket/9221 #9221] showed
    that `BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX` option of message queue,

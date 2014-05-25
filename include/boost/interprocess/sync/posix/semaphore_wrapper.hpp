@@ -133,7 +133,8 @@ inline void semaphore_init(sem_t *handle, unsigned int initialCount)
    //sem_init call is not defined, but -1 is returned on failure.
    //In the future, a successful call might be required to return 0.
    if(ret == -1){
-      throw interprocess_exception(system_error_code());
+      error_info err = system_error_code();
+      throw interprocess_exception(err);
    }
 }
 
@@ -149,7 +150,8 @@ inline void semaphore_post(sem_t *handle)
 {
    int ret = sem_post(handle);
    if(ret != 0){
-      throw interprocess_exception(system_error_code());
+      error_info err = system_error_code();
+      throw interprocess_exception(err);
    }
 }
 
@@ -157,7 +159,8 @@ inline void semaphore_wait(sem_t *handle)
 {
    int ret = sem_wait(handle);
    if(ret != 0){
-      throw interprocess_exception(system_error_code());
+      error_info err = system_error_code();
+      throw interprocess_exception(err);
    }
 }
 
@@ -169,8 +172,8 @@ inline bool semaphore_try_wait(sem_t *handle)
    if(system_error_code() == EAGAIN){
       return false;
    }
-   throw interprocess_exception(system_error_code());
-   return false;
+   error_info err = system_error_code();
+   throw interprocess_exception(err);
 }
 
 #ifndef BOOST_INTERPROCESS_POSIX_TIMEOUTS
@@ -214,7 +217,8 @@ inline bool semaphore_timed_wait(sem_t *handle, const boost::posix_time::ptime &
       if(system_error_code() == ETIMEDOUT){
          return false;
       }
-      throw interprocess_exception(system_error_code());
+      error_info err = system_error_code();
+      throw interprocess_exception(err);
    }
    return false;
    #else //#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS

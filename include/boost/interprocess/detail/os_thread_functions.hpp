@@ -65,7 +65,7 @@ namespace boost {
 namespace interprocess {
 namespace ipcdetail{
 
-#if (defined BOOST_INTERPROCESS_WINDOWS)
+#if defined (BOOST_INTERPROCESS_WINDOWS)
 
 typedef unsigned long OS_process_id_t;
 typedef unsigned long OS_thread_id_t;
@@ -210,7 +210,7 @@ inline unsigned int get_num_cores()
    return static_cast<unsigned>(sysinfo.dwNumberOfProcessors);
 }
 
-#else    //#if (defined BOOST_INTERPROCESS_WINDOWS)
+#else    //#if defined (BOOST_INTERPROCESS_WINDOWS)
 
 typedef pthread_t OS_thread_t;
 typedef pthread_t OS_thread_id_t;
@@ -467,7 +467,7 @@ inline int thread_create(OS_thread_t * thread, void *(*start_routine)(void*), vo
 inline void thread_join(OS_thread_t thread)
 {  (void)pthread_join(thread, 0);  }
 
-#endif   //#if (defined BOOST_INTERPROCESS_WINDOWS)
+#endif   //#if defined (BOOST_INTERPROCESS_WINDOWS)
 
 typedef char pid_str_t[sizeof(OS_process_id_t)*3+1];
 

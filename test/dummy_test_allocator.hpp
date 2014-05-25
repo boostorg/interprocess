@@ -11,7 +11,7 @@
 #ifndef BOOST_INTERPROCESS_DUMMY_TEST_ALLOCATOR_HPP
 #define BOOST_INTERPROCESS_DUMMY_TEST_ALLOCATOR_HPP
 
-#if (defined _MSC_VER)
+#if defined (_MSC_VER)
 #  pragma once
 #endif
 
