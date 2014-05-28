@@ -6650,6 +6650,12 @@ when using the library and that path will be used to place shared memory files.
 
 [endsect]
 
+[section:boost:use_windows_h BOOST_USE_WINDOWS_H support]
+
+If `BOOST_USE_WINDOWS_H` is defined, <windows.h> and other windows SDK files are included,
+otherwise the library declares needed functions and structures to reduce the impact of including
+those heavy headers.
+
 [endsect]
 
 [section:notes_linux Notes for Linux users]
@@ -6745,6 +6751,7 @@ thank them:
    * [@https://svn.boost.org/trac/boost/ticket/9835 Trac #9835 (['"Boost Interprocess fails to compile with Android NDK GCC 4.8, -Werror=unused-variable"])].
    * [@https://svn.boost.org/trac/boost/ticket/9911 Trac #9911 (['"get_tmp_base_dir(...) failure"])].
    * [@https://svn.boost.org/trac/boost/ticket/9946 Trac #9946 (['"ret_ptr uninitialized in init_atomic_func, fini_atomic_func"])].
+   * [@https://svn.boost.org/trac/boost/ticket/10021 Trac #10021 (['"Interprocess and BOOST_USE_WINDOWS_H"])].
    * [@https://github.com/boostorg/interprocess/pull/2 GitHub #2] (['"Provide support for the Cray C++ compiler. The Cray compiler defines __GNUC__"]]).
    * [@https://github.com/boostorg/interprocess/pull/3 GitHub #3] (['"Fix/mingw interprocess_exception throw in file_wrapper::priv_open_or_create"]]).
 
@@ -6760,6 +6767,12 @@ thank them:
 
 *  Added `BOOST_INTERPROCESS_SHARED_DIR_PATH` option to define the shared directory used to place shared memory objects
    when implemented as memory mapped files.
+
+*  Added support for `BOOST_USE_WINDOWS_H`. When this macro is defined Interprocess does not declare
+   used Windows API function and types, includes all needed windows SDK headers and uses types and
+   functions declared by the Windows SDK.
+
+*  Added `get_size` to [classref ::boost:interprocess:windows_shared_memory].
 
 [endsect]
 

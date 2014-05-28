@@ -270,7 +270,7 @@ inline bool delete_subdirectories_recursive
    void *             hFile;                       // Handle to directory
    std::string        strFilePath;                 // Filepath
    std::string        strPattern;                  // Pattern
-   winapi::win32_find_data_t  FileInformation;     // File information
+   winapi::win32_find_data  FileInformation;     // File information
 
    //Find all files and directories
    strPattern = refcstrRootDirectory + "\\*.*";
@@ -338,7 +338,7 @@ template<class Function>
 inline bool for_each_file_in_dir(const char *dir, Function f)
 {
    void *             hFile;                       // Handle to directory
-   winapi::win32_find_data_t  FileInformation;     // File information
+   winapi::win32_find_data  FileInformation;     // File information
 
    //Get base directory
    std::string str(dir);
