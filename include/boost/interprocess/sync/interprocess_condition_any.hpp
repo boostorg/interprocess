@@ -48,7 +48,7 @@ namespace interprocess {
 //!
 //!Unlike std::condition_variable_any in C++11, it is NOT safe to invoke the destructor if all
 //!threads have been only notified. It is required that they have exited their respective wait
-//!functions. 
+//!functions.
 class interprocess_condition_any
 {
    /// @cond
@@ -61,7 +61,7 @@ class interprocess_condition_any
       public:
       typedef interprocess_condition   condvar_type;
       typedef interprocess_mutex       mutex_type;
-   
+
       condvar_type &get_condvar() {  return m_cond;  }
       mutex_type   &get_mutex()   {  return m_mut; }
 

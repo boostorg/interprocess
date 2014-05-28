@@ -36,7 +36,7 @@ class bad_weak_ptr
    {  return "boost::interprocess::bad_weak_ptr"; }
 };
 
-} // namespace interprocess 
+} // namespace interprocess
 } // namespace boost
 
 #include <boost/interprocess/detail/config_end.hpp>

@@ -33,12 +33,12 @@ namespace interprocess {
 /*!This class implements the simple sequential fit algorithm with a simply
    linked list of free buffers.*/
 template<class MutexFamily, class VoidPtr>
-class multi_simple_seq_fit 
+class multi_simple_seq_fit
    : public ipcdetail::simple_seq_fit_impl<MutexFamily, VoidPtr>
 {
    typedef ipcdetail::simple_seq_fit_impl<MutexFamily, VoidPtr> base_t;
  public:
-   /*!Constructor. "size" is the total size of the managed memory segment, 
+   /*!Constructor. "size" is the total size of the managed memory segment,
       "extra_hdr_bytes" indicates the extra bytes beginning in the sizeof(multi_simple_seq_fit)
       offset that the allocator should not use at all.*/
    multi_simple_seq_fit           (size_type size, size_type extra_hdr_bytes)

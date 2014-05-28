@@ -498,7 +498,7 @@ inline bool interprocess_upgradable_mutex::timed_lock_sharable
    //or there are too many sharable locks
    while (this->m_ctrl.exclusive_in
          || this->m_ctrl.num_upr_shar == constants::max_readers){
-      if(!this->m_first_gate.timed_wait(lck, abs_time)){   
+      if(!this->m_first_gate.timed_wait(lck, abs_time)){
          if(this->m_ctrl.exclusive_in
             || this->m_ctrl.num_upr_shar == constants::max_readers){
             return false;

@@ -153,7 +153,7 @@ inline OS_highres_count_t system_highres_count_subtract(const OS_highres_count_t
 {  return l - r;  }
 
 inline bool system_highres_count_less(const OS_highres_count_t &l, const OS_highres_count_t &r)
-{  return l < r;  } 
+{  return l < r;  }
 
 inline bool system_highres_count_less_ul(const OS_highres_count_t &l, unsigned long r)
 {  return l < static_cast<OS_highres_count_t>(r);  }
@@ -305,8 +305,8 @@ inline unsigned long get_system_tick_in_highres_counts()
    mach_timebase_info(&info);
             //ns
    return static_cast<unsigned long>
-   (  
-      static_cast<double>(get_system_tick_ns()) 
+   (
+      static_cast<double>(get_system_tick_ns())
          / (static_cast<double>(info.numer) / info.denom)
    );
    #endif
@@ -349,11 +349,11 @@ inline OS_highres_count_t system_highres_count_subtract(const OS_highres_count_t
    OS_highres_count_t res;
 
    if (l.tv_nsec < r.tv_nsec){
-      res.tv_nsec = 1000000000 + l.tv_nsec - r.tv_nsec;        
+      res.tv_nsec = 1000000000 + l.tv_nsec - r.tv_nsec;
       res.tv_sec  = l.tv_sec - 1 - r.tv_sec;
    }
    else{
-      res.tv_nsec = l.tv_nsec - r.tv_nsec;        
+      res.tv_nsec = l.tv_nsec - r.tv_nsec;
       res.tv_sec  = l.tv_sec - r.tv_sec;
    }
 
@@ -364,7 +364,7 @@ inline bool system_highres_count_less(const OS_highres_count_t &l, const OS_high
 {  return l.tv_sec < r.tv_sec || (l.tv_sec == r.tv_sec && l.tv_nsec < r.tv_nsec);  }
 
 inline bool system_highres_count_less_ul(const OS_highres_count_t &l, unsigned long r)
-{  return !l.tv_sec && (static_cast<unsigned long>(l.tv_nsec) < r);  } 
+{  return !l.tv_sec && (static_cast<unsigned long>(l.tv_nsec) < r);  }
 
 #else
 

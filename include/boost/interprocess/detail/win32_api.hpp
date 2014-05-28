@@ -98,7 +98,7 @@ typedef unsigned short *bstr;
 
 struct wchar_variant
 {
-   union 
+   union
    {
       struct
       {
@@ -106,7 +106,7 @@ struct wchar_variant
          unsigned short wReserved1;
          unsigned short wReserved2;
          unsigned short wReserved3;
-         union 
+         union
          {
             bstr bstrVal;
             struct
@@ -1547,7 +1547,7 @@ const char *function_address_holder<Dummy>::FunctionNames[function_address_holde
 };
 
 template<int Dummy>
-unsigned int function_address_holder<Dummy>::FunctionModules[function_address_holder<Dummy>::NumFunction] = 
+unsigned int function_address_holder<Dummy>::FunctionModules[function_address_holder<Dummy>::NumFunction] =
 {
    NtDll_dll,
    NtDll_dll,
@@ -1563,7 +1563,7 @@ unsigned int function_address_holder<Dummy>::FunctionModules[function_address_ho
 };
 
 template<int Dummy>
-const char *function_address_holder<Dummy>::ModuleNames[function_address_holder<Dummy>::NumModule] = 
+const char *function_address_holder<Dummy>::ModuleNames[function_address_holder<Dummy>::NumModule] =
 {
    "ntdll.dll",
    "kernel32.dll"
@@ -1667,7 +1667,7 @@ inline void buffer_to_wide_str(const void *buf, std::size_t length, wchar_t *str
    }
 }
 
-inline bool get_boot_and_system_time_wstr(wchar_t *bootsystemstamp, std::size_t &s) 
+inline bool get_boot_and_system_time_wstr(wchar_t *bootsystemstamp, std::size_t &s)
    //will write BootAndSystemstampLength chars
 {
    if(s < (BootAndSystemstampLength*2))
@@ -1744,7 +1744,7 @@ class nt_query_mem_deleter
    }
 
    ntquery_mem_t *query_mem() const
-   {  return static_cast<ntquery_mem_t *>(static_cast<void*>(m_buf));  }  
+   {  return static_cast<ntquery_mem_t *>(static_cast<void*>(m_buf));  }
 
    unsigned long object_name_information_size() const
    {
@@ -2197,22 +2197,22 @@ inline bool get_last_bootup_time(std::string &stamp)
    void *hEventLog = OpenEventLogA(0, source_name);
    if (hEventLog){
       eventlog_handle_closer hnd_closer(hEventLog); (void)hnd_closer;
-      // Allocate an initial block of memory used to read event records. The number 
+      // Allocate an initial block of memory used to read event records. The number
       // of records read into the buffer will vary depending on the size of each event.
       // The size of each event will vary based on the size of the user-defined
-      // data included with each event, the number and length of insertion 
+      // data included with each event, the number and length of insertion
       // strings, and other data appended to the end of the event record.
       dwBytesToRead = max_record_buffer_size;
       c_heap_deleter heap_deleter(dwBytesToRead);
 
-      // Read blocks of records until you reach the end of the log or an 
+      // Read blocks of records until you reach the end of the log or an
       // error occurs. The records are read from newest to oldest. If the buffer
       // is not big enough to hold a complete event record, reallocate the buffer.
       if (heap_deleter.get() != 0){
          while (0 == status){
-            if (!ReadEventLogA(hEventLog, 
+            if (!ReadEventLogA(hEventLog,
                   eventlog_sequential_read | eventlog_backwards_read,
-                  0, 
+                  0,
                   heap_deleter.get(),
                   dwBytesToRead,
                   &dwBytesRead,
@@ -2281,7 +2281,7 @@ inline bool get_semaphore_info(void *handle, long &count, long &limit)
    return !status;
 }
 
-inline bool query_timer_resolution(unsigned long *lowres, unsigned long *highres, unsigned long *curres) 
+inline bool query_timer_resolution(unsigned long *lowres, unsigned long *highres, unsigned long *curres)
 {
    winapi::NtQueryTimerResolution_t pNtQueryTimerResolution =
          (winapi::NtQueryTimerResolution_t)dll_func::get(winapi::dll_func::NtQueryTimerResolution);

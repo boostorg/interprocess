@@ -25,7 +25,7 @@ class internal_mutex_lock
    public:
 
    typedef typename Lock::mutex_type::internal_mutex_type  mutex_type;
-   
+
 
    internal_mutex_lock(Lock &l)
       : l_(l)

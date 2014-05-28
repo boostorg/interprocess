@@ -284,7 +284,7 @@ class offset_ptr
    template<class T2>
    offset_ptr( const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &ptr
              #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
-             , typename ipcdetail::enable_if_c< ipcdetail::is_convertible<T2*, PointedType*>::value 
+             , typename ipcdetail::enable_if_c< ipcdetail::is_convertible<T2*, PointedType*>::value
                && ipcdetail::offset_ptr_maintains_address<T2, PointedType>::value
              >::type * = 0
              #endif
@@ -404,7 +404,7 @@ class offset_ptr
 
    #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    template<class T2>
-   typename ipcdetail::enable_if_c<ipcdetail::is_convertible<T2*, PointedType*>::value 
+   typename ipcdetail::enable_if_c<ipcdetail::is_convertible<T2*, PointedType*>::value
                                    && !ipcdetail::offset_ptr_maintains_address<T2, PointedType>::value
                                  , offset_ptr&>::type
       operator= (const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &ptr)

@@ -123,7 +123,7 @@ class segment_manager_base
    /// @cond
 
    //Experimental. Dont' use.
-   //!Allocates n_elements of elem_bytes bytes. 
+   //!Allocates n_elements of elem_bytes bytes.
    //!Throws bad_alloc on failure. chain.size() is not increased on failure.
    void allocate_many(size_type elem_bytes, size_type n_elements, multiallocation_chain &chain)
    {
@@ -145,7 +145,7 @@ class segment_manager_base
       }
    }
 
-   //!Allocates n_elements of elem_bytes bytes. 
+   //!Allocates n_elements of elem_bytes bytes.
    //!Non-throwing version. chain.size() is not increased on failure.
    void allocate_many(std::nothrow_t, size_type elem_bytes, size_type n_elements, multiallocation_chain &chain)
    {  MemoryAlgorithm::allocate_many(elem_bytes, n_elements, chain); }

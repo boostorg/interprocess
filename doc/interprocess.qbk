@@ -1800,10 +1800,10 @@ To sum up:
 
 [section:upgradable_transitions Lock transitions for Upgradable Mutex]
 
-A sharable mutex has no option to change the acquired lock for another lock 
+A sharable mutex has no option to change the acquired lock for another lock
 atomically.
 
-On the other hand, for an upgradable mutex, a thread that has 
+On the other hand, for an upgradable mutex, a thread that has
 acquired a lock can try to acquire another lock type atomically.
 All lock transitions are not guaranteed to succeed. Even if a transition is guaranteed
 to succeed, some transitions will block the thread waiting until other threads release
@@ -3919,7 +3919,7 @@ There are 2 types of `allocate_many` functions:
 
 [c++]
 
-   //!Allocates n_elements of elem_bytes bytes. 
+   //!Allocates n_elements of elem_bytes bytes.
    //!Throws bad_alloc on failure. chain.size() is not increased on failure.
    void allocate_many(size_type elem_bytes, size_type n_elements, multiallocation_chain &chain);
 
@@ -3927,7 +3927,7 @@ There are 2 types of `allocate_many` functions:
    //!Throws bad_alloc on failure. chain.size() is not increased on failure.
    void allocate_many(const size_type *element_lengths, size_type n_elements, size_type sizeof_element, multiallocation_chain &chain);
 
-   //!Allocates n_elements of elem_bytes bytes. 
+   //!Allocates n_elements of elem_bytes bytes.
    //!Non-throwing version. chain.size() is not increased on failure.
    void allocate_many(std::nothrow_t, size_type elem_bytes, size_type n_elements, multiallocation_chain &chain);
 
@@ -6739,7 +6739,7 @@ thank them:
 [section:release_notes Release Notes]
 
 [section:release_notes_boost_1_56_00 Boost 1.56 Release]
-*  Fixed bugs: 
+*  Fixed bugs:
    * [@https://svn.boost.org/trac/boost/ticket/9221 Trac #9221 (['"message_queue deadlock on linux"])].
    * [@https://svn.boost.org/trac/boost/ticket/9226 Trac #9226 (['"On some computers, Common Appdata is empty in registry, so boost interprocess cannot work"])].
    * [@https://svn.boost.org/trac/boost/ticket/9284 Trac #9284 (['"WaitForSingleObject(mutex) must handle WAIT_ABANDONED"])].

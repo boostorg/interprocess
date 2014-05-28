@@ -250,7 +250,7 @@ class priority_functor
 //!   if two messages have the same priority. So the next message to be
 //!   used in a "receive" is pointed by index [(cur_first_msg + cur_num_msg-1)%max_num_msg]
 //!   and the first free message ready to be used in a "send" operation is
-//!   [cur_first_msg] if circular buffer is extended from front, 
+//!   [cur_first_msg] if circular buffer is extended from front,
 //!   [(cur_first_msg + cur_num_msg)%max_num_msg] otherwise.
 //!
 //!   This transforms the index in a circular buffer with an embedded free
@@ -356,7 +356,7 @@ class mq_hdr_t
       iterator begin(this->inserted_ptr_begin()), end(this->inserted_ptr_end());
       if(end < begin){
          iterator idx_end = &mp_index[m_max_num_msg];
-         iterator ret = std::lower_bound(begin, idx_end, value, func); 
+         iterator ret = std::lower_bound(begin, idx_end, value, func);
          if(idx_end == ret){
             iterator idx_beg = &mp_index[0];
             ret = std::lower_bound(idx_beg, end, value, func);

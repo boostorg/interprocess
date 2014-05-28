@@ -186,7 +186,7 @@ class mapped_region
 
    //!This enum specifies region usage behaviors that an application can specify
    //!to the mapped region implementation.
-   enum advice_types{ 
+   enum advice_types{
       //!Specifies that the application has no advice to give on its behavior with respect to
       //!the region. It is the default characteristic if no advice is given for a range of memory.
       advice_normal,
@@ -520,7 +520,7 @@ inline bool mapped_region::shrink_by(std::size_t bytes, bool from_back)
    }
    else if(shrink_page_bytes){
       //In Windows, we can't decommit the storage or release the virtual address space,
-      //the best we can do is try to remove some memory from the process working set. 
+      //the best we can do is try to remove some memory from the process working set.
       //With a bit of luck we can free some physical memory.
       unsigned long old_protect_ignored;
       bool b_ret = winapi::virtual_unlock(shrink_page_start, shrink_page_bytes)

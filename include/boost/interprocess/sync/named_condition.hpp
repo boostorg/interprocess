@@ -177,7 +177,7 @@ inline bool named_condition::timed_wait
 template <typename L, typename Pr>
 inline bool named_condition::timed_wait
    (L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
-{  
+{
    ipcdetail::internal_mutex_lock<L> internal_lock(lock);
    return m_cond.timed_wait(internal_lock, abs_time, pred);
 }

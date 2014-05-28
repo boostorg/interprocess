@@ -157,7 +157,7 @@ class shm_named_condition_any
       public:
       typedef interprocess_mutex       mutex_type;
       typedef interprocess_condition   condvar_type;
-  
+
       condvar_type&  get_condvar() {  return m_cond;  }
       mutex_type&    get_mutex()   {  return m_mtx; }
 

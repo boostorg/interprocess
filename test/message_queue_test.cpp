@@ -281,7 +281,7 @@ static boost::interprocess::message_queue *global_queue = 0;
 static const int MULTI_NUM_MSG_PER_SENDER = 10000;
 //Message queue message capacity
 static const int MULTI_QUEUE_SIZE = (MULTI_NUM_MSG_PER_SENDER - 1)/MULTI_NUM_MSG_PER_SENDER + 1;
-//We'll launch MULTI_THREAD_COUNT senders and MULTI_THREAD_COUNT receivers 
+//We'll launch MULTI_THREAD_COUNT senders and MULTI_THREAD_COUNT receivers
 static const int MULTI_THREAD_COUNT = 10;
 
 static void multisend()
