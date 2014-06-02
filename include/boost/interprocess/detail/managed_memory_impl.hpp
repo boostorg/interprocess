@@ -609,7 +609,7 @@ class basic_managed_memory_impl
    {  mp_header->template destroy_ptr<T>(ptr); }
 
    //!Returns the name of an object created with construct/find_or_construct
-   //!functions. Does not throw
+   //!functions. If ptr points to an unique instance typeid(T).name() is returned.
    template<class T>
    static const char_type *get_instance_name(const T *ptr)
    {  return segment_manager::get_instance_name(ptr);   }
