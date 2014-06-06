@@ -378,10 +378,8 @@ bool test_segment_manager()
       if(!seg_mgr->all_memory_deallocated())
          return false;
       typedef typename SegmentManager::template allocator<float>::type allocator_t;
-      typedef typename SegmentManager::template deleter<float>::type   deleter_t;
 
       allocator_t alloc(seg_mgr->template get_allocator<float>());
-      deleter_t   delet(seg_mgr->template get_deleter<float>());
 
       if(!seg_mgr->all_memory_deallocated())
          return false;
@@ -389,6 +387,11 @@ bool test_segment_manager()
       if(seg_mgr->all_memory_deallocated())
          return false;
       alloc.deallocate(f, 50);
+      if(!seg_mgr->all_memory_deallocated())
+         return false;
+      typedef typename SegmentManager::template deleter<float>::type deleter_t;
+      deleter_t delet(seg_mgr->template get_deleter<float>());
+      delet(seg_mgr->template construct<float>(anonymous_instance)());
       if(!seg_mgr->all_memory_deallocated())
          return false;
    }

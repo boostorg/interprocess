@@ -80,12 +80,11 @@ class simple_seq_fit_impl
 
    private:
    class block_ctrl;
+   friend class block_ctrl;
+
    typedef typename boost::intrusive::
       pointer_traits<VoidPointer>::template
          rebind_pointer<block_ctrl>::type                   block_ctrl_ptr;
-
-   class block_ctrl;
-   friend class block_ctrl;
 
    //!Block control structure
    class block_ctrl
