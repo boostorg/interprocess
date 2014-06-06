@@ -70,8 +70,10 @@ struct GUID_BIPC
    unsigned char  Data4[8];
 };
 
+#if defined(_MSC_VER)
 #pragma warning (push)
 #pragma warning (disable : 4201) // nonstandard extension used
+#endif
 
 struct decimal
 {
@@ -120,7 +122,9 @@ struct wchar_variant
    };
 };
 
+#if defined(_MSC_VER)
 #pragma warning (pop)
+#endif
 
 
 
