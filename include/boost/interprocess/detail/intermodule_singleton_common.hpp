@@ -123,7 +123,8 @@ class intermodule_singleton_common
                //Now try to create the singleton in global map.
                //This function solves concurrency issues
                //between threads of several modules
-               void *tmp = constructor(get_map());
+               ThreadSafeGlobalMap *const pmap = get_map_ptr();
+               void *tmp = constructor(*pmap);
                //Increment the module reference count that reflects how many
                //singletons this module holds, so that we can safely destroy
                //module global map object when no singleton is left
@@ -181,7 +182,8 @@ class intermodule_singleton_common
          //Note: this destructor might provoke a Phoenix singleton
          //resurrection. This means that this_module_singleton_count
          //might change after this call.
-         destructor(ptr, get_map());
+         ThreadSafeGlobalMap * const pmap = get_map_ptr();
+         destructor(ptr, *pmap);
          ptr = 0;
 
          //Memory barrier to make sure pointer is nulled.
@@ -200,9 +202,9 @@ class intermodule_singleton_common
    }
 
    private:
-   static ThreadSafeGlobalMap &get_map()
+   static ThreadSafeGlobalMap *get_map_ptr()
    {
-      return *static_cast<ThreadSafeGlobalMap *>(static_cast<void *>(&mem_holder.map_mem[0]));
+      return static_cast<ThreadSafeGlobalMap *>(static_cast<void*>(mem_holder.map_mem));
    }
 
    static void initialize_global_map_handle()
@@ -229,16 +231,17 @@ class intermodule_singleton_common
                //Remove old global map from the system
                intermodule_singleton_helpers::thread_safe_global_map_dependant<ThreadSafeGlobalMap>::remove_old_gmem();
                //in-place construction of the global map class
+               ThreadSafeGlobalMap * const pmap = get_map_ptr();
                intermodule_singleton_helpers::thread_safe_global_map_dependant
-                  <ThreadSafeGlobalMap>::construct_map(static_cast<void*>(&get_map()));
+                  <ThreadSafeGlobalMap>::construct_map(static_cast<void*>(pmap));
                //Use global map's internal lock to initialize the lock file
                //that will mark this gmem as "in use".
                typename intermodule_singleton_helpers::thread_safe_global_map_dependant<ThreadSafeGlobalMap>::
-                  lock_file_logic f(get_map());
+                  lock_file_logic f(*pmap);
                //If function failed (maybe a competing process has erased the shared
                //memory between creation and file locking), retry with a new instance.
                if(f.retry()){
-                  get_map().~ThreadSafeGlobalMap();
+                  pmap->~ThreadSafeGlobalMap();
                   atomic_write32(&this_module_map_initialized, Destroyed);
                }
                else{
@@ -261,9 +264,10 @@ class intermodule_singleton_common
          //This module is being unloaded, so destroy
          //the global map object of this module
          //and unlink the global map if it's the last
+         ThreadSafeGlobalMap * const pmap = get_map_ptr();
          typename intermodule_singleton_helpers::thread_safe_global_map_dependant<ThreadSafeGlobalMap>::
-            unlink_map_logic f(get_map());
-         (get_map()).~ThreadSafeGlobalMap();
+            unlink_map_logic f(*pmap);
+         pmap->~ThreadSafeGlobalMap();
          atomic_write32(&this_module_map_initialized, Destroyed);
          //Do some cleanup for other processes old gmem instances
          intermodule_singleton_helpers::thread_safe_global_map_dependant<ThreadSafeGlobalMap>::remove_old_gmem();
@@ -279,10 +283,10 @@ class intermodule_singleton_common
    static volatile boost::uint32_t this_module_map_initialized;
 
    //Raw memory to construct the global map manager
-   static struct mem_holder_t
+   static union mem_holder_t
    {
+      unsigned char map_mem [sizeof(ThreadSafeGlobalMap)];
       ::boost::detail::max_align aligner;
-      char map_mem [sizeof(ThreadSafeGlobalMap)];
    } mem_holder;
 };
 
