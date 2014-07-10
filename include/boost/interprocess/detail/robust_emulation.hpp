@@ -23,6 +23,7 @@
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/shared_dir_helpers.hpp>
 #include <boost/interprocess/detail/intermodule_singleton.hpp>
+#include <boost/interprocess/detail/portable_intermodule_singleton.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/sync/spin/wait.hpp>
 #include <boost/interprocess/sync/detail/common_algorithms.hpp>

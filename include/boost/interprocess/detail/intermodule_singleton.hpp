@@ -20,8 +20,9 @@
 
 #ifdef BOOST_INTERPROCESS_WINDOWS
    #include <boost/interprocess/detail/windows_intermodule_singleton.hpp>
+#else
+   #include <boost/interprocess/detail/portable_intermodule_singleton.hpp>
 #endif
-#include <boost/interprocess/detail/portable_intermodule_singleton.hpp>
 
 namespace boost{
 namespace interprocess{

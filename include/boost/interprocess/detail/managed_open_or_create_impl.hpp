@@ -310,7 +310,6 @@ class managed_open_or_create_impl
    {
       typedef bool_<FileBased> file_like_t;
       (void)mode;
-      error_info err;
       bool created = false;
       bool ronly   = false;
       bool cow     = false;

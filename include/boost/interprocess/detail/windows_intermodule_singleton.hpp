@@ -29,7 +29,7 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/cstdint.hpp>
 #include <string>
-#include <map>
+#include <boost/container/map.hpp>
 
 namespace boost{
 namespace interprocess{
@@ -49,7 +49,7 @@ namespace intermodule_singleton_helpers {
 //    max and current semaphore count.
 class windows_semaphore_based_map
 {
-   typedef std::map<std::string, ref_count_ptr> map_type;
+   typedef boost::container::map<std::string, ref_count_ptr> map_type;
 
    public:
    windows_semaphore_based_map()
