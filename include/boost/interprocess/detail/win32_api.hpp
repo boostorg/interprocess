@@ -624,6 +624,12 @@ typedef hinstance_struct *hmodule;
 struct hkey_struct;
 typedef hkey_struct *hkey;
 
+#ifdef _WIN64
+typedef __int64 (__stdcall *farproc_t)();
+#else
+typedef int     (__stdcall *farproc_t)();
+#endif  // _WIN64
+
 #else    //#ifndef BOOST_USE_WINDOWS_H
 
 typedef GUID GUID_BIPC;
@@ -666,6 +672,8 @@ typedef HMODULE hmodule;
 typedef HKEY hkey;
 
 typedef BSTR bstr;
+
+typedef FARPROC farproc_t;
 
 #endif   //#ifndef BOOST_USE_WINDOWS_H
 
@@ -896,7 +904,7 @@ extern "C" __declspec(dllimport) int __stdcall InitializeSecurityDescriptor(inte
 extern "C" __declspec(dllimport) int __stdcall SetSecurityDescriptorDacl(interprocess_security_descriptor *pSecurityDescriptor, int bDaclPresent, interprocess_acl *pDacl, int bDaclDefaulted);
 extern "C" __declspec(dllimport) hmodule __stdcall LoadLibraryA(const char *);
 extern "C" __declspec(dllimport) int   __stdcall FreeLibrary(hmodule);
-extern "C" __declspec(dllimport) void *__stdcall GetProcAddress(void *, const char*);
+extern "C" __declspec(dllimport) farproc_t __stdcall GetProcAddress(void *, const char*);
 extern "C" __declspec(dllimport) hmodule __stdcall GetModuleHandleA(const char*);
 extern "C" __declspec(dllimport) void *__stdcall GetFileInformationByHandle(void *, interprocess_by_handle_file_information*);
 
@@ -1412,7 +1420,7 @@ inline hmodule load_library(const char *name)
 inline bool free_library(hmodule module)
 {  return 0 != FreeLibrary(module); }
 
-inline void *get_proc_address(hmodule module, const char *name)
+inline farproc_t get_proc_address(hmodule module, const char *name)
 {  return GetProcAddress(module, name); }
 
 inline void *get_current_process()
@@ -1472,7 +1480,7 @@ struct function_address_holder
    private:
    static const char *FunctionNames[NumFunction];
    static const char *ModuleNames[NumModule];
-   static void *FunctionAddresses[NumFunction];
+   static farproc_t FunctionAddresses[NumFunction];
    static unsigned int FunctionModules[NumFunction];
    static volatile long FunctionStates[NumFunction];
    static hmodule ModuleAddresses[NumModule];
@@ -1505,10 +1513,10 @@ struct function_address_holder
       return ModuleAddresses[id];
    }
 
-   static void *get_address_from_dll(const unsigned int id)
+   static farproc_t get_address_from_dll(const unsigned int id)
    {
       BOOST_ASSERT(id < (unsigned int)NumFunction);
-      void *addr = get_proc_address(get_module(FunctionModules[id]), FunctionNames[id]);
+      farproc_t addr = get_proc_address(get_module(FunctionModules[id]), FunctionNames[id]);
       BOOST_ASSERT(addr);
       return addr;
    }
@@ -1575,7 +1583,7 @@ const char *function_address_holder<Dummy>::ModuleNames[function_address_holder<
 
 
 template<int Dummy>
-void *function_address_holder<Dummy>::FunctionAddresses[function_address_holder<Dummy>::NumFunction];
+farproc_t function_address_holder<Dummy>::FunctionAddresses[function_address_holder<Dummy>::NumFunction];
 
 template<int Dummy>
 volatile long function_address_holder<Dummy>::FunctionStates[function_address_holder<Dummy>::NumFunction];
