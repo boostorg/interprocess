@@ -142,14 +142,29 @@ bool test_segment_manager()
       //Mark memory to non-zero
       std::memset(mem,  0xFF, Size);
       std::memset(mem2, 0xFF, Size2);
-      static unsigned char zerobuf[Size];
       //Deallocate and check still non-zero
       seg_mgr->deallocate(mem);
       seg_mgr->deallocate(mem2);
-      if(!std::memcmp(mem,  zerobuf, Size))
-         return false;
-      if(!std::memcmp(mem2, zerobuf, Size2))
-         return false;
+      {  //Use byte per byte comparison as "static unsigned char zerobuf[Size]"
+         //seems to be problematic in some compilers
+         unsigned char *const mem_uch_ptr  = static_cast<unsigned char *>(mem);
+         unsigned char *const mem2_uch_ptr = static_cast<unsigned char *>(mem2);
+         size_type zeroes = 0;
+         for(size_type i = 0; i != Size; ++i){
+            if(!mem_uch_ptr[i])
+               ++zeroes;
+         }
+         if(zeroes == Size)
+            return false;
+
+         zeroes = 0;
+         for(size_type i = 0; i != Size2; ++i){
+            if(!mem2_uch_ptr[i])
+               ++zeroes;
+         }
+         if(zeroes == Size2)
+            return false;
+      }
       //zero_free_memory and check it's zeroed
       seg_mgr->zero_free_memory();
       //TODO: some parts are not zeroed because they are used
