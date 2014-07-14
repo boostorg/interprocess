@@ -17,6 +17,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/container/string.hpp>
 
 #if !defined(BOOST_INTERPROCESS_WINDOWS)
    #error "This header can't be included from non-windows operating systems"
@@ -49,7 +50,7 @@ namespace intermodule_singleton_helpers {
 //    max and current semaphore count.
 class windows_semaphore_based_map
 {
-   typedef boost::container::map<std::string, ref_count_ptr> map_type;
+   typedef boost::container::map<boost::container::string, ref_count_ptr> map_type;
 
    public:
    windows_semaphore_based_map()
@@ -182,7 +183,7 @@ class windows_semaphore_based_map
    {
       scoped_lock<winapi_mutex_wrapper> lck(m_mtx_lock);
       map_type &map = this->get_map_unlocked();
-      map_type::iterator it = map.find(std::string(name));
+      map_type::iterator it = map.find(boost::container::string(name));
       if(it != map.end()){
          return &it->second;
       }
@@ -195,7 +196,7 @@ class windows_semaphore_based_map
    {
       scoped_lock<winapi_mutex_wrapper> lck(m_mtx_lock);
       map_type &map = this->get_map_unlocked();
-      map_type::iterator it = map.insert(map_type::value_type(std::string(name), ref)).first;
+      map_type::iterator it = map.insert(map_type::value_type(boost::container::string(name), ref)).first;
       return &it->second;
    }
 
@@ -203,7 +204,7 @@ class windows_semaphore_based_map
    {
       scoped_lock<winapi_mutex_wrapper> lck(m_mtx_lock);
       map_type &map = this->get_map_unlocked();
-      return map.erase(std::string(name)) != 0;
+      return map.erase(boost::container::string(name)) != 0;
    }
 
    template<class F>
@@ -290,7 +291,7 @@ struct thread_safe_global_map_dependant<windows_semaphore_based_map>
 
 }  //namespace intermodule_singleton_helpers {
 
-template<typename C, bool LazyInit = true, bool Phoenix = true>
+template<typename C, bool LazyInit = true, bool Phoenix = false>
 class windows_intermodule_singleton
    : public intermodule_singleton_impl
       < C

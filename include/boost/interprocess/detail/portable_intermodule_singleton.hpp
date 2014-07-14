@@ -343,7 +343,7 @@ struct thread_safe_global_map_dependant<managed_global_memory>
 
 }  //namespace intermodule_singleton_helpers {
 
-template<typename C, bool LazyInit = true, bool Phoenix = true>
+template<typename C, bool LazyInit = true, bool Phoenix = false>
 class portable_intermodule_singleton
    : public intermodule_singleton_impl<C, LazyInit, Phoenix, managed_global_memory>
 {};

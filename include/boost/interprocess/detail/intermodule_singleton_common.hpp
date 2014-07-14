@@ -364,9 +364,9 @@ class intermodule_singleton_impl
 
       ~lifetime_type_lazy()
       {
-         if(!Phoenix){
-            atexit_work();
-         }
+         //if(!Phoenix){
+            //atexit_work();
+         //}
       }
 
       //Dummy volatile so that the compiler can't resolve its value at compile-time
@@ -413,9 +413,9 @@ class intermodule_singleton_impl
                throw;
             }
          }
-         if(Phoenix){
+         //if(Phoenix){
             std::atexit(&atexit_work);
-         }
+         //}
          atomic_inc32(&rcount->singleton_ref_count);
          ret_ptr = rcount->ptr;
       }
