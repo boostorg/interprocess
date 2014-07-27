@@ -6753,6 +6753,7 @@ thank them:
    * [@https://svn.boost.org/trac/boost/ticket/9946 Trac #9946 (['"ret_ptr uninitialized in init_atomic_func, fini_atomic_func"])].
    * [@https://svn.boost.org/trac/boost/ticket/10011 Trac #10011 (['"segment_manager::find( unique_instance_t* ) fails to compile"])].
    * [@https://svn.boost.org/trac/boost/ticket/10021 Trac #10021 (['"Interprocess and BOOST_USE_WINDOWS_H"])].
+   * [@https://svn.boost.org/trac/boost/ticket/10230 Trac #10230 (['"No Sleep in interprocess::winapi"])].
    * [@https://github.com/boostorg/interprocess/pull/2 GitHub #2] (['"Provide support for the Cray C++ compiler. The Cray compiler defines __GNUC__"]]).
    * [@https://github.com/boostorg/interprocess/pull/3 GitHub #3] (['"Fix/mingw interprocess_exception throw in file_wrapper::priv_open_or_create"]]).
 
