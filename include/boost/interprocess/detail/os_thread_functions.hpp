@@ -165,7 +165,7 @@ inline void thread_yield()
 {  winapi::sched_yield();  }
 
 inline void thread_sleep(unsigned int ms)
-{  winapi::Sleep(ms);  }
+{  winapi::sleep(ms);  }
 
 //systemwide thread
 inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
