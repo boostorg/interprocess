@@ -286,11 +286,11 @@ typedef unsigned long long OS_highres_count_t;
 inline unsigned long get_system_tick_ns()
 {
    #ifdef _SC_CLK_TCK
-   long hz =::sysconf(_SC_CLK_TCK); // ticks per sec
-   if(hz <= 0){   //Try a typical value on error
-      hz = 100;
+   long ticks_per_second =::sysconf(_SC_CLK_TCK); // ticks per sec
+   if(ticks_per_second <= 0){   //Try a typical value on error
+      ticks_per_second = 100;
    }
-   return 999999999ul/static_cast<unsigned long>(hz)+1ul;
+   return 999999999ul/static_cast<unsigned long>(ticks_per_second)+1ul;
    #else
       #error "Can't obtain system tick value for your system, please provide a patch"
    #endif
