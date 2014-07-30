@@ -34,7 +34,7 @@ namespace boost {
 namespace interprocess {
 
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 namespace ipcdetail {
 
@@ -86,14 +86,14 @@ class cached_node_allocator_v1
 
 }  //namespace ipcdetail{
 
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 template < class T
          , class SegmentManager
          , std::size_t NodesPerBlock
          >
 class cached_node_allocator
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    :  public ipcdetail::cached_allocator_impl
          < T
          , ipcdetail::shared_node_pool
@@ -102,7 +102,7 @@ class cached_node_allocator
             , NodesPerBlock
             >
          , 2>
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 {
 
    #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED

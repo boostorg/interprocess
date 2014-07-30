@@ -35,7 +35,7 @@
 namespace boost {
 namespace interprocess {
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 namespace ipcdetail{
 
@@ -53,7 +53,7 @@ namespace ipcdetail{
    };
 }
 
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 //!A function that creates an anonymous shared memory segment of size "size".
 //!If "address" is passed the function will try to map the segment in that address.

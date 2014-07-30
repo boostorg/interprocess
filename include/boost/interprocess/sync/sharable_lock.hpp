@@ -51,13 +51,13 @@ class sharable_lock
 {
    public:
    typedef SharableMutex mutex_type;
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    typedef sharable_lock<SharableMutex> this_type;
    explicit sharable_lock(scoped_lock<mutex_type>&);
    typedef bool this_type::*unspecified_bool_type;
    BOOST_MOVABLE_BUT_NOT_COPYABLE(sharable_lock)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    public:
 
    //!Effects: Default constructs a sharable_lock.
@@ -290,11 +290,11 @@ class sharable_lock
       std::swap(m_locked, other.m_locked);
    }
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    mutex_type *mp_mutex;
    bool        m_locked;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 } // namespace interprocess

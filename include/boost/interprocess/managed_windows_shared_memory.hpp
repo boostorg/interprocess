@@ -65,7 +65,7 @@ class basic_managed_windows_shared_memory
       < CharType, AllocationAlgorithm, IndexType
       , ipcdetail::wshmem_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    typedef ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType,
@@ -78,7 +78,7 @@ class basic_managed_windows_shared_memory
    private:
    typedef typename base_t::char_ptr_holder_t   char_ptr_holder_t;
    BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_windows_shared_memory)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public: //functions
    typedef typename base_t::size_type              size_type;
@@ -170,7 +170,7 @@ class basic_managed_windows_shared_memory
       m_wshm.swap(other.m_wshm);
    }
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //!Tries to find a previous named allocation address. Returns a memory
    //!buffer and the object count. If not found returned pointer is 0.
@@ -188,7 +188,7 @@ class basic_managed_windows_shared_memory
 
    private:
    typename ipcdetail::wshmem_open_or_create<AllocationAlgorithm>::type m_wshm;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 }  //namespace interprocess {

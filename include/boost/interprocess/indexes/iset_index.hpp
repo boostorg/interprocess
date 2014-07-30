@@ -28,7 +28,7 @@
 namespace boost {
 namespace interprocess {
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 //!Helper class to define typedefs from IndexTraits
 template <class MapConfig>
@@ -52,7 +52,7 @@ struct iset_index_aux
       , bi::base_hook<derivation_hook>
       >::type                                                  index_t;
 };
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 //!Index type based in boost::intrusive::set.
 //!Just derives from boost::intrusive::set
@@ -62,13 +62,13 @@ class iset_index
    //Derive class from map specialization
    :  public iset_index_aux<MapConfig>::index_t
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    typedef iset_index_aux<MapConfig>                     index_aux;
    typedef typename index_aux::index_t                   index_type;
    typedef typename MapConfig::
       intrusive_compare_key_type                         intrusive_compare_key_type;
    typedef typename MapConfig::char_type                 char_type;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    typedef typename index_type::iterator                 iterator;
@@ -76,7 +76,7 @@ class iset_index
    typedef typename index_type::insert_commit_data       insert_commit_data;
    typedef typename index_type::value_type               value_type;
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
 
    struct intrusive_key_value_less
@@ -100,7 +100,7 @@ class iset_index
       }
    };
 
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
 
@@ -130,7 +130,7 @@ class iset_index
    {  return index_type::insert_check(key, intrusive_key_value_less(), commit_data); }
 };
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 //!Trait class to detect if an index is an intrusive
 //!index.
@@ -140,7 +140,7 @@ struct is_intrusive_index
 {
    static const bool value = true;
 };
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 }  //namespace interprocess {
 }  //namespace boost

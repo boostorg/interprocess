@@ -57,7 +57,7 @@ class basic_managed_mapped_file
       <CharType, AllocationAlgorithm, IndexType
       ,ipcdetail::mfile_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    public:
    typedef ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType,
@@ -75,7 +75,7 @@ class basic_managed_mapped_file
    private:
    typedef typename base_t::char_ptr_holder_t   char_ptr_holder_t;
    BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_mapped_file)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public: //functions
 
@@ -192,7 +192,7 @@ class basic_managed_mapped_file
          <basic_managed_mapped_file>(filename);
    }
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //!Tries to find a previous named allocation address. Returns a memory
    //!buffer and the object count. If not found returned pointer is 0.
@@ -210,7 +210,7 @@ class basic_managed_mapped_file
 
    private:
    typename ipcdetail::mfile_open_or_create<AllocationAlgorithm>::type m_mfile;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 }  //namespace interprocess {

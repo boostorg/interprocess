@@ -32,9 +32,9 @@ namespace interprocess {
 //!create mapped regions from the mapped files
 class file_mapping
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    BOOST_MOVABLE_BUT_NOT_COPYABLE(file_mapping)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    //!Constructs an empty file mapping.
@@ -91,14 +91,14 @@ class file_mapping
    //!being used other processes and no deletion permission was shared.
    static bool remove(const char *filename);
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    //!Closes a previously opened file mapping. Never throws.
    void priv_close();
    file_handle_t  m_handle;
    mode_t         m_mode;
    std::string    m_filename;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 inline file_mapping::file_mapping()
@@ -150,7 +150,7 @@ inline file_mapping::file_mapping
 inline bool file_mapping::remove(const char *filename)
 {  return ipcdetail::delete_file(filename);  }
 
-///@cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 inline void file_mapping::priv_close()
 {
@@ -160,7 +160,7 @@ inline void file_mapping::priv_close()
    }
 }
 
-///@endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 //!A class that stores the name of a file
 //!and tries to remove it in its destructor

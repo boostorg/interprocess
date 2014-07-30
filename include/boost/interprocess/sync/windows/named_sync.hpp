@@ -47,12 +47,12 @@ inline windows_named_sync_interface::~windows_named_sync_interface()
 
 class windows_named_sync
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //Non-copyable
    windows_named_sync(const windows_named_sync &);
    windows_named_sync &operator=(const windows_named_sync &);
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    windows_named_sync();
@@ -61,11 +61,11 @@ class windows_named_sync
 
    static bool remove(const char *name);
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    void *m_file_hnd;
 
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 inline windows_named_sync::windows_named_sync()

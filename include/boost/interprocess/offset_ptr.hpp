@@ -45,7 +45,7 @@ struct has_trivial_destructor;
 
 namespace interprocess {
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 namespace ipcdetail {
 
    template<class OffsetType, std::size_t OffsetAlignment>
@@ -219,7 +219,7 @@ namespace ipcdetail {
    };
 
 }  //namespace ipcdetail {
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 //!A smart pointer that stores the offset between between the pointer and the
 //!the object it points. This allows offset allows special properties, since
@@ -230,11 +230,11 @@ namespace ipcdetail {
 template <class PointedType, class DifferenceType, class OffsetType, std::size_t OffsetAlignment>
 class offset_ptr
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    typedef offset_ptr<PointedType, DifferenceType, OffsetType, OffsetAlignment>   self_t;
    void unspecified_bool_type_func() const {}
    typedef void (self_t::*unspecified_bool_type)() const;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    typedef PointedType                       element_type;
@@ -564,7 +564,7 @@ class offset_ptr
    }
 
    private:
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    void inc_offset(DifferenceType bytes)
    {  internal.m_offset += bytes;   }
 
@@ -572,7 +572,7 @@ class offset_ptr
    {  internal.m_offset -= bytes;   }
 
    ipcdetail::offset_ptr_internal<OffsetType, OffsetAlignment> internal;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 //!operator<<
@@ -627,7 +627,7 @@ inline boost::interprocess::offset_ptr<T1, P1, O1, A1>
 
 }  //namespace interprocess {
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 //!has_trivial_constructor<> == true_type specialization for optimizations
 template <class T, class P, class O, std::size_t A>
@@ -655,10 +655,10 @@ inline T * to_raw_pointer(boost::interprocess::offset_ptr<T, P, O, A> const & p)
 }  //namespace interprocess
 
 
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 }  //namespace boost {
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 namespace boost{
 
@@ -731,7 +731,7 @@ struct pointer_to_other
 };
 
 }  //namespace boost{
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 #include <boost/interprocess/detail/config_end.hpp>
 

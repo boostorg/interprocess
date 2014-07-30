@@ -62,7 +62,7 @@ class basic_managed_xsi_shared_memory
       ,ipcdetail::xsishmem_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>
    , private ipcdetail::xsishmem_open_or_create<AllocationAlgorithm>::type
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    public:
    typedef xsi_shared_memory_file_wrapper device_type;
 
@@ -80,7 +80,7 @@ class basic_managed_xsi_shared_memory
    private:
    typedef typename base_t::char_ptr_holder_t   char_ptr_holder_t;
    BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_xsi_shared_memory)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public: //functions
    typedef typename base_t::size_type              size_type;
@@ -177,7 +177,7 @@ class basic_managed_xsi_shared_memory
    int get_shmid() const
    {  return base2_t::get_device().get_shmid(); }
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //!Tries to find a previous named allocation address. Returns a memory
    //!buffer and the object count. If not found returned pointer is 0.
@@ -193,7 +193,7 @@ class basic_managed_xsi_shared_memory
       }
    }
 
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 }  //namespace interprocess {

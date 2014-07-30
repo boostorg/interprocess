@@ -15,7 +15,7 @@
 #  pragma once
 #endif
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
@@ -26,7 +26,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/sync/detail/condition_any_algorithm.hpp>
 
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 //!\file
 //!Describes process-shared variables interprocess_condition_any class
@@ -51,7 +51,7 @@ namespace interprocess {
 //!functions.
 class interprocess_condition_any
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    //Non-copyable
    interprocess_condition_any(const interprocess_condition_any &);
    interprocess_condition_any &operator=(const interprocess_condition_any &);
@@ -72,7 +72,7 @@ class interprocess_condition_any
 
    ipcdetail::condition_any_wrapper<members>   m_cond;
 
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    public:
    //!Constructs a interprocess_condition_any. On error throws interprocess_exception.
    interprocess_condition_any(){}

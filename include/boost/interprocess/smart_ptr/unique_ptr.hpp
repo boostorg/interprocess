@@ -35,7 +35,7 @@
 namespace boost{
 namespace interprocess{
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 template <class T, class D> class unique_ptr;
 
 namespace ipcdetail {
@@ -49,7 +49,7 @@ struct unique_ptr_error<const unique_ptr<T, D> >
 };
 
 }  //namespace ipcdetail {
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 //!Template unique_ptr stores a pointer to an object and deletes that object
 //!using the associated deleter when it is itself destroyed (such as when
@@ -81,13 +81,13 @@ struct unique_ptr_error<const unique_ptr<T, D> >
 template <class T, class D>
 class unique_ptr
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    struct nat  {int for_bool;};
    struct nat2 {int for_nullptr;};
    typedef int nat2::*nullptr_t;
    typedef typename ipcdetail::add_reference<D>::type deleter_reference;
    typedef typename ipcdetail::add_reference<const D>::type deleter_const_reference;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
 
@@ -324,7 +324,7 @@ class unique_ptr
    void swap(unique_ptr& u)
    {  ptr_.swap(u.ptr_);   }
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    boost::compressed_pair<pointer, D> ptr_;
    BOOST_MOVABLE_BUT_NOT_COPYABLE(unique_ptr)
@@ -333,7 +333,7 @@ class unique_ptr
 
    template <class U, class E> unique_ptr& operator=(unique_ptr<U, E>&);
    template <class U> typename ipcdetail::unique_ptr_error<U>::type operator=(U&);
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 /*
 template <class T, class D>

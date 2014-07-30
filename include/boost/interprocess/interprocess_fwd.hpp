@@ -24,7 +24,7 @@
 //                        Standard predeclarations
 //////////////////////////////////////////////////////////////////////////////
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 namespace boost{
 namespace intrusive{
@@ -41,7 +41,7 @@ namespace bi = boost::intrusive;
 #include <iosfwd>
 #include <string>
 
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 namespace boost { namespace interprocess {
 

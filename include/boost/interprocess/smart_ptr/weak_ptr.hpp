@@ -50,7 +50,7 @@ namespace interprocess{
 template<class T, class A, class D>
 class weak_ptr
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    // Borland 5.5.1 specific workarounds
    typedef weak_ptr<T, A, D> this_type;
@@ -61,7 +61,7 @@ class weak_ptr
                      <T>::type            reference;
    typedef typename ipcdetail::add_reference
                      <T>::type            const_reference;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    typedef T element_type;
@@ -195,7 +195,7 @@ class weak_ptr
    void swap(this_type & other) // never throws
    {  ipcdetail::do_swap(m_pn, other.m_pn);   }
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    template<class T2, class A2, class D2>
    bool _internal_less(weak_ptr<T2, A2, D2> const & rhs) const
    {  return m_pn < rhs.m_pn;  }
@@ -213,7 +213,7 @@ class weak_ptr
    template<class T2, class A2, class D2> friend class weak_ptr;
 
    ipcdetail::weak_count<T, A, D> m_pn;      // reference counter
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };  // weak_ptr
 
 template<class T, class A, class D, class U, class A2, class D2> inline

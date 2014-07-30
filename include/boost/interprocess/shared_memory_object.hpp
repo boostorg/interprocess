@@ -51,10 +51,10 @@ namespace interprocess {
 //!create mapped regions from the mapped files
 class shared_memory_object
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    //Non-copyable and non-assignable
    BOOST_MOVABLE_BUT_NOT_COPYABLE(shared_memory_object)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    //!Default constructor. Represents an empty shared_memory_object.
@@ -126,22 +126,22 @@ class shared_memory_object
    //!Returns mapping handle. Never throws.
    mapping_handle_t get_mapping_handle() const;
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
 
    //!Closes a previously opened file mapping. Never throws.
    void priv_close();
 
-   //!Closes a previously opened file mapping. Never throws.
+   //!Opens or creates a shared memory object.
    bool priv_open_or_create(ipcdetail::create_enum_t type, const char *filename, mode_t mode, const permissions &perm);
 
    file_handle_t  m_handle;
    mode_t         m_mode;
    std::string    m_filename;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 inline shared_memory_object::shared_memory_object()
    :  m_handle(file_handle_t(ipcdetail::invalid_file()))
@@ -404,7 +404,7 @@ inline void shared_memory_object::priv_close()
 
 #endif
 
-///@endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 //!A class that stores the name of a shared memory
 //!and calls shared_memory_object::remove(name) in its destructor

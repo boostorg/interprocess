@@ -47,10 +47,10 @@ namespace interprocess {
 //!can't communicate between them.
 class xsi_shared_memory
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    //Non-copyable and non-assignable
    BOOST_MOVABLE_BUT_NOT_COPYABLE(xsi_shared_memory)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    //!Default constructor.
@@ -115,7 +115,7 @@ class xsi_shared_memory
    //!Returns false on error. Never throws
    static bool remove(int shmid);
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
 
    //!Closes a previously opened file mapping. Never throws.
@@ -124,10 +124,10 @@ class xsi_shared_memory
                            , const permissions& perm
                            , std::size_t size);
    int            m_shmid;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 inline xsi_shared_memory::xsi_shared_memory()
    :  m_shmid(-1)
@@ -191,7 +191,7 @@ inline bool xsi_shared_memory::priv_open_or_create
 inline bool xsi_shared_memory::remove(int shmid)
 {  return -1 != ::shmctl(shmid, IPC_RMID, 0); }
 
-///@endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 }  //namespace interprocess {
 }  //namespace boost {

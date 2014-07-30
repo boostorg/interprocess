@@ -45,11 +45,11 @@ template
 class basic_managed_external_buffer
    : public ipcdetail::basic_managed_memory_impl <CharType, AllocationAlgorithm, IndexType>
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    typedef ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType>    base_t;
    BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_external_buffer)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    typedef typename base_t::size_type              size_type;

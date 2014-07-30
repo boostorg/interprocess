@@ -38,9 +38,9 @@ namespace interprocess {
 class xsi_shared_memory_file_wrapper
    : public xsi_shared_memory
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    BOOST_MOVABLE_BUT_NOT_COPYABLE(xsi_shared_memory_file_wrapper)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    public:
 
    xsi_shared_memory_file_wrapper() : xsi_shared_memory() {}

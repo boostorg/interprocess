@@ -46,13 +46,13 @@ template
 class basic_managed_heap_memory
    : public ipcdetail::basic_managed_memory_impl <CharType, AllocationAlgorithm, IndexType>
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
 
    typedef ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType>             base_t;
    BOOST_MOVABLE_BUT_NOT_COPYABLE(basic_managed_heap_memory)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public: //functions
    typedef typename base_t::size_type              size_type;
@@ -125,7 +125,7 @@ class basic_managed_heap_memory
       m_heapmem.swap(other.m_heapmem);
    }
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    //!Frees resources. Never throws.
    void priv_close()
@@ -135,7 +135,7 @@ class basic_managed_heap_memory
    }
 
    std::vector<char>  m_heapmem;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 

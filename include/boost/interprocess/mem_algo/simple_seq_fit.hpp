@@ -34,9 +34,9 @@ template<class MutexFamily, class VoidPointer>
 class simple_seq_fit
    : public ipcdetail::simple_seq_fit_impl<MutexFamily, VoidPointer>
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    typedef ipcdetail::simple_seq_fit_impl<MutexFamily, VoidPointer> base_t;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    typedef typename base_t::size_type                            size_type;

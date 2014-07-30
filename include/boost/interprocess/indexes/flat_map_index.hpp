@@ -48,12 +48,12 @@ class flat_map_index
    //Derive class from flat_map specialization
    : public flat_map_index_aux<MapConfig>::index_t
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    typedef flat_map_index_aux<MapConfig>  index_aux;
    typedef typename index_aux::index_t    base_type;
    typedef typename index_aux::
       segment_manager_base          segment_manager_base;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    //!Constructor. Takes a pointer to the segment manager. Can throw

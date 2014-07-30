@@ -31,13 +31,13 @@ namespace ipcdetail {
 
 class windows_named_condition_any
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //Non-copyable
    windows_named_condition_any();
    windows_named_condition_any(const windows_named_condition_any &);
    windows_named_condition_any &operator=(const windows_named_condition_any &);
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    windows_named_condition_any
@@ -94,7 +94,7 @@ class windows_named_condition_any
    static bool remove(const char *name)
    {  return windows_named_sync::remove(name);  }
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
 
    void dont_close_on_destruction()
@@ -228,7 +228,7 @@ class windows_named_condition_any
 
    windows_named_sync   m_named_sync;
    ipcdetail::condition_8a_wrapper<condition_data> m_condition_data;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 }  //namespace ipcdetail {

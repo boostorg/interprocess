@@ -66,7 +66,7 @@ namespace interprocess {
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
 class rbtree_best_fit
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    //Non-copyable
    rbtree_best_fit();
    rbtree_best_fit(const rbtree_best_fit &);
@@ -82,7 +82,7 @@ class rbtree_best_fit
       pointer_traits<VoidPointer>::template
          rebind_pointer<char>::type                         char_ptr;
 
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    //!Shared mutex family used for the rest of the Interprocess framework
@@ -94,7 +94,7 @@ class rbtree_best_fit
    typedef typename boost::intrusive::pointer_traits<char_ptr>::difference_type difference_type;
    typedef typename boost::make_unsigned<difference_type>::type     size_type;
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    private:
 
@@ -161,7 +161,7 @@ class rbtree_best_fit
    typedef ipcdetail::memory_algorithm_common<rbtree_best_fit> algo_impl_t;
 
    public:
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    //!Constructor. "size" is the total size of the managed memory segment,
    //!"extra_hdr_bytes" indicates the extra bytes beginning in the sizeof(rbtree_best_fit)
@@ -179,7 +179,7 @@ class rbtree_best_fit
    //!Allocates bytes, returns 0 if there is not more memory
    void* allocate             (size_type nbytes);
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //Experimental. Dont' use
 
@@ -204,7 +204,7 @@ class rbtree_best_fit
    //!Multiple element allocation, different size
    void deallocate_many(multiallocation_chain &chain);
 
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    //!Deallocates previously allocated bytes
    void   deallocate          (void *addr);
@@ -251,7 +251,7 @@ class rbtree_best_fit
    //!Alignment must be power of 2
    void* allocate_aligned     (size_type nbytes, size_type alignment);
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    static size_type priv_first_block_offset_from_this(const void *this_ptr, size_type extra_hdr_bytes);
 
@@ -360,12 +360,12 @@ class rbtree_best_fit
 
    //Make sure the maximum alignment is power of two
    BOOST_STATIC_ASSERT((0 == (Alignment & (Alignment - size_type(1u)))));
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    public:
    static const size_type PayloadPerAllocation = AllocatedCtrlBytes - UsableByPreviousChunk;
 };
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
 inline typename rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::size_type
@@ -1404,7 +1404,7 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_deallocate(vo
    priv_mark_as_free_block(block_to_insert);
 }
 
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 }  //namespace interprocess {
 }  //namespace boost {

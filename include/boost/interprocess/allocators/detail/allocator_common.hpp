@@ -676,9 +676,10 @@ class cached_allocator_impl
    void deallocate_free_chunks()
    {  m_cache.get_node_pool()->deallocate_free_blocks();   }
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    cache_impl<node_pool_t> m_cache;
+   #endif   //!defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 };
 
 //!Equality test for same type of

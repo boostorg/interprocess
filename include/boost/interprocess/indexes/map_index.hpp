@@ -55,12 +55,12 @@ class map_index
    //Derive class from map specialization
    : public ipcdetail::map_index_aux<MapConfig>::index_t
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    typedef ipcdetail::map_index_aux<MapConfig>  index_aux;
    typedef typename index_aux::index_t       base_type;
    typedef typename MapConfig::
       segment_manager_base          segment_manager_base;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    //!Constructor. Takes a pointer to the
@@ -80,7 +80,7 @@ class map_index
    {  base_type::get_stored_allocator().deallocate_free_blocks(); }
 };
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 //!Trait class to detect if an index is a node
 //!index. This allows more efficient operations
@@ -91,7 +91,7 @@ struct is_node_index
 {
    static const bool value = true;
 };
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 }}   //namespace boost { namespace interprocess {
 

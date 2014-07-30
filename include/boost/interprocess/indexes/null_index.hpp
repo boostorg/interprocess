@@ -28,10 +28,10 @@ namespace interprocess {
 template <class MapConfig>
 class null_index
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    typedef typename MapConfig::
       segment_manager_base    segment_manager_base;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    typedef int * iterator;

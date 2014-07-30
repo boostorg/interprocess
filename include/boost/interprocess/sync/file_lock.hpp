@@ -39,10 +39,10 @@ namespace interprocess {
 //!process so just use file locks to synchronize threads from different processes.
 class file_lock
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    //Non-copyable
    BOOST_MOVABLE_BUT_NOT_COPYABLE(file_lock)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    //!Constructs an empty file mapping.
@@ -139,11 +139,11 @@ class file_lock
    //!Effects: The calling thread releases the sharable ownership of the mutex.
    //!Throws: An exception derived from interprocess_exception on error.
    void unlock_sharable();
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    file_handle_t m_file_hnd;
 
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 inline file_lock::file_lock(const char *name)

@@ -42,11 +42,11 @@ namespace interprocess {
 //!that undoes the operation if the process crashes.
 class xsi_named_mutex
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    //Non-copyable and non-assignable
    xsi_named_mutex(xsi_named_mutex &);
    xsi_named_mutex &operator=(xsi_named_mutex &);
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    BOOST_MOVABLE_BUT_NOT_COPYABLE(xsi_named_mutex)
@@ -105,7 +105,7 @@ class xsi_named_mutex
 
    void unlock();
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
 
    //!Closes a previously opened file mapping. Never throws.
@@ -121,10 +121,10 @@ class xsi_named_mutex
    boost::uint8_t m_id;
    int            m_perm;
    std::string    m_path;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 inline xsi_named_mutex::xsi_named_mutex()
    :  m_semid(-1), m_key(-1), m_id(0), m_perm(0), m_path()
@@ -218,7 +218,7 @@ inline bool xsi_named_mutex::remove()
    return false;
 }
 
-///@endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 }  //namespace interprocess {
 }  //namespace boost {

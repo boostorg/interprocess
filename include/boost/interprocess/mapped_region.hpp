@@ -61,7 +61,7 @@
 namespace boost {
 namespace interprocess {
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 //Solaris declares madvise only in some configurations but defines MADV_XXX, a bit confusing.
 //Predeclare it here to avoid any compilation error
@@ -72,7 +72,7 @@ extern "C" int madvise(caddr_t, size_t, int);
 namespace ipcdetail{ class interprocess_tester; }
 namespace ipcdetail{ class raw_mapped_region_creator; }
 
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 //!The mapped_region class represents a portion or region created from a
 //!memory_mappable object.
@@ -82,10 +82,10 @@ namespace ipcdetail{ class raw_mapped_region_creator; }
 //!the region specified by the user.
 class mapped_region
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    //Non-copyable
    BOOST_MOVABLE_BUT_NOT_COPYABLE(mapped_region)
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
 
@@ -217,7 +217,7 @@ class mapped_region
    //!will restrict the address and the offset to map.
    static std::size_t get_page_size();
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    //!Closes a previously opened memory mapping. Never throws
    void priv_close();
@@ -254,10 +254,10 @@ class mapped_region
    template<int Dummy>
    static void destroy_syncs_in_range(const void *addr, std::size_t size);
    #endif
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
-///@cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 inline void swap(mapped_region &x, mapped_region &y)
 {  x.swap(y);  }
@@ -870,7 +870,7 @@ struct null_mapped_region_function
    {  return 0;  }
 };
 
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 }  //namespace interprocess {
 }  //namespace boost {
