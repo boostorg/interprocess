@@ -6606,8 +6606,6 @@ example, a new managed shared memory that uses the new index:
 
 [section:acknowledgements_notes Acknowledgements, notes and links]
 
-[section:notes Notes]
-
 [section:notes_windows Notes for Windows users]
 
 [section:notes_windows_com_init COM Initialization]
@@ -6650,11 +6648,13 @@ when using the library and that path will be used to place shared memory files.
 
 [endsect]
 
-[section:boost:use_windows_h BOOST_USE_WINDOWS_H support]
+[section:boost_use_windows_h BOOST_USE_WINDOWS_H support]
 
 If `BOOST_USE_WINDOWS_H` is defined, <windows.h> and other windows SDK files are included,
 otherwise the library declares needed functions and structures to reduce the impact of including
 those heavy headers.
+
+[endsect]
 
 [endsect]
 
@@ -6691,11 +6691,7 @@ change this overcommit behaviour.
 
 [endsect]
 
-[endsect]
-
 [section:thanks_to Thanks to...]
-
-[section:thanks_to_people People]
 
 Many people have contributed with ideas and revisions, so this is the place to
 thank them:
@@ -6731,8 +6727,6 @@ thank them:
    many and great advices.
 
 *  And finally, thank you to all Boosters. [*Long live to C++!]
-
-[endsect]
 
 [endsect]
 
@@ -7335,11 +7329,11 @@ But the work to implement PF_UNIX-like sockets and doors would be huge
 
 [endsect]
 
-[include auto_index_helpers.qbk]
-
 [section:indexes_reference Indexes and Reference]
 
 [section:index Indexes]
+
+[include auto_index_helpers.qbk]
 
 [named_index class_name Class Index]
 [named_index typedef_name Typedef Index]
