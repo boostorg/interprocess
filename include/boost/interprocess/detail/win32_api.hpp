@@ -651,7 +651,7 @@ typedef OVERLAPPED interprocess_overlapped;
 
 typedef FILETIME interprocess_filetime;
 
-typedef WIN32_FIND_DATA win32_find_data;
+typedef WIN32_FIND_DATAA win32_find_data;
 
 typedef SECURITY_ATTRIBUTES interprocess_security_attributes;
 
