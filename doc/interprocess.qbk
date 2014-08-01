@@ -6736,7 +6736,6 @@ thank them:
 *  Fixed bugs:
    * [@https://svn.boost.org/trac/boost/ticket/10262 Trac #10262 (['"AIX 6.1 bug with variable definition hz"])].
    * [@https://svn.boost.org/trac/boost/ticket/10262 Trac #10229 (['"Compiling errors in interprocess\detail\os_file_functions.hpp"])].
-#: 
 
 [endsect]
 
