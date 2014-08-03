@@ -971,6 +971,12 @@ template<class VoidPointer>
 inline bool message_queue_t<VoidPointer>::remove(const char *name)
 {  return shared_memory_object::remove(name);  }
 
+#else
+
+//!Typedef for a default message queue
+//!to be used between processes
+typedef message_queue_t<offset_ptr<void> > message_queue;
+
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 }} //namespace boost{  namespace interprocess{

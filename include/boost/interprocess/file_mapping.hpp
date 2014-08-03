@@ -160,8 +160,6 @@ inline void file_mapping::priv_close()
    }
 }
 
-#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
-
 //!A class that stores the name of a file
 //!and tries to remove it in its destructor
 //!Useful to remove temporary files in the presence
@@ -177,6 +175,8 @@ class remove_file_on_destroy
    ~remove_file_on_destroy()
    {  ipcdetail::delete_file(m_name);  }
 };
+
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 }  //namespace interprocess {
 }  //namespace boost {

@@ -177,6 +177,10 @@
    #define BOOST_INTERPROCESS_NEVER_INLINE __attribute__((__noinline__))
 #endif
 
+//Macros for documentation purposes. For code, expands to the argument
+#define BOOST_INTERPROCESS_IMPDEF(TYPE) TYPE
+#define BOOST_INTERPROCESS_SEEDOC(TYPE) TYPE
+
 #if defined(BOOST_NO_CXX11_NOEXCEPT)
    #if defined(BOOST_MSVC)
       #define BOOST_INTERPROCESS_NOEXCEPT throw()

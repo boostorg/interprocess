@@ -191,6 +191,27 @@ class basic_managed_windows_shared_memory
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
+#ifdef BOOST_INTERPROCESS_DOXYGEN_INVOKED
+
+//!Typedef for a default basic_managed_windows_shared_memory
+//!of narrow characters
+typedef basic_managed_windows_shared_memory
+   <char
+   ,rbtree_best_fit<mutex_family>
+   ,iset_index>
+managed_windows_shared_memory;
+
+//!Typedef for a default basic_managed_windows_shared_memory
+//!of wide characters
+typedef basic_managed_windows_shared_memory
+   <wchar_t
+   ,rbtree_best_fit<mutex_family>
+   ,iset_index>
+wmanaged_windows_shared_memory;
+
+#endif   //#ifdef BOOST_INTERPROCESS_DOXYGEN_INVOKED
+
+
 }  //namespace interprocess {
 }  //namespace boost {
 

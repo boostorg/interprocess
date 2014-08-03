@@ -53,9 +53,11 @@ template
          template<class IndexConfig> class IndexType
       >
 class basic_managed_mapped_file
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    : public ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType
       ,ipcdetail::mfile_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 {
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    public:
@@ -63,7 +65,6 @@ class basic_managed_mapped_file
       <CharType, AllocationAlgorithm, IndexType,
       ipcdetail::mfile_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>   base_t;
    typedef ipcdetail::file_wrapper device_type;
-   typedef typename base_t::size_type              size_type;
 
    private:
 
@@ -78,6 +79,10 @@ class basic_managed_mapped_file
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public: //functions
+
+   //!Unsigned integral type enough to represent
+   //!the size of a basic_managed_mapped_file.
+   typedef typename BOOST_INTERPROCESS_IMPDEF(base_t::size_type) size_type;
 
    //!Creates mapped file and creates and places the segment manager.
    //!This can throw.
@@ -212,6 +217,26 @@ class basic_managed_mapped_file
    typename ipcdetail::mfile_open_or_create<AllocationAlgorithm>::type m_mfile;
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
+
+#ifdef BOOST_INTERPROCESS_DOXYGEN_INVOKED
+
+//!Typedef for a default basic_managed_mapped_file
+//!of narrow characters
+typedef basic_managed_mapped_file
+   <char
+   ,rbtree_best_fit<mutex_family>
+   ,iset_index>
+managed_mapped_file;
+
+//!Typedef for a default basic_managed_mapped_file
+//!of wide characters
+typedef basic_managed_mapped_file
+   <wchar_t
+   ,rbtree_best_fit<mutex_family>
+   ,iset_index>
+wmanaged_mapped_file;
+
+#endif   //#ifdef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 }  //namespace interprocess {
 }  //namespace boost {

@@ -36,12 +36,16 @@
 
 namespace boost {
 
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
 //Predeclarations
 template <class T>
 struct has_trivial_constructor;
 
 template <class T>
 struct has_trivial_destructor;
+
+#endif   //#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 namespace interprocess {
 

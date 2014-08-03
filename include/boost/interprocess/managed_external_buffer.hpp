@@ -104,6 +104,26 @@ class basic_managed_external_buffer
    {  base_t::swap(other); }
 };
 
+#ifdef BOOST_INTERPROCESS_DOXYGEN_INVOKED
+
+//!Typedef for a default basic_managed_external_buffer
+//!of narrow characters
+typedef basic_managed_external_buffer
+   <char
+   ,rbtree_best_fit<null_mutex_family>
+   ,iset_index>
+managed_external_buffer;
+
+//!Typedef for a default basic_managed_external_buffer
+//!of wide characters
+typedef basic_managed_external_buffer
+   <wchar_t
+   ,rbtree_best_fit<null_mutex_family>
+   ,iset_index>
+wmanaged_external_buffer;
+
+#endif   //#ifdef BOOST_INTERPROCESS_DOXYGEN_INVOKED
+
 }  //namespace interprocess {
 }  //namespace boost {
 

@@ -25,6 +25,8 @@
 //[flat_map_index
 namespace boost { namespace interprocess {
 
+#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
+
 //!Helper class to define typedefs from IndexTraits
 template <class MapConfig>
 struct flat_map_index_aux
@@ -40,6 +42,8 @@ struct flat_map_index_aux
    typedef flat_map<key_type,  mapped_type,
                     key_less, allocator_type>      index_t;
 };
+
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 //!Index type based in flat_map. Just derives from flat_map and
 //!defines the interface needed by managed memory segments.

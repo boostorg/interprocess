@@ -404,8 +404,6 @@ inline void shared_memory_object::priv_close()
 
 #endif
 
-#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
-
 //!A class that stores the name of a shared memory
 //!and calls shared_memory_object::remove(name) in its destructor
 //!Useful to remove temporary shared memory objects in the presence
@@ -421,6 +419,8 @@ class remove_shared_memory_on_destroy
    ~remove_shared_memory_on_destroy()
    {  shared_memory_object::remove(m_name);  }
 };
+
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 }  //namespace interprocess {
 }  //namespace boost {

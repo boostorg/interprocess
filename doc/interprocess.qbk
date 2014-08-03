@@ -6735,7 +6735,9 @@ thank them:
 [section:release_notes_boost_1_57_00 Boost 1.57 Release]
 *  Fixed bugs:
    * [@https://svn.boost.org/trac/boost/ticket/10262 Trac #10262 (['"AIX 6.1 bug with variable definition hz"])].
-   * [@https://svn.boost.org/trac/boost/ticket/10262 Trac #10229 (['"Compiling errors in interprocess\detail\os_file_functions.hpp"])].
+   * [@https://svn.boost.org/trac/boost/ticket/10229 Trac #10229 (['"Compiling errors in interprocess\detail\os_file_functions.hpp"])].
+
+*  Reorganized Doxygen marks to obtain a better header reference.
 
 [endsect]
 
