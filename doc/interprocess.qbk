@@ -5741,9 +5741,9 @@ can be stored in a STL container, [classref boost::interprocess::shared_ptr shar
 can also be stored in [*Boost.Interprocess] containers.
 
 If a programmer just uses [classref boost::interprocess::shared_ptr shared_ptr]
-to be able to insert objects dynamically constructed in the managed segment
-in a container, but does not need to share the ownership of that object with
-other objects [classref boost::interprocess::unique_ptr unique_ptr] is a much
+to be able to insert dynamically constructed objects into a container constructed
+in the managed segment, but he does not need to share the ownership of that object with
+other objects [classref boost::interprocess::managed_unique_ptr managed_unique_ptr] is a much
 faster and easier to use alternative.
 
 [endsect]
@@ -5752,42 +5752,44 @@ faster and easier to use alternative.
 
 Unique ownership smart pointers are really useful to free programmers from
 manual resource liberation of non-shared objects. [*Boost.Interprocess]'
-[classref boost::interprocess::unique_ptr unique_ptr] is much like
+`unique_ptr` is much like
 [classref boost::interprocess::scoped_ptr scoped_ptr] but it's [*moveable]
 and can be easily inserted in [*Boost.Interprocess] containers.
-Here is the declaration of the unique pointer class:
+Interprocess had its own `unique_ptr` implementation but from Boost 1.57,
+[*Boost.Interprocess] uses the improved and generic `boost::unique_ptr`
+implementation. Here is the declaration of the unique pointer class:
 
 [c++]
 
    template <class T, class D>
    class unique_ptr;
 
-*  T is the type of the object pointed by [classref boost::interprocess::unique_ptr unique_ptr].
+*  T is the type of the object pointed by `unique_ptr`.
 *  D is the deleter that will erase the object type of the object pointed by
-   [classref boost::interprocess::unique_ptr unique_ptr] when the unique pointer
-   is destroyed (and if still owns ownership of the object). If the deleter defines
-   an internal `pointer` typedef, [classref boost::interprocess::unique_ptr unique_ptr]
+   the unique_ptr when the unique pointer
+   is destroyed (and if still has the ownership of the object). If the deleter defines
+   an internal `pointer` typedef, `unique_ptr`]
    will use an internal pointer of the same type. So if `D::pointer` is `offset_ptr<T>`
    the unique pointer will store a relative pointer instead of a raw one. This
-   allows placing [classref boost::interprocess::unique_ptr unique_ptr] in shared
+   allows placing `unique_ptr` in shared
    memory and memory-mapped files.
 
-[classref boost::interprocess::unique_ptr unique_ptr] can release the ownership of
+`unique_ptr` can release the ownership of
 the stored pointer so it's useful also to be used as a rollback function. One of the main
 properties of the class is that [*is not copyable, but only moveable]. When a unique
 pointer is moved to another one, the ownership of the pointer is transferred from
 the source unique pointer to the target unique pointer. If the target unique pointer
 owned an object, that object is first deleted before taking ownership of the new object.
 
-[classref boost::interprocess::unique_ptr unique_ptr] also offers auxiliary types to
+[*Boost.Interprocess] also offers auxiliary types to
 easily define and construct unique pointers that can be placed in managed segments
-and will correctly delete the owned object from the segment:
+and will correctly delete owned object from the segment:
 [classref boost::interprocess::managed_unique_ptr managed_unique_ptr]
 and
 [funcref boost::interprocess::make_managed_unique_ptr make_managed_unique_ptr]
 utilities.
 
-Here we see an example of the use [classref boost::interprocess::unique_ptr unique_ptr]
+Here we see an example of the use `unique_ptr`
 including creating containers of such objects:
 
 [import ../example/doc_unique_ptr.cpp]
@@ -6733,6 +6735,9 @@ thank them:
 [section:release_notes Release Notes]
 
 [section:release_notes_boost_1_57_00 Boost 1.57 Release]
+*  Removed `unique_ptr` and forwards boost::interprocess::unique_ptr to the general purpose
+   `boost::movelib::unique_ptr` class from [*Boost.Move]. This implementation is closer to the standard
+   `std::unique_ptr` implementation and it's better maintained.
 *  Fixed bugs:
    * [@https://svn.boost.org/trac/boost/ticket/10262 Trac #10262 (['"AIX 6.1 bug with variable definition hz"])].
    * [@https://svn.boost.org/trac/boost/ticket/10229 Trac #10229 (['"Compiling errors in interprocess\detail\os_file_functions.hpp"])].
@@ -7070,7 +7075,7 @@ thank them:
 *  Added auxiliary utilities to ease the definition and construction of
    [classref boost::interprocess::shared_ptr shared_ptr],
    [classref boost::interprocess::weak_ptr weak_ptr] and
-   [classref boost::interprocess::unique_ptr unique_ptr]. Added explanations
+   `unique_ptr`. Added explanations
    and examples of these smart pointers in the documentation.
 
 *  Optimized vector:
