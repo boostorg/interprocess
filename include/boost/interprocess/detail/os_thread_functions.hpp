@@ -193,7 +193,7 @@ inline long double get_current_process_creation_time()
 {
    winapi::interprocess_filetime CreationTime, ExitTime, KernelTime, UserTime;
 
-   get_process_times
+   winapi::get_process_times
       ( winapi::get_current_process(), &CreationTime, &ExitTime, &KernelTime, &UserTime);
 
    typedef long double ldouble_t;
