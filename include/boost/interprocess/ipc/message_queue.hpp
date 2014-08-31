@@ -524,8 +524,8 @@ class mq_hdr_t
        msg_hdr_align  = ::boost::alignment_of<msg_header>::value,
        index_align    = ::boost::alignment_of<msg_hdr_ptr_t>::value,
          r_hdr_size     = ipcdetail::ct_rounded_size<sizeof(mq_hdr_t), index_align>::value,
-         r_index_size   = ipcdetail::get_rounded_size(max_num_msg*sizeof(msg_hdr_ptr_t), msg_hdr_align),
-         r_max_msg_size = ipcdetail::get_rounded_size(max_msg_size, msg_hdr_align) + sizeof(msg_header);
+         r_index_size   = ipcdetail::get_rounded_size<size_type>(max_num_msg*sizeof(msg_hdr_ptr_t), msg_hdr_align),
+         r_max_msg_size = ipcdetail::get_rounded_size<size_type>(max_msg_size, msg_hdr_align) + sizeof(msg_header);
       return r_hdr_size + r_index_size + (max_num_msg*r_max_msg_size) +
          open_create_impl_t::ManagedOpenOrCreateUserOffset;
    }
@@ -538,8 +538,8 @@ class mq_hdr_t
         msg_hdr_align  = ::boost::alignment_of<msg_header>::value,
         index_align    = ::boost::alignment_of<msg_hdr_ptr_t>::value,
          r_hdr_size     = ipcdetail::ct_rounded_size<sizeof(mq_hdr_t), index_align>::value,
-         r_index_size   = ipcdetail::get_rounded_size(m_max_num_msg*sizeof(msg_hdr_ptr_t), msg_hdr_align),
-         r_max_msg_size = ipcdetail::get_rounded_size(m_max_msg_size, msg_hdr_align) + sizeof(msg_header);
+         r_index_size   = ipcdetail::get_rounded_size<size_type>(m_max_num_msg*sizeof(msg_hdr_ptr_t), msg_hdr_align),
+         r_max_msg_size = ipcdetail::get_rounded_size<size_type>(m_max_msg_size, msg_hdr_align) + sizeof(msg_header);
 
       //Pointer to the index
       msg_hdr_ptr_t *index =  reinterpret_cast<msg_hdr_ptr_t*>
