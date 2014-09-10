@@ -6735,13 +6735,14 @@ thank them:
 [section:release_notes Release Notes]
 
 [section:release_notes_boost_1_57_00 Boost 1.57 Release]
-*  Removed `unique_ptr` and forwards boost::interprocess::unique_ptr to the general purpose
+*  Removed `unique_ptr`, now forwards boost::interprocess::unique_ptr to the general purpose
    `boost::movelib::unique_ptr` class from [*Boost.Move]. This implementation is closer to the standard
    `std::unique_ptr` implementation and it's better maintained.
 *  Fixed bugs:
    * [@https://svn.boost.org/trac/boost/ticket/10262 Trac #10262 (['"AIX 6.1 bug with variable definition hz"])].
    * [@https://svn.boost.org/trac/boost/ticket/10229 Trac #10229 (['"Compiling errors in interprocess\detail\os_file_functions.hpp"])].
-
+   * [@https://github.com/boostorg/interprocess/pull/11 GitHub Pull #11 (['"Compile fix for BOOST_USE_WINDOWS_H"])].
+ 
 *  Reorganized Doxygen marks to obtain a better header reference.
 
 [endsect]
@@ -6762,8 +6763,8 @@ thank them:
    * [@https://svn.boost.org/trac/boost/ticket/10011 Trac #10011 (['"segment_manager::find( unique_instance_t* ) fails to compile"])].
    * [@https://svn.boost.org/trac/boost/ticket/10021 Trac #10021 (['"Interprocess and BOOST_USE_WINDOWS_H"])].
    * [@https://svn.boost.org/trac/boost/ticket/10230 Trac #10230 (['"No Sleep in interprocess::winapi"])].
-   * [@https://github.com/boostorg/interprocess/pull/2 GitHub #2] (['"Provide support for the Cray C++ compiler. The Cray compiler defines __GNUC__"]]).
-   * [@https://github.com/boostorg/interprocess/pull/3 GitHub #3] (['"Fix/mingw interprocess_exception throw in file_wrapper::priv_open_or_create"]]).
+   * [@https://github.com/boostorg/interprocess/pull/2 GitHub Pull #2] (['"Provide support for the Cray C++ compiler. The Cray compiler defines __GNUC__"]]).
+   * [@https://github.com/boostorg/interprocess/pull/3 GitHub Pull #3] (['"Fix/mingw interprocess_exception throw in file_wrapper::priv_open_or_create"]]).
 
 *  [*ABI breaking]: [@https://svn.boost.org/trac/boost/ticket/9221 #9221] showed
    that `BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX` option of message queue,

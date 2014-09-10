@@ -1206,9 +1206,6 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_is_allocated_
       (void)next_block_prev_allocated;
       BOOST_ASSERT(allocated == next_block_prev_allocated);
    }
-   else{
-      block = block;
-   }
    #endif
    return allocated;
 }
@@ -1226,9 +1223,7 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_is_prev_alloc
          block_ctrl *prev = priv_prev_block(block);
          (void)prev;
          BOOST_ASSERT(!prev->m_allocated);
-      }
-      else{
-         block = block;
+         BOOST_ASSERT(prev->m_size == block->m_prev_size);
       }
       #endif
       return false;
