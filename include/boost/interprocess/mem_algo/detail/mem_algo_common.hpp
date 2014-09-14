@@ -288,7 +288,6 @@ class memory_algorithm_common
             second->m_size = old_size - first->m_size;
             BOOST_ASSERT(second->m_size >= MinBlockUnits);
             memory_algo->priv_mark_new_allocated_block(first);
-            //memory_algo->priv_tail_size(first, first->m_size);
             memory_algo->priv_mark_new_allocated_block(second);
             memory_algo->priv_deallocate(memory_algo->priv_get_user_buffer(second));
          }

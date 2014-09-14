@@ -141,6 +141,7 @@ class rbtree_best_fit
       <block_ctrl, bi::base_hook<TreeHook> >::type                Imultiset;
 
    typedef typename Imultiset::iterator                           imultiset_iterator;
+   typedef typename Imultiset::const_iterator                     imultiset_const_iterator;
 
    //!This struct includes needed data and derives from
    //!mutex_type to allow EBO when using null mutex_type
@@ -814,7 +815,6 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
       block_ctrl *reuse = priv_get_block(reuse_ptr);
 
       //Sanity check
-      //BOOST_ASSERT(reuse->m_size == priv_tail_size(reuse));
       algo_impl_t::assert_alignment(reuse);
 
       block_ctrl *prev_block;
@@ -1041,7 +1041,6 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
 
    //The block must be marked as allocated and the sizes must be equal
    BOOST_ASSERT(priv_is_allocated_block(block));
-   //BOOST_ASSERT(old_block_units == priv_tail_size(block));
 
    //Put this to a safe value
    received_size = (old_block_units - AllocatedCtrlUnits)*Alignment + UsableByPreviousChunk;
@@ -1277,7 +1276,7 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_check_and_al
 
       imultiset_iterator it_hint;
       if(it_old == m_header.m_imultiset.begin()
-         || (--imultiset_iterator(it_old))->m_size < rem_block->m_size){
+         || (--imultiset_iterator(it_old))->m_size <= rem_block->m_size){
          //option a: slow but secure
          //m_header.m_imultiset.insert(m_header.m_imultiset.erase(it_old), *rem_block);
          //option b: Construct an empty node and swap
@@ -1340,7 +1339,6 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_deallocate(vo
 
    //The blocks must be marked as allocated and the sizes must be equal
    BOOST_ASSERT(priv_is_allocated_block(block));
-//   BOOST_ASSERT(block->m_size == priv_tail_size(block));
 
    //Check if alignment and block size are right
    algo_impl_t::assert_alignment(addr);
@@ -1355,42 +1353,44 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_deallocate(vo
    block_ctrl *block_to_insert = block;
 
    //Get the next block
-   block_ctrl *next_block  = priv_next_block(block);
-   bool merge_with_prev    = !priv_is_prev_allocated(block);
-   bool merge_with_next    = !priv_is_allocated_block(next_block);
+   block_ctrl *const next_block  = priv_next_block(block);
+   const bool merge_with_prev    = !priv_is_prev_allocated(block);
+   const bool merge_with_next    = !priv_is_allocated_block(next_block);
 
    //Merge logic. First just update block sizes, then fix free blocks tree
    if(merge_with_prev || merge_with_next){
       //Merge if the previous is free
       if(merge_with_prev){
          //Get the previous block
-         block_ctrl *prev_block = priv_prev_block(block);
-         prev_block->m_size += block->m_size;
-         BOOST_ASSERT(prev_block->m_size >= BlockCtrlUnits);
-         block_to_insert = prev_block;
+         block_to_insert = priv_prev_block(block);
+         block_to_insert->m_size += block->m_size;
+         BOOST_ASSERT(block_to_insert->m_size >= BlockCtrlUnits);
       }
       //Merge if the next is free
       if(merge_with_next){
          block_to_insert->m_size += next_block->m_size;
          BOOST_ASSERT(block_to_insert->m_size >= BlockCtrlUnits);
-         if(merge_with_prev)
-            m_header.m_imultiset.erase(Imultiset::s_iterator_to(*next_block));
+         const imultiset_iterator next_it = Imultiset::s_iterator_to(*next_block);
+         if(merge_with_prev){
+            m_header.m_imultiset.erase(next_it);
+         }
+         else{
+            m_header.m_imultiset.replace_node(next_it, *block_to_insert);
+         }
       }
-
-      bool only_merge_next = !merge_with_prev && merge_with_next;
-      imultiset_iterator free_block_to_check_it
-         (Imultiset::s_iterator_to(only_merge_next ? *next_block : *block_to_insert));
-      imultiset_iterator was_bigger_it(free_block_to_check_it);
 
       //Now try to shortcut erasure + insertion (O(log(N))) with
       //a O(1) operation if merging does not alter tree positions
-      if(++was_bigger_it != m_header.m_imultiset.end()   &&
-         block_to_insert->m_size > was_bigger_it->m_size ){
-         m_header.m_imultiset.erase(free_block_to_check_it);
-         m_header.m_imultiset.insert(m_header.m_imultiset.begin(), *block_to_insert);
+      const imultiset_iterator block_to_check_it = Imultiset::s_iterator_to(*block_to_insert);
+      imultiset_const_iterator next_to_check_it(block_to_check_it), end_it(m_header.m_imultiset.end());
+
+      if(++next_to_check_it != end_it && block_to_insert->m_size > next_to_check_it->m_size){
+         //Block is bigger than next, so move it
+         m_header.m_imultiset.erase(block_to_check_it);
+         m_header.m_imultiset.insert(end_it, *block_to_insert);
       }
-      else if(only_merge_next){
-         m_header.m_imultiset.replace_node(free_block_to_check_it, *block_to_insert);
+      else{
+         //Block size increment didn't violate tree invariants so there is nothing to fix
       }
    }
    else{
