@@ -6751,6 +6751,7 @@ thank them:
 *  Fixed bugs:
    * [@https://svn.boost.org/trac/boost/ticket/9221 Trac #9221 (['"message_queue deadlock on linux"])].
    * [@https://svn.boost.org/trac/boost/ticket/9226 Trac #9226 (['"On some computers, Common Appdata is empty in registry, so boost interprocess cannot work"])].
+   * [@https://svn.boost.org/trac/boost/ticket/9262 Trac #9262 (['"windows_intermodule_singleton breaks when calling a Debug dll from a Release executable"])].
    * [@https://svn.boost.org/trac/boost/ticket/9284 Trac #9284 (['"WaitForSingleObject(mutex) must handle WAIT_ABANDONED"])].
    * [@https://svn.boost.org/trac/boost/ticket/9285 Trac #9285 (['"CreateMutex returns NULL if fails"])].
    * [@https://svn.boost.org/trac/boost/ticket/9288 Trac #9288 (['"timed_wait does not check if it has expired"])].
