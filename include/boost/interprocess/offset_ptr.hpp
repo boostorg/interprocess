@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2012. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2014. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -231,6 +231,15 @@ namespace ipcdetail {
 //!pointer and the pointee are still separated by the same offset. This feature
 //!converts offset_ptr in a smart pointer that can be placed in shared memory and
 //!memory mapped files mapped in different addresses in every process.
+//!
+//! \tparam PointedType The type of the pointee.
+//! \tparam DifferenceType A signed integer type that can represent the arithmetic operations on the pointer
+//! \tparam OffsetType An unsigned integer type that can represent the
+//!   distance between two pointers reinterpret_cast-ed as unsigned integers. In general this type
+//!   should be at least of the same size of std::uintptr_t. In some systems it's possible to communicate
+//!   between 32 and 64 bit processes using 64 bit offsets.
+//! \tparam OffsetAlignment Alignment of the OffsetType stored inside. In some systems might be necessary
+//!   to align it to 64 bits in order to communicate 32 and 64 bit processes using 64 bit offsets.
 template <class PointedType, class DifferenceType, class OffsetType, std::size_t OffsetAlignment>
 class offset_ptr
 {
