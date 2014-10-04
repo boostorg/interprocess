@@ -453,6 +453,9 @@ inline file_handle_t create_or_open_file
             break;
          }
       }
+      else{
+         break;
+      }
    }
    return ret;
 }

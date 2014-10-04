@@ -6741,6 +6741,7 @@ thank them:
 *  Fixed bugs:
    * [@https://svn.boost.org/trac/boost/ticket/10262 Trac #10262 (['"AIX 6.1 bug with variable definition hz"])].
    * [@https://svn.boost.org/trac/boost/ticket/10229 Trac #10229 (['"Compiling errors in interprocess\detail\os_file_functions.hpp"])].
+   * [@https://svn.boost.org/trac/boost/ticket/10506 Trac #10506 (['"Infinite loop in create_or_open_file"])].
    * [@https://github.com/boostorg/interprocess/pull/11 GitHub Pull #11 (['"Compile fix for BOOST_USE_WINDOWS_H"])].
  
 *  Reorganized Doxygen marks to obtain a better header reference.
