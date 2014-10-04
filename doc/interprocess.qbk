@@ -270,7 +270,7 @@ Named [*Boost.Interprocess] resources (shared memory, memory mapped files,
 named mutexes/conditions/semaphores) have kernel or filesystem persistency.
 This means that even if all processes that have opened those resources
 end, the resource will still be accessible to be opened again and the resource
-can only be destructed via an explicit to their static member `remove` function.
+can only be destructed via an explicit call to their static member `remove` function.
 This behavior can be easily understood, since it's the same mechanism used
 by functions controlling file opening/creation/erasure:
 
