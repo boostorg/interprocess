@@ -17,7 +17,7 @@
 #include <set>
 #include <functional>
 #include "print_container.hpp"
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/utility_core.hpp>
 #include <string>
 #include "get_process_id_name.hpp"
 

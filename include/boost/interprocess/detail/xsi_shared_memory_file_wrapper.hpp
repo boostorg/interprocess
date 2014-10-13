@@ -11,6 +11,10 @@
 #ifndef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_FILE_WRAPPER_HPP
 #define BOOST_INTERPROCESS_XSI_SHARED_MEMORY_FILE_WRAPPER_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/detail/workaround.hpp>

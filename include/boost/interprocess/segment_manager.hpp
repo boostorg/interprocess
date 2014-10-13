@@ -32,7 +32,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
-#include <boost/move/move.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <cstddef>   //std::size_t
 #include <string>    //char_traits

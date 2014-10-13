@@ -24,7 +24,7 @@
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/math_functions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/move/move.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/min_max.hpp>
 #include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/assert.hpp>

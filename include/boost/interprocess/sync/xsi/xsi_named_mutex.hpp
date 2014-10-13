@@ -11,6 +11,10 @@
 #ifndef BOOST_INTERPROCESS_XSI_XSI_NAMED_MUTEX_HPP
 #define BOOST_INTERPROCESS_XSI_XSI_NAMED_MUTEX_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
@@ -18,7 +22,7 @@
 #error "This header can't be used in Windows operating systems"
 #endif
 
-#include <boost/move/move.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>

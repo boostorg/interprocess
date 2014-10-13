@@ -14,6 +14,10 @@
 #ifndef BOOST_INTERPROCESS_INTRUSIVE_PTR_HPP_INCLUDED
 #define BOOST_INTERPROCESS_INTRUSIVE_PTR_HPP_INCLUDED
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 //!\file
 //!Describes an intrusive ownership pointer.
 

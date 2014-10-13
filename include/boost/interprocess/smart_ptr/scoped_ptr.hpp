@@ -15,6 +15,10 @@
 #ifndef BOOST_INTERPROCESS_SCOPED_PTR_HPP_INCLUDED
 #define BOOST_INTERPROCESS_SCOPED_PTR_HPP_INCLUDED
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/pointer_type.hpp>

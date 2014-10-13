@@ -21,7 +21,7 @@
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/file_wrapper.hpp>
-#include <boost/move/move.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/permissions.hpp>
 //These includes needed to fulfill default template parameters of

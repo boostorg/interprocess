@@ -22,7 +22,7 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/permissions.hpp>
-#include <boost/move/move.hpp>
+#include <boost/move/utility_core.hpp>
 //These includes needed to fulfill default template parameters of
 //predeclarations in interprocess_fwd.hpp
 #include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>

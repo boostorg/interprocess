@@ -10,7 +10,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 //[doc_managed_multiple_allocation
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/detail/move.hpp> //boost::move
+#include <boost/move/utility_core.hpp> //boost::move
 #include <cassert>//assert
 #include <cstring>//std::memset
 #include <new>    //std::nothrow

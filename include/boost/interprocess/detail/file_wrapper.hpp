@@ -11,11 +11,15 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_FILE_WRAPPER_HPP
 #define BOOST_INTERPROCESS_DETAIL_FILE_WRAPPER_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/creation_tags.hpp>
-#include <boost/move/move.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 
 namespace boost {

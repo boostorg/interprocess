@@ -11,6 +11,10 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_CONDITION_ALGORITHM_8A_HPP
 #define BOOST_INTERPROCESS_DETAIL_CONDITION_ALGORITHM_8A_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>

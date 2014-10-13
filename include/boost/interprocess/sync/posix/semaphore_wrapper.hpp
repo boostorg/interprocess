@@ -11,6 +11,10 @@
 #ifndef BOOST_INTERPROCESS_POSIX_SEMAPHORE_WRAPPER_HPP
 #define BOOST_INTERPROCESS_POSIX_SEMAPHORE_WRAPPER_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/creation_tags.hpp>

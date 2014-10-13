@@ -11,6 +11,10 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_WORKAROUND_HPP
 #define BOOST_INTERPROCESS_DETAIL_WORKAROUND_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/interprocess/detail/config_begin.hpp>
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)

@@ -11,6 +11,10 @@
 #ifndef BOOST_INTERPROCESS_ANONYMOUS_SHARED_MEMORY_HPP
 #define BOOST_INTERPROCESS_ANONYMOUS_SHARED_MEMORY_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/creation_tags.hpp>

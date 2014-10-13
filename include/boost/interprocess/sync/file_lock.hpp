@@ -23,7 +23,7 @@
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/detail/common_algorithms.hpp>
 #include <boost/interprocess/sync/detail/locks.hpp>
-#include <boost/move/move.hpp>
+#include <boost/move/utility_core.hpp>
 
 //!\file
 //!Describes a class that wraps file locking capabilities.

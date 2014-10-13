@@ -11,6 +11,10 @@
 #ifndef BOOST_INTERPROCESS_SYNC_NAMED_CREATION_FUNCTOR_HPP
 #define BOOST_INTERPROCESS_SYNC_NAMED_CREATION_FUNCTOR_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/mpl.hpp>

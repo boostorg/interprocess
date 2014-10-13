@@ -26,7 +26,7 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include "allocator_v1.hpp"
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/detail/move.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <string>

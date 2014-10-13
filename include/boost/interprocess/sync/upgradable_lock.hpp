@@ -28,7 +28,7 @@
 #include <boost/interprocess/detail/type_traits.hpp>
 
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/move/move.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 //!\file
