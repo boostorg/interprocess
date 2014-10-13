@@ -346,7 +346,7 @@ inline bool robust_spin_mutex<Mutex>::previous_owner_dead()
 {
    //Notifies if a owner recovery has been performed in the last lock()
    return atomic_read32(&this->state) == fixing_state;
-};
+}
 
 template<class Mutex>
 inline void robust_spin_mutex<Mutex>::unlock()

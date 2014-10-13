@@ -49,15 +49,15 @@ class xsi_shared_memory_file_wrapper
 
    xsi_shared_memory_file_wrapper() : xsi_shared_memory() {}
 
-   xsi_shared_memory_file_wrapper(create_only_t, const xsi_key &key, mode_t mode, std::size_t size, const permissions& perm = permissions())
+   xsi_shared_memory_file_wrapper(create_only_t, const xsi_key &key, mode_t , std::size_t size, const permissions& perm = permissions())
       : xsi_shared_memory(create_only_t(), key, size, perm.get_permissions())
    {}
 
-   xsi_shared_memory_file_wrapper(open_or_create_t, const xsi_key &key, mode_t mode, std::size_t size, const permissions& perm = permissions())
+   xsi_shared_memory_file_wrapper(open_or_create_t, const xsi_key &key, mode_t , std::size_t size, const permissions& perm = permissions())
       : xsi_shared_memory(open_or_create_t(), key, size, perm.get_permissions())
    {}
 
-   xsi_shared_memory_file_wrapper(open_only_t, const xsi_key &key, mode_t mode, const permissions& perm = permissions())
+   xsi_shared_memory_file_wrapper(open_only_t, const xsi_key &key, mode_t, const permissions& = permissions())
       : xsi_shared_memory(open_only_t(), key)
    {}
 
