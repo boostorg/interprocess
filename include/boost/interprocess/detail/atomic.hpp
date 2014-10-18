@@ -57,8 +57,17 @@ inline boost::uint32_t atomic_cas32
 
 #include <boost/interprocess/detail/win32_api.hpp>
 
-extern "C" void _ReadWriteBarrier(void);
-#pragma intrinsic(_ReadWriteBarrier)
+#if defined( _MSC_VER )
+   #pragma intrinsic(_ReadWriteBarrier)
+   extern "C" void _ReadWriteBarrier(void);
+   #define BOOST_INTERPROCESS_READ_WRITE_BARRIER _ReadWriteBarrier()
+#elif defined(__GNUC__)
+   #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) > 40100
+      #define BOOST_INTERPROCESS_READ_WRITE_BARRIER __sync_synchronize()
+   #else
+      #define BOOST_INTERPROCESS_READ_WRITE_BARRIER __asm__ __volatile__("" : : : "memory")
+   #endif
+#endif
 
 namespace boost{
 namespace interprocess{
@@ -80,7 +89,7 @@ inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
 {
     const boost::uint32_t val = *mem;
-    _ReadWriteBarrier();
+    BOOST_INTERPROCESS_READ_WRITE_BARRIER;
     return val;
 }
 
