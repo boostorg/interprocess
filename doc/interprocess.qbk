@@ -320,14 +320,14 @@ All named resource creation functions take an optional
 [classref boost::interprocess::permissions permissions object] that can be
 configured with platform-dependant permissions.
 
-Since each mechanism can be emulated through diferent mechanisms
+Since each mechanism can be emulated through different mechanisms
 (a semaphore might be implement using mapped files or native semaphores)
 permissions types could vary when the implementation of a named resource
 changes (eg.: in Windows mutexes require `synchronize permissions`, but
 that's not the case of files).
 To avoid this, [*Boost.Interprocess] relies on file-like permissions,
 requiring file read-write-delete permissions to open named synchronization mechanisms
-(mutex, semaphores, etc.) and appropiate read or read-write-delete permissions for
+(mutex, semaphores, etc.) and appropriate read or read-write-delete permissions for
 shared memory. This approach has two advantages: it's similar to the UNIX philosophy
 and the programmer does not need to know how the named resource is implemented.
 
@@ -4972,7 +4972,7 @@ An example using [classref boost::interprocess::cached_adaptive_pool cached_adap
 
 [*Boost.Interprocess] STL compatible allocators offer a STL compatible allocator
 interface and if they define their internal *pointer* typedef as a relative pointer,
-they can sbe used to place STL containers in shared memory, memory mapped files or
+they can be used to place STL containers in shared memory, memory mapped files or
 in a user defined memory segment.
 
 However, as Scott Meyers mentions in his Effective STL
@@ -6189,7 +6189,7 @@ when creating a named object are these:
    and meta-data for destruction (number of objects, etc...).
 
 *  Call the constructors of the object being created. If it's an array, one
-   construtor per array element.
+   constructor per array element.
 
 *  Unlock the recursive mutex.
 
@@ -6582,7 +6582,7 @@ Interprocess also defines other index types:
 * [*boost::map_index] uses *boost::interprocess::map* as index type.
 
 * [*boost::null_index] that uses an dummy index type if the user just needs
-  anonymous allocations and wants to save some space and class instantations.
+  anonymous allocations and wants to save some space and class instantiations.
 
 Defining a new managed memory segment that uses the new index is easy. For
 example, a new managed shared memory that uses the new index:
@@ -6667,7 +6667,7 @@ those heavy headers.
 On systems without POSIX shared memory support shared memory objects are implemented as memory mapped files, using a directory
 placed in "/tmp" that can include (if `BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME` is defined) the last bootup time (if the Os supports it).
 As in Windows, in any error case obtaining this directory the library throws an error . You still can use
-[*Boost.Interprocess] definining your own directory as the shared directory. Just define `BOOST_INTERPROCESS_SHARED_DIR_PATH`
+[*Boost.Interprocess] defining your own directory as the shared directory. Just define `BOOST_INTERPROCESS_SHARED_DIR_PATH`
 when using the library and that path will be used to place shared memory files.
 
 [endsect]
