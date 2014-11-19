@@ -3915,7 +3915,7 @@ Managed memory segments offer this functionality through `allocate_many()` funct
 There are 2 types of `allocate_many` functions:
 
 * Allocation of N buffers of memory with the same size.
-* Allocation ot N buffers of memory, each one of different size.
+* Allocation of N buffers of memory, each one of different size.
 
 [c++]
 
