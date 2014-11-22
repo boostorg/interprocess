@@ -52,8 +52,8 @@ namespace interprocess {
 
 #if defined (BOOST_INTERPROCESS_WINDOWS)
 
-typedef void *             file_handle_t;
-typedef long long          offset_t;
+typedef void *                   file_handle_t;
+typedef ::boost::long_long_type  offset_t;
 typedef struct mapping_handle_impl_t{
    void *   handle;
    bool     is_shm;
