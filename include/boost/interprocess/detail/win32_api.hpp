@@ -28,6 +28,13 @@
 #include <vector>
 #include <memory>
 
+#if defined (BOOST_INTERPROCESS_WINDOWS)
+#  include <cstdarg>
+#  include <boost/detail/interlocked.hpp>
+#else
+# error "This file can only be included in Windows OS"
+#endif
+
 #ifdef BOOST_USE_WINDOWS_H
 #include <windows.h>
 #include <wbemidl.h>
@@ -42,13 +49,6 @@
 #  pragma comment( lib, "Ole32.lib" )
 #  pragma comment( lib, "Psapi.lib" )
 #  pragma comment( lib, "Shell32.lib" )   //SHGetSpecialFolderPathA
-#endif
-
-#if defined (BOOST_INTERPROCESS_WINDOWS)
-#  include <cstdarg>
-#  include <boost/detail/interlocked.hpp>
-#else
-# error "This file can only be included in Windows OS"
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
