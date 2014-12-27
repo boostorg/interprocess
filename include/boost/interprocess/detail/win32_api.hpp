@@ -2252,7 +2252,7 @@ inline bool get_last_bootup_time(std::string &stamp)
                // Print the contents of each record in the buffer.
                if(find_record_in_buffer(heap_deleter.get(), dwBytesRead, provider_name, event_id, pTypedRecord)){
                   char stamp_str[sizeof(unsigned long)*3+1];
-                  std::sprintf(&stamp_str[0], "%u", ((unsigned int)pTypedRecord->TimeGenerated));
+                  sprintf(&stamp_str[0], "%u", ((unsigned int)pTypedRecord->TimeGenerated));
                   stamp = stamp_str;
                   break;
                }
