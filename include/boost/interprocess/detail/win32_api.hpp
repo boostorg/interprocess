@@ -30,9 +30,9 @@
 
 #ifdef BOOST_USE_WINDOWS_H
 #include <windows.h>
-#include <Wbemidl.h>
-#include <Objbase.h>
-#include <Shlobj.h>
+#include <wbemidl.h>
+#include <objbase.h>
+#include <shlobj.h>
 #endif
 
 #if defined(_MSC_VER)
