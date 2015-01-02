@@ -31,9 +31,7 @@
 #include <boost/utility/addressof.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 
-#include <memory>
 #include <new>
-#include <algorithm>
 #include <cstddef>
 #include <stdexcept>
 
@@ -164,7 +162,7 @@ class allocator
    //!Swap segment manager. Does not throw. If each allocator is placed in
    //!different memory segments, the result is undefined.
    friend void swap(self_t &alloc1, self_t &alloc2)
-   {  ipcdetail::do_swap(alloc1.mp_mngr, alloc2.mp_mngr);   }
+   {  boost::adl_move_swap(alloc1.mp_mngr, alloc2.mp_mngr);   }
 
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold. This size only works for memory allocated with
@@ -174,14 +172,13 @@ class allocator
       return (size_type)mp_mngr->size(ipcdetail::to_raw_pointer(p))/sizeof(T);
    }
 
-   std::pair<pointer, bool>
-      allocation_command(boost::interprocess::allocation_type command,
-                         size_type limit_size,
-                         size_type preferred_size,
-                         size_type &received_size, const pointer &reuse = 0)
+   pointer allocation_command(boost::interprocess::allocation_type command,
+                           size_type limit_size, size_type &prefer_in_recvd_out_size, pointer &reuse)
    {
-      return mp_mngr->allocation_command
-         (command, limit_size, preferred_size, received_size, ipcdetail::to_raw_pointer(reuse));
+      value_type *reuse_raw = ipcdetail::to_raw_pointer(reuse);
+      pointer const p = mp_mngr->allocation_command(command, limit_size, prefer_in_recvd_out_size, reuse_raw);
+      reuse = reuse_raw;
+      return p;
    }
 
    //!Allocates many elements of size elem_size in a contiguous block

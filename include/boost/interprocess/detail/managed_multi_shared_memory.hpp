@@ -29,10 +29,13 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/permissions.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp> //managed_open_or_create_impl
-#include <new>
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/streams/vectorstream.hpp>
-#include <memory>
+#include <boost/intrusive/detail/minimal_pair_header.hpp>
+#include <string> //string
+#include <new>    //bad_alloc
+#include <ostream>//std::ends
+
 #include <boost/assert.hpp>
 //These includes needed to fulfill default template parameters of
 //predeclarations in interprocess_fwd.hpp

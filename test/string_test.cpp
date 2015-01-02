@@ -15,12 +15,10 @@
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <string>
-#include <vector>
 #include <algorithm>
 #include <cstring>
 #include <cstdio>
 #include <cstddef>
-#include <new>
 #include "dummy_test_allocator.hpp"
 #include "check_equal_containers.hpp"
 #include "expand_bwd_test_allocator.hpp"

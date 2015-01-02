@@ -1,0 +1,46 @@
+//////////////////////////////////////////////////////////////////////////////
+//
+// (C) Copyright Ion Gaztanaga 2014-2015. Distributed under the Boost
+// Software License, Version 1.0. (See accompanying file
+// LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// See http://www.boost.org/libs/interprocess for documentation.
+//
+//////////////////////////////////////////////////////////////////////////////
+#ifndef BOOST_INTERPROCESS_DETAIL_STD_FWD_HPP
+#define BOOST_INTERPROCESS_DETAIL_STD_FWD_HPP
+
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+//                        Standard predeclarations
+//////////////////////////////////////////////////////////////////////////////
+
+#if defined(__clang__) && defined(_LIBCPP_VERSION)
+   #define BOOST_INTERPROCESS_CLANG_INLINE_STD_NS
+   #pragma GCC diagnostic push
+   #pragma GCC diagnostic ignored "-Wc++11-extensions"
+   #define BOOST_INTERPROCESS_STD_NS_BEG _LIBCPP_BEGIN_NAMESPACE_STD
+   #define BOOST_INTERPROCESS_STD_NS_END _LIBCPP_END_NAMESPACE_STD
+#else
+   #define BOOST_INTERPROCESS_STD_NS_BEG namespace std{
+   #define BOOST_INTERPROCESS_STD_NS_END }
+#endif
+
+BOOST_INTERPROCESS_STD_NS_BEG
+
+template<class T>
+struct char_traits;
+
+struct nothrow_t;
+
+BOOST_INTERPROCESS_STD_NS_END
+
+#ifdef BOOST_INTERPROCESS_CLANG_INLINE_STD_NS
+   #pragma GCC diagnostic pop
+   #undef BOOST_INTERPROCESS_CLANG_INLINE_STD_NS
+#endif   //BOOST_INTERPROCESS_CLANG_INLINE_STD_NS
+
+#endif //#ifndef BOOST_INTERPROCESS_DETAIL_STD_FWD_HPP

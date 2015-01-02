@@ -106,9 +106,10 @@ bool test_allocation_shrink(Allocator &a)
       ;i < max
       ; ++i){
       typename Allocator::size_type received_size;
+      char *reuse = static_cast<char*>(buffers[i]);
       if(a.template allocation_command<char>
          ( boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, i*2
-         , i, received_size, static_cast<char*>(buffers[i])).first){
+         , received_size = i, reuse)){
          if(received_size > std::size_t(i*2)){
             return false;
          }
@@ -158,9 +159,10 @@ bool test_allocation_expand(Allocator &a)
       std::size_t preferred_size = i*2;
       preferred_size = min_size > preferred_size ? min_size : preferred_size;
 
+      char *reuse = static_cast<char*>(buffers[i]);
       while(a.template allocation_command<char>
          ( boost::interprocess::expand_fwd | boost::interprocess::nothrow_allocation, min_size
-         , preferred_size, received_size, static_cast<char*>(buffers[i])).first){
+         , received_size = preferred_size, reuse)){
          //Check received size is bigger than minimum
          if(received_size < min_size){
             return false;
@@ -196,11 +198,12 @@ bool test_allocation_shrink_and_expand(Allocator &a)
    //Allocate buffers wand store received sizes
    for(int i = 0; true; ++i){
       typename Allocator::size_type received_size;
+      char *reuse = 0;
       void *ptr = a.template allocation_command<char>
-         ( boost::interprocess::allocate_new | boost::interprocess::nothrow_allocation, i, i*2, received_size).first;
+         ( boost::interprocess::allocate_new | boost::interprocess::nothrow_allocation, i, received_size = i*2, reuse);
       if(!ptr){
          ptr = a.template allocation_command<char>
-            ( boost::interprocess::allocate_new | boost::interprocess::nothrow_allocation, 1, i*2, received_size).first;
+            ( boost::interprocess::allocate_new | boost::interprocess::nothrow_allocation, 1, received_size = i*2, reuse);
          if(!ptr)
             break;
       }
@@ -213,9 +216,10 @@ bool test_allocation_shrink_and_expand(Allocator &a)
       ; i < max
       ; ++i){
       typename Allocator::size_type received_size;
+      char *reuse = static_cast<char*>(buffers[i]);
       if(a.template allocation_command<char>
          ( boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, received_sizes[i]
-         , i, received_size, static_cast<char*>(buffers[i])).first){
+         , received_size = i, reuse)){
          if(received_size > std::size_t(received_sizes[i])){
             return false;
          }
@@ -232,9 +236,10 @@ bool test_allocation_shrink_and_expand(Allocator &a)
       ;++i){
       typename Allocator::size_type received_size;
       std::size_t request_size = received_sizes[i];
+      char *reuse = static_cast<char*>(buffers[i]);
       if(a.template allocation_command<char>
          ( boost::interprocess::expand_fwd | boost::interprocess::nothrow_allocation, request_size
-         , request_size, received_size, static_cast<char*>(buffers[i])).first){
+         , received_size = request_size, reuse)){
          if(received_size != received_sizes[i]){
             return false;
          }
@@ -297,9 +302,10 @@ bool test_allocation_deallocation_expand(Allocator &a)
          std::size_t preferred_size = i*2;
          preferred_size = min_size > preferred_size ? min_size : preferred_size;
 
+         char *reuse = static_cast<char*>(buffers[i]);
          while(a.template allocation_command<char>
             ( boost::interprocess::expand_fwd | boost::interprocess::nothrow_allocation, min_size
-            , preferred_size, received_size, static_cast<char*>(buffers[i])).first){
+            , received_size = preferred_size, reuse)){
             //Check received size is bigger than minimum
             if(received_size < min_size){
                return false;
@@ -367,17 +373,18 @@ bool test_allocation_with_reuse(Allocator &a)
       for(int i = 0; true; ++i){
          std::size_t min_size = (received_size + 1);
          std::size_t prf_size = (received_size + (i+1)*2);
-         std::pair<void*, bool> ret = a.raw_allocation_command
+         void *reuse = ptr;
+         void *ret = a.raw_allocation_command
             ( boost::interprocess::expand_bwd | boost::interprocess::nothrow_allocation, min_size
-            , prf_size, received_size, static_cast<char*>(ptr), sizeof_object);
-         if(!ret.first)
+            , received_size = prf_size, reuse, sizeof_object);
+         if(!ret)
             break;
          //If we have memory, this must be a buffer reuse
-         if(!ret.second)
+         if(!reuse)
             return 1;
          if(received_size < min_size)
             return 1;
-         ptr = ret.first;
+         ptr = ret;
       }
       //There is only a single block so deallocate it
       a.deallocate(ptr);

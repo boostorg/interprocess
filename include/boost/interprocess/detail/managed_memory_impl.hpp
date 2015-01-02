@@ -28,7 +28,7 @@
 //
 #include <boost/detail/no_exceptions_support.hpp>
 //
-#include <utility>
+#include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <fstream>
 #include <new>
 #include <boost/assert.hpp>
@@ -288,14 +288,9 @@ class basic_managed_memory_impl
    {   return mp_header->allocate_aligned(nbytes, alignment, nothrow);  }
 
    template<class T>
-   std::pair<T *, bool>
-      allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
-                           size_type preferred_size,size_type &received_size,
-                           T *reuse_ptr = 0)
-   {
-      return mp_header->allocation_command
-         (command, limit_size, preferred_size, received_size, reuse_ptr);
-   }
+   T * allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
+                           size_type &prefer_in_recvd_out_size, T *&reuse)
+   {  return mp_header->allocation_command(command, limit_size, prefer_in_recvd_out_size, reuse);  }
 
    //!Allocates nbytes bytes aligned to "alignment" bytes. "alignment"
    //!must be power of two. If no

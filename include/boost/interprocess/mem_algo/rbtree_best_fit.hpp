@@ -37,8 +37,6 @@
 #include <boost/intrusive/pointer_traits.hpp>
 #include <boost/assert.hpp>
 #include <boost/static_assert.hpp>
-#include <algorithm>
-#include <utility>
 #include <climits>
 #include <cstring>
 #include <iterator>
@@ -235,15 +233,12 @@ class rbtree_best_fit
    bool check_sanity();
 
    template<class T>
-   std::pair<T *, bool>
-      allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
-                           size_type preferred_size,size_type &received_size,
-                           T *reuse_ptr = 0);
+   T * allocation_command  (boost::interprocess::allocation_type command, size_type limit_size,
+                           size_type &prefer_in_recvd_out_size, T *&reuse);
 
-   std::pair<void *, bool>
-     raw_allocation_command  (boost::interprocess::allocation_type command,   size_type limit_object,
-                              size_type preferred_object,size_type &received_object,
-                              void *reuse_ptr = 0, size_type sizeof_object = 1);
+   void * raw_allocation_command (boost::interprocess::allocation_type command,   size_type limit_object,
+                              size_type &prefer_in_recvd_out_size,
+                              void *&reuse_ptr, size_type sizeof_object = 1);
 
    //!Returns the size of the buffer previously allocated pointed by ptr
    size_type size(const void *ptr) const;
@@ -260,19 +255,14 @@ class rbtree_best_fit
 
    block_ctrl *priv_end_block();
 
-   std::pair<void*, bool>
-      priv_allocation_command(boost::interprocess::allocation_type command,   size_type limit_size,
-                        size_type preferred_size,size_type &received_size,
-                        void *reuse_ptr, size_type sizeof_object);
+   void* priv_allocation_command(boost::interprocess::allocation_type command,   size_type limit_size,
+                        size_type &prefer_in_recvd_out_size, void *&reuse_ptr, size_type sizeof_object);
 
 
    //!Real allocation algorithm with min allocation option
-   std::pair<void *, bool> priv_allocate(boost::interprocess::allocation_type command
-                                        ,size_type limit_size
-                                        ,size_type preferred_size
-                                        ,size_type &received_size
-                                        ,void *reuse_ptr = 0
-                                        ,size_type backwards_multiple = 1);
+   void * priv_allocate( boost::interprocess::allocation_type command
+                       , size_type limit_size, size_type &prefer_in_recvd_out_size
+                       , void *&reuse_ptr, size_type backwards_multiple = 1);
 
    //!Obtains the block control structure of the user buffer
    static block_ctrl *priv_get_block(const void *ptr);
@@ -285,15 +275,12 @@ class rbtree_best_fit
    static size_type priv_get_total_units(size_type userbytes);
 
    //!Real expand function implementation
-   bool priv_expand(void *ptr
-                   ,const size_type min_size, const size_type preferred_size
-                   ,size_type &received_size);
+   bool priv_expand(void *ptr, const size_type min_size, size_type &prefer_in_recvd_out_size);
 
    //!Real expand to both sides implementation
    void* priv_expand_both_sides(boost::interprocess::allocation_type command
                                ,size_type min_size
-                               ,size_type preferred_size
-                               ,size_type &received_size
+                               ,size_type &prefer_in_recvd_out_size
                                ,void *reuse_ptr
                                ,bool only_preferred_backwards
                                ,size_type backwards_multiple);
@@ -540,8 +527,9 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::shrink_to_fit()
    //Check if no memory is allocated between the first and last block
    if(priv_next_block(first_block) == old_end_block){
       //If so check if we can allocate memory
-      size_type ignore;
-      unique_buffer = priv_allocate(boost::interprocess::allocate_new, 0, 0, ignore).first;
+      size_type ignore_recvd = 0;
+      void *ignore_reuse = 0;
+      unique_buffer = priv_allocate(boost::interprocess::allocate_new, 0, ignore_recvd, ignore_reuse);
       //If not, return, we can't shrink
       if(!unique_buffer)
          return;
@@ -675,9 +663,9 @@ inline void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    //-----------------------
    boost::interprocess::scoped_lock<mutex_type> guard(m_header);
    //-----------------------
-   size_type ignore;
-   void * ret = priv_allocate(boost::interprocess::allocate_new, nbytes, nbytes, ignore).first;
-   return ret;
+   size_type ignore_recvd = nbytes;
+   void *ignore_reuse = 0;
+   return priv_allocate(boost::interprocess::allocate_new, nbytes, ignore_recvd, ignore_reuse);
 }
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
@@ -692,48 +680,51 @@ inline void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
 template<class T>
-inline std::pair<T*, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
+inline T* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
-                        size_type preferred_size,size_type &received_size,
-                        T *reuse_ptr)
+                        size_type &prefer_in_recvd_out_size, T *&reuse)
 {
-   std::pair<void*, bool> ret = priv_allocation_command
-      (command, limit_size, preferred_size, received_size, static_cast<void*>(reuse_ptr), sizeof(T));
-
-   BOOST_ASSERT(0 == ((std::size_t)ret.first % ::boost::alignment_of<T>::value));
-   return std::pair<T *, bool>(static_cast<T*>(ret.first), ret.second);
+   void* raw_reuse = reuse;
+   void* const ret = priv_allocation_command(command, limit_size, prefer_in_recvd_out_size, raw_reuse, sizeof(T));
+   reuse = static_cast<T*>(raw_reuse);
+   BOOST_ASSERT(0 == ((std::size_t)ret % ::boost::alignment_of<T>::value));
+   return static_cast<T*>(ret);
 }
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
-inline std::pair<void*, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
+inline void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    raw_allocation_command  (boost::interprocess::allocation_type command,   size_type limit_objects,
-                        size_type preferred_objects,size_type &received_objects,
-                        void *reuse_ptr, size_type sizeof_object)
+                        size_type &prefer_in_recvd_out_objects, void *&reuse_ptr, size_type sizeof_object)
 {
+   size_type const preferred_objects = prefer_in_recvd_out_objects;
    if(!sizeof_object)
-      return std::pair<void *, bool>(static_cast<void*>(0), false);
+      return reuse_ptr = 0, static_cast<void*>(0);
    if(command & boost::interprocess::try_shrink_in_place){
-      bool success = algo_impl_t::try_shrink
+      if(!reuse_ptr)  return static_cast<void*>(0);
+      const bool success = algo_impl_t::try_shrink
          ( this, reuse_ptr, limit_objects*sizeof_object
-         , preferred_objects*sizeof_object, received_objects);
-      received_objects /= sizeof_object;
-      return std::pair<void *, bool> ((success ? reuse_ptr : 0), true);
+         , prefer_in_recvd_out_objects = preferred_objects*sizeof_object);
+      prefer_in_recvd_out_objects /= sizeof_object;
+      return success ? reuse_ptr : 0;
    }
-   return priv_allocation_command
-      (command, limit_objects, preferred_objects, received_objects, reuse_ptr, sizeof_object);
+   else{
+      return priv_allocation_command
+         (command, limit_objects, prefer_in_recvd_out_objects, reuse_ptr, sizeof_object);
+   }
 }
 
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
-inline std::pair<void*, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
+inline void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    priv_allocation_command (boost::interprocess::allocation_type command,   size_type limit_size,
-                       size_type preferred_size,size_type &received_size,
-                       void *reuse_ptr, size_type sizeof_object)
+                       size_type &prefer_in_recvd_out_size,
+                       void *&reuse_ptr, size_type sizeof_object)
 {
-   std::pair<void*, bool> ret;
-   size_type max_count = m_header.m_size/sizeof_object;
+   void* ret;
+   size_type const preferred_size = prefer_in_recvd_out_size;
+   size_type const max_count = m_header.m_size/sizeof_object;
    if(limit_size > max_count || preferred_size > max_count){
-      ret.first = 0; return ret;
+      return reuse_ptr = 0, static_cast<void*>(0);
    }
    size_type l_size = limit_size*sizeof_object;
    size_type p_size = preferred_size*sizeof_object;
@@ -742,9 +733,9 @@ inline std::pair<void*, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlign
       //-----------------------
       boost::interprocess::scoped_lock<mutex_type> guard(m_header);
       //-----------------------
-      ret = priv_allocate(command, l_size, p_size, r_size, reuse_ptr, sizeof_object);
+      ret = priv_allocate(command, l_size, r_size = p_size, reuse_ptr, sizeof_object);
    }
-   received_size = r_size/sizeof_object;
+   prefer_in_recvd_out_size = r_size/sizeof_object;
    return ret;
 }
 
@@ -788,20 +779,20 @@ template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
 void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    priv_expand_both_sides(boost::interprocess::allocation_type command
                          ,size_type min_size
-                         ,size_type preferred_size
-                         ,size_type &received_size
+                         ,size_type &prefer_in_recvd_out_size
                          ,void *reuse_ptr
                          ,bool only_preferred_backwards
                          ,size_type backwards_multiple)
 {
+   size_type const preferred_size = prefer_in_recvd_out_size;
    algo_impl_t::assert_alignment(reuse_ptr);
    if(command & boost::interprocess::expand_fwd){
-      if(priv_expand(reuse_ptr, min_size, preferred_size, received_size))
+      if(priv_expand(reuse_ptr, min_size, prefer_in_recvd_out_size = preferred_size))
          return reuse_ptr;
    }
    else{
-      received_size = this->size(reuse_ptr);
-      if(received_size >= preferred_size || received_size >= min_size)
+      prefer_in_recvd_out_size = this->size(reuse_ptr);
+      if(prefer_in_recvd_out_size >= preferred_size || prefer_in_recvd_out_size >= min_size)
          return reuse_ptr;
    }
 
@@ -835,7 +826,7 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
       size_type lcm;
       if(!algo_impl_t::calculate_lcm_and_needs_backwards_lcmed
          ( backwards_multiple
-         , received_size
+         , prefer_in_recvd_out_size
          , only_preferred_backwards ? preferred_size : min_size
          , lcm, needs_backwards_aligned)){
          return 0;
@@ -846,10 +837,10 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
          //Now take all next space. This will succeed
          if(command & boost::interprocess::expand_fwd){
             size_type received_size2;
-            if(!priv_expand(reuse_ptr, received_size, received_size, received_size2)){
+            if(!priv_expand(reuse_ptr, prefer_in_recvd_out_size, received_size2 = prefer_in_recvd_out_size)){
                BOOST_ASSERT(0);
             }
-            BOOST_ASSERT(received_size == received_size2);
+            BOOST_ASSERT(prefer_in_recvd_out_size == received_size2);
          }
          //We need a minimum size to split the previous one
          if(prev_block->m_size >= (needs_backwards_aligned/Alignment + BlockCtrlUnits)){
@@ -858,7 +849,7 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
 
             //Free old previous buffer
             new_block->m_size =
-               AllocatedCtrlUnits + (needs_backwards_aligned + (received_size - UsableByPreviousChunk))/Alignment;
+               AllocatedCtrlUnits + (needs_backwards_aligned + (prefer_in_recvd_out_size - UsableByPreviousChunk))/Alignment;
             BOOST_ASSERT(new_block->m_size >= BlockCtrlUnits);
             priv_mark_as_allocated_block(new_block);
 
@@ -880,7 +871,7 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
                }
             }
 
-            received_size = needs_backwards_aligned + received_size;
+            prefer_in_recvd_out_size = needs_backwards_aligned + prefer_in_recvd_out_size;
             m_header.m_allocated += needs_backwards_aligned;
 
             //Check alignment
@@ -903,7 +894,7 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
 
             //Just merge the whole previous block
             //prev_block->m_size*Alignment is multiple of lcm (and backwards_multiple)
-            received_size = received_size + (size_type)prev_block->m_size*Alignment;
+            prefer_in_recvd_out_size = prefer_in_recvd_out_size + (size_type)prev_block->m_size*Alignment;
 
             m_header.m_allocated += (size_type)prev_block->m_size*Alignment;
             //Now update sizes
@@ -937,28 +928,25 @@ inline void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
 }
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
-std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
+void * rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    priv_allocate(boost::interprocess::allocation_type command
                 ,size_type limit_size
-                ,size_type preferred_size
-                ,size_type &received_size
-                ,void *reuse_ptr
+                ,size_type &prefer_in_recvd_out_size
+                ,void *&reuse_ptr
                ,size_type backwards_multiple)
 {
-   //Remove me. Forbid backwards allocation
-   //command &= (~boost::interprocess::expand_bwd);
-
+   size_type const preferred_size = prefer_in_recvd_out_size;
    if(command & boost::interprocess::shrink_in_place){
+      if(!reuse_ptr)  return static_cast<void*>(0);
       bool success =
-         algo_impl_t::shrink(this, reuse_ptr, limit_size, preferred_size, received_size);
-      return std::pair<void *, bool> ((success ? reuse_ptr : 0), true);
+         algo_impl_t::shrink(this, reuse_ptr, limit_size, prefer_in_recvd_out_size = preferred_size);
+      return success ? reuse_ptr : 0;
    }
 
-   typedef std::pair<void *, bool> return_type;
-   received_size = 0;
+   prefer_in_recvd_out_size = 0;
 
    if(limit_size > preferred_size)
-      return return_type(static_cast<void*>(0), false);
+      return reuse_ptr = 0, static_cast<void*>(0);
 
    //Number of units to request (including block_ctrl header)
    size_type preferred_units = priv_get_total_units(preferred_size);
@@ -967,11 +955,12 @@ std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>:
    size_type limit_units = priv_get_total_units(limit_size);
 
    //Expand in place
+   prefer_in_recvd_out_size = preferred_size;
    if(reuse_ptr && (command & (boost::interprocess::expand_fwd | boost::interprocess::expand_bwd))){
       void *ret = priv_expand_both_sides
-         (command, limit_size, preferred_size, received_size, reuse_ptr, true, backwards_multiple);
+         (command, limit_size, prefer_in_recvd_out_size, reuse_ptr, true, backwards_multiple);
       if(ret)
-         return return_type(ret, true);
+         return ret;
    }
 
    if(command & boost::interprocess::allocate_new){
@@ -979,25 +968,24 @@ std::pair<void *, bool> rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>:
       imultiset_iterator it(m_header.m_imultiset.lower_bound(preferred_units, comp));
 
       if(it != m_header.m_imultiset.end()){
-         return return_type(this->priv_check_and_allocate
-            (preferred_units, ipcdetail::to_raw_pointer(&*it), received_size), false);
+         return reuse_ptr = 0, this->priv_check_and_allocate
+            (preferred_units, ipcdetail::to_raw_pointer(&*it), prefer_in_recvd_out_size);
       }
 
       if(it != m_header.m_imultiset.begin()&&
               (--it)->m_size >= limit_units){
-         return return_type(this->priv_check_and_allocate
-            (it->m_size, ipcdetail::to_raw_pointer(&*it), received_size), false);
+         return reuse_ptr = 0, this->priv_check_and_allocate
+            (it->m_size, ipcdetail::to_raw_pointer(&*it), prefer_in_recvd_out_size);
       }
    }
 
 
    //Now try to expand both sides with min size
    if(reuse_ptr && (command & (boost::interprocess::expand_fwd | boost::interprocess::expand_bwd))){
-      return return_type(priv_expand_both_sides
-         (command, limit_size, preferred_size, received_size, reuse_ptr, false, backwards_multiple), true);
+      return priv_expand_both_sides
+         (command, limit_size, prefer_in_recvd_out_size = preferred_size, reuse_ptr, false, backwards_multiple);
    }
-
-   return return_type(static_cast<void*>(0), false);
+   return reuse_ptr = 0, static_cast<void*>(0);
 }
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
@@ -1030,11 +1018,9 @@ rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
 bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
-   priv_expand (void *ptr
-               ,const size_type min_size
-               ,const size_type preferred_size
-               ,size_type &received_size)
+   priv_expand (void *ptr, const size_type min_size, size_type &prefer_in_recvd_out_size)
 {
+   size_type const preferred_size = prefer_in_recvd_out_size;
    //Obtain the real size of the block
    block_ctrl *block = priv_get_block(ptr);
    size_type old_block_units = block->m_size;
@@ -1043,8 +1029,8 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    BOOST_ASSERT(priv_is_allocated_block(block));
 
    //Put this to a safe value
-   received_size = (old_block_units - AllocatedCtrlUnits)*Alignment + UsableByPreviousChunk;
-   if(received_size >= preferred_size || received_size >= min_size)
+   prefer_in_recvd_out_size = (old_block_units - AllocatedCtrlUnits)*Alignment + UsableByPreviousChunk;
+   if(prefer_in_recvd_out_size >= preferred_size || prefer_in_recvd_out_size >= min_size)
       return true;
 
    //Now translate it to Alignment units
@@ -1057,7 +1043,7 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    block_ctrl *next_block;
 
    if(priv_is_allocated_block(next_block = priv_next_block(block))){
-      return received_size >= min_size ? true : false;
+      return prefer_in_recvd_out_size >= min_size;
    }
    algo_impl_t::assert_alignment(next_block);
 
@@ -1068,7 +1054,7 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    const size_type merged_user_units = merged_units - AllocatedCtrlUnits;
 
    if(merged_user_units < min_user_units){
-      received_size = merged_units*Alignment - UsableByPreviousChunk;
+      prefer_in_recvd_out_size = merged_units*Alignment - UsableByPreviousChunk;
       return false;
    }
 
@@ -1132,7 +1118,7 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
       m_header.m_allocated += (merged_units - old_block_units)*Alignment;
    }
    priv_mark_as_allocated_block(block);
-   received_size = ((size_type)block->m_size - AllocatedCtrlUnits)*Alignment + UsableByPreviousChunk;
+   prefer_in_recvd_out_size = ((size_type)block->m_size - AllocatedCtrlUnits)*Alignment + UsableByPreviousChunk;
    return true;
 }
 

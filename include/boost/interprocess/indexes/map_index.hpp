@@ -18,10 +18,11 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <functional>
-#include <utility>
+#include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/allocators/private_adaptive_pool.hpp>
+#include <boost/intrusive/detail/minimal_pair_header.hpp>         //std::pair
+#include <boost/intrusive/detail/minimal_less_equal_header.hpp>   //std::less
 
 //!\file
 //!Describes index adaptor of boost::map container, to use it

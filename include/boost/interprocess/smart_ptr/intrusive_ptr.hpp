@@ -27,10 +27,11 @@
 #include <boost/assert.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
+#include <boost/move/adl_move_swap.hpp>
 
-#include <functional>           // for std::less
 #include <iosfwd>               // for std::basic_ostream
 
+#include <boost/intrusive/detail/minimal_less_equal_header.hpp>   //std::less
 
 namespace boost {
 namespace interprocess {
@@ -168,7 +169,7 @@ class intrusive_ptr
    //!Exchanges the contents of the two smart pointers.
    //!Does not throw
    void swap(intrusive_ptr & rhs)
-   {  ipcdetail::do_swap(m_ptr, rhs.m_ptr);  }
+   {  ::boost::adl_move_swap(m_ptr, rhs.m_ptr);  }
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:

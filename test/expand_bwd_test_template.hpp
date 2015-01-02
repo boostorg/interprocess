@@ -14,7 +14,8 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <vector>
 #include "expand_bwd_test_allocator.hpp"
-#include <algorithm>
+#include <algorithm> //std::equal
+#include <iostream>
 #include <boost/type_traits/remove_volatile.hpp>
 
 namespace boost { namespace interprocess { namespace test {

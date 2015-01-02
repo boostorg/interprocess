@@ -16,12 +16,16 @@
 #include <boost/interprocess/containers/set.hpp>
 #include <boost/interprocess/allocators/node_allocator.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
-#include <vector>
-#include <iostream>
+
 #include <cstddef>
-#include <limits>
 #include <memory>
-#include <string>
+#include <utility>
+#include <functional>
+#include <iostream>
+#include <vector>
+#include <stdexcept>
+#include <limits>
+
 #include "get_process_id_name.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////

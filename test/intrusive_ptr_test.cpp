@@ -16,7 +16,7 @@
 
 #include <boost/detail/lightweight_test.hpp>
 #include <boost/config.hpp>
-#include <algorithm>
+#include <boost/move/adl_move_swap.hpp>
 #include <functional>
 
 typedef boost::interprocess::offset_ptr<void> VP;
@@ -283,8 +283,7 @@ void test()
       BOOST_TEST(px.get() == 0);
       BOOST_TEST(px2.get() == 0);
 
-      using std::swap;
-      swap(px, px2);
+      ::boost::adl_move_swap(px, px2);
 
       BOOST_TEST(px.get() == 0);
       BOOST_TEST(px2.get() == 0);
@@ -304,8 +303,7 @@ void test()
       BOOST_TEST(px3.get() == p);
       BOOST_TEST(px3->use_count() == 2);
 
-      using std::swap;
-      swap(px, px2);
+      ::boost::adl_move_swap(px, px2);
 
       BOOST_TEST(px.get() == 0);
       BOOST_TEST(px2.get() == p);
@@ -330,8 +328,7 @@ void test()
       BOOST_TEST(px3.get() == p2);
       BOOST_TEST(px3->use_count() == 2);
 
-      using std::swap;
-      swap(px, px2);
+      ::boost::adl_move_swap(px, px2);
 
       BOOST_TEST(px.get() == p1);
       BOOST_TEST(px->use_count() == 1);

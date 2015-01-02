@@ -35,10 +35,7 @@
 #include <boost/static_assert.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
 
-#include <algorithm>            // for std::swap
-#include <functional>           // for std::less
-#include <typeinfo>             // for std::bad_cast
-#include <iosfwd>               // for std::basic_ostream
+#include <iosfwd> // for std::basic_ostream
 
 //!\file
 //!Describes the smart pointer shared_ptr
@@ -391,7 +388,7 @@ inline typename managed_shared_ptr<T, ManagedMemory>::type
 //!Does not throw, return null shared pointer in error.
 template<class T, class ManagedMemory>
 inline typename managed_shared_ptr<T, ManagedMemory>::type
-   make_managed_shared_ptr(T *constructed_object, ManagedMemory &managed_memory, std::nothrow_t)
+   make_managed_shared_ptr(T *constructed_object, ManagedMemory &managed_memory, const std::nothrow_t &)
 {
    try{
       return typename managed_shared_ptr<T, ManagedMemory>::type

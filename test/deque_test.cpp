@@ -9,11 +9,9 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <algorithm>
 #include <memory>
 #include <deque>
 #include <iostream>
-#include <functional>
 #include <list>
 
 #include <boost/interprocess/managed_shared_memory.hpp>

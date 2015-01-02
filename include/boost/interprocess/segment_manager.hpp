@@ -37,7 +37,7 @@
 #include <cstddef>   //std::size_t
 #include <string>    //char_traits
 #include <new>       //std::nothrow
-#include <utility>   //std::pair
+#include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <boost/assert.hpp>
 #ifndef BOOST_NO_EXCEPTIONS
 #include <exception>
@@ -191,28 +191,23 @@ class segment_manager_base
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    template<class T>
-   std::pair<T *, bool>
-      allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
-                           size_type preferred_size,size_type &received_size,
-                           T *reuse_ptr = 0)
+   T *allocation_command  (boost::interprocess::allocation_type command, size_type limit_size,
+                           size_type &prefer_in_recvd_out_size, T *&reuse)
    {
-      std::pair<T *, bool> ret = MemoryAlgorithm::allocation_command
-         ( command | boost::interprocess::nothrow_allocation, limit_size, preferred_size, received_size
-         , reuse_ptr);
-      if(!(command & boost::interprocess::nothrow_allocation) && !ret.first)
+      T *ret = MemoryAlgorithm::allocation_command
+         (command | boost::interprocess::nothrow_allocation, limit_size, prefer_in_recvd_out_size, reuse);
+      if(!(command & boost::interprocess::nothrow_allocation) && !ret)
          throw bad_alloc();
       return ret;
    }
 
-   std::pair<void *, bool>
-      raw_allocation_command  (boost::interprocess::allocation_type command,   size_type limit_objects,
-                           size_type preferred_objects,size_type &received_objects,
-                           void *reuse_ptr = 0, size_type sizeof_object = 1)
+   void *raw_allocation_command  (boost::interprocess::allocation_type command,   size_type limit_objects,
+                           size_type &prefer_in_recvd_out_size, void *&reuse, size_type sizeof_object = 1)
    {
-      std::pair<void *, bool> ret = MemoryAlgorithm::raw_allocation_command
-         ( command | boost::interprocess::nothrow_allocation, limit_objects, preferred_objects, received_objects
-         , reuse_ptr, sizeof_object);
-      if(!(command & boost::interprocess::nothrow_allocation) && !ret.first)
+      void *ret = MemoryAlgorithm::raw_allocation_command
+         ( command | boost::interprocess::nothrow_allocation, limit_objects,
+           prefer_in_recvd_out_size, reuse, sizeof_object);
+      if(!(command & boost::interprocess::nothrow_allocation) && !ret)
          throw bad_alloc();
       return ret;
    }
@@ -728,7 +723,7 @@ class segment_manager
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
-   std::pair<T*, size_type> priv_find__impl (const ipcdetail::unique_instance_t* name, bool lock)
+   std::pair<T*, size_type> priv_find_impl (const ipcdetail::unique_instance_t* name, bool lock)
    {
       ipcdetail::placement_destroy<T> table;
       size_type size;
@@ -741,7 +736,7 @@ class segment_manager
    {
       void *ret;
       //Security overflow check
-     if(num > ((std::size_t)-1)/table.size){
+      if(num > ((std::size_t)-1)/table.size){
          if(dothrow)
             throw bad_alloc();
          else
@@ -1019,7 +1014,7 @@ class segment_manager
 
       //Check if the distance between the name pointer and the memory pointer
       //is correct (this can detect incorrect type in destruction)
-     std::size_t num = ctrl_data->m_value_bytes/table.size;
+      std::size_t num = ctrl_data->m_value_bytes/table.size;
       void *values = ctrl_data->value();
 
       //Sanity check

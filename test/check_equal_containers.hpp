@@ -12,9 +12,7 @@
 #define BOOST_INTERPROCESS_TEST_CHECK_EQUAL_CONTAINERS_HPP
 
 #include <boost/interprocess/detail/config_begin.hpp>
-#include <functional>
-#include <iostream>
-#include <algorithm>
+#include <iterator>
 #include <boost/container/detail/pair.hpp>
 
 namespace boost{

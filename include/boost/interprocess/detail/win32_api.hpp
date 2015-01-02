@@ -26,7 +26,6 @@
 #include <boost/assert.hpp>
 #include <string>
 #include <vector>
-#include <memory>
 
 #ifdef BOOST_USE_WINDOWS_H
 #include <windows.h>

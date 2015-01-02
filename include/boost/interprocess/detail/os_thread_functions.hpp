@@ -31,7 +31,7 @@
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <cstddef>
-#include <memory>
+#include <ostream>
 
 #if defined(BOOST_INTERPROCESS_WINDOWS)
 #  include <boost/interprocess/detail/win32_api.hpp>

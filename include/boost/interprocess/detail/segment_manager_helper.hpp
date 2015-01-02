@@ -31,10 +31,8 @@
 #include <cstddef>   //std::size_t
 #include <string>    //char_traits
 #include <new>       //std::nothrow
-#include <utility>   //std::pair
 #include <iterator>  //std::iterator_traits
 #include <boost/assert.hpp>   //BOOST_ASSERT
-#include <functional>   //unary_function
 #ifndef BOOST_NO_EXCEPTIONS
 #include <exception>
 #endif
@@ -399,7 +397,7 @@ struct index_data
 {
    typedef VoidPointer void_pointer;
    void_pointer    m_ptr;
-   index_data(void *ptr) : m_ptr(ptr){}
+   explicit index_data(void *ptr) : m_ptr(ptr){}
 
    void *value() const
    {  return static_cast<void*>(to_raw_pointer(m_ptr));  }
@@ -481,8 +479,6 @@ class segment_manager_iterator_value_adaptor<Iterator, false>
 
 template<class Iterator, bool intrusive>
 struct segment_manager_iterator_transform
-   :  std::unary_function< typename std::iterator_traits<Iterator>::value_type
-                         , segment_manager_iterator_value_adaptor<Iterator, intrusive> >
 {
    typedef segment_manager_iterator_value_adaptor<Iterator, intrusive> result_type;
 

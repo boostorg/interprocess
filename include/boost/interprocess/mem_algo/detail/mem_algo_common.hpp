@@ -29,8 +29,6 @@
 #include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/assert.hpp>
 #include <boost/static_assert.hpp>
-#include <algorithm>
-#include <utility>
 #include <iterator>
 #include <boost/assert.hpp>
 
@@ -240,10 +238,11 @@ class memory_algorithm_common
          return 0;
       }
 
-      size_type real_size;
+      size_type real_size = nbytes;
       if(alignment <= Alignment){
+         void *ignore_reuse = 0;
          return memory_algo->priv_allocate
-            (boost::interprocess::allocate_new, nbytes, nbytes, real_size).first;
+            (boost::interprocess::allocate_new, nbytes, real_size, ignore_reuse);
       }
 
       if(nbytes > UsableByPreviousChunk)
@@ -268,8 +267,9 @@ class memory_algorithm_common
          );
 
       //Now allocate the buffer
-      void *buffer = memory_algo->priv_allocate
-         (boost::interprocess::allocate_new, request, request, real_size).first;
+      real_size = request;
+      void *ignore_reuse = 0;
+      void *buffer = memory_algo->priv_allocate(boost::interprocess::allocate_new, request, real_size, ignore_reuse);
       if(!buffer){
          return 0;
       }
@@ -358,9 +358,9 @@ class memory_algorithm_common
 
    static bool try_shrink
       (MemoryAlgorithm *memory_algo, void *ptr
-      ,const size_type max_size,   const size_type preferred_size
-      ,size_type &received_size)
+      ,const size_type max_size, size_type &received_size)
    {
+      size_type const preferred_size = received_size;
       (void)memory_algo;
       //Obtain the real block
       block_ctrl *block = memory_algo->priv_get_block(ptr);
@@ -414,15 +414,14 @@ class memory_algorithm_common
 
    static bool shrink
       (MemoryAlgorithm *memory_algo, void *ptr
-      ,const size_type max_size,   const size_type preferred_size
-      ,size_type &received_size)
+      ,const size_type max_size, size_type &received_size)
    {
+      size_type const preferred_size = received_size;
       //Obtain the real block
       block_ctrl *block = memory_algo->priv_get_block(ptr);
       size_type old_block_units = (size_type)block->m_size;
 
-      if(!try_shrink
-         (memory_algo, ptr, max_size, preferred_size, received_size)){
+      if(!try_shrink(memory_algo, ptr, max_size, received_size)){
          return false;
       }
 
@@ -492,14 +491,15 @@ class memory_algorithm_common
                :  memory_algo->priv_get_total_units(elem_sizes[low_idx]*sizeof_element);
             min_allocation = min_allocation*Alignment - AllocatedCtrlBytes + UsableByPreviousChunk;
 
-            size_type received_size;
-            std::pair<void *, bool> ret = memory_algo->priv_allocate
-               (boost::interprocess::allocate_new, min_allocation, total_bytes, received_size, 0);
-            if(!ret.first){
+            size_type received_size = total_bytes;
+            void *ignore_reuse = 0;
+            void *ret = memory_algo->priv_allocate
+               (boost::interprocess::allocate_new, min_allocation, received_size, ignore_reuse);
+            if(!ret){
                break;
             }
 
-            block_ctrl *block = memory_algo->priv_get_block(ret.first);
+            block_ctrl *block = memory_algo->priv_get_block(ret);
             size_type received_units = (size_type)block->m_size;
             char *block_address = reinterpret_cast<char*>(block);
 
@@ -521,8 +521,8 @@ class memory_algorithm_common
                   (total_used_units + elem_units +
                   ((!sizeof_element)
                      ? elem_units
-               : std::max(memory_algo->priv_get_total_units(elem_sizes[low_idx+1]*sizeof_element), ptr_size_units))
-                  ) > received_units){
+               : max_value(memory_algo->priv_get_total_units(elem_sizes[low_idx+1]*sizeof_element), ptr_size_units))
+                   > received_units)){
                   //By default, the new block will use the rest of the buffer
                   new_block->m_size = received_units - total_used_units;
                   memory_algo->priv_mark_new_allocated_block(new_block);
@@ -530,12 +530,11 @@ class memory_algorithm_common
                   //If the remaining units are bigger than needed and we can
                   //split it obtaining a new free memory block do it.
                   if((received_units - total_used_units) >= (elem_units + MemoryAlgorithm::BlockCtrlUnits)){
-                     size_type shrunk_received;
                      size_type shrunk_request = elem_units*Alignment - AllocatedCtrlBytes + UsableByPreviousChunk;
+                     size_type shrunk_received = shrunk_request;
                      bool shrink_ok = shrink
                            (memory_algo
                            ,memory_algo->priv_get_user_buffer(new_block)
-                           ,shrunk_request
                            ,shrunk_request
                            ,shrunk_received);
                      (void)shrink_ok;

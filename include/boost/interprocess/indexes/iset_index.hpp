@@ -18,12 +18,11 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <string>
-#include <functional>
-#include <utility>
+#include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/intrusive/detail/minimal_pair_header.hpp>         //std::pair
+#include <boost/intrusive/detail/minimal_less_equal_header.hpp>   //std::less
 #include <boost/intrusive/set.hpp>
-
 
 //!\file
 //!Describes index adaptor of boost::intrusive::set container, to use it

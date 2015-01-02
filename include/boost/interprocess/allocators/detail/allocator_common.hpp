@@ -33,8 +33,7 @@
 #include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <algorithm> //std::swap
-#include <utility>   //std::pair
+#include <boost/move/adl_move_swap.hpp>
 #include <new>
 
 namespace boost {
@@ -295,9 +294,9 @@ class cache_impl
    public:
    void swap(cache_impl &other)
    {
-      ipcdetail::do_swap(mp_node_pool, other.mp_node_pool);
-      m_cached_nodes.swap(other.m_cached_nodes);
-      ipcdetail::do_swap(m_max_cached_nodes, other.m_max_cached_nodes);
+      ::boost::adl_move_swap(mp_node_pool, other.mp_node_pool);
+      ::boost::adl_move_swap(m_cached_nodes, other.m_cached_nodes);
+      ::boost::adl_move_swap(m_max_cached_nodes, other.m_max_cached_nodes);
    }
 };
 
@@ -338,14 +337,14 @@ class array_allocation_impl
       return (size_type)this->derived()->get_segment_manager()->size(ipcdetail::to_raw_pointer(p))/sizeof(T);
    }
 
-   std::pair<pointer, bool>
-      allocation_command(boost::interprocess::allocation_type command,
-                         size_type limit_size,
-                         size_type preferred_size,
-                         size_type &received_size, const pointer &reuse = 0)
+   pointer allocation_command(boost::interprocess::allocation_type command,
+                         size_type limit_size, size_type &prefer_in_recvd_out_size, pointer &reuse)
    {
-      return this->derived()->get_segment_manager()->allocation_command
-         (command, limit_size, preferred_size, received_size, ipcdetail::to_raw_pointer(reuse));
+      value_type *reuse_raw = ipcdetail::to_raw_pointer(reuse);
+      pointer const p = this->derived()->get_segment_manager()->allocation_command
+         (command, limit_size, prefer_in_recvd_out_size, reuse_raw);
+      reuse = reuse_raw;
+      return p;
    }
 
    //!Allocates many elements of size elem_size in a contiguous block
@@ -671,7 +670,7 @@ class cached_allocator_impl
    //!Swaps allocators. Does not throw. If each allocator is placed in a
    //!different shared memory segments, the result is undefined.
    friend void swap(cached_allocator_impl &alloc1, cached_allocator_impl &alloc2)
-   {  alloc1.m_cache.swap(alloc2.m_cache);   }
+   {  ::boost::adl_move_swap(alloc1.m_cache, alloc2.m_cache);   }
 
    void deallocate_cache()
    {  m_cache.deallocate_all_cached_nodes(); }
