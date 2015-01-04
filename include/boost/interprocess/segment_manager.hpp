@@ -34,8 +34,8 @@
 #include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/container/detail/minimal_char_traits_header.hpp>
 #include <cstddef>   //std::size_t
-#include <string>    //char_traits
 #include <new>       //std::nothrow
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <boost/assert.hpp>

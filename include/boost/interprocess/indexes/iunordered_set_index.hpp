@@ -24,6 +24,7 @@
 #include <boost/intrusive/unordered_set.hpp>
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <boost/intrusive/detail/minimal_less_equal_header.hpp>   //std::less
+#include <boost/container/detail/minimal_char_traits_header.hpp>  //std::char_traits
 
 //!\file
 //!Describes index adaptor of boost::intrusive::unordered_set container, to use it

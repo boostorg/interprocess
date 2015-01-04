@@ -22,6 +22,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/intrusive/detail/minimal_pair_header.hpp>         //std::pair
 #include <boost/intrusive/detail/minimal_less_equal_header.hpp>   //std::less
+#include <boost/container/detail/minimal_char_traits_header.hpp>  //std::char_traits
 #include <boost/intrusive/set.hpp>
 
 //!\file
