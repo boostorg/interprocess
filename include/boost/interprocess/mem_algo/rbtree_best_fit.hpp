@@ -18,33 +18,32 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/intrusive/pointer_traits.hpp>
-
+// interprocess
+#include <boost/interprocess/containers/allocation_type.hpp>
+#include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/mem_algo/detail/mem_algo_common.hpp>
-#include <boost/interprocess/containers/allocation_type.hpp>
-#include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
-#include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
+// interprocess/detail
 #include <boost/interprocess/detail/min_max.hpp>
 #include <boost/interprocess/detail/math_functions.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/type_traits/alignment_of.hpp>
-#include <boost/type_traits/type_with_alignment.hpp>
-#include <boost/type_traits/make_unsigned.hpp>
+#include <boost/interprocess/detail/utilities.hpp>
+// container
+#include <boost/container/detail/multiallocation_chain.hpp>
+// move/detail
+#include <boost/move/detail/type_traits.hpp> //make_unsigned, alignment_of
+// intrusive
 #include <boost/intrusive/pointer_traits.hpp>
+#include <boost/intrusive/set.hpp>
+// other boost
 #include <boost/assert.hpp>
 #include <boost/static_assert.hpp>
+// std
 #include <climits>
 #include <cstring>
-#include <iterator>
-
-#include <boost/assert.hpp>
-#include <new>
-
-#include <boost/intrusive/set.hpp>
+#include <new> //placement new
 
 //#define BOOST_INTERPROCESS_RBTREE_BEST_FIT_ABI_V1_HPP
 //to maintain ABI compatible with the original version
@@ -90,7 +89,7 @@ class rbtree_best_fit
    typedef ipcdetail::basic_multiallocation_chain<VoidPointer>  multiallocation_chain;
 
    typedef typename boost::intrusive::pointer_traits<char_ptr>::difference_type difference_type;
-   typedef typename boost::make_unsigned<difference_type>::type     size_type;
+   typedef typename boost::container::container_detail::make_unsigned<difference_type>::type     size_type;
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
@@ -327,7 +326,8 @@ class rbtree_best_fit
    public:
 
    static const size_type Alignment = !MemAlignment
-      ? size_type(::boost::alignment_of< ::boost::detail::max_align>::value)
+      ? size_type(::boost::container::container_detail::alignment_of
+                  < ::boost::container::container_detail::max_align_t>::value)
       : size_type(MemAlignment)
       ;
 
@@ -335,7 +335,7 @@ class rbtree_best_fit
    //Due to embedded bits in size, Alignment must be at least 4
    BOOST_STATIC_ASSERT((Alignment >= 4));
    //Due to rbtree size optimizations, Alignment must have at least pointer alignment
-   BOOST_STATIC_ASSERT((Alignment >= ::boost::alignment_of<void_pointer>::value));
+   BOOST_STATIC_ASSERT((Alignment >= ::boost::container::container_detail::alignment_of<void_pointer>::value));
    static const size_type AlignmentMask = (Alignment - 1);
    static const size_type BlockCtrlBytes = ipcdetail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value;
    static const size_type BlockCtrlUnits = BlockCtrlBytes/Alignment;
@@ -687,7 +687,7 @@ inline T* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    void* raw_reuse = reuse;
    void* const ret = priv_allocation_command(command, limit_size, prefer_in_recvd_out_size, raw_reuse, sizeof(T));
    reuse = static_cast<T*>(raw_reuse);
-   BOOST_ASSERT(0 == ((std::size_t)ret % ::boost::alignment_of<T>::value));
+   BOOST_ASSERT(0 == ((std::size_t)ret % ::boost::container::container_detail::alignment_of<T>::value));
    return static_cast<T*>(ret);
 }
 

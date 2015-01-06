@@ -8,15 +8,12 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef BOOST_INTERPROCESS_CAST_TAGS_HPP
-#define BOOST_INTERPROCESS_CAST_TAGS_HPP
+#ifndef BOOST_INTERPROCESS_DETAIL_CAST_TAGS_HPP
+#define BOOST_INTERPROCESS_DETAIL_CAST_TAGS_HPP
 
 #if defined(_MSC_VER)
 #  pragma once
 #endif
-
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 
 namespace boost { namespace interprocess { namespace ipcdetail {
 
@@ -27,7 +24,4 @@ struct reinterpret_cast_tag {};
 
 }}}  //namespace boost { namespace interprocess { namespace ipcdetail {
 
-#include <boost/interprocess/detail/config_end.hpp>
-
-#endif   //#ifndef BOOST_INTERPROCESS_CAST_TAGS_HPP
-
+#endif   //#ifndef BOOST_INTERPROCESS_DETAIL_CAST_TAGS_HPP

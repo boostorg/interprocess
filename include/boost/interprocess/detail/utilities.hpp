@@ -23,12 +23,9 @@
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/move/utility_core.hpp>
-#include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/interprocess/detail/min_max.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
-#include <boost/interprocess/detail/transform_iterator.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
-#include <boost/interprocess/containers/version_type.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/static_assert.hpp>

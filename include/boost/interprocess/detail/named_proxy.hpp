@@ -18,17 +18,17 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <new>
-#include <iterator>
+// interprocess/detail
 #include <boost/interprocess/detail/in_place_interface.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
-
 #ifndef BOOST_INTERPROCESS_PERFECT_FORWARDING
 #include <boost/interprocess/detail/preprocessor.hpp>
 #else
 #include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/variadic_templates_tools.hpp>
 #endif   //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+// std
+#include <new> //for placement new
 
 //!\file
 //!Describes a proxy class that implements named allocation syntax.
@@ -252,7 +252,7 @@ struct Ctor0Arg   :  public placement_destroy<T>
       private:                                                             \
       void construct(void *mem, true_)                                     \
       {                                                                    \
-         new((void*)mem) T                                                 \
+         ::new((void*)mem) T                                               \
          (BOOST_PP_ENUM(n, BOOST_INTERPROCESS_PP_MEMBER_IT_FORWARD, _));   \
       }                                                                    \
                                                                            \

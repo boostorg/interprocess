@@ -23,7 +23,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/smart_ptr/shared_ptr.hpp>
-#include <boost/detail/no_exceptions_support.hpp>
+#include <boost/core/no_exceptions_support.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <boost/intrusive/pointer_traits.hpp>

@@ -27,8 +27,7 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/multi_segment_services.hpp>
-#include <boost/type_traits/alignment_of.hpp>
-#include <boost/type_traits/type_with_alignment.hpp>
+#include <boost/move/detail/type_traits.hpp> //make_unsigned, alignment_of
 #include <boost/interprocess/detail/min_max.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
@@ -70,7 +69,7 @@ class simple_seq_fit_impl
    typedef VoidPointer        void_pointer;
 
    typedef typename boost::intrusive::pointer_traits<char_ptr>::difference_type difference_type;
-   typedef typename boost::make_unsigned<difference_type>::type size_type;
+   typedef typename boost::container::container_detail::make_unsigned<difference_type>::type size_type;
 
 
    private:
@@ -157,10 +156,9 @@ class simple_seq_fit_impl
    //!This function is normally used for security reasons.
    void clear_free_memory();
 
-   std::pair<void *, bool>
-      allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
+   void * allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
                            size_type preferred_size,size_type &received_size,
-                           void *reuse_ptr = 0, size_type backwards_multiple = 1);
+                           void *&reuse_ptr, size_type backwards_multiple = 1);
 
    /*!Returns the size of the buffer previously allocated pointed by ptr*/
    size_type size(void *ptr) const;
@@ -224,7 +222,7 @@ class simple_seq_fit_impl
    /*!Makes a new memory portion available for allocation*/
    void priv_add_segment(void *addr, size_type size);
 
-   static const std::size_t Alignment = ::boost::alignment_of<boost::ipcdetail::max_align>::value;
+   static const std::size_t Alignment = ::boost::container::container_detail::alignment_of<boost::ipcdetail::max_align>::value;
    static const std::size_t BlockCtrlBytes = ipcdetail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value;
    static const std::size_t BlockCtrlSize  = BlockCtrlBytes/Alignment;
    static const std::size_t MinBlockSize   = BlockCtrlSize + Alignment;
@@ -400,18 +398,19 @@ inline void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
 }
 
 template<class MutexFamily, class VoidPointer>
-inline std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
+inline void *simple_seq_fit_impl<MutexFamily, VoidPointer>::
    allocation_command  (boost::interprocess::allocation_type command,   size_type min_size,
                         size_type preferred_size,size_type &received_size,
-                        void *reuse_ptr, size_type backwards_multiple)
+                        void *&reuse_ptr, size_type backwards_multiple)
 {
    //-----------------------
    boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
    //-----------------------
    (void)backwards_multiple;
    command &= ~boost::interprocess::expand_bwd;
-   if(!command)
-      return std::pair<void *, bool>(0, false);
+   if(!command){
+      return reuse_ptr = 0, 0;
+   }
    return priv_allocate(command, min_size, preferred_size, received_size, reuse_ptr);
 }
 
@@ -545,23 +544,22 @@ void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
 }
 
 template<class MutexFamily, class VoidPointer>
-std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
+void * simple_seq_fit_impl<MutexFamily, VoidPointer>::
    priv_allocate(boost::interprocess::allocation_type command
                 ,size_type limit_size
                 ,size_type preferred_size
                 ,size_type &received_size
-                ,void *reuse_ptr)
+                ,void *&reuse_ptr)
 {
    if(command & boost::interprocess::shrink_in_place){
       bool success =
          this->priv_shrink(reuse_ptr, limit_size, preferred_size, received_size);
-      return std::pair<void *, bool> ((success ? reuse_ptr : 0), true);
+      return success ? reuse_ptr : 0;
    }
-   typedef std::pair<void *, bool> return_type;
    received_size = 0;
 
    if(limit_size > preferred_size)
-      return return_type(0, false);
+      return reuse_ptr = 0, 0;
 
    //Number of units to request (including block_ctrl header)
    size_type nunits = ipcdetail::get_rounded_size(preferred_size, Alignment)/Alignment + BlockCtrlSize;
@@ -581,7 +579,7 @@ std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
       void *ret = priv_expand_both_sides
          (command, limit_size, preferred_size, received_size, reuse_ptr, true);
       if(ret)
-         return return_type(ret, true);
+         return ret;
    }
 
    if(command & boost::interprocess::allocate_new){
@@ -608,7 +606,7 @@ std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
          void *ret = this->priv_check_and_allocate
                         (nunits, prev_biggest_block, biggest_block, received_size);
          if(ret)
-            return return_type(ret, false);
+            return reuse_ptr = 0, ret;
       }
    }
    //Now try to expand both sides with min size
@@ -616,7 +614,7 @@ std::pair<void *, bool> simple_seq_fit_impl<MutexFamily, VoidPointer>::
       return return_type(priv_expand_both_sides
          (command, limit_size, preferred_size, received_size, reuse_ptr, false), true);
    }
-   return return_type(0, false);
+   return reuse_ptr = 0, 0;
 }
 
 template<class MutexFamily, class VoidPointer>

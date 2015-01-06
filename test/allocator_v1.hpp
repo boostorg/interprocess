@@ -23,7 +23,6 @@
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/containers/allocation_type.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/containers/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/move/adl_move_swap.hpp>
 #include <boost/static_assert.hpp>

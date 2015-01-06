@@ -29,7 +29,7 @@
 #include <boost/interprocess/smart_ptr/detail/sp_counted_impl.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/container/allocator_traits.hpp>
-#include <boost/detail/no_exceptions_support.hpp>
+#include <boost/core/no_exceptions_support.hpp>
 #include <boost/move/adl_move_swap.hpp>
 #include <boost/intrusive/detail/minimal_less_equal_header.hpp>   //std::less
 

@@ -12,12 +12,13 @@
 #define BOOST_INTERPROCESS_TEST_MEMORY_ALGORITHM_TEST_TEMPLATE_HEADER
 
 #include <boost/interprocess/detail/config_begin.hpp>
+
+#include <boost/interprocess/containers/vector.hpp>
+
 #include <vector>
 #include <iostream>
-#include <new>
-#include <utility>
+#include <new> //std::nothrow
 #include <cstring>   //std::memset
-#include <boost/interprocess/containers/vector.hpp>
 
 namespace boost { namespace interprocess { namespace test {
 
@@ -32,7 +33,7 @@ bool test_allocation(Allocator &a)
       ; t != EndDeallocationType
       ; t = (deallocation_type)((int)t + 1)){
       std::vector<void*> buffers;
-     typename Allocator::size_type free_memory = a.get_free_memory();
+      typename Allocator::size_type free_memory = a.get_free_memory();
 
       for(int i = 0; true; ++i){
          void *ptr = a.allocate(i, std::nothrow);

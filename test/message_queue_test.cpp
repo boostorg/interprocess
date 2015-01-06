@@ -16,11 +16,12 @@
 #include <boost/interprocess/containers/set.hpp>
 #include <boost/interprocess/allocators/node_allocator.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
+// intrusive/detail
+#include <boost/intrusive/detail/minimal_pair_header.hpp>
+#include <boost/intrusive/detail/minimal_less_equal_header.hpp>
 
 #include <cstddef>
 #include <memory>
-#include <utility>
-#include <functional>
 #include <iostream>
 #include <vector>
 #include <stdexcept>

@@ -6364,8 +6364,7 @@ that boost::interprocess::rbtree_best_fit class offers:
 
 *  The [*allocate()] function must return 0 if there is no more available memory.
    The memory returned by [*my_algorithm]
-   must be aligned to the most restrictive memory alignment of the system, for example,
-   to the value returned by *ipcdetail::alignment_of<boost::detail::max_align>::value*.
+   must be aligned to the most restrictive memory alignment of the system.
    This function should be executed with the synchronization capabilities offered
    by `typename mutex_family::mutex_type` interprocess_mutex. That means, that if we define
    `typedef mutex_family mutex_family;` then this function should offer
@@ -6734,7 +6733,7 @@ thank them:
 [section:release_notes Release Notes]
 
 [section:release_notes_boost_1_58_00 Boost 1.58 Release]
-*  Reduced some compile-tim dependencies. Updated to Boost.Container changes.
+*  Reduced some compile-time dependencies. Updated to Boost.Container changes.
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/pull/13 GitHub Pull #13 (['"haiku: we don't have XSI shared memory, so don't try to use it"])].
 

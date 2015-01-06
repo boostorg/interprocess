@@ -26,7 +26,7 @@
 #include <boost/interprocess/segment_manager.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 //
-#include <boost/detail/no_exceptions_support.hpp>
+#include <boost/core/no_exceptions_support.hpp>
 //
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <fstream>

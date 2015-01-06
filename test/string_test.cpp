@@ -25,6 +25,7 @@
 #include "expand_bwd_test_template.hpp"
 #include "allocator_v1.hpp"
 #include "get_process_id_name.hpp"
+#include <new> //std::nothrow
 
 using namespace boost::interprocess;
 

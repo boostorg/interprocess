@@ -56,6 +56,12 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+//Ignore -pedantic errors here (anonymous structs, etc.)
+#if defined(BOOST_GCC) && (BOOST_GCC >= 040600)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-pedantic"
+#endif
+
 namespace boost  {
 namespace interprocess  {
 namespace winapi {
@@ -94,7 +100,7 @@ struct decimal
             unsigned long Lo32;
             unsigned long Mid32;
         };
-        unsigned __int64 Lo64;
+        ::boost::ulong_long_type Lo64;
     };
 };
 
@@ -739,8 +745,8 @@ union system_timeofday_information
       __int64 liExpTimeZoneBias;
       unsigned long uCurrentTimeZoneId;
       unsigned long dwReserved;
-      unsigned __int64 ullBootTimeBias;
-      unsigned __int64 ullSleepTimeBias;
+      ::boost::ulong_long_type ullBootTimeBias;
+      ::boost::ulong_long_type ullSleepTimeBias;
    } data;
    unsigned char Reserved1[sizeof(data_t)];
 };
@@ -1313,7 +1319,7 @@ class interprocess_all_access_security
    {  return &sa; }
 };
 
-inline void * create_file_mapping (void * handle, unsigned long access, unsigned __int64 file_offset, const char * name, interprocess_security_attributes *psec)
+inline void * create_file_mapping (void * handle, unsigned long access, ::boost::ulong_long_type file_offset, const char * name, interprocess_security_attributes *psec)
 {
    const unsigned long high_size(file_offset >> 32), low_size((boost::uint32_t)file_offset);
    return CreateFileMappingA (handle, psec, access, high_size, low_size, name);
@@ -1322,9 +1328,9 @@ inline void * create_file_mapping (void * handle, unsigned long access, unsigned
 inline void * open_file_mapping (unsigned long access, const char *name)
 {  return OpenFileMappingA (access, 0, name);   }
 
-inline void *map_view_of_file_ex(void *handle, unsigned long file_access, unsigned __int64 offset, std::size_t numbytes, void *base_addr)
+inline void *map_view_of_file_ex(void *handle, unsigned long file_access, ::boost::ulong_long_type offset, std::size_t numbytes, void *base_addr)
 {
-   const unsigned long offset_low  = (unsigned long)(offset & ((unsigned __int64)0xFFFFFFFF));
+   const unsigned long offset_low  = (unsigned long)(offset & ((::boost::ulong_long_type)0xFFFFFFFF));
    const unsigned long offset_high = offset >> 32;
    return MapViewOfFileEx(handle, file_access, offset_high, offset_low, numbytes, base_addr);
 }
@@ -2330,6 +2336,10 @@ inline unsigned long get_tick_count()
 }  //namespace winapi
 }  //namespace interprocess
 }  //namespace boost
+
+#if defined(BOOST_GCC) && (BOOST_GCC >= 040600)
+#  pragma GCC diagnostic pop
+#endif
 
 #include <boost/interprocess/detail/config_end.hpp>
 

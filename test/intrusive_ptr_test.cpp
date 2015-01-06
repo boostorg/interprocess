@@ -14,7 +14,7 @@
 #include <boost/interprocess/smart_ptr/intrusive_ptr.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 
-#include <boost/detail/lightweight_test.hpp>
+#include <boost/core/lightweight_test.hpp>
 #include <boost/config.hpp>
 #include <boost/move/adl_move_swap.hpp>
 #include <functional>

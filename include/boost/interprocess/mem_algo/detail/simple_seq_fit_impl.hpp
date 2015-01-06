@@ -32,8 +32,7 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
 #include <boost/interprocess/mem_algo/detail/mem_algo_common.hpp>
-#include <boost/type_traits/alignment_of.hpp>
-#include <boost/type_traits/type_with_alignment.hpp>
+#include <boost/move/detail/type_traits.hpp> //make_unsigned, alignment_of
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <cstring>
 #include <boost/assert.hpp>
@@ -74,7 +73,7 @@ class simple_seq_fit_impl
       basic_multiallocation_chain<VoidPointer>     multiallocation_chain;
 
    typedef typename boost::intrusive::pointer_traits<char_ptr>::difference_type difference_type;
-   typedef typename boost::make_unsigned<difference_type>::type size_type;
+   typedef typename boost::container::container_detail::make_unsigned<difference_type>::type size_type;
 
 
    private:
@@ -268,7 +267,8 @@ class simple_seq_fit_impl
    void priv_mark_new_allocated_block(block_ctrl *block);
 
    public:
-   static const size_type Alignment      = ::boost::alignment_of< ::boost::detail::max_align>::value;
+   static const size_type Alignment      = ::boost::container::container_detail::alignment_of
+      < ::boost::container::container_detail::max_align_t>::value;
    private:
    static const size_type BlockCtrlBytes = ipcdetail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value;
    static const size_type BlockCtrlUnits = BlockCtrlBytes/Alignment;
@@ -587,7 +587,7 @@ inline T* simple_seq_fit_impl<MutexFamily, VoidPointer>::
    void *raw_reuse = reuse_ptr;
    void * const ret = priv_allocation_command
       (command, limit_size, prefer_in_recvd_out_size, raw_reuse, sizeof(T));
-   BOOST_ASSERT(0 == ((std::size_t)ret % ::boost::alignment_of<T>::value));
+   BOOST_ASSERT(0 == ((std::size_t)ret % ::boost::container::container_detail::alignment_of<T>::value));
    reuse_ptr = static_cast<T*>(raw_reuse);
    return static_cast<T*>(ret);
 }

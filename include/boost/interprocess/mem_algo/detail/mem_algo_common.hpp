@@ -18,18 +18,20 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
+// interprocess
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/containers/allocation_type.hpp>
-#include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/type_traits.hpp>
+// interprocess/detail
 #include <boost/interprocess/detail/math_functions.hpp>
-#include <boost/interprocess/detail/utilities.hpp>
-#include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/min_max.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
+#include <boost/interprocess/detail/utilities.hpp>
+// container/detail
 #include <boost/container/detail/multiallocation_chain.hpp>
-#include <boost/assert.hpp>
+// move
+#include <boost/move/utility_core.hpp>
+// other boost
 #include <boost/static_assert.hpp>
-#include <iterator>
 #include <boost/assert.hpp>
 
 //!\file

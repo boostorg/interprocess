@@ -22,13 +22,9 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/cast_tags.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/container/detail/type_traits.hpp>  //alignment_of, aligned_storage
 #include <boost/assert.hpp>
-#include <ostream>
-#include <istream>
-#include <iterator>
-#include <iostream>
-#include <boost/aligned_storage.hpp>
-#include <boost/type_traits/alignment_of.hpp>
+#include <iosfwd>
 
 //!\file
 //!Describes a smart pointer that stores the offset between this pointer and
@@ -39,9 +35,6 @@ namespace boost {
 #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 //Predeclarations
-template <class T>
-struct has_trivial_constructor;
-
 template <class T>
 struct has_trivial_destructor;
 
@@ -59,10 +52,10 @@ namespace ipcdetail {
          : m_offset(off)
       {}
       OffsetType m_offset; //Distance between this object and pointee address
-      typename ::boost::aligned_storage
+      typename ::boost::container::container_detail::aligned_storage
          < sizeof(OffsetType)
          , (OffsetAlignment == offset_type_alignment) ?
-            ::boost::alignment_of<OffsetType>::value : OffsetAlignment
+            ::boost::container::container_detail::alignment_of<OffsetType>::value : OffsetAlignment
          >::type alignment_helper;
    };
 
@@ -642,20 +635,23 @@ inline boost::interprocess::offset_ptr<T1, P1, O1, A1>
 
 #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
-//!has_trivial_constructor<> == true_type specialization for optimizations
+///has_trivial_destructor<> == true_type specialization for optimizations
 template <class T, class P, class O, std::size_t A>
-struct has_trivial_constructor< boost::interprocess::offset_ptr<T, P, O, A> >
+struct has_trivial_destructor< ::boost::interprocess::offset_ptr<T, P, O, A> >
 {
    static const bool value = true;
 };
+
+namespace move_detail {
 
 ///has_trivial_destructor<> == true_type specialization for optimizations
 template <class T, class P, class O, std::size_t A>
-struct has_trivial_destructor< boost::interprocess::offset_ptr<T, P, O, A> >
+struct is_trivially_destructible< ::boost::interprocess::offset_ptr<T, P, O, A> >
 {
    static const bool value = true;
 };
 
+}  //namespace move_detail {
 
 namespace interprocess {
 

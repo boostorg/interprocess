@@ -20,7 +20,7 @@
 
 #include <boost/interprocess/detail/managed_memory_impl.hpp>
 #include <boost/interprocess/creation_tags.hpp>
-#include <boost/detail/no_exceptions_support.hpp>
+#include <boost/core/no_exceptions_support.hpp>
 #include <boost/interprocess/detail/multi_segment_services.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
