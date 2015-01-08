@@ -563,9 +563,6 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\posix_time_types_wrk.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\preprocessor.hpp">
-			</File>
-			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\ptime_wrk.hpp">
 			</File>
 			<File
@@ -588,9 +585,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\utilities.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\variadic_templates_tools.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\win32_api.hpp">
