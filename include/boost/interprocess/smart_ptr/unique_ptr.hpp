@@ -11,7 +11,7 @@
 #ifndef BOOST_INTERPROCESS_UNIQUE_PTR_HPP_INCLUDED
 #define BOOST_INTERPROCESS_UNIQUE_PTR_HPP_INCLUDED
 
-#if defined(_MSC_VER)
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 

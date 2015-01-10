@@ -11,7 +11,7 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_SPIN_MUTEX_HPP
 #define BOOST_INTERPROCESS_DETAIL_SPIN_MUTEX_HPP
 
-#if defined(_MSC_VER)
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 

@@ -15,7 +15,7 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_ATOMIC_HPP
 #define BOOST_INTERPROCESS_DETAIL_ATOMIC_HPP
 
-#if defined(_MSC_VER)
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 
