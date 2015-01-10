@@ -32,6 +32,7 @@
 #include <boost/core/no_exceptions_support.hpp>
 #include <boost/move/adl_move_swap.hpp>
 #include <boost/intrusive/detail/minimal_less_equal_header.hpp>   //std::less
+#include <boost/container/detail/placement_new.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -105,7 +106,7 @@ class shared_count
                         deallocator(m_pi, alloc);
             //It's more correct to use VoidAllocator::construct but
             //this needs copy constructor and we don't like it
-            new(ipcdetail::to_raw_pointer(m_pi))counted_impl(p, a, d);
+            ::new(ipcdetail::to_raw_pointer(m_pi), boost_container_new_t())counted_impl(p, a, d);
             deallocator.release();
          }
       }

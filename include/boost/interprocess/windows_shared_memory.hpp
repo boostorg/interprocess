@@ -17,8 +17,9 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/detail/workaround.hpp>
+
 #include <boost/interprocess/permissions.hpp>
+#include <boost/interprocess/detail/simple_swap.hpp>
 
 #if !defined(BOOST_INTERPROCESS_WINDOWS)
 #error "This header can only be used in Windows operating systems"
@@ -149,8 +150,8 @@ inline const char *windows_shared_memory::get_name() const
 
 inline void windows_shared_memory::swap(windows_shared_memory &other)
 {
-   std::swap(m_handle,  other.m_handle);
-   std::swap(m_mode,    other.m_mode);
+   (simple_swap)(m_handle,  other.m_handle);
+   (simple_swap)(m_mode,    other.m_mode);
    m_name.swap(other.m_name);
 }
 

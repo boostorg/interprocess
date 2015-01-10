@@ -39,8 +39,6 @@ struct random_access_iterator_tag;
 template<class T>
 struct char_traits;
 
-struct nothrow_t;
-
 template<class CharT, class Traits>
 class basic_ostream;
 

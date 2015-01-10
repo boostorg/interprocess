@@ -32,6 +32,8 @@
 #include <boost/interprocess/detail/utilities.hpp>
 // container
 #include <boost/container/detail/multiallocation_chain.hpp>
+// container/detail
+#include <boost/container/detail/placement_new.hpp>
 // move/detail
 #include <boost/move/detail/type_traits.hpp> //make_unsigned, alignment_of
 // intrusive
@@ -43,7 +45,6 @@
 // std
 #include <climits>
 #include <cstring>
-#include <new> //placement new
 
 //#define BOOST_INTERPROCESS_RBTREE_BEST_FIT_ABI_V1_HPP
 //to maintain ABI compatible with the original version
@@ -379,7 +380,7 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    BOOST_ASSERT(segment_size >= (BlockCtrlBytes + EndCtrlBlockBytes));
 
    //Initialize the first big block and the "end" node
-   block_ctrl *first_big_block = new(addr)block_ctrl;
+   block_ctrl *first_big_block = ::new(addr, boost_container_new_t())block_ctrl;
    first_big_block->m_size = segment_size/Alignment - EndCtrlBlockUnits;
    BOOST_ASSERT(first_big_block->m_size >= BlockCtrlUnits);
 
@@ -1089,8 +1090,8 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
          m_header.m_imultiset.erase(old_next_block_it);
       }
       //This is the remaining block
-      block_ctrl *rem_block = new(reinterpret_cast<block_ctrl*>
-                     (reinterpret_cast<char*>(block) + intended_units*Alignment))block_ctrl;
+      block_ctrl *rem_block = ::new(reinterpret_cast<block_ctrl*>
+                     (reinterpret_cast<char*>(block) + intended_units*Alignment), boost_container_new_t())block_ctrl;
       rem_block->m_size  = rem_units;
       algo_impl_t::assert_alignment(rem_block);
       BOOST_ASSERT(rem_block->m_size >= BlockCtrlUnits);
@@ -1253,8 +1254,8 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_check_and_al
       BOOST_ASSERT(block->m_size >= BlockCtrlUnits);
 
       //This is the remaining block
-      block_ctrl *rem_block = new(reinterpret_cast<block_ctrl*>
-                     (reinterpret_cast<char*>(block) + Alignment*nunits))block_ctrl;
+      block_ctrl *rem_block = ::new(reinterpret_cast<block_ctrl*>
+                     (reinterpret_cast<char*>(block) + Alignment*nunits), boost_container_new_t())block_ctrl;
       algo_impl_t::assert_alignment(rem_block);
       rem_block->m_size  = block_old_size - nunits;
       BOOST_ASSERT(rem_block->m_size >= BlockCtrlUnits);

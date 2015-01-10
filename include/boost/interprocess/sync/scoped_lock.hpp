@@ -29,6 +29,7 @@
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
+#include <boost/interprocess/detail/simple_swap.hpp>
 
 //!\file
 //!Describes the scoped_lock class.
@@ -353,8 +354,8 @@ class scoped_lock
    //!Throws: Nothing.
    void swap( scoped_lock<mutex_type> &other)
    {
-      std::swap(mp_mutex, other.mp_mutex);
-      std::swap(m_locked, other.m_locked);
+      (simple_swap)(mp_mutex, other.mp_mutex);
+      (simple_swap)(m_locked, other.m_locked);
    }
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)

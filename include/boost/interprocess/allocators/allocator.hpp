@@ -30,8 +30,8 @@
 #include <boost/assert.hpp>
 #include <boost/utility/addressof.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
+#include <boost/container/detail/placement_new.hpp>
 
-#include <new>
 #include <cstddef>
 #include <stdexcept>
 
@@ -257,7 +257,7 @@ class allocator
    //!For backwards compatibility with libraries using C++03 allocators
    template<class P>
    void construct(const pointer &ptr, BOOST_FWD_REF(P) p)
-   {  ::new((void*)ipcdetail::to_raw_pointer(ptr)) value_type(::boost::forward<P>(p));  }
+   {  ::new((void*)ipcdetail::to_raw_pointer(ptr), boost_container_new_t()) value_type(::boost::forward<P>(p));  }
 
    //!Destroys object. Throws if object's
    //!destructor throws

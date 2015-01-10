@@ -518,9 +518,6 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\interprocess_tester.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\intersegment_ptr.hpp">
-			</File>
-			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\lock_file_utilities.hpp">
 			</File>
 			<File
@@ -545,16 +542,19 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\mpl.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\multi_segment_services.hpp">
+				RelativePath="..\..\..\..\boost\interprocess\detail\named_proxy.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\named_proxy.hpp">
+				RelativePath="..\..\..\..\boost\interprocess\detail\nothrow.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\os_file_functions.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\os_thread_functions.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\placement_new.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\pointer_type.hpp">
@@ -573,6 +573,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\shared_dir_helpers.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\simple_swap.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\std_fwd.hpp">

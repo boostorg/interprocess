@@ -753,7 +753,7 @@ class intersegment_ptr : public flat_map_intersegment<interprocess_mutex>
    bool operator! () const
    {  return base_t::is_null();   }
 
-   //!Swaps two intersegment_ptr-s. More efficient than std::swap.
+   //!Swaps two intersegment_ptr-s. More efficient than standard swap.
    //!Never throws.
    void swap(intersegment_ptr &other)
    {  base_t::swap(other);   }

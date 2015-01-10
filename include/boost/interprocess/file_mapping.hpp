@@ -23,6 +23,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
+#include <boost/interprocess/detail/simple_swap.hpp>
 #include <boost/move/utility_core.hpp>
 #include <string>    //std::string
 
@@ -118,8 +119,8 @@ inline const char *file_mapping::get_name() const
 
 inline void file_mapping::swap(file_mapping &other)
 {
-   std::swap(m_handle, other.m_handle);
-   std::swap(m_mode, other.m_mode);
+   (simple_swap)(m_handle, other.m_handle);
+   (simple_swap)(m_mode, other.m_mode);
    m_filename.swap(other.m_filename);
 }
 

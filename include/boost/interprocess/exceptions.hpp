@@ -19,7 +19,6 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/errors.hpp>
 #include <stdexcept>
-#include <new>
 
 //!\file
 //!Describes exceptions thrown by interprocess classes

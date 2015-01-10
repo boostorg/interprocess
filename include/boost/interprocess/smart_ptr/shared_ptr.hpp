@@ -28,6 +28,7 @@
 #include <boost/assert.hpp>
 #include <boost/interprocess/smart_ptr/detail/shared_count.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/interprocess/detail/nothrow.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>

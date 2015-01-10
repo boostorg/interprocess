@@ -25,6 +25,7 @@
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <boost/intrusive/detail/minimal_less_equal_header.hpp>   //std::less
 #include <boost/container/detail/minimal_char_traits_header.hpp>  //std::char_traits
+#include <boost/container/detail/placement_new.hpp>
 
 //!\file
 //!Describes index adaptor of boost::intrusive::unordered_set container, to use it
@@ -168,7 +169,7 @@ class iunordered_set_index
       bucket_ptr buckets = alloc.allocate(num);
       bucket_ptr buckets_init = buckets;
       for(size_type i = 0; i < num; ++i){
-         new(to_raw_pointer(buckets_init++))bucket_type();
+         ::new(to_raw_pointer(buckets_init++), boost_container_new_t())bucket_type();
       }
       return buckets;
    }
@@ -214,13 +215,13 @@ class iunordered_set_index
       if(ret == old_buckets){
          bucket_ptr buckets_init = old_buckets + old_num;
          for(size_type i = 0; i < (new_num - old_num); ++i){
-            new(to_raw_pointer(buckets_init++))bucket_type();
+            ::new(to_raw_pointer(buckets_init++), boost_container_new_t())bucket_type();
          }
       }
       else{
          bucket_ptr buckets_init = ret;
          for(size_type i = 0; i < new_num; ++i){
-            new(to_raw_pointer(buckets_init++))bucket_type();
+            ::new(to_raw_pointer(buckets_init++), boost_container_new_t())bucket_type();
          }
       }
       return ret;

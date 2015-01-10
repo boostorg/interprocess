@@ -24,6 +24,7 @@
 #include <boost/interprocess/detail/transform_iterator.hpp>
 
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/interprocess/detail/nothrow.hpp>
 #include <boost/interprocess/detail/segment_manager_helper.hpp>
 #include <boost/interprocess/detail/named_proxy.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
@@ -34,9 +35,11 @@
 #include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
+// container/detail
 #include <boost/container/detail/minimal_char_traits_header.hpp>
+#include <boost/container/detail/placement_new.hpp>
+// std
 #include <cstddef>   //std::size_t
-#include <new>       //std::nothrow
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <boost/assert.hpp>
 #ifndef BOOST_NO_EXCEPTIONS
@@ -117,7 +120,7 @@ class segment_manager_base
 
    //!Allocates nbytes bytes. This function is only used in
    //!single-segment management. Never throws
-   void * allocate (size_type nbytes, std::nothrow_t)
+   void * allocate (size_type nbytes, const std::nothrow_t &)
    {  return MemoryAlgorithm::allocate(nbytes);   }
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
@@ -147,13 +150,13 @@ class segment_manager_base
 
    //!Allocates n_elements of elem_bytes bytes.
    //!Non-throwing version. chain.size() is not increased on failure.
-   void allocate_many(std::nothrow_t, size_type elem_bytes, size_type n_elements, multiallocation_chain &chain)
+   void allocate_many(const std::nothrow_t &, size_type elem_bytes, size_type n_elements, multiallocation_chain &chain)
    {  MemoryAlgorithm::allocate_many(elem_bytes, n_elements, chain); }
 
    //!Allocates n_elements, each one of
    //!element_lengths[i]*sizeof_element bytes.
    //!Non-throwing version. chain.size() is not increased on failure.
-   void allocate_many(std::nothrow_t, const size_type *elem_sizes, size_type n_elements, size_type sizeof_element, multiallocation_chain &chain)
+   void allocate_many(const std::nothrow_t &, const size_type *elem_sizes, size_type n_elements, size_type sizeof_element, multiallocation_chain &chain)
    {  MemoryAlgorithm::allocate_many(elem_sizes, n_elements, sizeof_element, chain); }
 
    //!Deallocates all elements contained in chain.
@@ -175,7 +178,7 @@ class segment_manager_base
 
    //!Allocates nbytes bytes. This function is only used in
    //!single-segment management. Never throws
-   void * allocate_aligned (size_type nbytes, size_type alignment, std::nothrow_t)
+   void * allocate_aligned (size_type nbytes, size_type alignment, const std::nothrow_t &)
    {  return MemoryAlgorithm::allocate_aligned(nbytes, alignment);   }
 
    //!Allocates nbytes bytes. This function is only used in
@@ -261,7 +264,7 @@ class segment_manager_base
                                  , 0);
 
       //Allocate memory
-      void *ptr_struct = this->allocate(block_info.total_size(), std::nothrow_t());
+      void *ptr_struct = this->allocate(block_info.total_size(), nothrow<>::get());
 
       //Check if there is enough memory
       if(!ptr_struct){
@@ -277,7 +280,7 @@ class segment_manager_base
       ipcdetail::mem_algo_deallocator<MemoryAlgorithm> mem(ptr_struct, *this);
 
       //Now construct the header
-      block_header_t * hdr = new(ptr_struct) block_header_t(block_info);
+      block_header_t * hdr = ::new(ptr_struct, boost_container_new_t()) block_header_t(block_info);
       void *ptr = 0; //avoid gcc warning
       ptr = hdr->value();
 
@@ -452,14 +455,14 @@ class segment_manager
    //!object
    template <class T>
    typename construct_proxy<T>::type
-      construct(char_ptr_holder_t name, std::nothrow_t)
+      construct(char_ptr_holder_t name, const std::nothrow_t &)
    {  return typename construct_proxy<T>::type (this, name, false, false);  }
 
    //!Returns no throwing "search or construct"
    //!proxy object
    template <class T>
    typename construct_proxy<T>::type
-      find_or_construct(char_ptr_holder_t name, std::nothrow_t)
+      find_or_construct(char_ptr_holder_t name, const std::nothrow_t &)
    {  return typename construct_proxy<T>::type (this, name, true, false);  }
 
    //!Returns throwing "construct from iterators" proxy object
@@ -479,14 +482,14 @@ class segment_manager
    //!proxy object
    template <class T>
    typename construct_iter_proxy<T>::type
-      construct_it(char_ptr_holder_t name, std::nothrow_t)
+      construct_it(char_ptr_holder_t name, const std::nothrow_t &)
    {  return typename construct_iter_proxy<T>::type (this, name, false, false);  }
 
    //!Returns no throwing "search or construct from iterators"
    //!proxy object
    template <class T>
    typename construct_iter_proxy<T>::type
-      find_or_construct_it(char_ptr_holder_t name, std::nothrow_t)
+      find_or_construct_it(char_ptr_holder_t name, const std::nothrow_t &)
    {  return typename construct_iter_proxy<T>::type (this, name, true, false);  }
 
    //!Calls object function blocking recursive interprocess_mutex and guarantees that
@@ -1122,14 +1125,14 @@ class segment_manager
       }
       else{
          buffer_ptr = this->allocate
-            (block_info.template total_size_with_header<intrusive_value_type>(), std::nothrow_t());
+            (block_info.template total_size_with_header<intrusive_value_type>(), nothrow<>::get());
          if(!buffer_ptr)
             return 0;
       }
 
       //Now construct the intrusive hook plus the header
-      intrusive_value_type * intrusive_hdr = new(buffer_ptr) intrusive_value_type();
-      block_header_t * hdr = new(intrusive_hdr->get_block_header())block_header_t(block_info);
+      intrusive_value_type * intrusive_hdr = ::new(buffer_ptr, boost_container_new_t()) intrusive_value_type();
+      block_header_t * hdr = ::new(intrusive_hdr->get_block_header(), boost_container_new_t())block_header_t(block_info);
       void *ptr = 0; //avoid gcc warning
       ptr = hdr->value();
 
@@ -1246,11 +1249,11 @@ class segment_manager
             buffer_ptr = this->allocate(total_size);
          }
          else{
-            buffer_ptr = this->allocate(total_size, std::nothrow_t());
+            buffer_ptr = this->allocate(total_size, nothrow<>::get());
             if(!buffer_ptr)
                return 0;
          }
-         index_it *idr = new(buffer_ptr) index_it(it);
+         index_it *idr = ::new(buffer_ptr, boost_container_new_t()) index_it(it);
          hdr = block_header_t::template from_first_header<index_it>(idr);
       }
       else{
@@ -1258,14 +1261,14 @@ class segment_manager
             buffer_ptr = this->allocate(block_info.total_size());
          }
          else{
-            buffer_ptr = this->allocate(block_info.total_size(), std::nothrow_t());
+            buffer_ptr = this->allocate(block_info.total_size(), nothrow<>::get());
             if(!buffer_ptr)
                return 0;
          }
          hdr = static_cast<block_header_t*>(buffer_ptr);
       }
 
-      hdr = new(hdr)block_header_t(block_info);
+      hdr = ::new(hdr, boost_container_new_t())block_header_t(block_info);
       void *ptr = 0; //avoid gcc warning
       ptr = hdr->value();
 

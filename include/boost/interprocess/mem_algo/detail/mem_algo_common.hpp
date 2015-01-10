@@ -28,6 +28,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 // container/detail
 #include <boost/container/detail/multiallocation_chain.hpp>
+#include <boost/container/detail/placement_new.hpp>
 // move
 #include <boost/move/utility_core.hpp>
 // other boost
@@ -560,7 +561,7 @@ class memory_algorithm_common
                total_used_units += (size_type)new_block->m_size;
                //Check we have enough room to overwrite the intrusive pointer
                BOOST_ASSERT((new_block->m_size*Alignment - AllocatedCtrlUnits) >= sizeof(void_pointer));
-               void_pointer p = new(memory_algo->priv_get_user_buffer(new_block))void_pointer(0);
+               void_pointer p = ::new(memory_algo->priv_get_user_buffer(new_block), boost_container_new_t())void_pointer(0);
                chain.push_back(p);
                ++low_idx;
             }

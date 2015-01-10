@@ -36,7 +36,6 @@
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <cstring>
 #include <boost/assert.hpp>
-#include <new>
 
 //!\file
 //!Describes sequential fit algorithm used to allocate objects in shared memory.
