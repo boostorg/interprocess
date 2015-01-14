@@ -57,7 +57,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 //Ignore -pedantic errors here (anonymous structs, etc.)
-#if defined(BOOST_GCC) && (BOOST_GCC >= 040600)
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-pedantic"
 #endif
@@ -2337,7 +2337,7 @@ inline unsigned long get_tick_count()
 }  //namespace interprocess
 }  //namespace boost
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 040600)
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
 #  pragma GCC diagnostic pop
 #endif
 
