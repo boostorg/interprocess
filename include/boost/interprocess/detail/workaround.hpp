@@ -102,7 +102,7 @@
       //#define BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS_ONLY
    #endif
 
-   #if defined(_POSIX_TIMEOUTS) && ((_POSIX_TIMEOUTS - 0) > 0)
+   #if defined(_POSIX_TIMEOUTS) && ((_POSIX_TIMEOUTS - 0) >= 200112L)
       #define BOOST_INTERPROCESS_POSIX_TIMEOUTS
    #endif
 
