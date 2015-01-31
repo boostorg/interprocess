@@ -18,6 +18,10 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
+#if !defined(BOOST_INTERPROCESS_MAPPED_FILES)
+#error "Boost.Interprocess: This platform does not support memory mapped files!"
+#endif
+
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>

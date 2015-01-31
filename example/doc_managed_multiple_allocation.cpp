@@ -7,6 +7,8 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
+
 #include <boost/interprocess/detail/config_begin.hpp>
 //[doc_managed_multiple_allocation
 #include <boost/interprocess/managed_shared_memory.hpp>
@@ -89,3 +91,10 @@ int main()
 }
 //]
 #include <boost/interprocess/detail/config_end.hpp>
+
+#else //#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
+int main()
+{
+   return 0;
+}
+#endif//#if defined(BOOST_INTERPROCESS_MAPPED_FILES)

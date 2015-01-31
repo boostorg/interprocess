@@ -29,9 +29,7 @@
 #include <cstddef>
 #include <string>
 
-#if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS_ONLY)
-#  include <sys/shm.h>      //System V shared memory...
-#elif defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
+#if defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
 #  include <fcntl.h>        //O_CREAT, O_*...
 #  include <sys/mman.h>     //shm_xxx
 #  include <unistd.h>       //ftruncate, close
