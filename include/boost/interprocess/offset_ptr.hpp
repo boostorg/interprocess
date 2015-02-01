@@ -79,7 +79,7 @@ namespace ipcdetail {
    #endif
    template<int Dummy>
    #ifndef BOOST_INTERPROCESS_OFFSET_PTR_INLINE_TO_PTR
-      BOOST_INTERPROCESS_NEVER_INLINE
+      BOOST_NOINLINE
    #elif defined(NDEBUG)
       inline
    #endif
@@ -121,7 +121,7 @@ namespace ipcdetail {
 
    template<int Dummy>
    #ifndef BOOST_INTERPROCESS_OFFSET_PTR_INLINE_TO_OFF
-      BOOST_INTERPROCESS_NEVER_INLINE
+      BOOST_NOINLINE
    #elif defined(NDEBUG)
       inline
    #endif
@@ -170,7 +170,7 @@ namespace ipcdetail {
 
    template<int Dummy>
    #ifndef BOOST_INTERPROCESS_OFFSET_PTR_INLINE_TO_OFF_FROM_OTHER
-      BOOST_INTERPROCESS_NEVER_INLINE
+      BOOST_NOINLINE
    #elif defined(NDEBUG)
       inline
    #endif

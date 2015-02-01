@@ -180,36 +180,9 @@
 //with processes compiled with those versions.
 #define BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX
 
-//Inline attributes
-#if defined(_MSC_VER)
-   #define BOOST_INTERPROCESS_ALWAYS_INLINE __forceinline
-#elif defined (__GNUC__)
-   #define BOOST_INTERPROCESS_ALWAYS_INLINE __attribute__((__always_inline__))
-#else
-   #define BOOST_INTERPROCESS_ALWAYS_INLINE inline
-#endif
-
-#if defined(_MSC_VER)
-   #define BOOST_INTERPROCESS_NEVER_INLINE __declspec(noinline)
-#elif defined (__GNUC__)
-   #define BOOST_INTERPROCESS_NEVER_INLINE __attribute__((__noinline__))
-#endif
-
 //Macros for documentation purposes. For code, expands to the argument
 #define BOOST_INTERPROCESS_IMPDEF(TYPE) TYPE
 #define BOOST_INTERPROCESS_SEEDOC(TYPE) TYPE
-
-#if defined(BOOST_NO_CXX11_NOEXCEPT)
-   #if defined(BOOST_MSVC)
-      #define BOOST_INTERPROCESS_NOEXCEPT throw()
-   #else
-      #define BOOST_INTERPROCESS_NOEXCEPT
-   #endif
-   #define BOOST_INTERPROCESS_NOEXCEPT_IF(x)
-#else
-   #define BOOST_INTERPROCESS_NOEXCEPT    noexcept
-   #define BOOST_INTERPROCESS_NOEXCEPT_IF(x) noexcept(x)
-#endif
 
 #include <boost/interprocess/detail/config_end.hpp>
 
