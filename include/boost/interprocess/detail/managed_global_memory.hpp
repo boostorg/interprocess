@@ -11,6 +11,10 @@
 #ifndef BOOST_INTERPROCESS_BASIC_GLOBAL_MEMORY_HPP
 #define BOOST_INTERPROCESS_BASIC_GLOBAL_MEMORY_HPP
 
+#ifndef BOOST_CONFIG_HPP
+#  include <boost/config.hpp>
+#endif
+#
 #if defined(BOOST_HAS_PRAGMA_ONCE)
 #pragma once
 #endif

@@ -11,6 +11,10 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_MEM_ALGO_COMMON_HPP
 #define BOOST_INTERPROCESS_DETAIL_MEM_ALGO_COMMON_HPP
 
+#ifndef BOOST_CONFIG_HPP
+#  include <boost/config.hpp>
+#endif
+#
 #if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif

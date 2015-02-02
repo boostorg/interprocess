@@ -11,6 +11,10 @@
 #ifndef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_DEVICE_HPP
 #define BOOST_INTERPROCESS_XSI_SHARED_MEMORY_DEVICE_HPP
 
+#ifndef BOOST_CONFIG_HPP
+#  include <boost/config.hpp>
+#endif
+#
 #if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
