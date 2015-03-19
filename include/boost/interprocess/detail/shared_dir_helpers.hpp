@@ -102,13 +102,21 @@ namespace ipcdetail {
    #endif
 #endif   //#if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME)
 
+#if defined(BOOST_INTERPROCESS_TEMP_DIR_FUNC)
+      void get_temp_dir(std::string& dir_path);
+#else
+      inline void get_temp_dir(std::string& dir_path) {
+            #if defined (BOOST_INTERPROCESS_WINDOWS)
+               winapi::get_shared_documents_folder(dir_path);
+            #else
+               dir_path = "/tmp";
+            #endif
+      }
+#endif
+
 inline void get_shared_dir_root(std::string &dir_path)
 {
-   #if defined (BOOST_INTERPROCESS_WINDOWS)
-      winapi::get_shared_documents_folder(dir_path);
-   #else
-      dir_path = "/tmp";
-   #endif
+   get_temp_dir(dir_path);
    //We always need this path, so throw on error
    if(dir_path.empty()){
       error_info err = system_error_code();
