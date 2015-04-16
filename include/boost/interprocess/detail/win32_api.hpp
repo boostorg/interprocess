@@ -2164,7 +2164,7 @@ inline bool get_wmi_last_bootup_time( std::wstring& strValue)
 inline bool get_wmi_last_bootup_time( std::string& str )
 {
    std::wstring wstr;
-   bool ret = get_last_bootup_time(wstr);
+   bool ret = get_wmi_last_bootup_time(wstr);
    str.resize(wstr.size());
    for(std::size_t i = 0, max = str.size(); i != max; ++i){
       str[i] = '0' + (wstr[i]-L'0');
