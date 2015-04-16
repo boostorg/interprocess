@@ -2147,11 +2147,7 @@ inline bool get_wmi_class_attribute( std::wstring& strValue, const wchar_t *wmi_
    return bRet;
 }
 
-#ifdef BOOST_INTERPROCESS_BOOTSTAMP_IS_LASTBOOTUPTIME
-
-//Obtains the bootup time from WMI LastBootUpTime.
-//This time seems to change with hibernation and clock synchronization so avoid it.
-inline bool get_last_bootup_time( std::wstring& strValue )
+inline bool get_wmi_last_bootup_time( std::wstring& strValue)
 {
    bool ret = get_wmi_class_attribute(strValue, L"Win32_OperatingSystem", L"LastBootUpTime");
    std::size_t timezone = strValue.find(L'+');
@@ -2162,10 +2158,10 @@ inline bool get_last_bootup_time( std::wstring& strValue )
    if(timezone != std::wstring::npos){
       strValue.erase(timezone);
    }
-   return ret;
+   return ret;   
 }
 
-inline bool get_last_bootup_time( std::string& str )
+inline bool get_wmi_last_bootup_time( std::string& str )
 {
    std::wstring wstr;
    bool ret = get_last_bootup_time(wstr);
@@ -2174,6 +2170,20 @@ inline bool get_last_bootup_time( std::string& str )
       str[i] = '0' + (wstr[i]-L'0');
    }
    return ret;
+}
+
+#ifdef BOOST_INTERPROCESS_BOOTSTAMP_IS_LASTBOOTUPTIME
+
+//Obtains the bootup time from WMI LastBootUpTime.
+//This time seems to change with hibernation and clock synchronization so avoid it.
+inline bool get_last_bootup_time( std::wstring& strValue )
+{
+   return get_wmi_last_bootup_time(strValue);
+}
+
+inline bool get_last_bootup_time( std::string& str )
+{
+   return get_wmi_last_bootup_time(str);
 }
 
 #else
@@ -2252,7 +2262,7 @@ inline bool get_last_bootup_time(std::string &stamp)
                   }
                }
                else{  //Not found or EOF
-                  return false;
+                  return get_wmi_last_bootup_time(stamp);
                }
             }
             else
