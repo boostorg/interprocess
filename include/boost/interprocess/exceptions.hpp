@@ -33,7 +33,7 @@ namespace interprocess {
 
 //!This class is the base class of all exceptions
 //!thrown by boost::interprocess
-class interprocess_exception : public std::exception
+class BOOST_SYMBOL_VISIBLE interprocess_exception : public std::exception
 {
    public:
    interprocess_exception(const char *err/*error_code_t ec = other_error*/)
@@ -87,7 +87,7 @@ class interprocess_exception : public std::exception
 
 //!This is the exception thrown by shared interprocess_mutex family when a deadlock situation
 //!is detected or when using a interprocess_condition the interprocess_mutex is not locked
-class lock_exception : public interprocess_exception
+class BOOST_SYMBOL_VISIBLE lock_exception : public interprocess_exception
 {
    public:
    lock_exception()
@@ -136,7 +136,7 @@ class not_previously_created : public interprocess_exception
 
 //!This exception is thrown when a memory request can't be
 //!fulfilled.
-class bad_alloc : public interprocess_exception
+class BOOST_SYMBOL_VISIBLE bad_alloc : public interprocess_exception
 {
  public:
    bad_alloc() : interprocess_exception("::boost::interprocess::bad_alloc"){}
