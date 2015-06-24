@@ -6734,6 +6734,7 @@ thank them:
 
 [section:release_notes_boost_1_59_00 Boost 1.59 Release]
 *  Fixed bugs:
+   * [@https://svn.boost.org/trac/boost/ticket/5139 ( Trac #5139 ( (['"Initial Stream Position in Boost.Interprocess.Vectorstream"])].
    * [@https://github.com/boostorg/interprocess/pull/19 GitHub Pull #19 (['"Fix exception visibility"])]. Thanks to Romain-Geissler.
 
 [endsect]
