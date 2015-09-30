@@ -33,11 +33,22 @@ struct random_access_iterator_tag;
 template<class T>
 struct char_traits;
 
+#if defined(BOOST_MSVC) && (BOOST_MSVC >= 1800) &&defined(BOOST_DINKUMWARE_STDLIB)
+#define BOOST_INTERPROCESS_STD_FWD_MSVC_IOS_BUG
+// Compiler bug workaround. Previous versions (<= VC11)
+// used dummy virtual functions
+#  pragma vtordisp(push, 2)
+#endif
+
 template<class CharT, class Traits>
 class basic_ostream;
 
 template<class CharT, class Traits>
 class basic_istream;
+
+#ifdef BOOST_INTERPROCESS_STD_FWD_MSVC_IOS_BUG
+#  pragma vtordisp(pop)
+#endif
 
 BOOST_MOVE_STD_NS_END
 #include <boost/move/detail/std_ns_end.hpp>
