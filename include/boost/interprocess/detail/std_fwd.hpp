@@ -48,6 +48,7 @@ class basic_istream;
 
 #ifdef BOOST_INTERPROCESS_STD_FWD_MSVC_IOS_BUG
 #  pragma vtordisp(pop)
+#  undef BOOST_INTERPROCESS_STD_FWD_MSVC_IOS_BUG
 #endif
 
 BOOST_MOVE_STD_NS_END
