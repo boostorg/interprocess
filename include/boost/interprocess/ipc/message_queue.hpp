@@ -124,6 +124,9 @@ class message_queue_t
    //!use remove().
    ~message_queue_t();
 
+   //!Checks whether the message queue is initialized or not.
+   bool is_open() const;
+
    //!Swaps the message queue with another message queue.
    void swap(message_queue_t &other);
 
@@ -725,6 +728,10 @@ inline message_queue_t<VoidPointer> &message_queue_t<VoidPointer>::operator=(BOO
    this->swap(tmp);
    return *this;
 }
+
+template<class VoidPointer>
+inline bool message_queue_t<VoidPointer>::is_open() const
+{  return m_shmem.is_inited(); }
 
 template<class VoidPointer>
 inline void message_queue_t<VoidPointer>::swap(message_queue_t &other)
