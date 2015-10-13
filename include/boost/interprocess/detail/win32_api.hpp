@@ -31,11 +31,18 @@
 #include <string>
 #include <vector>
 
+#if defined (BOOST_INTERPROCESS_WINDOWS)
+#  include <cstdarg>
+#  include <boost/detail/interlocked.hpp>
+#else
+# error "This file can only be included in Windows OS"
+#endif
+
 #ifdef BOOST_USE_WINDOWS_H
 #include <windows.h>
-#include <Wbemidl.h>
-#include <Objbase.h>
-#include <Shlobj.h>
+#include <wbemidl.h>
+#include <objbase.h>
+#include <shlobj.h>
 #endif
 
 #if defined(_MSC_VER)
@@ -45,13 +52,6 @@
 #  pragma comment( lib, "Ole32.lib" )
 #  pragma comment( lib, "Psapi.lib" )
 #  pragma comment( lib, "Shell32.lib" )   //SHGetSpecialFolderPathA
-#endif
-
-#if defined (BOOST_INTERPROCESS_WINDOWS)
-#  include <cstdarg>
-#  include <boost/detail/interlocked.hpp>
-#else
-# error "This file can only be included in Windows OS"
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2261,7 +2261,7 @@ inline bool get_last_bootup_time(std::string &stamp)
                // Print the contents of each record in the buffer.
                if(find_record_in_buffer(heap_deleter.get(), dwBytesRead, provider_name, event_id, pTypedRecord)){
                   char stamp_str[sizeof(unsigned long)*3+1];
-                  std::sprintf(&stamp_str[0], "%u", ((unsigned int)pTypedRecord->TimeGenerated));
+                  sprintf(&stamp_str[0], "%u", ((unsigned int)pTypedRecord->TimeGenerated));
                   stamp = stamp_str;
                   break;
                }
