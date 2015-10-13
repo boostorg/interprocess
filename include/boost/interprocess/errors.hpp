@@ -119,7 +119,8 @@ enum error_code_t
    invalid_argument,
    timeout_when_locking_error,
    timeout_when_waiting_error,
-   owner_dead_error
+   owner_dead_error,
+   not_inited_error
 };
 
 typedef int    native_error_t;
