@@ -11,3 +11,6 @@
    #pragma warning (pop)
 #endif
 
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40000)
+#pragma GCC diagnostic pop
+#endif
