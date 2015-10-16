@@ -163,18 +163,18 @@ template<class T>
 class pointer_uintptr_caster<T*>
 {
    public:
-   explicit pointer_uintptr_caster(uintptr_t sz)
+   BOOST_FORCEINLINE explicit pointer_uintptr_caster(uintptr_t sz)
       : m_uintptr(sz)
    {}
 
-   explicit pointer_uintptr_caster(const volatile T *p)
+   BOOST_FORCEINLINE explicit pointer_uintptr_caster(const volatile T *p)
       : m_uintptr(reinterpret_cast<uintptr_t>(p))
    {}
 
-   uintptr_t uintptr() const
+   BOOST_FORCEINLINE uintptr_t uintptr() const
    {   return m_uintptr;   }
 
-   T* pointer() const
+   BOOST_FORCEINLINE T* pointer() const
    {   return reinterpret_cast<T*>(m_uintptr);   }
 
    private:
