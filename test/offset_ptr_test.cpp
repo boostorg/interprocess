@@ -254,7 +254,7 @@ struct node
 
 void test_pointer_plus_bits()
 {
-   BOOST_STATIC_ASSERT(boost::intrusive::max_pointer_plus_bits< offset_ptr<void>, boost::move_detail::alignment_of<node>::value >::value >= 1U);
+   BOOST_STATIC_ASSERT((boost::intrusive::max_pointer_plus_bits< offset_ptr<void>, boost::move_detail::alignment_of<node>::value >::value >= 1U));
    typedef boost::intrusive::pointer_plus_bits< offset_ptr<node>, 1u > ptr_plus_bits;
 
    node n, n2;
