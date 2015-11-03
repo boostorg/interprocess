@@ -1282,7 +1282,25 @@ inline int unmap_view_of_file(void *address)
 {  return UnmapViewOfFile(address); }
 
 inline void *open_or_create_semaphore(const char *name, long initial_count, long maximum_count, interprocess_security_attributes *attr)
-{  return CreateSemaphoreA(attr, initial_count, maximum_count, name);  }
+{  	
+#if defined (BOOST_PLAT_WINDOWS_RUNTIME)
+	wchar_t * wcstring = 0;
+	if (name)
+	{
+		size_t newsize = strlen(name) + 1;
+		wcstring = new wchar_t[newsize];
+
+		// Convert to wchar_t string.
+		size_t convertedChars = 0;
+		mbstowcs_s(&convertedChars, wcstring, newsize, name, _TRUNCATE);
+	}
+	HANDLE h = CreateSemaphoreExW(attr, initial_count, maximum_count, wcstring, 0, SEMAPHORE_ALL_ACCESS);
+	delete[] wcstring;
+	return h;
+#else
+	return CreateSemaphoreA(attr, initial_count, maximum_count, name);
+#endif
+}
 
 inline void *open_semaphore(const char *name)
 {  return OpenSemaphoreA(semaphore_all_access, 0, name);  }
