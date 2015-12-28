@@ -229,10 +229,10 @@ bool test_serialize_db()
 }
 //]
 
-static const int MsgSize = 10;
+static const int MsgSize = 1920 * 1080 * 3;
 static const int NumMsg  = 1000;
-static char msgsend [10];
-static char msgrecv [10];
+static char msgsend [MsgSize];
+static char msgrecv [MsgSize];
 
 static boost::interprocess::message_queue *pmessage_queue;
 
@@ -243,7 +243,7 @@ void receiver()
    int nummsg = NumMsg;
 
    while(nummsg--){
-      pmessage_queue->receive(msgrecv, MsgSize, recvd_size, priority);
+      pmessage_queue->receive(msgrecv, sizeof msgrecv, recvd_size, priority);
    }
 }
 
@@ -253,7 +253,7 @@ bool test_buffer_overflow()
    {
       std::auto_ptr<boost::interprocess::message_queue>
          ptr(new boost::interprocess::message_queue
-               (create_only, test::get_process_id_name(), 10, 10));
+               (create_only, test::get_process_id_name(), NumMsg, MsgSize));
       pmessage_queue = ptr.get();
 
       //Launch the receiver thread
@@ -264,7 +264,7 @@ bool test_buffer_overflow()
       int nummsg = NumMsg;
 
       while(nummsg--){
-         pmessage_queue->send(msgsend, MsgSize, 0);
+         pmessage_queue->send(msgsend, sizeof msgsend, 0);
       }
 
       boost::interprocess::ipcdetail::thread_join(thread);

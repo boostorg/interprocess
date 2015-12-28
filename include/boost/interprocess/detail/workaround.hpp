@@ -180,7 +180,9 @@
 //message queue uses a circular queue as index instead of an array (better performance)
 //Boost version < 1.52 uses an array, so undef this if you want to communicate
 //with processes compiled with those versions.
-#define BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX
+#ifndef BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX
+#define BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX 1
+#endif
 
 //Macros for documentation purposes. For code, expands to the argument
 #define BOOST_INTERPROCESS_IMPDEF(TYPE) TYPE
