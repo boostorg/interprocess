@@ -2740,7 +2740,7 @@ file locking easier in the presence of exceptions, just like with mutexes:
    file_lock f_lock("my_file");
 
    {
-      //Construct a sharable lock with the filel lock.
+      //Construct a sharable lock with the file lock.
       //This will call "f_lock.sharable_lock()".
       sharable_lock<file_lock> sh_lock(f_lock);
 
@@ -2764,7 +2764,7 @@ file locking easier in the presence of exceptions, just like with mutexes:
    file_lock f_lock("my_file");
 
    {
-      //Construct a sharable lock with the filel lock.
+      //Construct an exclusive lock with the file lock.
       //This will call "f_lock.lock()".
       scoped_lock<file_lock> e_lock(f_lock);
 
