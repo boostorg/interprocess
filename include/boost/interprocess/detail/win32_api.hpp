@@ -66,7 +66,11 @@
 //Ignore -pedantic errors here (anonymous structs, etc.)
 #if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
 #  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-pedantic"
+#  if (BOOST_GCC >= 60000)
+#     pragma GCC diagnostic ignored "-Wpedantic"
+#  else
+#     pragma GCC diagnostic ignored "-pedantic"
+#  endif
 #endif
 
 namespace boost  {
