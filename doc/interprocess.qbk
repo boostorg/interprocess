@@ -6734,13 +6734,13 @@ thank them:
 
 [section:release_notes_boost_1_62_00 Boost 1.62 Release]
 *  Fixed bugs:
-   * [@https://github.com/boostorg/interprocess/pull/27 ( GitHub Pull #27 ( (['"Fix undefined behavior"])].
+   * [@https://github.com/boostorg/interprocess/pull/27 GitHub Pull #27 (['"Fix undefined behavior"])].
 
 [endsect]
 
 [section:release_notes_boost_1_61_00 Boost 1.61 Release]
 *  Fixed bugs:
-   * [@https://github.com/boostorg/interprocess/pull/23 ( GitHub Pull #23 ( (['"Fixed case sensetive for linux mingw"])].
+   * [@https://github.com/boostorg/interprocess/pull/23 GitHub Pull #23 (['"Fixed case sensetive for linux mingw"])].
 
 [endsect]
 
@@ -6748,13 +6748,13 @@ thank them:
 *  Improved [classref boost::interprocess::offset_ptr offset_ptr] performance and removed any undefined behaviour. No
    special cases needed for different compilers.
 *  Fixed bugs:
-   * [@https://svn.boost.org/trac/boost/ticket/11699 ( Trac #11699 ( (['"Forward declarations of std templates causes stack corruption under Visual Studio 2015"])].
+   * [@https://svn.boost.org/trac/boost/ticket/11699 Trac #11699 (['"Forward declarations of std templates causes stack corruption under Visual Studio 2015"])].
 
 [endsect]
 
 [section:release_notes_boost_1_59_00 Boost 1.59 Release]
 *  Fixed bugs:
-   * [@https://svn.boost.org/trac/boost/ticket/5139 ( Trac #5139 ( (['"Initial Stream Position in Boost.Interprocess.Vectorstream"])].
+   * [@https://svn.boost.org/trac/boost/ticket/5139 Trac #5139 (['"Initial Stream Position in Boost.Interprocess.Vectorstream"])].
    * [@https://github.com/boostorg/interprocess/pull/19 GitHub Pull #19 (['"Fix exception visibility"])]. Thanks to Romain-Geissler.
 
 [endsect]
