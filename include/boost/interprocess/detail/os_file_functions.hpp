@@ -145,6 +145,14 @@ inline file_handle_t open_existing_file
       (name, (unsigned int)mode, winapi::open_existing, attr, 0);
 }
 
+inline file_handle_t open_existing_file
+   (const wchar_t *name, mode_t mode = read_write, bool temporary = false)
+{
+   unsigned long attr = temporary ? winapi::file_attribute_temporary : 0;
+   return winapi::create_file
+      (name, (unsigned int)mode, winapi::open_existing, attr, 0);
+}
+
 inline bool delete_file(const char *name)
 {  return winapi::unlink_file(name);   }
 

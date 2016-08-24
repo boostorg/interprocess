@@ -60,6 +60,10 @@ class file_mapping
    //!modes. Throws interprocess_exception on error.
    file_mapping(const char *filename, mode_t mode);
 
+#if (defined BOOST_INTERPROCESS_WINDOWS)
+   file_mapping(const wchar_t *filename, mode_t mode);
+#endif
+
    //!Moves the ownership of "moved"'s file mapping object to *this.
    //!After the call, "moved" does not represent any file mapping object.
    //!Does not throw
@@ -159,6 +163,35 @@ inline file_mapping::file_mapping
    }
    m_mode = mode;
 }
+
+#if (defined BOOST_INTERPROCESS_WINDOWS)
+inline file_mapping::file_mapping
+   (const wchar_t* filename, mode_t mode)
+{
+    std::wstring src = filename;
+    m_filename.resize(src.size() * 6 + 1);
+    //65001 is CP_UTF8
+    int len = WideCharToMultiByte(65001, 0, filename, -1, &m_filename[0], m_filename.size(), 0, 0);
+    m_filename.resize(len);
+
+   //Check accesses
+   if (mode != read_write && mode != read_only){
+      error_info err = other_error;
+      throw interprocess_exception(err);
+   }
+
+   //Open file
+   m_handle = ipcdetail::open_existing_file(filename, mode);
+
+   //Check for error
+   if(m_handle == ipcdetail::invalid_file()){
+      error_info err = system_error_code();
+      this->priv_close();
+      throw interprocess_exception(err);
+   }
+   m_mode = mode;
+}
+#endif
 
 inline bool file_mapping::remove(const char *filename)
 {  return ipcdetail::delete_file(filename);  }

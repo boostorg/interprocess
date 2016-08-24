@@ -870,6 +870,7 @@ extern "C" __declspec(dllimport) int __stdcall DuplicateHandle
    , unsigned long dwDesiredAccess, int bInheritHandle
    , unsigned long dwOptions);
 extern "C" __declspec(dllimport) long __stdcall GetFileType(void *hFile);
+extern "C" __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int, unsigned long, const wchar_t*, int, char*, int, const char*, int*);
 extern "C" __declspec(dllimport) void *__stdcall FindFirstFileA(const char *lpFileName, win32_find_data *lpFindFileData);
 extern "C" __declspec(dllimport) int   __stdcall FindNextFileA(void *hFindFile, win32_find_data *lpFindFileData);
 extern "C" __declspec(dllimport) int   __stdcall FindClose(void *hFindFile);
@@ -887,6 +888,7 @@ extern "C" __declspec(dllimport) void * __stdcall CreateFileMappingA (void *, in
 extern "C" __declspec(dllimport) void * __stdcall MapViewOfFileEx (void *, unsigned long, unsigned long, unsigned long, std::size_t, void*);
 extern "C" __declspec(dllimport) void * __stdcall OpenFileMappingA (unsigned long, int, const char *);
 extern "C" __declspec(dllimport) void * __stdcall CreateFileA (const char *, unsigned long, unsigned long, struct interprocess_security_attributes*, unsigned long, unsigned long, void *);
+extern "C" __declspec(dllimport) void * __stdcall CreateFileW (const wchar_t *, unsigned long, unsigned long, struct interprocess_security_attributes*, unsigned long, unsigned long, void *);
 extern "C" __declspec(dllimport) void __stdcall GetSystemInfo (struct system_info *);
 extern "C" __declspec(dllimport) int __stdcall FlushViewOfFile (void *, std::size_t);
 extern "C" __declspec(dllimport) int __stdcall VirtualUnlock (void *, std::size_t);
