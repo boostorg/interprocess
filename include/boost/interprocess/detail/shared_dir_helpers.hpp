@@ -102,21 +102,14 @@ namespace ipcdetail {
    #endif
 #endif   //#if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME)
 
-#if defined(BOOST_INTERPROCESS_TEMP_DIR_FUNC)
-      void get_temp_dir(std::string& dir_path);
-#else
-      inline void get_temp_dir(std::string& dir_path) {
-            #if defined (BOOST_INTERPROCESS_WINDOWS)
-               winapi::get_shared_documents_folder(dir_path);
-            #else
-               dir_path = "/tmp";
-            #endif
-      }
-#endif
-
 inline void get_shared_dir_root(std::string &dir_path)
 {
-   get_temp_dir(dir_path);
+   #if defined (BOOST_INTERPROCESS_WINDOWS)
+      winapi::get_shared_documents_folder(dir_path);
+   #else               
+      dir_path = "/tmp";
+   #endif
+
    //We always need this path, so throw on error
    if(dir_path.empty()){
       error_info err = system_error_code();
@@ -126,11 +119,22 @@ inline void get_shared_dir_root(std::string &dir_path)
    dir_path += "/boost_interprocess";
 }
 
+#ifdef BOOST_INTERPROCESS_SHARED_DIR_FUNC
+namespace boost {
+      namespace interprocess {
+            namespace ipcdetail {
+                  // When BOOST_INTERPROCESS_SHARED_DIR_FUNC is defined, users have to implement
+                  // get_shared_dir
+                  void get_shared_dir(std::string &shared_dir);
+            }
+      }
+}  
+#else 
 inline void get_shared_dir(std::string &shared_dir)
 {
    #if defined(BOOST_INTERPROCESS_SHARED_DIR_PATH)
       shared_dir = BOOST_INTERPROCESS_SHARED_DIR_PATH;
-   #else
+   #else 
       get_shared_dir_root(shared_dir);
       #if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME)
          shared_dir += "/";
@@ -138,6 +142,7 @@ inline void get_shared_dir(std::string &shared_dir)
       #endif
    #endif
 }
+#endif
 
 inline void shared_filepath(const char *filename, std::string &filepath)
 {
@@ -148,8 +153,8 @@ inline void shared_filepath(const char *filename, std::string &filepath)
 
 inline void create_shared_dir_and_clean_old(std::string &shared_dir)
 {
-   #if defined(BOOST_INTERPROCESS_SHARED_DIR_PATH)
-      shared_dir = BOOST_INTERPROCESS_SHARED_DIR_PATH;
+   #if defined(BOOST_INTERPROCESS_SHARED_DIR_PATH) || defined(BOOST_INTERPROCESS_SHARED_DIR_FUNC)
+      get_shared_dir(shared_dir);
    #else
       //First get the temp directory
       std::string root_shared_dir;
