@@ -621,7 +621,7 @@ inline mapped_region::mapped_region
          throw interprocess_exception(err);
       }
       //Attach memory
-      void *base = ::shmat(map_hnd.handle, (void*)address, flag);
+      void *base = ::shmat(map_hnd.handle, address, flag);
       if(base == (void*)-1){
          error_info err(system_error_code());
          throw interprocess_exception(err);
