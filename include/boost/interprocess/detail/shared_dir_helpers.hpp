@@ -119,17 +119,21 @@ inline void get_shared_dir_root(std::string &dir_path)
    dir_path += "/boost_interprocess";
 }
 
+#if defined(BOOST_INTERPROCESS_SHARED_DIR_FUNC) && defined(BOOST_INTERPROCESS_SHARED_DIR_PATH)
+#error "Error: Both BOOST_INTERPROCESS_SHARED_DIR_FUNC and BOOST_INTERPROCESS_SHARED_DIR_PATH defined!"
+#endif
+
 #ifdef BOOST_INTERPROCESS_SHARED_DIR_FUNC
 namespace boost {
-      namespace interprocess {
-            namespace ipcdetail {
-                  // When BOOST_INTERPROCESS_SHARED_DIR_FUNC is defined, users have to implement
-                  // get_shared_dir
-                  void get_shared_dir(std::string &shared_dir);
-            }
+   namespace interprocess {
+      namespace ipcdetail {
+         // When BOOST_INTERPROCESS_SHARED_DIR_FUNC is defined, users have to implement
+         // get_shared_dir
+         void get_shared_dir(std::string &shared_dir);
       }
+   }
 }  
-#else 
+#else
 inline void get_shared_dir(std::string &shared_dir)
 {
    #if defined(BOOST_INTERPROCESS_SHARED_DIR_PATH)
