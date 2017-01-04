@@ -23,6 +23,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/type_traits/is_convertible.hpp>
+#include <boost/type_traits/is_constructible.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
@@ -270,8 +271,8 @@ class offset_ptr
          (ipcdetail::offset_ptr_to_offset_from_other(this, &ptr, ptr.internal.m_offset)))
    {}
 
-   //!Constructor from other offset_ptr. If pointers of pointee types are
-   //!convertible, offset_ptrs will be convertibles. Never throws.
+   //!Constructor from other offset_ptr. Only takes part in overload resolution
+   //!if T2* is convertible to PointedType*. Never throws.
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr( const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &ptr
              #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
@@ -284,8 +285,6 @@ class offset_ptr
 
    #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
-   //!Constructor from other offset_ptr. If pointers of pointee types are
-   //!convertible, offset_ptrs will be convertibles. Never throws.
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr( const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &ptr
              , typename ipcdetail::enable_if_convertible_unequal_address<T2, PointedType>::type* = 0) BOOST_NOEXCEPT
@@ -294,6 +293,20 @@ class offset_ptr
    {}
 
    #endif
+
+   //!Constructor from other offset_ptr. Only takes part in overload resolution
+   //!if PointedType* is constructible from T2* other than via a conversion (e.g. cast to a derived class). Never throws.
+   template<class T2>
+   BOOST_INTERPROCESS_FORCEINLINE explicit offset_ptr(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &ptr
+             #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
+             , typename ipcdetail::enable_if_c<
+                !::boost::is_convertible<T2*, PointedType*>::value && ::boost::is_constructible<T2*, PointedType*>::value
+             >::type * = 0
+             #endif
+             ) BOOST_NOEXCEPT
+      : internal(static_cast<OffsetType>
+         (ipcdetail::offset_ptr_to_offset(static_cast<PointedType*>(ptr.get()), this)))
+   {}
 
    //!Emulates static_cast operator.
    //!Never throws.
