@@ -112,8 +112,8 @@ inline bool equal_thread_id(OS_thread_id_t id1, OS_thread_id_t id2)
 //return the system tick in ns
 inline unsigned long get_system_tick_ns()
 {
-   unsigned long curres;
-   winapi::set_timer_resolution(10000, 0, &curres);
+   unsigned long curres, ignore1, ignore2;
+   winapi::query_timer_resolution(&ignore1, &ignore2, &curres);
    //Windows API returns the value in hundreds of ns
    return (curres - 1ul)*100ul;
 }
@@ -121,8 +121,8 @@ inline unsigned long get_system_tick_ns()
 //return the system tick in us
 inline unsigned long get_system_tick_us()
 {
-   unsigned long curres;
-   winapi::set_timer_resolution(10000, 0, &curres);
+   unsigned long curres, ignore1, ignore2;
+   winapi::query_timer_resolution(&ignore1, &ignore2, &curres);
    //Windows API returns the value in hundreds of ns
    return (curres - 1ul)/10ul + 1ul;
 }
@@ -132,8 +132,8 @@ typedef unsigned __int64 OS_highres_count_t;
 inline unsigned long get_system_tick_in_highres_counts()
 {
    __int64 freq;
-   unsigned long curres;
-   winapi::set_timer_resolution(10000, 0, &curres);
+   unsigned long curres, ignore1, ignore2;
+   winapi::query_timer_resolution(&ignore1, &ignore2, &curres);
    //Frequency in counts per second
    if(!winapi::query_performance_frequency(&freq)){
       //Tick resolution in ms
