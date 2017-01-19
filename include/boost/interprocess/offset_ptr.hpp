@@ -444,9 +444,17 @@ class offset_ptr
 
    //!Compatibility with pointer_traits
    //!
+   #if defined(BOOST_NO_CXX11_TEMPLATE_ALIASES)
    template <class U>
    struct rebind
    {  typedef offset_ptr<U, DifferenceType, OffsetType, OffsetAlignment> other;  };
+   #else
+   template <class U>
+   using rebind = offset_ptr<U, DifferenceType, OffsetType, OffsetAlignment>;
+   #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
+   typedef offset_ptr<PointedType, DifferenceType, OffsetType, OffsetAlignment> other;
+   #endif //BOOST_INTERPROCESS_DOXYGEN_INVOKED
+   #endif
 
    //!Compatibility with pointer_traits
    //!
