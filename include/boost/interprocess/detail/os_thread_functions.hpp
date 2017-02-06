@@ -53,7 +53,12 @@
 #     include <sys/sysctl.h>
 #  endif
 //According to the article "C/C++ tip: How to measure elapsed real time for benchmarking"
-#  if defined(CLOCK_MONOTONIC_PRECISE)   //BSD
+//Check MacOs first as macOS 10.12 SDK defines both CLOCK_MONOTONIC and
+//CLOCK_MONOTONIC_RAW and no clock_gettime.
+#  if (defined(macintosh) || defined(__APPLE__) || defined(__APPLE_CC__))
+#     include <mach/mach_time.h>  // mach_absolute_time, mach_timebase_info_data_t
+#     define BOOST_INTERPROCESS_MATCH_ABSOLUTE_TIME
+#  elif defined(CLOCK_MONOTONIC_PRECISE)   //BSD
 #     define BOOST_INTERPROCESS_CLOCK_MONOTONIC CLOCK_MONOTONIC_PRECISE
 #  elif defined(CLOCK_MONOTONIC_RAW)     //Linux
 #     define BOOST_INTERPROCESS_CLOCK_MONOTONIC CLOCK_MONOTONIC_RAW
@@ -61,9 +66,6 @@
 #     define BOOST_INTERPROCESS_CLOCK_MONOTONIC CLOCK_HIGHRES
 #  elif defined(CLOCK_MONOTONIC)         //POSIX (AIX, BSD, Linux, Solaris)
 #     define BOOST_INTERPROCESS_CLOCK_MONOTONIC CLOCK_MONOTONIC
-#  elif !defined(CLOCK_MONOTONIC) && (defined(macintosh) || defined(__APPLE__) || defined(__APPLE_CC__))
-#     include <mach/mach_time.h>  // mach_absolute_time, mach_timebase_info_data_t
-#     define BOOST_INTERPROCESS_MATCH_ABSOLUTE_TIME
 #  else
 #     error "No high resolution steady clock in your system, please provide a patch"
 #  endif
