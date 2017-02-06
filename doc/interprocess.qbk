@@ -6756,9 +6756,12 @@ thank them:
 
 [section:release_notes_boost_1_64_00 Boost 1.64 Release]
 *  Fixed bugs:
+   * [@https://svn.boost.org/trac/boost/ticket/12617 Trac #12617 (['"clock_gettime not available on OS X 10.11"])].
    * [@https://svn.boost.org/trac/boost/ticket/12744 Trac #12744 (['"winapi::set_timer_resolution inadvertently changes timer resolution (Windows)"])].
    * [@https://github.com/boostorg/interprocess/pull/32 GitHub Pull #32 (['"Conform to std::pointer_traits requirements"])].
    * [@https://github.com/boostorg/interprocess/pull/33 GitHub Pull #33 (['"explicit cast to derived class" and "64/32 bit processes sharing"])].
+
+[endsect]
 
 [endsect]
 
