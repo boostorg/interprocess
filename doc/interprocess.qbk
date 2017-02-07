@@ -6763,8 +6763,6 @@ thank them:
 
 [endsect]
 
-[endsect]
-
 [section:release_notes_boost_1_63_00 Boost 1.63 Release]
 *  Fixed bugs:
    * [@https://svn.boost.org/trac/boost/ticket/12499 Trac #12499 (['"Memory allocation fails"])].
