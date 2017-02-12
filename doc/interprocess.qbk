@@ -6760,6 +6760,7 @@ thank them:
    * [@https://svn.boost.org/trac/boost/ticket/12744 Trac #12744 (['"winapi::set_timer_resolution inadvertently changes timer resolution (Windows)"])].
    * [@https://github.com/boostorg/interprocess/pull/32 GitHub Pull #32 (['"Conform to std::pointer_traits requirements"])].
    * [@https://github.com/boostorg/interprocess/pull/33 GitHub Pull #33 (['"explicit cast to derived class" and "64/32 bit processes sharing"])].
+   * [@https://github.com/boostorg/interprocess/pull/34 GitHub Pull #34 (['"Update example to use multi_index::member instead of BOOST_MULTI_INDEX_MEMBER"])].
    * [@https://github.com/boostorg/interprocess/pull/35 GitHub Pull #35 (['"Fixed options for cross-compilation"])].
 
 * New experimental option `BOOST_INTERPROCESS_BOOTSTAMP_IS_SESSION_MANAGER_BASED` from Windows systems.
