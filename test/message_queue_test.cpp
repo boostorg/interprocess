@@ -251,7 +251,11 @@ bool test_buffer_overflow()
 {
    boost::interprocess::message_queue::remove(test::get_process_id_name());
    {
+#ifdef BOOST_NO_AUTO_PTR
+      std::unique_ptr<boost::interprocess::message_queue>
+#else
       std::auto_ptr<boost::interprocess::message_queue>
+#endif
          ptr(new boost::interprocess::message_queue
                (create_only, test::get_process_id_name(), 10, 10));
       pmessage_queue = ptr.get();
