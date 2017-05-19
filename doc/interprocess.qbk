@@ -813,7 +813,7 @@ inmedially visible to other processes. However, the file contents on disk are
 not updated immediately, since that would hurt performance (writing to disk
 is several times slower than writing to memory). If the user wants to make sure
 that file's contents have been updated, it can flush a range from the view to disk.
-When the function returns, the flushing process has startd but there is not guarantee that
+When the function returns, the flushing process has started but there is no guarantee that
 all data has been written to disk:
 
 [c++]
