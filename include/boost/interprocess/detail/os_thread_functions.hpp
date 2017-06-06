@@ -305,6 +305,11 @@ typedef struct timespec OS_highres_count_t;
 typedef unsigned long long OS_highres_count_t;
 #endif
 
+#ifdef _AIX
+// In AIX variable name hz conflicts with the definition of an AIX system variable
+#undef hz
+#endif
+
 inline unsigned long get_system_tick_ns()
 {
    #ifdef _SC_CLK_TCK
