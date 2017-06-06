@@ -240,6 +240,9 @@ class managed_open_or_create_impl
    ~managed_open_or_create_impl()
    {}
 
+   bool is_inited()  const
+   {  return static_cast<bool>(m_mapped_region.get_address()); }
+
    std::size_t get_user_size()  const
    {  return m_mapped_region.get_size() - ManagedOpenOrCreateUserOffset; }
 

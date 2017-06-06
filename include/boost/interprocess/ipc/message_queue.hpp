@@ -62,10 +62,10 @@ template<class VoidPointer>
 class message_queue_t
 {
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+   //Non-copyable
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(message_queue_t)
    //Blocking modes
    enum block_t   {  blocking,   timed,   non_blocking   };
-
-   message_queue_t();
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
@@ -75,6 +75,11 @@ class message_queue_t
          rebind_pointer<char>::type                                    char_ptr;
    typedef typename boost::intrusive::pointer_traits<char_ptr>::difference_type difference_type;
    typedef typename boost::container::container_detail::make_unsigned<difference_type>::type        size_type;
+
+   //!Default constructor. "max_msg" and "max_msg_size" will be 0. The resulting
+   //!message queue cannot be meaningfully used other than being assigned.
+   //!"get_max_msg()", "get_max_msg_size()", and "get_num_msg()" return 0, others throw an error.
+   message_queue_t();
 
    //!Creates a process shared message queue with name "name". For this message queue,
    //!the maximum number of messages will be "max_num_msg" and the maximum message size
@@ -102,6 +107,14 @@ class message_queue_t
    message_queue_t(open_only_t open_only,
                  const char *name);
 
+   //!Move constructor. *this will be constructed taking ownership of "other",
+   //!and "other" will be left in default constructor state.
+   message_queue_t(BOOST_RV_REF(message_queue_t) other);
+
+   //!Move assignment. Moves the ownership of "moved"'s message queue to *this.
+   //!After the call, "moved" is left in default constructor state.
+   message_queue_t &operator=(BOOST_RV_REF(message_queue_t) moved);
+
    //!Destroys *this and indicates that the calling process is finished using
    //!the resource. All opened message queues are still
    //!valid after destruction. The destructor function will deallocate
@@ -110,6 +123,12 @@ class message_queue_t
    //!the open constructor overload. To erase the message queue from the system
    //!use remove().
    ~message_queue_t();
+
+   //!Checks whether the message queue is initialized or not.
+   bool is_open() const;
+
+   //!Swaps the message queue with another message queue.
+   void swap(message_queue_t &other);
 
    //!Sends a message stored in buffer "buffer" with size "buffer_size" in the
    //!message queue with priority "priority". If the message queue is full
@@ -650,6 +669,10 @@ inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPoin
 {  return ipcdetail::mq_hdr_t<VoidPointer>::get_mem_size(max_msg_size, max_num_msg);   }
 
 template<class VoidPointer>
+inline message_queue_t<VoidPointer>::message_queue_t()
+{}
+
+template<class VoidPointer>
 inline message_queue_t<VoidPointer>::message_queue_t(create_only_t,
                                     const char *name,
                                     size_type max_num_msg,
@@ -695,6 +718,26 @@ inline message_queue_t<VoidPointer>::message_queue_t(open_only_t, const char *na
 {}
 
 template<class VoidPointer>
+inline message_queue_t<VoidPointer>::message_queue_t(BOOST_RV_REF(message_queue_t) other)
+{  this->swap(other); }
+
+template<class VoidPointer>
+inline message_queue_t<VoidPointer> &message_queue_t<VoidPointer>::operator=(BOOST_RV_REF(message_queue_t) moved)
+{
+   message_queue_t tmp(boost::move(moved));
+   this->swap(tmp);
+   return *this;
+}
+
+template<class VoidPointer>
+inline bool message_queue_t<VoidPointer>::is_open() const
+{  return m_shmem.is_inited(); }
+
+template<class VoidPointer>
+inline void message_queue_t<VoidPointer>::swap(message_queue_t &other)
+{  this->m_shmem.swap(other.m_shmem); }
+
+template<class VoidPointer>
 inline void message_queue_t<VoidPointer>::send
    (const void *buffer, size_type buffer_size, unsigned int priority)
 {  this->do_send(blocking, buffer, buffer_size, priority, ptime()); }
@@ -721,6 +764,7 @@ inline bool message_queue_t<VoidPointer>::do_send(block_t block,
                                 const void *buffer,      size_type buffer_size,
                                 unsigned int priority,   const boost::posix_time::ptime &abs_time)
 {
+   if (!m_shmem.is_inited()) throw interprocess_exception(not_inited_error);
    ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    //Check if buffer is smaller than maximum allowed
    if (buffer_size > p_hdr->m_max_msg_size) {
@@ -848,6 +892,7 @@ inline bool
                           size_type &recvd_size,   unsigned int &priority,
                           const boost::posix_time::ptime &abs_time)
 {
+   if (!m_shmem.is_inited()) throw interprocess_exception(not_inited_error);
    ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    //Check if buffer is big enough for any message
    if (buffer_size < p_hdr->m_max_msg_size) {
@@ -953,12 +998,14 @@ inline bool
 template<class VoidPointer>
 inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPointer>::get_max_msg() const
 {
+   if (!m_shmem.is_inited()) return 0;
    ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    return p_hdr ? p_hdr->m_max_num_msg : 0;  }
 
 template<class VoidPointer>
 inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPointer>::get_max_msg_size() const
 {
+   if (!m_shmem.is_inited()) return 0;
    ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    return p_hdr ? p_hdr->m_max_msg_size : 0;
 }
@@ -966,6 +1013,7 @@ inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPoin
 template<class VoidPointer>
 inline typename message_queue_t<VoidPointer>::size_type message_queue_t<VoidPointer>::get_num_msg() const
 {
+   if (!m_shmem.is_inited()) return 0;
    ipcdetail::mq_hdr_t<VoidPointer> *p_hdr = static_cast<ipcdetail::mq_hdr_t<VoidPointer>*>(m_shmem.get_user_address());
    if(p_hdr){
       //---------------------------------------------
