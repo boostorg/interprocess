@@ -3350,7 +3350,9 @@ To use a managed mapped file, you must include the following header:
    //    file to implement managed features.
    //!!  If anything fails, throws interprocess_exception
    //
-   managed_mapped_file mfile      (create_only,      "MyMappedFile",   //Mapped file name      65536);           //Mapped file size
+   managed_mapped_file mfile      ( create_only
+                                  , "MyMappedFile" //Mapped file name
+                                  , 65536);        //Mapped file size
 [c++]
 
    //1.  Opens a file
@@ -3361,7 +3363,10 @@ To use a managed mapped file, you must include the following header:
    //    to implement managed features.
    //!!  If anything fails, throws interprocess_exception
    //
-   managed_mapped_file mfile      (open_only,      "MyMappedFile");  //Mapped file name[c++]
+   managed_mapped_file mfile      ( open_only
+                                  , "MyMappedFile"); //Mapped file name
+
+[c++]
 
    //1.  If the file was previously created
    //    equivalent to "open_only".
@@ -3369,7 +3374,10 @@ To use a managed mapped file, you must include the following header:
    //
    //!!  If anything fails, throws interprocess_exception
    //
-   managed_mapped_file mfile      (open_or_create,      "MyMappedFile",   //Mapped file name      65536);           //Mapped file size
+   managed_mapped_file mfile      (open_or_create
+                                  , "MyMappedFile" //Mapped file name
+                                  , 65536);        //Mapped file size
+
 When the `managed_mapped_file` object is destroyed, the file is
 automatically unmapped, and all the resources are freed. To remove
 the file from the filesystem you could use standard C `std::remove`
