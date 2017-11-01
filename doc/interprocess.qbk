@@ -6762,6 +6762,12 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_66_00 Boost 1.66 Release]
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/pull/41 GitHub Pull #41 (['"Data race in boost::interprocess::rbtree_best_fit"])].
+
+[endsect]
+
 [section:release_notes_boost_1_65_00 Boost 1.65 Release]
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/pull/37 GitHub Pull #37 (['"Conditionally replace deprecated/removed std::auto_ptr..."])].
