@@ -48,13 +48,13 @@ template< class SegmentManager
         , unsigned char OverheadPercent
         >
 class private_adaptive_node_pool
-   :  public boost::container::container_detail::private_adaptive_node_pool_impl
+   :  public boost::container::dtl::private_adaptive_node_pool_impl
          < typename SegmentManager::segment_manager_base_type
          , ::boost::container::adaptive_pool_flag::size_ordered |
            ::boost::container::adaptive_pool_flag::address_ordered
          >
 {
-   typedef boost::container::container_detail::private_adaptive_node_pool_impl
+   typedef boost::container::dtl::private_adaptive_node_pool_impl
       < typename SegmentManager::segment_manager_base_type
       , ::boost::container::adaptive_pool_flag::size_ordered |
         ::boost::container::adaptive_pool_flag::address_ordered
