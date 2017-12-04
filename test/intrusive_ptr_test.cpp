@@ -21,6 +21,10 @@
 
 typedef boost::interprocess::offset_ptr<void> VP;
 
+namespace {
+    int addref_release_calls = 0;
+}
+
 namespace N
 {
 
@@ -52,11 +56,13 @@ class base
 
    void add_ref()
    {
+      ++addref_release_calls;
       ++use_count_;
    }
 
    void release()
    {
+      ++addref_release_calls;
       if(--use_count_ == 0) delete this;
    }
 };
@@ -189,11 +195,35 @@ void copy_constructor()
    }
 }
 
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+void move_constructor()
+{
+   {
+      int prev_addref_release_calls = addref_release_calls;
+      X* x = new X();
+      boost::interprocess::intrusive_ptr<X, VP> px(x);
+      BOOST_TEST(addref_release_calls == prev_addref_release_calls + 1);
+
+      static_assert(std::is_nothrow_move_constructible< boost::interprocess::intrusive_ptr<X, VP> >::value, "test instrusive_ptr is nothrow move constructible");
+
+      boost::interprocess::intrusive_ptr<X, VP> px2(std::move(px));
+      BOOST_TEST(px2.get() == x);
+      BOOST_TEST(px.get() == nullptr);
+      BOOST_TEST(px2->use_count() == 1);
+      BOOST_TEST(addref_release_calls == prev_addref_release_calls + 1);
+   }
+}
+#endif
+
 void test()
 {
    default_constructor();
    pointer_constructor();
    copy_constructor();
+
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+    move_constructor();
+#endif
 }
 
 } // namespace n_constructors
@@ -223,6 +253,28 @@ void copy_assignment()
 {
 }
 
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+void move_assignment()
+{
+   {      
+      int prev_addref_release_calls = addref_release_calls;
+      X* x = new X();
+      boost::interprocess::intrusive_ptr<X, VP> px(x);
+      BOOST_TEST(px->use_count() == 1);
+      BOOST_TEST(addref_release_calls == prev_addref_release_calls + 1);
+
+      static_assert(std::is_nothrow_move_assignable< boost::interprocess::intrusive_ptr<X, VP> >::value, "test if nothrow move assignable ");
+
+      boost::interprocess::intrusive_ptr<X, VP> px2;
+      px2 = std::move(px);
+      BOOST_TEST(px2.get() == x);
+      BOOST_TEST(px.get() == nullptr);
+      BOOST_TEST(px2->use_count() == 1);
+      BOOST_TEST(addref_release_calls == prev_addref_release_calls + 1);
+   }
+}
+#endif
+
 void conversion_assignment()
 {
 }
@@ -236,6 +288,10 @@ void test()
    copy_assignment();
    conversion_assignment();
    pointer_assignment();
+
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+   move_assignment();
+#endif   
 }
 
 } // namespace n_assignment

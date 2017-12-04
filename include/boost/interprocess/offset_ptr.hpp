@@ -34,6 +34,7 @@
 #include <boost/container/detail/type_traits.hpp>  //alignment_of, aligned_storage
 #include <boost/assert.hpp>
 #include <iosfwd>
+#include <iterator>
 
 //!\file
 //!Describes a smart pointer that stores the offset between this pointer and
