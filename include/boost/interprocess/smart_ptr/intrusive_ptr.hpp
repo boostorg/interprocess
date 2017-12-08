@@ -32,6 +32,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
 #include <boost/move/adl_move_swap.hpp>
+#include <boost/move/core.hpp>
 
 #include <iosfwd>               // for std::basic_ostream
 
@@ -72,6 +73,8 @@ class intrusive_ptr
    typedef pointer this_type::*unspecified_bool_type;
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
+   BOOST_COPYABLE_AND_MOVABLE(intrusive_ptr)
+
    public:
    //!Constructor. Initializes internal pointer to 0.
    //!Does not throw
@@ -96,14 +99,12 @@ class intrusive_ptr
       if(m_ptr != 0) intrusive_ptr_add_ref(ipcdetail::to_raw_pointer(m_ptr));
    }
 
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
    //!Move constructor. Moves the internal pointer. Does not throw
-   intrusive_ptr(intrusive_ptr&& rhs) BOOST_NOEXCEPT
+   intrusive_ptr(BOOST_RV_REF(intrusive_ptr) rhs) BOOST_NOEXCEPT
 	   : m_ptr(rhs.m_ptr) 
    {
 	   rhs.m_ptr = 0;
    }
-#endif
 
    //!Constructor from related. Copies the internal pointer and if "p" is not
    //!zero calls intrusive_ptr_add_ref(to_raw_pointer(p)). Does not throw
@@ -121,23 +122,20 @@ class intrusive_ptr
 
    //!Assignment operator. Equivalent to intrusive_ptr(r).swap(*this).
    //!Does not throw
-   intrusive_ptr & operator=(intrusive_ptr const & rhs) BOOST_NOEXCEPT
+   intrusive_ptr & operator=(BOOST_COPY_ASSIGN_REF(intrusive_ptr) rhs) BOOST_NOEXCEPT
    {
       this_type(rhs).swap(*this);
       return *this;
    }
 
-
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
    //!Move Assignment operator
    //!Does not throw
-   intrusive_ptr & operator=(intrusive_ptr&& rhs) BOOST_NOEXCEPT 
+   intrusive_ptr & operator=(BOOST_RV_REF(intrusive_ptr) rhs) BOOST_NOEXCEPT 
    {
 	   rhs.swap(*this);
 	   rhs.reset();
 	   return *this;
    }
-#endif
 
    //!Assignment from related. Equivalent to intrusive_ptr(r).swap(*this).
    //!Does not throw
