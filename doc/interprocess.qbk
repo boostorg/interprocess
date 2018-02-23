@@ -6791,7 +6791,7 @@ thank them:
    * [@https://github.com/boostorg/interprocess/pull/35 GitHub Pull #35 (['"Fixed options for cross-compilation"])].
 
 * New experimental option `BOOST_INTERPROCESS_BOOTSTAMP_IS_SESSION_MANAGER_BASED` from Windows systems.
-  This option derives the unique booststamp used to name the folder where shared memory is placed from registry values associated
+  This option derives the unique bootstamp used to name the folder where shared memory is placed from registry values associated
   with the session manager. This option only works on Vista and later systems and might be more stable than the default version.
 
 [endsect]
