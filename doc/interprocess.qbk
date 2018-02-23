@@ -6765,6 +6765,7 @@ thank them:
 [section:release_notes_boost_1_67_00 Boost 1.67 Release]
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/pull/45 GitHub Pull #45 (['"Make intrusive_ptr move constructible/assignable"])].
+   * [@https://github.com/boostorg/interprocess/pull/48 GitHub Pull #48 (['"Win32: Fix read of reg_expand_sz type"])].
 
 [endsect]
 
