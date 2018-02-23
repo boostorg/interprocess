@@ -2035,7 +2035,7 @@ inline bool get_registry_value_string(hkey key_type, const char *subkey_name, co
       unsigned long size;
       unsigned long type;
       long err = reg_query_value_ex( key, value_name, 0, &type, 0, &size);
-      if((reg_sz == type || reg_expand_sz != type) && !err){
+      if((reg_sz == type || reg_expand_sz == type) && !err){
          //Size includes terminating NULL
          s.resize(size);
          err = reg_query_value_ex( key, value_name, 0, &type, (unsigned char*)(&s[0]), &size);

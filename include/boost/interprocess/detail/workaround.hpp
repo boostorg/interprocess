@@ -31,7 +31,7 @@
    //////////////////////////////////////////////////////
    //Check for XSI shared memory objects. They are available in nearly all UNIX platforms
    //////////////////////////////////////////////////////
-   #if !defined(__QNXNTO__) && !defined(__ANDROID__) && !defined(__HAIKU__)
+   #if !defined(__QNXNTO__) && !defined(__ANDROID__) && !defined(__HAIKU__) && !(__VXWORKS__)
       #define BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
    #endif
 
