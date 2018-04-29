@@ -6764,7 +6764,8 @@ thank them:
 
 [section:release_notes_boost_1_68_00 Boost 1.68 Release]
 *  Fixed bugs:
-   * [@https://github.com/boostorg/interprocess/pull/45 GitHub Issue #54 (['"fill_system_message() ignores an error returned by winapi::format_message()"])].
+   * [@https://github.com/boostorg/interprocess/pull/53 GitHub Issue #53 (['"Crash waiting on condition variable from multiple processes in do_wait()"])].
+   * [@https://github.com/boostorg/interprocess/pull/54 GitHub Issue #54 (['"fill_system_message() ignores an error returned by winapi::format_message()"])].
 
 [endsect]
 
