@@ -1535,7 +1535,6 @@ struct function_address_holder
          , NtOpenFile
          , NtClose
          , NtQueryTimerResolution
-         , NtSetTimerResolution
          , QueryPerformanceCounter
          , QueryPerformanceFrequency
          , NumFunction
@@ -1618,7 +1617,6 @@ const char *function_address_holder<Dummy>::FunctionNames[function_address_holde
    "NtOpenFile",
    "NtClose",
    "NtQueryTimerResolution",
-   "NtSetTimerResolution",
    "QueryPerformanceCounter",
    "QueryPerformanceFrequency"
 };
@@ -1626,7 +1624,6 @@ const char *function_address_holder<Dummy>::FunctionNames[function_address_holde
 template<int Dummy>
 unsigned int function_address_holder<Dummy>::FunctionModules[function_address_holder<Dummy>::NumFunction] =
 {
-   NtDll_dll,
    NtDll_dll,
    NtDll_dll,
    NtDll_dll,
@@ -2439,13 +2436,6 @@ inline bool query_timer_resolution(unsigned long *lowres, unsigned long *highres
    winapi::NtQueryTimerResolution_t pNtQueryTimerResolution =
          (winapi::NtQueryTimerResolution_t)dll_func::get(winapi::dll_func::NtQueryTimerResolution);
    return !pNtQueryTimerResolution(lowres, highres, curres);
-}
-
-inline bool set_timer_resolution(unsigned long RequestedResolution, int Set, unsigned long* ActualResolution)
-{
-   winapi::NtSetTimerResolution_t pNtSetTimerResolution =
-         (winapi::NtSetTimerResolution_t)dll_func::get(winapi::dll_func::NtSetTimerResolution);
-   return !pNtSetTimerResolution(RequestedResolution, Set, ActualResolution);
 }
 
 inline bool query_performance_counter(__int64 *lpPerformanceCount)
