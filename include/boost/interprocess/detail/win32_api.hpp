@@ -103,7 +103,7 @@
 #if defined(BOOST_GCC)
 #  if (BOOST_GCC >= 40600)
 #     pragma GCC diagnostic push
-#     if (BOOST_GCC >= 60000)
+#     if (BOOST_GCC >= 40800)
 #        pragma GCC diagnostic ignored "-Wpedantic"
 #     else
 #        pragma GCC diagnostic ignored "-pedantic"
