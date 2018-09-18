@@ -6765,6 +6765,8 @@ thank them:
 [section:release_notes_boost_1_69_00 Boost 1.69 Release]
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/59 GitHub Issue #59 (['"warning: ISO C++ prohibits anonymous structs [-Wpedantic]"])].
+   * [@https://github.com/boostorg/interprocess/issues/60 GitHub Issue #60 (['"warning: cast between incompatible function types from boost::interprocess::winapi::farproc_t..."])].
+   * [@https://github.com/boostorg/interprocess/issues/61 GitHub Issue #61 (['"warning: struct winapi::*_BIPC has virtual functions and accessible non-virtual destructor"])].
 
 [endsect]
 

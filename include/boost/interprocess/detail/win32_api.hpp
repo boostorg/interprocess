@@ -109,6 +109,7 @@
 #     else
 #        pragma GCC diagnostic ignored "-pedantic"
 #     endif
+#     pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
 #  else
 #     pragma GCC system_header
 #  endif
