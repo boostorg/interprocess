@@ -41,8 +41,9 @@ namespace ipcdetail{
          if(pthread_mutexattr_init(&m_attr)!=0 ||
             pthread_mutexattr_setpshared(&m_attr, PTHREAD_PROCESS_SHARED)!= 0 ||
              (recursive &&
-              pthread_mutexattr_settype(&m_attr, PTHREAD_MUTEX_RECURSIVE)!= 0 ))
-            throw interprocess_exception("pthread_mutexattr_xxxx failed");
+			  pthread_mutexattr_settype(&m_attr, PTHREAD_MUTEX_RECURSIVE) != 0 ) ||
+			pthread_mutexattr_setrobust(&m_attr, PTHREAD_MUTEX_ROBUST) != 0 )
+			 throw interprocess_exception("pthread_mutexattr_xxxx failed");
       }
 
       //!Destructor
