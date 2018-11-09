@@ -87,16 +87,21 @@ inline posix_recursive_mutex::~posix_recursive_mutex()
 
 inline void posix_recursive_mutex::lock()
 {
-   if (pthread_mutex_lock(&m_mut) != 0)
-      throw lock_exception();
+	int res = pthread_mutex_lock(&m_mut);
+	if (res == EOWNERDEAD)
+		pthread_mutex_consistent(&m_mut);
+	else if (res != 0)
+		throw lock_exception();
 }
 
 inline bool posix_recursive_mutex::try_lock()
 {
    int res = pthread_mutex_trylock(&m_mut);
-   if (!(res == 0 || res == EBUSY))
-      throw lock_exception();
-   return res == 0;
+   if (res == EOWNERDEAD)
+	   pthread_mutex_consistent(&m_mut);
+   else if (!(res == 0 || res == EBUSY))
+	   throw lock_exception();
+   return (res == 0 || res == EOWNERDEAD);
 }
 
 inline bool posix_recursive_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
@@ -110,9 +115,11 @@ inline bool posix_recursive_mutex::timed_lock(const boost::posix_time::ptime &ab
 
    timespec ts = ptime_to_timespec(abs_time);
    int res = pthread_mutex_timedlock(&m_mut, &ts);
-   if (res != 0 && res != ETIMEDOUT)
-      throw lock_exception();
-   return res == 0;
+   if (res == EOWNERDEAD)
+	   pthread_mutex_consistent(&m_mut);
+   else if (res != 0 && res != ETIMEDOUT)
+	   throw lock_exception();
+   return (res == 0 || res == EOWNERDEAD);
 
    #else //BOOST_INTERPROCESS_POSIX_TIMEOUTS
 
