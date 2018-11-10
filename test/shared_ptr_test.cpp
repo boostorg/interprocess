@@ -274,7 +274,7 @@ struct X
 {
    X(){ ++cnt;   }
    // virtual destructor deliberately omitted
-   ~X(){   --cnt;    }
+   virtual ~X(){   --cnt;    }
 
    virtual int id() const
    {  return 1;   }
@@ -287,7 +287,7 @@ struct X
 struct Y: public X
 {
    Y(){  ++cnt;   }
-   ~Y(){ --cnt;   }
+   virtual ~Y(){ --cnt;   }
 
    virtual int id() const
    {  return 2;   }
