@@ -73,9 +73,10 @@ your system's documentation to know which library implements them.
 
 [*Boost.Interprocess] has been tested in the following compilers/platforms:
 
-*  Visual >= 7.1
-*  GCC >= 4.1
-*  Intel 11
+*  Visual C++ >= 7.1.
+*  GCC >= 4.1.
+
+[warning GCC < 4.3 and MSVC < 9.0 are deprecated and will be removed in the next version.]
 
 [endsect]
 
@@ -6763,6 +6764,9 @@ thank them:
 [section:release_notes Release Notes]
 
 [section:release_notes_boost_1_69_00 Boost 1.69 Release]
+
+* Deprecated GCC < 4.3 and MSVC < 9.0 (Visual 2008) compilers.
+
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/59 GitHub Issue #59 (['"warning: ISO C++ prohibits anonymous structs [-Wpedantic]"])].
    * [@https://github.com/boostorg/interprocess/issues/60 GitHub Issue #60 (['"warning: cast between incompatible function types from boost::interprocess::winapi::farproc_t..."])].
