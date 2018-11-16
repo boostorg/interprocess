@@ -6771,6 +6771,7 @@ thank them:
    * [@https://github.com/boostorg/interprocess/issues/59 GitHub Issue #59 (['"warning: ISO C++ prohibits anonymous structs [-Wpedantic]"])].
    * [@https://github.com/boostorg/interprocess/issues/60 GitHub Issue #60 (['"warning: cast between incompatible function types from boost::interprocess::winapi::farproc_t..."])].
    * [@https://github.com/boostorg/interprocess/issues/61 GitHub Issue #61 (['"warning: struct winapi::*_BIPC has virtual functions and accessible non-virtual destructor"])].
+   * [@https://github.com/boostorg/interprocess/issues/64 GitHub Issue #64 (['"UBSan: runtime error: load of value 4294967295, (...) for type 'boost::interprocess::mode_t'"])].
    * [@https://github.com/boostorg/interprocess/pull/68   GitHub Pull #68 (['"Prepare for C++20 and remove "throw()" usage"])].
 
 [endsect]
