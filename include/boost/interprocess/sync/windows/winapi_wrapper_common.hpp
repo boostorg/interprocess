@@ -31,6 +31,8 @@ namespace boost {
 namespace interprocess {
 namespace ipcdetail {
 
+inline bool winapi_wrapper_timed_wait_for_single_object(void *handle, const boost::posix_time::ptime &abs_time);
+ 
 inline void winapi_wrapper_wait_for_single_object(void *handle)
 {
    winapi_wrapper_timed_wait_for_single_object(handle, boost::posix_time::pos_infin);
