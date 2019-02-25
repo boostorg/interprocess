@@ -308,7 +308,7 @@ class basic_ibufferstream :
       , basic_streambuf_t(this)
       {}
 
-   ~basic_ibufferstream(){};
+   ~basic_ibufferstream(){}
 
    public:
    //!Returns the address of the stored

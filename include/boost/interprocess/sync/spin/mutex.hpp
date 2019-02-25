@@ -45,7 +45,7 @@ class spin_mutex
    bool try_lock();
    bool timed_lock(const boost::posix_time::ptime &abs_time);
    void unlock();
-   void take_ownership(){};
+   void take_ownership(){}
    private:
    volatile boost::uint32_t m_s;
 };
