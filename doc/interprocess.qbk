@@ -6763,6 +6763,13 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_70_00 Boost 1.70 Release]
+
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/pull/78 GitHub Pull #78 (['"Fix -Wextra-semi clang warnings"])].
+
+[endsect]
+
 [section:release_notes_boost_1_69_00 Boost 1.69 Release]
 
 * Deprecated GCC < 4.3 and MSVC < 9.0 (Visual 2008) compilers.
