@@ -6766,6 +6766,7 @@ thank them:
 [section:release_notes_boost_1_70_00 Boost 1.70 Release]
 
 *  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/pull/51 GitHub Pull #51 (['"United handling of wait_for_single_object"])].
    * [@https://github.com/boostorg/interprocess/pull/78 GitHub Pull #78 (['"Fix -Wextra-semi clang warnings"])].
 
 [endsect]
