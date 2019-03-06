@@ -5156,7 +5156,7 @@ Let's see an example:
 [section:containers_and_move Move semantics in Interprocess containers]
 
 [*Boost.Interprocess] containers support move semantics, which means that the contents
-of a container can be moved from a container two another one, without any copying. The
+of a container can be moved from a container to another one, without any copying. The
 contents of the source container are transferred to the target container and the source
 container is left in default-constructed state.
 
