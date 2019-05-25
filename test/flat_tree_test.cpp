@@ -152,7 +152,7 @@ int main()
                   ,MyStdMap
                   ,MyShmMultiMap
                   ,MyStdMultiMap>()){
-      std::cout << "Error in set_test<MyShmMap>" << std::endl;
+      std::cout << "Error in map_test<MyShmMap>" << std::endl;
       return 1;
    }
 
@@ -161,7 +161,7 @@ int main()
                   ,MyStdMap
                   ,MyShmMultiMap
                   ,MyStdMultiMap>()){
-      std::cout << "Error in set_test<MyShmMap>" << std::endl;
+      std::cout << "Error in map_test<MyShmMap>" << std::endl;
       return 1;
    }
 
@@ -178,7 +178,7 @@ int main()
                   ,MyStdMap
                   ,MyMoveCopyShmMultiMap
                   ,MyStdMultiMap>()){
-      std::cout << "Error in set_test<MyMoveCopyShmMap>" << std::endl;
+      std::cout << "Error in map_test<MyMoveCopyShmMap>" << std::endl;
       return 1;
    }
 
