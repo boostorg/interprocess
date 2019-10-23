@@ -6674,6 +6674,10 @@ If `BOOST_USE_WINDOWS_H` is defined, <windows.h> and other windows SDK files are
 otherwise the library declares needed functions and structures to reduce the impact of including
 those heavy headers.
 
+Since Visual Studio 2019, this may cause compile errors (C2116 and C2733) if included alongside
+Windows headers. An alternative to defining `BOOST_USE_WINDOWS_H` is to add the compatibility
+option `/Zc:externC-`, which suppresses these warnings.
+
 [endsect]
 
 [endsect]
