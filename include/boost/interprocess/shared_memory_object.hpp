@@ -34,7 +34,7 @@
 #include <string>
 
 #if defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
-#  include <fcntl.h>        //O_CREAT, O_*...
+#  include <fcntl.h>        //posix_fallocate, O_CREAT, O_*...
 #  include <sys/mman.h>     //shm_xxx
 #  include <unistd.h>       //ftruncate, close
 #  include <sys/stat.h>     //mode_t, S_IRWXG, S_IRWXO, S_IRWXU,
@@ -394,6 +394,13 @@ inline bool shared_memory_object::remove(const char *filename)
 
 inline void shared_memory_object::truncate(offset_t length)
 {
+   // Use fallocate first to avoid SIGBUS on mem access when kernel can't
+   // allocate memory
+   if(0 != posix_fallocate(m_handle, 0, length)){
+      error_info err(system_error_code());
+      throw interprocess_exception(err);
+   }
+   // We still have to use ftruncate in case if file gets truncated
    if(0 != ftruncate(m_handle, length)){
       error_info err(system_error_code());
       throw interprocess_exception(err);
