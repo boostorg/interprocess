@@ -239,7 +239,7 @@ inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
                acquired = false, true : false;
 
    }
-   return (acquired = true);
+   return (true == acquired);
 }
 
 inline bool release_file_lock(file_handle_t hnd)
@@ -268,7 +268,7 @@ inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
       return winapi::get_last_error() == winapi::error_lock_violation ?
                acquired = false, true : false;
    }
-   return (acquired = true);
+   return (true == acquired);
 }
 
 inline bool release_file_lock_sharable(file_handle_t hnd)
