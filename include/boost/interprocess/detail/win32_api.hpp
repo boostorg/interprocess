@@ -1454,11 +1454,11 @@ inline bool set_file_pointer_ex(void *handle, __int64 distance, __int64 *new_fil
    return 0 != SetFilePointerEx(handle, d, (large_integer*)new_file_pointer, move_method);
 }
 
-inline bool lock_file_ex(void *hnd, unsigned long flags, unsigned long reserved, unsigned long size_low, unsigned long size_high, interprocess_overlapped *overlapped)
-{  return 0 != LockFileEx(hnd, flags, reserved, size_low, size_high, overlapped); }
+inline bool lock_file_ex(void *hnd, unsigned long flags, unsigned long, unsigned long size_low, unsigned long size_high, interprocess_overlapped *overlapped)
+{  return 0 != LockFileEx(hnd, flags, 0, size_low, size_high, overlapped); }
 
-inline bool unlock_file_ex(void *hnd, unsigned long reserved, unsigned long size_low, unsigned long size_high, interprocess_overlapped *overlapped)
-{  return 0 != UnlockFileEx(hnd, reserved, size_low, size_high, overlapped);  }
+inline bool unlock_file_ex(void *hnd, unsigned long, unsigned long size_low, unsigned long size_high, interprocess_overlapped *overlapped)
+{  return 0 != UnlockFileEx(hnd, 0, size_low, size_high, overlapped);  }
 
 inline bool write_file(void *hnd, const void *buffer, unsigned long bytes_to_write, unsigned long *bytes_written, interprocess_overlapped* overlapped)
 {  return 0 != WriteFile(hnd, buffer, bytes_to_write, bytes_written, overlapped);  }
