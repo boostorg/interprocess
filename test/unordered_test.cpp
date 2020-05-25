@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include "get_process_id_name.hpp"
@@ -96,5 +95,3 @@ int main()
    bip::shared_memory_object::remove(bip::test::get_process_id_name());
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

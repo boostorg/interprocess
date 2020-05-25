@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
 #ifdef BOOST_INTERPROCESS_WINDOWS
@@ -148,5 +147,3 @@ int main()
 }
 
 #endif
-
-#include <boost/interprocess/detail/config_end.hpp>

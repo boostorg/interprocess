@@ -8,12 +8,10 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
 #if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS)
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/managed_xsi_shared_memory.hpp>
@@ -170,5 +168,3 @@ int main()
 }
 
 #endif  //#ifndef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
-
-#include <boost/interprocess/detail/config_end.hpp>

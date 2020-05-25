@@ -8,10 +8,9 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+#include <boost/config.hpp>
 
-#ifdef BOOST_INTERPROCESS_WINDOWS
+#ifdef BOOST_WINDOWS
 
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
@@ -75,6 +74,4 @@ int main()
    return 0;
 }
 
-#endif   //#ifdef BOOST_INTERPROCESS_WINDOWS
-
-#include <boost/interprocess/detail/config_end.hpp>
+#endif   //#ifdef BOOST_WINDOWS

@@ -10,7 +10,6 @@
 #define _WIN32_WINNT 0x0501
 #define BOOST_USE_WINDOWS_H
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
 #ifdef BOOST_INTERPROCESS_WINDOWS
@@ -34,5 +33,3 @@ int main()
 }
 
 #endif
-
-#include <boost/interprocess/detail/config_end.hpp>

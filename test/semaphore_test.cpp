@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -66,5 +65,3 @@ int main ()
    test::test_all_mutex<semaphore_test_wrapper>();
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/exceptions.hpp>
@@ -83,5 +82,3 @@ int main ()
    shared_memory_object::remove(ShmName);
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

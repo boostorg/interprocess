@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include "mutex_test_template.hpp"
 #include "sharable_mutex_test_template.hpp"
 #include <boost/interprocess/sync/interprocess_upgradable_mutex.hpp>
@@ -169,5 +168,3 @@ int main ()
 
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

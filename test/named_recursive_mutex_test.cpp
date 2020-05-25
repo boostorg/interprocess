@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/sync/named_recursive_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -36,6 +35,4 @@ int main ()
    named_recursive_mutex::remove(test::get_process_id_name());
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>
 

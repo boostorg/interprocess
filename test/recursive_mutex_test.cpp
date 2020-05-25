@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #if defined(BOOST_INTERPROCESS_WINDOWS)
 #include <boost/interprocess/sync/windows/recursive_mutex.hpp>
@@ -38,5 +37,3 @@ int main ()
 
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

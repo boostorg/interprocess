@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/mem_algo/simple_seq_fit.hpp>
 #include <boost/interprocess/mem_algo/rbtree_best_fit.hpp>
@@ -87,5 +86,3 @@ int main ()
    shared_memory_object::remove(shMemName);
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

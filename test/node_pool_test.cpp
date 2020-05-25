@@ -7,7 +7,6 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
 #include "node_pool_test.hpp"
 #include <boost/interprocess/allocators/detail/node_pool.hpp>
 
@@ -25,5 +24,3 @@ int main ()
 
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

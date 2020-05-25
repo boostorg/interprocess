@@ -7,9 +7,10 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/interprocess/detail/workaround.hpp>
+
 #if defined(BOOST_INTERPROCESS_MAPPED_FILES)
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/detail/file_wrapper.hpp>
@@ -87,8 +88,6 @@ int main ()
 //   file_mapping::remove(get_filename().c_str());
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>
 
 #else //#if !defined(BOOST_INTERPROCESS_MAPPED_FILES)
 
