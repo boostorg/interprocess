@@ -24,9 +24,9 @@
 #include <boost/interprocess/errors.hpp>
 #include <boost/interprocess/permissions.hpp>
 
-#include <string>
-#include <limits>
 #include <climits>
+#include <limits>
+#include <string>
 #include <boost/move/detail/type_traits.hpp> //make_unsigned
 
 #if defined (BOOST_INTERPROCESS_WINDOWS)
@@ -37,9 +37,9 @@
 #     include <unistd.h>
 #     include <sys/types.h>
 #     include <sys/stat.h>
-#     include <errno.h>
-#     include <cstdio>
 #     include <dirent.h>
+#     include <cerrno>
+#     include <cstdio>
 #     if 0
 #        include <sys/file.h>
 #     endif
@@ -457,7 +457,7 @@ inline file_handle_t create_or_open_file
    int ret = -1;
    //We need a loop to change permissions correctly using fchmod, since
    //with "O_CREAT only" ::open we don't know if we've created or opened the file.
-   while(1){
+   while(true){
       ret = ::open(name, ((int)mode) | O_EXCL | O_CREAT, perm.get_permissions());
       if(ret >= 0){
          ::fchmod(ret, perm.get_permissions());
