@@ -36,11 +36,11 @@ class internal_mutex_lock
    typedef typename Lock::mutex_type::internal_mutex_type  mutex_type;
 
 
-   internal_mutex_lock(Lock &l)
+   BOOST_INTERPROCESS_FORCEINLINE internal_mutex_lock(Lock &l)
       : l_(l)
    {}
 
-   mutex_type* mutex() const
+   BOOST_INTERPROCESS_FORCEINLINE mutex_type* mutex() const
    {  return l_ ? &l_.mutex()->internal_mutex() : 0;  }
 
    BOOST_INTERPROCESS_FORCEINLINE void lock()    { l_.lock(); }
@@ -59,7 +59,7 @@ class lock_inverter
 {
    Lock &l_;
    public:
-   lock_inverter(Lock &l)
+   BOOST_INTERPROCESS_FORCEINLINE lock_inverter(Lock &l)
       :  l_(l)
    {}
 
@@ -74,7 +74,7 @@ class lock_to_sharable
    Lock &l_;
 
    public:
-   explicit lock_to_sharable(Lock &l)
+   BOOST_INTERPROCESS_FORCEINLINE explicit lock_to_sharable(Lock &l)
       :  l_(l)
    {}
 
@@ -91,7 +91,7 @@ class lock_to_wait
    Lock &l_;
 
    public:
-   explicit lock_to_wait(Lock &l)
+   BOOST_INTERPROCESS_FORCEINLINE explicit lock_to_wait(Lock &l)
       :  l_(l)
    {}
    BOOST_INTERPROCESS_FORCEINLINE void lock()     {  l_.wait();     }
