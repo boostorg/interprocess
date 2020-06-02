@@ -15,6 +15,7 @@
 #include <boost/assert.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
+#include <boost/interprocess/sync/spin/mutex.hpp>
 #include "mutex_test_template.hpp"
 
 int main ()
@@ -22,6 +23,7 @@ int main ()
    using namespace boost::interprocess;
    test::test_mutex_lock_timeout<interprocess_mutex>();
    test::test_mutex_lock_timeout<interprocess_recursive_mutex>();
+   test::test_mutex_lock_timeout<ipcdetail::spin_mutex>();
 
    return 0;
 }

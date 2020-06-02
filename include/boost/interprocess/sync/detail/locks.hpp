@@ -21,6 +21,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -42,11 +43,11 @@ class internal_mutex_lock
    mutex_type* mutex() const
    {  return l_ ? &l_.mutex()->internal_mutex() : 0;  }
 
-   void lock()    { l_.lock(); }
+   BOOST_INTERPROCESS_FORCEINLINE void lock()    { l_.lock(); }
 
-   void unlock()  { l_.unlock(); }
+   BOOST_INTERPROCESS_FORCEINLINE void unlock()  { l_.unlock(); }
 
-   operator unspecified_bool_type() const
+   BOOST_INTERPROCESS_FORCEINLINE operator unspecified_bool_type() const
    {  return l_ ? &internal_mutex_lock::lock : 0;  }
 
    private:
@@ -61,8 +62,10 @@ class lock_inverter
    lock_inverter(Lock &l)
       :  l_(l)
    {}
-   void lock()    {   l_.unlock();   }
-   void unlock()  {   l_.lock();     }
+
+   BOOST_INTERPROCESS_FORCEINLINE void lock()    {   l_.unlock();   }
+
+   BOOST_INTERPROCESS_FORCEINLINE void unlock()  {   l_.lock();     }
 };
 
 template <class Lock>
@@ -74,9 +77,12 @@ class lock_to_sharable
    explicit lock_to_sharable(Lock &l)
       :  l_(l)
    {}
-   void lock()    {  l_.lock_sharable();     }
-   bool try_lock(){  return l_.try_lock_sharable(); }
-   void unlock()  {  l_.unlock_sharable();   }
+
+   BOOST_INTERPROCESS_FORCEINLINE void lock()    {  l_.lock_sharable();     }
+
+   BOOST_INTERPROCESS_FORCEINLINE bool try_lock(){  return l_.try_lock_sharable(); }
+
+   BOOST_INTERPROCESS_FORCEINLINE void unlock()  {  l_.unlock_sharable();   }
 };
 
 template <class Lock>
@@ -88,8 +94,12 @@ class lock_to_wait
    explicit lock_to_wait(Lock &l)
       :  l_(l)
    {}
-   void lock()    {  l_.wait();     }
-   bool try_lock(){  return l_.try_wait(); }
+   BOOST_INTERPROCESS_FORCEINLINE void lock()     {  l_.wait();     }
+
+   BOOST_INTERPROCESS_FORCEINLINE bool try_lock() {  return l_.try_wait(); }
+
+   BOOST_INTERPROCESS_FORCEINLINE bool timed_lock(const boost::posix_time::ptime &abs_time)
+      {  return l_.timed_wait(abs_time);   }
 };
 
 }  //namespace ipcdetail
