@@ -383,7 +383,7 @@ inline mapped_region::mapped_region()
 template<int dummy>
 inline std::size_t mapped_region::page_size_holder<dummy>::get_page_size()
 {
-   winapi::system_info info;
+   winapi::interprocess_system_info info;
    winapi::get_system_info(&info);
    return std::size_t(info.dwAllocationGranularity);
 }
