@@ -13,9 +13,9 @@
 #define BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS 1000
 
 #include <boost/assert.hpp>
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
+#include <boost/interprocess/sync/spin/mutex.hpp>
 #include "mutex_test_template.hpp"
 
 int main ()
@@ -23,8 +23,7 @@ int main ()
    using namespace boost::interprocess;
    test::test_mutex_lock_timeout<interprocess_mutex>();
    test::test_mutex_lock_timeout<interprocess_recursive_mutex>();
+   test::test_mutex_lock_timeout<ipcdetail::spin_mutex>();
 
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

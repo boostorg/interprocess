@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/list.hpp>
 #include <boost/interprocess/containers/vector.hpp>
@@ -63,5 +62,3 @@ int main ()
       return 1;
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include "mutex_test_template.hpp"
@@ -34,5 +33,3 @@ int main ()
    named_mutex::remove(test::get_process_id_name());
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

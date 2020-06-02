@@ -10,7 +10,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/smart_ptr/shared_ptr.hpp>
 #include <boost/interprocess/smart_ptr/weak_ptr.hpp>
@@ -610,6 +609,4 @@ int main()
 
    test_alias();
 }
-
-#include <boost/interprocess/detail/config_end.hpp>
 

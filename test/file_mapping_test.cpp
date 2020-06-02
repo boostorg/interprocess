@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <ios> //std::streamoff
 #include <fstream>   //std::ofstream, std::ifstream
 #include <iostream>
@@ -160,5 +159,3 @@ int main ()
    file_mapping::remove(get_filename().c_str());
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

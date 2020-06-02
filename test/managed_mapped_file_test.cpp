@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
 #if defined(BOOST_INTERPROCESS_MAPPED_FILES)
@@ -235,5 +234,3 @@ int main()
 }
 
 #endif//#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
-
-#include <boost/interprocess/detail/config_end.hpp>

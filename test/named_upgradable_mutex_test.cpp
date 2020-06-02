@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include "mutex_test_template.hpp"
 #include "sharable_mutex_test_template.hpp"
 #include "named_creation_template.hpp"
@@ -99,5 +98,3 @@ int main ()
    named_upgradable_mutex::remove(test::get_process_id_name());
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

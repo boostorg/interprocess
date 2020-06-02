@@ -8,8 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/interprocess/sync/named_condition.hpp>
 #include <boost/interprocess/sync/detail/locks.hpp>
@@ -185,5 +183,3 @@ int main ()
    named_mutex::remove(test::add_to_process_id_name("named_mutex"));
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

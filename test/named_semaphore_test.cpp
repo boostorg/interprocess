@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/sync/named_semaphore.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
 #include <boost/interprocess/exceptions.hpp>
@@ -120,4 +119,3 @@ int main ()
    return 0;
 }
 
-#include <boost/interprocess/detail/config_end.hpp>

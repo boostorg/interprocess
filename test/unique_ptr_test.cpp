@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/smart_ptr/unique_ptr.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
@@ -138,5 +137,3 @@ int main()
    shared_memory_object::remove(process_name.c_str());
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

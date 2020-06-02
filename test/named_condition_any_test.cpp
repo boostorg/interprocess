@@ -8,8 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/interprocess/sync/named_condition_any.hpp>
 #include <boost/interprocess/sync/detail/locks.hpp>
@@ -186,4 +184,3 @@ int main ()
    return 0;
 }
 
-#include <boost/interprocess/detail/config_end.hpp>

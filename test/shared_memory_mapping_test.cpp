@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <fstream>
 #include <iostream>
 #include <boost/interprocess/shared_memory_object.hpp>
