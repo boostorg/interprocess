@@ -6763,6 +6763,20 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_74_00 Boost 1.74 Release]
+
+* [*ABI breaking]: Option `BOOST_INTERPROCESS_BOOTSTAMP_IS_SESSION_MANAGER_BASED` is now the default value.
+  You can obtain the pre-Boost 1.73 behaviour defining `BOOST_INTERPROCESS_BOOTSTAMP_IS_EVENTLOG_BASED`.
+  The old and broken pre-Boost 1.54 behaviour (`BOOST_INTERPROCESS_BOOTSTAMP_IS_LASTBOOTUPTIME`) is no
+  longer available.
+
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/issues/89 GitHub #89 (['"priv_size_from_mapping_size() calculates wrong value"])].
+   * [@https://github.com/boostorg/interprocess/issues/99 GitHub #99 (['"Error in win32_api.hpp"])].
+   * [@https://github.com/boostorg/interprocess/issues/89 GitHub #105 (['"Build failure with clang on Windows"])].
+
+[endsect]
+
 [section:release_notes_boost_1_71_00 Boost 1.71 Release]
 
 *  Fixed bugs:

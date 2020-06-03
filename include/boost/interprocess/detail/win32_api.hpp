@@ -21,7 +21,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/date_time/filetime_functions.hpp>
+#include <boost/cstdint.hpp>
 #include <cstddef>
 #include <cstring>
 #include <cstdlib>
@@ -279,6 +279,7 @@ enum section_information_class
 #include <boost/winapi/get_current_thread_id.hpp>
 #include <boost/winapi/get_current_process.hpp>
 #include <boost/winapi/get_process_times.hpp>
+#include <boost/winapi/error_codes.hpp>
 #include <boost/winapi/thread.hpp>
 #include <boost/winapi/system.hpp>
 #include <boost/winapi/time.hpp>
@@ -303,11 +304,11 @@ namespace boost {
 namespace ipwinapiext {
 typedef boost::winapi::LONG_ LSTATUS;
 
-#ifndef BOOST_USE_WINDOWS_H
-typedef boost::winapi::LARGE_INTEGER_ LARGE_INTEGER_EXT;
-#else
-typedef LARGE_INTEGER LARGE_INTEGER_EXT;
-#endif
+//#ifndef BOOST_USE_WINDOWS_H
+//typedef boost::winapi::LARGE_INTEGER_ LARGE_INTEGER_EXT;
+//#else
+//typedef LARGE_INTEGER LARGE_INTEGER_EXT;
+//#endif
 
 }} //namespace boost::ipwinapiext
 
@@ -320,8 +321,6 @@ BOOST_SYMBOL_IMPORT BOOST_WINAPI_DETAIL_VOID BOOST_WINAPI_WINAPI_CC SetLastError
 
 //File management
 BOOST_SYMBOL_IMPORT boost::winapi::DWORD_ BOOST_WINAPI_WINAPI_CC GetFileType(boost::winapi::HANDLE_ hTemplateFile);
-BOOST_SYMBOL_IMPORT boost::winapi::BOOL_ BOOST_WINAPI_WINAPI_CC SetFilePointerEx( boost::winapi::HANDLE_ hFile, boost::ipwinapiext::LARGE_INTEGER_EXT liDistanceToMove
-                                                                                , ::_LARGE_INTEGER *lpNewFilePointer, boost::winapi::DWORD_ dwMoveMethod);
 BOOST_SYMBOL_IMPORT boost::winapi::BOOL_ BOOST_WINAPI_WINAPI_CC FlushFileBuffers(boost::winapi::HANDLE_ hFile);
 //Virtual Memory
 BOOST_SYMBOL_IMPORT boost::winapi::BOOL_ BOOST_WINAPI_WINAPI_CC VirtualLock(boost::winapi::LPVOID_ lpAddress, boost::winapi::SIZE_T_ dwSize);
@@ -364,14 +363,6 @@ BOOST_FORCEINLINE BOOST_WINAPI_DETAIL_VOID SetLastError(boost::winapi::DWORD_ dw
 //File management
 BOOST_FORCEINLINE boost::winapi::DWORD_ GetFileType(boost::winapi::HANDLE_ hTemplateFile)
 {  return ::GetFileType(hTemplateFile);   }
-
-BOOST_FORCEINLINE boost::winapi::BOOL_ SetFilePointerEx(boost::winapi::HANDLE_ hFile, boost::winapi::LARGE_INTEGER_ liDistanceToMove
-   , boost::winapi::PLARGE_INTEGER_ lpNewFilePointer, boost::winapi::DWORD_ dwMoveMethod)
-{
-   boost::ipwinapiext::LARGE_INTEGER_EXT largeInt;
-   largeInt.QuadPart = liDistanceToMove.QuadPart;
-   return ::SetFilePointerEx(hFile, largeInt, reinterpret_cast< ::_LARGE_INTEGER* >(lpNewFilePointer), dwMoveMethod);
-}
 
 BOOST_FORCEINLINE boost::winapi::BOOL_ FlushFileBuffers(boost::winapi::HANDLE_ hFile)
 {  return ::FlushFileBuffers(hFile);   }
@@ -741,7 +732,7 @@ class interprocess_all_access_security
 
 inline void * create_file_mapping (void * handle, unsigned long access, ::boost::ulong_long_type file_offset, const char * name, interprocess_security_attributes *psec)
 {
-   const unsigned long high_size(file_offset >> 32), low_size((boost::uint32_t)file_offset);
+   const boost::winapi::DWORD_ high_size(file_offset >> 32), low_size((boost::winapi::DWORD_)file_offset);
    return CreateFileMappingA (handle, psec, access, high_size, low_size, name);
 }
 
@@ -806,10 +797,16 @@ inline unsigned long get_temp_path(unsigned long length, char *buffer)
 inline int set_end_of_file(void *handle)
 {  return 0 != boost::winapi::SetEndOfFile(handle);   }
 
-inline bool set_file_pointer_ex(void *handle, __int64 distance, __int64 *new_file_pointer, unsigned long move_method)
+inline bool set_file_pointer(void *handle, __int64 distance, __int64 *new_file_pointer, unsigned long move_method)
 {
-   boost::winapi::LARGE_INTEGER_ d; d.QuadPart = distance;
-   return 0 != boost::ipwinapiext::SetFilePointerEx(handle, d, (boost::winapi::LARGE_INTEGER_*)new_file_pointer, move_method);
+   long highPart = distance >> 32u;
+   boost::winapi::DWORD_ r = boost::winapi::SetFilePointer(handle, (unsigned long)distance, &highPart, move_method);
+   bool br = r != boost::winapi::INVALID_SET_FILE_POINTER_ || boost::winapi::GetLastError() != 0;
+   if (br && new_file_pointer){
+      *new_file_pointer = (unsigned __int64)r + ((__int64)highPart << 32);
+   }
+
+   return br;
 }
 
 inline bool lock_file_ex(void *hnd, unsigned long flags, unsigned long reserved, unsigned long size_low, unsigned long size_high, interprocess_overlapped *overlapped)
@@ -1150,7 +1147,7 @@ class nt_query_mem_deleter
       offsetof(ntquery_mem_t, name.Name.Buffer);
    //                                           Timestamp                      process id              atomic count
    static const std::size_t rename_suffix =
-      (SystemTimeOfDayInfoLength + sizeof(unsigned long) + sizeof(boost::uint32_t))*2;
+      (SystemTimeOfDayInfoLength + sizeof(unsigned long) + sizeof(boost::winapi::DWORD_))*2;
 
    public:
    explicit nt_query_mem_deleter(std::size_t object_name_information_size)

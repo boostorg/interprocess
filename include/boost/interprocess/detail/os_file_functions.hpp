@@ -167,7 +167,7 @@ inline bool truncate_file (file_handle_t hnd, std::size_t size)
    }
 
    if(offset_t(size) > filesize){
-      if(!winapi::set_file_pointer_ex(hnd, filesize, 0, winapi::file_begin)){
+      if(!winapi::set_file_pointer(hnd, filesize, 0, winapi::file_begin)){
          return false;
       }
       //We will write zeros in the end of the file
@@ -186,7 +186,7 @@ inline bool truncate_file (file_handle_t hnd, std::size_t size)
       }
    }
    else{
-      if(!winapi::set_file_pointer_ex(hnd, size, 0, winapi::file_begin)){
+      if(!winapi::set_file_pointer(hnd, size, 0, winapi::file_begin)){
          return false;
       }
       if(!winapi::set_end_of_file(hnd)){
@@ -200,10 +200,10 @@ inline bool get_file_size(file_handle_t hnd, offset_t &size)
 {  return winapi::get_file_size(hnd, size);  }
 
 inline bool set_file_pointer(file_handle_t hnd, offset_t off, file_pos_t pos)
-{  return winapi::set_file_pointer_ex(hnd, off, 0, (unsigned long) pos); }
+{  return winapi::set_file_pointer(hnd, off, 0, (unsigned long) pos); }
 
 inline bool get_file_pointer(file_handle_t hnd, offset_t &off)
-{  return winapi::set_file_pointer_ex(hnd, 0, &off, winapi::file_current); }
+{  return winapi::set_file_pointer(hnd, 0, &off, winapi::file_current); }
 
 inline bool write_file(file_handle_t hnd, const void *data, std::size_t numdata)
 {
