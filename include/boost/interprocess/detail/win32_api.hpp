@@ -723,7 +723,7 @@ class interprocess_all_access_security
       sa.lpSecurityDescriptor = &sd;
       sa.nLength = sizeof(interprocess_security_attributes);
       sa.bInheritHandle = false;
-      initialized = false;
+      initialized = true;
    }
 
    interprocess_security_attributes *get_attributes()
