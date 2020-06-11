@@ -716,14 +716,14 @@ class interprocess_all_access_security
    interprocess_all_access_security()
       : initialized(false)
    {
-      if(!InitializeSecurityDescriptor(&sd, security_descriptor_revision))
+      if(!boost::winapi::InitializeSecurityDescriptor(&sd, security_descriptor_revision))
          return;
-      if(!::SetSecurityDescriptorDacl(&sd, true, 0, false))
+      if(!boost::winapi::SetSecurityDescriptorDacl(&sd, true, 0, false))
          return;
       sa.lpSecurityDescriptor = &sd;
       sa.nLength = sizeof(interprocess_security_attributes);
       sa.bInheritHandle = false;
-      initialized = false;
+      initialized = true;
    }
 
    interprocess_security_attributes *get_attributes()
