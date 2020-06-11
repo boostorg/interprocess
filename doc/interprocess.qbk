@@ -6722,6 +6722,24 @@ change this overcommit behaviour.
 
 [endsect]
 
+[section:notes_freebsd Notes for FreeBSD users]
+
+[section:notes_freebsd_umtx_vnode_persistent Process-shared synchronization primitives and ['kern.ipc.umtx_vnode_persistent]]
+
+Starting from FreeBSD 11, declares the macro _POSIX_THREAD_PROCESS_SHARED. However, the default behavior is different from the one on Linux.
+If you want to use this feature, according to the man page of libthr(3), you should check sysctl's ['kern.ipc.umtx_vnode_persistent]:
+
+* ['kern.ipc.umtx_vnode_persistent]: By default, a shared lock backed by a mapped file in memory is automatically destroyed on the last
+   unmap of the corresponding file's page, which is allowed by POSIX. Setting the sysctl to 1 makes such a shared lock object persist until
+   the vnode is recycled by the Virtual File System. Note that in case file is not opened and not mapped, the kernel might recycle it at
+   any moment, making this sysctl less useful than it sounds.
+
+If you want mapped files to remain useful after the last handle is closed, set this variable to 1.
+
+[endsect]
+
+[endsect]
+
 [section:thanks_to Thanks to...]
 
 Many people have contributed with ideas and revisions, so this is the place to
@@ -6773,7 +6791,8 @@ thank them:
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/89 GitHub #89 (['"priv_size_from_mapping_size() calculates wrong value"])].
    * [@https://github.com/boostorg/interprocess/issues/99 GitHub #99 (['"Error in win32_api.hpp"])].
-   * [@https://github.com/boostorg/interprocess/issues/89 GitHub #105 (['"Build failure with clang on Windows"])].
+   * [@https://github.com/boostorg/interprocess/issues/105 GitHub #105 (['"Build failure with clang on Windows"])].
+   * [@https://github.com/boostorg/interprocess/pull/119 GitHub #119 (['"Fix mingw compile error"])].
 
 [endsect]
 
