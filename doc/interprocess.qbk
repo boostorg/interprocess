@@ -6722,6 +6722,24 @@ change this overcommit behaviour.
 
 [endsect]
 
+[section:notes_freebsd Notes for FreeBSD users]
+
+[section:notes_freebsd_umtx_vnode_persistent Process-shared synchronization primitives and ['kern.ipc.umtx_vnode_persistent]]
+
+Starting from FreeBSD 11, declares the macro _POSIX_THREAD_PROCESS_SHARED. However, the default behavior is different from the one on Linux.
+If you want to use this feature, according to the man page of libthr(3), you should check sysctl's ['kern.ipc.umtx_vnode_persistent]:
+
+* ['kern.ipc.umtx_vnode_persistent]: By default, a shared lock backed by a mapped file in memory is automatically destroyed on the last
+   unmap of the corresponding file's page, which is allowed by POSIX. Setting the sysctl to 1 makes such a shared lock object persist until
+   the vnode is recycled by the Virtual File System. Note that in case file is not opened and not mapped, the kernel might recycle it at
+   any moment, making this sysctl less useful than it sounds.
+
+If you want mapped files to remain useful after the last handle is closed, set this variable to 1.
+
+[endsect]
+
+[endsect]
+
 [section:thanks_to Thanks to...]
 
 Many people have contributed with ideas and revisions, so this is the place to
@@ -6762,6 +6780,21 @@ thank them:
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_74_00 Boost 1.74 Release]
+
+* [*ABI breaking]: Option `BOOST_INTERPROCESS_BOOTSTAMP_IS_SESSION_MANAGER_BASED` is now the default value.
+  You can obtain the pre-Boost 1.73 behaviour defining `BOOST_INTERPROCESS_BOOTSTAMP_IS_EVENTLOG_BASED`.
+  The old and broken pre-Boost 1.54 behaviour (`BOOST_INTERPROCESS_BOOTSTAMP_IS_LASTBOOTUPTIME`) is no
+  longer available.
+
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/issues/89 GitHub #89 (['"priv_size_from_mapping_size() calculates wrong value"])].
+   * [@https://github.com/boostorg/interprocess/issues/99 GitHub #99 (['"Error in win32_api.hpp"])].
+   * [@https://github.com/boostorg/interprocess/issues/105 GitHub #105 (['"Build failure with clang on Windows"])].
+   * [@https://github.com/boostorg/interprocess/pull/119 GitHub #119 (['"Fix mingw compile error"])].
+
+[endsect]
 
 [section:release_notes_boost_1_71_00 Boost 1.71 Release]
 
