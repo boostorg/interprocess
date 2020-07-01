@@ -20,7 +20,7 @@ int main ()
    try{
       //Open a message queue.
       message_queue mq
-         (open_only        //only create
+         (open_only        //only open
          ,"message_queue"  //name
          );
 
