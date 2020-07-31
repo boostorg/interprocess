@@ -50,16 +50,18 @@ class windows_semaphore
 
    private:
    const sync_id id_;
+   const unsigned int initialCount_;
 };
 
 inline windows_semaphore::windows_semaphore(unsigned int initialCount)
-   : id_(this)
+   : id_(this),
+     initialCount_(initialCount)
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
    //Force smeaphore creation with the initial count
    bool open_or_created;
-   handles.obtain_semaphore(this->id_, initialCount, &open_or_created);
+   handles.obtain_semaphore(this->id_, initialCount_, &open_or_created);
    //The semaphore must be created, never opened
    BOOST_ASSERT(open_or_created);
    BOOST_ASSERT(open_or_created && winapi::get_last_error() != winapi::error_already_exists);
@@ -78,7 +80,7 @@ inline void windows_semaphore::wait(void)
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
    //This can throw
-   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, 0));
+   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, initialCount_));
    sem.wait();
 }
 
@@ -87,7 +89,7 @@ inline bool windows_semaphore::try_wait(void)
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
    //This can throw
-   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, 0));
+   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, initialCount_));
    return sem.try_wait();
 }
 
@@ -96,7 +98,7 @@ inline bool windows_semaphore::timed_wait(const boost::posix_time::ptime &abs_ti
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
    //This can throw
-   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, 0));
+   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, initialCount_));
    return sem.timed_wait(abs_time);
 }
 
@@ -104,7 +106,7 @@ inline void windows_semaphore::post(long release_count)
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
-   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, 0));
+   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, initialCount_));
    sem.post(release_count);
 }
 
