@@ -22,6 +22,7 @@ struct InstanceCounter
 {
    InstanceCounter(){++counter;}
    InstanceCounter(const InstanceCounter&){++counter;}
+   InstanceCounter & operator=(const InstanceCounter&){  return *this;  }
   ~InstanceCounter(){--counter;}
    static std::size_t counter;
 };

@@ -193,6 +193,9 @@ class copyable_int
    copyable_int & operator= (int i)
    {  this->m_int = i;  return *this;  }
 
+   copyable_int & operator=(const copyable_int& mmi)
+   {  m_int = mmi.m_int;   return *this;  }
+
    bool operator ==(const copyable_int &mi) const
    {  return this->m_int == mi.m_int;   }
 
