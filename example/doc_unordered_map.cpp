@@ -26,7 +26,7 @@
 //->
 
 #include <functional>                  //std::equal_to
-#include <boost/functional/hash.hpp>   //boost::hash
+#include <boost/container_hash/hash.hpp>   //boost::hash
 
 //<-
 #include "../test/get_process_id_name.hpp"
