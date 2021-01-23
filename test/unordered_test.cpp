@@ -25,7 +25,7 @@
 //->
 
 #include <functional> //std::equal_to
-#include <boost/functional/hash.hpp> //boost::hash
+#include <boost/container_hash/hash.hpp> //boost::hash
 
 namespace bip = boost::interprocess;
 
