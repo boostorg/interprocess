@@ -48,14 +48,6 @@ class xsi_shared_memory_remover
    xsi_shared_memory & xsi_shm_;
 };
 
-inline std::string get_filename()
-{
-   std::string ret (ipcdetail::get_temporary_path());
-   ret += "/";
-   ret += test::get_process_id_name();
-   return ret;
-}
-
 int main ()
 {
    const int ShmemSize          = 65536;

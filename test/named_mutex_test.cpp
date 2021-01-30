@@ -12,24 +12,27 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include "mutex_test_template.hpp"
 #include "named_creation_template.hpp"
-#include <string>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
+#include <exception>
 
 using namespace boost::interprocess;
 
 int main ()
 {
+   int ret = 0;
    try{
       named_mutex::remove(test::get_process_id_name());
       test::test_named_creation< test::named_sync_creation_test_wrapper<named_mutex> >();
+      #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+      test::test_named_creation< test::named_sync_creation_test_wrapper_w<named_mutex> >();
+      #endif   //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
       test::test_all_lock< test::named_sync_wrapper<named_mutex> >();
       test::test_all_mutex<test::named_sync_wrapper<named_mutex> >();
    }
    catch(std::exception &ex){
-      named_mutex::remove(test::get_process_id_name());
       std::cout << ex.what() << std::endl;
-      return 1;
+      ret = 1;
    }
    named_mutex::remove(test::get_process_id_name());
-   return 0;
+   return ret;
 }

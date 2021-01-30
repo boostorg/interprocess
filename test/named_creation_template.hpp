@@ -100,6 +100,17 @@ struct named_sync_deleter
    {  NamedSync::remove(test::get_process_id_name()); }
 };
 
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+
+template<class NamedSync>
+struct named_sync_deleter_w
+{
+   ~named_sync_deleter_w()
+   {  NamedSync::remove(test::get_process_id_wname()); }
+};
+
+#endif   //#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+
 
 //This wrapper is necessary to have a common constructor
 //in generic named_creation_template functions
@@ -124,6 +135,32 @@ class named_sync_creation_test_wrapper
    {}
 };
 
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+
+//This wrapper is necessary to have a common constructor
+//in generic named_creation_template functions
+template<class NamedSync>
+class named_sync_creation_test_wrapper_w
+   : public test::named_sync_deleter_w<NamedSync>, public NamedSync
+{
+   public:
+   named_sync_creation_test_wrapper_w(create_only_t)
+      :  NamedSync(create_only, test::get_process_id_wname())
+   {}
+
+   named_sync_creation_test_wrapper_w(open_only_t)
+      :  NamedSync(open_only, test::get_process_id_wname())
+   {}
+
+   named_sync_creation_test_wrapper_w(open_or_create_t)
+      :  NamedSync(open_or_create, test::get_process_id_wname())
+   {}
+
+   ~named_sync_creation_test_wrapper_w()
+   {}
+};
+
+#endif   //#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
 
 }}}   //namespace boost { namespace interprocess { namespace test {
 

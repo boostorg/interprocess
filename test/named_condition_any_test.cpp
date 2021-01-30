@@ -32,6 +32,23 @@ struct condition_deleter
    }
 };
 
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+
+struct condition_deleter_w
+{
+   std::wstring name;
+
+   ~condition_deleter_w()
+   {
+      if(name.empty())
+         named_condition_any::remove(test::add_to_process_id_name(L"named_condition_any"));
+      else
+         named_condition_any::remove(name.c_str());
+   }
+};
+
+#endif   //#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+
 inline std::string num_to_string(int n)
 {  std::stringstream s; s << n; return s.str(); }
 
@@ -117,6 +134,40 @@ class named_condition_any_creation_test_wrapper
 
 int named_condition_any_creation_test_wrapper::count_ = 0;
 
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+
+//This wrapper is necessary to have a common constructor
+//in generic named_creation_template functions
+class named_condition_any_creation_test_wrapper_w
+   : public condition_deleter_w, public named_condition_any
+{
+   public:
+   named_condition_any_creation_test_wrapper_w(create_only_t)
+      :  named_condition_any(create_only, test::add_to_process_id_name(L"named_condition_any"))
+   {  ++count_;   }
+
+   named_condition_any_creation_test_wrapper_w(open_only_t)
+      :  named_condition_any(open_only, test::add_to_process_id_name(L"named_condition_any"))
+   {  ++count_;   }
+
+   named_condition_any_creation_test_wrapper_w(open_or_create_t)
+      :  named_condition_any(open_or_create, test::add_to_process_id_name(L"named_condition_any"))
+   {  ++count_;   }
+
+   ~named_condition_any_creation_test_wrapper_w()   {
+      if(--count_){
+         ipcdetail::interprocess_tester::
+            dont_close_on_destruction(static_cast<named_condition_any&>(*this));
+      }
+   }
+   static int count_;
+};
+
+int named_condition_any_creation_test_wrapper_w::count_ = 0;
+
+#endif   //#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+
+
 struct mutex_deleter
 {
    std::string name;
@@ -169,6 +220,9 @@ int main ()
       named_mutex::remove(test::add_to_process_id_name("named_mutex"));
 
       test::test_named_creation<named_condition_any_creation_test_wrapper>();
+      #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+      test::test_named_creation<named_condition_any_creation_test_wrapper_w>();
+      #endif
       test::do_test_condition<named_condition_any_test_wrapper
                              ,named_mutex_test_wrapper>();
    }

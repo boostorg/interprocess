@@ -442,7 +442,7 @@ inline mapped_region::mapped_region
          //Create mapping handle
          native_mapping_handle = winapi::create_file_mapping
             ( ipcdetail::file_handle_from_mapping_handle(mapping.get_mapping_handle())
-            , protection, 0, 0, 0);
+            , protection, 0, (char*)0, 0);
 
          //Check if all is correct
          if(!native_mapping_handle){

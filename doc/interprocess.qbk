@@ -6781,6 +6781,28 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_76_00 Boost 1.76 Release]
+
+*  Added `wchar_t` API support for named resources in operating systems that offer native wide character API (e.g. Windows).
+    The following classes were updated with `wchar_t` name support:
+    * `file_mapping`
+    * `managed_mapped_file`
+    * `managed_shared_memory`
+    * `managed_windows_shared_memory`
+    * `shared_memory_object`
+    * `windows_shared_memory_object`
+    * `file_lock`
+    * `named_condition`
+    * `named_condition_any`
+    * `named_mutex`
+    * `named_recursive_mutex`
+    * `named_semaphore`
+    * `named_sharable_mutex`
+    * `named_upgradable_mutex`
+    * `message_queue`
+
+[endsect]
+
 [section:release_notes_boost_1_75_00 Boost 1.75 Release]
 
 *  Fixed bugs:

@@ -28,12 +28,13 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/shared_dir_helpers.hpp>
+#include <boost/interprocess/detail/char_wchar_holder.hpp>
 #include <boost/interprocess/permissions.hpp>
 #include <boost/move/adl_move_swap.hpp>
 #include <cstddef>
-#include <string>
 
 #if defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
+#  include <string>
 #  include <fcntl.h>        //O_CREAT, O_*...
 #  include <sys/mman.h>     //shm_xxx
 #  include <unistd.h>       //ftruncate, close
@@ -82,6 +83,35 @@ class shared_memory_object
    shared_memory_object(open_only_t, const char *name, mode_t mode)
    {  this->priv_open_or_create(ipcdetail::DoOpen, name, mode, permissions());  }
 
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+   //!Creates a shared memory object with name "name" and mode "mode", with the access mode "mode"
+   //!If the file previously exists, throws an error.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   shared_memory_object(create_only_t, const wchar_t*name, mode_t mode, const permissions &perm = permissions())
+   {  this->priv_open_or_create(ipcdetail::DoCreate, name, mode, perm);  }
+
+   //!Tries to create a shared memory object with name "name" and mode "mode", with the
+   //!access mode "mode". If the file previously exists, it tries to open it with mode "mode".
+   //!Otherwise throws an error.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   shared_memory_object(open_or_create_t, const wchar_t*name, mode_t mode, const permissions &perm = permissions())
+   {  this->priv_open_or_create(ipcdetail::DoOpenOrCreate, name, mode, perm);  }
+
+   //!Tries to open a shared memory object with name "name", with the access mode "mode".
+   //!If the file does not previously exist, it throws an error.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   shared_memory_object(open_only_t, const wchar_t*name, mode_t mode)
+   {  this->priv_open_or_create(ipcdetail::DoOpen, name, mode, permissions());  }
+
+   #endif //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
    //!Moves the ownership of "moved"'s shared memory object to *this.
    //!After the call, "moved" does not represent any shared memory object.
    //!Does not throw
@@ -106,6 +136,17 @@ class shared_memory_object
    //!Erases a shared memory object from the system.
    //!Returns false on error. Never throws
    static bool remove(const char *name);
+
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+   //!Erases a shared memory object from the system.
+   //!Returns false on error. Never throws
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   static bool remove(const wchar_t *name);
+
+   #endif //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //!Sets the size of the shared memory mapping
    void truncate(offset_t length);
@@ -139,11 +180,12 @@ class shared_memory_object
    void priv_close();
 
    //!Opens or creates a shared memory object.
-   bool priv_open_or_create(ipcdetail::create_enum_t type, const char *filename, mode_t mode, const permissions &perm);
+   template<class CharT>
+   bool priv_open_or_create(ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, const permissions &perm);
 
-   file_handle_t  m_handle;
-   mode_t         m_mode;
-   std::string    m_filename;
+   file_handle_t     m_handle;
+   mode_t            m_mode;
+   char_wchar_holder m_filename;
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
@@ -159,7 +201,7 @@ inline shared_memory_object::~shared_memory_object()
 
 
 inline const char *shared_memory_object::get_name() const
-{  return m_filename.c_str(); }
+{  return m_filename.getn(); }
 
 inline bool shared_memory_object::get_size(offset_t &size) const
 {  return ipcdetail::get_file_size((file_handle_t)m_handle, size);  }
@@ -181,11 +223,12 @@ inline mode_t shared_memory_object::get_mode() const
 
 #if !defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
 
+template<class CharT>
 inline bool shared_memory_object::priv_open_or_create
-   (ipcdetail::create_enum_t type, const char *filename, mode_t mode, const permissions &perm)
+   (ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, const permissions &perm)
 {
    m_filename = filename;
-   std::string shmfile;
+   std::basic_string<CharT> shmfile;
    ipcdetail::create_shared_dir_cleaning_old_and_get_filepath(filename, shmfile);
 
    //Set accesses
@@ -221,6 +264,23 @@ inline bool shared_memory_object::priv_open_or_create
    m_mode = mode;
    return true;
 }
+
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+
+inline bool shared_memory_object::remove(const wchar_t *filename)
+{
+   try{
+      //Make sure a temporary path is created for shared memory
+      std::wstring shmfile;
+      ipcdetail::shared_filepath(filename, shmfile);
+      return ipcdetail::delete_file(shmfile.c_str());
+   }
+   catch(...){
+      return false;
+   }
+}
+
+#endif
 
 inline bool shared_memory_object::remove(const char *filename)
 {
@@ -275,9 +335,10 @@ inline bool use_filesystem_based_posix()
 
 }  //shared_memory_object_detail
 
+template<class CharT>
 inline bool shared_memory_object::priv_open_or_create
    (ipcdetail::create_enum_t type,
-    const char *filename,
+    const CharT *filename,
     mode_t mode, const permissions &perm)
 {
    #if defined(BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
@@ -287,11 +348,12 @@ inline bool shared_memory_object::priv_open_or_create
    #else
    const bool add_leading_slash = true;
    #endif
+   std::basic_string<CharT> fname;
    if(add_leading_slash){
-      ipcdetail::add_leading_slash(filename, m_filename);
+      ipcdetail::add_leading_slash(filename, fname);
    }
    else{
-      ipcdetail::create_shared_dir_cleaning_old_and_get_filepath(filename, m_filename);
+      ipcdetail::create_shared_dir_cleaning_old_and_get_filepath(filename, fname);
    }
 
    //Create new mapping
@@ -312,13 +374,13 @@ inline bool shared_memory_object::priv_open_or_create
       case ipcdetail::DoOpen:
       {
          //No oflag addition
-         m_handle = shm_open(m_filename.c_str(), oflag, unix_perm);
+         m_handle = shm_open(fname.c_str(), oflag, unix_perm);
       }
       break;
       case ipcdetail::DoCreate:
       {
          oflag |= (O_CREAT | O_EXCL);
-         m_handle = shm_open(m_filename.c_str(), oflag, unix_perm);
+         m_handle = shm_open(fname.c_str(), oflag, unix_perm);
          if(m_handle >= 0){
             ::fchmod(m_handle, unix_perm);
          }
@@ -330,14 +392,14 @@ inline bool shared_memory_object::priv_open_or_create
          //with "O_CREAT" only we don't know if we've created or opened the shm.
          while(true){
             //Try to create shared memory
-            m_handle = shm_open(m_filename.c_str(), oflag | (O_CREAT | O_EXCL), unix_perm);
+            m_handle = shm_open(fname.c_str(), oflag | (O_CREAT | O_EXCL), unix_perm);
             //If successful change real permissions
             if(m_handle >= 0){
                ::fchmod(m_handle, unix_perm);
             }
             //If already exists, try to open
             else if(errno == EEXIST){
-               m_handle = shm_open(m_filename.c_str(), oflag, unix_perm);
+               m_handle = shm_open(fname.c_str(), oflag, unix_perm);
                //If open fails and errno tells the file does not exist
                //(shm was removed between creation and opening tries), just retry
                if(m_handle < 0 && errno == ENOENT){

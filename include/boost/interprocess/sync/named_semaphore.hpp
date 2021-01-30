@@ -74,6 +74,36 @@ class named_semaphore
    //!interprocess_exception.
    named_semaphore(open_only_t, const char *name);
 
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+   //!Creates a global semaphore with a name, and an initial count.
+   //!If the semaphore can't be created throws interprocess_exception
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   named_semaphore(create_only_t, const wchar_t *name, unsigned int initialCount, const permissions &perm = permissions());
+
+   //!Opens or creates a global semaphore with a name, and an initial count.
+   //!If the semaphore is created, this call is equivalent to
+   //!named_semaphore(create_only_t, ...)
+   //!If the semaphore is already created, this call is equivalent to
+   //!named_semaphore(open_only_t, ... )
+   //!and initialCount is ignored.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   named_semaphore(open_or_create_t, const wchar_t *name, unsigned int initialCount, const permissions &perm = permissions());
+
+   //!Opens a global semaphore with a name if that semaphore is previously.
+   //!created. If it is not previously created this function throws
+   //!interprocess_exception.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   named_semaphore(open_only_t, const wchar_t *name);
+
+   #endif //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
    //!Destroys *this and indicates that the calling process is finished using
    //!the resource. The destructor function will deallocate
    //!any system resources allocated by the system for use by this process for
@@ -108,6 +138,17 @@ class named_semaphore
    //!Returns false on error. Never throws.
    static bool remove(const char *name);
 
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+   //!Erases a named semaphore from the system.
+   //!Returns false on error. Never throws.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   static bool remove(const wchar_t *name);
+
+   #endif //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    friend class ipcdetail::interprocess_tester;
@@ -141,6 +182,24 @@ inline named_semaphore::named_semaphore(open_only_t, const char *name)
    :  m_sem(open_only, name)
 {}
 
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+inline named_semaphore::named_semaphore
+   (create_only_t, const wchar_t *name, unsigned int initialCount, const permissions &perm)
+   :  m_sem(create_only, name, initialCount, perm)
+{}
+
+inline named_semaphore::named_semaphore
+   (open_or_create_t, const wchar_t *name, unsigned int initialCount, const permissions &perm)
+   :  m_sem(open_or_create, name, initialCount, perm)
+{}
+
+inline named_semaphore::named_semaphore(open_only_t, const wchar_t *name)
+   :  m_sem(open_only, name)
+{}
+
+#endif //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
 inline named_semaphore::~named_semaphore()
 {}
 
@@ -161,6 +220,13 @@ inline bool named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time
 
 inline bool named_semaphore::remove(const char *name)
 {  return impl_t::remove(name);   }
+
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+inline bool named_semaphore::remove(const wchar_t *name)
+{  return impl_t::remove(name);   }
+
+#endif
 
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 

@@ -60,7 +60,8 @@ class windows_named_sync
 
    public:
    windows_named_sync();
-   void open_or_create(create_enum_t creation_type, const char *name, const permissions &perm, windows_named_sync_interface &sync_interface);
+   template <class CharT>
+   void open_or_create(create_enum_t creation_type, const CharT *name, const permissions &perm, windows_named_sync_interface &sync_interface);
    void close(windows_named_sync_interface &sync_interface);
 
    static bool remove(const char *name);
@@ -99,13 +100,14 @@ inline void windows_named_sync::close(windows_named_sync_interface &sync_interfa
    }
 }
 
+template <class CharT>
 inline void windows_named_sync::open_or_create
    ( create_enum_t creation_type
-   , const char *name
+   , const CharT *name
    , const permissions &perm
    , windows_named_sync_interface &sync_interface)
 {
-   std::string aux_str(name);
+   std::basic_string<CharT> aux_str(name);
    m_file_hnd  = winapi::invalid_handle_value;
    //Use a file to emulate POSIX lifetime semantics. After this logic
    //we'll obtain the ID of the native handle to open in aux_str
@@ -162,7 +164,7 @@ inline void windows_named_sync::open_or_create
                }
                if(success){
                   //Now create a global semaphore name based on the unique id
-                  char unique_id_name[sizeof(unique_id_val)*2+1];
+                  CharT unique_id_name[sizeof(unique_id_val)*2+1];
                   std::size_t name_suffix_length = sizeof(unique_id_name);
                   bytes_to_str(&unique_id_val, sizeof(unique_id_val), &unique_id_name[0], name_suffix_length);
                   success = sync_interface.open(creation_type, unique_id_name);

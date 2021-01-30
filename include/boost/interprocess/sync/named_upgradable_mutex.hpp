@@ -73,6 +73,36 @@ class named_upgradable_mutex
    //!interprocess_exception.
    named_upgradable_mutex(open_only_t open_only, const char *name);
 
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+   //!Creates a global upgradable mutex with a name.
+   //!If the upgradable mutex can't be created throws interprocess_exception
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   named_upgradable_mutex(create_only_t create_only, const wchar_t *name, const permissions &perm = permissions());
+
+   //!Opens or creates a global upgradable mutex with a name.
+   //!If the upgradable mutex is created, this call is equivalent to
+   //!named_upgradable_mutex(create_only_t, ...)
+   //!If the upgradable mutex is already created, this call is equivalent to
+   //!named_upgradable_mutex(open_only_t, ... ).
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   named_upgradable_mutex(open_or_create_t open_or_create, const wchar_t *name, const permissions &perm = permissions());
+
+   //!Opens a global upgradable mutex with a name if that upgradable mutex
+   //!is previously.
+   //!created. If it is not previously created this function throws
+   //!interprocess_exception.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   named_upgradable_mutex(open_only_t open_only, const wchar_t *name);
+
+   #endif //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
    //!Destroys *this and indicates that the calling process is finished using
    //!the resource. The destructor function will deallocate
    //!any system resources allocated by the system for use by this process for
@@ -231,6 +261,15 @@ class named_upgradable_mutex
    //!Returns false on error. Never throws.
    static bool remove(const char *name);
 
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+   //!Erases a named upgradable mutex from the system.
+   //!Returns false on error. Never throws.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   static bool remove(const wchar_t *name);
+   #endif
+
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    friend class ipcdetail::interprocess_tester;
@@ -282,6 +321,43 @@ inline named_upgradable_mutex::named_upgradable_mutex
                ,0
                ,construct_func_t(ipcdetail::DoOpen))
 {}
+
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+inline named_upgradable_mutex::named_upgradable_mutex
+   (create_only_t, const wchar_t *name, const permissions &perm)
+   :  m_shmem  (create_only
+               ,name
+               ,sizeof(interprocess_upgradable_mutex) +
+                  open_create_impl_t::ManagedOpenOrCreateUserOffset
+               ,read_write
+               ,0
+               ,construct_func_t(ipcdetail::DoCreate)
+               ,perm)
+{}
+
+inline named_upgradable_mutex::named_upgradable_mutex
+   (open_or_create_t, const wchar_t *name, const permissions &perm)
+   :  m_shmem  (open_or_create
+               ,name
+               ,sizeof(interprocess_upgradable_mutex) +
+                  open_create_impl_t::ManagedOpenOrCreateUserOffset
+               ,read_write
+               ,0
+               ,construct_func_t(ipcdetail::DoOpenOrCreate)
+               ,perm)
+{}
+
+inline named_upgradable_mutex::named_upgradable_mutex
+   (open_only_t, const wchar_t *name)
+   :  m_shmem  (open_only
+               ,name
+               ,read_write
+               ,0
+               ,construct_func_t(ipcdetail::DoOpen))
+{}
+
+#endif
 
 inline void named_upgradable_mutex::dont_close_on_destruction()
 {  ipcdetail::interprocess_tester::dont_close_on_destruction(m_shmem);  }
@@ -352,6 +428,14 @@ inline bool named_upgradable_mutex::try_unlock_sharable_and_lock_upgradable()
 
 inline bool named_upgradable_mutex::remove(const char *name)
 {  return shared_memory_object::remove(name); }
+
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+inline bool named_upgradable_mutex::remove(const wchar_t *name)
+{  return shared_memory_object::remove(name); }
+
+#endif
+
 
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
