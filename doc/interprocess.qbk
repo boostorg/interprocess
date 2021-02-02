@@ -6801,6 +6801,9 @@ thank them:
     * `named_upgradable_mutex`
     * `message_queue`
 
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/pull/92 GitHub #92 (['"bufferstream: Correct MSVC compilation warning"])].
+
 [endsect]
 
 [section:release_notes_boost_1_75_00 Boost 1.75 Release]
