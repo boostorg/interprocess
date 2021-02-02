@@ -142,6 +142,74 @@ class basic_managed_mapped_file
                 ipcdetail::DoOpen))
    {}
 
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+   //!Creates mapped file and creates and places the segment manager.
+   //!This can throw.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   basic_managed_mapped_file(create_only_t, const wchar_t *name,
+                             size_type size, const void *addr = 0, const permissions &perm = permissions())
+      : m_mfile(create_only, name, size, read_write, addr,
+                create_open_func_t(get_this_pointer(), ipcdetail::DoCreate), perm)
+   {}
+
+   //!Creates mapped file and creates and places the segment manager if
+   //!segment was not created. If segment was created it connects to the
+   //!segment.
+   //!This can throw.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   basic_managed_mapped_file (open_or_create_t,
+                              const wchar_t *name, size_type size,
+                              const void *addr = 0, const permissions &perm = permissions())
+      : m_mfile(open_or_create, name, size, read_write, addr,
+                create_open_func_t(get_this_pointer(),
+                ipcdetail::DoOpenOrCreate), perm)
+   {}
+
+   //!Connects to a created mapped file and its segment manager.
+   //!This can throw.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   basic_managed_mapped_file (open_only_t, const wchar_t* name,
+                              const void *addr = 0)
+      : m_mfile(open_only, name, read_write, addr,
+                create_open_func_t(get_this_pointer(),
+                ipcdetail::DoOpen))
+   {}
+
+   //!Connects to a created mapped file and its segment manager
+   //!in copy_on_write mode.
+   //!This can throw.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   basic_managed_mapped_file (open_copy_on_write_t, const wchar_t* name,
+                              const void *addr = 0)
+      : m_mfile(open_only, name, copy_on_write, addr,
+                create_open_func_t(get_this_pointer(),
+                ipcdetail::DoOpen))
+   {}
+
+   //!Connects to a created mapped file and its segment manager
+   //!in read-only mode.
+   //!This can throw.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   basic_managed_mapped_file (open_read_only_t, const wchar_t* name,
+                              const void *addr = 0)
+      : m_mfile(open_only, name, read_only, addr,
+                create_open_func_t(get_this_pointer(),
+                ipcdetail::DoOpen))
+   {}
+
+   #endif //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
    basic_managed_mapped_file(BOOST_RV_REF(basic_managed_mapped_file) moved)
@@ -200,6 +268,37 @@ class basic_managed_mapped_file
       return base_t::template shrink_to_fit
          <basic_managed_mapped_file>(filename);
    }
+
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+   //!Tries to resize mapped file so that we have room for
+   //!more objects.
+   //!
+   //!This function is not synchronized so no other thread or process should
+   //!be reading or writing the file
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   static bool grow(const wchar_t *filename, size_type extra_bytes)
+   {
+      return base_t::template grow
+         <basic_managed_mapped_file>(filename, extra_bytes);
+   }
+
+   //!Tries to resize mapped file to minimized the size of the file.
+   //!
+   //!This function is not synchronized so no other thread or process should
+   //!be reading or writing the file
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   static bool shrink_to_fit(const wchar_t *filename)
+   {
+      return base_t::template shrink_to_fit
+         <basic_managed_mapped_file>(filename);
+   }
+
+   #endif
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 

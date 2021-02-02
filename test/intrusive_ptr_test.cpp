@@ -9,7 +9,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/smart_ptr/intrusive_ptr.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
@@ -542,5 +541,3 @@ int main()
 
    return boost::report_errors();
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

@@ -1,22 +1,33 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2014-2014. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/interprocess/indexes/iunordered_set_index.hpp>
-#include "named_allocation_test_template.hpp"
+#ifdef BOOST_INTERPROCESS_WINDOWS
+#include <windows.h>
+
+#include <boost/interprocess/windows_shared_memory.hpp>
+
+using namespace boost::interprocess;
 
 int main ()
 {
-   using namespace boost::interprocess;
-   if(!test::test_named_allocation<iunordered_set_index>()){
-      return 1;
-   }
-
+   windows_shared_memory dummy;
+   static_cast<void>(dummy);
    return 0;
 }
+
+#else
+
+int main()
+{
+   return 0;
+}
+
+#endif

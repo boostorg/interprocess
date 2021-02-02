@@ -32,8 +32,8 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/simple_swap.hpp>
+#include <boost/interprocess/detail/char_wchar_holder.hpp>
 #include <boost/move/utility_core.hpp>
-#include <string>    //std::string
 
 //!\file
 //!Describes file_mapping and mapped region classes
@@ -59,6 +59,17 @@ class file_mapping
    //!can be opened for read-only "read_only" or read-write "read_write"
    //!modes. Throws interprocess_exception on error.
    file_mapping(const char *filename, mode_t mode);
+
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+   //!Opens a file mapping of file "filename", starting in offset
+   //!"file_offset", and the mapping's size will be "size". The mapping
+   //!can be opened for read-only "read_only" or read-write "read_write"
+   //!modes. Throws interprocess_exception on error.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   file_mapping(const wchar_t *filename, mode_t mode);
+   #endif
 
    //!Moves the ownership of "moved"'s file mapping object to *this.
    //!After the call, "moved" does not represent any file mapping object.
@@ -104,13 +115,24 @@ class file_mapping
    //!being used other processes and no deletion permission was shared.
    static bool remove(const char *filename);
 
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+   //!Removes the file named "filename" even if it's been memory mapped.
+   //!Returns true on success.
+   //!The function might fail in some operating systems if the file is
+   //!being used other processes and no deletion permission was shared.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   static bool remove(const wchar_t *filename);
+   #endif
+
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    //!Closes a previously opened file mapping. Never throws.
    void priv_close();
    file_handle_t  m_handle;
    mode_t         m_mode;
-   std::string    m_filename;
+   char_wchar_holder    m_filename;
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
@@ -123,7 +145,7 @@ inline file_mapping::~file_mapping()
 {  this->priv_close(); }
 
 inline const char *file_mapping::get_name() const
-{  return m_filename.c_str(); }
+{  return m_filename.getn(); }
 
 inline void file_mapping::swap(file_mapping &other)
 {
@@ -162,6 +184,35 @@ inline file_mapping::file_mapping
 
 inline bool file_mapping::remove(const char *filename)
 {  return ipcdetail::delete_file(filename);  }
+
+#ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
+inline file_mapping::file_mapping
+   (const wchar_t *filename, mode_t mode)
+   :  m_filename(filename)
+{
+   //Check accesses
+   if (mode != read_write && mode != read_only){
+      error_info err = other_error;
+      throw interprocess_exception(err);
+   }
+
+   //Open file
+   m_handle = ipcdetail::open_existing_file(filename, mode);
+
+   //Check for error
+   if(m_handle == ipcdetail::invalid_file()){
+      error_info err = system_error_code();
+      this->priv_close();
+      throw interprocess_exception(err);
+   }
+   m_mode = mode;
+}
+
+inline bool file_mapping::remove(const wchar_t *filename)
+{  return ipcdetail::delete_file(filename);  }
+
+#endif
+
 
 #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 

@@ -8,12 +8,10 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
 #if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS)
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/managed_xsi_shared_memory.hpp>
@@ -49,14 +47,6 @@ class xsi_shared_memory_remover
    private:
    xsi_shared_memory & xsi_shm_;
 };
-
-inline std::string get_filename()
-{
-   std::string ret (ipcdetail::get_temporary_path());
-   ret += "/";
-   ret += test::get_process_id_name();
-   return ret;
-}
 
 int main ()
 {
@@ -170,5 +160,3 @@ int main()
 }
 
 #endif  //#ifndef BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
-
-#include <boost/interprocess/detail/config_end.hpp>

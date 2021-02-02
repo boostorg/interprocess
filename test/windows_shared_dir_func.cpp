@@ -8,12 +8,9 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+#include <boost/config.hpp>
 
-#ifdef BOOST_INTERPROCESS_WINDOWS
-
-#define BOOST_INTERPROCESS_WINDOWS
+#ifdef BOOST_WINDOWS
 
 //Force user-defined get_shared_dir
 #define BOOST_INTERPROCESS_SHARED_DIR_FUNC
@@ -38,6 +35,16 @@ inline void get_shared_dir(std::string &shared_dir)
    dir_created = true;
 }
 
+inline void get_shared_dir(std::wstring &shared_dir)
+{
+   shared_dir = boost::interprocess::ipcdetail::get_temporary_wpath();
+   shared_dir += L"/boostipctest_";
+   shared_dir += boost::interprocess::test::get_process_id_wname();
+   if(!dir_created)
+      ipcdetail::create_directory(shared_dir.c_str());
+   dir_created = true;
+}
+
 }}}   //namespace boost::interprocess::ipcdetail
 
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -51,15 +58,17 @@ int main ()
    ipcdetail::get_shared_dir(shared_dir);
 
    std::string shm_path(shared_dir);
+   shm_path += "/";
    shm_path += shm_name;
 
    int ret = 0;
    shared_memory_object::remove(shm_name);
    {
-      shared_memory_object shm(create_only, shm_name, read_write);
+      {
+         shared_memory_object shm(create_only, shm_name, read_write);
+      }
 
-      shm_path += shm_name;
-      int ret = ipcdetail::invalid_file() == ipcdetail::open_existing_file(shm_path.c_str(), read_only) ?
+      ret = ipcdetail::invalid_file() == ipcdetail::open_existing_file(shm_path.c_str(), read_only) ?
                1 : 0;
       if(ret)
       {
@@ -79,6 +88,4 @@ int main()
    return 0;
 }
 
-#endif   //#ifdef BOOST_INTERPROCESS_WINDOWS
-
-#include <boost/interprocess/detail/config_end.hpp>
+#endif   //#ifdef BOOST_WINDOWS

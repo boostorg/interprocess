@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
@@ -18,10 +17,39 @@
 
 using namespace boost::interprocess;
 
-int main ()
+template <class CharT>
+struct filename_traits;
+
+template <>
+struct filename_traits<char>
+{
+
+   static const char* get()
+   {  return test::get_process_id_name();  }
+
+   static std::string filename;
+};
+
+#ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
+
+template <>
+struct filename_traits<wchar_t>
+{
+
+   static const wchar_t* get()
+   {  return test::get_process_id_wname();  }
+
+   static std::wstring filename;
+};
+
+#endif   //#ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
+
+
+template<class CharT>
+int test_managed_shared_memory()
 {
    const int ShmemSize          = 65536;
-   const char *const ShmemName = test::get_process_id_name();
+   const CharT *const ShmemName = filename_traits<CharT>::get();
 
    //STL compatible allocator object for memory-mapped shmem
    typedef allocator<int, managed_shared_memory::segment_manager>
@@ -213,4 +241,14 @@ int main ()
    return 0;
 }
 
-#include <boost/interprocess/detail/config_end.hpp>
+int main ()
+{
+   int r;
+   r = test_managed_shared_memory<char>();
+   if(r) return r;
+   #ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
+   r = test_managed_shared_memory<wchar_t>();
+   if(r) return r;
+   #endif
+   return 0;
+}

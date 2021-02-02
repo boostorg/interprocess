@@ -8,10 +8,9 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+#include <boost/config.hpp>
 
-#ifdef BOOST_INTERPROCESS_WINDOWS
+#ifdef BOOST_WINDOWS
 
 #include <fstream>
 #include <iostream>
@@ -135,4 +134,3 @@ int main()
 
 #endif
 
-#include <boost/interprocess/detail/config_end.hpp>

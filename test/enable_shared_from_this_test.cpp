@@ -10,7 +10,6 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/smart_ptr/enable_shared_from_this.hpp>
 #include <boost/interprocess/smart_ptr/shared_ptr.hpp>
@@ -93,5 +92,3 @@ int main()
    shared_memory_object::remove(process_name.c_str());
    return boost::report_errors();
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

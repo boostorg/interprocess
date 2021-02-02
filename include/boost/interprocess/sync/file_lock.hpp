@@ -59,6 +59,15 @@ class file_lock
    //!exist or there are no operating system resources.
    file_lock(const char *name);
 
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+   //!Opens a file lock. Throws interprocess_exception if the file does not
+   //!exist or there are no operating system resources.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   file_lock(const wchar_t *name);
+   #endif
+
    //!Moves the ownership of "moved"'s file mapping object to *this.
    //!After the call, "moved" does not represent any file mapping object.
    //!Does not throw
@@ -159,6 +168,20 @@ inline file_lock::file_lock(const char *name)
       throw interprocess_exception(err);
    }
 }
+
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+inline file_lock::file_lock(const wchar_t *name)
+{
+   m_file_hnd = ipcdetail::open_existing_file(name, read_write);
+
+   if(m_file_hnd == ipcdetail::invalid_file()){
+      error_info err(system_error_code());
+      throw interprocess_exception(err);
+   }
+}
+
+#endif //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 inline file_lock::~file_lock()
 {

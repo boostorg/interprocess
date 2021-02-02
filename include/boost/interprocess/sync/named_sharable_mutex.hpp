@@ -72,6 +72,36 @@ class named_sharable_mutex
    //!interprocess_exception.
    named_sharable_mutex(open_only_t open_only, const char *name);
 
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+   //!Creates a global sharable mutex with a name.
+   //!If the sharable mutex can't be created throws interprocess_exception
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   named_sharable_mutex(create_only_t create_only, const wchar_t *name, const permissions &perm = permissions());
+
+   //!Opens or creates a global sharable mutex with a name.
+   //!If the sharable mutex is created, this call is equivalent to
+   //!named_sharable_mutex(create_only_t, ...)
+   //!If the sharable mutex is already created, this call is equivalent to
+   //!named_sharable_mutex(open_only_t, ... ).
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   named_sharable_mutex(open_or_create_t open_or_create, const wchar_t *name, const permissions &perm = permissions());
+
+   //!Opens a global sharable mutex with a name if that sharable mutex
+   //!is previously.
+   //!created. If it is not previously created this function throws
+   //!interprocess_exception.
+   //! 
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   named_sharable_mutex(open_only_t open_only, const wchar_t *name);
+
+   #endif   //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
    //!Destroys *this and indicates that the calling process is finished using
    //!the resource. The destructor function will deallocate
    //!any system resources allocated by the system for use by this process for
@@ -140,6 +170,14 @@ class named_sharable_mutex
    //!Returns false on error. Never throws.
    static bool remove(const char *name);
 
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+   //!Erases a named sharable mutex from the system.
+   //!Returns false on error. Never throws.
+   static bool remove(const wchar_t *name);
+
+   #endif
+
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    friend class ipcdetail::interprocess_tester;
@@ -192,6 +230,43 @@ inline named_sharable_mutex::named_sharable_mutex
                ,construct_func_t(ipcdetail::DoOpen))
 {}
 
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+inline named_sharable_mutex::named_sharable_mutex
+   (create_only_t, const wchar_t *name, const permissions &perm)
+   :  m_shmem  (create_only
+               ,name
+               ,sizeof(interprocess_sharable_mutex) +
+                  open_create_impl_t::ManagedOpenOrCreateUserOffset
+               ,read_write
+               ,0
+               ,construct_func_t(ipcdetail::DoCreate)
+               ,perm)
+{}
+
+inline named_sharable_mutex::named_sharable_mutex
+   (open_or_create_t, const wchar_t *name, const permissions &perm)
+   :  m_shmem  (open_or_create
+               ,name
+               ,sizeof(interprocess_sharable_mutex) +
+                  open_create_impl_t::ManagedOpenOrCreateUserOffset
+               ,read_write
+               ,0
+               ,construct_func_t(ipcdetail::DoOpenOrCreate)
+               ,perm)
+{}
+
+inline named_sharable_mutex::named_sharable_mutex
+   (open_only_t, const wchar_t *name)
+   :  m_shmem  (open_only
+               ,name
+               ,read_write
+               ,0
+               ,construct_func_t(ipcdetail::DoOpen))
+{}
+
+#endif
+
 inline void named_sharable_mutex::dont_close_on_destruction()
 {  ipcdetail::interprocess_tester::dont_close_on_destruction(m_shmem);  }
 
@@ -223,6 +298,13 @@ inline bool named_sharable_mutex::timed_lock_sharable
 
 inline bool named_sharable_mutex::remove(const char *name)
 {  return shared_memory_object::remove(name); }
+
+#if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+inline bool named_sharable_mutex::remove(const wchar_t *name)
+{  return shared_memory_object::remove(name); }
+
+#endif //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 

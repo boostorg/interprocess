@@ -67,6 +67,33 @@ class windows_named_condition_any
       m_named_sync.open_or_create(DoOpen, name, permissions(), callbacks);
    }
 
+   #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
+   windows_named_condition_any
+      (create_only_t, const wchar_t *name, const permissions &perm)
+      : m_condition_data()
+   {
+      named_cond_callbacks callbacks(m_condition_data.get_members());
+      m_named_sync.open_or_create(DoCreate, name, perm, callbacks);
+   }
+
+   windows_named_condition_any
+      (open_or_create_t, const wchar_t *name, const permissions &perm)
+      : m_condition_data()
+   {
+      named_cond_callbacks callbacks(m_condition_data.get_members());
+      m_named_sync.open_or_create(DoOpenOrCreate, name, perm, callbacks);
+   }
+
+   windows_named_condition_any(open_only_t, const wchar_t *name)
+      : m_condition_data()
+   {
+      named_cond_callbacks callbacks(m_condition_data.get_members());
+      m_named_sync.open_or_create(DoOpen, name, permissions(), callbacks);
+   }
+
+   #endif   //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+
    ~windows_named_condition_any()
    {
       named_cond_callbacks callbacks(m_condition_data.get_members());

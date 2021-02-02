@@ -7,7 +7,6 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/intermodule_singleton.hpp>
 #include <boost/interprocess/detail/portable_intermodule_singleton.hpp>
 #include <iostream>
@@ -326,5 +325,3 @@ int main ()
 
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

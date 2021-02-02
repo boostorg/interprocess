@@ -143,6 +143,48 @@ class basic_managed_windows_shared_memory
                 create_open_func_t(get_this_pointer(), ipcdetail::DoOpen))
    {}
 
+   //!Creates shared memory and creates and places the segment manager if
+   //!segment was not created. If segment was created it connects to the
+   //!segment.
+   //!This can throw.
+   basic_managed_windows_shared_memory
+      (open_or_create_t,
+      const wchar_t *name, size_type size,
+      const void *addr = 0,
+      const permissions &perm = permissions())
+      : m_wshm(open_or_create, name, size, read_write, addr,
+                create_open_func_t(get_this_pointer(),
+                ipcdetail::DoOpenOrCreate), perm)
+   {}
+
+   //!Connects to a created shared memory and its segment manager.
+   //!This can throw.
+   basic_managed_windows_shared_memory
+      (open_only_t, const wchar_t* name, const void *addr = 0)
+      : m_wshm(open_only, name, read_write, addr,
+                create_open_func_t(get_this_pointer(),
+                ipcdetail::DoOpen))
+   {}
+
+   //!Connects to a created shared memory and its segment manager
+   //!in copy_on_write mode.
+   //!This can throw.
+   basic_managed_windows_shared_memory
+      (open_copy_on_write_t, const wchar_t* name, const void *addr = 0)
+      : m_wshm(open_only, name, copy_on_write, addr,
+                create_open_func_t(get_this_pointer(), ipcdetail::DoOpen))
+   {}
+
+   //!Connects to a created shared memory and its segment manager
+   //!in read-only mode.
+   //!This can throw.
+   basic_managed_windows_shared_memory
+      (open_read_only_t, const wchar_t* name, const void *addr = 0)
+      : base_t()
+      , m_wshm(open_only, name, read_only, addr,
+                create_open_func_t(get_this_pointer(), ipcdetail::DoOpen))
+   {}
+
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
    basic_managed_windows_shared_memory

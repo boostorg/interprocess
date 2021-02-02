@@ -51,6 +51,12 @@ class windows_named_semaphore
 
    windows_named_semaphore(open_only_t, const char *name);
 
+   windows_named_semaphore(create_only_t, const wchar_t *name, unsigned int initialCount, const permissions &perm = permissions());
+
+   windows_named_semaphore(open_or_create_t, const wchar_t *name, unsigned int initialCount, const permissions &perm = permissions());
+
+   windows_named_semaphore(open_only_t, const wchar_t *name);
+
    ~windows_named_semaphore();
 
    void post();
@@ -142,6 +148,29 @@ inline windows_named_semaphore::windows_named_semaphore
 }
 
 inline windows_named_semaphore::windows_named_semaphore(open_only_t, const char *name)
+   : m_sem_wrapper()
+{
+   named_sem_callbacks callbacks(m_sem_wrapper, 0);
+   m_named_sync.open_or_create(DoOpen, name, permissions(), callbacks);
+}
+
+inline windows_named_semaphore::windows_named_semaphore
+   (create_only_t, const wchar_t *name, unsigned int initial_count, const permissions &perm)
+   : m_sem_wrapper()
+{
+   named_sem_callbacks callbacks(m_sem_wrapper, initial_count);
+   m_named_sync.open_or_create(DoCreate, name, perm, callbacks);
+}
+
+inline windows_named_semaphore::windows_named_semaphore
+   (open_or_create_t, const wchar_t *name, unsigned int initial_count, const permissions &perm)
+   : m_sem_wrapper()
+{
+   named_sem_callbacks callbacks(m_sem_wrapper, initial_count);
+   m_named_sync.open_or_create(DoOpenOrCreate, name, perm, callbacks);
+}
+
+inline windows_named_semaphore::windows_named_semaphore(open_only_t, const wchar_t *name)
    : m_sem_wrapper()
 {
    named_sem_callbacks callbacks(m_sem_wrapper, 0);

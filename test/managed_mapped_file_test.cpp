@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
 #if defined(BOOST_INTERPROCESS_MAPPED_FILES)
@@ -22,19 +21,43 @@
 
 using namespace boost::interprocess;
 
-inline std::string get_filename()
-{
-   std::string ret (ipcdetail::get_temporary_path());
-   ret += "/";
-   ret += test::get_process_id_name();
-   return ret;
-}
+template <class CharT>
+struct filename_traits;
 
-int main ()
+template <>
+struct filename_traits<char>
+{
+
+   static const char* get()
+   {  return filename.c_str();  }
+
+   static std::string filename;
+};
+
+std::string filename_traits<char>::filename = get_filename();
+
+
+#ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
+
+template <>
+struct filename_traits<wchar_t>
+{
+
+   static const wchar_t* get()
+   {  return filename.c_str();  }
+
+   static std::wstring filename;
+};
+
+std::wstring filename_traits<wchar_t>::filename = get_wfilename();
+
+#endif   //#ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
+
+template<class CharT>
+int test_managed_mapped_file()
 {
    const int FileSize          = 65536*10;
-   std::string filename(get_filename());
-   const char *FileName = filename.c_str();
+   const CharT *FileName = filename_traits<CharT>::get();
 
    //STL compatible allocator object for memory-mapped file
    typedef allocator<int, managed_mapped_file::segment_manager>
@@ -227,6 +250,19 @@ int main ()
    return 0;
 }
 
+int main ()
+{
+   int r;
+   r = test_managed_mapped_file<char>();
+   if(r) return r;
+   #ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
+   r = test_managed_mapped_file<wchar_t>();
+   if(r) return r;
+   #endif
+   return 0;
+}
+
+
 #else //#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
 
 int main()
@@ -235,5 +271,3 @@ int main()
 }
 
 #endif//#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
-
-#include <boost/interprocess/detail/config_end.hpp>

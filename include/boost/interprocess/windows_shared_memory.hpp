@@ -24,6 +24,7 @@
 
 #include <boost/interprocess/permissions.hpp>
 #include <boost/interprocess/detail/simple_swap.hpp>
+#include <boost/interprocess/detail/char_wchar_holder.hpp>
 
 #if !defined(BOOST_INTERPROCESS_WINDOWS)
 #error "This header can only be used in Windows operating systems"
@@ -38,7 +39,7 @@
 #include <boost/interprocess/detail/win32_api.hpp>
 #include <cstddef>
 #include <boost/cstdint.hpp>
-#include <string>
+
 
 //!\file
 //!Describes a class representing a native windows shared memory.
@@ -84,6 +85,23 @@ class windows_shared_memory
    //!Tries to open a shared memory object with name "name", with the access mode "mode".
    //!If the file does not previously exist, it throws an error.
    windows_shared_memory(open_only_t, const char *name, mode_t mode)
+   {  this->priv_open_or_create(ipcdetail::DoOpen, name, mode, 0, permissions());  }
+
+   //!Creates a new native shared memory with name "name" and at least size "size",
+   //!with the access mode "mode".
+   //!If the file previously exists, throws an error.
+   windows_shared_memory(create_only_t, const wchar_t *name, mode_t mode, std::size_t size, const permissions& perm = permissions())
+   {  this->priv_open_or_create(ipcdetail::DoCreate, name, mode, size, perm);  }
+
+   //!Tries to create a shared memory object with name "name" and at least size "size", with the
+   //!access mode "mode". If the file previously exists, it tries to open it with mode "mode".
+   //!Otherwise throws an error.
+   windows_shared_memory(open_or_create_t, const wchar_t *name, mode_t mode, std::size_t size, const permissions& perm = permissions())
+   {  this->priv_open_or_create(ipcdetail::DoOpenOrCreate, name, mode, size, perm);  }
+
+   //!Tries to open a shared memory object with name "name", with the access mode "mode".
+   //!If the file does not previously exist, it throws an error.
+   windows_shared_memory(open_only_t, const wchar_t *name, mode_t mode)
    {  this->priv_open_or_create(ipcdetail::DoOpen, name, mode, 0, permissions());  }
 
    //!Moves the ownership of "moved"'s shared memory object to *this.
@@ -132,11 +150,12 @@ class windows_shared_memory
    void priv_close();
 
    //!Closes a previously opened file mapping. Never throws.
-   bool priv_open_or_create(ipcdetail::create_enum_t type, const char *filename, mode_t mode, std::size_t size, const permissions& perm = permissions());
+   template <class CharT>
+   bool priv_open_or_create(ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, std::size_t size, const permissions& perm = permissions());
 
    void *         m_handle;
    mode_t         m_mode;
-   std::string    m_name;
+   char_wchar_holder m_name;
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
@@ -150,7 +169,7 @@ inline windows_shared_memory::~windows_shared_memory()
 {  this->priv_close(); }
 
 inline const char *windows_shared_memory::get_name() const
-{  return m_name.c_str(); }
+{  return m_name.getn(); }
 
 inline void windows_shared_memory::swap(windows_shared_memory &other)
 {
@@ -171,11 +190,10 @@ inline offset_t windows_shared_memory::get_size() const
    return (m_handle && winapi::get_file_mapping_size(m_handle, size)) ? size : 0;
 }
 
+template <class CharT>
 inline bool windows_shared_memory::priv_open_or_create
-   (ipcdetail::create_enum_t type, const char *filename, mode_t mode, std::size_t size, const permissions& perm)
+   (ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, std::size_t size, const permissions& perm)
 {
-   m_name = filename ? filename : "";
-
    unsigned long protection = 0;
    unsigned long map_access = 0;
 

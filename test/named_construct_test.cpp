@@ -7,8 +7,6 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 // intrusive/detail
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
@@ -193,4 +191,3 @@ int main ()
 }
 
 //]
-#include <boost/interprocess/detail/config_end.hpp>

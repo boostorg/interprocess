@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <fstream>
 #include <iostream>
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -111,7 +110,26 @@ int main ()
             }
          }
       }
+      #ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
+      //Now check the pattern mapping a single read only mapped_region
+      {
+         //Create a file mapping
+         shared_memory_object mapping(open_only, test::get_process_id_wname(), read_only);
 
+         //Create a single regions, mapping all the file
+         mapped_region region (mapping, read_only);
+
+         //Check pattern
+         unsigned char *pattern = static_cast<unsigned char*>(region.get_address());
+         for(std::size_t i = 0
+            ;i < FileSize
+            ;++i, ++pattern){
+            if(*pattern != static_cast<unsigned char>(i)){
+               return 1;
+            }
+         }
+      }
+      #endif   //BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
       //Now check the pattern mapping a single read only mapped_region
       {
          //Create a file mapping

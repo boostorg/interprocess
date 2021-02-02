@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include "get_process_id_name.hpp"
@@ -26,7 +25,7 @@
 //->
 
 #include <functional> //std::equal_to
-#include <boost/functional/hash.hpp> //boost::hash
+#include <boost/container_hash/hash.hpp> //boost::hash
 
 namespace bip = boost::interprocess;
 
@@ -96,5 +95,3 @@ int main()
    bip::shared_memory_object::remove(bip::test::get_process_id_name());
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

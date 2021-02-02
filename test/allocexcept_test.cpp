@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/vector.hpp>
@@ -23,6 +22,7 @@ struct InstanceCounter
 {
    InstanceCounter(){++counter;}
    InstanceCounter(const InstanceCounter&){++counter;}
+   InstanceCounter & operator=(const InstanceCounter&){  return *this;  }
   ~InstanceCounter(){--counter;}
    static std::size_t counter;
 };
@@ -92,4 +92,3 @@ int main ()
    return 0;
 }
 
-#include <boost/interprocess/detail/config_end.hpp>

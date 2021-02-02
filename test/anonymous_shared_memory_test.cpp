@@ -8,7 +8,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <iostream>
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/anonymous_shared_memory.hpp>
@@ -50,5 +49,3 @@ int main ()
    }
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

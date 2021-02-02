@@ -51,6 +51,18 @@ class windows_named_recursive_mutex
    windows_named_recursive_mutex(open_only_t, const char *name)
       : windows_named_mutex(open_only_t(), name)
    {}
+
+   windows_named_recursive_mutex(create_only_t, const wchar_t *name, const permissions &perm = permissions())
+      : windows_named_mutex(create_only_t(), name, perm)
+   {}
+
+   windows_named_recursive_mutex(open_or_create_t, const wchar_t *name, const permissions &perm = permissions())
+      : windows_named_mutex(open_or_create_t(), name, perm)
+   {}
+
+   windows_named_recursive_mutex(open_only_t, const wchar_t *name)
+      : windows_named_mutex(open_only_t(), name)
+   {}
 };
 
 }  //namespace ipcdetail {

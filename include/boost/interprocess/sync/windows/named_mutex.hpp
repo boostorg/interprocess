@@ -54,6 +54,12 @@ class windows_named_mutex
 
    windows_named_mutex(open_only_t, const char *name);
 
+   windows_named_mutex(create_only_t, const wchar_t *name, const permissions &perm = permissions());
+
+   windows_named_mutex(open_or_create_t, const wchar_t *name, const permissions &perm = permissions());
+
+   windows_named_mutex(open_only_t, const wchar_t *name);
+
    ~windows_named_mutex();
 
    void unlock();
@@ -62,6 +68,8 @@ class windows_named_mutex
    bool timed_lock(const boost::posix_time::ptime &abs_time);
 
    static bool remove(const char *name);
+
+   static bool remove(const wchar_t *name);
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
@@ -145,6 +153,29 @@ inline windows_named_mutex::windows_named_mutex(open_only_t, const char *name)
    m_named_sync.open_or_create(DoOpen, name, permissions(), callbacks);
 }
 
+inline windows_named_mutex::windows_named_mutex
+   (create_only_t, const wchar_t *name, const permissions &perm)
+   : m_mtx_wrapper()
+{
+   named_mut_callbacks callbacks(m_mtx_wrapper);
+   m_named_sync.open_or_create(DoCreate, name, perm, callbacks);
+}
+
+inline windows_named_mutex::windows_named_mutex
+   (open_or_create_t, const wchar_t *name, const permissions &perm)
+   : m_mtx_wrapper()
+{
+   named_mut_callbacks callbacks(m_mtx_wrapper);
+   m_named_sync.open_or_create(DoOpenOrCreate, name, perm, callbacks);
+}
+
+inline windows_named_mutex::windows_named_mutex(open_only_t, const wchar_t *name)
+   : m_mtx_wrapper()
+{
+   named_mut_callbacks callbacks(m_mtx_wrapper);
+   m_named_sync.open_or_create(DoOpen, name, permissions(), callbacks);
+}
+
 inline void windows_named_mutex::unlock()
 {
    m_mtx_wrapper.unlock();
@@ -166,6 +197,11 @@ inline bool windows_named_mutex::timed_lock(const boost::posix_time::ptime &abs_
 }
 
 inline bool windows_named_mutex::remove(const char *name)
+{
+   return windows_named_sync::remove(name);
+}
+
+inline bool windows_named_mutex::remove(const wchar_t *name)
 {
    return windows_named_sync::remove(name);
 }

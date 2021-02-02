@@ -7,7 +7,6 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
 #include "robust_mutex_test.hpp"
 #include <boost/interprocess/detail/robust_emulation.hpp>
 #include <boost/interprocess/sync/spin/recursive_mutex.hpp>
@@ -19,5 +18,3 @@ int main(int argc, char *argv[])
    return test::robust_mutex_test
       < ipcdetail::robust_spin_mutex<ipcdetail::spin_recursive_mutex> >(argc, argv);
 }
-
-#include <boost/interprocess/detail/config_end.hpp>

@@ -8,10 +8,9 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/detail/config_begin.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+#include <boost/config.hpp>
 
-#ifdef BOOST_INTERPROCESS_WINDOWS
+#ifdef BOOST_WINDOWS
 
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
@@ -54,11 +53,42 @@ class shared_memory_creation_test_wrapper
    {}
 };
 
+#ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
+
+static const wchar_t *wname_initialization_routine()
+{
+   static std::wstring process_name;
+   test::get_process_id_wname(process_name);
+   return process_name.c_str();
+}
+
+class shared_memory_creation_test_wrapper_w
+   : public windows_shared_memory_t
+{
+   public:
+   shared_memory_creation_test_wrapper_w(create_only_t)
+      :  windows_shared_memory_t(create_only, wname_initialization_routine(), ShmSize, read_write, 0, permissions())
+   {}
+
+   shared_memory_creation_test_wrapper_w(open_only_t)
+      :  windows_shared_memory_t(open_only, wname_initialization_routine(), read_write, 0)
+   {}
+
+   shared_memory_creation_test_wrapper_w(open_or_create_t)
+      :  windows_shared_memory_t(open_or_create, wname_initialization_routine(), ShmSize, read_write, 0, permissions())
+   {}
+};
+
+#endif   //BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
+
 
 int main ()
 {
    try{
       test::test_named_creation<shared_memory_creation_test_wrapper>();
+      #ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
+      test::test_named_creation<shared_memory_creation_test_wrapper_w>();
+      #endif
    }
    catch(std::exception &ex){
       std::cout << ex.what() << std::endl;
@@ -75,6 +105,4 @@ int main()
    return 0;
 }
 
-#endif   //#ifdef BOOST_INTERPROCESS_WINDOWS
-
-#include <boost/interprocess/detail/config_end.hpp>
+#endif   //#ifdef BOOST_WINDOWS
