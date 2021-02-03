@@ -1605,7 +1605,7 @@ Boost.Interprocess offers the following condition types:
 
    #include <boost/interprocess/sync/named_condition_any.hpp>
 
-* [classref boost::interprocess::named_condition named_condition]: A named
+* [classref boost::interprocess::named_condition_any named_condition_any]: A named
   condition variable to be used with any lock type.
 
 Named conditions are similar to anonymous conditions, but they are used in
