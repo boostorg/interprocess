@@ -5293,7 +5293,7 @@ the performance of this algorithm suffers when the memory is fragmented. This
 algorithm has linear allocation and deallocation time, so when the number
 of allocations is high, the user should use a more performance-friendly algorithm.
 
-In most 32 systems, with 8 byte alignment, "basic_size" is 8 bytes.
+In most 32 bit systems, with 8 byte alignment, "basic_size" is 8 bytes.
 This means that an allocation request of 1 byte leads to
 the creation of a 16 byte block, where 8 bytes are available to the user.
 The allocation of 8 bytes leads also to the same 16 byte block.
@@ -5330,7 +5330,7 @@ segments and big number of allocations. To form a block a minimum memory size is
 the sum of the doubly linked list and the red-black tree control data.
 The size of a block is measured in multiples of the most restrictive alignment value.
 
-In most 32 systems with 8 byte alignment the minimum size of a block is 24 byte.
+In most 32 bit systems with 8 byte alignment the minimum size of a block is 24 byte.
 When a block is allocated the control data related to the red black tree
 is overwritten by the user (because it's only needed for free blocks).
 
