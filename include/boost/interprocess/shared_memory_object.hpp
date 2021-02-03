@@ -35,7 +35,7 @@
 
 #if defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
 #  include <string>
-#  include <fcntl.h>        //O_CREAT, O_*...
+#  include <fcntl.h>        //posix_fallocate, O_CREAT, O_*...
 #  include <sys/mman.h>     //shm_xxx
 #  include <unistd.h>       //ftruncate, close
 #  include <sys/stat.h>     //mode_t, S_IRWXG, S_IRWXO, S_IRWXU,
@@ -456,6 +456,15 @@ inline bool shared_memory_object::remove(const char *filename)
 
 inline void shared_memory_object::truncate(offset_t length)
 {
+   #ifdef BOOST_INTERPROCESS_POSIX_FALLOCATE
+   int ret = posix_fallocate(m_handle, 0, length);
+
+   if (ret && ret != EOPNOTSUPP){
+      error_info err(system_error_code());
+      throw interprocess_exception(err);
+   }
+   //ftruncate fallback
+   #endif //BOOST_INTERPROCESS_POSIX_FALLOCATE
    if(0 != ftruncate(m_handle, length)){
       error_info err(system_error_code());
       throw interprocess_exception(err);

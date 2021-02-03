@@ -147,6 +147,14 @@
        (defined (_FILE_OFFSET_BITS) &&(_FILE_OFFSET_BITS  - 0 >= 64))
       #define BOOST_INTERPROCESS_UNIX_64_BIT_OR_BIGGER_OFF_T
    #endif
+
+   //////////////////////////////////////////////////////
+   //posix_fallocate
+   //////////////////////////////////////////////////////
+   #if (_XOPEN_SOURCE >= 600 || __POSIX_C_SOURCE >= 200112L)
+   #define BOOST_INTERPROCESS_POSIX_FALLOCATE
+   #endif
+
 #endif   //!defined(BOOST_INTERPROCESS_WINDOWS)
 
 #if defined(BOOST_INTERPROCESS_WINDOWS) || defined(BOOST_INTERPROCESS_POSIX_MAPPED_FILES)
