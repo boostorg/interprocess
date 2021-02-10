@@ -6802,8 +6802,9 @@ thank them:
     * `message_queue`
 
 *  Fixed bugs:
-   * [@https://github.com/boostorg/interprocess/pull/92  GitHub #92 (['"bufferstream: Correct MSVC compilation warning"])].
-   * [@https://github.com/boostorg/interprocess/pull/106 GitHub #106 (['"Use fallocate on truncate_file"])].
+   * [@https://github.com/boostorg/interprocess/issues/76 GitHub #76  (['"Cygwin compilation errors"])].
+   * [@https://github.com/boostorg/interprocess/pull/92   GitHub #92  (['"bufferstream: Correct MSVC compilation warning"])].
+   * [@https://github.com/boostorg/interprocess/pull/106  GitHub #106 (['"Use fallocate on truncate_file"])].
 
 [endsect]
 

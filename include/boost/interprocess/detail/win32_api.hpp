@@ -304,6 +304,10 @@ namespace boost {
 namespace ipwinapiext {
 typedef boost::winapi::LONG_ LSTATUS;
 
+typedef boost::winapi::DWORD_ (__stdcall *LPTHREAD_START_ROUTINE_)
+   (boost::winapi::LPVOID_ lpThreadParameter);
+
+
 //#ifndef BOOST_USE_WINDOWS_H
 //typedef boost::winapi::LARGE_INTEGER_ LARGE_INTEGER_EXT;
 //#else
@@ -322,6 +326,18 @@ BOOST_SYMBOL_IMPORT BOOST_WINAPI_DETAIL_VOID BOOST_WINAPI_WINAPI_CC SetLastError
 //File management
 BOOST_SYMBOL_IMPORT boost::winapi::DWORD_ BOOST_WINAPI_WINAPI_CC GetFileType(boost::winapi::HANDLE_ hTemplateFile);
 BOOST_SYMBOL_IMPORT boost::winapi::BOOL_ BOOST_WINAPI_WINAPI_CC FlushFileBuffers(boost::winapi::HANDLE_ hFile);
+
+//threading
+
+BOOST_SYMBOL_IMPORT boost::winapi::HANDLE_ BOOST_WINAPI_WINAPI_CC CreateThread
+   ( ::_SECURITY_ATTRIBUTES* lpThreadAttributes
+   , boost::winapi::SIZE_T_ dwStackSize
+   , boost::ipwinapiext::LPTHREAD_START_ROUTINE_ lpStartAddress
+   , boost::winapi::LPVOID_ lpParameter
+   , boost::winapi::DWORD_ dwCreationFlags
+   , boost::winapi::LPDWORD_ lpThreadId
+   );
+
 //Virtual Memory
 BOOST_SYMBOL_IMPORT boost::winapi::BOOL_ BOOST_WINAPI_WINAPI_CC VirtualLock(boost::winapi::LPVOID_ lpAddress, boost::winapi::SIZE_T_ dwSize);
 BOOST_SYMBOL_IMPORT boost::winapi::BOOL_ BOOST_WINAPI_WINAPI_CC VirtualUnlock(boost::winapi::LPVOID_ lpAddress, boost::winapi::SIZE_T_ dwSize);
@@ -363,6 +379,21 @@ namespace ipwinapiext {
 typedef ::HKEY HKEY_;
 
 #if BOOST_WINAPI_PARTITION_APP_SYSTEM
+
+//Threads
+BOOST_FORCEINLINE boost::winapi::HANDLE_ CreateThread
+   ( boost::winapi::SECURITY_ATTRIBUTES_* lpThreadAttributes
+   , boost::winapi::SIZE_T_ dwStackSize
+   , boost::ipwinapiext::LPTHREAD_START_ROUTINE_ lpStartAddress
+   , boost::winapi::LPVOID_ lpParameter
+   , boost::winapi::DWORD_ dwCreationFlags
+   , boost::winapi::LPDWORD_ lpThreadId
+)
+{
+   return ::CreateThread( reinterpret_cast< ::_SECURITY_ATTRIBUTES* >(lpThreadAttributes)
+                        , dwStackSize, lpStartAddress
+                        , lpParameter, dwCreationFlags, lpThreadId);
+}
 
 //Error handling
 BOOST_FORCEINLINE BOOST_WINAPI_DETAIL_VOID SetLastError(boost::winapi::DWORD_ dwErrCode)
