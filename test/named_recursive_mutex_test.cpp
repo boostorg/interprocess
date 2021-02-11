@@ -16,26 +16,44 @@
 #include "get_process_id_name.hpp"
 #include <exception>
 
+#if defined(BOOST_INTERPROCESS_WINDOWS)
+#include <boost/interprocess/sync/windows/named_recursive_mutex.hpp>
+#endif
+
 using namespace boost::interprocess;
 
-int main ()
+
+template<class NamedRecursiveMutex>
+int test_named_recursive_mutex()
 {
    int ret = 0;
    try{
-      named_recursive_mutex::remove(test::get_process_id_name());
-      test::test_named_creation< test::named_sync_creation_test_wrapper<named_recursive_mutex> >();
+      NamedRecursiveMutex::remove(test::get_process_id_name());
+      test::test_named_creation< test::named_sync_creation_test_wrapper<NamedRecursiveMutex> >();
       #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
-      test::test_named_creation< test::named_sync_creation_test_wrapper_w<named_recursive_mutex> >();
+      test::test_named_creation< test::named_sync_creation_test_wrapper_w<NamedRecursiveMutex> >();
       #endif   //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
-      test::test_all_lock< test::named_sync_wrapper<named_recursive_mutex> >();
-      test::test_all_mutex<test::named_sync_wrapper<named_recursive_mutex> >();
-      test::test_all_recursive_lock<test::named_sync_wrapper<named_recursive_mutex> >();
+      test::test_all_lock< test::named_sync_wrapper<NamedRecursiveMutex> >();
+      test::test_all_mutex<test::named_sync_wrapper<NamedRecursiveMutex> >();
+      test::test_all_recursive_lock<test::named_sync_wrapper<NamedRecursiveMutex> >();
    }
    catch(std::exception &ex){
       std::cout << ex.what() << std::endl;
       ret = 1;
    }
-   named_recursive_mutex::remove(test::get_process_id_name());
+   NamedRecursiveMutex::remove(test::get_process_id_name());
    return ret;
 }
 
+int main()
+{
+   int ret;
+   #if defined(BOOST_INTERPROCESS_WINDOWS)
+   ret = test_named_recursive_mutex<ipcdetail::windows_named_recursive_mutex>();
+   if (ret)
+      return ret;
+   #endif
+   ret = test_named_recursive_mutex<named_recursive_mutex>();
+   
+   return ret;
+}

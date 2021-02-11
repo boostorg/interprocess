@@ -65,6 +65,7 @@ class windows_named_semaphore
    bool timed_wait(const boost::posix_time::ptime &abs_time);
 
    static bool remove(const char *name);
+   static bool remove(const wchar_t *name);
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
@@ -106,6 +107,19 @@ class windows_named_semaphore
             , winapi_semaphore_wrapper::MaxCount, sem_perm, created);
       }
 
+      virtual bool open(create_enum_t, const wchar_t *id_name)
+      {
+         std::wstring aux_str  = L"Global\\bipc.sem.";
+         aux_str += id_name;
+         //
+         permissions sem_perm;
+         sem_perm.set_unrestricted();
+         bool created;
+         return m_sem_wrapper.open_or_create
+            ( aux_str.c_str(), static_cast<long>(m_sem_count)
+            , winapi_semaphore_wrapper::MaxCount, sem_perm, created);
+      }
+
       virtual void close()
       {
          m_sem_wrapper.close();
@@ -115,8 +129,8 @@ class windows_named_semaphore
       {}
 
       private:
-      sem_count_t m_sem_count;
       winapi_semaphore_wrapper&     m_sem_wrapper;
+      sem_count_t m_sem_count;
    };
 
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
@@ -198,6 +212,11 @@ inline bool windows_named_semaphore::timed_wait(const boost::posix_time::ptime &
 }
 
 inline bool windows_named_semaphore::remove(const char *name)
+{
+   return windows_named_sync::remove(name);
+}
+
+inline bool windows_named_semaphore::remove(const wchar_t *name)
 {
    return windows_named_sync::remove(name);
 }

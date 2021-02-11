@@ -42,6 +42,7 @@ class windows_named_sync_interface
    virtual const void *buffer_with_init_data_to_file() = 0;
    virtual void *buffer_to_store_init_data_from_file() = 0;
    virtual bool open(create_enum_t creation_type, const char *id_name) = 0;
+   virtual bool open(create_enum_t creation_type, const wchar_t *id_name) = 0;
    virtual void close() = 0;
    virtual ~windows_named_sync_interface() = 0;
 };
@@ -65,6 +66,7 @@ class windows_named_sync
    void close(windows_named_sync_interface &sync_interface);
 
    static bool remove(const char *name);
+   static bool remove(const wchar_t *name);
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
@@ -204,6 +206,19 @@ inline bool windows_named_sync::remove(const char *name)
    try{
       //Make sure a temporary path is created for shared memory
       std::string semfile;
+      ipcdetail::shared_filepath(name, semfile);
+      return winapi::unlink_file(semfile.c_str());
+   }
+   catch(...){
+      return false;
+   }
+}
+
+inline bool windows_named_sync::remove(const wchar_t *name)
+{
+   try{
+      //Make sure a temporary path is created for shared memory
+      std::wstring semfile;
       ipcdetail::shared_filepath(name, semfile);
       return winapi::unlink_file(semfile.c_str());
    }

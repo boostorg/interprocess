@@ -107,6 +107,16 @@ class windows_named_mutex
          return m_mtx_wrapper.open_or_create(aux_str.c_str(), mut_perm);
       }
 
+      virtual bool open(create_enum_t, const wchar_t *id_name)
+      {
+         std::wstring aux_str  = L"Global\\bipc.mut.";
+         aux_str += id_name;
+         //
+         permissions mut_perm;
+         mut_perm.set_unrestricted();
+         return m_mtx_wrapper.open_or_create(aux_str.c_str(), mut_perm);
+      }
+
       virtual void close()
       {
          m_mtx_wrapper.close();

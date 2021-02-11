@@ -157,7 +157,6 @@ class named_semaphore
    #if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
       typedef ipcdetail::posix_named_semaphore   impl_t;
    #elif defined(BOOST_INTERPROCESS_USE_WINDOWS)
-      #undef BOOST_INTERPROCESS_USE_WINDOWS
       typedef ipcdetail::windows_named_semaphore impl_t;
    #else
       typedef ipcdetail::shm_named_semaphore     impl_t;

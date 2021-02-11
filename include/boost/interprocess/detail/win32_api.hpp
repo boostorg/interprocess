@@ -746,6 +746,9 @@ inline bool file_time_to_local_file_time
 inline void *open_or_create_mutex(const char *name, bool initial_owner, interprocess_security_attributes *attr)
 {  return CreateMutexA(attr, (int)initial_owner, name);  }
 
+inline void *open_or_create_mutex(const wchar_t *name, bool initial_owner, interprocess_security_attributes *attr)
+{  return CreateMutexW(attr, (int)initial_owner, name);  }
+
 inline unsigned long wait_for_single_object(void *handle, unsigned long time)
 {  return WaitForSingleObject(handle, time); }
 
@@ -758,8 +761,14 @@ inline int unmap_view_of_file(void *address)
 inline void *open_or_create_semaphore(const char *name, long initial_count, long maximum_count, interprocess_security_attributes *attr)
 {  return CreateSemaphoreA(attr, initial_count, maximum_count, name);  }
 
+inline void *open_or_create_semaphore(const wchar_t *name, long initial_count, long maximum_count, interprocess_security_attributes *attr)
+{  return CreateSemaphoreW(attr, initial_count, maximum_count, name);  }
+
 inline void *open_semaphore(const char *name)
 {  return OpenSemaphoreA(semaphore_all_access, 0, name);  }
+
+inline void *open_semaphore(const wchar_t *name)
+{  return OpenSemaphoreW(semaphore_all_access, 0, name);  }
 
 inline int release_semaphore(void *handle, long release_count, long *prev_count)
 {  return ReleaseSemaphore(handle, release_count, prev_count); }
