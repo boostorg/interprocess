@@ -210,6 +210,16 @@
 
 #define BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
 
+#ifdef __clang__
+   #define BOOST_INTERPROCESS_DISABLE_DEPRECATED_WARNING _Pragma("clang diagnostic push") \
+                                                         _Pragma("clang diagnostic ignored \"-Wdeprecated-declarations\"")
+   #define BOOST_INTERPROCESS_RESTORE_WARNING            _Pragma("clang diagnostic pop")
+#else // __clang__
+   #define BOOST_INTERPROCESS_DISABLE_DEPRECATED_WARNING __pragma(warning(push)) \
+                                                         __pragma(warning(disable : 4996))
+   #define BOOST_INTERPROCESS_RESTORE_WARNING            __pragma(warning(pop))
+#endif // __clang__
+
 #endif
 
 
