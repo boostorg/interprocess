@@ -6801,11 +6801,15 @@ thank them:
     * `named_upgradable_mutex`
     * `message_queue`
 
+*  Added `BOOST_INTERPROCESS_FORCE_NATIVE_EMULATION` macro option to disable the use of generic emulation code for process
+   shared synchronization primitives instead of native POSIX or Winapi functions.
+
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/76  GitHub #76  (['"Cygwin compilation errors"])].
    * [@https://github.com/boostorg/interprocess/pull/92    GitHub #92  (['"bufferstream: Correct MSVC compilation warning"])].
    * [@https://github.com/boostorg/interprocess/pull/106   GitHub #106 (['"Use fallocate on truncate_file"])].
    * [@https://github.com/boostorg/interprocess/issues/126 GitHub #126 (['"_ReadWriteBarrier is deprecated warning when compiling with clang-cl.exe"])].
+   * [@https://github.com/boostorg/interprocess/pull/83    GitHub #83  (['"Add BOOST_INTERPROCESS_FORCE_NATIVE_EMULATION option"])].
 
 [endsect]
 
