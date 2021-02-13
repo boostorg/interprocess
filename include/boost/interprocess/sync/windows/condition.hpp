@@ -35,17 +35,17 @@ namespace boost {
 namespace interprocess {
 namespace ipcdetail {
 
-class windows_condition
+class winapi_condition
 {
-   windows_condition(const windows_condition &);
-   windows_condition &operator=(const windows_condition &);
+   winapi_condition(const winapi_condition &);
+   winapi_condition &operator=(const winapi_condition &);
 
    public:
-   windows_condition()
+   winapi_condition()
       : m_condition_data()
    {}
 
-   ~windows_condition()
+   ~winapi_condition()
    {
       //Notify all waiting threads
       //to allow POSIX semantics on condition destruction
@@ -79,8 +79,8 @@ class windows_condition
    struct condition_data
    {
       typedef boost::int32_t     integer_type;
-      typedef windows_semaphore  semaphore_type;
-      typedef windows_mutex      mutex_type;
+      typedef winapi_semaphore  semaphore_type;
+      typedef winapi_mutex      mutex_type;
 
       condition_data()
          : m_nwaiters_blocked(0)

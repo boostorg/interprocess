@@ -29,7 +29,7 @@ int main()
 {
    int ret;
    #if defined(BOOST_INTERPROCESS_WINDOWS)
-   ret = test::test_named_condition<ipcdetail::windows_named_condition_any, ipcdetail::windows_named_mutex>();
+   ret = test::test_named_condition<ipcdetail::winapi_named_condition_any, ipcdetail::winapi_named_mutex>();
    if (ret)
       return ret;
    #endif

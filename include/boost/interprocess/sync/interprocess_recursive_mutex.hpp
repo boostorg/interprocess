@@ -43,20 +43,20 @@
 #include <boost/interprocess/sync/detail/common_algorithms.hpp>
 #include <boost/assert.hpp>
 
-#if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && \
-   (defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && defined (BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES))
-   #include <boost/interprocess/sync/posix/recursive_mutex.hpp>
-   #define BOOST_INTERPROCESS_USE_POSIX
-//Experimental...
-#elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
-   #include <boost/interprocess/sync/windows/recursive_mutex.hpp>
-   #define BOOST_INTERPROCESS_USE_WINDOWS
-#elif !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+#if defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION)
    #include <boost/interprocess/sync/spin/recursive_mutex.hpp>
-   #define BOOST_INTERPROCESS_USE_GENERIC_EMULATION
+#elif defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && defined (BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES)
+   #include <boost/interprocess/sync/posix/recursive_mutex.hpp>
+   #define BOOST_INTERPROCESS_RECURSIVE_MUTEX_USE_POSIX
+//Experimental...
+#elif defined (BOOST_INTERPROCESS_WINDOWS)
+   #include <boost/interprocess/sync/windows/recursive_mutex.hpp>
+   #define BOOST_INTERPROCESS_RECURSIVE_MUTEX_USE_WINAPI
+#else
+   #error "Unsuported interprocess_recursive_mutex"
 #endif
 
-#if defined (BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
+#if defined (BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION)
 namespace boost {
 namespace interprocess {
 namespace ipcdetail{
@@ -124,19 +124,14 @@ class interprocess_recursive_mutex
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
 
-   #if defined (BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
-      #undef BOOST_INTERPROCESS_USE_GENERIC_EMULATION
+   #if defined(BOOST_INTERPROCESS_RECURSIVE_MUTEX_USE_POSIX)
+      ipcdetail::posix_recursive_mutex mutex;
+   #elif defined(BOOST_INTERPROCESS_RECURSIVE_MUTEX_USE_WINAPI)
+      ipcdetail::winapi_recursive_mutex mutex;
+   #else
       void take_ownership(){ mutex.take_ownership(); }
       friend class ipcdetail::robust_emulation_helpers::mutex_traits<interprocess_recursive_mutex>;
       ipcdetail::spin_recursive_mutex mutex;
-   #elif defined(BOOST_INTERPROCESS_USE_POSIX)
-      #undef BOOST_INTERPROCESS_USE_POSIX
-      ipcdetail::posix_recursive_mutex mutex;
-   #elif defined(BOOST_INTERPROCESS_USE_WINDOWS)
-      #undef BOOST_INTERPROCESS_USE_WINDOWS
-      ipcdetail::windows_recursive_mutex mutex;
-   #else
-      #error "Unknown platform for interprocess_mutex"
    #endif
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };

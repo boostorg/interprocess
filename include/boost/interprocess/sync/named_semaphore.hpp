@@ -32,9 +32,9 @@
 //Experimental...
 #elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
    #include <boost/interprocess/sync/windows/named_semaphore.hpp>
-   #define BOOST_INTERPROCESS_USE_WINDOWS
+   #define BOOST_INTERPROCESS_NAMED_SEMAPHORE_USE_WINAPI
 #else
-#include <boost/interprocess/sync/shm/named_semaphore.hpp>
+   #include <boost/interprocess/sync/shm/named_semaphore.hpp>
 #endif
 
 //!\file
@@ -156,8 +156,8 @@ class named_semaphore
 
    #if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
       typedef ipcdetail::posix_named_semaphore   impl_t;
-   #elif defined(BOOST_INTERPROCESS_USE_WINDOWS)
-      typedef ipcdetail::windows_named_semaphore impl_t;
+   #elif defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USE_WINAPI)
+      typedef ipcdetail::winapi_named_semaphore impl_t;
    #else
       typedef ipcdetail::shm_named_semaphore     impl_t;
    #endif

@@ -34,30 +34,30 @@ namespace ipcdetail {
 
 
 
-class windows_named_semaphore
+class winapi_named_semaphore
 {
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //Non-copyable
-   windows_named_semaphore();
-   windows_named_semaphore(const windows_named_semaphore &);
-   windows_named_semaphore &operator=(const windows_named_semaphore &);
+   winapi_named_semaphore();
+   winapi_named_semaphore(const winapi_named_semaphore &);
+   winapi_named_semaphore &operator=(const winapi_named_semaphore &);
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
-   windows_named_semaphore(create_only_t, const char *name, unsigned int initialCount, const permissions &perm = permissions());
+   winapi_named_semaphore(create_only_t, const char *name, unsigned int initialCount, const permissions &perm = permissions());
 
-   windows_named_semaphore(open_or_create_t, const char *name, unsigned int initialCount, const permissions &perm = permissions());
+   winapi_named_semaphore(open_or_create_t, const char *name, unsigned int initialCount, const permissions &perm = permissions());
 
-   windows_named_semaphore(open_only_t, const char *name);
+   winapi_named_semaphore(open_only_t, const char *name);
 
-   windows_named_semaphore(create_only_t, const wchar_t *name, unsigned int initialCount, const permissions &perm = permissions());
+   winapi_named_semaphore(create_only_t, const wchar_t *name, unsigned int initialCount, const permissions &perm = permissions());
 
-   windows_named_semaphore(open_or_create_t, const wchar_t *name, unsigned int initialCount, const permissions &perm = permissions());
+   winapi_named_semaphore(open_or_create_t, const wchar_t *name, unsigned int initialCount, const permissions &perm = permissions());
 
-   windows_named_semaphore(open_only_t, const wchar_t *name);
+   winapi_named_semaphore(open_only_t, const wchar_t *name);
 
-   ~windows_named_semaphore();
+   ~winapi_named_semaphore();
 
    void post();
    void wait();
@@ -136,16 +136,16 @@ class windows_named_semaphore
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
-inline windows_named_semaphore::~windows_named_semaphore()
+inline winapi_named_semaphore::~winapi_named_semaphore()
 {
    named_sem_callbacks callbacks(m_sem_wrapper, m_sem_wrapper.value());
    m_named_sync.close(callbacks);
 }
 
-inline void windows_named_semaphore::dont_close_on_destruction()
+inline void winapi_named_semaphore::dont_close_on_destruction()
 {}
 
-inline windows_named_semaphore::windows_named_semaphore
+inline winapi_named_semaphore::winapi_named_semaphore
    (create_only_t, const char *name, unsigned int initial_count, const permissions &perm)
    : m_sem_wrapper()
 {
@@ -153,7 +153,7 @@ inline windows_named_semaphore::windows_named_semaphore
    m_named_sync.open_or_create(DoCreate, name, perm, callbacks);
 }
 
-inline windows_named_semaphore::windows_named_semaphore
+inline winapi_named_semaphore::winapi_named_semaphore
    (open_or_create_t, const char *name, unsigned int initial_count, const permissions &perm)
    : m_sem_wrapper()
 {
@@ -161,14 +161,14 @@ inline windows_named_semaphore::windows_named_semaphore
    m_named_sync.open_or_create(DoOpenOrCreate, name, perm, callbacks);
 }
 
-inline windows_named_semaphore::windows_named_semaphore(open_only_t, const char *name)
+inline winapi_named_semaphore::winapi_named_semaphore(open_only_t, const char *name)
    : m_sem_wrapper()
 {
    named_sem_callbacks callbacks(m_sem_wrapper, 0);
    m_named_sync.open_or_create(DoOpen, name, permissions(), callbacks);
 }
 
-inline windows_named_semaphore::windows_named_semaphore
+inline winapi_named_semaphore::winapi_named_semaphore
    (create_only_t, const wchar_t *name, unsigned int initial_count, const permissions &perm)
    : m_sem_wrapper()
 {
@@ -176,7 +176,7 @@ inline windows_named_semaphore::windows_named_semaphore
    m_named_sync.open_or_create(DoCreate, name, perm, callbacks);
 }
 
-inline windows_named_semaphore::windows_named_semaphore
+inline winapi_named_semaphore::winapi_named_semaphore
    (open_or_create_t, const wchar_t *name, unsigned int initial_count, const permissions &perm)
    : m_sem_wrapper()
 {
@@ -184,39 +184,39 @@ inline windows_named_semaphore::windows_named_semaphore
    m_named_sync.open_or_create(DoOpenOrCreate, name, perm, callbacks);
 }
 
-inline windows_named_semaphore::windows_named_semaphore(open_only_t, const wchar_t *name)
+inline winapi_named_semaphore::winapi_named_semaphore(open_only_t, const wchar_t *name)
    : m_sem_wrapper()
 {
    named_sem_callbacks callbacks(m_sem_wrapper, 0);
    m_named_sync.open_or_create(DoOpen, name, permissions(), callbacks);
 }
 
-inline void windows_named_semaphore::post()
+inline void winapi_named_semaphore::post()
 {
    m_sem_wrapper.post();
 }
 
-inline void windows_named_semaphore::wait()
+inline void winapi_named_semaphore::wait()
 {
    m_sem_wrapper.wait();
 }
 
-inline bool windows_named_semaphore::try_wait()
+inline bool winapi_named_semaphore::try_wait()
 {
    return m_sem_wrapper.try_wait();
 }
 
-inline bool windows_named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
+inline bool winapi_named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
 {
    return m_sem_wrapper.timed_wait(abs_time);
 }
 
-inline bool windows_named_semaphore::remove(const char *name)
+inline bool winapi_named_semaphore::remove(const char *name)
 {
    return windows_named_sync::remove(name);
 }
 
-inline bool windows_named_semaphore::remove(const wchar_t *name)
+inline bool winapi_named_semaphore::remove(const wchar_t *name)
 {
    return windows_named_sync::remove(name);
 }

@@ -46,7 +46,7 @@ int main()
 {
    int ret;
    #if defined(BOOST_INTERPROCESS_WINDOWS)
-   ret = test_named_mutex<ipcdetail::windows_named_mutex>();
+   ret = test_named_mutex<ipcdetail::winapi_named_mutex>();
    if (ret)
       return ret;
    #endif

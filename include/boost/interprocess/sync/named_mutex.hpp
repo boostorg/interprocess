@@ -29,12 +29,12 @@
 
 #if defined(BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
    #include <boost/interprocess/sync/posix/named_mutex.hpp>
-   #define BOOST_INTERPROCESS_USE_POSIX_SEMAPHORES
+   #define BOOST_INTERPROCESS_NAMED_MUTEX_USE_POSIX
 #elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
    #include <boost/interprocess/sync/windows/named_mutex.hpp>
-   #define BOOST_INTERPROCESS_USE_WINDOWS
+   #define BOOST_INTERPROCESS_NAMED_MUTEX_USE_WINAPI
 #else
-#include <boost/interprocess/sync/shm/named_mutex.hpp>
+   #include <boost/interprocess/sync/shm/named_mutex.hpp>
 #endif
 
 //!\file
@@ -154,12 +154,10 @@ class named_mutex
    void dont_close_on_destruction();
 
    public:
-   #if defined(BOOST_INTERPROCESS_USE_POSIX_SEMAPHORES)
+   #if defined(BOOST_INTERPROCESS_NAMED_MUTEX_USE_POSIX)
       typedef ipcdetail::posix_named_mutex      internal_mutex_type;
-      #undef BOOST_INTERPROCESS_USE_POSIX_SEMAPHORES
-   #elif defined(BOOST_INTERPROCESS_USE_WINDOWS)
-      typedef ipcdetail::windows_named_mutex    internal_mutex_type;
-      #undef BOOST_INTERPROCESS_USE_WINDOWS
+   #elif defined(BOOST_INTERPROCESS_NAMED_MUTEX_USE_WINAPI)
+      typedef ipcdetail::winapi_named_mutex    internal_mutex_type;
    #else
       typedef ipcdetail::shm_named_mutex        internal_mutex_type;
    #endif

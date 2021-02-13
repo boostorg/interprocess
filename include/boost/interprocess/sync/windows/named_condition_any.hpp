@@ -68,18 +68,18 @@ struct named_cond_callbacks_str<wchar_t>
    {  return L"_ul";  }
 };
 
-class windows_named_condition_any
+class winapi_named_condition_any
 {
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //Non-copyable
-   windows_named_condition_any();
-   windows_named_condition_any(const windows_named_condition_any &);
-   windows_named_condition_any &operator=(const windows_named_condition_any &);
+   winapi_named_condition_any();
+   winapi_named_condition_any(const winapi_named_condition_any &);
+   winapi_named_condition_any &operator=(const winapi_named_condition_any &);
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
-   windows_named_condition_any
+   winapi_named_condition_any
       (create_only_t, const char *name, const permissions &perm = permissions())
       : m_condition_data()
    {
@@ -87,7 +87,7 @@ class windows_named_condition_any
       m_named_sync.open_or_create(DoCreate, name, perm, callbacks);
    }
 
-   windows_named_condition_any
+   winapi_named_condition_any
       (open_or_create_t, const char *name, const permissions &perm = permissions())
       : m_condition_data()
    {
@@ -95,7 +95,7 @@ class windows_named_condition_any
       m_named_sync.open_or_create(DoOpenOrCreate, name, perm, callbacks);
    }
 
-   windows_named_condition_any(open_only_t, const char *name)
+   winapi_named_condition_any(open_only_t, const char *name)
       : m_condition_data()
    {
       named_cond_callbacks callbacks(m_condition_data.get_members());
@@ -104,7 +104,7 @@ class windows_named_condition_any
 
    #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
-   windows_named_condition_any
+   winapi_named_condition_any
       (create_only_t, const wchar_t *name, const permissions &perm = permissions())
       : m_condition_data()
    {
@@ -112,7 +112,7 @@ class windows_named_condition_any
       m_named_sync.open_or_create(DoCreate, name, perm, callbacks);
    }
 
-   windows_named_condition_any
+   winapi_named_condition_any
       (open_or_create_t, const wchar_t *name, const permissions &perm = permissions())
       : m_condition_data()
    {
@@ -120,7 +120,7 @@ class windows_named_condition_any
       m_named_sync.open_or_create(DoOpenOrCreate, name, perm, callbacks);
    }
 
-   windows_named_condition_any(open_only_t, const wchar_t *name)
+   winapi_named_condition_any(open_only_t, const wchar_t *name)
       : m_condition_data()
    {
       named_cond_callbacks callbacks(m_condition_data.get_members());
@@ -129,7 +129,7 @@ class windows_named_condition_any
 
    #endif   //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
-   ~windows_named_condition_any()
+   ~winapi_named_condition_any()
    {
       named_cond_callbacks callbacks(m_condition_data.get_members());
       m_named_sync.close(callbacks);

@@ -49,7 +49,7 @@ int main()
 {
    int ret;
    #if defined(BOOST_INTERPROCESS_WINDOWS)
-   ret = test_named_recursive_mutex<ipcdetail::windows_named_recursive_mutex>();
+   ret = test_named_recursive_mutex<ipcdetail::winapi_named_recursive_mutex>();
    if (ret)
       return ret;
    #endif

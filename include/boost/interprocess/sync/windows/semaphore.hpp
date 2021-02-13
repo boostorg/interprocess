@@ -34,14 +34,14 @@ namespace boost {
 namespace interprocess {
 namespace ipcdetail {
 
-class windows_semaphore
+class winapi_semaphore
 {
-   windows_semaphore(const windows_semaphore &);
-   windows_semaphore &operator=(const windows_semaphore &);
+   winapi_semaphore(const winapi_semaphore &);
+   winapi_semaphore &operator=(const winapi_semaphore &);
    public:
 
-   windows_semaphore(unsigned int initialCount);
-   ~windows_semaphore();
+   winapi_semaphore(unsigned int initialCount);
+   ~winapi_semaphore();
 
    void post(unsigned int release_count = 1);
    void wait();
@@ -53,7 +53,7 @@ class windows_semaphore
    const unsigned initial_count_;
 };
 
-inline windows_semaphore::windows_semaphore(unsigned int initialCount)
+inline winapi_semaphore::winapi_semaphore(unsigned int initialCount)
    : id_(this), initial_count_(initialCount)
 {
    sync_handles &handles =
@@ -67,14 +67,14 @@ inline windows_semaphore::windows_semaphore(unsigned int initialCount)
    (void)open_or_created;
 }
 
-inline windows_semaphore::~windows_semaphore()
+inline winapi_semaphore::~winapi_semaphore()
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
    handles.destroy_handle(this->id_);
 }
 
-inline void windows_semaphore::wait()
+inline void winapi_semaphore::wait()
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
@@ -83,7 +83,7 @@ inline void windows_semaphore::wait()
    sem.wait();
 }
 
-inline bool windows_semaphore::try_wait()
+inline bool winapi_semaphore::try_wait()
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
@@ -92,7 +92,7 @@ inline bool windows_semaphore::try_wait()
    return sem.try_wait();
 }
 
-inline bool windows_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
+inline bool winapi_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
@@ -101,7 +101,7 @@ inline bool windows_semaphore::timed_wait(const boost::posix_time::ptime &abs_ti
    return sem.timed_wait(abs_time);
 }
 
-inline void windows_semaphore::post(unsigned release_count)
+inline void winapi_semaphore::post(unsigned release_count)
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();

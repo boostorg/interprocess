@@ -29,7 +29,7 @@
 #include <boost/interprocess/sync/detail/locks.hpp>
 #if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
    #include <boost/interprocess/sync/windows/named_condition_any.hpp>
-   #define BOOST_INTERPROCESS_USE_WINDOWS
+   #define BOOST_INTERPROCESS_NAMED_CONDITION_ANY_USE_WINAPI
 #else
    #include <boost/interprocess/sync/shm/named_condition_any.hpp>
 #endif
@@ -183,8 +183,8 @@ class named_condition_any
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
-   #if defined(BOOST_INTERPROCESS_USE_WINDOWS)
-   typedef ipcdetail::windows_named_condition_any   condition_any_type;
+   #if defined(BOOST_INTERPROCESS_NAMED_CONDITION_ANY_USE_WINAPI)
+   typedef ipcdetail::winapi_named_condition_any   condition_any_type;
    #else
    typedef ipcdetail::shm_named_condition_any       condition_any_type;
    #endif

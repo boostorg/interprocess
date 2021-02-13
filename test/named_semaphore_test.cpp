@@ -137,7 +137,7 @@ int main()
 {
    int ret;
    #if defined(BOOST_INTERPROCESS_WINDOWS)
-   ret = test_named_semaphore<ipcdetail::windows_named_semaphore>();
+   ret = test_named_semaphore<ipcdetail::winapi_named_semaphore>();
    if (ret)
       return ret;
    #endif

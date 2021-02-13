@@ -37,30 +37,30 @@ namespace ipcdetail {
 
 
 
-class windows_named_mutex
+class winapi_named_mutex
 {
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //Non-copyable
-   windows_named_mutex();
-   windows_named_mutex(const windows_named_mutex &);
-   windows_named_mutex &operator=(const windows_named_mutex &);
+   winapi_named_mutex();
+   winapi_named_mutex(const winapi_named_mutex &);
+   winapi_named_mutex &operator=(const winapi_named_mutex &);
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
-   windows_named_mutex(create_only_t, const char *name, const permissions &perm = permissions());
+   winapi_named_mutex(create_only_t, const char *name, const permissions &perm = permissions());
 
-   windows_named_mutex(open_or_create_t, const char *name, const permissions &perm = permissions());
+   winapi_named_mutex(open_or_create_t, const char *name, const permissions &perm = permissions());
 
-   windows_named_mutex(open_only_t, const char *name);
+   winapi_named_mutex(open_only_t, const char *name);
 
-   windows_named_mutex(create_only_t, const wchar_t *name, const permissions &perm = permissions());
+   winapi_named_mutex(create_only_t, const wchar_t *name, const permissions &perm = permissions());
 
-   windows_named_mutex(open_or_create_t, const wchar_t *name, const permissions &perm = permissions());
+   winapi_named_mutex(open_or_create_t, const wchar_t *name, const permissions &perm = permissions());
 
-   windows_named_mutex(open_only_t, const wchar_t *name);
+   winapi_named_mutex(open_only_t, const wchar_t *name);
 
-   ~windows_named_mutex();
+   ~winapi_named_mutex();
 
    void unlock();
    void lock();
@@ -131,16 +131,16 @@ class windows_named_mutex
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
-inline windows_named_mutex::~windows_named_mutex()
+inline winapi_named_mutex::~winapi_named_mutex()
 {
    named_mut_callbacks callbacks(m_mtx_wrapper);
    m_named_sync.close(callbacks);
 }
 
-inline void windows_named_mutex::dont_close_on_destruction()
+inline void winapi_named_mutex::dont_close_on_destruction()
 {}
 
-inline windows_named_mutex::windows_named_mutex
+inline winapi_named_mutex::winapi_named_mutex
    (create_only_t, const char *name, const permissions &perm)
    : m_mtx_wrapper()
 {
@@ -148,7 +148,7 @@ inline windows_named_mutex::windows_named_mutex
    m_named_sync.open_or_create(DoCreate, name, perm, callbacks);
 }
 
-inline windows_named_mutex::windows_named_mutex
+inline winapi_named_mutex::winapi_named_mutex
    (open_or_create_t, const char *name, const permissions &perm)
    : m_mtx_wrapper()
 {
@@ -156,14 +156,14 @@ inline windows_named_mutex::windows_named_mutex
    m_named_sync.open_or_create(DoOpenOrCreate, name, perm, callbacks);
 }
 
-inline windows_named_mutex::windows_named_mutex(open_only_t, const char *name)
+inline winapi_named_mutex::winapi_named_mutex(open_only_t, const char *name)
    : m_mtx_wrapper()
 {
    named_mut_callbacks callbacks(m_mtx_wrapper);
    m_named_sync.open_or_create(DoOpen, name, permissions(), callbacks);
 }
 
-inline windows_named_mutex::windows_named_mutex
+inline winapi_named_mutex::winapi_named_mutex
    (create_only_t, const wchar_t *name, const permissions &perm)
    : m_mtx_wrapper()
 {
@@ -171,7 +171,7 @@ inline windows_named_mutex::windows_named_mutex
    m_named_sync.open_or_create(DoCreate, name, perm, callbacks);
 }
 
-inline windows_named_mutex::windows_named_mutex
+inline winapi_named_mutex::winapi_named_mutex
    (open_or_create_t, const wchar_t *name, const permissions &perm)
    : m_mtx_wrapper()
 {
@@ -179,39 +179,39 @@ inline windows_named_mutex::windows_named_mutex
    m_named_sync.open_or_create(DoOpenOrCreate, name, perm, callbacks);
 }
 
-inline windows_named_mutex::windows_named_mutex(open_only_t, const wchar_t *name)
+inline winapi_named_mutex::winapi_named_mutex(open_only_t, const wchar_t *name)
    : m_mtx_wrapper()
 {
    named_mut_callbacks callbacks(m_mtx_wrapper);
    m_named_sync.open_or_create(DoOpen, name, permissions(), callbacks);
 }
 
-inline void windows_named_mutex::unlock()
+inline void winapi_named_mutex::unlock()
 {
    m_mtx_wrapper.unlock();
 }
 
-inline void windows_named_mutex::lock()
+inline void winapi_named_mutex::lock()
 {
    m_mtx_wrapper.lock();
 }
 
-inline bool windows_named_mutex::try_lock()
+inline bool winapi_named_mutex::try_lock()
 {
    return m_mtx_wrapper.try_lock();
 }
 
-inline bool windows_named_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
+inline bool winapi_named_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
 {
    return m_mtx_wrapper.timed_lock(abs_time);
 }
 
-inline bool windows_named_mutex::remove(const char *name)
+inline bool winapi_named_mutex::remove(const char *name)
 {
    return windows_named_sync::remove(name);
 }
 
-inline bool windows_named_mutex::remove(const wchar_t *name)
+inline bool winapi_named_mutex::remove(const wchar_t *name)
 {
    return windows_named_sync::remove(name);
 }
