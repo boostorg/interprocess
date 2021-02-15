@@ -37,11 +37,29 @@ namespace interprocess {
 
 namespace ipcdetail {
 
-template<class AllocationAlgorithm>
+template
+      <
+         class CharType,
+         class AllocationAlgorithm,
+         template<class IndexConfig> class IndexType
+      >
 struct shmem_open_or_create
 {
-   typedef  ipcdetail::managed_open_or_create_impl
-      < shared_memory_object, AllocationAlgorithm::Alignment, true, false> type;
+   static const std::size_t segment_manager_alignment = boost::move_detail::alignment_of
+         < segment_manager
+               < CharType
+               , AllocationAlgorithm
+               , IndexType>
+         >::value;
+   static const std::size_t final_segment_manager_alignment
+      = segment_manager_alignment > AllocationAlgorithm::Alignment
+      ? segment_manager_alignment : AllocationAlgorithm::Alignment;
+
+   typedef ipcdetail::managed_open_or_create_impl
+      < shared_memory_object
+      , final_segment_manager_alignment
+      , true
+      , false> type;
 };
 
 }  //namespace ipcdetail {
@@ -57,15 +75,18 @@ template
       >
 class basic_managed_shared_memory
    : public ipcdetail::basic_managed_memory_impl
-      <CharType, AllocationAlgorithm, IndexType
-      ,ipcdetail::shmem_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>
-   , private ipcdetail::shmem_open_or_create<AllocationAlgorithm>::type
+      < CharType, AllocationAlgorithm, IndexType
+      , ipcdetail::shmem_open_or_create<CharType, AllocationAlgorithm, IndexType>::type::ManagedOpenOrCreateUserOffset>
+   , private ipcdetail::shmem_open_or_create<CharType, AllocationAlgorithm, IndexType>::type
 {
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+   typedef typename ipcdetail::shmem_open_or_create
+      < CharType
+      , AllocationAlgorithm
+      , IndexType>::type                                 base2_t;
    typedef ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType,
-      ipcdetail::shmem_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>   base_t;
-   typedef typename ipcdetail::shmem_open_or_create<AllocationAlgorithm>::type                     base2_t;
+      base2_t::ManagedOpenOrCreateUserOffset>            base_t;
 
    typedef ipcdetail::create_open_func<base_t>        create_open_func_t;
 

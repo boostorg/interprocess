@@ -38,12 +38,31 @@ namespace interprocess {
 
 namespace ipcdetail {
 
-template<class AllocationAlgorithm>
+template
+      <
+         class CharType,
+         class AllocationAlgorithm,
+         template<class IndexConfig> class IndexType
+      >
 struct wshmem_open_or_create
 {
+   static const std::size_t segment_manager_alignment = boost::move_detail::alignment_of
+         < segment_manager
+               < CharType
+               , AllocationAlgorithm
+               , IndexType>
+         >::value;
+   static const std::size_t final_segment_manager_alignment
+      = segment_manager_alignment > AllocationAlgorithm::Alignment
+      ? segment_manager_alignment : AllocationAlgorithm::Alignment;
+
    typedef  ipcdetail::managed_open_or_create_impl
-      < windows_shared_memory, AllocationAlgorithm::Alignment, false, false> type;
+      < windows_shared_memory
+      , final_segment_manager_alignment
+      , false
+      , false> type;
 };
+
 
 }  //namespace ipcdetail {
 
@@ -67,13 +86,15 @@ template
 class basic_managed_windows_shared_memory
    : public ipcdetail::basic_managed_memory_impl
       < CharType, AllocationAlgorithm, IndexType
-      , ipcdetail::wshmem_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>
+      , ipcdetail::wshmem_open_or_create
+         <CharType, AllocationAlgorithm, IndexType>::type::ManagedOpenOrCreateUserOffset>
 {
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    typedef ipcdetail::basic_managed_memory_impl
-      <CharType, AllocationAlgorithm, IndexType,
-      ipcdetail::wshmem_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>   base_t;
+      < CharType, AllocationAlgorithm, IndexType
+      , ipcdetail::wshmem_open_or_create
+         <CharType, AllocationAlgorithm, IndexType>::type::ManagedOpenOrCreateUserOffset>   base_t;
    typedef ipcdetail::create_open_func<base_t>        create_open_func_t;
 
    basic_managed_windows_shared_memory *get_this_pointer()
@@ -233,7 +254,8 @@ class basic_managed_windows_shared_memory
    }
 
    private:
-   typename ipcdetail::wshmem_open_or_create<AllocationAlgorithm>::type m_wshm;
+   typename ipcdetail::wshmem_open_or_create
+      <CharType, AllocationAlgorithm, IndexType>::type m_wshm;
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 

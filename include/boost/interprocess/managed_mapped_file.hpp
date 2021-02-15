@@ -38,11 +38,29 @@ namespace boost {
 namespace interprocess {
 namespace ipcdetail {
 
-template<class AllocationAlgorithm>
+template
+      <
+         class CharType,
+         class AllocationAlgorithm,
+         template<class IndexConfig> class IndexType
+      >
 struct mfile_open_or_create
 {
+   static const std::size_t segment_manager_alignment = boost::move_detail::alignment_of
+         < segment_manager
+               < CharType
+               , AllocationAlgorithm
+               , IndexType>
+         >::value;
+   static const std::size_t final_segment_manager_alignment
+      = segment_manager_alignment > AllocationAlgorithm::Alignment
+      ? segment_manager_alignment : AllocationAlgorithm::Alignment;
+
    typedef  ipcdetail::managed_open_or_create_impl
-      < file_wrapper, AllocationAlgorithm::Alignment, true, false> type;
+      < file_wrapper
+      , final_segment_manager_alignment
+      , true
+      , false> type;
 };
 
 }  //namespace ipcdetail {
@@ -59,15 +77,17 @@ template
 class basic_managed_mapped_file
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    : public ipcdetail::basic_managed_memory_impl
-      <CharType, AllocationAlgorithm, IndexType
-      ,ipcdetail::mfile_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>
+      < CharType, AllocationAlgorithm, IndexType
+      , ipcdetail::mfile_open_or_create
+         <CharType, AllocationAlgorithm, IndexType>::type::ManagedOpenOrCreateUserOffset>
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 {
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    public:
    typedef ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType,
-      ipcdetail::mfile_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>   base_t;
+      ipcdetail::mfile_open_or_create<CharType, AllocationAlgorithm, IndexType>
+         ::type::ManagedOpenOrCreateUserOffset>   base_t;
    typedef ipcdetail::file_wrapper device_type;
 
    private:
@@ -317,7 +337,8 @@ class basic_managed_mapped_file
    }
 
    private:
-   typename ipcdetail::mfile_open_or_create<AllocationAlgorithm>::type m_mfile;
+   typename ipcdetail::mfile_open_or_create
+      <CharType, AllocationAlgorithm, IndexType>::type m_mfile;
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 

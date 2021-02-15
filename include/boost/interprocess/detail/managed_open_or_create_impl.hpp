@@ -81,15 +81,14 @@ class managed_open_or_create_impl
       CorruptedSegment
    };
 
+   static const std::size_t RequiredAlignment =
+      MemAlignment ? MemAlignment
+                   : boost::container::dtl::alignment_of< boost::container::dtl::max_align_t >::value
+                   ;
+
    public:
-   static const std::size_t
-      ManagedOpenOrCreateUserOffset =
-         ct_rounded_size
-            < sizeof(boost::uint32_t)
-            , MemAlignment ? (MemAlignment) :
-               (::boost::container::dtl::alignment_of
-                  < ::boost::container::dtl::max_align_t >::value)
-            >::value;
+   static const std::size_t ManagedOpenOrCreateUserOffset =
+      ct_rounded_size<sizeof(boost::uint32_t), RequiredAlignment>::value;
 
    managed_open_or_create_impl()
    {}

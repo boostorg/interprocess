@@ -42,12 +42,31 @@ namespace interprocess {
 
 namespace ipcdetail {
 
-template<class AllocationAlgorithm>
+template
+      <
+         class CharType,
+         class AllocationAlgorithm,
+         template<class IndexConfig> class IndexType
+      >
 struct xsishmem_open_or_create
 {
-   typedef  ipcdetail::managed_open_or_create_impl                 //!FileBased, StoreDevice
-      < xsi_shared_memory_file_wrapper, AllocationAlgorithm::Alignment, false, true> type;
+   static const std::size_t segment_manager_alignment = boost::move_detail::alignment_of
+         < segment_manager
+               < CharType
+               , AllocationAlgorithm
+               , IndexType>
+         >::value;
+   static const std::size_t final_segment_manager_alignment
+      = segment_manager_alignment > AllocationAlgorithm::Alignment
+      ? segment_manager_alignment : AllocationAlgorithm::Alignment;
+
+   typedef  ipcdetail::managed_open_or_create_impl
+      < xsi_shared_memory_file_wrapper
+      , final_segment_manager_alignment
+      , false
+      , true> type;
 };
+
 
 }  //namespace ipcdetail {
 
@@ -63,18 +82,21 @@ template
 class basic_managed_xsi_shared_memory
    : public ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType
-      ,ipcdetail::xsishmem_open_or_create<AllocationAlgorithm>::type::ManagedOpenOrCreateUserOffset>
-   , private ipcdetail::xsishmem_open_or_create<AllocationAlgorithm>::type
+      ,ipcdetail::xsishmem_open_or_create<CharType, AllocationAlgorithm, IndexType>
+         ::type::ManagedOpenOrCreateUserOffset>
+   , private ipcdetail::xsishmem_open_or_create
+      <CharType, AllocationAlgorithm, IndexType>::type
 {
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    public:
    typedef xsi_shared_memory_file_wrapper device_type;
 
    public:
-   typedef typename ipcdetail::xsishmem_open_or_create<AllocationAlgorithm>::type base2_t;
+   typedef typename ipcdetail::xsishmem_open_or_create
+      <CharType, AllocationAlgorithm, IndexType>::type base2_t;
    typedef ipcdetail::basic_managed_memory_impl
       <CharType, AllocationAlgorithm, IndexType,
-      base2_t::ManagedOpenOrCreateUserOffset>   base_t;
+      base2_t::ManagedOpenOrCreateUserOffset>          base_t;
 
    typedef ipcdetail::create_open_func<base_t>        create_open_func_t;
 
