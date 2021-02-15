@@ -51,7 +51,7 @@ class file_lock
    public:
    //!Constructs an empty file mapping.
    //!Does not throw
-   file_lock()
+   file_lock() BOOST_NOEXCEPT
       :  m_file_hnd(file_handle_t(ipcdetail::invalid_file()))
    {}
 
@@ -71,14 +71,14 @@ class file_lock
    //!Moves the ownership of "moved"'s file mapping object to *this.
    //!After the call, "moved" does not represent any file mapping object.
    //!Does not throw
-   file_lock(BOOST_RV_REF(file_lock) moved)
+   file_lock(BOOST_RV_REF(file_lock) moved) BOOST_NOEXCEPT
       :  m_file_hnd(file_handle_t(ipcdetail::invalid_file()))
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s file mapping to *this.
    //!After the call, "moved" does not represent any file mapping.
    //!Does not throw
-   file_lock &operator=(BOOST_RV_REF(file_lock) moved)
+   file_lock &operator=(BOOST_RV_REF(file_lock) moved) BOOST_NOEXCEPT
    {
       file_lock tmp(boost::move(moved));
       this->swap(tmp);
@@ -90,7 +90,7 @@ class file_lock
 
    //!Swaps two file_locks.
    //!Does not throw.
-   void swap(file_lock &other)
+   void swap(file_lock &other) BOOST_NOEXCEPT
    {
       file_handle_t tmp = m_file_hnd;
       m_file_hnd = other.m_file_hnd;
