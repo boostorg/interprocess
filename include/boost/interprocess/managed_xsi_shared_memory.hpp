@@ -122,7 +122,7 @@ class basic_managed_xsi_shared_memory
 
    //!Default constructor. Does nothing.
    //!Useful in combination with move semantics
-   basic_managed_xsi_shared_memory()
+   basic_managed_xsi_shared_memory() BOOST_NOEXCEPT
    {}
 
    //!Creates shared memory and creates and places the segment manager.
@@ -170,7 +170,7 @@ class basic_managed_xsi_shared_memory
 
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
-   basic_managed_xsi_shared_memory(BOOST_RV_REF(basic_managed_xsi_shared_memory) moved)
+   basic_managed_xsi_shared_memory(BOOST_RV_REF(basic_managed_xsi_shared_memory) moved) BOOST_NOEXCEPT
    {
       basic_managed_xsi_shared_memory tmp;
       this->swap(moved);
@@ -179,7 +179,7 @@ class basic_managed_xsi_shared_memory
 
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
-   basic_managed_xsi_shared_memory &operator=(BOOST_RV_REF(basic_managed_xsi_shared_memory) moved)
+   basic_managed_xsi_shared_memory &operator=(BOOST_RV_REF(basic_managed_xsi_shared_memory) moved) BOOST_NOEXCEPT
    {
       basic_managed_xsi_shared_memory tmp(boost::move(moved));
       this->swap(tmp);
@@ -188,7 +188,7 @@ class basic_managed_xsi_shared_memory
 
    //!Swaps the ownership of the managed shared memories managed by *this and other.
    //!Never throws.
-   void swap(basic_managed_xsi_shared_memory &other)
+   void swap(basic_managed_xsi_shared_memory &other) BOOST_NOEXCEPT
    {
       base_t::swap(other);
       base2_t::swap(other);
@@ -200,7 +200,7 @@ class basic_managed_xsi_shared_memory
    static bool remove(int shmid)
    {  return device_type::remove(shmid); }
 
-   int get_shmid() const
+   int get_shmid() const BOOST_NOEXCEPT
    {  return base2_t::get_device().get_shmid(); }
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)

@@ -68,7 +68,7 @@ class windows_shared_memory
    public:
    //!Default constructor.
    //!Represents an empty windows_shared_memory.
-   windows_shared_memory();
+   windows_shared_memory() BOOST_NOEXCEPT;
 
    //!Creates a new native shared memory with name "name" and at least size "size",
    //!with the access mode "mode".
@@ -107,14 +107,14 @@ class windows_shared_memory
    //!Moves the ownership of "moved"'s shared memory object to *this.
    //!After the call, "moved" does not represent any shared memory object.
    //!Does not throw
-   windows_shared_memory(BOOST_RV_REF(windows_shared_memory) moved)
+   windows_shared_memory(BOOST_RV_REF(windows_shared_memory) moved) BOOST_NOEXCEPT
       : m_handle(0)
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s shared memory to *this.
    //!After the call, "moved" does not represent any shared memory.
    //!Does not throw
-   windows_shared_memory &operator=(BOOST_RV_REF(windows_shared_memory) moved)
+   windows_shared_memory &operator=(BOOST_RV_REF(windows_shared_memory) moved) BOOST_NOEXCEPT
    {
       windows_shared_memory tmp(boost::move(moved));
       this->swap(tmp);
@@ -122,7 +122,7 @@ class windows_shared_memory
    }
 
    //!Swaps to shared_memory_objects. Does not throw
-   void swap(windows_shared_memory &other);
+   void swap(windows_shared_memory &other) BOOST_NOEXCEPT;
 
    //!Destroys *this. All mapped regions are still valid after
    //!destruction. When all mapped regions and windows_shared_memory
@@ -131,17 +131,17 @@ class windows_shared_memory
    ~windows_shared_memory();
 
    //!Returns the name of the shared memory.
-   const char *get_name() const;
+   const char *get_name() const BOOST_NOEXCEPT;
 
    //!Returns access mode
-   mode_t get_mode() const;
+   mode_t get_mode() const BOOST_NOEXCEPT;
 
    //!Returns the mapping handle. Never throws
-   mapping_handle_t get_mapping_handle() const;
+   mapping_handle_t get_mapping_handle() const BOOST_NOEXCEPT;
 
    //!Returns the size of the windows shared memory. It will be a 4K rounded
    //!size of the "size" passed in the constructor.
-   offset_t get_size() const;
+   offset_t get_size() const BOOST_NOEXCEPT;
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
@@ -161,30 +161,30 @@ class windows_shared_memory
 
 #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
-inline windows_shared_memory::windows_shared_memory()
+inline windows_shared_memory::windows_shared_memory() BOOST_NOEXCEPT
    :  m_handle(0)
 {}
 
 inline windows_shared_memory::~windows_shared_memory()
 {  this->priv_close(); }
 
-inline const char *windows_shared_memory::get_name() const
+inline const char *windows_shared_memory::get_name() const BOOST_NOEXCEPT
 {  return m_name.getn(); }
 
-inline void windows_shared_memory::swap(windows_shared_memory &other)
+inline void windows_shared_memory::swap(windows_shared_memory &other) BOOST_NOEXCEPT
 {
    (simple_swap)(m_handle,  other.m_handle);
    (simple_swap)(m_mode,    other.m_mode);
    m_name.swap(other.m_name);
 }
 
-inline mapping_handle_t windows_shared_memory::get_mapping_handle() const
+inline mapping_handle_t windows_shared_memory::get_mapping_handle() const BOOST_NOEXCEPT
 {  mapping_handle_t mhnd = { m_handle, true};   return mhnd;   }
 
-inline mode_t windows_shared_memory::get_mode() const
+inline mode_t windows_shared_memory::get_mode() const BOOST_NOEXCEPT
 {  return m_mode; }
 
-inline offset_t windows_shared_memory::get_size() const
+inline offset_t windows_shared_memory::get_size() const BOOST_NOEXCEPT
 {
    offset_t size; //This shall never fail
    return (m_handle && winapi::get_file_mapping_size(m_handle, size)) ? size : 0;

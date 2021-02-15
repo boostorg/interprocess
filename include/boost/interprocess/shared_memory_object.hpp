@@ -65,7 +65,7 @@ class shared_memory_object
 
    public:
    //!Default constructor. Represents an empty shared_memory_object.
-   shared_memory_object();
+   shared_memory_object() BOOST_NOEXCEPT;
 
    //!Creates a shared memory object with name "name" and mode "mode", with the access mode "mode"
    //!If the file previously exists, throws an error.*/
@@ -115,7 +115,7 @@ class shared_memory_object
    //!Moves the ownership of "moved"'s shared memory object to *this.
    //!After the call, "moved" does not represent any shared memory object.
    //!Does not throw
-   shared_memory_object(BOOST_RV_REF(shared_memory_object) moved)
+   shared_memory_object(BOOST_RV_REF(shared_memory_object) moved) BOOST_NOEXCEPT
       :  m_handle(file_handle_t(ipcdetail::invalid_file()))
       ,  m_mode(read_only)
    {  this->swap(moved);   }
@@ -123,7 +123,7 @@ class shared_memory_object
    //!Moves the ownership of "moved"'s shared memory to *this.
    //!After the call, "moved" does not represent any shared memory.
    //!Does not throw
-   shared_memory_object &operator=(BOOST_RV_REF(shared_memory_object) moved)
+   shared_memory_object &operator=(BOOST_RV_REF(shared_memory_object) moved) BOOST_NOEXCEPT
    {
       shared_memory_object tmp(boost::move(moved));
       this->swap(tmp);
@@ -131,7 +131,7 @@ class shared_memory_object
    }
 
    //!Swaps the shared_memory_objects. Does not throw
-   void swap(shared_memory_object &moved);
+   void swap(shared_memory_object &moved) BOOST_NOEXCEPT;
 
    //!Erases a shared memory object from the system.
    //!Returns false on error. Never throws
@@ -161,17 +161,17 @@ class shared_memory_object
    ~shared_memory_object();
 
    //!Returns the name of the shared memory object.
-   const char *get_name() const;
+   const char *get_name() const BOOST_NOEXCEPT;
 
    //!Returns true if the size of the shared memory object
    //!can be obtained and writes the size in the passed reference
-   bool get_size(offset_t &size) const;
+   bool get_size(offset_t &size) const BOOST_NOEXCEPT;
 
    //!Returns access mode
-   mode_t get_mode() const;
+   mode_t get_mode() const BOOST_NOEXCEPT;
 
    //!Returns mapping handle. Never throws.
-   mapping_handle_t get_mapping_handle() const;
+   mapping_handle_t get_mapping_handle() const BOOST_NOEXCEPT;
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
@@ -191,7 +191,7 @@ class shared_memory_object
 
 #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
-inline shared_memory_object::shared_memory_object()
+inline shared_memory_object::shared_memory_object() BOOST_NOEXCEPT
    :  m_handle(file_handle_t(ipcdetail::invalid_file()))
    ,  m_mode(read_only)
 {}
@@ -200,25 +200,25 @@ inline shared_memory_object::~shared_memory_object()
 {  this->priv_close(); }
 
 
-inline const char *shared_memory_object::get_name() const
+inline const char *shared_memory_object::get_name() const BOOST_NOEXCEPT
 {  return m_filename.getn(); }
 
-inline bool shared_memory_object::get_size(offset_t &size) const
+inline bool shared_memory_object::get_size(offset_t &size) const BOOST_NOEXCEPT
 {  return ipcdetail::get_file_size((file_handle_t)m_handle, size);  }
 
-inline void shared_memory_object::swap(shared_memory_object &other)
+inline void shared_memory_object::swap(shared_memory_object &other) BOOST_NOEXCEPT
 {
    boost::adl_move_swap(m_handle, other.m_handle);
    boost::adl_move_swap(m_mode,   other.m_mode);
    m_filename.swap(other.m_filename);
 }
 
-inline mapping_handle_t shared_memory_object::get_mapping_handle() const
+inline mapping_handle_t shared_memory_object::get_mapping_handle() const BOOST_NOEXCEPT
 {
    return ipcdetail::mapping_handle_from_file_handle(m_handle);
 }
 
-inline mode_t shared_memory_object::get_mode() const
+inline mode_t shared_memory_object::get_mode() const BOOST_NOEXCEPT
 {  return m_mode; }
 
 #if !defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)

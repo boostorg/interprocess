@@ -110,7 +110,7 @@ class basic_managed_windows_shared_memory
 
    //!Default constructor. Does nothing.
    //!Useful in combination with move semantics
-   basic_managed_windows_shared_memory()
+   basic_managed_windows_shared_memory() BOOST_NOEXCEPT
    {}
 
    //!Creates shared memory and creates and places the segment manager.
@@ -209,12 +209,12 @@ class basic_managed_windows_shared_memory
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
    basic_managed_windows_shared_memory
-      (BOOST_RV_REF(basic_managed_windows_shared_memory) moved)
+      (BOOST_RV_REF(basic_managed_windows_shared_memory) moved) BOOST_NOEXCEPT
    {  this->swap(moved);   }
 
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
-   basic_managed_windows_shared_memory &operator=(BOOST_RV_REF(basic_managed_windows_shared_memory) moved)
+   basic_managed_windows_shared_memory &operator=(BOOST_RV_REF(basic_managed_windows_shared_memory) moved) BOOST_NOEXCEPT
    {
       basic_managed_windows_shared_memory tmp(boost::move(moved));
       this->swap(tmp);
@@ -231,7 +231,7 @@ class basic_managed_windows_shared_memory
 
    //!Swaps the ownership of the managed mapped memories managed by *this and other.
    //!Never throws.
-   void swap(basic_managed_windows_shared_memory &other)
+   void swap(basic_managed_windows_shared_memory &other) BOOST_NOEXCEPT
    {
       base_t::swap(other);
       m_wshm.swap(other.m_wshm);

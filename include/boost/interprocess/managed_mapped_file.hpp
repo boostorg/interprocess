@@ -110,7 +110,7 @@ class basic_managed_mapped_file
 
    //!Creates mapped file and creates and places the segment manager.
    //!This can throw.
-   basic_managed_mapped_file()
+   basic_managed_mapped_file() BOOST_NOEXCEPT
    {}
 
    //!Creates mapped file and creates and places the segment manager.
@@ -232,14 +232,14 @@ class basic_managed_mapped_file
 
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
-   basic_managed_mapped_file(BOOST_RV_REF(basic_managed_mapped_file) moved)
+   basic_managed_mapped_file(BOOST_RV_REF(basic_managed_mapped_file) moved) BOOST_NOEXCEPT
    {
       this->swap(moved);
    }
 
    //!Moves the ownership of "moved"'s managed memory to *this.
    //!Does not throw
-   basic_managed_mapped_file &operator=(BOOST_RV_REF(basic_managed_mapped_file) moved)
+   basic_managed_mapped_file &operator=(BOOST_RV_REF(basic_managed_mapped_file) moved) BOOST_NOEXCEPT
    {
       basic_managed_mapped_file tmp(boost::move(moved));
       this->swap(tmp);
@@ -257,7 +257,7 @@ class basic_managed_mapped_file
 
    //!Swaps the ownership of the managed mapped memories managed by *this and other.
    //!Never throws.
-   void swap(basic_managed_mapped_file &other)
+   void swap(basic_managed_mapped_file &other) BOOST_NOEXCEPT
    {
       base_t::swap(other);
       m_mfile.swap(other.m_mfile);

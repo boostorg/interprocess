@@ -52,7 +52,7 @@ class file_mapping
    public:
    //!Constructs an empty file mapping.
    //!Does not throw
-   file_mapping();
+   file_mapping() BOOST_NOEXCEPT;
 
    //!Opens a file mapping of file "filename", starting in offset
    //!"file_offset", and the mapping's size will be "size". The mapping
@@ -74,7 +74,7 @@ class file_mapping
    //!Moves the ownership of "moved"'s file mapping object to *this.
    //!After the call, "moved" does not represent any file mapping object.
    //!Does not throw
-   file_mapping(BOOST_RV_REF(file_mapping) moved)
+   file_mapping(BOOST_RV_REF(file_mapping) moved) BOOST_NOEXCEPT
       :  m_handle(file_handle_t(ipcdetail::invalid_file()))
       ,  m_mode(read_only)
    {  this->swap(moved);   }
@@ -82,7 +82,7 @@ class file_mapping
    //!Moves the ownership of "moved"'s file mapping to *this.
    //!After the call, "moved" does not represent any file mapping.
    //!Does not throw
-   file_mapping &operator=(BOOST_RV_REF(file_mapping) moved)
+   file_mapping &operator=(BOOST_RV_REF(file_mapping) moved) BOOST_NOEXCEPT
    {
       file_mapping tmp(boost::move(moved));
       this->swap(tmp);
@@ -91,15 +91,15 @@ class file_mapping
 
    //!Swaps to file_mappings.
    //!Does not throw.
-   void swap(file_mapping &other);
+   void swap(file_mapping &other) BOOST_NOEXCEPT;
 
    //!Returns access mode
    //!used in the constructor
-   mode_t get_mode() const;
+   mode_t get_mode() const BOOST_NOEXCEPT;
 
    //!Obtains the mapping handle
    //!to be used with mapped_region
-   mapping_handle_t get_mapping_handle() const;
+   mapping_handle_t get_mapping_handle() const BOOST_NOEXCEPT;
 
    //!Destroys the file mapping. All mapped regions created from this are still
    //!valid. Does not throw
@@ -107,7 +107,7 @@ class file_mapping
 
    //!Returns the name of the file
    //!used in the constructor.
-   const char *get_name() const;
+   const char *get_name() const BOOST_NOEXCEPT;
 
    //!Removes the file named "filename" even if it's been memory mapped.
    //!Returns true on success.
@@ -136,7 +136,7 @@ class file_mapping
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
-inline file_mapping::file_mapping()
+inline file_mapping::file_mapping() BOOST_NOEXCEPT
    :  m_handle(file_handle_t(ipcdetail::invalid_file()))
    ,  m_mode(read_only)
 {}
@@ -144,20 +144,20 @@ inline file_mapping::file_mapping()
 inline file_mapping::~file_mapping()
 {  this->priv_close(); }
 
-inline const char *file_mapping::get_name() const
+inline const char *file_mapping::get_name() const BOOST_NOEXCEPT
 {  return m_filename.getn(); }
 
-inline void file_mapping::swap(file_mapping &other)
+inline void file_mapping::swap(file_mapping &other) BOOST_NOEXCEPT
 {
    (simple_swap)(m_handle, other.m_handle);
    (simple_swap)(m_mode, other.m_mode);
    m_filename.swap(other.m_filename);
 }
 
-inline mapping_handle_t file_mapping::get_mapping_handle() const
+inline mapping_handle_t file_mapping::get_mapping_handle() const BOOST_NOEXCEPT
 {  return ipcdetail::mapping_handle_from_file_handle(m_handle);  }
 
-inline mode_t file_mapping::get_mode() const
+inline mode_t file_mapping::get_mode() const BOOST_NOEXCEPT
 {  return m_mode; }
 
 inline file_mapping::file_mapping
