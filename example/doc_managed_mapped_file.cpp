@@ -7,10 +7,9 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
-
-#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+
+#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
 
 #include <boost/interprocess/containers/list.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
@@ -106,8 +105,6 @@ int main ()
    file_mapping::remove(FileName);
    return 0;
 }
-
-#include <boost/interprocess/detail/config_end.hpp>
 
 #else //#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
 int main()
