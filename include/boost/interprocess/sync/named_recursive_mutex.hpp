@@ -116,16 +116,25 @@ class named_recursive_mutex
 
    //!Locks named_recursive_mutex, sleeps when named_recursive_mutex is already locked.
    //!Throws interprocess_exception if a severe error is found.
+   //! 
+   //!Note: A program shall not deadlock if the thread that has ownership calls 
+   //!   this function. 
    void lock();
 
    //!Tries to lock the named_recursive_mutex, returns false when named_recursive_mutex
    //!is already locked, returns true when success.
    //!Throws interprocess_exception if a severe error is found.
+   //! 
+   //!Note: A program shall not deadlock if the thread that has ownership calls 
+   //!   this function. 
    bool try_lock();
 
    //!Tries to lock the named_recursive_mutex until time abs_time,
    //!Returns false when timeout expires, returns true when locks.
    //!Throws interprocess_exception if a severe error is found
+   //! 
+   //!Note: A program shall not deadlock if the thread that has ownership calls 
+   //!   this function. 
    bool timed_lock(const boost::posix_time::ptime &abs_time);
 
    //!Erases a named recursive mutex

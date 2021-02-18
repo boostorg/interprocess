@@ -119,18 +119,36 @@ class named_mutex
    //!mutex.
    void unlock();
 
+   //!Requires: The calling thread does not own the mutex.
+   //!
    //!Locks the mutex, sleeps when the mutex is already locked.
    //!Throws interprocess_exception if a severe error is found
+   //!
+   //!Note: A program may deadlock if the thread that has ownership calls 
+   //!   this function. If the implementation can detect the deadlock,
+   //!   an exception could be thrown.
    void lock();
 
+   //!Requires: The calling thread does not own the mutex.
+   //!
    //!Tries to lock the mutex, returns false when the mutex
    //!is already locked, returns true when success.
    //!Throws interprocess_exception if a severe error is found
+   //!
+   //!Note: A program may deadlock if the thread that has ownership calls 
+   //!   this function. If the implementation can detect the deadlock,
+   //!   an exception could be thrown.
    bool try_lock();
 
+   //!Requires: The calling thread does not own the mutex.
+   //!
    //!Tries to lock the the mutex until time abs_time,
    //!Returns false when timeout expires, returns true when locks.
    //!Throws interprocess_exception if a severe error is found
+   //!
+   //!Note: A program may deadlock if the thread that has ownership calls 
+   //!   this function. If the implementation can detect the deadlock,
+   //!   an exception could be thrown.
    bool timed_lock(const boost::posix_time::ptime &abs_time);
 
    //!Erases a named mutex from the system.

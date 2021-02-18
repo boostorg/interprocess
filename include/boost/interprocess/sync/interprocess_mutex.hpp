@@ -101,20 +101,34 @@ class interprocess_mutex
    //!the result is undefined. Does not throw.
    ~interprocess_mutex();
 
+   //!Requires: The calling thread does not own the mutex.
+   //!
    //!Effects: The calling thread tries to obtain ownership of the mutex, and
    //!   if another thread has ownership of the mutex, it waits until it can
    //!   obtain the ownership. If a thread takes ownership of the mutex the
    //!   mutex must be unlocked by the same mutex.
    //!Throws: interprocess_exception on error.
+   //! 
+   //!Note: A program may deadlock if the thread that has ownership calls 
+   //!   this function. If the implementation can detect the deadlock,
+   //!   an exception could be thrown.
    void lock();
 
+   //!Requires: The calling thread does not own the mutex.
+   //!
    //!Effects: The calling thread tries to obtain ownership of the mutex, and
    //!   if another thread has ownership of the mutex returns immediately.
    //!Returns: If the thread acquires ownership of the mutex, returns true, if
    //!   the another thread has ownership of the mutex, returns false.
    //!Throws: interprocess_exception on error.
+   //! 
+   //!Note: A program may deadlock if the thread that has ownership calls 
+   //!   this function. If the implementation can detect the deadlock,
+   //!   an exception could be thrown.
    bool try_lock();
 
+   //!Requires: The calling thread does not own the mutex.
+   //!
    //!Effects: The calling thread will try to obtain exclusive ownership of the
    //!   mutex if it can do so in until the specified time is reached. If the
    //!   mutex supports recursive locking, the mutex must be unlocked the same
@@ -122,6 +136,10 @@ class interprocess_mutex
    //!Returns: If the thread acquires ownership of the mutex, returns true, if
    //!   the timeout expires returns false.
    //!Throws: interprocess_exception on error.
+   //! 
+   //!Note: A program may deadlock if the thread that has ownership calls 
+   //!   this function. If the implementation can detect the deadlock,
+   //!   an exception could be thrown.
    bool timed_lock(const boost::posix_time::ptime &abs_time);
 
    //!Effects: The calling thread releases the exclusive ownership of the mutex.

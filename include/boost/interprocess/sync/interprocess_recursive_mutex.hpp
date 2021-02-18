@@ -102,18 +102,27 @@ class interprocess_recursive_mutex
    //!   mutex must be unlocked by the same mutex. The mutex must be unlocked
    //!   the same number of times it is locked.
    //!Throws: interprocess_exception on error.
+   //! 
+   //!Note: A program shall not deadlock if the thread that has ownership calls 
+   //!   this function. 
    void lock();
 
    //!Tries to lock the interprocess_mutex, returns false when interprocess_mutex
    //!is already locked, returns true when success. The mutex must be unlocked
    //!the same number of times it is locked.
    //!Throws: interprocess_exception if a severe error is found
+   //! 
+   //!Note: A program shall not deadlock if the thread that has ownership calls 
+   //!   this function. 
    bool try_lock();
 
    //!Tries to lock the interprocess_mutex, if interprocess_mutex can't be locked before
    //!abs_time time, returns false. The mutex must be unlocked
    //!   the same number of times it is locked.
    //!Throws: interprocess_exception if a severe error is found
+   //! 
+   //!Note: A program shall not deadlock if the thread that has ownership calls 
+   //!   this function. 
    bool timed_lock(const boost::posix_time::ptime &abs_time);
 
    //!Effects: The calling thread releases the exclusive ownership of the mutex.
