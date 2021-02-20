@@ -6637,21 +6637,15 @@ want [*Boost.Interprocess] to initialize the COM library with another model, def
 
 Shared memory (`shared_memory_object`) is implemented in Windows using memory mapped files, placed in a
 shared directory in the shared documents folder (`SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\Common AppData`).
-This directory name is the last bootup time obtained via COM calls (if `BOOST_INTERPROCESS_BOOTSTAMP_IS_LASTBOOTUPTIME`) defined
-or searching the system log for a startup event (the default implementation), so that each bootup shared memory is created in a new
-folder obtaining kernel persistence shared memory.
+This directory name is the last bootup time obtained via Registry values of the Session Manager. This behaviour is the default
+since Boost 1.74.
 
-If using `BOOST_INTERPROCESS_BOOTSTAMP_IS_LASTBOOTUPTIME`, due to COM implementation related errors,
-in Boost 1.48 & Boost 1.49 the bootup-time folder was dumped and files
-were directly created in shared documents folder, reverting to filesystem persistence shared memory. Boost 1.50 fixed those issues
-and recovered bootup time directory and kernel persistence. If you need to reproduce Boost 1.48 & Boost 1.49 behaviour to communicate
-with applications compiled with that version, comment `#define BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME` directive
-in the Windows configuration part of `boost/interprocess/detail/workaround.hpp`.
+Old [*Boost.Interprocess] versions (until Boost 1.48 ) used COM calls (via macro `BOOST_INTERPROCESS_BOOTSTAMP_IS_LASTBOOTUPTIME`)
+but that timestamp was unreliable in Virtual Machines and time adjustements. Next versions until (Boost 1.74) used EventLog startup event
+as timestamp, but several users discovered this event could be absent in the Event Log if the system was up for a long time. You
+can force this Event Log based timestamp defining BOOST_INTERPROCESS_BOOTSTAMP_IS_EVENTLOG_BASED.
 
-If using the default implementation, (`BOOST_INTERPROCESS_BOOTSTAMP_IS_LASTBOOTUPTIME` undefined) and the Startup Event is not
-found, this might be due to some buggy software that floods or erases the event log.
-
-In any error case (shared documents folder is not defined or bootup time could not be obtained, the library throws an error. You still
+In any error case (shared documents folder is not defined or bootup time could not be obtained), the library throws an error. You still
 can use [*Boost.Interprocess] defining your own directory as the shared directory. When your shared directory is a compile-time constant,
 define `BOOST_INTERPROCESS_SHARED_DIR_PATH` when using the library and that path will be used to place shared memory files. When you have 
 to determine the shared directory at runtime, define `BOOST_INTERPROCESS_SHARED_DIR_FUNC` and implement the function 
