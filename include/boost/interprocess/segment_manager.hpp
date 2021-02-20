@@ -127,6 +127,20 @@ class segment_manager_base
    void * allocate (size_type nbytes, const std::nothrow_t &)
    {  return MemoryAlgorithm::allocate(nbytes);   }
 
+   //!Returns a reference to the internal memory algorithm.
+   //!This function is useful for custom memory algorithms that
+   //!need additional configuration options after construction. Never throws.
+   //!This function should be only used by advanced users.
+   MemoryAlgorithm &get_memory_algorithm()
+   {  return static_cast<MemoryAlgorithm&>(*this);   }
+
+   //!Returns a const reference to the internal memory algorithm.
+   //!This function is useful for custom memory algorithms that
+   //!need additional configuration options after construction. Never throws.
+   //!This function should be only used by advanced users.
+   const MemoryAlgorithm &get_memory_algorithm() const
+   {  return static_cast<const MemoryAlgorithm&>(*this);   }
+
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //Experimental. Dont' use.

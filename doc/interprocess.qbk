@@ -6809,6 +6809,7 @@ thank them:
    * [@https://github.com/boostorg/interprocess/pull/83    GitHub #83  (['"Add BOOST_INTERPROCESS_FORCE_NATIVE_EMULATION option"])].
    * [@https://github.com/boostorg/interprocess/pull/92    GitHub #92  (['"bufferstream: Correct MSVC compilation warning"])].
    * [@https://github.com/boostorg/interprocess/pull/106   GitHub #106 (['"Use fallocate on truncate_file"])].
+   * [@https://github.com/boostorg/interprocess/issues/120 GitHub #120 (['"segment_manager customization"])].
    * [@https://github.com/boostorg/interprocess/issues/122 GitHub #122 (['"Mark constructors/assignment/swap noexcept where possible"])].
    * [@https://github.com/boostorg/interprocess/issues/126 GitHub #126 (['"_ReadWriteBarrier is deprecated warning when compiling with clang-cl.exe"])].
 
