@@ -12,24 +12,45 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include "mutex_test_template.hpp"
 #include "named_creation_template.hpp"
-#include <string>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
+#include <exception>
+
+#if defined(BOOST_INTERPROCESS_WINDOWS)
+#include <boost/interprocess/sync/windows/named_mutex.hpp>
+#endif
 
 using namespace boost::interprocess;
 
-int main ()
+template<class NamedMutex>
+int test_named_mutex()
 {
+   int ret = 0;
    try{
-      named_mutex::remove(test::get_process_id_name());
-      test::test_named_creation< test::named_sync_creation_test_wrapper<named_mutex> >();
-      test::test_all_lock< test::named_sync_wrapper<named_mutex> >();
-      test::test_all_mutex<test::named_sync_wrapper<named_mutex> >();
+      NamedMutex::remove(test::get_process_id_name());
+      test::test_named_creation< test::named_sync_creation_test_wrapper<NamedMutex> >();
+      #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+      test::test_named_creation< test::named_sync_creation_test_wrapper_w<NamedMutex> >();
+      #endif   //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+      test::test_all_lock< test::named_sync_wrapper<NamedMutex> >();
+      test::test_all_mutex<test::named_sync_wrapper<NamedMutex> >();
    }
    catch(std::exception &ex){
-      named_mutex::remove(test::get_process_id_name());
       std::cout << ex.what() << std::endl;
-      return 1;
+      ret = 1;
    }
-   named_mutex::remove(test::get_process_id_name());
-   return 0;
+   NamedMutex::remove(test::get_process_id_name());
+   return ret;
+}
+
+int main()
+{
+   int ret;
+   #if defined(BOOST_INTERPROCESS_WINDOWS)
+   ret = test_named_mutex<ipcdetail::winapi_named_mutex>();
+   if (ret)
+      return ret;
+   #endif
+   ret = test_named_mutex<named_mutex>();
+   
+   return ret;
 }

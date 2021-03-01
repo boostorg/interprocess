@@ -30,17 +30,17 @@
 #include <boost/interprocess/sync/detail/locks.hpp>
 #include <boost/interprocess/sync/detail/common_algorithms.hpp>
 
-#if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && \
-   (defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && defined(BOOST_INTERPROCESS_POSIX_UNNAMED_SEMAPHORES))
-   #include <boost/interprocess/sync/posix/semaphore.hpp>
-   #define BOOST_INTERPROCESS_USE_POSIX
-//Experimental...
-#elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
-   #include <boost/interprocess/sync/windows/semaphore.hpp>
-   #define BOOST_INTERPROCESS_USE_WINDOWS
-#elif !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+#if defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION)
    #include <boost/interprocess/sync/spin/semaphore.hpp>
-   #define BOOST_INTERPROCESS_USE_GENERIC_EMULATION
+#elif defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && defined(BOOST_INTERPROCESS_POSIX_UNNAMED_SEMAPHORES)
+   #include <boost/interprocess/sync/posix/semaphore.hpp>
+   #define BOOST_INTERPROCESS_SEMAPHORE_USE_POSIX
+#elif defined (BOOST_INTERPROCESS_WINDOWS)
+   //Experimental...
+   #include <boost/interprocess/sync/windows/semaphore.hpp>
+   #define BOOST_INTERPROCESS_SEMAPHORE_USE_WINAPI
+#else
+   #error "Unsuported interprocess_semaphore"
 #endif
 
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
@@ -95,16 +95,13 @@ class interprocess_semaphore
 //   int get_count() const;
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
-   #if defined(BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
-      #undef BOOST_INTERPROCESS_USE_GENERIC_EMULATION
-      typedef ipcdetail::spin_semaphore internal_sem_t;
-   #elif defined(BOOST_INTERPROCESS_USE_WINDOWS)
-      #undef BOOST_INTERPROCESS_USE_WINDOWS
-      typedef ipcdetail::windows_semaphore internal_sem_t;
-   #else
-      #undef BOOST_INTERPROCESS_USE_POSIX
+   #if defined(BOOST_INTERPROCESS_SEMAPHORE_USE_POSIX)
       typedef ipcdetail::posix_semaphore internal_sem_t;
-   #endif   //#if defined(BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
+   #elif defined(BOOST_INTERPROCESS_SEMAPHORE_USE_WINAPI)
+      typedef ipcdetail::winapi_semaphore internal_sem_t;
+   #else
+      typedef ipcdetail::spin_semaphore internal_sem_t;
+   #endif   //#if defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION)
    internal_sem_t m_sem;
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };

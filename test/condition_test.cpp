@@ -25,7 +25,7 @@ using namespace boost::interprocess;
 int main ()
 {
    #if defined(BOOST_INTERPROCESS_WINDOWS)
-      if(!test::do_test_condition<ipcdetail::windows_condition, ipcdetail::windows_mutex>())
+      if(!test::do_test_condition<ipcdetail::winapi_condition, ipcdetail::winapi_mutex>())
          return 1;
       if(!test::do_test_condition<ipcdetail::spin_condition, ipcdetail::spin_mutex>())
          return 1;

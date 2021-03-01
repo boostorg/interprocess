@@ -19,14 +19,6 @@
 
 using namespace boost::interprocess;
 
-inline std::string get_filename()
-{
-   std::string ret (ipcdetail::get_temporary_path());
-   ret += "/";
-   ret += test::get_process_id_name();
-   return ret;
-}
-
 //This wrapper is necessary to have a default constructor
 //in generic mutex_test_template functions
 class file_lock_lock_test_wrapper
@@ -47,16 +39,21 @@ int main ()
       if(!file){
          return 1;
       }
-      file_lock flock(get_filename().c_str());
       {
-      scoped_lock<file_lock> sl(flock);
+         file_lock flock(get_filename().c_str());
+         {
+         scoped_lock<file_lock> sl(flock);
+         }
+         {
+         scoped_lock<file_lock> sl(flock, try_to_lock);
+         }
+         {
+         scoped_lock<file_lock> sl(flock, test::delay(1));
+         }
       }
-      {
-      scoped_lock<file_lock> sl(flock, try_to_lock);
-      }
-      {
-      scoped_lock<file_lock> sl(flock, test::delay(1));
-      }
+      #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
+      file_lock flock(get_wfilename().c_str());
+      #endif
    }
    {
       //Now test move semantics

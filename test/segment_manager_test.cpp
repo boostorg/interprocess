@@ -289,7 +289,7 @@ bool test_segment_manager()
             return false;
          typename SegmentManager::const_named_iterator nb(seg_mgr->named_begin());
          typename SegmentManager::const_named_iterator ne(seg_mgr->named_end());
-         for(std::size_t i = 0, imax = seg_mgr->get_num_named_objects(); i != imax; ++i){ ++nb; }
+         for(std::size_t j = 0, imax = seg_mgr->get_num_named_objects(); j != imax; ++j){ ++nb; }
          if(nb != ne)
             return false;
          seg_mgr->destroy_ptr(uint_object);
@@ -379,7 +379,7 @@ bool test_segment_manager()
             return false;
          typename SegmentManager::const_unique_iterator nb(seg_mgr->unique_begin());
          typename SegmentManager::const_unique_iterator ne(seg_mgr->unique_end());
-         for(std::size_t i = 0, imax = seg_mgr->get_num_unique_objects(); i != imax; ++i){ ++nb; }
+         for(std::size_t j = 0, imax = seg_mgr->get_num_unique_objects(); j != imax; ++j){ ++nb; }
          if(nb != ne)
             return false;
          seg_mgr->destroy_ptr(uint_object);
@@ -435,6 +435,18 @@ bool test_segment_manager()
       seg_mgr->shrink_to_fit_indexes();
       if(!seg_mgr->all_memory_deallocated())
          return false;
+   }
+   {//test get_memory_algorithm
+      {
+         typename SegmentManager::memory_algorithm & mem_algo =
+            seg_mgr->get_memory_algorithm();
+         boost::ignore_unused(mem_algo);
+      }
+      {
+         const typename SegmentManager::memory_algorithm & mem_algo =
+            const_cast<const SegmentManager*>(seg_mgr)->get_memory_algorithm();
+         boost::ignore_unused(mem_algo);
+      }
    }
    return true;
 }
