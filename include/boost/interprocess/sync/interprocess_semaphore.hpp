@@ -30,17 +30,18 @@
 #include <boost/interprocess/sync/detail/locks.hpp>
 #include <boost/interprocess/sync/detail/common_algorithms.hpp>
 
-#if defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION)
-   #include <boost/interprocess/sync/spin/semaphore.hpp>
-#elif defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && defined(BOOST_INTERPROCESS_POSIX_UNNAMED_SEMAPHORES)
+#if   !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && \
+       defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)    && \
+       defined(BOOST_INTERPROCESS_POSIX_UNNAMED_SEMAPHORES)
    #include <boost/interprocess/sync/posix/semaphore.hpp>
    #define BOOST_INTERPROCESS_SEMAPHORE_USE_POSIX
-#elif defined (BOOST_INTERPROCESS_WINDOWS)
+#elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
    //Experimental...
    #include <boost/interprocess/sync/windows/semaphore.hpp>
    #define BOOST_INTERPROCESS_SEMAPHORE_USE_WINAPI
 #else
-   #error "Unsuported interprocess_semaphore"
+   //spin_semaphore is used
+   #include <boost/interprocess/sync/spin/semaphore.hpp>
 #endif
 
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED

@@ -31,17 +31,16 @@
 #include <boost/limits.hpp>
 #include <boost/assert.hpp>
 
-#if defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION)
-   #include <boost/interprocess/sync/spin/condition.hpp>
-#elif defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)
+#if   !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)
    #include <boost/interprocess/sync/posix/condition.hpp>
    #define BOOST_INTERPROCESS_CONDITION_USE_POSIX
 //Experimental...
-#elif defined (BOOST_INTERPROCESS_WINDOWS)
+#elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
    #include <boost/interprocess/sync/windows/condition.hpp>
    #define BOOST_INTERPROCESS_CONDITION_USE_WINAPI
 #else
-   #error "Unsuported interprocess_condition"
+   //spin_condition is used
+   #include <boost/interprocess/sync/spin/condition.hpp>
 #endif
 
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED

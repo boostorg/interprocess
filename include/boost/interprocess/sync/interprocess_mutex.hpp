@@ -32,28 +32,25 @@
 #include <boost/assert.hpp>
 #include <boost/interprocess/sync/detail/common_algorithms.hpp>
 
-
-#if defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION)
-   #include <boost/interprocess/sync/spin/mutex.hpp>
-namespace boost {
-namespace interprocess {
-namespace ipcdetail{
-namespace robust_emulation_helpers {
-
-template<class T>
-class mutex_traits;
-
-}}}}
-
-#elif defined (BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)
+#if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)
    #include <boost/interprocess/sync/posix/mutex.hpp>
    #define BOOST_INTERPROCESS_MUTEX_USE_POSIX
-//Experimental...
 #elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
+   //Experimental...
    #define BOOST_INTERPROCESS_MUTEX_USE_WINAPI
    #include <boost/interprocess/sync/windows/mutex.hpp>
 #else
-   #error "Unsuported interprocess_mutex"
+   //spin_mutex is used
+   #include <boost/interprocess/sync/spin/mutex.hpp>
+   namespace boost {
+   namespace interprocess {
+   namespace ipcdetail{
+   namespace robust_emulation_helpers {
+
+   template<class T>
+   class mutex_traits;
+
+   }}}}
 #endif
 
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
