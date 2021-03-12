@@ -43,30 +43,27 @@
 #include <boost/interprocess/sync/detail/common_algorithms.hpp>
 #include <boost/assert.hpp>
 
-#if defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION)
-   #include <boost/interprocess/sync/spin/recursive_mutex.hpp>
-#elif defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && defined (BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES)
+#if   !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && \
+       defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && \
+       defined (BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES)
+   //Experimental...
    #include <boost/interprocess/sync/posix/recursive_mutex.hpp>
    #define BOOST_INTERPROCESS_RECURSIVE_MUTEX_USE_POSIX
-//Experimental...
-#elif defined (BOOST_INTERPROCESS_WINDOWS)
+#elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
    #include <boost/interprocess/sync/windows/recursive_mutex.hpp>
    #define BOOST_INTERPROCESS_RECURSIVE_MUTEX_USE_WINAPI
 #else
-   #error "Unsuported interprocess_recursive_mutex"
-#endif
+   //spin_recursive_mutex is used
+   #include <boost/interprocess/sync/spin/recursive_mutex.hpp>
+   namespace boost {
+   namespace interprocess {
+   namespace ipcdetail{
+   namespace robust_emulation_helpers {
 
-#if defined (BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION)
-namespace boost {
-namespace interprocess {
-namespace ipcdetail{
-namespace robust_emulation_helpers {
+   template<class T>
+   class mutex_traits;
 
-template<class T>
-class mutex_traits;
-
-}}}}
-
+   }}}}
 #endif
 
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
