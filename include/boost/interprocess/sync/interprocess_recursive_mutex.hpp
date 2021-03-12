@@ -55,19 +55,15 @@
 #else
    //spin_recursive_mutex is used
    #include <boost/interprocess/sync/spin/recursive_mutex.hpp>
-#endif
+   namespace boost {
+   namespace interprocess {
+   namespace ipcdetail{
+   namespace robust_emulation_helpers {
 
-#if defined (BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION)
-namespace boost {
-namespace interprocess {
-namespace ipcdetail{
-namespace robust_emulation_helpers {
+   template<class T>
+   class mutex_traits;
 
-template<class T>
-class mutex_traits;
-
-}}}}
-
+   }}}}
 #endif
 
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
