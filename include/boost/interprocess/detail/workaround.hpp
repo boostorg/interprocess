@@ -230,5 +230,12 @@
 
 #endif
 
+#if defined(BOOST_HAS_THREADS) 
+#  if defined(_MSC_VER) || defined(__MWERKS__) || defined(__MINGW32__) ||  defined(__BORLANDC__)
+     //no reentrant posix functions (eg: localtime_r)
+#  elif (!defined(__hpux) || (defined(__hpux) && defined(_REENTRANT)))
+#   define BOOST_INTERPROCESS_HAS_REENTRANT_STD_FUNCTIONS
+#  endif
+#endif
 
 #endif   //#ifndef BOOST_INTERPROCESS_DETAIL_WORKAROUND_HPP

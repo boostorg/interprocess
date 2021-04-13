@@ -24,7 +24,6 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/permissions.hpp>
 
 #if defined(BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES)
@@ -149,7 +148,8 @@ class named_mutex
    //!Note: A program may deadlock if the thread that has ownership calls 
    //!   this function. If the implementation can detect the deadlock,
    //!   an exception could be thrown.
-   bool timed_lock(const boost::posix_time::ptime &abs_time);
+   template<class TimePoint>
+   bool timed_lock(const TimePoint &abs_time);
 
    //!Erases a named mutex from the system.
    //!Returns false on error. Never throws.
@@ -232,7 +232,8 @@ inline void named_mutex::unlock()
 inline bool named_mutex::try_lock()
 {  return m_mut.try_lock();  }
 
-inline bool named_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
+template<class TimePoint>
+inline bool named_mutex::timed_lock(const TimePoint &abs_time)
 {  return m_mut.timed_lock(abs_time);  }
 
 inline bool named_mutex::remove(const char *name)

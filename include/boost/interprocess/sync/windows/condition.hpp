@@ -21,7 +21,6 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
@@ -58,12 +57,12 @@ class winapi_condition
    void notify_all()
    {  m_condition_data.notify_all();   }
 
-   template <typename L>
-   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time)
+   template <typename L, typename TimePoint>
+   bool timed_wait(L& lock, const TimePoint &abs_time)
    {  return m_condition_data.timed_wait(lock, abs_time);   }
 
-   template <typename L, typename Pr>
-   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
+   template <typename L, typename TimePoint, typename Pr>
+   bool timed_wait(L& lock, const TimePoint &abs_time, Pr pred)
    {  return m_condition_data.timed_wait(lock, abs_time, pred);   }
 
    template <typename L>

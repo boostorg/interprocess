@@ -26,7 +26,6 @@
 
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/detail/locks.hpp>
 #include <boost/interprocess/sync/detail/common_algorithms.hpp>
 
@@ -90,7 +89,8 @@ class interprocess_semaphore
    //!to the posted or the timeout expires. If the timeout expires, the
    //!function returns false. If the interprocess_semaphore is posted the function
    //!returns true. If there is an error throws sem_exception
-   bool timed_wait(const boost::posix_time::ptime &abs_time);
+   template<class TimePoint>
+   bool timed_wait(const TimePoint &abs_time);
 
    //!Returns the interprocess_semaphore count
 //   int get_count() const;
@@ -128,7 +128,8 @@ inline void interprocess_semaphore::wait()
 inline bool interprocess_semaphore::try_wait()
 { return m_sem.try_wait(); }
 
-inline bool interprocess_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
+template<class TimePoint>
+inline bool interprocess_semaphore::timed_wait(const TimePoint &abs_time)
 { return m_sem.timed_wait(abs_time); }
 
 inline void interprocess_semaphore::post()

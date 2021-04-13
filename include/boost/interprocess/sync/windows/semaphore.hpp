@@ -21,7 +21,6 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/detail/win32_api.hpp>
 #include <boost/interprocess/detail/windows_intermodule_singleton.hpp>
 #include <boost/interprocess/sync/windows/sync_utils.hpp>
@@ -46,7 +45,7 @@ class winapi_semaphore
    void post(unsigned int release_count = 1);
    void wait();
    bool try_wait();
-   bool timed_wait(const boost::posix_time::ptime &abs_time);
+   template<class TimePoint> bool timed_wait(const TimePoint &abs_time);
 
    private:
    const sync_id id_;
@@ -92,7 +91,8 @@ inline bool winapi_semaphore::try_wait()
    return sem.try_wait();
 }
 
-inline bool winapi_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
+template<class TimePoint>
+inline bool winapi_semaphore::timed_wait(const TimePoint &abs_time)
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();

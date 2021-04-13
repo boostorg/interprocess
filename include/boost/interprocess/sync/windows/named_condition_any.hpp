@@ -24,7 +24,6 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/permissions.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/windows/named_sync.hpp>
 #include <boost/interprocess/sync/windows/winapi_semaphore_wrapper.hpp>
 #include <boost/interprocess/sync/detail/condition_algorithm_8a.hpp>
@@ -141,12 +140,12 @@ class winapi_named_condition_any
    void notify_all()
    {  m_condition_data.notify_all();   }
 
-   template <typename L>
-   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time)
+   template <typename L, typename TimePoint>
+   bool timed_wait(L& lock, const TimePoint &abs_time)
    {  return m_condition_data.timed_wait(lock, abs_time);   }
 
-   template <typename L, typename Pr>
-   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
+   template <typename L, typename TimePoint, typename Pr>
+   bool timed_wait(L& lock, const TimePoint &abs_time, Pr pred)
    {  return m_condition_data.timed_wait(lock, abs_time, pred);   }
 
    template <typename L>

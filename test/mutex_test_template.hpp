@@ -106,9 +106,7 @@ struct test_timedlock
       // Test the lock's constructors.
       {
          // Construct and initialize an ptime for a fast time out.
-         boost::posix_time::ptime pt = delay(1*BaseSeconds, 0);
-
-         timed_lock_type lock(interprocess_mutex, pt);
+         timed_lock_type lock(interprocess_mutex, ptime_delay(1*BaseSeconds));
          BOOST_INTERPROCESS_CHECK(lock ? true : false);
       }
       {
@@ -125,11 +123,17 @@ struct test_timedlock
       BOOST_INTERPROCESS_CHECK(lock ? true : false);
       lock.unlock();
       BOOST_INTERPROCESS_CHECK(!lock);
-      boost::posix_time::ptime pt = delay(3*BaseSeconds, 0);
-      BOOST_INTERPROCESS_CHECK(lock.timed_lock(pt));
+      BOOST_INTERPROCESS_CHECK(lock.timed_lock(boost_systemclock_delay(3*BaseSeconds)));
       BOOST_INTERPROCESS_CHECK(lock ? true : false);
    }
 };
+
+template <class Lock, class Mutex, class TimePoint>
+void lock_twice_timed(Mutex& mx, const TimePoint& pt)
+{
+   Lock lock1(mx, pt);
+   Lock lock2(mx, pt);
+}
 
 template <typename M>
 struct test_recursive_lock
@@ -154,9 +158,15 @@ struct test_recursive_lock
       }
       {
          //This should always lock
-         boost::posix_time::ptime pt = delay(2*BaseSeconds);
-         lock_type lock1(mx, pt);
-         lock_type lock2(mx, pt);
+         lock_twice_timed<lock_type>(mx, ptime_delay(2*BaseSeconds));
+      }
+      {
+         //This should always lock
+         lock_twice_timed<lock_type>(mx, boost_systemclock_delay(2*BaseSeconds));
+      }
+      {
+         //This should always lock
+         lock_twice_timed<lock_type>(mx, std_systemclock_delay(2*BaseSeconds));
       }
    }
 };
@@ -218,10 +228,9 @@ template<typename M>
 void timed_lock_and_sleep(void *arg, M &sm)
 {
    data<M> *pdata = static_cast<data<M>*>(arg);
-   boost::posix_time::ptime pt(delay(pdata->m_secs));
    boost::interprocess::scoped_lock<M>
       l (sm, boost::interprocess::defer_lock);
-   if (l.timed_lock(pt)){
+   if (l.timed_lock(std_systemclock_delay(pdata->m_secs))){
       boost::interprocess::ipcdetail::thread_sleep((1000*2*BaseSeconds));
       ++shared_val;
       pdata->m_value = shared_val;

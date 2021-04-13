@@ -85,7 +85,7 @@ template<typename SM>
 void timed_exclusive(void *arg, SM &sm)
 {
    data<SM> *pdata = static_cast<data<SM>*>(arg);
-   boost::posix_time::ptime pt(delay(pdata->m_secs));
+   boost::posix_time::ptime pt(ptime_delay(pdata->m_secs));
    boost::interprocess::scoped_lock<SM>
       l (sm, boost::interprocess::defer_lock);
    if (l.timed_lock(pt)){
@@ -99,10 +99,9 @@ template<typename SM>
 void timed_shared(void *arg, SM &sm)
 {
    data<SM> *pdata = static_cast<data<SM>*>(arg);
-   boost::posix_time::ptime pt(delay(pdata->m_secs));
    boost::interprocess::sharable_lock<SM>
       l(sm, boost::interprocess::defer_lock);
-   if (l.timed_lock(pt)){
+   if (l.timed_lock(boost_systemclock_delay(pdata->m_secs))){
       if(pdata->m_secs){
          boost::interprocess::ipcdetail::thread_sleep((1000*pdata->m_secs*BaseSeconds));
       }

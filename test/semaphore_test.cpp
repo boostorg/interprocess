@@ -33,7 +33,8 @@ class semaphore_test_wrapper
    bool try_lock()
    {  return this->try_wait();  }
 
-   bool timed_lock(const boost::posix_time::ptime &pt)
+   template<class TimePoint>
+   bool timed_lock(const TimePoint &pt)
    {  return this->timed_wait(pt);  }
 
    void unlock()

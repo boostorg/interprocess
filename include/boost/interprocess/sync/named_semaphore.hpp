@@ -25,7 +25,6 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/permissions.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 #if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
 #include <boost/interprocess/sync/posix/named_semaphore.hpp>
@@ -132,7 +131,8 @@ class named_semaphore
    //!to the posted or the timeout expires. If the timeout expires, the
    //!function returns false. If the semaphore is posted the function
    //!returns true. If there is an error throws sem_exception
-   bool timed_wait(const boost::posix_time::ptime &abs_time);
+   template<class TimePoint>
+   bool timed_wait(const TimePoint &abs_time);
 
    //!Erases a named semaphore from the system.
    //!Returns false on error. Never throws.
@@ -214,7 +214,8 @@ inline void named_semaphore::post()
 inline bool named_semaphore::try_wait()
 {  return m_sem.try_wait();  }
 
-inline bool named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
+template<class TimePoint>
+inline bool named_semaphore::timed_wait(const TimePoint &abs_time)
 {  return m_sem.timed_wait(abs_time);  }
 
 inline bool named_semaphore::remove(const char *name)

@@ -2380,10 +2380,11 @@ is permitted:
       scoped_lock<Mutex>      e_lock(move(u_lock, try_to_lock));
    }
    {
-      boost::posix_time::ptime t = test::delay(100);
+      using namespace boost::posix_time;
       upgradable_lock<Mutex>  u_lock(mut);
+      ptime t = boost::date_time::microsec_clock<ptime>::universal_time() + milliseconds(100);
       //This calls timed_unlock_upgradable_and_lock()
-      scoped_lock<Mutex>      e_lock(move(u_lock));
+      scoped_lock<Mutex>      e_lock(move(u_lock), t);
    }
    {
       sharable_lock<Mutex>    s_lock(mut);
@@ -6774,6 +6775,14 @@ thank them:
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_77_00 Boost 1.77 Release]
+
+*  Interprocess no longer depends on Boost.DateTime. Instead, all timed
+   functions were templated to take a TimePoint. This time point can be `boost::date_time::ptime`,
+   `std::time_point` or `boost::chrono::time_point`.
+
+[endsect]
 
 [section:release_notes_boost_1_76_00 Boost 1.76 Release]
 

@@ -39,7 +39,6 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/detail/common_algorithms.hpp>
 #include <boost/assert.hpp>
 
@@ -119,8 +118,9 @@ class interprocess_recursive_mutex
    //!Throws: interprocess_exception if a severe error is found
    //! 
    //!Note: A program shall not deadlock if the thread that has ownership calls 
-   //!   this function. 
-   bool timed_lock(const boost::posix_time::ptime &abs_time);
+   //!   this function.
+   template<class TimePoint>
+   bool timed_lock(const TimePoint &abs_time);
 
    //!Effects: The calling thread releases the exclusive ownership of the mutex.
    //!   If the mutex supports recursive locking, the mutex must be unlocked the
@@ -158,7 +158,8 @@ inline void interprocess_recursive_mutex::lock()
 inline bool interprocess_recursive_mutex::try_lock()
 { return mutex.try_lock(); }
 
-inline bool interprocess_recursive_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
+template<class TimePoint>
+inline bool interprocess_recursive_mutex::timed_lock(const TimePoint &abs_time)
 { return mutex.timed_lock(abs_time); }
 
 inline void interprocess_recursive_mutex::unlock()

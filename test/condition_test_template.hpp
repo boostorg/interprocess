@@ -25,18 +25,12 @@
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include "boost_interprocess_check.hpp"
 #include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include "util.hpp"
 #include <iostream>
 
 namespace boost{
 namespace interprocess{
 namespace test {
-
-boost::posix_time::ptime ptime_delay(int secs)
-{
-   return   microsec_clock::universal_time() +
-            boost::posix_time::time_duration(0, 0, secs);
-}
 
 template <typename F, typename T>
 class binder
@@ -115,7 +109,7 @@ void condition_test_waits(condition_test_data<Condition, Mutex>* data)
     data->awoken++;
     data->condition.notify_one();
 
-    // Test timed_wait.
+    // Test timed_wait
     while (data->notified != 3)
         data->condition.timed_wait(lock, ptime_delay(5));
     BOOST_INTERPROCESS_CHECK(lock ? true : false);
@@ -125,11 +119,19 @@ void condition_test_waits(condition_test_data<Condition, Mutex>* data)
 
     // Test predicate timed_wait.
     cond_predicate pred(data->notified, 4);
-    bool ret = data->condition.timed_wait(lock, ptime_delay(5), pred);
+    bool ret = data->condition.timed_wait(lock, boost_systemclock_delay(5), pred);
     BOOST_INTERPROCESS_CHECK(ret);(void)ret;
     BOOST_INTERPROCESS_CHECK(lock ? true : false);
     BOOST_INTERPROCESS_CHECK(pred());
     BOOST_INTERPROCESS_CHECK(data->notified == 4);
+    data->awoken++;
+    data->condition.notify_one();
+
+    // Test timed_wait
+    while (data->notified != 5)
+        data->condition.timed_wait(lock, std_systemclock_delay(5));
+    BOOST_INTERPROCESS_CHECK(lock ? true : false);
+    BOOST_INTERPROCESS_CHECK(data->notified == 5);
     data->awoken++;
     data->condition.notify_one();
 }
@@ -226,10 +228,18 @@ void do_test_condition_waits()
          data.condition.wait(lock);
       BOOST_INTERPROCESS_CHECK(lock ? true : false);
       BOOST_INTERPROCESS_CHECK(data.awoken == 4);
+
+      boost::interprocess::ipcdetail::thread_sleep(1000);
+      data.notified++;
+      data.condition.notify_one();
+      while (data.awoken != 5)
+         data.condition.wait(lock);
+      BOOST_INTERPROCESS_CHECK(lock ? true : false);
+      BOOST_INTERPROCESS_CHECK(data.awoken == 5);
    }
 
    boost::interprocess::ipcdetail::thread_join(thread);
-   BOOST_INTERPROCESS_CHECK(data.awoken == 4);
+   BOOST_INTERPROCESS_CHECK(data.awoken == 5);
 }
 /*
 //Message queue simulation test

@@ -25,7 +25,6 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
 #include <boost/interprocess/permissions.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/detail/locks.hpp>
 #if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
    #include <boost/interprocess/sync/windows/named_condition.hpp>
@@ -139,14 +138,14 @@ class named_condition
    //!this->notify_one() or this->notify_all(), or until time abs_time is reached,
    //!and then reacquires the lock.
    //!Returns: false if time abs_time is reached, otherwise true.
-   template <typename L>
-   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time);
+   template <typename L, class TimePoint>
+   bool timed_wait(L& lock, const TimePoint &abs_time);
 
    //!The same as:   while (!pred()) {
    //!                  if (!timed_wait(lock, abs_time)) return pred();
    //!               } return true;
-   template <typename L, typename Pr>
-   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred);
+   template <typename L, class TimePoint, typename Pr>
+   bool timed_wait(L& lock, const TimePoint &abs_time, Pr pred);
 
    //!Erases a named condition from the system.
    //!Returns false on error. Never throws.
@@ -232,17 +231,17 @@ inline void named_condition::wait(L& lock, Pr pred)
    m_cond.wait(internal_lock, pred);
 }
 
-template <typename L>
+template <typename L, typename TimePoint>
 inline bool named_condition::timed_wait
-   (L& lock, const boost::posix_time::ptime &abs_time)
+   (L& lock, const TimePoint &abs_time)
 {
    ipcdetail::internal_mutex_lock<L> internal_lock(lock);
    return m_cond.timed_wait(internal_lock, abs_time);
 }
 
-template <typename L, typename Pr>
+template <typename L, typename TimePoint, typename Pr>
 inline bool named_condition::timed_wait
-   (L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
+   (L& lock, const TimePoint &abs_time, Pr pred)
 {
    ipcdetail::internal_mutex_lock<L> internal_lock(lock);
    return m_cond.timed_wait(internal_lock, abs_time, pred);

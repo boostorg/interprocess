@@ -26,19 +26,19 @@
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#define BOOST_CHRONO_HEADER_ONLY
+#include <boost/chrono/system_clocks.hpp>
 #include <boost/version.hpp>
+
+#if !defined(BOOST_NO_CXX11_HDR_CHRONO)
+#include <chrono>
+#endif
 
 namespace boost {
 namespace interprocess {
 namespace test {
 
-inline void sleep(const boost::posix_time::ptime &xt)
-{
-   boost::interprocess::ipcdetail::thread_sleep
-      ((xt - microsec_clock::universal_time()).total_milliseconds());
-}
-
-inline boost::posix_time::ptime delay(int secs, int msecs=0, int nsecs = 0)
+inline boost::posix_time::ptime ptime_delay(int secs, int msecs=0, int nsecs = 0)
 {
    (void)msecs;
    using namespace boost::posix_time;
@@ -46,16 +46,25 @@ inline boost::posix_time::ptime delay(int secs, int msecs=0, int nsecs = 0)
                (double(time_duration::ticks_per_second())/double(1000000000.0)));
    count += static_cast<int>(double(msecs)*
                (double(time_duration::ticks_per_second())/double(1000.0)));
-   boost::posix_time::ptime cur = microsec_clock::universal_time();
+   boost::posix_time::ptime cur = boost::posix_time::microsec_clock::universal_time();
    return cur +=  boost::posix_time::time_duration(0, 0, secs, count);
 }
 
-inline bool in_range(const boost::posix_time::ptime& xt, int secs=1)
-{
-    boost::posix_time::ptime min = delay(-secs);
-    boost::posix_time::ptime max = delay(0);
-    return (xt > min) && (max > xt);
-}
+inline boost::chrono::system_clock::time_point boost_systemclock_delay(int secs)
+{  return boost::chrono::system_clock::now() + boost::chrono::seconds(secs);  }
+
+#if !defined(BOOST_NO_CXX11_HDR_CHRONO)
+//Use std chrono if available
+inline std::chrono::system_clock::time_point std_systemclock_delay(int secs)
+{  return std::chrono::system_clock::now() + std::chrono::seconds(secs);  }
+
+#else
+//Otherwise use boost chrono
+inline boost::chrono::system_clock::time_point std_systemclock_delay(int secs)
+{  return boost_systemclock_delay(secs);  }
+
+#endif
+
 
 template <typename P>
 class thread_adapter
@@ -83,7 +92,7 @@ struct data
    error_code_t   m_error;
 };
 
-static int shared_val = 0;
+int shared_val = 0;
 static const int BaseSeconds = 1;
 
 }  //namespace test {

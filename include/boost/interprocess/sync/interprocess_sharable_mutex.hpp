@@ -26,7 +26,6 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
 #include <climits>
@@ -96,7 +95,8 @@ class interprocess_sharable_mutex
    //!Note: A program may deadlock if the thread that has ownership calls 
    //!   this function. If the implementation can detect the deadlock,
    //!   an exception could be thrown.
-   bool timed_lock(const boost::posix_time::ptime &abs_time);
+   template<class TimePoint>
+   bool timed_lock(const TimePoint &abs_time);
 
    //!Precondition: The thread must have exclusive ownership of the mutex.
    //!Effects: The calling thread releases the exclusive ownership of the mutex.
@@ -142,7 +142,8 @@ class interprocess_sharable_mutex
    //!Note: A program may deadlock if the thread that has ownership calls 
    //!   this function. If the implementation can detect the deadlock,
    //!   an exception could be thrown.
-   bool timed_lock_sharable(const boost::posix_time::ptime &abs_time);
+   template<class TimePoint>
+   bool timed_lock_sharable(const TimePoint &abs_time);
 
    //!Precondition: The thread must have sharable ownership of the mutex.
    //!Effects: The calling thread releases the sharable ownership of the mutex.
@@ -250,8 +251,9 @@ inline bool interprocess_sharable_mutex::try_lock()
    return true;
 }
 
+template<class TimePoint>
 inline bool interprocess_sharable_mutex::timed_lock
-   (const boost::posix_time::ptime &abs_time)
+   (const TimePoint &abs_time)
 {
    scoped_lock_t lck(m_mut, abs_time);
    if(!lck.owns())   return false;
@@ -333,8 +335,9 @@ inline bool interprocess_sharable_mutex::try_lock_sharable()
    return true;
 }
 
+template<class TimePoint>
 inline bool interprocess_sharable_mutex::timed_lock_sharable
-   (const boost::posix_time::ptime &abs_time)
+   (const TimePoint &abs_time)
 {
    scoped_lock_t lck(m_mut, abs_time);
    if(!lck.owns())   return false;

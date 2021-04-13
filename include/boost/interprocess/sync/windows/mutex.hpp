@@ -21,7 +21,6 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/detail/win32_api.hpp>
 #include <boost/interprocess/detail/windows_intermodule_singleton.hpp>
 #include <boost/interprocess/sync/windows/sync_utils.hpp>
@@ -44,7 +43,7 @@ class winapi_mutex
 
    void lock();
    bool try_lock();
-   bool timed_lock(const boost::posix_time::ptime &abs_time);
+   template<class TimePoint> bool timed_lock(const TimePoint &abs_time);
    void unlock();
    void take_ownership(){};
 
@@ -91,7 +90,8 @@ inline bool winapi_mutex::try_lock(void)
    return mut.try_lock();
 }
 
-inline bool winapi_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
+template<class TimePoint>
+inline bool winapi_mutex::timed_lock(const TimePoint &abs_time)
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();

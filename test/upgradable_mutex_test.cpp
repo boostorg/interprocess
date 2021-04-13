@@ -67,17 +67,15 @@ int main ()
          e_lock = boost::move(moved);
       }
       {
-         boost::posix_time::ptime t = test::delay(100);
          upgradable_lock<Mutex>  u_lock(mut);
          //This calls timed_unlock_upgradable_and_lock()
-         scoped_lock<Mutex>      e_lock(boost::move(u_lock), t);
+         scoped_lock<Mutex>      e_lock(boost::move(u_lock), test::boost_systemclock_delay(10));
       }
       {
-         boost::posix_time::ptime t = test::delay(100);
          upgradable_lock<Mutex>  u_lock(mut);
          //This calls timed_unlock_upgradable_and_lock()
          scoped_lock<Mutex>      e_lock(mut2);
-         scoped_lock<Mutex>      moved(boost::move(u_lock), t);
+         scoped_lock<Mutex>      moved(boost::move(u_lock), test::ptime_delay(10));
          e_lock = boost::move(moved);
       }
       {

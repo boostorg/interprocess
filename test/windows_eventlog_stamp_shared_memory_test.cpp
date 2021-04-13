@@ -19,6 +19,41 @@ int main()
 #else //BOOST_WINDOWS
 
 #define BOOST_INTERPROCESS_BOOTSTAMP_IS_EVENTLOG_BASED
+//Force user-defined get_shared_dir
+#define BOOST_INTERPROCESS_SHARED_DIR_FUNC
+#include <boost/interprocess/detail/shared_dir_helpers.hpp>
+#include <string>
+
+#include "get_process_id_name.hpp"
+
+namespace boost {
+namespace interprocess {
+namespace ipcdetail {
+
+static bool dir_created = false;
+
+inline void get_shared_dir(std::string &shared_dir)
+{
+   shared_dir = boost::interprocess::ipcdetail::get_temporary_path();
+   shared_dir += "/boostipctesteventlog_";
+   shared_dir += boost::interprocess::test::get_process_id_name();
+   if(!dir_created)
+      ipcdetail::create_directory(shared_dir.c_str());
+   dir_created = true;
+}
+
+inline void get_shared_dir(std::wstring &shared_dir)
+{
+   shared_dir = boost::interprocess::ipcdetail::get_temporary_wpath();
+   shared_dir += L"/boostipctesteventlog_";
+   shared_dir += boost::interprocess::test::get_process_id_wname();
+   if(!dir_created)
+      ipcdetail::create_directory(shared_dir.c_str());
+   dir_created = true;
+}
+
+}}}   //namespace boost::interprocess::ipcdetail
+
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/exceptions.hpp>

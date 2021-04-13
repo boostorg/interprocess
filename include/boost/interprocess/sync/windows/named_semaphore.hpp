@@ -24,7 +24,6 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/permissions.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/windows/named_sync.hpp>
 #include <boost/interprocess/sync/windows/winapi_semaphore_wrapper.hpp>
 
@@ -62,7 +61,7 @@ class winapi_named_semaphore
    void post();
    void wait();
    bool try_wait();
-   bool timed_wait(const boost::posix_time::ptime &abs_time);
+   template<class TimePoint> bool timed_wait(const TimePoint &abs_time);
 
    static bool remove(const char *name);
    static bool remove(const wchar_t *name);
@@ -206,7 +205,8 @@ inline bool winapi_named_semaphore::try_wait()
    return m_sem_wrapper.try_wait();
 }
 
-inline bool winapi_named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
+template<class TimePoint>
+inline bool winapi_named_semaphore::timed_wait(const TimePoint &abs_time)
 {
    return m_sem_wrapper.timed_wait(abs_time);
 }

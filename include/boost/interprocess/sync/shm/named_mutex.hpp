@@ -25,7 +25,6 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
 #include <boost/interprocess/permissions.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
@@ -118,7 +117,8 @@ class shm_named_mutex
    //!Tries to lock the interprocess_mutex until time abs_time,
    //!Returns false when timeout expires, returns true when locks.
    //!Throws interprocess_exception if a severe error is found
-   bool timed_lock(const boost::posix_time::ptime &abs_time);
+   template<class TimePoint>
+   bool timed_lock(const TimePoint &abs_time);
 
    //!Erases a named mutex from the system.
    //!Returns false on error. Never throws.
@@ -227,7 +227,8 @@ inline void shm_named_mutex::unlock()
 inline bool shm_named_mutex::try_lock()
 {  return this->internal_mutex().try_lock();  }
 
-inline bool shm_named_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
+template<class TimePoint>
+inline bool shm_named_mutex::timed_lock(const TimePoint &abs_time)
 {  return this->internal_mutex().timed_lock(abs_time);   }
 
 inline bool shm_named_mutex::remove(const char *name)

@@ -10,7 +10,7 @@
 
 // enable timeout feature
 #define BOOST_INTERPROCESS_ENABLE_TIMEOUT_WHEN_LOCKING
-#define BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS 1000
+#define BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS 6000
 
 #include <boost/assert.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>

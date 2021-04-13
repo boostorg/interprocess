@@ -24,7 +24,6 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/detail/locks.hpp>
 #include <boost/interprocess/exceptions.hpp>
@@ -49,14 +48,6 @@
 //!Describes process-shared variables interprocess_condition class
 
 namespace boost {
-
-#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
-
-namespace posix_time
-{  class ptime;   }
-
-#endif   //#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
-
 namespace interprocess {
 
 class named_condition;
@@ -121,8 +112,8 @@ class interprocess_condition
    //!this->notify_one() or this->notify_all(), or until time abs_time is reached,
    //!and then reacquires the lock.
    //!Returns: false if time abs_time is reached, otherwise true.
-   template <typename L>
-   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time)
+   template <typename L, class TimePoint>
+   bool timed_wait(L& lock, const TimePoint &abs_time)
    {
       ipcdetail::internal_mutex_lock<L> internal_lock(lock);
       return m_condition.timed_wait(internal_lock, abs_time);
@@ -131,8 +122,8 @@ class interprocess_condition
    //!The same as:   while (!pred()) {
    //!                  if (!timed_wait(lock, abs_time)) return pred();
    //!               } return true;
-   template <typename L, typename Pr>
-   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
+   template <typename L, class TimePoint, typename Pr>
+   bool timed_wait(L& lock, const TimePoint &abs_time, Pr pred)
    {
       ipcdetail::internal_mutex_lock<L> internal_lock(lock);
       return m_condition.timed_wait(internal_lock, abs_time, pred);

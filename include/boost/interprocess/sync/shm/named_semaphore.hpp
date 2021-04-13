@@ -25,7 +25,6 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/permissions.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
@@ -67,7 +66,7 @@ class shm_named_semaphore
    void post();
    void wait();
    bool try_wait();
-   bool timed_wait(const boost::posix_time::ptime &abs_time);
+   template<class TimePoint> bool timed_wait(const TimePoint &abs_time);
 
    static bool remove(const char *name);
 
@@ -176,7 +175,8 @@ inline void shm_named_semaphore::wait()
 inline bool shm_named_semaphore::try_wait()
 {  return semaphore()->try_wait();   }
 
-inline bool shm_named_semaphore::timed_wait(const boost::posix_time::ptime &abs_time)
+template<class TimePoint>
+inline bool shm_named_semaphore::timed_wait(const TimePoint &abs_time)
 {  return semaphore()->timed_wait(abs_time); }
 
 inline bool shm_named_semaphore::remove(const char *name)

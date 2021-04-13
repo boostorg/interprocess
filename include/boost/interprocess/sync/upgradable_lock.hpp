@@ -33,7 +33,6 @@
 
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/move/utility_core.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
 //!\file
 //!Describes the upgradable_lock class that serves to acquire the upgradable
@@ -109,7 +108,8 @@ class upgradable_lock
    //!   handles recursive locking depends upon the mutex. If the mutex_type
    //!   does not support timed_lock_upgradable, this constructor will fail
    //!   at compile time if instantiated, but otherwise have no effect.
-   upgradable_lock(mutex_type& m, const boost::posix_time::ptime& abs_time)
+   template<class TimePoint>
+   upgradable_lock(mutex_type& m, const TimePoint& abs_time)
       : mp_mutex(&m), m_locked(false)
    {  m_locked = mp_mutex->timed_lock_upgradable(abs_time);  }
 
@@ -243,7 +243,8 @@ class upgradable_lock
    //!   specified time. If the mutex_type does not support
    //!   timed_lock_upgradable(abs_time), this function will fail at compile
    //!   time if instantiated, but otherwise have no effect.
-   bool timed_lock(const boost::posix_time::ptime& abs_time)
+   template<class TimePoint>
+   bool timed_lock(const TimePoint& abs_time)
    {
       if(!mp_mutex || m_locked)
          throw lock_exception();

@@ -86,15 +86,15 @@ class named_condition_test_wrapper
       NamedCondition::wait(internal_lock, pred);
    }
 
-   template <typename L>
-   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time)
+   template <typename L, typename TimePoint>
+   bool timed_wait(L& lock, const TimePoint &abs_time)
    {
       ipcdetail::internal_mutex_lock<L> internal_lock(lock);
       return NamedCondition::timed_wait(internal_lock, abs_time);
    }
 
-   template <typename L, typename Pr>
-   bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
+   template <typename L, typename TimePoint, typename Pr>
+   bool timed_wait(L& lock, const TimePoint &abs_time, Pr pred)
    {
       ipcdetail::internal_mutex_lock<L> internal_lock(lock);
       return NamedCondition::timed_wait(internal_lock, abs_time, pred);

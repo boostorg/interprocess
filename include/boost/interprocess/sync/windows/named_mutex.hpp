@@ -23,7 +23,6 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/permissions.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
-#include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/windows/sync_utils.hpp>
 #include <boost/interprocess/sync/windows/named_sync.hpp>
 #include <boost/interprocess/sync/windows/winapi_mutex_wrapper.hpp>
@@ -65,7 +64,7 @@ class winapi_named_mutex
    void unlock();
    void lock();
    bool try_lock();
-   bool timed_lock(const boost::posix_time::ptime &abs_time);
+   template<class TimePoint> bool timed_lock(const TimePoint &abs_time);
 
    static bool remove(const char *name);
 
@@ -201,7 +200,8 @@ inline bool winapi_named_mutex::try_lock()
    return m_mtx_wrapper.try_lock();
 }
 
-inline bool winapi_named_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
+template<class TimePoint>
+inline bool winapi_named_mutex::timed_lock(const TimePoint &abs_time)
 {
    return m_mtx_wrapper.timed_lock(abs_time);
 }
