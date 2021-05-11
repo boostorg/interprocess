@@ -64,6 +64,9 @@ class basic_managed_external_buffer
    {}
 
    //!Creates and places the segment manager. This can throw
+   //!The external memory supplied by the user shall be aligned to the maximum value between 
+   //!`alignof(std::max_align_t)` and the strictest alignment of any over-aligned type to be built
+   //!inside that memory.
    basic_managed_external_buffer
       (create_only_t, void *addr, size_type size)
    {
@@ -75,6 +78,9 @@ class basic_managed_external_buffer
    }
 
    //!Creates and places the segment manager. This can throw
+   //!The external memory supplied by the user shall be aligned to the maximum value between 
+   //!`alignof(std::max_align_t)` and the strictest alignment of any over-aligned type to be built
+   //!inside that memory.
    basic_managed_external_buffer
       (open_only_t, void *addr, size_type size)
    {

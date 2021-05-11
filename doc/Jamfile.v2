@@ -32,8 +32,9 @@ doxygen autodoc
         <doxygen:param>EXPAND_ONLY_PREDEF=YES
         <doxygen:param>MACRO_EXPANSION=YES
         <doxygen:param>"PREDEFINED=\"BOOST_INTERPROCESS_DOXYGEN_INVOKED\" \\
-                                   \"BOOST_NOEXCEPT_IF(T)=noexcept(T)\" \\
                                    \"BOOST_NOEXCEPT_OR_NOTHROW=noexcept\" \\
+                                   \"BOOST_NOEXCEPT_IF(T)=noexcept(T)\" \\
+                                   \"BOOST_NOEXCEPT=noexcept\" \\
                                    \"BOOST_INTERPROCESS_IMPDEF(T)=implementation_defined\" \\
                                    \"BOOST_INTERPROCESS_SEEDOC(T)=see_documentation\" \\
                                    \"BOOST_INTERPROCESS_DOC1ST(T1,T2)=T1\" \\

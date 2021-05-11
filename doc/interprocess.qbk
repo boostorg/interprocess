@@ -4279,6 +4279,10 @@ be also useful to build small databases for embedded systems limiting the size o
 the used memory to a predefined memory chunk, instead of letting the database
 fragment the heap memory.
 
+[*Note:] The external memory supplied by the user shall be aligned to the maximum value between 
+`alignof(max_align_t)` and the alignment of the strictest over-aligned type to be built inside
+that memory.
+
 [endsect]
 
 [section:managed_heap_memory Managed Heap Memory: Boost.Interprocess machinery in heap memory]
@@ -4345,6 +4349,18 @@ Otherwise, the result is undefined. Here is an example:
 
 [import ../example/doc_managed_heap_memory.cpp]
 [doc_managed_heap_memory]
+
+[*Note:] Heap memory is not guaranteed to be compatible with over-aligned types so it is
+not supported to use memory allocation algorithms or construct objects that need over-aligned memory:
+
+[c++]
+
+    // 64 byte aligned memory might not be supported
+    typedef basic_managed_heap_memory<
+        char,
+        rbtree_best_fit<mutex_family, offset_ptr<void, long, unsigned long, 64>, 64>,
+        iset_index
+    > managed_heap_with_overalignment_t;
 
 [endsect]
 
@@ -6781,6 +6797,9 @@ thank them:
 *  Interprocess no longer depends on Boost.DateTime. Instead, all timed
    functions were templated to take a TimePoint. This time point can be `boost::date_time::ptime`,
    `std::time_point` or `boost::chrono::time_point`.
+
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/issues/50  GitHub #50 (['"64-byte alignment causes assertion in rbtree_best_fit"])].
 
 [endsect]
 
