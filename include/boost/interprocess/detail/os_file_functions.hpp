@@ -104,7 +104,8 @@ template<class CharT>
 inline bool create_directory(const CharT *path)
 {  return winapi::create_directory(path); }
 
-inline bool remove_directory(const char *path)
+template <class CharT>
+inline bool remove_directory(const CharT *path)
 {  return winapi::remove_directory(path); }
 
 inline bool get_temporary_path(char *buffer, std::size_t buf_len, std::size_t &required_len)

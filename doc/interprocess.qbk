@@ -6664,8 +6664,9 @@ can force this Event Log based timestamp defining BOOST_INTERPROCESS_BOOTSTAMP_I
 
 In any error case (shared documents folder is not defined or bootup time could not be obtained), the library throws an error. You still
 can use [*Boost.Interprocess] defining your own directory as the shared directory. When your shared directory is a compile-time constant,
-define `BOOST_INTERPROCESS_SHARED_DIR_PATH` when using the library and that path will be used to place shared memory files. When you have 
-to determine the shared directory at runtime, define `BOOST_INTERPROCESS_SHARED_DIR_FUNC` and implement the function 
+define `BOOST_INTERPROCESS_SHARED_DIR_PATH` (and BOOST_INTERPROCESS_SHARED_DIR_WPATH in Windows systems) when using the library and that
+path will be used to place shared memory files. When you have to determine the shared directory at runtime,
+define `BOOST_INTERPROCESS_SHARED_DIR_FUNC` and implement the following functions
 
 [c++]
 
@@ -6673,6 +6674,8 @@ to determine the shared directory at runtime, define `BOOST_INTERPROCESS_SHARED_
        namespace interprocess { 
            namespace ipcdetail {
                void get_shared_dir(std::string &shared_dir);
+               //wstring overload is only needed for Windows systems
+               void get_shared_dir(std::wstring &shared_dir);
            }
        }
    }
@@ -6791,6 +6794,14 @@ thank them:
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_78_00 Boost 1.78 Release]
+
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/issues/145  GitHub #145 (['"1.76 now requires unicode paths on windows"])].
+
+[endsect]
+
 
 [section:release_notes_boost_1_77_00 Boost 1.77 Release]
 

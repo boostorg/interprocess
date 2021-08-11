@@ -161,18 +161,32 @@ inline void get_shared_dir_root(std::basic_string<CharT> &dir_path)
 
 #else
 
+#if defined(BOOST_INTERPROCESS_SHARED_DIR_PATH)
+
+inline void get_shared_dir(std::string &shared_dir)
+{
+   shared_dir = BOOST_INTERPROCESS_SHARED_DIR_PATH;
+}
+
+#endif
+
+#if defined(BOOST_INTERPROCESS_SHARED_DIR_WPATH)
+
+inline void get_shared_dir(std::wstring &shared_dir)
+{
+   shared_dir = BOOST_INTERPROCESS_SHARED_DIR_WPATH;
+}
+
+#endif
+
 template<class CharT>
 inline void get_shared_dir(std::basic_string<CharT> &shared_dir)
 {
-   #if defined(BOOST_INTERPROCESS_SHARED_DIR_PATH)
-      shared_dir = BOOST_INTERPROCESS_SHARED_DIR_PATH;
-   #else 
       get_shared_dir_root(shared_dir);
       #if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME)
          shared_dir += shared_dir_constants<CharT>::dir_separator();
          get_bootstamp(shared_dir, true);
       #endif
-   #endif
 }
 #endif
 
