@@ -265,9 +265,9 @@ inline Mutex &mutex()
    return mut;
 }
 */
-static volatile int count = 0;
-static volatile int waiting_readers = 0;
-static volatile int waiting_writer  = 0;
+static int count = 0;
+static int waiting_readers = 0;
+static int waiting_writer  = 0;
 const int queue_size    = 3;
 const int thread_factor = 10;
 const int NumThreads    = thread_factor*queue_size;
