@@ -100,6 +100,20 @@ class named_condition_test_wrapper
       return NamedCondition::timed_wait(internal_lock, abs_time, pred);
    }
 
+   template <typename L, class TimePoint>
+   cv_status wait_until(L& lock, const TimePoint &abs_time)
+   {
+      ipcdetail::internal_mutex_lock<L> internal_lock(lock);
+      return NamedCondition::wait_until(internal_lock, abs_time);
+   }
+
+   template <typename L, class TimePoint, typename Pr>
+   bool wait_until(L& lock, const TimePoint &abs_time, Pr pred)
+   {
+      ipcdetail::internal_mutex_lock<L> internal_lock(lock);
+      return NamedCondition::wait_until(internal_lock, abs_time, pred);
+   }
+
    static int count;
 };
 

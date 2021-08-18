@@ -37,6 +37,12 @@ class semaphore_test_wrapper
    bool timed_lock(const TimePoint &pt)
    {  return this->timed_wait(pt);  }
 
+   template<class TimePoint> bool try_lock_until(const TimePoint &abs_time)
+   {  return this->timed_lock(abs_time);  }
+
+   template<class Duration>  bool try_lock_for(const Duration &dur)
+   {  return this->timed_lock(boost::interprocess::ipcdetail::duration_to_ustime(dur)); }
+
    void unlock()
    {  this->post();  }
 

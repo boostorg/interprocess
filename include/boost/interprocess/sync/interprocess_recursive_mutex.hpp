@@ -122,6 +122,16 @@ class interprocess_recursive_mutex
    template<class TimePoint>
    bool timed_lock(const TimePoint &abs_time);
 
+   //!Same as `timed_lock`, but this function is modeled after the
+   //!standard library interface.
+   template<class TimePoint> bool try_lock_until(const TimePoint &abs_time)
+   {  return this->timed_lock(abs_time);  }
+
+   //!Same as `timed_lock`, but this function is modeled after the
+   //!standard library interface.
+   template<class Duration>  bool try_lock_for(const Duration &dur)
+   {  return this->timed_lock(ipcdetail::duration_to_ustime(dur)); }
+
    //!Effects: The calling thread releases the exclusive ownership of the mutex.
    //!   If the mutex supports recursive locking, the mutex must be unlocked the
    //!   same number of times it is locked.

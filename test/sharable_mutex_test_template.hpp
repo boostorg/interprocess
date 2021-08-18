@@ -82,34 +82,6 @@ void try_shared(void *arg, SM &sm)
 }
 
 template<typename SM>
-void timed_exclusive(void *arg, SM &sm)
-{
-   data<SM> *pdata = static_cast<data<SM>*>(arg);
-   boost::posix_time::ptime pt(ptime_delay(pdata->m_secs));
-   boost::interprocess::scoped_lock<SM>
-      l (sm, boost::interprocess::defer_lock);
-   if (l.timed_lock(pt)){
-      boost::interprocess::ipcdetail::thread_sleep((1000*3*BaseSeconds));
-      shared_val += 10;
-      pdata->m_value = shared_val;
-   }
-}
-
-template<typename SM>
-void timed_shared(void *arg, SM &sm)
-{
-   data<SM> *pdata = static_cast<data<SM>*>(arg);
-   boost::interprocess::sharable_lock<SM>
-      l(sm, boost::interprocess::defer_lock);
-   if (l.timed_lock(boost_systemclock_delay(pdata->m_secs))){
-      if(pdata->m_secs){
-         boost::interprocess::ipcdetail::thread_sleep((1000*pdata->m_secs*BaseSeconds));
-      }
-      pdata->m_value = shared_val;
-   }
-}
-
-template<typename SM>
 void test_plain_sharable_mutex()
 {
    {
@@ -224,49 +196,103 @@ void test_try_sharable_mutex()
 }
 
 template<typename SM>
+void timed_exclusive(void *arg, SM &sm)
+{
+   data<SM> *pdata = static_cast<data<SM>*>(arg);
+   boost::interprocess::scoped_lock<SM>
+      l (sm, boost::interprocess::defer_lock);
+
+   bool r = false;
+   if(pdata->m_flags == (int)TimedLock){
+      r = l.timed_lock(std_systemclock_delay(pdata->m_secs));
+   }
+   else if (pdata->m_flags == (int)TryLockUntil) {
+      r = l.try_lock_until(ptime_delay(pdata->m_secs));
+   }
+   else if (pdata->m_flags == (int)TryLockFor) {
+      r = l.try_lock_for(boost_systemclock_seconds(pdata->m_secs));
+   }
+
+   if (r){
+      boost::interprocess::ipcdetail::thread_sleep((1000*3*BaseSeconds));
+      shared_val += 10;
+      pdata->m_value = shared_val;
+   }
+}
+
+template<typename SM>
+void timed_shared(void *arg, SM &sm)
+{
+   data<SM> *pdata = static_cast<data<SM>*>(arg);
+   boost::interprocess::sharable_lock<SM>
+      l(sm, boost::interprocess::defer_lock);
+
+   bool r = false;
+   if(pdata->m_flags == (int)TimedLock){
+      r = l.timed_lock(std_systemclock_delay(pdata->m_secs));
+   }
+   else if (pdata->m_flags == (int)TryLockUntil) {
+      r = l.try_lock_until(ptime_delay(pdata->m_secs));
+   }
+   else if (pdata->m_flags == (int)TryLockFor) {
+      r = l.try_lock_for(boost_systemclock_seconds(pdata->m_secs));
+   }
+
+   if (r){
+      if(pdata->m_secs){
+         boost::interprocess::ipcdetail::thread_sleep((1000*pdata->m_secs*BaseSeconds));
+      }
+      pdata->m_value = shared_val;
+   }
+}
+
+template<typename SM>
 void test_timed_sharable_mutex()
 {
-   SM mtx;
-   data<SM> s1(1,1*BaseSeconds);
-   data<SM> s2(2,3*BaseSeconds);
-   data<SM> e1(3,3*BaseSeconds);
-   data<SM> e2(4,1*BaseSeconds);
+   for (int flag = 0; flag != (int)ETimedLockFlagsMax; ++flag)
+   {
+      SM mtx;
+      data<SM> s1(1,1*BaseSeconds, flag);
+      data<SM> s2(2,3*BaseSeconds, flag);
+      data<SM> e1(3,3*BaseSeconds, flag);
+      data<SM> e2(4,1*BaseSeconds, flag);
 
-   // We begin with some specialized tests for "timed" behavior
+      // We begin with some specialized tests for "timed" behavior
 
-   shared_val = 0;
+      shared_val = 0;
 
-   // Writer one will hold the lock for 3*BaseSeconds seconds.
-   boost::interprocess::ipcdetail::OS_thread_t tw1;
-   boost::interprocess::ipcdetail::thread_launch(tw1, thread_adapter<SM>(timed_exclusive,&e1,mtx));
+      // Writer one will hold the lock for 3*BaseSeconds seconds.
+      boost::interprocess::ipcdetail::OS_thread_t tw1;
+      boost::interprocess::ipcdetail::thread_launch(tw1, thread_adapter<SM>(timed_exclusive,&e1,mtx));
 
-   boost::interprocess::ipcdetail::thread_sleep((1000*1*BaseSeconds));
-   // Writer two will "clearly" try for the lock after the readers
-   //  have tried for it.  Writer will wait up 1*BaseSeconds seconds for the lock.
-   //  This write will fail.
-   boost::interprocess::ipcdetail::OS_thread_t tw2;
-   boost::interprocess::ipcdetail::thread_launch(tw2, thread_adapter<SM>(timed_exclusive,&e2,mtx));
+      boost::interprocess::ipcdetail::thread_sleep((1000*1*BaseSeconds));
+      // Writer two will "clearly" try for the lock after the readers
+      //  have tried for it.  Writer will wait up 1*BaseSeconds seconds for the lock.
+      //  This write will fail.
+      boost::interprocess::ipcdetail::OS_thread_t tw2;
+      boost::interprocess::ipcdetail::thread_launch(tw2, thread_adapter<SM>(timed_exclusive,&e2,mtx));
 
-   // Readers one and two will "clearly" try for the lock after writer
-   //   one already holds it.  1st reader will wait 1*BaseSeconds seconds, and will fail
-   //   to get the lock.  2nd reader will wait 3*BaseSeconds seconds, and will get
-   //   the lock.
+      // Readers one and two will "clearly" try for the lock after writer
+      //   one already holds it.  1st reader will wait 1*BaseSeconds seconds, and will fail
+      //   to get the lock.  2nd reader will wait 3*BaseSeconds seconds, and will get
+      //   the lock.
 
-   boost::interprocess::ipcdetail::OS_thread_t thr1;
-   boost::interprocess::ipcdetail::thread_launch(thr1, thread_adapter<SM>(timed_shared,&s1,mtx));
+      boost::interprocess::ipcdetail::OS_thread_t thr1;
+      boost::interprocess::ipcdetail::thread_launch(thr1, thread_adapter<SM>(timed_shared,&s1,mtx));
 
-   boost::interprocess::ipcdetail::OS_thread_t thr2;
-   boost::interprocess::ipcdetail::thread_launch(thr2, thread_adapter<SM>(timed_shared,&s2,mtx));
+      boost::interprocess::ipcdetail::OS_thread_t thr2;
+      boost::interprocess::ipcdetail::thread_launch(thr2, thread_adapter<SM>(timed_shared,&s2,mtx));
 
-   boost::interprocess::ipcdetail::thread_join(tw1);
-   boost::interprocess::ipcdetail::thread_join(thr1);
-   boost::interprocess::ipcdetail::thread_join(thr2);
-   boost::interprocess::ipcdetail::thread_join(tw2);
+      boost::interprocess::ipcdetail::thread_join(tw1);
+      boost::interprocess::ipcdetail::thread_join(thr1);
+      boost::interprocess::ipcdetail::thread_join(thr2);
+      boost::interprocess::ipcdetail::thread_join(tw2);
 
-   BOOST_INTERPROCESS_CHECK(e1.m_value == 10);
-   BOOST_INTERPROCESS_CHECK(s1.m_value == -1);
-   BOOST_INTERPROCESS_CHECK(s2.m_value == 10);
-   BOOST_INTERPROCESS_CHECK(e2.m_value == -1);
+      BOOST_INTERPROCESS_CHECK(e1.m_value == 10);
+      BOOST_INTERPROCESS_CHECK(s1.m_value == -1);
+      BOOST_INTERPROCESS_CHECK(s2.m_value == 10);
+      BOOST_INTERPROCESS_CHECK(e2.m_value == -1);
+   }
 }
 
 template<typename SM>

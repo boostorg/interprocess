@@ -31,7 +31,7 @@ namespace ipcdetail {
 
 template<class TimePoint>
 inline timespec timepoint_to_timespec ( const TimePoint &tm
-                                  , typename enable_if_ptime<TimePoint>::type * = 0)
+                                      , typename enable_if_ptime<TimePoint>::type * = 0)
 {
    typedef typename TimePoint::date_type            date_type;
    typedef typename TimePoint::time_duration_type   time_duration_type;
@@ -57,7 +57,7 @@ inline timespec timepoint_to_timespec (const ustime &tm)
 
 template<class TimePoint>
 inline timespec timepoint_to_timespec ( const TimePoint &tm
-                                       , typename enable_if_time_point<TimePoint>::type * = 0)
+                                      , typename enable_if_time_point<TimePoint>::type * = 0)
 {
    typedef typename TimePoint::duration duration_t;
    duration_t d(tm.time_since_epoch());

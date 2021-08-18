@@ -166,6 +166,15 @@ class ustime
    ustime operator + (const usduration &other)
    {  ustime r(*this); r += other; return r; }
 
+   ustime &operator -= (const usduration &other)
+   {  m_microsecs -= other.m_microsecs; return *this; }
+
+   ustime operator - (const usduration &other)
+   {  ustime r(*this); r -= other; return r; }
+
+   friend usduration operator - (const ustime &l, const ustime &r)
+   {  return usduration(l.m_microsecs - r.m_microsecs); }
+
    bool operator < (const ustime &other) const
    {  return m_microsecs < other.m_microsecs; }
 
@@ -296,6 +305,22 @@ inline bool is_pos_infinity(const TimePoint &, typename disable_if_ptime<TimePoi
    return false;
 }
 
+/*
+template<class Duration>
+inline ustime duration_to_timepoint(const Duration &dur, typename enable_if_ptime<Duration>::type* = 0)
+{
+   return dur.is_pos_infinity();
+}
+
+template<class Duration>
+inline bool duration_to_timepoint(const Duration &, typename disable_if_ptime<Duration>::type* = 0)
+{
+   return false;
+}
+*/
+
+// duration_to_milliseconds
+
 template<class Duration>
 inline boost::uint64_t duration_to_milliseconds(const Duration &abs_time, typename enable_if_ptime_duration<Duration>::type* = 0)
 {
@@ -307,6 +332,34 @@ inline boost::uint64_t duration_to_milliseconds(const Duration &d, typename enab
 {
    const double factor = double(Duration::period::num)*1000.0/double(Duration::period::den);
    return static_cast<boost::uint64_t>(d.count()*factor);
+}
+
+inline boost::uint64_t duration_to_milliseconds(const usduration &d)
+{
+   return d.get_microsecs()/1000;
+}
+
+// duration_to_usduration
+
+template<class Duration>
+inline usduration duration_to_usduration(const Duration &d, typename enable_if_ptime_duration<Duration>::type* = 0)
+{
+   return usduration(d.total_microseconds());
+}
+
+template<class Duration>
+inline usduration duration_to_usduration(const Duration &d, typename enable_if_duration<Duration>::type* = 0)
+{
+   const double factor = double(Duration::period::num)*1000000.0/double(Duration::period::den);
+   return usduration(static_cast<boost::uint64_t>(d.count()*factor));
+}
+
+// duration_to_ustime
+
+template<class Duration>
+inline ustime duration_to_ustime(const Duration &d)
+{
+   return microsec_clock<ustime>::universal_time() + (duration_to_usduration)(d);
 }
 
 

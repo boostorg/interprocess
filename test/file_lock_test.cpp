@@ -70,7 +70,7 @@ int main ()
       mapping.swap(move_assign);
    }
 
-   //test::test_all_lock<file_lock_lock_test_wrapper>();
+   test::test_all_lock<file_lock_lock_test_wrapper>();
    //test::test_all_mutex<file_lock_lock_test_wrapper>();
    //test::test_all_sharable_mutex<file_lock_lock_test_wrapper>();
    std::remove(get_filename().c_str());

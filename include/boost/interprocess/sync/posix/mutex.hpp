@@ -71,6 +71,13 @@ class posix_mutex
    void lock();
    bool try_lock();
    template<class TimePoint> bool timed_lock(const TimePoint &abs_time);
+
+   template<class TimePoint> bool try_lock_until(const TimePoint &abs_time)
+   {  return this->timed_lock(abs_time);  }
+
+   template<class Duration>  bool try_lock_for(const Duration &dur)
+   {  return this->timed_lock(duration_to_ustime(dur)); }
+
    void unlock();
 
    friend class posix_condition;

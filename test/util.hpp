@@ -50,18 +50,30 @@ inline boost::posix_time::ptime ptime_delay(int secs, int msecs=0, int nsecs = 0
    return cur +=  boost::posix_time::time_duration(0, 0, secs, count);
 }
 
+inline boost::posix_time::time_duration ptime_seconds(int secs)
+{  return  boost::posix_time::time_duration(0, 0, secs);  }
+
 inline boost::chrono::system_clock::time_point boost_systemclock_delay(int secs)
 {  return boost::chrono::system_clock::now() + boost::chrono::seconds(secs);  }
+
+inline boost::chrono::seconds boost_systemclock_seconds(int secs)
+{  return boost::chrono::seconds(secs);  }
 
 #if !defined(BOOST_NO_CXX11_HDR_CHRONO)
 //Use std chrono if available
 inline std::chrono::system_clock::time_point std_systemclock_delay(int secs)
 {  return std::chrono::system_clock::now() + std::chrono::seconds(secs);  }
 
+inline std::chrono::seconds std_systemclock_seconds(int secs)
+{  return std::chrono::seconds(secs);  }
+
 #else
 //Otherwise use boost chrono
 inline boost::chrono::system_clock::time_point std_systemclock_delay(int secs)
 {  return boost_systemclock_delay(secs);  }
+
+inline boost::chrono::seconds std_systemclock_seconds(int secs)
+{  return boost::chrono::seconds(secs);  }
 
 #endif
 
@@ -83,13 +95,14 @@ class thread_adapter
 template <typename P>
 struct data
 {
-   explicit data(int id, int secs=0)
-      : m_id(id), m_value(-1), m_secs(secs), m_error(no_error)
+   explicit data(int id, int secs=0, int flags = 0)
+      : m_id(id), m_value(-1), m_secs(secs), m_error(no_error), m_flags(flags)
    {}
    int            m_id;
    int            m_value;
    int            m_secs;
    error_code_t   m_error;
+   int            m_flags;
 };
 
 int shared_val = 0;

@@ -21,6 +21,8 @@
 #include <boost/interprocess/sync/windows/named_semaphore.hpp>
 #endif
 
+#include <boost/interprocess/detail/timed_utils.hpp>
+
 using namespace boost::interprocess;
 
 static const std::size_t RecSemCount   = 100;
@@ -60,6 +62,12 @@ class lock_test_wrapper
    template<class TimePoint>
    bool timed_lock(const TimePoint &pt)
    {  return this->timed_wait(pt);  }
+
+   template<class TimePoint> bool try_lock_until(const TimePoint &abs_time)
+   {  return this->timed_lock(abs_time);  }
+
+   template<class Duration>  bool try_lock_for(const Duration &dur)
+   {  return this->timed_lock(boost::interprocess::ipcdetail::duration_to_ustime(dur)); }
 
    void unlock()
    {  this->post();  }

@@ -1383,7 +1383,7 @@ All the mutex types from [*Boost.Interprocess] implement the following operation
 
 [*Throws:] *interprocess_exception* on error.
 
-[blurb ['[*bool timed_lock(const boost::posix_time::ptime &abs_time)]]]
+[blurb ['[*template<class TimePoint> bool timed_lock(const TimePoint &abs_time)]]]
 
 [*Effects:] The calling thread will try to obtain exclusive ownership of the mutex if it can do so in until the specified time is reached. If the mutex supports recursive locking, the mutex must be unlocked the same number of times it is locked.
 
@@ -1399,8 +1399,8 @@ All the mutex types from [*Boost.Interprocess] implement the following operation
 
 [*Throws:] An exception derived from *interprocess_exception* on error.
 
-[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
-are UTC time points, not local time points]
+[important Boost.Interprocess timed synchronization mechanisms support several timepoints: `boost::posix_time::ptime` absolute UTC time points,
+    `boost::chrono` and `std::chrono` timepoints. Additionally Interprocess' mutexes meet standard C++ `TimedLockable` requirements for std-compatibility]
 
 [endsect]
 
@@ -1499,8 +1499,8 @@ try_lock, timed_lock a mutex or not to lock it at all.
 For more information, check the
 [classref boost::interprocess::scoped_lock scoped_lock's reference].
 
-[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
-are UTC time points, not local time points]
+[important Boost.Interprocess timed synchronization operations support several timepoints: `boost::posix_time::ptime` absolute UTC time points,
+    `boost::chrono` and `std::chrono` timepoints]
 
 [endsect]
 
@@ -1857,7 +1857,7 @@ If it has to wait, returns false.
 
 [*Throws:] *interprocess_exception* on error.
 
-[blurb ['[*bool timed_lock(const boost::posix_time::ptime &abs_time)]]]
+[blurb ['[*template<class TimePoint> bool timed_lock(const TimePoint &abs_time)]]]
 
 [*Effects:]
 The calling thread tries to acquire exclusive ownership of the mutex
@@ -1902,7 +1902,7 @@ If it has to wait, returns false.
 
 [*Throws:] *interprocess_exception* on error.
 
-[blurb ['[*bool timed_lock_sharable(const boost::posix_time::ptime &abs_time)]]]
+[blurb ['[*template <class TimePoint> bool timed_lock_sharable(const TimePoint &abs_time)]]]
 
 [*Effects:]
 The calling thread tries to acquire sharable ownership of the mutex
@@ -1947,7 +1947,7 @@ If it has to wait, returns false.
 
 [*Throws:] *interprocess_exception* on error.
 
-[blurb ['[*bool timed_lock_upgradable(const boost::posix_time::ptime &abs_time)]]]
+[blurb ['[*template <class TimePoint> bool timed_lock_upgradable(const TimePoint &abs_time)]]]
 
 [*Effects:]
 The calling thread tries to acquire upgradable ownership of the mutex
@@ -2019,7 +2019,9 @@ it will maintain upgradable ownership.
 [*Returns:] If acquires exclusive ownership, returns true. Otherwise
 returns false.
 
-[*Throws:] An exception derived from *interprocess_exception* on error.[blurb ['[*bool timed_unlock_upgradable_and_lock(const boost::posix_time::ptime &abs_time)]]]
+[*Throws:] An exception derived from *interprocess_exception* on error.
+
+[blurb ['[*template <class TimePoint> bool timed_unlock_upgradable_and_lock(const TimePoint &abs_time)]]]
 
 [*Precondition:] The thread must have upgradable ownership of the mutex.
 
@@ -2042,7 +2044,9 @@ but it will maintain sharable ownership.
 [*Returns:] If acquires exclusive ownership, returns true. Otherwise
 returns false.
 
-[*Throws:] An exception derived from *interprocess_exception* on error.[blurb ['[*bool try_unlock_sharable_and_lock_upgradable()]]]
+[*Throws:] An exception derived from *interprocess_exception* on error.
+
+[blurb ['[*bool try_unlock_sharable_and_lock_upgradable()]]]
 
 [*Precondition:] The thread must have sharable ownership of the mutex.
 
@@ -2055,8 +2059,8 @@ returns false.
 
 [*Throws:] An exception derived from *interprocess_exception* on error.
 
-[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
-are UTC time points, not local time points]
+[important Boost.Interprocess timed synchronization mechanisms support several timepoints: `boost::posix_time::ptime` absolute UTC time points,
+    `boost::chrono` and `std::chrono` timepoints.]
 
 [endsect]
 
@@ -2095,6 +2099,8 @@ Boost.Interprocess offers the following upgradable mutex types:
 
 * [classref boost::interprocess::named_upgradable_mutex named_upgradable_mutex]: A non-recursive,
   named upgradable mutex.
+
+[important Interprocess shared mutexes meet standard C++ `SharedTimedMutex` requirements for std-compatibility]
 
 [endsect]
 
@@ -2234,8 +2240,8 @@ upgradable mutex is always unlocked when an exception occurs.
 [classref boost::interprocess::sharable_lock sharable_lock] offer
 more features and operations, see their reference for more informations
 
-[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
-are UTC time points, not local time points]
+[important Boost.Interprocess timed synchronization mechanisms support several timepoints: `boost::posix_time::ptime` absolute UTC time points,
+    `boost::chrono` and `std::chrono` timepoints.]
 
 [endsect]
 
@@ -2392,8 +2398,8 @@ is permitted:
       scoped_lock<Mutex>      e_lock(move(s_lock, try_to_lock));
    }
 
-[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
-are UTC time points, not local time points]
+[important Boost.Interprocess timed synchronization mechanisms support several timepoints: `boost::posix_time::ptime` absolute UTC time points,
+    `boost::chrono` and `std::chrono` timepoints.]
 
 [endsect]
 
@@ -2654,7 +2660,7 @@ If it has to wait, returns false.
 
 [*Throws:] *interprocess_exception* on error.
 
-[blurb ['[*bool timed_lock(const boost::posix_time::ptime &abs_time)]]]
+[blurb ['[*template <class TimePoint> bool timed_lock(const TimePoint &abs_time)]]]
 
 [*Effects:]
 The calling thread tries to acquire exclusive ownership of the file lock
@@ -2695,7 +2701,7 @@ If it has to wait, returns false.
 
 [*Throws:] *interprocess_exception* on error.
 
-[blurb ['[*bool timed_lock_sharable(const boost::posix_time::ptime &abs_time)]]]
+[blurb ['[*template <class TimePoint> bool timed_lock_sharable(const TimePoint &abs_time)]]]
 
 [*Effects:]
 The calling thread tries to acquire sharable ownership of the file lock
@@ -2718,8 +2724,8 @@ returns false.
 For more file locking methods, please
 [classref boost::interprocess::file_lock file_lock reference].
 
-[important `boost::posix_time::ptime` absolute time points used by Boost.Interprocess synchronization mechanisms
-are UTC time points, not local time points]
+[important Boost.Interprocess timed synchronization mechanisms support several timepoints: `boost::posix_time::ptime` absolute UTC time points,
+    `boost::chrono` and `std::chrono` timepoints.]
 
 [endsect]
 
@@ -6797,7 +6803,12 @@ thank them:
 
 [section:release_notes_boost_1_78_00 Boost 1.78 Release]
 
+*  Mutexes and condition variables now additionally offer a standard C++-like interface to allow reusing code that
+   is already working with standard thread utilities. E.g.: mutexes meet `TimedLockable` requirements and condition
+   variables implement `wait_until/wait_for` operations.
+
 *  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/issues/149  GitHub #149 (['"interprocess_condition_any::timed_wait update"])].
    * [@https://github.com/boostorg/interprocess/issues/145  GitHub #145 (['"1.76 now requires unicode paths on windows"])].
 
 [endsect]
