@@ -82,8 +82,8 @@ class BOOST_SYMBOL_VISIBLE interprocess_exception : public std::exception
 class BOOST_SYMBOL_VISIBLE lock_exception : public interprocess_exception
 {
    public:
-   lock_exception() BOOST_NOEXCEPT
-      :  interprocess_exception(lock_error)
+   lock_exception(error_code_t err = lock_error) BOOST_NOEXCEPT
+      :  interprocess_exception(err)
    {}
 
    const char* what() const BOOST_NOEXCEPT_OR_NOTHROW BOOST_OVERRIDE

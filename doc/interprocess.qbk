@@ -6808,6 +6808,8 @@ thank them:
    variables implement `wait_until/wait_for` operations.
 
 *  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/pulls/65    GitHub #65 (['"Robustness of the interprocess mutex"])].
+   * [@https://github.com/boostorg/interprocess/pulls/67    GitHub #67 (['"Changed to use posix robust mutex"])].
    * [@https://github.com/boostorg/interprocess/issues/149  GitHub #149 (['"interprocess_condition_any::timed_wait update"])].
    * [@https://github.com/boostorg/interprocess/issues/145  GitHub #145 (['"1.76 now requires unicode paths on windows"])].
 

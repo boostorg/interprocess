@@ -45,10 +45,10 @@
 #if   !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && \
        defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && \
        defined (BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES)
-   //Experimental...
    #include <boost/interprocess/sync/posix/recursive_mutex.hpp>
    #define BOOST_INTERPROCESS_RECURSIVE_MUTEX_USE_POSIX
 #elif !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_WINDOWS)
+   //Experimental...
    #include <boost/interprocess/sync/windows/recursive_mutex.hpp>
    #define BOOST_INTERPROCESS_RECURSIVE_MUTEX_USE_WINAPI
 #else
