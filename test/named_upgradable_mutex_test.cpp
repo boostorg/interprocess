@@ -20,7 +20,7 @@ using namespace boost::interprocess;
 int main ()
 {
    int ret = 0;
-   try{
+   BOOST_TRY{
       named_upgradable_mutex::remove(test::get_process_id_name());
       test::test_named_creation< test::named_sync_creation_test_wrapper<named_upgradable_mutex> >();
       #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
@@ -30,10 +30,10 @@ int main ()
       test::test_all_mutex<test::named_sync_wrapper<named_upgradable_mutex> >();
       test::test_all_sharable_mutex<test::named_sync_wrapper<named_upgradable_mutex> >();
    }
-   catch(std::exception &ex){
+   BOOST_CATCH(std::exception &ex){
       std::cout << ex.what() << std::endl;
       ret = 1;
-   }
+   } BOOST_CATCH_END
    named_upgradable_mutex::remove(test::get_process_id_name());
    return ret;
 }

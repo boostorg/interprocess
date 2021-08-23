@@ -103,7 +103,7 @@ int list_test (bool copied_allocators_equal = true)
    const int max = 100;
    typedef push_data_function<DoublyLinked> push_data_t;
 
-   try{
+   BOOST_TRY{
       //Named new capable shared mem allocator
       //Create shared memory
       shared_memory_object::remove(shMemName);
@@ -264,10 +264,10 @@ int list_test (bool copied_allocators_equal = true)
       if(!segment.all_memory_deallocated())
          return 1;
    }
-   catch(...){
+   BOOST_CATCH(...){
       shared_memory_object::remove(shMemName);
-      throw;
-   }
+      BOOST_RETHROW
+   } BOOST_CATCH_END
    shared_memory_object::remove(shMemName);
    return 0;
 }

@@ -26,14 +26,14 @@ using namespace boost::interprocess;
 
 void remove_shared_memory(const xsi_key &key)
 {
-   try{
+   BOOST_TRY{
       xsi_shared_memory xsi(open_only, key);
       xsi_shared_memory::remove(xsi.get_shmid());
    }
-   catch(interprocess_exception &e){
+   BOOST_CATCH(interprocess_exception &e){
       if(e.get_error_code() != not_found_error)
-         throw;
-   }
+         BOOST_RETHROW
+   } BOOST_CATCH_END
 }
 
 class xsi_shared_memory_remover
@@ -61,23 +61,23 @@ int main ()
    remove_shared_memory(key);
 
    unsigned int i;
-   try{
+   BOOST_TRY{
       for(i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
       {
          const std::size_t FileSize = 99999*2;
          //Create a file mapping
          xsi_shared_memory mapping (create_only, names[i] ? key : xsi_key(), FileSize);
          xsi_shared_memory_remover rem(mapping);
-         try{
+         BOOST_TRY{
             {
                //Partial mapping should fail fox XSI shared memory
                bool thrown = false;
-               try{
+               BOOST_TRY{
                   mapped_region region2(mapping, read_write, FileSize/2, FileSize - FileSize/2, 0);
                }
-               catch(...){
+               BOOST_CATCH(...){
                   thrown = true;
-               }
+               } BOOST_CATCH_END
                if(thrown == false){
                   return 1;
                }
@@ -105,16 +105,16 @@ int main ()
                }
             }
          }
-         catch(std::exception &exc){
+         BOOST_CATCH(std::exception &exc){
             std::cout << "Unhandled exception: " << exc.what() << std::endl;
             return 1;
-         }
+         } BOOST_CATCH_END
       }
    }
-   catch(std::exception &exc){
+   BOOST_CATCH(std::exception &exc){
       std::cout << "Unhandled exception: " << exc.what() << std::endl;
       return 1;
-   }
+   } BOOST_CATCH_END
    return 0;
 }
 

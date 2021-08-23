@@ -269,30 +269,30 @@ inline bool shared_memory_object::priv_open_or_create
 
 inline bool shared_memory_object::remove(const wchar_t *filename)
 {
-   try{
+   BOOST_TRY{
       //Make sure a temporary path is created for shared memory
       std::wstring shmfile;
       ipcdetail::shared_filepath(filename, shmfile);
       return ipcdetail::delete_file(shmfile.c_str());
    }
-   catch(...){
+   BOOST_CATCH(...){
       return false;
-   }
+   } BOOST_CATCH_END
 }
 
 #endif
 
 inline bool shared_memory_object::remove(const char *filename)
 {
-   try{
+   BOOST_TRY{
       //Make sure a temporary path is created for shared memory
       std::string shmfile;
       ipcdetail::shared_filepath(filename, shmfile);
       return ipcdetail::delete_file(shmfile.c_str());
    }
-   catch(...){
+   BOOST_CATCH(...){
       return false;
-   }
+   } BOOST_CATCH_END
 }
 
 inline void shared_memory_object::truncate(offset_t length)
@@ -432,7 +432,7 @@ inline bool shared_memory_object::priv_open_or_create
 
 inline bool shared_memory_object::remove(const char *filename)
 {
-   try{
+   BOOST_TRY{
       std::string filepath;
       #if defined(BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
       const bool add_leading_slash = false;
@@ -449,9 +449,9 @@ inline bool shared_memory_object::remove(const char *filename)
       }
       return 0 == shm_unlink(filepath.c_str());
    }
-   catch(...){
+   BOOST_CATCH(...){
       return false;
-   }
+   } BOOST_CATCH_END
 }
 
 inline void shared_memory_object::truncate(offset_t length)

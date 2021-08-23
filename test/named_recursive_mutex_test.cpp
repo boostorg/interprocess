@@ -27,7 +27,7 @@ template<class NamedRecursiveMutex>
 int test_named_recursive_mutex()
 {
    int ret = 0;
-   try{
+   BOOST_TRY{
       NamedRecursiveMutex::remove(test::get_process_id_name());
       test::test_named_creation< test::named_sync_creation_test_wrapper<NamedRecursiveMutex> >();
       #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
@@ -37,10 +37,10 @@ int test_named_recursive_mutex()
       test::test_all_mutex<test::named_sync_wrapper<NamedRecursiveMutex> >();
       test::test_all_recursive_lock<test::named_sync_wrapper<NamedRecursiveMutex> >();
    }
-   catch(std::exception &ex){
+   BOOST_CATCH(std::exception &ex){
       std::cout << ex.what() << std::endl;
       ret = 1;
-   }
+   } BOOST_CATCH_END
    NamedRecursiveMutex::remove(test::get_process_id_name());
    return ret;
 }

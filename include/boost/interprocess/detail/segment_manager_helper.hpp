@@ -219,8 +219,7 @@ inline void array_construct(void *mem, std::size_t num, in_place_interface &tabl
       std::size_t destroyed = 0;
       table.destroy_n(mem, constructed, destroyed);
       BOOST_RETHROW
-   }
-   BOOST_CATCH_END
+   } BOOST_CATCH_END
 }
 
 template<class CharT>

@@ -20,7 +20,7 @@ using namespace boost::interprocess;
 
 int main ()
 {
-   try{
+   BOOST_TRY{
       //Remove shared memory on construction and destruction
       struct shm_remove
       {
@@ -71,10 +71,10 @@ int main ()
             break;
       }
    }
-   catch(interprocess_exception &ex){
+   BOOST_CATCH(interprocess_exception &ex){
       std::cout << ex.what() << std::endl;
       return 1;
-   }
+   } BOOST_CATCH_END
    return 0;
 }
 //]

@@ -124,7 +124,7 @@ bool do_test()
    const char *const shMemName = test::get_process_id_name();
    const int max = 100;
 
-   /*try*/{
+   /*BOOST_TRY*/{
       shared_memory_object::remove(shMemName);
 
       //Create shared memory
@@ -139,7 +139,7 @@ bool do_test()
 
       MyStdDeque *stddeque = new MyStdDeque;
 
-      /*try*/{
+      /*BOOST_TRY*/{
          //Compare several shared memory deque operations with std::deque
          for(int i = 0; i < max*50; ++i){
             IntType move_me(i);
@@ -270,17 +270,17 @@ bool do_test()
          if(!segment.all_memory_deallocated())
             return false;
       }/*
-      catch(std::exception &ex){
+      BOOST_CATCH(std::exception &ex){
          std::cout << ex.what() << std::endl;
          return false;
-      }*/
+      } BOOST_CATCH_END*/
 
       std::cout << std::endl << "Test OK!" << std::endl;
    }/*
-   catch(...){
+   BOOST_CATCH(...){
       shared_memory_object::remove(shMemName);
-      throw;
-   }*/
+      BOOST_RETHROW
+   } BOOST_CATCH_END*/
    shared_memory_object::remove(shMemName);
    return true;
 }

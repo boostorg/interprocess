@@ -27,7 +27,7 @@ int main ()
       ,read_write                   //read-write mode
       );
 
-   try{
+   BOOST_TRY{
       //Map the whole shared memory in this process
       mapped_region region
          (shm                       //What to map
@@ -60,10 +60,10 @@ int main ()
       }
       while(!end_loop);
    }
-   catch(interprocess_exception &ex){
+   BOOST_CATCH(interprocess_exception &ex){
       std::cout << ex.what() << std::endl;
       return 1;
-   }
+   } BOOST_CATCH_END
 
    return 0;
 }

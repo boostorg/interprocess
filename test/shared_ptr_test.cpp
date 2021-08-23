@@ -230,14 +230,14 @@ int string_shared_ptr_vector_insertion_test()
             }
             bool success = false;
             //Now this should throw
-            try{
+            BOOST_TRY{
                string_shared_ptr_t dummy(*beg);
                //We should never reach here
                return 1;
             }
-            catch(const boost::interprocess::bad_weak_ptr &){
+            BOOST_CATCH(const boost::interprocess::bad_weak_ptr &){
                success = true;
-            }
+            } BOOST_CATCH_END
             if(!success){
                return 1;
             }
@@ -466,12 +466,12 @@ int basic_shared_ptr_test()
          BOOST_TEST(wp1.expired());
          BOOST_TEST(wp1.use_count() == 0);
 
-         try{
+         BOOST_TRY{
             x_shared_ptr sp1(wp1);
             BOOST_ERROR("shared_ptr<X, A, D> sp1(wp1) failed to throw");
          }
-         catch(boost::interprocess::bad_weak_ptr const &)
-         {}
+         BOOST_CATCH(boost::interprocess::bad_weak_ptr const &)
+         {} BOOST_CATCH_END
 
          test_is_zero(wp1.lock());
 

@@ -17,7 +17,7 @@ using namespace boost::interprocess;
 
 int main ()
 {
-   try{
+   BOOST_TRY{
       //Erase previous message queue
       message_queue::remove("message_queue");
 
@@ -34,10 +34,10 @@ int main ()
          mq.send(&i, sizeof(i), 0);
       }
    }
-   catch(interprocess_exception &ex){
+   BOOST_CATCH(interprocess_exception &ex){
       std::cout << ex.what() << std::endl;
       return 1;
-   }
+   } BOOST_CATCH_END
 
    return 0;
 }

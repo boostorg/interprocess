@@ -245,4 +245,6 @@
 #  endif
 #endif
 
+#include <boost/core/no_exceptions_support.hpp>
+
 #endif   //#ifndef BOOST_INTERPROCESS_DETAIL_WORKAROUND_HPP

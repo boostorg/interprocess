@@ -7,7 +7,6 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
 //[doc_managed_aligned_allocation
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <cassert>
@@ -88,31 +87,4 @@ int main()
    return 0;
 }
 //]
-/*
 
-#include <vector>
-#include <boost/interprocess/managed_windows_shared_memory.hpp>
-
-int main()
-{
-   using namespace boost::interprocess;
-   typedef boost::interprocess::
-      managed_windows_shared_memory  shared_segment;
-
-   std::vector<void *> ptrs;
-   shared_segment m_segment(create_only, "shmem", 4096*16);
-   try{
-      while(1){
-         //Now I have several allocate_aligned operations:
-         ptrs.push_back(m_segment.allocate_aligned(128, 128));
-      }
-   }
-   catch(...){
-      m_segment.deallocate(ptrs.back());
-      ptrs.pop_back();
-      ptrs.push_back(m_segment.allocate_aligned(128, 128));
-   }
-   return 0;
-}
-*/
-#include <boost/interprocess/detail/config_end.hpp>

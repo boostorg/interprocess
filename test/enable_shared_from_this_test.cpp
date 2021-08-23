@@ -49,21 +49,21 @@ void test_enable_shared_this(ManagedMemory &managed_mem)
 
    X v2(*p);
 
-   try
+   BOOST_TRY
    {
       //This should throw bad_weak_ptr
       v_shared_ptr r = v2.shared_from_this();
       BOOST_ERROR("v2.shared_from_this() failed to throw");
    }
-   catch(boost::interprocess::bad_weak_ptr const &)
+   BOOST_CATCH(boost::interprocess::bad_weak_ptr const &)
    {
       //This is the expected path
    }
-   catch(...){
+   BOOST_CATCH(...){
       BOOST_ERROR("v2.shared_from_this() threw an unexpected exception");
-   }
+   } BOOST_CATCH_END
 
-   try
+   BOOST_TRY
    {
       //This should not throw bad_weak_ptr
       *p = X();
@@ -71,14 +71,14 @@ void test_enable_shared_this(ManagedMemory &managed_mem)
       BOOST_TEST(p == r);
       BOOST_TEST(!(p < r) && !(r < p));
    }
-   catch(boost::interprocess::bad_weak_ptr const &)
+   BOOST_CATCH(boost::interprocess::bad_weak_ptr const &)
    {
       BOOST_ERROR("p->shared_from_this() threw bad_weak_ptr after *p = X()");
    }
-   catch(...)
+   BOOST_CATCH(...)
    {
       BOOST_ERROR("p->shared_from_this() threw an unexpected exception after *p = X()");
-   }
+   } BOOST_CATCH_END
 }
 
 

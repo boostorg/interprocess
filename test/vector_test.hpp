@@ -89,7 +89,7 @@ int vector_test()
       //Compare several shared memory vector operations with std::vector
       //Create shared memory
       shared_memory_object::remove(shMemName);
-      try{
+      BOOST_TRY{
          ManagedSharedMemory segment(create_only, shMemName, Memsize);
 
          segment.reserve_named_objects(100);
@@ -234,11 +234,11 @@ int vector_test()
          if(!segment.all_memory_deallocated())
             return 1;
       }
-      catch(std::exception &ex){
+      BOOST_CATCH(std::exception &ex){
          shared_memory_object::remove(shMemName);
          std::cout << ex.what() << std::endl;
          return 1;
-      }
+      } BOOST_CATCH_END
    }
    shared_memory_object::remove(shMemName);
    std::cout << std::endl << "Test OK!" << std::endl;

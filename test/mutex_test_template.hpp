@@ -194,7 +194,7 @@ template<typename M>
 void lock_and_catch_errors(void *arg, M &sm)
 {
    data<M> *pdata = static_cast<data<M>*>(arg);
-   try
+   BOOST_TRY
    {
       boost::interprocess::scoped_lock<M> l(sm);
       if(pdata->m_secs){
@@ -206,10 +206,10 @@ void lock_and_catch_errors(void *arg, M &sm)
       ++shared_val;
       pdata->m_value = shared_val;
    }
-   catch(interprocess_exception const & e)
+   BOOST_CATCH(interprocess_exception const & e)
    {
       pdata->m_error = e.get_error_code();
-   }
+   } BOOST_CATCH_END
 }
 
 template<typename M>

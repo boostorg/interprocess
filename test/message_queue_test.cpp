@@ -153,14 +153,14 @@ bool test_serialize_db()
          return false;
 
       //Fill map1 until is full
-      try{
+      BOOST_TRY{
          std::size_t i = 0;
          while(1){
             (*map1)[i] = i;
             ++i;
          }
       }
-      catch(boost::interprocess::bad_alloc &){}
+      BOOST_CATCH(boost::interprocess::bad_alloc &){} BOOST_CATCH_END
 
       //Data control data sending through the message queue
       std::size_t sent = 0;
@@ -320,7 +320,7 @@ bool test_multi_sender_receiver()
 {
    bool ret = true;
    //std::cout << "Testing multi-sender / multi-receiver " << std::endl;
-   try {
+   BOOST_TRY {
       boost::interprocess::message_queue::remove(test::get_process_id_name());
       boost::interprocess::message_queue mq
          (boost::interprocess::open_or_create, test::get_process_id_name(), MULTI_QUEUE_SIZE, 1);
@@ -343,10 +343,10 @@ bool test_multi_sender_receiver()
          //std::cout << "Joined thread " << i << std::endl;
       }
    }
-   catch (std::exception &e) {
+   BOOST_CATCH(std::exception &e) {
       std::cout << "error " << e.what() << std::endl;
       ret = false;
-   }
+   } BOOST_CATCH_END
    boost::interprocess::message_queue::remove(test::get_process_id_name());
    return ret;
 }
@@ -402,7 +402,7 @@ class msg_queue_named_test_wrapper_w
 int main ()
 {
    int ret = 0;
-   try{
+   BOOST_TRY{
       message_queue::remove(test::get_process_id_name());
       test::test_named_creation<msg_queue_named_test_wrapper>();
       #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
@@ -425,10 +425,10 @@ int main ()
          return 1;
       }
    }
-   catch (std::exception &ex) {
+   BOOST_CATCH(std::exception &ex) {
       std::cout << ex.what() << std::endl;
       ret = 1;
-   }
+   } BOOST_CATCH_END
    
    message_queue::remove(test::get_process_id_name());
    return ret;

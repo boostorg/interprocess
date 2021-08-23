@@ -93,7 +93,7 @@ bool test_segment_manager()
          return false;
       if(seg_mgr->get_free_memory() != free_mem_before)
          return false;
-      try{  seg_mgr->allocate(ShmSizeSize*2);  }catch(interprocess_exception&){}
+      BOOST_TRY{  seg_mgr->allocate(ShmSizeSize*2);  }BOOST_CATCH(interprocess_exception&){} BOOST_CATCH_END
       if(seg_mgr->get_free_memory() != free_mem_before)
          return false;
       if(seg_mgr->allocate(ShmSizeSize*2, std::nothrow))
@@ -121,7 +121,7 @@ bool test_segment_manager()
          return false;
       if(seg_mgr->get_free_memory() != free_mem_before)
          return false;
-      try{  seg_mgr->allocate_aligned(ShmSizeSize*2, Alignment);  }catch(interprocess_exception&){}
+      BOOST_TRY{  seg_mgr->allocate_aligned(ShmSizeSize*2, Alignment);  }BOOST_CATCH(interprocess_exception&){} BOOST_CATCH_END
       if(seg_mgr->get_free_memory() != free_mem_before)
          return false;
       if(seg_mgr->allocate_aligned(ShmSizeSize*2, Alignment, std::nothrow))
@@ -210,9 +210,9 @@ bool test_segment_manager()
       if(seg_mgr->get_instance_name(int_array))
          return false;
       seg_mgr->destroy_ptr(int_array);
-      try{  seg_mgr->template construct<int>(anonymous_instance)[ShmSizeSize]();  }catch(interprocess_exception&){}
+      BOOST_TRY{  seg_mgr->template construct<int>(anonymous_instance)[ShmSizeSize]();  }BOOST_CATCH(interprocess_exception&){} BOOST_CATCH_END
       if(seg_mgr->template construct<int>(anonymous_instance, std::nothrow)[ShmSizeSize]())
-      try{  seg_mgr->template construct_it<int>(anonymous_instance)[ShmSizeSize](&int_array_values[0]);  }catch(interprocess_exception&){}
+      BOOST_TRY{  seg_mgr->template construct_it<int>(anonymous_instance)[ShmSizeSize](&int_array_values[0]);  }BOOST_CATCH(interprocess_exception&){} BOOST_CATCH_END
       if(seg_mgr->template construct_it<int>(anonymous_instance, std::nothrow)[ShmSizeSize](&int_array_values[0]))
          return false;
       if(seg_mgr->get_free_memory() != free_mem_before)
@@ -295,9 +295,9 @@ bool test_segment_manager()
          seg_mgr->destroy_ptr(uint_object);
          seg_mgr->template destroy<int>(object2_name);
       }
-      try{  seg_mgr->template construct<unsigned int>(object1_name)[ShmSizeSize]();  }catch(interprocess_exception&){}
+      BOOST_TRY{  seg_mgr->template construct<unsigned int>(object1_name)[ShmSizeSize]();  }BOOST_CATCH(interprocess_exception&){} BOOST_CATCH_END
       if(seg_mgr->template construct<int>(object2_name, std::nothrow)[ShmSizeSize]())
-      try{  seg_mgr->template construct_it<unsigned int>(object1_name)[ShmSizeSize](&int_array_values[0]);  }catch(interprocess_exception&){}
+      BOOST_TRY{  seg_mgr->template construct_it<unsigned int>(object1_name)[ShmSizeSize](&int_array_values[0]);  }BOOST_CATCH(interprocess_exception&){} BOOST_CATCH_END
       if(seg_mgr->template construct_it<int>(object2_name, std::nothrow)[ShmSizeSize](&int_array_values[0]))
          return false;
       seg_mgr->shrink_to_fit_indexes();
@@ -385,9 +385,9 @@ bool test_segment_manager()
          seg_mgr->destroy_ptr(uint_object);
          seg_mgr->template destroy<int>(unique_instance);
       }
-      try{  seg_mgr->template construct<unsigned int>(unique_instance)[ShmSizeSize]();  }catch(interprocess_exception&){}
+      BOOST_TRY{  seg_mgr->template construct<unsigned int>(unique_instance)[ShmSizeSize]();  }BOOST_CATCH(interprocess_exception&){} BOOST_CATCH_END
       if(seg_mgr->template construct<int>(unique_instance, std::nothrow)[ShmSizeSize]())
-      try{  seg_mgr->template construct_it<unsigned int>(unique_instance)[ShmSizeSize](&int_array_values[0]);  }catch(interprocess_exception&){}
+      BOOST_TRY{  seg_mgr->template construct_it<unsigned int>(unique_instance)[ShmSizeSize](&int_array_values[0]);  }BOOST_CATCH(interprocess_exception&){} BOOST_CATCH_END
       if(seg_mgr->template construct_it<int>(unique_instance, std::nothrow)[ShmSizeSize](&int_array_values[0]))
          return false;
       seg_mgr->shrink_to_fit_indexes();

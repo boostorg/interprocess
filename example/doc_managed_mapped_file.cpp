@@ -43,7 +43,7 @@ int main ()
    const std::size_t FileSize = 1000;
    file_mapping::remove(FileName);
 
-   try{
+   BOOST_TRY{
       MyList::size_type old_size = 0;
       managed_mapped_file::handle_t list_handle;
       {
@@ -55,14 +55,14 @@ int main ()
          list_handle = mfile_memory.get_handle_from_address(mylist);
 
          //Fill list until there is no more room in the file
-         try{
+         BOOST_TRY{
             while(1) {
                mylist->insert(mylist->begin(), 0);
             }
          }
-         catch(const bad_alloc &){
+         BOOST_CATCH(const bad_alloc &){
             //mapped file is full
-         }
+         } BOOST_CATCH_END
          //Let's obtain the size of the list
          old_size = mylist->size();
       }
@@ -80,14 +80,14 @@ int main ()
                            (mfile_memory.get_address_from_handle(list_handle));
 
          //Fill list until there is no more room in the file
-         try{
+         BOOST_TRY{
             while(1) {
                mylist->insert(mylist->begin(), 0);
             }
          }
-         catch(const bad_alloc &){
+         BOOST_CATCH(const bad_alloc &){
             //mapped file is full
-         }
+         } BOOST_CATCH_END
 
          //Let's obtain the new size of the list
          MyList::size_type new_size = mylist->size();
@@ -98,10 +98,10 @@ int main ()
          mfile_memory.destroy_ptr(mylist);
       }
    }
-   catch(...){
+   BOOST_CATCH(...){
       file_mapping::remove(FileName);
-      throw;
-   }
+      BOOST_RETHROW
+   } BOOST_CATCH_END
    file_mapping::remove(FileName);
    return 0;
 }

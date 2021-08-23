@@ -37,7 +37,7 @@ int main()
 {
    //Remove any other old shared memory from the system
    bip::shared_memory_object::remove(bip::test::get_process_id_name());
-   try {
+   BOOST_TRY {
       bip::managed_shared_memory shm(bip::create_only, bip::test::get_process_id_name(), 65536);
 
       //Elements to be inserted in unordered containers
@@ -86,11 +86,11 @@ int main()
          return 1;
 
    }
-   catch(...){
+   BOOST_CATCH(...){
       //Remove shared memory from the system
       bip::shared_memory_object::remove(bip::test::get_process_id_name());
-      throw;
-   }
+      BOOST_RETHROW
+   } BOOST_CATCH_END
    //Remove shared memory from the system
    bip::shared_memory_object::remove(bip::test::get_process_id_name());
    return 0;

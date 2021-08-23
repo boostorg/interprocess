@@ -25,7 +25,7 @@ template<class NamedMutex>
 int test_named_mutex()
 {
    int ret = 0;
-   try{
+   BOOST_TRY{
       NamedMutex::remove(test::get_process_id_name());
       test::test_named_creation< test::named_sync_creation_test_wrapper<NamedMutex> >();
       #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
@@ -34,10 +34,10 @@ int test_named_mutex()
       test::test_all_lock< test::named_sync_wrapper<NamedMutex> >();
       test::test_all_mutex<test::named_sync_wrapper<NamedMutex> >();
    }
-   catch(std::exception &ex){
+   BOOST_CATCH(std::exception &ex){
       std::cout << ex.what() << std::endl;
       ret = 1;
-   }
+   } BOOST_CATCH_END
    NamedMutex::remove(test::get_process_id_name());
    return ret;
 }

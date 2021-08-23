@@ -25,14 +25,14 @@ using namespace boost::interprocess;
 
 void remove_shared_memory(const xsi_key &key)
 {
-   try{
+   BOOST_TRY{
       xsi_shared_memory xsi(open_only, key);
       xsi_shared_memory::remove(xsi.get_shmid());
    }
-   catch(interprocess_exception &e){
+   BOOST_CATCH(interprocess_exception &e){
       if(e.get_error_code() != not_found_error)
-         throw;
-   }
+         BOOST_RETHROW
+   } BOOST_CATCH_END
 }
 
 class xsi_shared_memory_remover

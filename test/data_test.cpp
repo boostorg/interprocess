@@ -26,7 +26,7 @@ int main ()
    test::get_process_id_name(process_name);
    const char *const shMemName = process_name.c_str();
 
-   try{
+   BOOST_TRY{
    shared_memory_object::remove(shMemName);
 
    //Create shared memory
@@ -85,10 +85,10 @@ int main ()
          return 1;
    }
    }
-   catch(...){
+   BOOST_CATCH(...){
       shared_memory_object::remove(shMemName);
-      throw;
-   }
+      BOOST_RETHROW
+   } BOOST_CATCH_END
    shared_memory_object::remove(shMemName);
    return 0;
 }

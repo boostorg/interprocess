@@ -31,14 +31,14 @@ int main ()
    managed_heap_memory::handle_t list_handle = heap_memory.get_handle_from_address(mylist);
 
    //Fill list until there is no more memory in the buffer
-   try{
+   BOOST_TRY{
       while(1) {
          mylist->insert(mylist->begin(), 0);
       }
    }
-   catch(const bad_alloc &){
+   BOOST_CATCH(const bad_alloc &){
       //memory is full
-   }
+   } BOOST_CATCH_END
    //Let's obtain the size of the list
    MyList::size_type old_size = mylist->size();
    //<-
@@ -55,14 +55,14 @@ int main ()
                (heap_memory.get_address_from_handle(list_handle));
 
    //Fill list until there is no more memory in the buffer
-   try{
+   BOOST_TRY{
       while(1) {
          mylist->insert(mylist->begin(), 0);
       }
    }
-   catch(const bad_alloc &){
+   BOOST_CATCH(const bad_alloc &){
       //memory is full
-   }
+   } BOOST_CATCH_END
 
    //Let's obtain the new size of the list
    MyList::size_type new_size = mylist->size();

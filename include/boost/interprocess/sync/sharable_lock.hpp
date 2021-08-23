@@ -182,10 +182,10 @@ class sharable_lock
    //!Notes: The destructor behavior ensures that the mutex lock is not leaked.
    ~sharable_lock()
    {
-      try{
+      BOOST_TRY{
          if(m_locked && mp_mutex)   mp_mutex->unlock_sharable();
       }
-      catch(...){}
+      BOOST_CATCH(...){} BOOST_CATCH_END
    }
 
    //!Effects: If owns() before the call, then unlock_sharable() is called on mutex().

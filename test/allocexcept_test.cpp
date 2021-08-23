@@ -37,57 +37,59 @@ int main ()
    const int memsize = 16384;
    const char *const shMemName = test::get_process_id_name();
 
-   try{
-   shared_memory_object::remove(shMemName);
-
-   //Named allocate capable shared mem allocator
-   managed_shared_memory segment(create_only, shMemName, memsize);
-
-   //STL compatible allocator object, uses allocate(), deallocate() functions
-   typedef allocator<InstanceCounter,
-                     managed_shared_memory::segment_manager>
-      inst_allocator_t;
-   const inst_allocator_t myallocator (segment.get_segment_manager());
-
-   typedef vector<InstanceCounter, inst_allocator_t> MyVect;
-
-   //We'll provoke an exception, let's see if exception handling works
-   try{
-      //Fill vector until there is no more memory
-      MyVect myvec(myallocator);
-      int i;
-      for(i = 0; true; ++i){
-         myvec.push_back(InstanceCounter());
-      }
-   }
-   catch(boost::interprocess::bad_alloc &){
-      if(InstanceCounter::counter != 0)
-         return 1;
-   }
-
-   //We'll provoke an exception, let's see if exception handling works
-   try{
-      //Fill vector at the beginning until there is no more memory
-      MyVect myvec(myallocator);
-      int i;
-      InstanceCounter ic;
-      for(i = 0; true; ++i){
-         myvec.insert(myvec.begin(), i, ic);
-      }
-   }
-   catch(boost::interprocess::bad_alloc &){
-      if(InstanceCounter::counter != 0)
-         return 1;
-   }
-   catch(std::length_error &){
-      if(InstanceCounter::counter != 0)
-         return 1;
-   }
-   }
-   catch(...){
+   BOOST_TRY{
       shared_memory_object::remove(shMemName);
-      throw;
+
+      //Named allocate capable shared mem allocator
+      managed_shared_memory segment(create_only, shMemName, memsize);
+
+      //STL compatible allocator object, uses allocate(), deallocate() functions
+      typedef allocator<InstanceCounter,
+                        managed_shared_memory::segment_manager>
+         inst_allocator_t;
+      const inst_allocator_t myallocator (segment.get_segment_manager());
+
+      typedef vector<InstanceCounter, inst_allocator_t> MyVect;
+
+      //We'll provoke an exception, let's see if exception handling works
+      BOOST_TRY{
+         //Fill vector until there is no more memory
+         MyVect myvec(myallocator);
+         int i;
+         for(i = 0; true; ++i){
+            myvec.push_back(InstanceCounter());
+         }
+      }
+      BOOST_CATCH(boost::interprocess::bad_alloc &){
+         if(InstanceCounter::counter != 0)
+            return 1;
+      } BOOST_CATCH_END
+
+      //We'll provoke an exception, let's see if exception handling works
+      BOOST_TRY{
+         //Fill vector at the beginning until there is no more memory
+         MyVect myvec(myallocator);
+         int i;
+         InstanceCounter ic;
+         for(i = 0; true; ++i){
+            myvec.insert(myvec.begin(), i, ic);
+         }
+      }
+      BOOST_CATCH(boost::interprocess::bad_alloc &){
+         if(InstanceCounter::counter != 0)
+            return 1;
+      }
+      BOOST_CATCH(std::length_error &){
+         if(InstanceCounter::counter != 0)
+            return 1;
+      } BOOST_CATCH_END
    }
+   BOOST_CATCH(...){
+      shared_memory_object::remove(shMemName);
+      BOOST_RETHROW
+   }
+   BOOST_CATCH_END
+
    shared_memory_object::remove(shMemName);
    return 0;
 }

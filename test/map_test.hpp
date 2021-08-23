@@ -52,7 +52,7 @@ int map_test ()
    const char *const shMemName = test::get_process_id_name();
    const int max = 100;
 
-   try{
+   BOOST_TRY{
       //Create shared memory
       shared_memory_object::remove(shMemName);
       ManagedSharedMemory segment(create_only, shMemName, memsize);
@@ -482,10 +482,10 @@ int map_test ()
       if(!segment.all_memory_deallocated())
          return 1;
    }
-   catch(...){
+   BOOST_CATCH(...){
       shared_memory_object::remove(shMemName);
-      throw;
-   }
+      BOOST_RETHROW
+   } BOOST_CATCH_END
    shared_memory_object::remove(shMemName);
    return 0;
 }
@@ -505,7 +505,7 @@ int map_test_copyable ()
    const char *const shMemName = test::get_process_id_name();
    const int max = 100;
 
-   try{
+   BOOST_TRY{
    //Create shared memory
    shared_memory_object::remove(shMemName);
    ManagedSharedMemory segment(create_only, shMemName, memsize);
@@ -576,10 +576,10 @@ int map_test_copyable ()
       if(!segment.all_memory_deallocated())
          return 1;
    }
-   catch(...){
+   BOOST_CATCH(...){
       shared_memory_object::remove(shMemName);
-      throw;
-   }
+      BOOST_RETHROW
+   } BOOST_CATCH_END
    shared_memory_object::remove(shMemName);
    return 0;
 }

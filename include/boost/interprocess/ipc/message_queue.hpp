@@ -683,8 +683,7 @@ class msg_queue_initialization_func_t
          }
          BOOST_CATCH(...){
             return false;
-         }
-         BOOST_CATCH_END
+         } BOOST_CATCH_END
       }
       return true;
    }
@@ -893,8 +892,7 @@ inline bool message_queue_t<VoidPointer>::do_send(
             --p_hdr->m_blocked_senders;
             #endif
             BOOST_RETHROW;
-         }
-         BOOST_CATCH_END
+         } BOOST_CATCH_END
       }
 
       #if defined(BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX)
@@ -1024,8 +1022,7 @@ inline bool
             --p_hdr->m_blocked_receivers;
             #endif
             BOOST_RETHROW;
-         }
-         BOOST_CATCH_END
+         } BOOST_CATCH_END
       }
 
       #ifdef BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX

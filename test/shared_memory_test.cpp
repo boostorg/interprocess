@@ -81,7 +81,7 @@ class shared_memory_creation_test_wrapper_w
 
 int main ()
 {
-   try{
+   BOOST_TRY{
       shared_memory_object::remove(ShmName);
       test::test_named_creation<shared_memory_creation_test_wrapper>();
       #ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
@@ -102,11 +102,11 @@ int main ()
          move_assign = boost::move(move_ctor);
       }
    }
-   catch(std::exception &ex){
+   BOOST_CATCH(std::exception &ex){
       shared_memory_object::remove(ShmName);
       std::cout << ex.what() << std::endl;
       return 1;
-   }
+   } BOOST_CATCH_END
    shared_memory_object::remove(ShmName);
    return 0;
 }
