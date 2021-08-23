@@ -2593,9 +2593,13 @@ Generally speaking, we can have two file locking capabilities:
    that the operation can be performed according to the acquired lock. Reads and writes
    block until the lock is released.
 
-[*Boost.Interprocess] implements [*advisory blocking] because of portability reasons.
-This means that every process accessing to a file concurrently, must cooperate using
-file locks to synchronize the access.
+[*Boost.Interprocess] uses the widely used native capability in each OS, which means:
+
+*   On Unix systems the widly available and tested POSIX `fcntl`-based advisory locking
+    is used. Moreover, [@https://man7.org/linux/man-pages/man2/fcntl.2.html some mandatory locking
+    implementations (e.g. Linux) are not reliable].
+
+*   On Windows systems native Mandatory Locking (using `FileLockEx`) is used.
 
 In some systems file locking can be even further refined, leading to [*record locking],
 where a user can specify a [*byte range] within the file where the lock is applied.
@@ -6810,6 +6814,7 @@ thank them:
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/pulls/65    GitHub #65 (['"Robustness of the interprocess mutex"])].
    * [@https://github.com/boostorg/interprocess/pulls/67    GitHub #67 (['"Changed to use posix robust mutex"])].
+   * [@https://github.com/boostorg/interprocess/issues/142  GitHub #142 (['"File lock documentation about advisory locking is inaccurate on Windows"])].
    * [@https://github.com/boostorg/interprocess/issues/149  GitHub #149 (['"interprocess_condition_any::timed_wait update"])].
    * [@https://github.com/boostorg/interprocess/issues/145  GitHub #145 (['"1.76 now requires unicode paths on windows"])].
 
