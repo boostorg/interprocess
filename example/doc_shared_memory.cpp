@@ -7,7 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
+
 //[doc_shared_memory
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
@@ -94,4 +94,4 @@ int main(int argc, char *argv[])
    return 0;
 }
 //]
-#include <boost/interprocess/detail/config_end.hpp>
+

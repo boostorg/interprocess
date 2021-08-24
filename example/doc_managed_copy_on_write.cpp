@@ -7,7 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
+
 #include <boost/interprocess/detail/os_file_functions.hpp>
 //[doc_managed_copy_on_write
 #include <boost/interprocess/managed_mapped_file.hpp>
@@ -96,4 +96,4 @@ int main()
    return 0;
 }
 //]
-#include <boost/interprocess/detail/config_end.hpp>
+

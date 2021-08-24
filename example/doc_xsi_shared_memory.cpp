@@ -7,7 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
+
 #include <boost/interprocess/detail/workaround.hpp>
 
 #if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
@@ -92,4 +92,4 @@ int main()
 
 #endif //BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
 
-#include <boost/interprocess/detail/config_end.hpp>
+

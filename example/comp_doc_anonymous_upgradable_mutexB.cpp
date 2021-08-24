@@ -7,7 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
+
 
 //[doc_anonymous_upgradable_mutexB
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -70,4 +70,4 @@ int main ()
 }
 //]
 
-#include <boost/interprocess/detail/config_end.hpp>
+

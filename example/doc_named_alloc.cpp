@@ -7,7 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/interprocess/detail/config_begin.hpp>
+
 #include <boost/interprocess/detail/workaround.hpp>
 //[doc_named_alloc
 #include <boost/interprocess/managed_shared_memory.hpp>
@@ -134,4 +134,4 @@ int main(int argc, char *argv[])
    return 0;
 }
 //]
-#include <boost/interprocess/detail/config_end.hpp>
+
