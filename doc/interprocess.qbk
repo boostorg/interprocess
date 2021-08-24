@@ -6811,10 +6811,28 @@ thank them:
    is already working with standard thread utilities. E.g.: mutexes meet `TimedLockable` requirements and condition
    variables implement `wait_until/wait_for` operations.
 
+*  Timeout support for managed memory segments: there are situations with concurrent creation and opening situations, half-initialized
+   tries, corruption, etc. where the implementation has to loop, retrying the operation or just waiting another process to complete
+   the initialization. This can lead to deadlocks, so the implementation was refactored to include retry and timeout limits.
+
+   *    BOOST_INTERPROCESS_MANAGED_OPEN_OR_CREATE_INITIALIZE_MAX_TRIES (20 by default) limits the amount of times the implementation
+        will try to perform the following steps:
+        *   Try to create the resource (shared memory, mapped file, ...) and receive an "already existing" error
+        *   Then try to open the resource but obtaining an "non existing resource" error.
+
+   *    BOOST_INTERPROCESS_MANAGED_OPEN_OR_CREATE_INITIALIZE_TIMEOUT_SEC (300 by default) limits the amount of times the implementation
+        will wait another thread to initialize (truncate the file/shared memory, initialize managed headers...) the resource while
+        trying to open it concurrently.
+
+    *   BOOST_INTERPROCESS_MANAGED_OPEN_OR_CREATE_INITIALIZE_MAX_TRIES/BOOST_INTERPROCESS_MANAGED_OPEN_OR_CREATE_INITIALIZE_TIMEOUT_SEC
+        can be defined by the user before including Boost.Interprocess headers to tune the default values.
+
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/pulls/65    GitHub #65 (['"Robustness of the interprocess mutex"])].
    * [@https://github.com/boostorg/interprocess/pulls/67    GitHub #67 (['"Changed to use posix robust mutex"])].
    * [@https://github.com/boostorg/interprocess/pulls/103   GitHub #103 (['"Use interprocess headers without exception handling"])].
+   * [@https://github.com/boostorg/interprocess/issues/128  GitHub #128 (['"Infinite loop in managed_open_or_create_impl.hpp"])].
+   * [@https://github.com/boostorg/interprocess/issues/130  GitHub #130 (['"infinite loop in managed_open_or_create_impl.hpp if filesize is 0"])].
    * [@https://github.com/boostorg/interprocess/issues/142  GitHub #142 (['"File lock documentation about advisory locking is inaccurate on Windows"])].
    * [@https://github.com/boostorg/interprocess/issues/149  GitHub #149 (['"interprocess_condition_any::timed_wait update"])].
    * [@https://github.com/boostorg/interprocess/issues/145  GitHub #145 (['"1.76 now requires unicode paths on windows"])].

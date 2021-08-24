@@ -57,6 +57,29 @@ int main ()
       //Construct the STL-like allocator with the segment manager
       const allocator_int_t myallocator (w_shm.get_segment_manager());
 
+      //Named allocate capable shared memory managed memory class
+      managed_windows_shared_memory w_tmp(open_only, MemName);
+   }
+   {
+      bool throws_ok = false;
+      //Check memory is gone
+      BOOST_TRY{
+         managed_windows_shared_memory w_tmp(open_only, MemName);
+      }
+      BOOST_CATCH(interprocess_exception &e) {
+         throws_ok = e.get_error_code() == not_found_error;
+      }
+      BOOST_CATCH_END
+      if (!throws_ok)
+         return 1;
+   }
+   {
+      //Named allocate capable shared memory managed memory class
+      managed_windows_shared_memory w_shm(open_or_create, MemName, MemSize);
+
+      //Construct the STL-like allocator with the segment manager
+      const allocator_int_t myallocator (w_shm.get_segment_manager());
+
       //Construct vector
       MyVect *w_shm_vect = w_shm.construct<MyVect> ("MyVector") (myallocator);
 
@@ -75,6 +98,18 @@ int main ()
       {
          //Map preexisting segment again in memory
          managed_windows_shared_memory w_shm_new(open_only, MemName);
+
+         //Check vector is still there
+         w_shm_vect = w_shm_new.find<MyVect>("MyVector").first;
+         if(!w_shm_vect)
+            return -1;
+
+         if(w_shm_new.get_size() != w_shm.get_size())
+            return 1;
+      }
+      {
+         //Map preexisting segment again in memory
+         managed_windows_shared_memory w_shm_new(open_or_create, MemName, MemSize);
 
          //Check vector is still there
          w_shm_vect = w_shm_new.find<MyVect>("MyVector").first;
@@ -114,7 +149,7 @@ int main ()
             }
          }
          {
-            //Map preexisting shmem again in copy-on-write
+            //Map preexisting shmem again in read-only
             managed_windows_shared_memory shmem(open_read_only, MemName);
 
             //Check vector is still there

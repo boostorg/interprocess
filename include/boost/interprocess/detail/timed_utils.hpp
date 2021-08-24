@@ -149,6 +149,18 @@ class usduration
    boost::uint64_t get_microsecs() const
    {  return m_microsecs;  }
 
+   bool operator < (const usduration &other) const
+   {  return m_microsecs < other.m_microsecs; }
+
+   bool operator > (const usduration &other) const
+   {  return m_microsecs > other.m_microsecs; }
+
+   bool operator <= (const usduration &other) const
+   {  return m_microsecs <= other.m_microsecs; }
+
+   bool operator >= (const usduration &other) const
+   {  return m_microsecs >= other.m_microsecs; }
+
    private:
    boost::uint64_t m_microsecs;
 };
@@ -196,6 +208,9 @@ class ustime
 
 inline usduration usduration_milliseconds(boost::uint64_t millisec)
 {  return usduration(millisec*1000u);   }
+
+inline usduration usduration_seconds(boost::uint64_t sec)
+{  return usduration(sec*uint64_t(1000000u));   }
 
 template<class TimeType, class Enable = void>
 class microsec_clock;

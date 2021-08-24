@@ -83,7 +83,14 @@ int test_managed_shared_memory()
       shared_memory_object::remove(ShmemName);
 
       //Named allocate capable memory mapped shmem managed memory class
-      managed_shared_memory shmem(create_only, ShmemName, ShmemSize);
+      managed_shared_memory tmp(create_only, ShmemName, ShmemSize);
+   }
+   {
+      //Remove the shmem it is already created
+      shared_memory_object::remove(ShmemName);
+
+      //Now re-create it with create or open
+      managed_shared_memory shmem(open_or_create, ShmemName, ShmemSize);
 
       //Construct the STL-like allocator with the segment manager
       const allocator_int_t myallocator (shmem.get_segment_manager());
@@ -140,9 +147,18 @@ int test_managed_shared_memory()
          if(!shmem_vect)
             return -1;
       }
+      {
+         //Map preexisting shmem again in memory
+         managed_shared_memory shmem(open_or_create, ShmemName, ShmemSize);
+
+         //Check vector is still there
+         MyVect *shmem_vect = shmem.find<MyVect>("MyVector").first;
+         if(!shmem_vect)
+            return -1;
+      }
    }
    {
-      //Map preexisting shmem again in copy-on-write
+      //Map preexisting shmem again in read-only
       managed_shared_memory shmem(open_read_only, ShmemName);
 
       //Check vector is still there
