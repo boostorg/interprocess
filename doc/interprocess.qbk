@@ -6836,6 +6836,7 @@ thank them:
    * [@https://github.com/boostorg/interprocess/issues/142  GitHub #142 (['"File lock documentation about advisory locking is inaccurate on Windows"])].
    * [@https://github.com/boostorg/interprocess/issues/149  GitHub #149 (['"interprocess_condition_any::timed_wait update"])].
    * [@https://github.com/boostorg/interprocess/issues/145  GitHub #145 (['"1.76 now requires unicode paths on windows"])].
+   * [@https://github.com/boostorg/interprocess/issues/154  GitHub #154 (['"shared_memory_object::truncate() fails on AIX"])].
    * [@https://github.com/boostorg/interprocess/pull/155    GitHub #155 (['"properly initilize enable_shared_from_this if the type is const"])].
 
 [endsect]
