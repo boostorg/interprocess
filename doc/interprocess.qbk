@@ -6828,14 +6828,15 @@ thank them:
         can be defined by the user before including Boost.Interprocess headers to tune the default values.
 
 *  Fixed bugs:
-   * [@https://github.com/boostorg/interprocess/pulls/65    GitHub #65 (['"Robustness of the interprocess mutex"])].
-   * [@https://github.com/boostorg/interprocess/pulls/67    GitHub #67 (['"Changed to use posix robust mutex"])].
-   * [@https://github.com/boostorg/interprocess/pulls/103   GitHub #103 (['"Use interprocess headers without exception handling"])].
+   * [@https://github.com/boostorg/interprocess/pull/65     GitHub #65 (['"Robustness of the interprocess mutex"])].
+   * [@https://github.com/boostorg/interprocess/pull/67     GitHub #67 (['"Changed to use posix robust mutex"])].
+   * [@https://github.com/boostorg/interprocess/pull/103    GitHub #103 (['"Use interprocess headers without exception handling"])].
    * [@https://github.com/boostorg/interprocess/issues/128  GitHub #128 (['"Infinite loop in managed_open_or_create_impl.hpp"])].
    * [@https://github.com/boostorg/interprocess/issues/130  GitHub #130 (['"infinite loop in managed_open_or_create_impl.hpp if filesize is 0"])].
    * [@https://github.com/boostorg/interprocess/issues/142  GitHub #142 (['"File lock documentation about advisory locking is inaccurate on Windows"])].
    * [@https://github.com/boostorg/interprocess/issues/149  GitHub #149 (['"interprocess_condition_any::timed_wait update"])].
    * [@https://github.com/boostorg/interprocess/issues/145  GitHub #145 (['"1.76 now requires unicode paths on windows"])].
+   * [@https://github.com/boostorg/interprocess/pull/155    GitHub #155 (['"properly initilize enable_shared_from_this if the type is const"])].
 
 [endsect]
 
