@@ -103,18 +103,20 @@ class shared_ptr
 
    typedef T                                                   element_type;
    typedef T                                                   value_type;
+   typedef typename boost::container::
+      allocator_traits<VoidAllocator>::pointer                 void_ptr;
    typedef typename boost::intrusive::
-      pointer_traits<typename VoidAllocator::pointer>::template
+      pointer_traits<void_ptr>::template
          rebind_pointer<T>::type                               pointer;
    typedef typename ipcdetail::add_reference
                      <value_type>::type                        reference;
    typedef typename ipcdetail::add_reference
                      <const value_type>::type                  const_reference;
    typedef typename boost::intrusive::
-      pointer_traits<typename VoidAllocator::pointer>::template
+      pointer_traits<void_ptr>::template
          rebind_pointer<const Deleter>::type                               const_deleter_pointer;
    typedef typename boost::intrusive::
-      pointer_traits<typename VoidAllocator::pointer>::template
+      pointer_traits<void_ptr>::template
          rebind_pointer<const VoidAllocator>::type                         const_allocator_pointer;
 
    BOOST_COPYABLE_AND_MOVABLE(shared_ptr)
