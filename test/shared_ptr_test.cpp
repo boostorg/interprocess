@@ -596,6 +596,32 @@ void test_alias()
    shared_memory_object::remove(process_name.c_str());
 }
 
+
+struct std_deleter
+{
+   typedef const void* pointer;
+
+   void operator()(const void* p) const;
+};
+
+struct shared_from_this_tester: enable_shared_from_this<
+    const shared_from_this_tester, std::allocator<void>, std_deleter
+> {};
+
+void std_deleter::operator()(const void* p) const
+{
+    delete static_cast<const shared_from_this_tester*>(p);
+}
+
+
+void test_const_shared_from_this()
+{
+    shared_ptr<const shared_from_this_tester, std::allocator<void>, std_deleter> cptr(
+        new shared_from_this_tester()
+    );
+    BOOST_TEST( cptr->shared_from_this().get() == cptr.get() );
+}
+
 int main()
 {
    if(0 != simple_test())
@@ -608,5 +634,6 @@ int main()
       return 1;
 
    test_alias();
+   test_const_shared_from_this();
 }
 
