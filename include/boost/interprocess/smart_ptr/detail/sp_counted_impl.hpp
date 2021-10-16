@@ -26,7 +26,6 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/containers/version_type.hpp>
-#include <boost/interprocess/containers/allocator_traits.hpp>
 #include <boost/interprocess/smart_ptr/detail/sp_counted_base.hpp>
 #include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
@@ -103,7 +102,7 @@ class sp_counted_impl_pd
       pointer_traits<a_pointer>::template
          rebind_pointer<const D>::type                   const_deleter_pointer;
    typedef typename boost::intrusive::
-?      pointer_traits<a_pointer>::template
+      pointer_traits<a_pointer>::template
          rebind_pointer<const A>::type                   const_allocator_pointer;
 
    typedef typename D::pointer   pointer;

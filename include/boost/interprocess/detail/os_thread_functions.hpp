@@ -157,7 +157,7 @@ inline OS_highres_count_t get_current_system_highres_count()
    if(!winapi::query_performance_counter(&count)){
       count = winapi::get_tick_count();
    }
-   return count;
+   return (OS_highres_count_t)count;
 }
 
 inline void zero_highres_count(OS_highres_count_t &count)

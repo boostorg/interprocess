@@ -46,14 +46,14 @@ bool copyable_only(V1 *shmvector, V2 *stdvector, boost::interprocess::ipcdetail:
 {
    typedef typename V1::value_type IntType;
    std::size_t size = shmvector->size();
-   stdvector->insert(stdvector->end(), 50, 1);
-   shmvector->insert(shmvector->end(), 50, IntType(1));
+   stdvector->insert(stdvector->end(), 50u, 1);
+   shmvector->insert(shmvector->end(), 50u, IntType(1));
    if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
 
    {
       IntType move_me(1);
-      stdvector->insert(stdvector->begin()+size/2, 50, 1);
-      shmvector->insert(shmvector->begin()+size/2, 50, boost::move(move_me));
+      stdvector->insert(stdvector->begin()+std::ptrdiff_t(size/2u), 50u, 1);
+      shmvector->insert(shmvector->begin()+std::ptrdiff_t(size/2u), 50u, boost::move(move_me));
       if(!test::CheckEqualContainers(shmvector, stdvector)) return false;
    }
    {

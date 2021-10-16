@@ -10,7 +10,7 @@
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/file_mapping.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include "util.hpp"
 #include "mutex_test_template.hpp"
 #include "sharable_mutex_test_template.hpp"
 #include "get_process_id_name.hpp"

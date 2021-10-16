@@ -289,12 +289,12 @@ static const int MULTI_NUM_MSG_PER_SENDER = 10000;
 //Message queue message capacity
 static const int MULTI_QUEUE_SIZE = (MULTI_NUM_MSG_PER_SENDER - 1)/MULTI_NUM_MSG_PER_SENDER + 1;
 //We'll launch MULTI_THREAD_COUNT senders and MULTI_THREAD_COUNT receivers
-static const int MULTI_THREAD_COUNT = 10;
+static const std::size_t MULTI_THREAD_COUNT = 10;
 
 static void multisend()
 {
    char buff;
-   for (int i = 0; i < MULTI_NUM_MSG_PER_SENDER; i++) {
+   for (std::size_t i = 0; i < MULTI_NUM_MSG_PER_SENDER; i++) {
       global_queue->send(&buff, 1, 0);
    }
    global_queue->send(&buff, 0, 0);
@@ -328,17 +328,17 @@ bool test_multi_sender_receiver()
       std::vector<boost::interprocess::ipcdetail::OS_thread_t> threads(MULTI_THREAD_COUNT*2);
 
       //Launch senders receiver thread
-      for (int i = 0; i < MULTI_THREAD_COUNT; i++) {
+      for (std::size_t i = 0; i < MULTI_THREAD_COUNT; i++) {
          boost::interprocess::ipcdetail::thread_launch
             (threads[i], &multisend);
       }
 
-      for (int i = 0; i < MULTI_THREAD_COUNT; i++) {
+      for (std::size_t i = 0; i < MULTI_THREAD_COUNT; i++) {
          boost::interprocess::ipcdetail::thread_launch
             (threads[MULTI_THREAD_COUNT+i], &multireceive);
       }
 
-      for (int i = 0; i < MULTI_THREAD_COUNT*2; i++) {
+      for (std::size_t i = 0; i < MULTI_THREAD_COUNT*2; i++) {
          boost::interprocess::ipcdetail::thread_join(threads[i]);
          //std::cout << "Joined thread " << i << std::endl;
       }

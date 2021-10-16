@@ -55,7 +55,7 @@ int main ()
       BOOST_TRY{
          //Fill vector until there is no more memory
          MyVect myvec(myallocator);
-         int i;
+         std::size_t i;
          for(i = 0; true; ++i){
             myvec.push_back(InstanceCounter());
          }
@@ -69,7 +69,7 @@ int main ()
       BOOST_TRY{
          //Fill vector at the beginning until there is no more memory
          MyVect myvec(myallocator);
-         int i;
+         std::size_t i;
          InstanceCounter ic;
          for(i = 0; true; ++i){
             myvec.insert(myvec.begin(), i, ic);

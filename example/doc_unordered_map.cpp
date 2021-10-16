@@ -85,12 +85,12 @@ int main ()
    //Note that the first parameter is the initial bucket count and
    //after that, the hash function, the equality function and the allocator
    MyHashMap *myhashmap = segment.construct<MyHashMap>("MyHashMap")  //object name
-      ( 3, boost::hash<int>(), std::equal_to<int>()                  //
+      ( 3u, boost::hash<int>(), std::equal_to<int>()                  //
       , segment.get_allocator<ValueType>());                         //allocator instance
 
    //Insert data in the hash map
-   for(int i = 0; i < 100; ++i){
-      myhashmap->insert(ValueType(i, (float)i));
+   for(std::size_t i = 0; i < 100u; ++i){
+      myhashmap->insert(ValueType((int)i, (float)i));
    }
    return 0;
 }

@@ -294,7 +294,7 @@ class winapi_named_condition_any
          winapi_semaphore_wrapper sem_block_queue;
          bool created;
          if(!sem_block_queue.open_or_create
-            (aux_str.c_str(), sem_counts[0], winapi_semaphore_wrapper::MaxCount, perm, created))
+            (aux_str.c_str(), static_cast<long>(sem_counts[0]), winapi_semaphore_wrapper::MaxCount, perm, created))
             return false;
          aux_str.erase(pos);
 
@@ -302,7 +302,7 @@ class winapi_named_condition_any
          aux_str += str_t::bl();
          winapi_semaphore_wrapper sem_block_lock;
          if(!sem_block_lock.open_or_create
-            (aux_str.c_str(), sem_counts[1], winapi_semaphore_wrapper::MaxCount, perm, created))
+            (aux_str.c_str(), static_cast<long>(sem_counts[1]), winapi_semaphore_wrapper::MaxCount, perm, created))
             return false;
          aux_str.erase(pos);
 

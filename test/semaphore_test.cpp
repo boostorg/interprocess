@@ -10,7 +10,6 @@
 
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "named_creation_template.hpp"
 #include "mutex_test_template.hpp"
 
@@ -47,8 +46,8 @@ class semaphore_test_wrapper
    {  this->post();  }
 
    protected:
-   semaphore_test_wrapper(int initial_count)
-      :  boost::interprocess::interprocess_semaphore(initial_count)
+   semaphore_test_wrapper(std::size_t initial_count)
+      :  boost::interprocess::interprocess_semaphore(unsigned(initial_count))
    {}
 };
 

@@ -11,7 +11,6 @@
 #include <boost/interprocess/sync/named_semaphore.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "named_creation_template.hpp"
 #include "mutex_test_template.hpp"
 #include "get_process_id_name.hpp"

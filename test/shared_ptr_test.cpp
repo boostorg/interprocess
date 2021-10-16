@@ -165,7 +165,7 @@ int string_shared_ptr_vector_insertion_test()
          string_shared_ptr_vector_t my_sharedptr_vector(string_shared_ptr_allocator);
          my_sharedptr_vector.insert(my_sharedptr_vector.begin(), NumElements, string_shared_ptr);
          //Insert in the middle to test movability
-         my_sharedptr_vector.insert(my_sharedptr_vector.begin() + my_sharedptr_vector.size()/2, NumElements, string_shared_ptr);
+         my_sharedptr_vector.insert(my_sharedptr_vector.nth(my_sharedptr_vector.size()/2u), NumElements, string_shared_ptr);
          //Now check the shared count is the objects contained in the
          //vector plus string_shared_ptr
          if(string_shared_ptr.use_count() != static_cast<long>(my_sharedptr_vector.size()+1)){

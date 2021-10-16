@@ -42,7 +42,7 @@ int main()
 
       //Elements to be inserted in unordered containers
       const int elements[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-      const int elements_size = sizeof(elements)/sizeof(elements[0]);
+      const std::size_t elements_size = sizeof(elements)/sizeof(elements[0]);
 
       MyUnorderedSet *myset  =
          shm.construct<MyUnorderedSet>(bip::anonymous_instance)
@@ -58,14 +58,14 @@ int main()
             , shm.get_allocator<int>());
 
       //Insert elements and check sizes
-      myset->insert((&elements[0]), (&elements[elements_size]));
-      myset->insert((&elements[0]), (&elements[elements_size]));
-      mymset->insert((&elements[0]), (&elements[elements_size]));
-      mymset->insert((&elements[0]), (&elements[elements_size]));
+      myset->insert((&elements[0]), (&elements[std::ptrdiff_t(elements_size)]));
+      myset->insert((&elements[0]), (&elements[std::ptrdiff_t(elements_size)]));
+      mymset->insert((&elements[0]), (&elements[std::ptrdiff_t(elements_size)]));
+      mymset->insert((&elements[0]), (&elements[std::ptrdiff_t(elements_size)]));
 
-      if(myset->size() != (unsigned int)elements_size)
+      if(myset->size() != elements_size)
          return 1;
-      if(mymset->size() != (unsigned int)elements_size*2)
+      if(mymset->size() != elements_size*2u)
          return 1;
 
       //Destroy elements and check sizes

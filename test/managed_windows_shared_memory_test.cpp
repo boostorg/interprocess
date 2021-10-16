@@ -38,15 +38,15 @@ int main ()
       //Named allocate capable shared memory allocator
       managed_windows_shared_memory w_shm(create_only, MemName, MemSize);
 
-      int i;
+      std::size_t i;
       //Let's allocate some memory
       for(i = 0; i < max; ++i){
-         array[i] = w_shm.allocate(i+1);
+         array[std::ptrdiff_t(i)] = w_shm.allocate(i+1u);
       }
 
       //Deallocate allocated memory
       for(i = 0; i < max; ++i){
-         w_shm.deallocate(array[i]);
+         w_shm.deallocate(array[std::ptrdiff_t(i)]);
       }
    }
 

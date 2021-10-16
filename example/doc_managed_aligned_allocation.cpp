@@ -55,7 +55,7 @@ int main()
    void *ptr = managed_shm.allocate_aligned(100, Alignment);
 
    //Check alignment
-   assert((static_cast<char*>(ptr)-static_cast<char*>(0)) % Alignment == 0);
+   assert(std::size_t(static_cast<char*>(ptr)-static_cast<char*>(0)) % Alignment == 0);
 
    //Deallocate it
    managed_shm.deallocate(ptr);
@@ -64,7 +64,7 @@ int main()
    ptr = managed_shm.allocate_aligned(100, Alignment, std::nothrow);
 
    //Check alignment
-   assert((static_cast<char*>(ptr)-static_cast<char*>(0)) % Alignment == 0);
+   assert(std::size_t(static_cast<char*>(ptr)-static_cast<char*>(0)) % Alignment == 0);
 
    //Deallocate it
    managed_shm.deallocate(ptr);
@@ -76,10 +76,10 @@ int main()
    //This allocation will maximize the size of the aligned memory
    //and will increase the possibility of finding more aligned memory
    ptr = managed_shm.allocate_aligned
-      (3*Alignment - managed_shared_memory::PayloadPerAllocation, Alignment);
+      (3u*Alignment - managed_shared_memory::PayloadPerAllocation, Alignment);
 
    //Check alignment
-   assert((static_cast<char*>(ptr)-static_cast<char*>(0)) % Alignment == 0);
+   assert(std::size_t(static_cast<char*>(ptr)-static_cast<char*>(0)) % Alignment == 0);
 
    //Deallocate it
    managed_shm.deallocate(ptr);

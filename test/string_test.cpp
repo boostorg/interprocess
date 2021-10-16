@@ -97,10 +97,10 @@ int string_test()
       CharType buffer [20];
 
       //First, push back
-      for(int i = 0; i < MaxSize; ++i){
+      for(std::size_t i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%i", i);
+         std::sprintf(buffer, "%u", (unsigned)i);
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->push_back(auxShmString);
@@ -112,10 +112,10 @@ int string_test()
       }
 
       //Now push back moving
-      for(int i = 0; i < MaxSize; ++i){
+      for(std::size_t i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%i", i);
+         std::sprintf(buffer, "%u", (unsigned)i);
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->push_back(boost::move(auxShmString));
@@ -127,10 +127,10 @@ int string_test()
       }
 
       //push front
-      for(int i = 0; i < MaxSize; ++i){
+      for(std::size_t i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%i", i);
+         std::sprintf(buffer, "%u", (unsigned)i);
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->insert(shmStringVect->begin(), auxShmString);
@@ -142,10 +142,10 @@ int string_test()
       }
 
       //Now push front moving
-      for(int i = 0; i < MaxSize; ++i){
+      for(std::size_t i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%i", i);
+         std::sprintf(buffer, "%u", (unsigned)i);
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->insert(shmStringVect->begin(), boost::move(auxShmString));
@@ -199,10 +199,10 @@ int string_test()
       if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
       const CharType prefix []    = "Prefix";
-      const int  prefix_size  = sizeof(prefix)/sizeof(prefix[0])-1;
+      const std::size_t prefix_size  = sizeof(prefix)/sizeof(prefix[0])-1;
       const CharType sufix []     = "Suffix";
 
-      for(int i = 0; i < MaxSize; ++i){
+      for(std::size_t i = 0; i < MaxSize; ++i){
          (*shmStringVect)[i].append(sufix);
          (*stdStringVect)[i].append(sufix);
          (*shmStringVect)[i].insert((*shmStringVect)[i].begin(),
@@ -213,28 +213,28 @@ int string_test()
 
       if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-      for(int i = 0; i < MaxSize; ++i){
+      for(std::size_t i = 0; i < MaxSize; ++i){
          std::reverse((*shmStringVect)[i].begin(), (*shmStringVect)[i].end());
          std::reverse((*stdStringVect)[i].begin(), (*stdStringVect)[i].end());
       }
 
       if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-      for(int i = 0; i < MaxSize; ++i){
+      for(std::size_t i = 0; i < MaxSize; ++i){
          std::reverse((*shmStringVect)[i].begin(), (*shmStringVect)[i].end());
          std::reverse((*stdStringVect)[i].begin(), (*stdStringVect)[i].end());
       }
 
       if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-      for(int i = 0; i < MaxSize; ++i){
+      for(std::size_t i = 0; i < MaxSize; ++i){
          std::sort(shmStringVect->begin(), shmStringVect->end());
          std::sort(stdStringVect->begin(), stdStringVect->end());
       }
 
       if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-      for(int i = 0; i < MaxSize; ++i){
+      for(std::size_t i = 0; i < MaxSize; ++i){
          (*shmStringVect)[i].replace((*shmStringVect)[i].begin(),
                                     (*shmStringVect)[i].end(),
                                     "String");

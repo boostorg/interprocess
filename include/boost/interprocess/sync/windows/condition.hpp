@@ -95,7 +95,7 @@ class winapi_condition
 
    struct condition_data
    {
-      typedef boost::int32_t     integer_type;
+      typedef unsigned int      integer_type;
       typedef winapi_semaphore  semaphore_type;
       typedef winapi_mutex      mutex_type;
 

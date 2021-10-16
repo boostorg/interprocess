@@ -47,15 +47,15 @@ int main ()
 
    //----   ALLOC, NAMED_ALLOC, NAMED_NEW TEST   ----//
    {
-      int i;
+      std::size_t i;
       //Let's allocate some memory
       for(i = 0; i < max; ++i){
-         array[i] = segment.allocate(i+1);
+         array[std::ptrdiff_t(i)] = segment.allocate(i+1u);
       }
 
       //Deallocate allocated memory
       for(i = 0; i < max; ++i){
-         segment.deallocate(array[i]);
+         segment.deallocate(array[std::ptrdiff_t(i)]);
       }
 
       bool res;

@@ -230,7 +230,7 @@ class microsec_clock<TimeType, typename enable_if_ptime<TimeType>::type>
          timeval tv;
          gettimeofday(&tv, 0); //gettimeofday does not support TZ adjust on Linux.
          std::time_t t = tv.tv_sec;
-         boost::uint32_t sub_sec = tv.tv_usec;
+         boost::uint32_t sub_sec = static_cast<boost::uint32_t>(tv.tv_usec);
       #elif defined(BOOST_HAS_FTIME)
          boost::winapi::FILETIME_ ft;
          boost::winapi::GetSystemTimeAsFileTime(&ft);
@@ -253,13 +253,13 @@ class microsec_clock<TimeType, typename enable_if_ptime<TimeType>::type>
       //of the current time system.  For example, if the time system
       //doesn't support fractional seconds then res_adjust returns 0
       //and all the fractional seconds return 0.
-      int adjust = static_cast< int >(resolution_traits_type::res_adjust() / 1000000);
+      unsigned adjust = static_cast< unsigned >(resolution_traits_type::res_adjust() / 1000000);
 
       time_duration_type td(static_cast< typename time_duration_type::hour_type >(curr_ptr->tm_hour),
                               static_cast< typename time_duration_type::min_type >(curr_ptr->tm_min),
                               static_cast< typename time_duration_type::sec_type >(curr_ptr->tm_sec),
-                              sub_sec * adjust);
-
+                              static_cast< typename time_duration_type::fractional_seconds_type >(sub_sec * adjust)
+                           );
       return TimeType(d,td);
    }
 };
@@ -274,7 +274,7 @@ class microsec_clock<ustime>
          timeval tv;
          gettimeofday(&tv, 0); //gettimeofday does not support TZ adjust on Linux.
          boost::uint64_t micros = boost::uint64_t(tv.tv_sec)*1000000;
-         micros += tv.tv_usec;
+         micros += (boost::uint64_t)tv.tv_usec;
       #elif defined(BOOST_HAS_FTIME)
          boost::winapi::FILETIME_ ft;
          boost::winapi::GetSystemTimeAsFileTime(&ft);
@@ -339,14 +339,14 @@ inline bool duration_to_timepoint(const Duration &, typename disable_if_ptime<Du
 template<class Duration>
 inline boost::uint64_t duration_to_milliseconds(const Duration &abs_time, typename enable_if_ptime_duration<Duration>::type* = 0)
 {
-   return abs_time.total_milliseconds();
+   return static_cast<boost::uint64_t>(abs_time.total_milliseconds());
 }
 
 template<class Duration>
 inline boost::uint64_t duration_to_milliseconds(const Duration &d, typename enable_if_duration<Duration>::type* = 0)
 {
    const double factor = double(Duration::period::num)*1000.0/double(Duration::period::den);
-   return static_cast<boost::uint64_t>(d.count()*factor);
+   return static_cast<boost::uint64_t>(double(d.count())*factor);
 }
 
 inline boost::uint64_t duration_to_milliseconds(const usduration &d)
@@ -359,14 +359,14 @@ inline boost::uint64_t duration_to_milliseconds(const usduration &d)
 template<class Duration>
 inline usduration duration_to_usduration(const Duration &d, typename enable_if_ptime_duration<Duration>::type* = 0)
 {
-   return usduration(d.total_microseconds());
+   return usduration(static_cast<boost::uint64_t>(d.total_microseconds()));
 }
 
 template<class Duration>
 inline usduration duration_to_usduration(const Duration &d, typename enable_if_duration<Duration>::type* = 0)
 {
    const double factor = double(Duration::period::num)*1000000.0/double(Duration::period::den);
-   return usduration(static_cast<boost::uint64_t>(d.count()*factor));
+   return usduration(static_cast<boost::uint64_t>(double(d.count())*factor));
 }
 
 // duration_to_ustime

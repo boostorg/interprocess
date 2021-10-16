@@ -198,7 +198,7 @@ inline bool truncate_file (file_handle_t hnd, std::size_t size)
       }
       //We will write zeros in the end of the file
       //since set_end_of_file does not guarantee this
-      for(std::size_t remaining = size - filesize, write_size = 0
+      for(std::size_t remaining = size - std::size_t(filesize), write_size = 0
          ;remaining > 0
          ;remaining -= write_size){
          const std::size_t DataSize = 512;

@@ -62,7 +62,6 @@ class expand_bwd_test_allocator
    typedef typename ipcdetail::add_reference
                      <const value_type>::type   const_reference;
    typedef std::size_t                          size_type;
-   typedef std::ptrdiff_t                       difference_type;
 
    typedef boost::interprocess::version_type<expand_bwd_test_allocator, 2>   version;
 
@@ -74,7 +73,7 @@ class expand_bwd_test_allocator
    {  typedef expand_bwd_test_allocator<T2>   other;   };
 
    //!Constructor from the segment manager. Never throws
-   expand_bwd_test_allocator(T *buf, size_type sz, difference_type offset)
+   expand_bwd_test_allocator(T *buf, size_type sz, size_type offset)
       : mp_buffer(buf), m_size(sz)
       , m_offset(offset),  m_allocations(0){ }
 
@@ -133,7 +132,7 @@ class expand_bwd_test_allocator
             assert(0);
          }
          ++m_allocations;
-         return mp_buffer + m_offset;
+         return mp_buffer + std::ptrdiff_t(m_offset);
       }
       else if(m_allocations == 1){
          if(limit_size > m_size){
@@ -167,7 +166,7 @@ class expand_bwd_test_allocator
 
    pointer           mp_buffer;
    size_type         m_size;
-   difference_type   m_offset;
+   size_type         m_offset;
    char              m_allocations;
 };
 

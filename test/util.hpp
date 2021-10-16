@@ -25,6 +25,15 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wconversion"
+#  if (BOOST_GCC >= 100000)
+#pragma GCC diagnostic ignored "-Warith-conversion"
+#  endif
+#endif
+
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #define BOOST_CHRONO_HEADER_ONLY
 #include <boost/chrono/system_clocks.hpp>
@@ -32,6 +41,10 @@
 
 #if !defined(BOOST_NO_CXX11_HDR_CHRONO)
 #include <chrono>
+#endif
+
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic pop
 #endif
 
 namespace boost {

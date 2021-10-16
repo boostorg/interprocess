@@ -66,15 +66,15 @@ int test_managed_shared_memory()
       //Named allocate capable shared memory allocator
       managed_shared_memory shmem(create_only, ShmemName, ShmemSize);
 
-      int i;
+      std::size_t i;
       //Let's allocate some memory
       for(i = 0; i < max; ++i){
-         array[i] = shmem.allocate(i+1);
+         array[std::ptrdiff_t(i)] = shmem.allocate(i+1u);
       }
 
       //Deallocate allocated memory
       for(i = 0; i < max; ++i){
-         shmem.deallocate(array[i]);
+         shmem.deallocate(array[std::ptrdiff_t(i)]);
       }
    }
 

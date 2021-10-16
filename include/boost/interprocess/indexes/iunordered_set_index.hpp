@@ -161,6 +161,7 @@ class iunordered_set_index
    typedef typename index_type::bucket_type              bucket_type;
    typedef typename index_type::bucket_traits            bucket_traits;
    typedef typename index_type::size_type                size_type;
+   typedef typename index_type::difference_type          difference_type;
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
@@ -203,7 +204,7 @@ class iunordered_set_index
          (boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, received_size, received_size, buckets);
       BOOST_ASSERT(buckets == shunk_p); (void)shunk_p;
 
-      bucket_ptr buckets_init = buckets + received_size;
+      bucket_ptr buckets_init = buckets + difference_type(received_size);
       for(size_type i = 0; i < (old_size - received_size); ++i){
          to_raw_pointer(buckets_init++)->~bucket_type();
       }
@@ -219,7 +220,7 @@ class iunordered_set_index
       bucket_ptr ret = alloc.allocation_command
             (boost::interprocess::expand_fwd | boost::interprocess::allocate_new, new_num, received_size, reuse);
       if(ret == old_buckets){
-         bucket_ptr buckets_init = old_buckets + old_num;
+         bucket_ptr buckets_init = old_buckets + difference_type(old_num);
          for(size_type i = 0; i < (new_num - old_num); ++i){
             ::new(to_raw_pointer(buckets_init++), boost_container_new_t())bucket_type();
          }

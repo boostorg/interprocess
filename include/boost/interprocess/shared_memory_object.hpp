@@ -297,7 +297,7 @@ inline bool shared_memory_object::remove(const char *filename)
 
 inline void shared_memory_object::truncate(offset_t length)
 {
-   if(!ipcdetail::truncate_file(m_handle, length)){
+   if(!ipcdetail::truncate_file(m_handle, (std::size_t)length)){
       error_info err = system_error_code();
       throw interprocess_exception(err);
    }

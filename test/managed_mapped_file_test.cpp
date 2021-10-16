@@ -74,15 +74,15 @@ int test_managed_mapped_file()
       //Named allocate capable shared memory allocator
       managed_mapped_file mfile(create_only, FileName, FileSize);
 
-      int i;
+      std::size_t i;
       //Let's allocate some memory
       for(i = 0; i < max; ++i){
-         array[i] = mfile.allocate(i+1);
+         array[std::ptrdiff_t(i)] = mfile.allocate(i+1u);
       }
 
       //Deallocate allocated memory
       for(i = 0; i < max; ++i){
-         mfile.deallocate(array[i]);
+         mfile.deallocate(array[std::ptrdiff_t(i)]);
       }
    }
 

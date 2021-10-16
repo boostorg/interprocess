@@ -10,7 +10,6 @@
 
 #include <boost/interprocess/sync/named_recursive_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "mutex_test_template.hpp"
 #include "named_creation_template.hpp"
 #include "get_process_id_name.hpp"

@@ -50,7 +50,7 @@ int main()
    {
       //Create an named integer in a managed mapped file
       managed_mapped_file managed_file(create_only, ManagedFile, 65536);
-      managed_file.construct<int>("MyInt")(0u);
+      managed_file.construct<int>("MyInt")(0);
 
       //Now create a copy on write version
       managed_mapped_file managed_file_cow(open_copy_on_write, ManagedFile);

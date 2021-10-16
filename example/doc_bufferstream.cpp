@@ -58,18 +58,18 @@ int main ()
    //Fill data
    std::vector<int> data;
    data.reserve(100);
-   for(int i = 0; i < 100; ++i){
-      data.push_back(i);
+   for(std::size_t i = 0; i < 100; ++i){
+      data.push_back((int)i);
    }
    const std::size_t BufferSize = 100*5;
 
    //Allocate a buffer in shared memory to write data
    char *my_cstring =
-      segment.construct<char>("MyCString")[BufferSize](0);
+      segment.construct<char>("MyCString")[BufferSize]('\0');
    bufferstream mybufstream(my_cstring, BufferSize);
 
    //Now write data to the buffer
-   for(int i = 0; i < 100; ++i){
+   for(std::size_t i = 0; i < 100; ++i){
       mybufstream << data[i] << std::endl;
    }
 
@@ -95,8 +95,8 @@ int main ()
    mybufstream.seekp(0, std::ios::beg);
 
    //Now write again the data trying to do a buffer overflow
-   for(int i = 0, m = data.size()*5; i < m; ++i){
-      mybufstream << data[i%5] << std::endl;
+   for(std::size_t i = 0, m = data.size()*5; i < m; ++i){
+      mybufstream << data[i%5u] << std::endl;
    }
 
    //Now make sure badbit is active

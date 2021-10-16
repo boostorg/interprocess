@@ -58,8 +58,8 @@ bool copyable_only(V1 *shmdeque, V2 *stddeque, ipcdetail::true_type)
    if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
    {
       IntType move_me(1);
-      stddeque->insert(stddeque->begin()+size/2, 50, 1);
-      shmdeque->insert(shmdeque->begin()+size/2, 50, boost::move(move_me));
+      stddeque->insert(stddeque->begin()+std::ptrdiff_t(size/2u), 50u, 1);
+      shmdeque->insert(shmdeque->begin()+std::ptrdiff_t(size/2u), 50u, boost::move(move_me));
       if(!test::CheckEqualContainers(shmdeque, stddeque)) return false;
    }
    {

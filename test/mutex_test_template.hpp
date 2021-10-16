@@ -27,7 +27,7 @@
 #include "util.hpp"
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+
 #include <iostream>
 
 namespace boost { namespace interprocess { namespace test {
@@ -180,10 +180,10 @@ void lock_and_sleep(void *arg, M &sm)
    data<M> *pdata = static_cast<data<M>*>(arg);
    boost::interprocess::scoped_lock<M> l(sm);
    if(pdata->m_secs){
-      boost::interprocess::ipcdetail::thread_sleep((1000*pdata->m_secs));
+      boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*pdata->m_secs));
    }
    else{
-      boost::interprocess::ipcdetail::thread_sleep((1000*2*BaseSeconds));
+      boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*2*BaseSeconds));
    }
 
    ++shared_val;
@@ -198,10 +198,10 @@ void lock_and_catch_errors(void *arg, M &sm)
    {
       boost::interprocess::scoped_lock<M> l(sm);
       if(pdata->m_secs){
-         boost::interprocess::ipcdetail::thread_sleep((1000*pdata->m_secs));
+         boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*pdata->m_secs));
       }
       else{
-         boost::interprocess::ipcdetail::thread_sleep((1000*2*BaseSeconds));
+         boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*2*BaseSeconds));
       }
       ++shared_val;
       pdata->m_value = shared_val;
@@ -218,7 +218,7 @@ void try_lock_and_sleep(void *arg, M &sm)
    data<M> *pdata = static_cast<data<M>*>(arg);
    boost::interprocess::scoped_lock<M> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
-      boost::interprocess::ipcdetail::thread_sleep((1000*2*BaseSeconds));
+      boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*2*BaseSeconds));
       ++shared_val;
       pdata->m_value = shared_val;
    }
@@ -250,7 +250,7 @@ void timed_lock_and_sleep(void *arg, M &sm)
    }
 
    if (r){
-      boost::interprocess::ipcdetail::thread_sleep((1000*2*BaseSeconds));
+      boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*2*BaseSeconds));
       ++shared_val;
       pdata->m_value = shared_val;
    }
@@ -271,7 +271,7 @@ void test_mutex_lock()
    boost::interprocess::ipcdetail::thread_launch(tm1, thread_adapter<M>(&lock_and_sleep, &d1, mtx));
 
    //Wait 1*BaseSeconds
-   boost::interprocess::ipcdetail::thread_sleep((1000*1*BaseSeconds));
+   boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*1*BaseSeconds));
 
    // Locker two launches, but it won't hold the lock for 2*BaseSeconds seconds.
    boost::interprocess::ipcdetail::OS_thread_t tm2;
@@ -280,7 +280,7 @@ void test_mutex_lock()
    //Wait completion
 
    boost::interprocess::ipcdetail::thread_join(tm1);
-   boost::interprocess::ipcdetail::thread_sleep((1000*1*BaseSeconds));
+   boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*1*BaseSeconds));
    boost::interprocess::ipcdetail::thread_join(tm2);
 
    BOOST_INTERPROCESS_CHECK(d1.m_value == 1);
@@ -306,7 +306,7 @@ void test_mutex_lock_timeout()
    boost::interprocess::ipcdetail::thread_launch(tm1, thread_adapter<M>(&lock_and_sleep, &d1, mtx));
 
    //Wait 1*BaseSeconds
-   boost::interprocess::ipcdetail::thread_sleep((1000*wait_time_s));
+   boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*wait_time_s));
 
    // Locker two launches, and attempts to hold the lock for wait_time_s * 2 seconds.
    boost::interprocess::ipcdetail::OS_thread_t tm2;
@@ -314,7 +314,7 @@ void test_mutex_lock_timeout()
 
    //Wait completion
    boost::interprocess::ipcdetail::thread_join(tm1);
-   boost::interprocess::ipcdetail::thread_sleep((1000*1*BaseSeconds));
+   boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*1*BaseSeconds));
    boost::interprocess::ipcdetail::thread_join(tm2);
 
    BOOST_INTERPROCESS_CHECK(d1.m_value == 1);
@@ -338,7 +338,7 @@ void test_mutex_try_lock()
    boost::interprocess::ipcdetail::thread_launch(tm1, thread_adapter<M>(&try_lock_and_sleep, &d1, mtx));
 
    //Wait 1*BaseSeconds
-   boost::interprocess::ipcdetail::thread_sleep((1000*1*BaseSeconds));
+   boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*1*BaseSeconds));
 
    // Locker two launches, but it should fail acquiring the lock
    boost::interprocess::ipcdetail::OS_thread_t tm2;
@@ -370,7 +370,7 @@ void test_mutex_timed_lock()
       boost::interprocess::ipcdetail::thread_launch(tm1, thread_adapter<M>(&timed_lock_and_sleep, &d1, mtx));
 
       //Wait 1*BaseSeconds
-      boost::interprocess::ipcdetail::thread_sleep((1000*1*BaseSeconds));
+      boost::interprocess::ipcdetail::thread_sleep(unsigned(1000*1*BaseSeconds));
 
       // Locker two launches, holds the lock for 2*BaseSeconds seconds.
       boost::interprocess::ipcdetail::OS_thread_t tm2;
