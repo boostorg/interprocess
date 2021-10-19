@@ -421,7 +421,7 @@ inline void thread_sleep_tick()
    struct timespec rqt;
    //Sleep for the half of the tick time
    rqt.tv_sec  = 0;
-   rqt.tv_nsec = get_system_tick_ns()/2;
+   rqt.tv_nsec = (long)get_system_tick_ns()/2;
    ::nanosleep(&rqt, 0);
 }
 

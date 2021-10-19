@@ -121,7 +121,7 @@ class basic_managed_memory_impl
             device_type f(open_or_create, filename, read_write);
             if(!f.get_size(old_size))
                return false;
-            f.truncate(old_size + extra_bytes);
+            f.truncate(old_size + static_cast<offset_t>(extra_bytes));
          }
          ManagedMemory managed_memory(open_only, filename);
          //Grow always works
@@ -151,7 +151,7 @@ class basic_managed_memory_impl
       //Decrease file size
       {
          device_type f(open_or_create, filename, read_write);
-         f.truncate(new_size);
+         f.truncate(static_cast<offset_t>(new_size));
       }
       return true;
    }

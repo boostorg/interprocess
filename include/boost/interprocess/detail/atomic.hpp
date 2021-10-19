@@ -158,7 +158,7 @@ inline boost::uint32_t atomic_add32
    // int r = *pw;
    // *mem += val;
    // return r;
-   int r;
+   boost::uint32_t r;
 
    asm volatile
    (

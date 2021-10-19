@@ -70,7 +70,7 @@ int test_managed_mapped_file()
       file_mapping::remove(FileName);
 
       const int max              = 100;
-      void *array[max];
+      void *array[std::size_t(max)];
       //Named allocate capable shared memory allocator
       managed_mapped_file mfile(create_only, FileName, FileSize);
 

@@ -148,7 +148,7 @@ namespace ipcdetail{
       //!Constructor. Takes barrier attributes to initialize the barrier
       barrier_initializer(pthread_barrier_t &mut,
                           pthread_barrierattr_t &mut_attr,
-                          int count)
+                          unsigned int count)
       : mp_barrier(&mut)
       {
          if(pthread_barrier_init(mp_barrier, &mut_attr, count) != 0)

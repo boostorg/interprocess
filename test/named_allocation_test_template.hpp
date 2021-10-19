@@ -106,7 +106,7 @@ bool test_named_iterators(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
    std::vector<char*> buffers;
-   const int BufferLen = 100;
+   const std::size_t BufferLen = 100;
    char_type name[BufferLen];
    typedef std::basic_string<char_type> string_type;
    std::set<string_type> names;
@@ -177,7 +177,7 @@ bool test_shrink_to_fit(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
    std::vector<char*> buffers;
-   const int BufferLen = 100;
+   const std::size_t BufferLen = 100;
    char_type name[BufferLen];
 
    basic_bufferstream<char_type> formatter(name, BufferLen);
@@ -218,7 +218,7 @@ bool test_direct_named_allocation_destruction(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
    std::vector<char*> buffers;
-   const int BufferLen = 100;
+   const std::size_t BufferLen = 100;
    char_type name[BufferLen];
 
    basic_bufferstream<char_type> formatter(name, BufferLen);
@@ -259,7 +259,7 @@ bool test_named_allocation_inverse_destruction(ManagedMemory &m)
    typedef typename ManagedMemory::char_type char_type;
 
    std::vector<char*> buffers;
-   const int BufferLen = 100;
+   const std::size_t BufferLen = 100;
    char_type name[BufferLen];
 
    basic_bufferstream<char_type> formatter(name, BufferLen);
@@ -298,7 +298,7 @@ bool test_named_allocation_mixed_destruction(ManagedMemory &m)
    typedef typename ManagedMemory::char_type char_type;
 
    std::vector<char*> buffers;
-   const int BufferLen = 100;
+   const std::size_t BufferLen = 100;
    char_type name[BufferLen];
 
    basic_bufferstream<char_type> formatter(name, BufferLen);
@@ -339,7 +339,7 @@ bool test_inverse_named_allocation_destruction(ManagedMemory &m)
    typedef typename ManagedMemory::char_type char_type;
 
    std::vector<char*> buffers;
-   const int BufferLen = 100;
+   const std::size_t BufferLen = 100;
    char_type name[BufferLen];
 
    basic_bufferstream<char_type> formatter(name, BufferLen);

@@ -34,7 +34,7 @@ int main ()
 
    {
       const int max              = 100;
-      void *array[max];
+      void *array[std::size_t(max)];
       //Named allocate capable shared memory allocator
       managed_windows_shared_memory w_shm(create_only, MemName, MemSize);
 

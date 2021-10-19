@@ -62,7 +62,7 @@ int test_managed_shared_memory()
       shared_memory_object::remove(ShmemName);
 
       const int max              = 100;
-      void *array[max];
+      void *array[std::size_t(max)];
       //Named allocate capable shared memory allocator
       managed_shared_memory shmem(create_only, ShmemName, ShmemSize);
 

@@ -172,13 +172,13 @@ int map_test ()
       }
       {
          //This is really nasty, but we have no other simple choice
-         IntPairType aux_vect[max];
+         IntPairType aux_vect[std::size_t(max)];
          for(int i = 0; i < max; ++i){
             IntType i1(i);
             IntType i2(i);
             new(&aux_vect[i])IntPairType(boost::move(i1), boost::move(i2));
          }
-         IntPairType aux_vect3[max];
+         IntPairType aux_vect3[std::size_t(max)];
          for(int i = 0; i < max; ++i){
             IntType i1(i);
             IntType i2(i);
@@ -320,13 +320,13 @@ int map_test ()
 
       {
          //This is really nasty, but we have no other simple choice
-         IntPairType aux_vect[max];
+         IntPairType aux_vect[std::size_t(max)];
          for(int i = 0; i < max; ++i){
             IntType i1(i);
             IntType i2(i);
             new(&aux_vect[i])IntPairType(boost::move(i1), boost::move(i2));
          }
-         IntPairType aux_vect3[max];
+         IntPairType aux_vect3[std::size_t(max)];
          for(int i = 0; i < max; ++i){
             IntType i1(i);
             IntType i2(i);

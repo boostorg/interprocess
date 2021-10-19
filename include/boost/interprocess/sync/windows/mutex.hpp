@@ -59,13 +59,13 @@ class winapi_mutex
 };
 
 inline winapi_mutex::winapi_mutex()
-   : id_(this)
+   : id_()
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
    //Create mutex with the initial count
    bool open_or_created;
-   (void)handles.obtain_mutex(this->id_, &open_or_created);
+   (void)handles.obtain_mutex(this->id_, this, &open_or_created);
    //The mutex must be created, never opened
    BOOST_ASSERT(open_or_created);
    BOOST_ASSERT(open_or_created && winapi::get_last_error() != winapi::error_already_exists);
@@ -76,7 +76,7 @@ inline winapi_mutex::~winapi_mutex()
 {
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
-   handles.destroy_handle(this->id_);
+   handles.destroy_handle(this->id_, this);
 }
 
 inline void winapi_mutex::lock(void)
@@ -84,7 +84,7 @@ inline void winapi_mutex::lock(void)
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
    //This can throw
-   winapi_mutex_functions mut(handles.obtain_mutex(this->id_));
+   winapi_mutex_functions mut(handles.obtain_mutex(this->id_, this));
    mut.lock();
 }
 
@@ -93,7 +93,7 @@ inline bool winapi_mutex::try_lock(void)
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
    //This can throw
-   winapi_mutex_functions mut(handles.obtain_mutex(this->id_));
+   winapi_mutex_functions mut(handles.obtain_mutex(this->id_, this));
    return mut.try_lock();
 }
 
@@ -103,7 +103,7 @@ inline bool winapi_mutex::timed_lock(const TimePoint &abs_time)
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
    //This can throw
-   winapi_mutex_functions mut(handles.obtain_mutex(this->id_));
+   winapi_mutex_functions mut(handles.obtain_mutex(this->id_, this));
    return mut.timed_lock(abs_time);
 }
 
@@ -112,7 +112,7 @@ inline void winapi_mutex::unlock(void)
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
    //This can throw
-   winapi_mutex_functions mut(handles.obtain_mutex(this->id_));
+   winapi_mutex_functions mut(handles.obtain_mutex(this->id_, this));
    return mut.unlock();
 }
 

@@ -42,16 +42,16 @@ inline timespec timepoint_to_timespec ( const TimePoint &tm
    time_duration_type duration  = (tm <= epoch) ? time_duration_type(epoch - epoch)
                                                 : time_duration_type(tm - epoch);
    timespec ts;
-   ts.tv_sec  = duration.total_seconds();
-   ts.tv_nsec = duration.total_nanoseconds() % 1000000000;
+   ts.tv_sec  = static_cast<time_t>(duration.total_seconds());
+   ts.tv_nsec = static_cast<long>(duration.total_nanoseconds() % 1000000000);
    return ts;
 }
 
 inline timespec timepoint_to_timespec (const ustime &tm)
 {
    timespec ts;
-   ts.tv_sec  = tm.get_microsecs()/1000000u;
-   ts.tv_nsec = (tm.get_microsecs()%1000000u)*1000u;
+   ts.tv_sec  = static_cast<time_t>(tm.get_microsecs()/1000000u);
+   ts.tv_nsec = static_cast<long>((tm.get_microsecs()%1000000u)*1000u);
    return ts;
 }
 
@@ -65,15 +65,15 @@ inline timespec timepoint_to_timespec ( const TimePoint &tm
    timespec ts;
    BOOST_IF_CONSTEXPR(duration_t::period::num == 1 && duration_t::period::den == 1000000000)
    {
-      ts.tv_sec  = d.count()/duration_t::period::den;
-      ts.tv_nsec = d.count()%duration_t::period::den;
+      ts.tv_sec  = static_cast<time_t>(d.count()/duration_t::period::den);
+      ts.tv_nsec = static_cast<long>(d.count()%duration_t::period::den);
    }
    else
    {
       const double factor = double(duration_t::period::num)/double(duration_t::period::den);
       const double res = d.count()*factor;
-      ts.tv_sec  = static_cast<boost::uint64_t>(res);
-      ts.tv_nsec = static_cast<boost::uint64_t>(res - double(ts.tv_sec));
+      ts.tv_sec  = static_cast<time_t>(res);
+      ts.tv_nsec = static_cast<long>(res - double(ts.tv_sec));
    }
    return ts;
 }

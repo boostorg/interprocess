@@ -364,12 +364,12 @@ inline offset_t mapped_region::priv_page_offset_addr_fixup(offset_t offset, cons
    //We calculate the difference between demanded and valid offset
    //(always less than a page in std::size_t, thus, representable by std::size_t)
    const std::size_t page_offset =
-      static_cast<std::size_t>(offset - (offset / page_size) * page_size);
+      static_cast<std::size_t>(offset - (offset / offset_t(page_size)) * offset_t(page_size));
    //Update the mapping address
    if(address){
       address = static_cast<const char*>(address) - page_offset;
    }
-   return page_offset;
+   return offset_t(page_offset);
 }
 
 #if defined (BOOST_INTERPROCESS_WINDOWS)
@@ -695,7 +695,7 @@ inline mapped_region::mapped_region
 
    //Map it to the address space
    void* base = mmap ( const_cast<void*>(address)
-                     , static_cast<std::size_t>(page_offset + size)
+                     , static_cast<std::size_t>(page_offset) + size
                      , prot
                      , flags
                      , mapping.get_mapping_handle().handle
@@ -709,7 +709,7 @@ inline mapped_region::mapped_region
 
    //Calculate new base for the user
    m_base = static_cast<char*>(base) + page_offset;
-   m_page_offset = page_offset;
+   m_page_offset = static_cast<std::size_t>(page_offset);
    m_size   = size;
 
    //Check for fixed mapping error

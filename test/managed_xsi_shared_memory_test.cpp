@@ -50,7 +50,7 @@ class xsi_shared_memory_remover
 
 int main ()
 {
-   const int ShmemSize          = 65536;
+   const std::size_t ShmemSize          = 65536;
    std::string filename = get_filename();
    const char *const ShmemName = filename.c_str();
 
@@ -70,15 +70,15 @@ int main ()
       //Remove the shmem it is already created
       remove_shared_memory(key);
 
-      const int max              = 100;
+      const std::size_t max              = 100;
       void *array[max];
       //Named allocate capable shared memory allocator
       managed_xsi_shared_memory shmem(create_only, key, ShmemSize);
       shmid = shmem.get_shmid();
-      int i;
+      std::size_t i;
       //Let's allocate some memory
       for(i = 0; i < max; ++i){
-         array[i] = shmem.allocate(i+1);
+         array[i] = shmem.allocate(i+1u);
       }
 
       //Deallocate allocated memory

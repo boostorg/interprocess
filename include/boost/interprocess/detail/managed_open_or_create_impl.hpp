@@ -344,7 +344,7 @@ class managed_open_or_create_impl
    {
       BOOST_TRY{
          //If this throws, we are lost
-         truncate_device<FileBased>(dev, size, file_like_t());
+         truncate_device<FileBased>(dev, static_cast<offset_t>(size), file_like_t());
 
          //If the following throws, we will truncate the file to 1
          mapped_region region(dev, read_write, 0, 0, addr);

@@ -115,7 +115,7 @@ void do_test_condition_notify_all()
 {
    const int NUMTHREADS = 3;
 
-   boost::interprocess::ipcdetail::OS_thread_t thgroup[NUMTHREADS];
+   boost::interprocess::ipcdetail::OS_thread_t thgroup[std::size_t(NUMTHREADS)];
    condition_test_data<Condition, Mutex> data;
 
    for(int i = 0; i< NUMTHREADS; ++i){
@@ -365,7 +365,7 @@ void do_test_condition_queue_notify_one(void)
       waiting_readers = 0;
       waiting_writer  = 0;
 
-      boost::interprocess::ipcdetail::OS_thread_t thgroup[NumThreads];
+      boost::interprocess::ipcdetail::OS_thread_t thgroup[std::size_t(NumThreads)];
       for(int i = 0; i< NumThreads; ++i){
          condition_func<Condition, Mutex> func(cond_full, cond_empty, mutex);
          boost::interprocess::ipcdetail::thread_launch(thgroup[i], func);
@@ -410,7 +410,7 @@ void do_test_condition_queue_notify_all(void)
       waiting_readers = 0;
       waiting_writer  = 0;
 
-      boost::interprocess::ipcdetail::OS_thread_t thgroup[NumThreads];
+      boost::interprocess::ipcdetail::OS_thread_t thgroup[std::size_t(NumThreads)];
       for(int i = 0; i< NumThreads; ++i){
          condition_func<Condition, Mutex> func(cond_full, cond_empty, mutex);
          boost::interprocess::ipcdetail::thread_launch(thgroup[i], func);

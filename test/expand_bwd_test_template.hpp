@@ -130,7 +130,7 @@ bool test_insert_with_expand_bwd()
       {  100,  100,  100,  200,
          300,  25,   100,  200   };
    //Number of tests
-   const std::size_t Iterations    = sizeof(InsertSize)/sizeof(int);
+   const std::size_t Iterations    = sizeof(InsertSize)/sizeof(std::size_t);
 
    for(std::size_t iteration = 0; iteration < Iterations; ++iteration)
    {
@@ -187,7 +187,7 @@ bool test_assign_with_expand_bwd()
    const std::size_t Offset[]      = { 50, 50, 50};
    const std::size_t InitialSize[] = { 25, 25, 25};
    const std::size_t InsertSize[]  = { 15, 35, 55};
-   const std::size_t Iterations    = sizeof(InsertSize)/sizeof(int);
+   const std::size_t Iterations    = sizeof(InsertSize)/sizeof(std::size_t);
 
    for(std::size_t iteration = 0; iteration <Iterations; ++iteration)
    {

@@ -454,7 +454,7 @@ bool test_continuous_aligned_allocation(Allocator &a)
                return false;
          }
          //Deallocate all
-         for(unsigned int k = buffers.size(); k--;){
+         for(std::size_t k = buffers.size(); k--;){
             a.deallocate(buffers[k]);
          }
          buffers.clear();

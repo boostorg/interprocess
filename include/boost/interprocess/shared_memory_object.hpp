@@ -368,7 +368,7 @@ inline bool shared_memory_object::priv_open_or_create
       error_info err(mode_error);
       throw interprocess_exception(err);
    }
-   int unix_perm = perm.get_permissions();
+   ::mode_t unix_perm = perm.get_permissions();
 
    switch(type){
       case ipcdetail::DoOpen:
