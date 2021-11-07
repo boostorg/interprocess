@@ -209,7 +209,7 @@ inline void create_shared_dir_and_clean_old(std::basic_string<CharT> &shared_dir
       get_shared_dir_root(root_shared_dir);
 
       //If fails, check that it's because already exists
-      if(!create_directory(root_shared_dir.c_str())){
+      if(!create_directory(root_shared_dir.c_str(), true)){
          error_info info(system_error_code());
          if(info.get_error_code() != already_exists_error){
             throw interprocess_exception(info);
@@ -220,7 +220,7 @@ inline void create_shared_dir_and_clean_old(std::basic_string<CharT> &shared_dir
          get_shared_dir(shared_dir);
 
          //If fails, check that it's because already exists
-         if(!create_directory(shared_dir.c_str())){
+         if(!create_directory(shared_dir.c_str(), true)){
             error_info info(system_error_code());
             if(info.get_error_code() != already_exists_error){
                throw interprocess_exception(info);

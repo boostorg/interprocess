@@ -38,7 +38,7 @@ inline void get_shared_dir(std::string &shared_dir)
    shared_dir += "/boostipctesteventlog_";
    shared_dir += boost::interprocess::test::get_process_id_name();
    if(!dir_created)
-      ipcdetail::create_directory(shared_dir.c_str());
+      ipcdetail::create_directory(shared_dir.c_str(), true);
    dir_created = true;
 }
 
@@ -48,7 +48,7 @@ inline void get_shared_dir(std::wstring &shared_dir)
    shared_dir += L"/boostipctesteventlog_";
    shared_dir += boost::interprocess::test::get_process_id_wname();
    if(!dir_created)
-      ipcdetail::create_directory(shared_dir.c_str());
+      ipcdetail::create_directory(shared_dir.c_str(), true);
    dir_created = true;
 }
 
