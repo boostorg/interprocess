@@ -27,6 +27,14 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/cstdint.hpp>
 
+#if !defined(_AIX)
+#define BOOST_INTERPROCESS_DETAIL_PPC_ASM_LABEL(label) label ":\n\t"
+#define BOOST_INTERPROCESS_DETAIL_PPC_ASM_JUMP(insn, label, offset) insn " " label "\n\t"
+#else
+#define BOOST_INTERPROCESS_DETAIL_PPC_ASM_LABEL(label)
+#define BOOST_INTERPROCESS_DETAIL_PPC_ASM_JUMP(insn, label, offset) insn " $" offset "\n\t"
+#endif
+
 namespace boost{
 namespace interprocess{
 namespace ipcdetail{
@@ -223,14 +231,17 @@ inline boost::uint32_t atomic_add32(volatile boost::uint32_t *mem, boost::uint32
 {
    boost::uint32_t prev, temp;
 
-   asm volatile ("1:\n\t"
-                 "lwarx  %0,0,%2\n\t"
-                 "add    %1,%0,%3\n\t"
-                 "stwcx. %1,0,%2\n\t"
-                 "bne-   1b"
-                 : "=&r" (prev), "=&r" (temp)
-                 : "b" (mem), "r" (val)
-                 : "cc", "memory");
+   asm volatile
+     (
+         BOOST_INTERPROCESS_DETAIL_PPC_ASM_LABEL("1")
+         "lwarx  %0,0,%2\n\t"
+         "add    %1,%0,%3\n\t"
+         "stwcx. %1,0,%2\n\t"
+         BOOST_INTERPROCESS_DETAIL_PPC_ASM_JUMP("bne-", "1b", "-12")
+         : "=&r" (prev), "=&r" (temp)
+         : "b" (mem), "r" (val)
+         : "cc", "memory"
+      );
    return prev;
 }
 
@@ -245,16 +256,19 @@ inline boost::uint32_t atomic_cas32
 {
    boost::uint32_t prev;
 
-   asm volatile ("1:\n\t"
-                 "lwarx  %0,0,%1\n\t"
-                 "cmpw   %0,%3\n\t"
-                 "bne-   2f\n\t"
-                 "stwcx. %2,0,%1\n\t"
-                 "bne-   1b\n\t"
-                 "2:"
-                 : "=&r"(prev)
-                 : "b" (mem), "r" (with), "r" (cmp)
-                 : "cc", "memory");
+   asm volatile
+     (
+         BOOST_INTERPROCESS_DETAIL_PPC_ASM_LABEL("1")
+         "lwarx  %0,0,%1\n\t"
+         "cmpw   %0,%3\n\t"
+         BOOST_INTERPROCESS_DETAIL_PPC_ASM_JUMP("bne-", "2f", "+12")
+         "stwcx. %2,0,%1\n\t"
+         BOOST_INTERPROCESS_DETAIL_PPC_ASM_JUMP("bne-", "1b", "-16")
+         BOOST_INTERPROCESS_DETAIL_PPC_ASM_LABEL("2")
+         : "=&r"(prev)
+	 : "b" (mem), "r" (with), "r" (cmp)
+	 : "cc", "memory"
+      );
    return prev;
 }
 
