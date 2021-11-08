@@ -52,7 +52,7 @@ static void create_tmp_subdir_and_get_pid_based_filepath
    create_shared_dir_and_clean_old(s);
    s += "/";
    s += subdir_name;
-   if(!open_or_create_directory(s.c_str(), true)){
+   if(!open_or_create_shared_directory(s.c_str())){
       error_info err = system_error_code();
       throw interprocess_exception(err);
    }

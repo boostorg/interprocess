@@ -209,22 +209,18 @@ inline void create_shared_dir_and_clean_old(std::basic_string<CharT> &shared_dir
       get_shared_dir_root(root_shared_dir);
 
       //If fails, check that it's because already exists
-      if(!create_directory(root_shared_dir.c_str(), true)){
+      if(!open_or_create_shared_directory(root_shared_dir.c_str())){
          error_info info(system_error_code());
-         if(info.get_error_code() != already_exists_error){
-            throw interprocess_exception(info);
-         }
+         throw interprocess_exception(info);
       }
 
       #if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME)
          get_shared_dir(shared_dir);
 
          //If fails, check that it's because already exists
-         if(!create_directory(shared_dir.c_str(), true)){
+         if(!open_or_create_shared_directory(shared_dir.c_str())){
             error_info info(system_error_code());
-            if(info.get_error_code() != already_exists_error){
-               throw interprocess_exception(info);
-            }
+            throw interprocess_exception(info);
          }
          //Now erase all old directories created in the previous boot sessions
          std::basic_string<CharT> subdir = shared_dir;

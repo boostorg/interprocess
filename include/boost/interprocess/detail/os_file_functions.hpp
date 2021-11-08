@@ -101,8 +101,22 @@ inline file_handle_t file_handle_from_mapping_handle(mapping_handle_t hnd)
 {  return hnd.handle; }
 
 template<class CharT>
-inline bool create_directory(const CharT *path, bool = false)
+inline bool create_directory(const CharT *path)
 {  return winapi::create_directory(path); }
+
+template<class CharT>
+inline bool open_or_create_directory(const CharT *path)
+{
+   //If fails, check that it's because it already exists
+   return create_directory(path)
+      ||  error_info(system_error_code()).get_error_code() == already_exists_error;
+}
+
+template<class CharT>
+inline bool open_or_create_shared_directory(const CharT *path)
+{
+   return open_or_create_directory(path);
+}
 
 template <class CharT>
 inline bool remove_directory(const CharT *path)
@@ -493,10 +507,23 @@ inline mapping_handle_t mapping_handle_from_file_handle(file_handle_t hnd)
 inline file_handle_t file_handle_from_mapping_handle(mapping_handle_t hnd)
 {  return hnd.handle; }
 
-inline bool create_directory(const char *path, bool is_shared_dir = false)
+inline bool create_directory(const char *path)
 {
-   ::mode_t m = is_shared_dir ? 01777 : 0777;
-   return ::mkdir(path, m) == 0 && ::chmod(path, m) == 0;
+   ::mode_t m = ::mode_t(0777);
+   return ::mkdir(path, m) == 0;
+}
+
+inline bool open_or_create_directory(const char *path)
+{
+   ::mode_t m = ::mode_t(0777);
+   return ::mkdir(path, m) == 0 || (errno == EEXIST);
+}
+
+inline bool open_or_create_shared_directory(const char *path)
+{
+   ::mode_t m = ::mode_t(01777);
+   const bool created_or_exists = (::mkdir(path, m) == 0) || (errno == EEXIST);
+   return created_or_exists && (::chmod(path, m) == 0);
 }
 
 inline bool remove_directory(const char *path)
@@ -784,18 +811,6 @@ inline bool delete_subdirectories(const std::string &refcstrRootDirectory, const
 }
 
 #endif   //#if defined (BOOST_INTERPROCESS_WINDOWS)
-
-inline bool open_or_create_directory(const char *dir_name, bool is_shared_dir = false)
-{
-   //If fails, check that it's because it already exists
-   if(!create_directory(dir_name, is_shared_dir)){
-      error_info info(system_error_code());
-      if(info.get_error_code() != already_exists_error){
-         return false;
-      }
-   }
-   return true;
-}
 
 inline std::string get_temporary_path()
 {
