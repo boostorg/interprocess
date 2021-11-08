@@ -495,7 +495,7 @@ inline file_handle_t file_handle_from_mapping_handle(mapping_handle_t hnd)
 
 inline bool create_directory(const char *path, bool is_shared_dir = false)
 {
-   ::mode_t m = is_shared_dir ? 1777 : 0777;
+   ::mode_t m = is_shared_dir ? 01777 : 0777;
    return ::mkdir(path, m) == 0 && ::chmod(path, m) == 0;
 }
 
