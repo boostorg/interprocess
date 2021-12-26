@@ -6805,6 +6805,13 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_79_00 Boost 1.79 Release]
+
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/pull/162     GitHub #162 (['"Fix missing sys/stat.h include on musl-based systems"])].
+
+[endsect]
+
 [section:release_notes_boost_1_78_00 Boost 1.78 Release]
 
 *  Mutexes and condition variables now additionally offer a standard C++-like interface to allow reusing code that
