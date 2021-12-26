@@ -41,7 +41,7 @@ class derived_class
    :  public base_class
 {
    public:
-   virtual ~derived_class()
+   virtual ~derived_class() BOOST_OVERRIDE
    {}
 };
 
@@ -286,9 +286,9 @@ struct X
 struct Y: public X
 {
    Y(){  ++cnt;   }
-   virtual ~Y(){ --cnt;   }
+   virtual ~Y() BOOST_OVERRIDE{ --cnt;   }
 
-   virtual int id() const
+   virtual int id() const BOOST_OVERRIDE
    {  return 2;   }
 
    private:
