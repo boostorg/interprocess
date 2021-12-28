@@ -6807,6 +6807,7 @@ thank them:
 
 [section:release_notes_boost_1_79_00 Boost 1.79 Release]
 
+*  The library now compiles without warnings with GCC's -Wcast-align=strict
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/160   GitHub #160 (['"More GCC suggest-override warnings"])].
    * [@https://github.com/boostorg/interprocess/pull/162     GitHub #162 (['"Fix missing sys/stat.h include on musl-based systems"])].
