@@ -83,7 +83,7 @@ class message_queue_t
    //!Creates a process shared message queue with name "name". For this message queue,
    //!the maximum number of messages will be "max_num_msg" and the maximum message size
    //!will be "max_msg_size". Throws on error and if the queue was previously created.
-   message_queue_t(create_only_t create_only,
+   message_queue_t(create_only_t,
                  const char *name,
                  size_type max_num_msg,
                  size_type max_msg_size,
@@ -94,7 +94,7 @@ class message_queue_t
    //!and the maximum message size will be "max_msg_size". If queue was previously
    //!created the queue will be opened and "max_num_msg" and "max_msg_size" parameters
    //!are ignored. Throws on error.
-   message_queue_t(open_or_create_t open_or_create,
+   message_queue_t(open_or_create_t,
                  const char *name,
                  size_type max_num_msg,
                  size_type max_msg_size,
@@ -103,7 +103,7 @@ class message_queue_t
    //!Opens a previously created process shared message queue with name "name".
    //!If the queue was not previously created or there are no free resources,
    //!throws an error.
-   message_queue_t(open_only_t open_only, const char *name);
+   message_queue_t(open_only_t, const char *name);
 
    #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
@@ -113,7 +113,7 @@ class message_queue_t
    //! 
    //!Note: This function is only available on operating systems with
    //!      native wchar_t APIs (e.g. Windows).
-   message_queue_t(create_only_t create_only,
+   message_queue_t(create_only_t,
                  const wchar_t *name,
                  size_type max_num_msg,
                  size_type max_msg_size,
@@ -127,7 +127,7 @@ class message_queue_t
    //! 
    //!Note: This function is only available on operating systems with
    //!      native wchar_t APIs (e.g. Windows).
-   message_queue_t(open_or_create_t open_or_create,
+   message_queue_t(open_or_create_t,
                  const wchar_t *name,
                  size_type max_num_msg,
                  size_type max_msg_size,
@@ -139,7 +139,7 @@ class message_queue_t
    //! 
    //!Note: This function is only available on operating systems with
    //!      native wchar_t APIs (e.g. Windows).
-   message_queue_t(open_only_t open_only, const wchar_t *name);
+   message_queue_t(open_only_t, const wchar_t *name);
 
    #endif //defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 

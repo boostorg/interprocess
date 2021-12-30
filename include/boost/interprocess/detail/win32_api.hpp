@@ -1243,8 +1243,8 @@ class nt_query_mem_deleter
       (SystemTimeOfDayInfoLength + sizeof(unsigned long) + sizeof(boost::winapi::DWORD_))*2;
 
    public:
-   explicit nt_query_mem_deleter(std::size_t object_name_information_size)
-      : m_size(object_name_information_size + rename_offset + rename_suffix)
+   explicit nt_query_mem_deleter(std::size_t object_name_info_size)
+      : m_size(object_name_info_size + rename_offset + rename_suffix)
       , m_buf(new char [m_size])
    {}
 
