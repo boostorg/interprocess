@@ -29,6 +29,9 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wcast-align"
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #  if (BOOST_GCC >= 100000)
 #pragma GCC diagnostic ignored "-Warith-conversion"
 #  endif
