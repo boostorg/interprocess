@@ -92,10 +92,10 @@ int main ()
          //Let's obtain the new size of the list
          MyList::size_type new_size = mylist->size();
 
-         assert(new_size > old_size);
-
          //Destroy list
          mfile_memory.destroy_ptr(mylist);
+
+         return (new_size > old_size) ? 0 : 1;
       }
    }
    BOOST_CATCH(...){
