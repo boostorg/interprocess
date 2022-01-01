@@ -403,17 +403,31 @@ class intermodule_singleton_impl
       void operator()()
       {
          ref_count_ptr *rcount = intermodule_singleton_helpers::thread_safe_global_map_dependant
+#if defined(BOOST_NO_RTTI)
+            <ThreadSafeGlobalMap>::find(m_map, boost::typeindex::type_id<C>().pretty_name());
+#else
             <ThreadSafeGlobalMap>::find(m_map, typeid(C).name());
+#endif //#if defined(BOOST_NO_RTTI)
          if(!rcount){
             C *p = new C;
-            BOOST_TRY{
+            BOOST_TRY
+            {
                ref_count_ptr val(p, 0u);
                rcount = intermodule_singleton_helpers::thread_safe_global_map_dependant
+#if defined(BOOST_NO_RTTI)
+                           <ThreadSafeGlobalMap>::insert(m_map, boost::typeindex::type_id<C>().pretty_name(), val);
+#else
                            <ThreadSafeGlobalMap>::insert(m_map, typeid(C).name(), val);
+#endif //#if defined(BOOST_NO_RTTI)
             }
-            BOOST_CATCH(...){
+            BOOST_CATCH(...)
+            {
                intermodule_singleton_helpers::thread_safe_global_map_dependant
+#if defined(BOOST_NO_RTTI)
+                           <ThreadSafeGlobalMap>::erase(m_map, boost::typeindex::type_id<C>().pretty_name());
+#else
                            <ThreadSafeGlobalMap>::erase(m_map, typeid(C).name());
+#endif //#if defined(BOOST_NO_RTTI)
                delete p;
                BOOST_RETHROW
             } BOOST_CATCH_END
@@ -443,7 +457,11 @@ class intermodule_singleton_impl
       void operator()()
       {
          ref_count_ptr *rcount = intermodule_singleton_helpers::thread_safe_global_map_dependant
+#if defined(BOOST_NO_RTTI)
+            <ThreadSafeGlobalMap>::find(m_map, boost::typeindex::type_id<C>().pretty_name());
+#else
             <ThreadSafeGlobalMap>::find(m_map, typeid(C).name());
+#endif //#if defined(BOOST_NO_RTTI)
             //The object must exist
          BOOST_ASSERT(rcount);
          BOOST_ASSERT(rcount->singleton_ref_count > 0);
@@ -454,7 +472,11 @@ class intermodule_singleton_impl
             C *pc = static_cast<C*>(rcount->ptr);
             //Now destroy map entry
             bool destroyed = intermodule_singleton_helpers::thread_safe_global_map_dependant
+#if defined(BOOST_NO_RTTI)
+                        <ThreadSafeGlobalMap>::erase(m_map, boost::typeindex::type_id<C>().pretty_name());
+#else
                         <ThreadSafeGlobalMap>::erase(m_map, typeid(C).name());
+#endif //#if defined(BOOST_NO_RTTI)
             (void)destroyed;  BOOST_ASSERT(destroyed == true);
             delete pc;
          }

@@ -21,9 +21,12 @@
 
 namespace boost { namespace interprocess { namespace ipcdetail {
 
+#if !defined(BOOST_NO_RTTI)
+struct dynamic_cast_tag {};
+#endif //#if !defined(BOOST_NO_RTTI)
+
 struct static_cast_tag {};
 struct const_cast_tag {};
-struct dynamic_cast_tag {};
 struct reinterpret_cast_tag {};
 
 }}}  //namespace boost { namespace interprocess { namespace ipcdetail {

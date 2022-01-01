@@ -192,6 +192,8 @@ class shared_ptr
              , r.m_pn)
    {}
 
+   #if !defined(BOOST_NO_RTTI)
+
    template<class Y>
    shared_ptr(shared_ptr<Y, VoidAllocator, Deleter> const & r, ipcdetail::dynamic_cast_tag)
       :  m_pn( pointer(dynamic_cast<T*>(ipcdetail::to_raw_pointer(r.m_pn.to_raw_pointer())))
@@ -201,6 +203,8 @@ class shared_ptr
          m_pn = ipcdetail::shared_count<T, VoidAllocator, Deleter>();
       }
    }
+   #endif   //#if !defined(BOOST_NO_RTTI)
+
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    //!Equivalent to shared_ptr(r).swap(*this).
@@ -348,9 +352,13 @@ template<class T, class VoidAllocator, class Deleter, class U> inline
 shared_ptr<T, VoidAllocator, Deleter> const_pointer_cast(shared_ptr<U, VoidAllocator, Deleter> const & r)
 {  return shared_ptr<T, VoidAllocator, Deleter>(r, ipcdetail::const_cast_tag()); }
 
+#if !defined(BOOST_NO_RTTI)
+
 template<class T, class VoidAllocator, class Deleter, class U> inline
 shared_ptr<T, VoidAllocator, Deleter> dynamic_pointer_cast(shared_ptr<U, VoidAllocator, Deleter> const & r)
 {  return shared_ptr<T, VoidAllocator, Deleter>(r, ipcdetail::dynamic_cast_tag());  }
+
+#endif //#if !defined(BOOST_NO_RTTI)
 
 // to_raw_pointer() enables boost::mem_fn to recognize shared_ptr
 template<class T, class VoidAllocator, class Deleter> inline
