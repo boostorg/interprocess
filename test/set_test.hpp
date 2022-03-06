@@ -462,6 +462,8 @@ int set_test ()
       shmset->clear();
       shmmultiset->clear();
 
+      typedef typename MyShmMultiSet::size_type set_size_type;
+
       for(int j = 0; j < 3; ++j)
       for(int i = 0; i < 100; ++i){
          IntType move_me(i);
@@ -469,11 +471,11 @@ int set_test ()
          IntType move_me2(i);
          shmmultiset->insert(boost::move(move_me2));
          IntType count_me(i);
-         if(shmset->count(count_me) != typename MyShmMultiSet::size_type(1)){
+         if(shmset->count(count_me) != set_size_type(1u)){
             std::cout << "Error in shmset->count(count_me)" << std::endl;
             return 1;
          }
-         if(shmmultiset->count(count_me) != typename MyShmMultiSet::size_type(j+1)){
+         if(shmmultiset->count(count_me) != set_size_type(j)+1u){
             std::cout << "Error in shmmultiset->count(count_me)" << std::endl;
             return 1;
          }

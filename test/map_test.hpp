@@ -452,6 +452,8 @@ int map_test ()
          shmmap->clear();
          shmmultimap->clear();
 
+         typedef typename MyShmMultiMap::size_type map_size_type;
+
          for(int j = 0; j < 3; ++j)
          for(int i = 0; i < 100; ++i){
             IntPairType intpair;
@@ -465,9 +467,9 @@ int map_test ()
                new(&intpair)IntPairType(boost::move(i1), boost::move(i2));
             }
             shmmultimap->insert(boost::move(intpair));
-            if(shmmap->count(IntType(i)) != typename MyShmMultiMap::size_type(1))
+            if(shmmap->count(IntType(i)) != map_size_type(1u))
                return 1;
-            if(shmmultimap->count(IntType(i)) != typename MyShmMultiMap::size_type(j+1))
+            if(shmmultimap->count(IntType(i)) != map_size_type(j)+1u)
                return 1;
          }
       }
