@@ -269,6 +269,44 @@ bool test_expand_bwd()
    return  test::test_all_expand_bwd<string_type>();
 }
 
+bool vector_of_strings_test()
+{
+   using namespace boost::interprocess;
+   typedef allocator<char, managed_shared_memory::segment_manager> ShmCharAllocator;
+   typedef allocator<int, managed_shared_memory::segment_manager> ShmIntAllocator;
+   typedef basic_string<char, std::char_traits<char>, ShmCharAllocator > ShmString;
+   typedef allocator<ShmString, managed_shared_memory::segment_manager> ShmStringAllocator;
+
+   const char *memoryName = "test_memory";
+   shared_memory_object::remove(memoryName);
+   managed_shared_memory shm(create_only, memoryName, 1024 * 1024);
+   shared_memory_object::remove(memoryName);
+
+   ShmStringAllocator stringAllocator(shm.get_segment_manager());
+   ShmIntAllocator intAllocator(shm.get_segment_manager());
+
+   vector<ShmString, ShmStringAllocator> vectorOfStrings(stringAllocator);
+   vector <int, ShmIntAllocator> vectorOfInts(intAllocator);
+
+   {
+      ShmString z("aaaaaaaa", stringAllocator);
+      vectorOfStrings.push_back(z);
+      vectorOfInts.push_back(7);
+   }
+   {
+      ShmString z("ccccccccccccccccccccccc", stringAllocator);
+      vectorOfStrings.push_back(z);
+   }
+   {
+      ShmString z("bbbb", stringAllocator);
+      vectorOfStrings.push_back(z);
+   }
+
+   return std::strcmp(vectorOfStrings.at(0).c_str(), "aaaaaaaa") == 0
+      &&  std::strcmp(vectorOfStrings.at(1).c_str(), "ccccccccccccccccccccccc") == 0
+      &&  std::strcmp(vectorOfStrings.at(2).c_str(), "bbbb") == 0;
+}
+
 int main()
 {
    if(string_test<char, allocator>()){
@@ -280,6 +318,9 @@ int main()
    }
 
    if(!test_expand_bwd())
+      return 1;
+
+   if(!vector_of_strings_test())
       return 1;
 
    return 0;
