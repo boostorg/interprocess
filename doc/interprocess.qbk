@@ -5251,7 +5251,7 @@ Here is an example that shows how to put a multi index container in shared memor
 
 [endsect]
 
-Programmers can place [*Boost.CircularBuffer] containers in sharecd memory provided
+Programmers can place [*Boost.CircularBuffer] containers in shared memory provided
 they disable debugging facilities with defines `BOOST_CB_DISABLE_DEBUG` or the more
 general `NDEBUG`. The reason is that those debugging facilities are only compatible
 with raw pointers.
