@@ -6811,6 +6811,7 @@ thank them:
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/160   GitHub #160 (['"More GCC suggest-override warnings"])].
    * [@https://github.com/boostorg/interprocess/pull/162     GitHub #162 (['"Fix missing sys/stat.h include on musl-based systems"])].
+   * [@https://github.com/boostorg/interprocess/pull/171     GitHub #171 (['"Fixing windows_shared_memory::get_name()"])].
 
 [endsect]
 
