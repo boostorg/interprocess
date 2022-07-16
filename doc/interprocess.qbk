@@ -6805,6 +6805,13 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_80_00 Boost 1.80 Release]
+
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/issues/177   GitHub #177 (['"check_sanity() scoped mutex locked after assertion"])].
+
+[endsect]
+
 [section:release_notes_boost_1_79_00 Boost 1.79 Release]
 
 *  The library now compiles without warnings with GCC's -Wcast-align=strict
