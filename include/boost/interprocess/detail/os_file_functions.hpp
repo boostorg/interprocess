@@ -520,9 +520,13 @@ inline bool open_or_create_directory(const char *path)
 
 inline bool open_or_create_shared_directory(const char *path)
 {
-   ::mode_t m = ::mode_t(01777);
-   const bool created_or_exists = (::mkdir(path, m) == 0) || (errno == EEXIST);
-   return created_or_exists && (::chmod(path, m) == 0);
+   const ::mode_t m = ::mode_t(01777);
+   const bool created = ::mkdir(path, m) == 0;
+   const bool created_or_exists = created || (errno == EEXIST);
+   //Try to maximize the chance that the sticky bit is set in shared dirs
+   //created with old versions that did not set it (for security reasons)
+   const bool chmoded = ::chmod(path, m) == 0;
+   return created ? chmoded : created_or_exists;
 }
 
 inline bool remove_directory(const char *path)
