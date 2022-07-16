@@ -6809,6 +6809,7 @@ thank them:
 
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/177   GitHub #177 (['"check_sanity() scoped mutex locked after assertion"])].
+   * [@https://github.com/boostorg/interprocess/issues/181   GitHub #181 (['"clang-8 warning: result of comparison of constant 'K' with expression of type 'std::size_t' (...) is always false"])].
 
 [endsect]
 
