@@ -140,17 +140,13 @@ jobs:
       - name: Run tests
         run: |
           cd ../boost-root
-          ./b2 -j3 libs/$LIBRARY/test toolset=${{matrix.toolset}} cxxstd=${{matrix.cxxstd}} variant=debug,release
+          ./b2 -j2 libs/$LIBRARY/test toolset=${{matrix.toolset}} cxxstd=${{matrix.cxxstd}} variant=debug,release
 
   windows:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - toolset: msvc-14.1
-            cxxstd: "14,17,latest"
-            addrmd: 32,64
-            os: windows-2016
           - toolset: msvc-14.2
             cxxstd: "14,17,latest"
             addrmd: 32,64
@@ -159,10 +155,6 @@ jobs:
             cxxstd: "14,17,latest"
             addrmd: 32,64
             os: windows-2022
-          - toolset: gcc
-            cxxstd: "03,11,14,17,2a"
-            addrmd: 64
-            os: windows-2019
 
     runs-on: ${{matrix.os}}
 
@@ -195,4 +187,4 @@ jobs:
         shell: cmd
         run: |
           cd ../boost-root
-          b2 -j3 libs/%LIBRARY%/test toolset=${{matrix.toolset}} cxxstd=${{matrix.cxxstd}} address-model=${{matrix.addrmd}} variant=debug,release
+          b2 -j2 libs/%LIBRARY%/test toolset=${{matrix.toolset}} cxxstd=${{matrix.cxxstd}} address-model=${{matrix.addrmd}} variant=debug,release
