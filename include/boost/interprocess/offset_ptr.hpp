@@ -329,12 +329,16 @@ class offset_ptr
       : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(const_cast<PointedType*>(r.get()), this))
    {}
 
+#if !defined(BOOST_NO_RTTI)
+
    //!Emulates dynamic_cast operator.
    //!Never throws.
    template<class T2, class P2, class O2, std::size_t A2>
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, ipcdetail::dynamic_cast_tag) BOOST_NOEXCEPT
       : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(dynamic_cast<PointedType*>(r.get()), this))
    {}
+   
+#endif //#if !defined(BOOST_NO_RTTI)
 
    //!Emulates reinterpret_cast operator.
    //!Never throws.
@@ -628,6 +632,8 @@ BOOST_INTERPROCESS_FORCEINLINE boost::interprocess::offset_ptr<T1, P1, O1, A1>
             (r, boost::interprocess::ipcdetail::const_cast_tag());
 }
 
+#if !defined(BOOST_NO_RTTI)
+
 //!Simulation of dynamic_cast between pointers. Never throws.
 template<class T1, class P1, class O1, std::size_t A1, class T2, class P2, class O2, std::size_t A2>
 BOOST_INTERPROCESS_FORCEINLINE boost::interprocess::offset_ptr<T1, P1, O1, A1>
@@ -636,6 +642,8 @@ BOOST_INTERPROCESS_FORCEINLINE boost::interprocess::offset_ptr<T1, P1, O1, A1>
    return boost::interprocess::offset_ptr<T1, P1, O1, A1>
             (r, boost::interprocess::ipcdetail::dynamic_cast_tag());
 }
+
+#endif //#if !defined(BOOST_NO_RTTI)
 
 //!Simulation of reinterpret_cast between pointers. Never throws.
 template<class T1, class P1, class O1, std::size_t A1, class T2, class P2, class O2, std::size_t A2>

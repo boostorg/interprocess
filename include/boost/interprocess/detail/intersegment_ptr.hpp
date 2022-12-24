@@ -648,11 +648,15 @@ class intersegment_ptr : public flat_map_intersegment<interprocess_mutex>
    intersegment_ptr(const intersegment_ptr<U> &r, ipcdetail::const_cast_tag)
    {  base_t::set_from_pointer(const_cast<T*>(r.get())); }
 
+#if !defined(BOOST_NO_RTTI)
+
    //!Emulates dynamic_cast operator.
    //!Never throws.
    template<class U>
    intersegment_ptr(const intersegment_ptr<U> &r, ipcdetail::dynamic_cast_tag)
    {  base_t::set_from_pointer(dynamic_cast<T*>(r.get())); }
+   
+#endif //#if !defined(BOOST_NO_RTTI)
 
    //!Emulates reinterpret_cast operator.
    //!Never throws.
@@ -887,11 +891,15 @@ template<class T, class U> inline
 boost::interprocess::intersegment_ptr<T> const_pointer_cast(const boost::interprocess::intersegment_ptr<U> &r)
 {  return boost::interprocess::intersegment_ptr<T>(r, boost::interprocess::ipcdetail::const_cast_tag());  }
 
+#if !defined(BOOST_NO_RTTI)
+
 //!Simulation of dynamic_cast between pointers.
 //!Never throws.
 template<class T, class U> inline
 boost::interprocess::intersegment_ptr<T> dynamic_pointer_cast(const boost::interprocess::intersegment_ptr<U> &r)
 {  return boost::interprocess::intersegment_ptr<T>(r, boost::interprocess::ipcdetail::dynamic_cast_tag());  }
+
+#endif //#if !defined(BOOST_NO_RTTI)
 
 //!Simulation of reinterpret_cast between pointers.
 //!Never throws.

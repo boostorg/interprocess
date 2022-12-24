@@ -23,7 +23,12 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/container/detail/type_traits.hpp>  //alignment_of, aligned_storage
-#include <typeinfo>  //typeid
+
+#if defined(BOOST_NO_RTTI)
+#  include <boost/type_index.hpp>
+#else
+#  include <typeinfo> //typeid
+#endif
 
 //!\file
 //!Describes an abstract interface for placement construction and destruction.
@@ -51,7 +56,15 @@ template<class T>
 struct placement_destroy :  public in_place_interface
 {
    placement_destroy()
-      :  in_place_interface(::boost::container::dtl::alignment_of<T>::value, sizeof(T), typeid(T).name())
+   :  in_place_interface(
+      ::boost::container::dtl::alignment_of<T>::value, 
+      sizeof(T), 
+#if defined(BOOST_NO_RTTI)
+      boost::typeindex::type_id<T>().pretty_name(),
+#else
+      typeid(T).name(),
+#endif //#if defined(BOOST_NO_RTTI)
+      )
    {}
 
    virtual void destroy_n(void *mem, std::size_t num, std::size_t &destroyed) BOOST_OVERRIDE

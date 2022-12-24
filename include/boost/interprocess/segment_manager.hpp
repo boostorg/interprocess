@@ -50,6 +50,12 @@
 #include <exception>
 #endif
 
+#if defined(BOOST_NO_RTTI)
+#  include <boost/type_index.hpp>
+#else
+#  include <typeinfo> //typeid
+#endif
+
 //!\file
 //!Describes the object placed in a memory segment that provides
 //!named object allocation capabilities for single-segment and
@@ -546,8 +552,13 @@ class segment_manager
       ipcdetail::placement_destroy<T> dtor;
 
       if(name.is_unique()){
-         return this->priv_generic_named_destroy<char>
-            ( typeid(T).name(), m_header.m_unique_index , dtor, is_intrusive_t());
+         return this->priv_generic_named_destroy<char>(
+#if defined(BOOST_NO_RTTI)
+            boost::typeindex::type_id<T>().pretty_name(),
+#else
+            typeid(T).name(),
+#endif //#if defined(BOOST_NO_RTTI)
+            m_header.m_unique_index , dtor, is_intrusive_t());
       }
       else{
          return this->priv_generic_named_destroy<CharType>
@@ -733,10 +744,18 @@ class segment_manager
       size_type sz;
       void *ret;
 
-      if(name == reinterpret_cast<const CharType*>(-1)){
-         ret = priv_generic_find<char> (typeid(T).name(), m_header.m_unique_index, table, sz, is_intrusive_t(), lock);
+      if(name == reinterpret_cast<const CharType*>(-1))
+      {
+         ret = priv_generic_find<char>(
+#if defined(BOOST_NO_RTTI)
+         boost::typeindex::type_id<T>().pretty_name(),
+#else
+         typeid(T).name(),
+#endif //#if defined(BOOST_NO_RTTI)
+         m_header.m_unique_index, table, sz, is_intrusive_t(), lock);
       }
-      else{
+      else
+      {
          ret = priv_generic_find<CharType> (name, m_header.m_named_index, table, sz, is_intrusive_t(), lock);
       }
       return std::pair<T*, size_type>(static_cast<T*>(ret), sz);
