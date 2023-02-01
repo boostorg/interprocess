@@ -6764,6 +6764,24 @@ If you want mapped files to remain useful after the last handle is closed, set t
 
 [endsect]
 
+[section:notes_freebsd Notes for MacOs users]
+
+[section:notes_macos_sandboxed Limitations for sandboxed applications]
+
+[*Boost.Interprocess] uses POSIX shared memory in MacOS to implement shared memory classes in MacOS.
+
+But sandboxed apps cannot use System V (XSI) semaphores and POSIX semaphores and shared memory can't
+be used by default. However, by specifying an entitlement that requests membership in an application group,
+an app can use these technologies to communicate with other members of that application group.
+
+Please see Apple documentation
+[@https://developer.apple.com/library/archive/documentation/Security/Conceptual/AppSandboxDesignGuide/AppSandboxInDepth/AppSandboxInDepth.html#//apple_ref/doc/uid/TP40011183-CH3-SW24
+ for limitations and guide on how to use interprocess communications on sandboxed applications].
+
+[endsect]
+
+[endsect]
+
 [section:thanks_to Thanks to...]
 
 Many people have contributed with ideas and revisions, so this is the place to
