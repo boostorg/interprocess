@@ -440,12 +440,10 @@ bool test_segment_manager()
       {
          typename SegmentManager::memory_algorithm & mem_algo =
             seg_mgr->get_memory_algorithm();
-         boost::ignore_unused(mem_algo);
-      }
-      {
-         const typename SegmentManager::memory_algorithm & mem_algo =
+         const typename SegmentManager::memory_algorithm & const_mem_algo =
             const_cast<const SegmentManager*>(seg_mgr)->get_memory_algorithm();
-         boost::ignore_unused(mem_algo);
+         if (&mem_algo != &const_mem_algo)
+            return false;
       }
    }
    return true;
