@@ -138,7 +138,6 @@ int vector_test()
             IntType aux_vect[50];
             for(int i = 0; i < 50; ++i){
                IntType new_int(-1);
-               //BOOST_STATIC_ASSERT((::boost::move_ipcdetail::is_copy_constructible<boost::interprocess::test::movable_int>::value == false));
                aux_vect[i] = boost::move(new_int);
             }
             int aux_vect2[50];
