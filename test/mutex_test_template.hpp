@@ -105,10 +105,15 @@ struct test_timedlock
 
       // Test the lock's constructors.
       {
-         // Construct and initialize an ptime for a fast time out.
+         // Construct and initialize a ptime for a fast time out.
          timed_lock_type lock(interprocess_mutex, ptime_delay(1*BaseSeconds));
          BOOST_INTERPROCESS_CHECK(lock ? true : false);
       }
+      {
+         // Construct and initialize positive infinity.
+         timed_lock_type lock(interprocess_mutex, boost::posix_time::pos_infin);
+         BOOST_INTERPROCESS_CHECK(lock ? true : false);
+      } 
       {
          timed_lock_type lock(interprocess_mutex, boost::interprocess::defer_lock);
          BOOST_INTERPROCESS_CHECK(!lock);
