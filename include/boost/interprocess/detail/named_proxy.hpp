@@ -78,16 +78,16 @@ struct CtorArgN : public placement_destroy<T>
    private:
    template<std::size_t ...IdxPack>
    void construct(void *mem, true_, const index_tuple<IdxPack...>&)
-   {  ::new((void*)mem, boost_container_new_t())T(*boost::forward<Args>(get<IdxPack>(args_))...); }
+   {  ::new((void*)mem, boost_container_new_t())T(*boost::forward<Args>((get<IdxPack>)(args_))...); }
 
    template<std::size_t ...IdxPack>
    void construct(void *mem, false_, const index_tuple<IdxPack...>&)
-   {  ::new((void*)mem, boost_container_new_t())T(boost::forward<Args>(get<IdxPack>(args_))...); }
+   {  ::new((void*)mem, boost_container_new_t())T(boost::forward<Args>((get<IdxPack>)(args_))...); }
 
    template<std::size_t ...IdxPack>
    void do_increment(true_, const index_tuple<IdxPack...>&)
    {
-      this->expansion_helper(++get<IdxPack>(args_)...);
+      this->expansion_helper(++(get<IdxPack>)(args_)...);
    }
 
    template<class ...ExpansionArgs>
