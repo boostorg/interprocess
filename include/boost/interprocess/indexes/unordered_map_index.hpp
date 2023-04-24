@@ -23,7 +23,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
-#include <boost/unordered_map.hpp>
+#include <boost/unordered/unordered_map.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/allocators/private_adaptive_pool.hpp>
 
