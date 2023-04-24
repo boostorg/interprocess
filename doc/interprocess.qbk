@@ -6822,6 +6822,13 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_83_00 Boost 1.83 Release]
+
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/pull/188   GitHub #188 (['"Fix: emscripten doesn't support shm"])].
+
+[endsect]
+
 [section:release_notes_boost_1_82_00 Boost 1.82 Release]
 
 *  Fixed bugs:
