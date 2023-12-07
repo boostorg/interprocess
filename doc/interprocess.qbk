@@ -7625,7 +7625,7 @@ shared memory, allocators and containers used to design [*Boost.Interprocess].
 
 * Instantiating C++ objects in shared memory: [@http://www.cs.ubc.ca/local/reading/proceedings/cascon94/htm/english/abs/hon.htm ['"Using objects in shared memory for C++ application"] ].
 
-* A shared memory allocator and relative pointer: [@http://home.earthlink.net/~joshwalker1/writing/SharedMemory.html ['"Taming Shared Memory"] ].
+* A shared memory allocator and relative pointer: [@https://web.archive.org/web/20050313052229/https://home.earthlink.net/~joshwalker1/writing/SharedMemory.html  ['"Taming Shared Memory"] ].
 
 [endsect]
 
