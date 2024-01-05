@@ -790,7 +790,7 @@ bool test_many_different_allocation(Allocator &a)
       }
 
       std::vector<void*> buffers;
-      for(std::size_t i = 0; true; ++i){
+      while(true){
          multiallocation_chain chain;
          a.allocate_many(std::nothrow, requested_sizes, ArraySize, 1, chain);
          if(chain.empty())

@@ -38,8 +38,11 @@
 #endif
 
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#if BOOST_CXX_VERSION >= 201103L
 #define BOOST_CHRONO_HEADER_ONLY
 #include <boost/chrono/system_clocks.hpp>
+#endif
+
 #include <boost/version.hpp>
 
 #if !defined(BOOST_NO_CXX11_HDR_CHRONO)
@@ -69,28 +72,42 @@ inline boost::posix_time::ptime ptime_delay(int secs, int msecs=0, int nsecs = 0
 inline boost::posix_time::time_duration ptime_seconds(int secs)
 {  return  boost::posix_time::time_duration(0, 0, secs);  }
 
-inline boost::chrono::system_clock::time_point boost_systemclock_delay(int secs)
-{  return boost::chrono::system_clock::now() + boost::chrono::seconds(secs);  }
+#if BOOST_CXX_VERSION >= 201103L
+   inline boost::chrono::system_clock::time_point boost_systemclock_delay(int secs)
+   {  return boost::chrono::system_clock::now() + boost::chrono::seconds(secs);  }
 
-inline boost::chrono::seconds boost_systemclock_seconds(int secs)
-{  return boost::chrono::seconds(secs);  }
+   inline boost::chrono::seconds boost_systemclock_seconds(int secs)
+   {  return boost::chrono::seconds(secs);  }
+#else
+   inline boost::posix_time::ptime boost_systemclock_delay(int secs)
+   {  return ptime_delay(secs);  }
+
+   inline boost::posix_time::time_duration boost_systemclock_seconds(int secs)
+   {  return ptime_seconds(secs);  }
+#endif 
 
 #if !defined(BOOST_NO_CXX11_HDR_CHRONO)
-//Use std chrono if available
-inline std::chrono::system_clock::time_point std_systemclock_delay(int secs)
-{  return std::chrono::system_clock::now() + std::chrono::seconds(secs);  }
+   //Use std chrono if available
+   inline std::chrono::system_clock::time_point std_systemclock_delay(int secs)
+   {  return std::chrono::system_clock::now() + std::chrono::seconds(secs);  }
 
-inline std::chrono::seconds std_systemclock_seconds(int secs)
-{  return std::chrono::seconds(secs);  }
+   inline std::chrono::seconds std_systemclock_seconds(int secs)
+   {  return std::chrono::seconds(secs);  }
+
+#elif BOOST_CXX_VERSION >= 201103L
+   //Otherwise use boost chrono
+   inline boost::chrono::system_clock::time_point std_systemclock_delay(int secs)
+   {  return boost_systemclock_delay(secs);  }
+
+   inline boost::chrono::seconds std_systemclock_seconds(int secs)
+   {  return boost_systemclock_seconds(secs);  }
 
 #else
-//Otherwise use boost chrono
-inline boost::chrono::system_clock::time_point std_systemclock_delay(int secs)
-{  return boost_systemclock_delay(secs);  }
+   inline boost::posix_time::ptime std_systemclock_delay(int secs)
+   {  return ptime_delay(secs);  }
 
-inline boost::chrono::seconds std_systemclock_seconds(int secs)
-{  return boost::chrono::seconds(secs);  }
-
+   inline boost::posix_time::time_duration std_systemclock_seconds(int secs)
+   {  return ptime_seconds(secs);  }
 #endif
 
 
