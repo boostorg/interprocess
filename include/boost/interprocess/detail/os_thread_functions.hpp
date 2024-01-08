@@ -188,7 +188,7 @@ inline void thread_sleep_tick()
 inline void thread_yield()
 {  winapi::sched_yield();  }
 
-inline void thread_sleep(unsigned int ms)
+inline void thread_sleep_ms(unsigned int ms)
 {  winapi::sleep(ms);  }
 
 //systemwide thread
@@ -425,7 +425,7 @@ inline void thread_sleep_tick()
    ::nanosleep(&rqt, 0);
 }
 
-inline void thread_sleep(unsigned int ms)
+inline void thread_sleep_ms(unsigned int ms)
 {
    struct timespec rqt;
    rqt.tv_sec = ms/1000u;
