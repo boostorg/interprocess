@@ -580,6 +580,7 @@ jobs:
             set BOOST_BRANCH=develop
             for /f %%i in ("%GITHUB_BASE_REF%") do if "%%~nxi" == "master" set BOOST_BRANCH=master
             echo BOOST_BRANCH: %BOOST_BRANCH%
+            echo NUMBER_OF_PROCESSORS: %NUMBER_OF_PROCESSORS%
             cd ..
             git clone -b %BOOST_BRANCH% --depth 1 https://github.com/boostorg/boost.git boost-root
             cd boost-root
