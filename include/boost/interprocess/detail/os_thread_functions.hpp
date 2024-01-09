@@ -44,6 +44,7 @@
 #  include <unistd.h>
 #  include <sched.h>
 #  include <time.h>
+#  include <errno.h>
 #  ifdef BOOST_INTERPROCESS_BSD_DERIVATIVE
       //Some *BSD systems (OpenBSD & NetBSD) need sys/param.h before sys/sysctl.h, whereas
       //others (FreeBSD & Darwin) need sys/types.h
@@ -422,7 +423,12 @@ inline void thread_sleep_tick()
    //Sleep for the half of the tick time
    rqt.tv_sec  = 0;
    rqt.tv_nsec = (long)get_system_tick_ns()/2;
-   ::nanosleep(&rqt, 0);
+
+   struct timespec rmn;
+   while (0 != ::nanosleep(&rqt, &rmn) && errno == EINTR) {
+      rqt.tv_sec = rmn.tv_sec;
+      rqt.tv_nsec = rmn.tv_nsec;
+   }
 }
 
 inline void thread_sleep_ms(unsigned int ms)
@@ -430,7 +436,12 @@ inline void thread_sleep_ms(unsigned int ms)
    struct timespec rqt;
    rqt.tv_sec = ms/1000u;
    rqt.tv_nsec = (ms%1000u)*1000000u;
-   ::nanosleep(&rqt, 0);
+
+   struct timespec rmn;
+   while (0 != ::nanosleep(&rqt, &rmn) && errno == EINTR) {
+      rqt.tv_sec  = rmn.tv_sec;
+      rqt.tv_nsec = rmn.tv_nsec;
+   }
 }
 
 //systemwide thread
