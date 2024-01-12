@@ -31,6 +31,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/assert.hpp>
 #include <boost/move/adl_move_swap.hpp>
+#include <iostream>
 
 //Some Unixes use caddr_t instead of void * in madvise
 //              SunOS                                 Tru64                               HP-UX                    AIX
@@ -599,6 +600,7 @@ inline mapped_region::mapped_region
       ::shmid_ds xsi_ds;
       int ret = ::shmctl(map_hnd.handle, IPC_STAT, &xsi_ds);
       if(ret == -1){
+         std::cout << "::shmctl failed, errno: " << errno << std::endl;
          error_info err(system_error_code());
          throw interprocess_exception(err);
       }
@@ -625,6 +627,7 @@ inline mapped_region::mapped_region
       void *const final_address = const_cast<void *>(address);
       void *base = ::shmat(map_hnd.handle, final_address, flag);
       if(base == (void*)-1){
+         std::cout << "::shmat failed, errno: " << errno << std::endl;
          error_info err(system_error_code());
          throw interprocess_exception(err);
       }
@@ -644,6 +647,7 @@ inline mapped_region::mapped_region
    if(size == 0){
       struct ::stat buf;
       if(0 != fstat(map_hnd.handle, &buf)){
+         std::cout << "::fstat failed, errno: " << errno << std::endl;
          error_info err(system_error_code());
          throw interprocess_exception(err);
       }
