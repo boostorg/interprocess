@@ -56,6 +56,7 @@ int main ()
 
    file_mapping::remove(names[0]);
    {  ipcdetail::file_wrapper(create_only, names[0], read_write); }
+
    xsi_key key(names[0], 1);
    file_mapping::remove(names[0]);
    remove_shared_memory(key);
@@ -81,14 +82,19 @@ int main ()
                if(thrown == false){
                   return 1;
                }
-               //Create a mapped region
-               mapped_region region (mapping, read_write, 0, FileSize, 0);
+               BOOST_TRY{
+                  //Create a mapped region
+                  mapped_region region (mapping, read_write, 0, FileSize, 0);
 
-               //Fill two regions with a pattern
-               unsigned char *filler = static_cast<unsigned char*>(region.get_address());
-               for(std::size_t i = 0; i < FileSize; ++i){
-                  *filler++ = static_cast<unsigned char>(i);
+                  //Fill two regions with a pattern
+                  unsigned char *filler = static_cast<unsigned char*>(region.get_address());
+                  for(std::size_t i = 0; i < FileSize; ++i){
+                     *filler++ = static_cast<unsigned char>(i);
+                  }
                }
+               BOOST_CATCH(std::exception& exc){
+                  std::cout << "Unhandled exception 0: " << exc.what() << "name: " << (names[i] ? names[i] : "null") << std::endl;
+               } BOOST_CATCH_END
             }
 
             //Now check the pattern mapping a single read only mapped_region
@@ -106,13 +112,13 @@ int main ()
             }
          }
          BOOST_CATCH(std::exception &exc){
-            std::cout << "Unhandled exception: " << exc.what() << std::endl;
+            std::cout << "Unhandled exception 1: " << exc.what() << "name: " << (names[i] ? names[i] : "null") << std::endl;
             return 1;
          } BOOST_CATCH_END
       }
    }
    BOOST_CATCH(std::exception &exc){
-      std::cout << "Unhandled exception: " << exc.what() << std::endl;
+      std::cout << "Unhandled exception 2: " << exc.what() << "name: " << (names[i] ? names[i] : "null") << std::endl;
       return 1;
    } BOOST_CATCH_END
    return 0;
