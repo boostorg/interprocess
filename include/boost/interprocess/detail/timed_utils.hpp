@@ -297,18 +297,6 @@ class microsec_clock<TimePoint, typename enable_if_time_point<TimePoint>::type>
 
 
 template<class TimePoint>
-inline TimePoint delay_ms(unsigned msecs, typename enable_if_ptime<TimePoint>::type* = 0)
-{
-   typedef typename TimePoint::time_duration_type time_duration_type;
-   typedef typename time_duration_type::rep_type resolution_traits_type;
-
-   time_duration_type td(msecs*1000*resolution_traits_type::res_adjust());
-
-   TimePoint tp(microsec_clock<TimePoint>::universal_time());
-   return (tp += td);
-}
-
-template<class TimePoint>
 inline bool is_pos_infinity(const TimePoint &abs_time, typename enable_if_ptime<TimePoint>::type* = 0)
 {
    return abs_time.is_pos_infinity();
@@ -319,20 +307,6 @@ inline bool is_pos_infinity(const TimePoint &, typename disable_if_ptime<TimePoi
 {
    return false;
 }
-
-/*
-template<class Duration>
-inline ustime duration_to_timepoint(const Duration &dur, typename enable_if_ptime<Duration>::type* = 0)
-{
-   return dur.is_pos_infinity();
-}
-
-template<class Duration>
-inline bool duration_to_timepoint(const Duration &, typename disable_if_ptime<Duration>::type* = 0)
-{
-   return false;
-}
-*/
 
 // duration_to_milliseconds
 
