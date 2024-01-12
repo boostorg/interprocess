@@ -143,7 +143,7 @@ struct data
 };
 
 int shared_val = 0;
-static const unsigned BaseMs = 400;
+static const unsigned BaseMs = 100;
 
 }  //namespace test {
 }  //namespace interprocess {
