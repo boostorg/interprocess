@@ -34,7 +34,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <cstddef>
-#include <ostream>
+#include <cassert>
 
 #if defined(BOOST_INTERPROCESS_WINDOWS)
 #  include <boost/interprocess/detail/win32_api.hpp>
@@ -512,7 +512,11 @@ inline int thread_create(OS_thread_t * thread, void *(*start_routine)(void*), vo
 {  return pthread_create(thread, 0, start_routine, arg); }
 
 inline void thread_join(OS_thread_t thread)
-{  (void)pthread_join(thread, 0);  }
+{
+   int ret = pthread_join(thread, 0);
+   (void)ret;
+   assert(0 == ret);
+}
 
 #endif   //#if defined (BOOST_INTERPROCESS_WINDOWS)
 
@@ -544,8 +548,16 @@ inline int thread_create( OS_thread_t * thread, boost::ipwinapiext::LPTHREAD_STA
 
 inline void thread_join( OS_thread_t thread)
 {
-   winapi::wait_for_single_object( thread.handle(), winapi::infinite_time );
-   winapi::close_handle( thread.handle() );
+   {
+      unsigned long ret = winapi::wait_for_single_object( thread.handle(), winapi::infinite_time );
+      assert(0 == ret);
+      (void)ret;
+   }
+   {
+      bool ret = winapi::close_handle(thread.handle());
+      assert(true == ret);
+      (void)ret;
+   }
 }
 
 #endif
