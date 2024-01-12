@@ -73,7 +73,7 @@ inline timespec timepoint_to_timespec ( const TimePoint &tm
       const double factor = double(duration_t::period::num)/double(duration_t::period::den);
       const double res = d.count()*factor;
       ts.tv_sec  = static_cast<time_t>(res);
-      ts.tv_nsec = static_cast<long>(res - double(ts.tv_sec));
+      ts.tv_nsec = static_cast<long>(1000000000.0*(res - double(ts.tv_sec)));
    }
    return ts;
 }
