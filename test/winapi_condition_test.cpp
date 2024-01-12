@@ -9,16 +9,24 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/sync/interprocess_condition.hpp>
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include "condition_test_template.hpp"
+
+#if defined(BOOST_INTERPROCESS_WINDOWS)
+#include <boost/interprocess/sync/windows/condition.hpp>
+#include <boost/interprocess/sync/windows/mutex.hpp>
 
 using namespace boost::interprocess;
 
 int main ()
 {
-   if(!test::do_test_condition<interprocess_condition, interprocess_mutex>())
+   if(!test::do_test_condition<ipcdetail::winapi_condition, ipcdetail::winapi_mutex>())
       return 1;
-
    return 0;
 }
+
+#else
+int main()
+{
+   return 0;
+}
+#endif

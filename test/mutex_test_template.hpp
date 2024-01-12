@@ -270,9 +270,7 @@ void test_mutex_lock()
    boost::interprocess::ipcdetail::thread_launch(tm2, thread_adapter<M>(&lock_and_sleep, &d2, mtx));
 
    //Wait completion
-
    boost::interprocess::ipcdetail::thread_join(tm1);
-   boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs));
    boost::interprocess::ipcdetail::thread_join(tm2);
 
    BOOST_INTERPROCESS_CHECK(d1.m_value == 1);
@@ -347,6 +345,7 @@ void test_mutex_timed_lock()
 {
    for (int flag = 0; flag != (int)ETimedLockFlagsMax; ++flag)
    {
+      //int flag = 2;
       shared_val = 0;
 
       M mtx, m2;

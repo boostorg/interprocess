@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2006-2012. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -8,13 +8,18 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/sync/named_mutex.hpp>
-#include <boost/interprocess/sync/named_condition.hpp>
-#include "named_condition_test_helpers.hpp"
+#include <boost/interprocess/detail/workaround.hpp>
+#include "condition_test_template.hpp"
+
+#include <boost/interprocess/sync/spin/condition.hpp>
+#include <boost/interprocess/sync/spin/semaphore.hpp>
 
 using namespace boost::interprocess;
 
-int main()
+int main ()
 {
-   return test::test_named_condition<named_condition, named_mutex>();
+   if(!test::do_test_condition<ipcdetail::spin_condition, ipcdetail::spin_mutex>())
+      return 1;
+
+   return 0;
 }

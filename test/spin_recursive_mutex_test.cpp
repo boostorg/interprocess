@@ -9,16 +9,17 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/workaround.hpp>
-#include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
+#include <boost/interprocess/sync/spin/recursive_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include "mutex_test_template.hpp"
 
 int main ()
 {
    using namespace boost::interprocess;
-   test::test_all_lock<interprocess_recursive_mutex>();
-   test::test_all_mutex<interprocess_recursive_mutex>();
-   test::test_all_recursive_lock<interprocess_recursive_mutex>();
+   //
+   test::test_all_lock<ipcdetail::spin_recursive_mutex>();
+   test::test_all_mutex<ipcdetail::spin_recursive_mutex>();
+   test::test_all_recursive_lock<ipcdetail::spin_recursive_mutex>();
 
    return 0;
 }

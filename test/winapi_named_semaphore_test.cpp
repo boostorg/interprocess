@@ -8,13 +8,24 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/sync/named_mutex.hpp>
-#include <boost/interprocess/sync/named_condition.hpp>
-#include "named_condition_test_helpers.hpp"
+#include <boost/interprocess/detail/workaround.hpp>
+
+#ifdef BOOST_INTERPROCESS_WINDOWS
+#include <boost/interprocess/sync/windows/named_semaphore.hpp>
+#include "named_semaphore_test_helpers.hpp"
 
 using namespace boost::interprocess;
 
 int main()
 {
-   return test::test_named_condition<named_condition, named_mutex>();
+   return test::test_named_semaphore<ipcdetail::winapi_named_semaphore>();
 }
+
+#else
+
+int main()
+{
+   return 0;
+}
+
+#endif

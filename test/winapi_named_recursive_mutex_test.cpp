@@ -8,13 +8,25 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/sync/named_mutex.hpp>
-#include <boost/interprocess/sync/named_condition.hpp>
-#include "named_condition_test_helpers.hpp"
+#include <boost/interprocess/detail/workaround.hpp>
+
+#ifdef BOOST_INTERPROCESS_WINDOWS
+
+#include "named_mutex_test_helpers.hpp"
+#include <boost/interprocess/sync/windows/named_recursive_mutex.hpp>
 
 using namespace boost::interprocess;
 
 int main()
 {
-   return test::test_named_condition<named_condition, named_mutex>();
+   return test::test_named_recursive_mutex<ipcdetail::winapi_named_recursive_mutex>();
 }
+
+#else
+
+int main()
+{
+   return 0;
+}
+
+#endif

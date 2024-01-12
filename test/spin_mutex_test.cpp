@@ -8,13 +8,16 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/interprocess/sync/named_mutex.hpp>
-#include <boost/interprocess/sync/named_condition.hpp>
-#include "named_condition_test_helpers.hpp"
+#include <boost/interprocess/detail/workaround.hpp>
+#include "mutex_test_template.hpp"
 
-using namespace boost::interprocess;
+#include <boost/interprocess/sync/spin/mutex.hpp>
 
-int main()
+int main ()
 {
-   return test::test_named_condition<named_condition, named_mutex>();
+   using namespace boost::interprocess;
+
+   test::test_all_lock<ipcdetail::spin_mutex>();
+   test::test_all_mutex<ipcdetail::spin_mutex>();
+   return 0;
 }
