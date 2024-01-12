@@ -161,6 +161,12 @@ inline OS_highres_count_t get_current_system_highres_count()
    return (OS_highres_count_t)count;
 }
 
+inline unsigned get_current_system_highres_rand()
+{
+   unsigned __int64 count = (unsigned __int64) get_current_system_highres_count();
+   return static_cast<unsigned>(count + (count >> 32u));
+}
+
 inline void zero_highres_count(OS_highres_count_t &count)
 {  count = 0;  }
 
@@ -351,6 +357,16 @@ inline OS_highres_count_t get_current_system_highres_count()
       return count;
    #elif defined(BOOST_INTERPROCESS_MATCH_ABSOLUTE_TIME)
       return ::mach_absolute_time();
+   #endif
+}
+
+inline unsigned get_current_system_highres_rand()
+{
+   OS_highres_count_t count = get_current_system_highres_count();
+   #if defined(BOOST_INTERPROCESS_CLOCK_MONOTONIC)
+      return static_cast<unsigned>(count.tv_sec + count.tv_nsec);
+   #elif defined(BOOST_INTERPROCESS_MATCH_ABSOLUTE_TIME)
+      return static_cast<unsigned>(count);
    #endif
 }
 

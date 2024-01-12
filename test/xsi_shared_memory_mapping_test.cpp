@@ -18,6 +18,7 @@
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/detail/file_wrapper.hpp>
+#include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <string>
 #include <iostream>
 #include "get_process_id_name.hpp"
@@ -57,7 +58,7 @@ int main ()
    file_mapping::remove(names[0]);
    {  ipcdetail::file_wrapper(create_only, names[0], read_write); }
 
-   xsi_key key(names[0], 1);
+   xsi_key key(names[0], static_cast<int>(boost::interprocess::ipcdetail::get_current_system_highres_rand()));
    file_mapping::remove(names[0]);
    remove_shared_memory(key);
 
