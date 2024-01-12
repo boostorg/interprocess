@@ -65,7 +65,7 @@ int main ()
    BOOST_TRY{
       for(i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
       {
-         const std::size_t FileSize = 99999*2;
+         const std::size_t FileSize = 16*1024;
          //Create a file mapping
          xsi_shared_memory mapping (create_only, names[i] ? key : xsi_key(), FileSize);
          xsi_shared_memory_remover rem(mapping);
@@ -93,7 +93,7 @@ int main ()
                   }
                }
                BOOST_CATCH(std::exception& exc){
-                  std::cout << "Unhandled exception 0: " << exc.what() << "name: " << (names[i] ? names[i] : "null") << std::endl;
+                  std::cout << "Unhandled exception 0: " << exc.what() << " name: " << (names[i] ? names[i] : "null") << std::endl;
                } BOOST_CATCH_END
             }
 
@@ -112,13 +112,13 @@ int main ()
             }
          }
          BOOST_CATCH(std::exception &exc){
-            std::cout << "Unhandled exception 1: " << exc.what() << "name: " << (names[i] ? names[i] : "null") << std::endl;
+            std::cout << "Unhandled exception 1: " << exc.what() << " name: " << (names[i] ? names[i] : "null") << std::endl;
             return 1;
          } BOOST_CATCH_END
       }
    }
    BOOST_CATCH(std::exception &exc){
-      std::cout << "Unhandled exception 2: " << exc.what() << "name: " << (names[i] ? names[i] : "null") << std::endl;
+      std::cout << "Unhandled exception 2: " << exc.what() << " name: " << (names[i] ? names[i] : "null") << std::endl;
       return 1;
    } BOOST_CATCH_END
    return 0;
