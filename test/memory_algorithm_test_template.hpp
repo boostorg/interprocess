@@ -872,7 +872,7 @@ bool test_many_deallocation(Allocator &a)
    typename Allocator::size_type free_memory = a.get_free_memory();
 
    {
-      for(std::size_t i = 0; true; ++i){
+      while(true){
          multiallocation_chain chain;
          a.allocate_many(std::nothrow, requested_sizes, ArraySize, 1, chain);
          if(chain.empty())
