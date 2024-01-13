@@ -58,7 +58,7 @@ int main ()
    file_mapping::remove(names[0]);
    {  ipcdetail::file_wrapper(create_only, names[0], read_write); }
 
-   xsi_key key(names[0], static_cast<int>(boost::interprocess::ipcdetail::get_current_system_highres_rand()));
+   xsi_key key(names[0], static_cast<boost::uint8_t>(boost::interprocess::ipcdetail::get_current_system_highres_rand()));
    file_mapping::remove(names[0]);
    remove_shared_memory(key);
 
