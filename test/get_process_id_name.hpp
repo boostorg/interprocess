@@ -24,14 +24,16 @@ namespace test{
 inline void get_process_id_name(std::string &str)
 {
    std::stringstream sstr;
-   sstr << "process_" << boost::interprocess::ipcdetail::get_current_process_id() << std::ends;
+   sstr << "process_" << boost::interprocess::ipcdetail::get_current_process_id() << "_rand_"
+                      << boost::interprocess::ipcdetail::get_system_tick_in_highres_counts() << std::ends;
    str = sstr.str().c_str();
 }
 
 inline void get_process_id_ptr_name(std::string &str, const void *ptr)
 {
    std::stringstream sstr;
-   sstr << "process_" << boost::interprocess::ipcdetail::get_current_process_id() << "_" << ptr << std::ends;
+   sstr << "process_" << boost::interprocess::ipcdetail::get_current_process_id() << "_" << ptr << "_rand_"
+                      << boost::interprocess::ipcdetail::get_system_tick_in_highres_counts() << std::ends;
    str = sstr.str().c_str();
 }
 
@@ -92,7 +94,8 @@ namespace test {
 inline void get_process_id_wname(std::wstring &str)
 {
    std::wstringstream sstr;
-   sstr << L"process_" << boost::interprocess::ipcdetail::get_current_process_id() << std::ends;
+   sstr << L"process_" << boost::interprocess::ipcdetail::get_current_process_id() << "_rand_"
+                       << boost::interprocess::ipcdetail::get_system_tick_in_highres_counts() << std::ends;
    str = sstr.str().c_str();
 }
 
