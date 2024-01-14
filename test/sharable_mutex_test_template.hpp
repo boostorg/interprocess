@@ -96,14 +96,14 @@ void test_plain_sharable_mutex()
       boost::interprocess::ipcdetail::thread_launch(tw1, thread_adapter<SM>(plain_exclusive, &e1, mtx));
 
       //Give time to e1 to grab the mutex
-      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs/2));
+      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs));
 
       // Writer two launches, tries to grab the lock, "clearly"
       //  after Writer one will already be holding it.
       boost::interprocess::ipcdetail::OS_thread_t tw2;
       boost::interprocess::ipcdetail::thread_launch(tw2, thread_adapter<SM>(plain_exclusive, &e2, mtx));
 
-      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs/2));
+      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs));
 
       // Readers launche, "clearly" after writer two, and "clearly"
       //   while writer 1 still holds the lock
@@ -139,7 +139,7 @@ void test_plain_sharable_mutex()
       boost::interprocess::ipcdetail::thread_launch(thr2, thread_adapter<SM>(plain_shared,&s2, mtx));
 
       //Make sure they try to hold the sharable lock
-      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs/2u));
+      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs));
 
       // We launch two writers, that should block until the readers end
       boost::interprocess::ipcdetail::OS_thread_t tw1;
@@ -177,7 +177,7 @@ void test_try_sharable_mutex()
    boost::interprocess::ipcdetail::OS_thread_t tw1;
    boost::interprocess::ipcdetail::thread_launch(tw1, thread_adapter<SM>(try_exclusive,&e1,mtx));
 
-   boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs/2u));
+   boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs));
 
    // Reader one launches, "clearly" after writer #1 holds the lock
    //   and before it releases the lock.
