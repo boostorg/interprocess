@@ -241,7 +241,7 @@ void timed_shared(void *arg, SM &sm)
    }
 
    if (r){
-      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(3 * BaseMs));
+      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(3*BaseMs));
       pdata->m_value = shared_val;
    }
 }
@@ -265,7 +265,7 @@ void test_timed_sharable_mutex()
       boost::interprocess::ipcdetail::OS_thread_t tw1;
       boost::interprocess::ipcdetail::thread_launch(tw1, thread_adapter<SM>(timed_exclusive,&e1,mtx));
 
-      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs)/2);
+      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs));
       // Writer two will "clearly" try for the lock after the readers
       //  have tried for it.  Writer will wait up 1*BaseMs seconds for the lock.
       //  This write will fail.

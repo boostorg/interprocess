@@ -50,8 +50,9 @@ inline timespec timepoint_to_timespec ( const TimePoint &tm
 inline timespec timepoint_to_timespec (const ustime &tm)
 {
    timespec ts;
-   ts.tv_sec  = static_cast<time_t>(tm.get_microsecs()/1000000u);
-   ts.tv_nsec = static_cast<long>((tm.get_microsecs()%1000000u)*1000u);
+   const boost::uint64_t micros = tm.get_microsecs();
+   ts.tv_sec  = static_cast<time_t>(micros /1000000u);
+   ts.tv_nsec = static_cast<long>((micros%1000000u)*1000u);
    return ts;
 }
 
@@ -63,15 +64,18 @@ inline timespec timepoint_to_timespec ( const TimePoint &tm
    duration_t d(tm.time_since_epoch());
 
    timespec ts;
+   const typename duration_t::rep cnt = d.count();
+
    BOOST_IF_CONSTEXPR(duration_t::period::num == 1 && duration_t::period::den == 1000000000)
    {
-      ts.tv_sec  = static_cast<time_t>(d.count()/duration_t::period::den);
-      ts.tv_nsec = static_cast<long>(d.count()%duration_t::period::den);
+
+      ts.tv_sec  = static_cast<time_t>(cnt /duration_t::period::den);
+      ts.tv_nsec = static_cast<long>(cnt%duration_t::period::den);
    }
    else
    {
       const double factor = double(duration_t::period::num)/double(duration_t::period::den);
-      const double res = d.count()*factor;
+      const double res = double(cnt)*factor;
       ts.tv_sec  = static_cast<time_t>(res);
       ts.tv_nsec = static_cast<long>(1000000000.0*(res - double(ts.tv_sec)));
    }

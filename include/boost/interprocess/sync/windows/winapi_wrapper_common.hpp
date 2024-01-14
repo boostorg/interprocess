@@ -60,7 +60,8 @@ inline bool winapi_wrapper_timed_wait_for_single_object(void *handle, const Time
       time_ms = winapi::infinite_time;
    }
    else {
-      const TimePoint cur_time = microsec_clock<TimePoint>::universal_time();
+      typedef typename microsec_clock<TimePoint>::time_point time_point;
+      const time_point cur_time = microsec_clock<TimePoint>::universal_time();
       if(abs_time > cur_time){
          time_ms = static_cast<unsigned long>(duration_to_milliseconds(abs_time - cur_time));
       }

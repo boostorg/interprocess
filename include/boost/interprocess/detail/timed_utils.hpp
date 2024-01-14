@@ -168,7 +168,7 @@ class usduration
 class ustime
 {
    public:
-   explicit ustime(boost::uint64_t microsecs)
+   explicit ustime(boost::uint64_t microsecs = 0u)
       : m_microsecs(microsecs)
    {}
 
@@ -222,9 +222,11 @@ class microsec_clock<TimeType, typename enable_if_ptime<TimeType>::type>
    typedef typename TimeType::date_type date_type;
    typedef typename TimeType::time_duration_type time_duration_type;
    typedef typename time_duration_type::rep_type resolution_traits_type;
-   public:
 
-   static TimeType universal_time()
+   public:
+   typedef TimeType time_point;
+
+   static time_point universal_time()
    {
       #ifdef BOOST_HAS_GETTIMEOFDAY
          timeval tv;
@@ -260,7 +262,7 @@ class microsec_clock<TimeType, typename enable_if_ptime<TimeType>::type>
                               static_cast< typename time_duration_type::sec_type >(curr_ptr->tm_sec),
                               static_cast< typename time_duration_type::fractional_seconds_type >(sub_sec * adjust)
                            );
-      return TimeType(d,td);
+      return time_point(d,td);
    }
 };
 
@@ -268,12 +270,14 @@ template<>
 class microsec_clock<ustime>
 {
    public:
+   typedef ustime time_point;
+
    static ustime universal_time()
    {
       #ifdef BOOST_HAS_GETTIMEOFDAY
          timeval tv;
          gettimeofday(&tv, 0); //gettimeofday does not support TZ adjust on Linux.
-         boost::uint64_t micros = boost::uint64_t(tv.tv_sec)*1000000;
+         boost::uint64_t micros = boost::uint64_t(tv.tv_sec)*1000000u;
          micros += (boost::uint64_t)tv.tv_usec;
       #elif defined(BOOST_HAS_FTIME)
          boost::winapi::FILETIME_ ft;
@@ -291,7 +295,9 @@ template<class TimePoint>
 class microsec_clock<TimePoint, typename enable_if_time_point<TimePoint>::type>
 {
    public:
-   static TimePoint universal_time()
+   typedef typename TimePoint::clock::time_point time_point;
+
+   static time_point universal_time()
    {  return TimePoint::clock::now();  }
 };
 
