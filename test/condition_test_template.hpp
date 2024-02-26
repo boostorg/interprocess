@@ -27,6 +27,7 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include "util.hpp"
 #include <iostream>
+#include <typeinfo>
 
 namespace boost{
 namespace interprocess{

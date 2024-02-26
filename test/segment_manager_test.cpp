@@ -25,6 +25,7 @@
 #include <cstddef>
 #include <new>
 #include <cstring>
+#include <typeinfo>
 
 using namespace boost::interprocess;
 

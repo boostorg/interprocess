@@ -31,6 +31,7 @@
 #include <iostream>
 #include <cassert>
 #include "util.hpp"
+#include <typeinfo>
 
 namespace boost { namespace interprocess { namespace test {
 

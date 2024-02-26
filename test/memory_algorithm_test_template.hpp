@@ -19,6 +19,7 @@
 #include <iostream>
 #include <new> //std::nothrow
 #include <cstring>   //std::memset
+#include <typeinfo>
 
 namespace boost { namespace interprocess { namespace test {
 

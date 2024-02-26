@@ -27,7 +27,7 @@
 #include "util.hpp"
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
-
+#include <typeinfo>
 #include <iostream>
 
 namespace boost { namespace interprocess { namespace test {
