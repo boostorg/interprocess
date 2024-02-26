@@ -28,7 +28,7 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
-#include <boost/interprocess/detail/timed_utils.hpp>
+#include <boost/interprocess/timed_utils.hpp>
 #include <boost/interprocess/sync/spin/wait.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/cstdint.hpp>

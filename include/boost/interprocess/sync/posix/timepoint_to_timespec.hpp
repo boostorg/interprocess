@@ -21,7 +21,7 @@
 
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
-#include <boost/interprocess/detail/timed_utils.hpp>
+#include <boost/interprocess/timed_utils.hpp>
 
 namespace boost {
 

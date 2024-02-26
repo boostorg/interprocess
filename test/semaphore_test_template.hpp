@@ -23,14 +23,15 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/exceptions.hpp>
+#include <boost/interprocess/timed_utils.hpp>
 #include "named_creation_template.hpp"
 #include "mutex_test_template.hpp"
-
-namespace boost { namespace interprocess { namespace test {
 
 #include <boost/interprocess/exceptions.hpp>
 #include "named_creation_template.hpp"
 #include "mutex_test_template.hpp"
+
+namespace boost { namespace interprocess { namespace test {
 
 static const std::size_t SemCount      = 1;
 static const std::size_t RecSemCount   = 100;

@@ -24,7 +24,7 @@
 #include <boost/interprocess/detail/win32_api.hpp>
 #include <boost/interprocess/errors.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/detail/timed_utils.hpp>
+#include <boost/interprocess/timed_utils.hpp>
 #include <limits>
 
 namespace boost {

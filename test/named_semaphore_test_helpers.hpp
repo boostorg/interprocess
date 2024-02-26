@@ -20,7 +20,7 @@
 #include "mutex_test_template.hpp"
 #include "get_process_id_name.hpp"
 #include <exception>
-#include <boost/interprocess/detail/timed_utils.hpp>
+#include <boost/interprocess/timed_utils.hpp>
 
 #include <exception>
 

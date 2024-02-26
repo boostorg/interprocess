@@ -49,6 +49,7 @@
 #ifndef BOOST_NO_EXCEPTIONS
 #include <exception>
 #endif
+#include <typeinfo>
 
 //!\file
 //!Describes the object placed in a memory segment that provides

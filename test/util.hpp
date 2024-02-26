@@ -24,6 +24,7 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
+#include <boost/interprocess/timed_utils.hpp>
 
 #if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic push
@@ -37,10 +38,10 @@
 #  endif
 #endif
 
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #if BOOST_CXX_VERSION >= 201103L
 #define BOOST_CHRONO_HEADER_ONLY
 #include <boost/chrono/system_clocks.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #endif
 
 #include <boost/version.hpp>
@@ -57,6 +58,9 @@ namespace boost {
 namespace interprocess {
 namespace test {
 
+// ptime_delay_ms + ptime_ms
+
+#if BOOST_CXX_VERSION >= 201103L
 inline boost::posix_time::ptime ptime_delay_ms(unsigned msecs)
 {
    using namespace boost::posix_time;
@@ -68,10 +72,19 @@ inline boost::posix_time::ptime ptime_delay_ms(unsigned msecs)
 inline boost::posix_time::time_duration ptime_ms(unsigned msecs)
 {
    using namespace boost::posix_time;
-   int count = static_cast<int>(double(msecs)*
-               (double(time_duration::ticks_per_second())/double(1000.0)));
+   int count = static_cast<int>(double(msecs) *
+      (double(time_duration::ticks_per_second()) / double(1000.0)));
    return time_duration(0, 0, 0, count);
 }
+#else
+   inline ustime ptime_delay_ms(unsigned msecs)
+   {  return ustime_delay_milliseconds(msecs); }
+
+   inline usduration ptime_ms(unsigned msecs)
+   {  return usduration_from_milliseconds(msecs); }
+#endif
+
+// boost_systemclock_delay_ms + boost_systemclock_ms
 
 #if BOOST_CXX_VERSION >= 201103L
    inline boost::chrono::system_clock::time_point boost_systemclock_delay_ms(unsigned msecs)
@@ -80,13 +93,14 @@ inline boost::posix_time::time_duration ptime_ms(unsigned msecs)
    inline boost::chrono::milliseconds boost_systemclock_ms(unsigned msecs)
    {  return boost::chrono::milliseconds(msecs);  }
 #else
-   inline boost::posix_time::ptime boost_systemclock_delay_ms(unsigned msecs)
-   {  return ptime_delay_ms(msecs);  }
+   inline ustime boost_systemclock_delay_ms(unsigned msecs)
+   {  return ustime_delay_milliseconds(msecs); }
 
-   inline boost::posix_time::time_duration boost_systemclock_ms(unsigned msecs)
-   {  return ptime_ms(msecs);  }
-
+   inline usduration boost_systemclock_ms(unsigned msecs)
+   {  return usduration_from_milliseconds(msecs); }
 #endif 
+
+// std_systemclock_delay_ms + std_systemclock_ms
 
 #if !defined(BOOST_NO_CXX11_HDR_CHRONO)
    //Use std chrono if available
@@ -103,15 +117,15 @@ inline boost::posix_time::time_duration ptime_ms(unsigned msecs)
 
    inline boost::chrono::milliseconds std_systemclock_ms(unsigned msecs)
    {  return boost_systemclock_ms(msecs);  }
-
 #else
-   inline boost::posix_time::ptime std_systemclock_delay_ms(unsigned msecs)
-   {  return ptime_delay_ms(msecs);  }
+   inline ustime std_systemclock_delay_ms(unsigned msecs)
+   {  return ustime_delay_milliseconds(msecs); }
 
-   inline boost::posix_time::time_duration std_systemclock_ms(unsigned msecs)
-   {  return ptime_ms(msecs);  }
+   inline usduration std_systemclock_ms(unsigned msecs)
+   {  return usduration_from_milliseconds(msecs); }
 #endif
 
+// thread_adapter + data
 
 template <typename P>
 class thread_adapter
