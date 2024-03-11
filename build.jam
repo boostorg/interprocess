@@ -1,0 +1,29 @@
+# Copyright René Ferdinand Rivera Morell 2023
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+
+import project ;
+
+project /boost/interprocess
+    : common-requirements
+        <source>/boost/assert//boost_assert
+        <source>/boost/config//boost_config
+        <source>/boost/container//boost_container
+        <source>/boost/core//boost_core
+        <source>/boost/intrusive//boost_intrusive
+        <source>/boost/move//boost_move
+        <source>/boost/static_assert//boost_static_assert
+        <source>/boost/type_traits//boost_type_traits
+        <source>/boost/unordered//boost_unordered
+        <source>/boost/winapi//boost_winapi
+        <include>include
+    ;
+
+explicit
+    [ alias boost_interprocess ]
+    [ alias all : boost_interprocess example test ]
+    ;
+
+call-if : boost-library interprocess
+    ;
