@@ -7,16 +7,16 @@ import project ;
 
 project /boost/interprocess
     : common-requirements
-        <source>/boost/assert//boost_assert
-        <source>/boost/config//boost_config
-        <source>/boost/container//boost_container
-        <source>/boost/core//boost_core
-        <source>/boost/intrusive//boost_intrusive
-        <source>/boost/move//boost_move
-        <source>/boost/static_assert//boost_static_assert
-        <source>/boost/type_traits//boost_type_traits
-        <source>/boost/unordered//boost_unordered
-        <source>/boost/winapi//boost_winapi
+        <library>/boost/assert//boost_assert
+        <library>/boost/config//boost_config
+        <library>/boost/container//boost_container
+        <library>/boost/core//boost_core
+        <library>/boost/intrusive//boost_intrusive
+        <library>/boost/move//boost_move
+        <library>/boost/static_assert//boost_static_assert
+        <library>/boost/type_traits//boost_type_traits
+        <library>/boost/unordered//boost_unordered
+        <library>/boost/winapi//boost_winapi
         <include>include
     ;
 
