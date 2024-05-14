@@ -25,6 +25,7 @@ project : requirements
     <target-os>windows,<toolset>clang:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
     <target-os>linux:<linkflags>"-lrt"
     <library>/boost/multi_index//boost_multi_index
+    <library>/boost/unordered//boost_unordered
     ;
 
 rule test_all
