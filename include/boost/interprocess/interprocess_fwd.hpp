@@ -22,7 +22,7 @@
 #  pragma once
 #endif
 
-#include <boost/interprocess/detail/std_fwd.hpp>
+#include <iosfwd>
 
 //! \file
 //! This header file forward declares the basic interprocess types:
