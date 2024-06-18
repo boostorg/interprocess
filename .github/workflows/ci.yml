@@ -328,15 +328,15 @@ jobs:
           #------------------
           # Macos 11, clang
           - toolset: clang
-            cxxstd: "03,11,14,17,2a"
+            cxxstd: "11,14,17,2a"
             os: macos-11
           # Macos 12, clang
           - toolset: clang
-            cxxstd: "03,11,14,17,20,2b"
+            cxxstd: "11,14,17,20,2b"
             os: macos-12
           # Macos 13, clang
           - toolset: clang
-            cxxstd: "03,11,14,17,20,2b"
+            cxxstd: "11,14,17,20,2b"
             os: macos-13
 
     timeout-minutes: 180
