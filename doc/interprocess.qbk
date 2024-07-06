@@ -6833,8 +6833,6 @@ thank them:
 
 [endsect]
 
- #198
-
 [section:release_notes_boost_1_85_00 Boost 1.85 Release]
 
 *  Remove broken `unordered_map_index` class.
