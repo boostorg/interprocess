@@ -6827,6 +6827,7 @@ thank them:
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/pull/191   GitHub #191 (['"vectorstream: support file sizes larger than INT_MAX "])].
    * [@https://github.com/boostorg/interprocess/pull/198   GitHub #198 (['"Minor fixes for documentation of offset_ptr"])].
+   * [@https://github.com/boostorg/interprocess/pull/202   GitHub #202 (['"Allow to map message_queue in anonymous memory"])].
    * [@https://github.com/boostorg/interprocess/pull/207   GitHub #207 (['"cmake: link system libraries"])].
    * [@https://github.com/boostorg/interprocess/pull/214   GitHub #214 (['"Doc: Fix github links"])].
 
