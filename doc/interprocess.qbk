@@ -6822,6 +6822,17 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_86_00 Boost 1.86 Release]
+
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/pull/191   GitHub #191 (['"vectorstream: support file sizes larger than INT_MAX "])].
+   * [@https://github.com/boostorg/interprocess/pull/198   GitHub #198 (['"Minor fixes for documentation of offset_ptr"])].
+   * [@https://github.com/boostorg/interprocess/pull/202   GitHub #202 (['"Allow to map message_queue in anonymous memory"])].
+   * [@https://github.com/boostorg/interprocess/pull/207   GitHub #207 (['"cmake: link system libraries"])].
+   * [@https://github.com/boostorg/interprocess/pull/214   GitHub #214 (['"Doc: Fix github links"])].
+
+[endsect]
+
 [section:release_notes_boost_1_85_00 Boost 1.85 Release]
 
 *  Remove broken `unordered_map_index` class.
@@ -6886,9 +6897,9 @@ thank them:
         can be defined by the user before including Boost.Interprocess headers to tune the default values.
 
 *  Fixed bugs:
-   * [@https://github.com/boostorg/interprocess/pull/65     GitHub #65 (['"Robustness of the interprocess mutex"])].
+   * [@https://github.com/boostorg/interprocess/issues/65   GitHub #65 (['"Robustness of the interprocess mutex"])].
    * [@https://github.com/boostorg/interprocess/pull/67     GitHub #67 (['"Changed to use posix robust mutex"])].
-   * [@https://github.com/boostorg/interprocess/pull/103    GitHub #103 (['"Use interprocess headers without exception handling"])].
+   * [@https://github.com/boostorg/interprocess/issues/103  GitHub #103 (['"Use interprocess headers without exception handling"])].
    * [@https://github.com/boostorg/interprocess/issues/128  GitHub #128 (['"Infinite loop in managed_open_or_create_impl.hpp"])].
    * [@https://github.com/boostorg/interprocess/issues/130  GitHub #130 (['"infinite loop in managed_open_or_create_impl.hpp if filesize is 0"])].
    * [@https://github.com/boostorg/interprocess/issues/142  GitHub #142 (['"File lock documentation about advisory locking is inaccurate on Windows"])].
@@ -6972,8 +6983,8 @@ thank them:
 [section:release_notes_boost_1_71_00 Boost 1.71 Release]
 
 *  Fixed bugs:
-   * [@https://github.com/boostorg/interprocess/pull/85 GitHub #85 (['"warning: Implicit conversion loses integer precision"])].
-   * [@https://github.com/boostorg/interprocess/pull/86 GitHub #86 (['"warning: Possible misuse of comma operator"])].
+   * [@https://github.com/boostorg/interprocess/issues/85 GitHub #85 (['"warning: Implicit conversion loses integer precision"])].
+   * [@https://github.com/boostorg/interprocess/issues/86 GitHub #86 (['"warning: Possible misuse of comma operator"])].
 
 [endsect]
 
@@ -7015,7 +7026,7 @@ thank them:
 
 [section:release_notes_boost_1_66_00 Boost 1.66 Release]
 *  Fixed bugs:
-   * [@https://github.com/boostorg/interprocess/pull/41 GitHub Pull #41 (['"Data race in boost::interprocess::rbtree_best_fit"])].
+   * [@https://github.com/boostorg/interprocess/issues/41 GitHub Issue #41 (['"Data race in boost::interprocess::rbtree_best_fit"])].
 
 [endsect]
 
