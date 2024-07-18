@@ -15,6 +15,8 @@
 # the run rule for each source, the result is a list of all
 # the run rules, which we can pass on to the test_suite rule:
 
+import ../config/checks/config : requires ;
+
 rule test_all
 {
    local all_rules = ;
@@ -40,6 +42,22 @@ rule test_all
       :  # additional args
       :  # test-files
       :  # requirements
+        <toolset>acc:<linkflags>-lrt
+        <toolset>acc-pa_risc:<linkflags>-lrt
+        <toolset>gcc-mingw:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
+        <target-os>hpux,<toolset>gcc:<linkflags>"-Wl,+as,mpas"
+        <target-os>windows,<toolset>clang:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
+        <target-os>linux:<linkflags>"-lrt"
+      ] ;
+   }
+
+   for local fileb in [ glob cpp11_*.cpp ]
+   {
+      all_rules += [ run $(fileb)
+      :  # additional args
+      :  # test-files
+      :  # requirements
+      [ requires cxx11_lambdas cxx11_rvalue_references cxx11_final cxx11_auto_declarations ]
         <toolset>acc:<linkflags>-lrt
         <toolset>acc-pa_risc:<linkflags>-lrt
         <toolset>gcc-mingw:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
