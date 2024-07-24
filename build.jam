@@ -5,24 +5,27 @@
 
 require-b2 5.2 ;
 
+constant boost_dependencies :
+    /boost/assert//boost_assert
+    /boost/config//boost_config
+    /boost/container//boost_container
+    /boost/core//boost_core
+    /boost/intrusive//boost_intrusive
+    /boost/move//boost_move
+    /boost/static_assert//boost_static_assert
+    /boost/type_traits//boost_type_traits
+    /boost/winapi//boost_winapi ;
+
 project /boost/interprocess
     : common-requirements
-        <library>/boost/assert//boost_assert
-        <library>/boost/config//boost_config
-        <library>/boost/container//boost_container
-        <library>/boost/core//boost_core
-        <library>/boost/intrusive//boost_intrusive
-        <library>/boost/move//boost_move
-        <library>/boost/static_assert//boost_static_assert
-        <library>/boost/type_traits//boost_type_traits
-        <library>/boost/winapi//boost_winapi
         <include>include
     ;
 
 explicit
-    [ alias boost_interprocess ]
+    [ alias boost_interprocess : : : : <library>$(boost_dependencies) ]
     [ alias all : boost_interprocess example test ]
     ;
 
 call-if : boost-library interprocess
     ;
+
