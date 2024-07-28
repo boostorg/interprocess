@@ -2308,13 +2308,13 @@ we should call to unlock it:
 
 [c++]
 
-   BOOST_TRY{
+   try{
       //Mutex operations
    }
-   BOOST_CATCH(...){
+   catch(...){
       //What should we call? "unlock()" or "unlock_sharable()"
       //Is the mutex locked?
-   } BOOST_CATCH_END
+   }
 
 We can use [*lock transfer] to simplify all this management:
 
@@ -6830,6 +6830,8 @@ thank them:
    * [@https://github.com/boostorg/interprocess/pull/202   GitHub #202 (['"Allow to map message_queue in anonymous memory"])].
    * [@https://github.com/boostorg/interprocess/pull/207   GitHub #207 (['"cmake: link system libraries"])].
    * [@https://github.com/boostorg/interprocess/pull/214   GitHub #214 (['"Doc: Fix github links"])].
+
+* Added natvis definition for `offset_ptr`. Many thanks to Braden Ganetsky.
 
 [endsect]
 
