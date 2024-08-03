@@ -19,6 +19,14 @@
     ]
 ]
 
+[def BOOST_INTERPROCESS_TRY try ]
+[def BOOST_INTERPROCESS_CATCH catch]
+[def BOOST_INTERPROCESS_RETHROW throw;]
+[def BOOST_INTERPROCESS_CATCH_END]
+
+[def test::get_process_id_name() "MySharedMemory"]
+
+
 [section:intro Introduction]
 
 [*Boost.Interprocess] simplifies the use of common interprocess communication
