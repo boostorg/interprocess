@@ -319,15 +319,18 @@ class offset_ptr
    {}
    #endif   //BOOST_NO_CXX11_NULLPTR
 
-   //!Constructor from other pointer.
+   //!Constructor from raw pointer. Only takes part in overload resolution if T* is convertible to PointedType*
    //!Never throws.
    template <class T>
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr( T *ptr
-             , typename ipcdetail::enable_if< ::boost::move_detail::is_convertible<T*, PointedType*> >::type * = 0) BOOST_NOEXCEPT
+      #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
+             , typename ipcdetail::enable_if< ::boost::move_detail::is_convertible<T*, PointedType*> >::type * = 0
+      #endif
+      ) BOOST_NOEXCEPT
       : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(ptr), this))
    {}
 
-   //!Constructor from other offset_ptr
+   //!Constructor from other offset_ptr.
    //!Never throws.
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr& ptr) BOOST_NOEXCEPT
       : internal(ipcdetail::offset_ptr_to_offset_from_other(this, &ptr, ptr.internal.m_offset))
@@ -435,8 +438,9 @@ class offset_ptr
    }
    #endif   //BOOST_NO_CXX11_NULLPTR
 
-   //!Assignment from related offset_ptr. If pointers of pointee types
-   //!   are assignable, offset_ptrs will be assignable. Never throws.
+   //!Assignment from related offset_ptr.
+   //!Only takes part in overload resolution if T2* is convertible to PointedType*
+   //!Never throws.
    template<class T2> BOOST_INTERPROCESS_FORCEINLINE 
    #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    typename ipcdetail::enable_if_c
