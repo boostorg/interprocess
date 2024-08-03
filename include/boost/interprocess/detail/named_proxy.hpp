@@ -67,17 +67,17 @@ struct CtorArgN : public placement_destroy<T>
    virtual void construct_n(void *mem, std::size_t num) BOOST_OVERRIDE
    {
       std::size_t constructed = 0;
-      BOOST_TRY{
+      BOOST_INTERPROCESS_TRY{
          T* memory      = static_cast<T*>(mem);
          for(constructed = 0; constructed < num; ++constructed){
             this->construct(memory++, IsIterator(), index_tuple_t());
             this->do_increment(IsIterator(), index_tuple_t());
          }
       }
-      BOOST_CATCH(...) {
+      BOOST_INTERPROCESS_CATCH(...) {
          this->placement_destroy<T>::destroy_n(mem, constructed);
-         BOOST_RETHROW
-      } BOOST_CATCH_END
+         BOOST_INTERPROCESS_RETHROW
+      } BOOST_INTERPROCESS_CATCH_END
    }
 
    private:
@@ -157,16 +157,16 @@ struct CtorArg##N : placement_destroy<T>\
    virtual void construct_n(void *mem, std::size_t num) BOOST_OVERRIDE\
    {\
       std::size_t constructed = 0;\
-      BOOST_TRY{\
+      BOOST_INTERPROCESS_TRY{\
          T* memory = static_cast<T*>(mem);\
          for (constructed = 0; constructed < num; ++constructed) {\
             ::new((void*)memory++) T ( BOOST_MOVE_MFWD##N );\
          }\
       }\
-      BOOST_CATCH(...) {\
+      BOOST_INTERPROCESS_CATCH(...) {\
          this->placement_destroy<T>::destroy_n(mem, constructed);\
-         BOOST_RETHROW\
-      } BOOST_CATCH_END\
+         BOOST_INTERPROCESS_RETHROW\
+      } BOOST_INTERPROCESS_CATCH_END\
    }\
    \
    private:\
@@ -194,17 +194,17 @@ struct CtorIt##N : public placement_destroy<T>\
    virtual void construct_n(void *mem, std::size_t num) BOOST_OVERRIDE\
    {\
       std::size_t constructed = 0;\
-      BOOST_TRY{\
+      BOOST_INTERPROCESS_TRY{\
          T* memory      = static_cast<T*>(mem);\
          for(constructed = 0; constructed < num; ++constructed){\
             ::new((void*)memory++) T( BOOST_MOVE_MITFWD##N );\
             ++(*this);\
          }\
       }\
-      BOOST_CATCH(...) {\
+      BOOST_INTERPROCESS_CATCH(...) {\
          this->placement_destroy<T>::destroy_n(mem, constructed);\
-         BOOST_RETHROW\
-      } BOOST_CATCH_END\
+         BOOST_INTERPROCESS_RETHROW\
+      } BOOST_INTERPROCESS_CATCH_END\
    }\
    \
    private:\

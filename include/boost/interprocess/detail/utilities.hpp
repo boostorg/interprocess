@@ -32,7 +32,6 @@
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
 #include <boost/move/utility_core.hpp>
-#include <boost/static_assert.hpp>
 #include <boost/cstdint.hpp>
 #include <climits>
 
@@ -80,9 +79,9 @@ inline SizeType get_truncated_size_po2(SizeType orig_size, SizeType multiple)
 template <std::size_t OrigSize, std::size_t RoundTo>
 struct ct_rounded_size
 {
-   BOOST_STATIC_ASSERT((RoundTo != 0));
+   BOOST_INTERPROCESS_STATIC_ASSERT((RoundTo != 0));
    static const std::size_t intermediate_value = (OrigSize-1)/RoundTo+1;
-   BOOST_STATIC_ASSERT(intermediate_value <= std::size_t(-1)/RoundTo);
+   BOOST_INTERPROCESS_STATIC_ASSERT(intermediate_value <= std::size_t(-1)/RoundTo);
    static const std::size_t value = intermediate_value*RoundTo;
 };
 
@@ -151,7 +150,7 @@ template<std::size_t SztSizeOfType, class SizeType>
 BOOST_INTERPROCESS_FORCEINLINE bool size_overflows(SizeType count)
 {
    //Compile time-check
-   BOOST_STATIC_ASSERT(SztSizeOfType <= SizeType(-1));
+   BOOST_INTERPROCESS_STATIC_ASSERT(SztSizeOfType <= SizeType(-1));
    //Runtime check
    return multiplication_overflows(SizeType(SztSizeOfType), count);
 }

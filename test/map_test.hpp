@@ -52,7 +52,7 @@ int map_test ()
    const char *const shMemName = test::get_process_id_name();
    const int max = 100;
 
-   BOOST_TRY{
+   BOOST_INTERPROCESS_TRY{
       //Create shared memory
       shared_memory_object::remove(shMemName);
       ManagedSharedMemory segment(create_only, shMemName, Memsize);
@@ -484,10 +484,10 @@ int map_test ()
       if(!segment.all_memory_deallocated())
          return 1;
    }
-   BOOST_CATCH(...){
+   BOOST_INTERPROCESS_CATCH(...){
       shared_memory_object::remove(shMemName);
-      BOOST_RETHROW
-   } BOOST_CATCH_END
+      BOOST_INTERPROCESS_RETHROW
+   } BOOST_INTERPROCESS_CATCH_END
    shared_memory_object::remove(shMemName);
    return 0;
 }
@@ -507,7 +507,7 @@ int map_test_copyable ()
    const char *const shMemName = test::get_process_id_name();
    const int max = 100;
 
-   BOOST_TRY{
+   BOOST_INTERPROCESS_TRY{
    //Create shared memory
    shared_memory_object::remove(shMemName);
    ManagedSharedMemory segment(create_only, shMemName, Memsize);
@@ -578,10 +578,10 @@ int map_test_copyable ()
       if(!segment.all_memory_deallocated())
          return 1;
    }
-   BOOST_CATCH(...){
+   BOOST_INTERPROCESS_CATCH(...){
       shared_memory_object::remove(shMemName);
-      BOOST_RETHROW
-   } BOOST_CATCH_END
+      BOOST_INTERPROCESS_RETHROW
+   } BOOST_INTERPROCESS_CATCH_END
    shared_memory_object::remove(shMemName);
    return 0;
 }

@@ -22,7 +22,6 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/core/no_exceptions_support.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 
 #include <boost/interprocess/detail/transform_iterator.hpp>
@@ -1105,17 +1104,17 @@ class segment_manager
       typename index_type_t::insert_commit_data   commit_data;
       typedef typename index_type_t::value_type   intrusive_value_type;
 
-      BOOST_TRY{
+      BOOST_INTERPROCESS_TRY{
          ipcdetail::intrusive_compare_key<CharT> key(name, namelen);
          insert_ret = index.insert_check(key, commit_data);
       }
       //Ignore exceptions
-      BOOST_CATCH(...){
+      BOOST_INTERPROCESS_CATCH(...){
          if(dothrow)
-            BOOST_RETHROW
+            BOOST_INTERPROCESS_RETHROW
          return 0;
       }
-      BOOST_CATCH_END
+      BOOST_INTERPROCESS_CATCH_END
 
       index_it it = insert_ret.first;
 
@@ -1158,17 +1157,17 @@ class segment_manager
       CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
       std::char_traits<CharT>::copy(name_ptr, name, namelen+1);
 
-      BOOST_TRY{
+      BOOST_INTERPROCESS_TRY{
          //Now commit the insertion using previous context data
          it = index.insert_commit(*intrusive_hdr, commit_data);
       }
       //Ignore exceptions
-      BOOST_CATCH(...){
+      BOOST_INTERPROCESS_CATCH(...){
          if(dothrow)
-            BOOST_RETHROW
+            BOOST_INTERPROCESS_RETHROW
          return 0;
       }
-      BOOST_CATCH_END
+      BOOST_INTERPROCESS_CATCH_END
 
       //Avoid constructions if constructor is trivial
       //Build scoped ptr to avoid leaks with constructor exception
@@ -1229,16 +1228,16 @@ class segment_manager
       //to insert the node, do an ugly un-const cast and modify
       //the key (which is a smart pointer) to an equivalent one
       index_ib insert_ret;
-      BOOST_TRY{
+      BOOST_INTERPROCESS_TRY{
          insert_ret = index.insert(value_type(key_type (name, namelen), mapped_type(0)));
       }
       //Ignore exceptions
-      BOOST_CATCH(...){
+      BOOST_INTERPROCESS_CATCH(...){
          if(dothrow)
-            BOOST_RETHROW;
+            BOOST_INTERPROCESS_RETHROW;
          return 0;
       }
-      BOOST_CATCH_END
+      BOOST_INTERPROCESS_CATCH_END
 
       index_it it = insert_ret.first;
 

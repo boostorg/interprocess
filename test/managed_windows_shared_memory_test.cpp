@@ -63,13 +63,13 @@ int main ()
    {
       bool throws_ok = false;
       //Check memory is gone
-      BOOST_TRY{
+      BOOST_INTERPROCESS_TRY{
          managed_windows_shared_memory w_tmp(open_only, MemName);
       }
-      BOOST_CATCH(interprocess_exception &e) {
+      BOOST_INTERPROCESS_CATCH(interprocess_exception &e) {
          throws_ok = e.get_error_code() == not_found_error;
       }
-      BOOST_CATCH_END
+      BOOST_INTERPROCESS_CATCH_END
       if (!throws_ok)
          return 1;
    }

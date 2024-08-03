@@ -1324,7 +1324,7 @@ inline bool unlink_file(const CharT *filename)
    //- Close the handle. If there are no file users, it will be deleted.
    //  Otherwise it will be used by already connected handles but the
    //  file name can't be used to open this file again
-   BOOST_TRY{
+   BOOST_INTERPROCESS_TRY{
       NtSetInformationFile_t pNtSetInformationFile =
          reinterpret_cast<NtSetInformationFile_t>(dll_func::get(dll_func::NtSetInformationFile));
 
@@ -1418,9 +1418,9 @@ inline bool unlink_file(const CharT *filename)
          return true;
       }
    }
-   BOOST_CATCH(...){
+   BOOST_INTERPROCESS_CATCH(...){
       return false;
-   } BOOST_CATCH_END
+   } BOOST_INTERPROCESS_CATCH_END
    return true;
 }
 
