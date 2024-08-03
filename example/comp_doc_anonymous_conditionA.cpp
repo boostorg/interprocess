@@ -37,7 +37,7 @@ int main ()
       ,"MySharedMemory"           //name
       ,read_write                //read-write mode
       );
-   BOOST_TRY{
+   BOOST_INTERPROCESS_TRY{
       //Set size
       shm.truncate(sizeof(trace_queue));
 
@@ -72,10 +72,11 @@ int main ()
          data->message_in = true;
       }
    }
-   BOOST_CATCH(interprocess_exception &ex){
+   BOOST_INTERPROCESS_CATCH(interprocess_exception &ex){
       std::cout << ex.what() << std::endl;
       return 1;
-   } BOOST_CATCH_END
+   }
+   BOOST_INTERPROCESS_CATCH_END
 
    return 0;
 }
