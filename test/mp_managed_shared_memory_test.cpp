@@ -35,7 +35,7 @@ typedef list<int, allocator<int, managed_shared_memory::segment_manager> >
 int main(int argc, char *argv[])
 {
    std::string p_or_c = argc == 1 ? "parent" : "child";
-   BOOST_TRY {
+   BOOST_INTERPROCESS_TRY {
       if(argc == 1){  //Parent process
          shm_remove remover; (void)remover;
          shared_memory_object::remove(test::get_process_id_name());
@@ -95,17 +95,17 @@ int main(int argc, char *argv[])
          my_sem->post();
       }
    }
-   BOOST_CATCH(interprocess_exception &e){
+   BOOST_INTERPROCESS_CATCH(interprocess_exception &e){
       std::cerr << p_or_c << " -> interprocess_exception::what(): " << e.what()
                 << " native error: " << e.get_native_error()
                 << " error code: " << e.get_error_code() << '\n';
       return 2;
    }
-   BOOST_CATCH(std::exception &e){
+   BOOST_INTERPROCESS_CATCH(std::exception &e){
       std::cerr << p_or_c << " -> std::exception::what(): " << e.what() << '\n';
       return 3;
    }
-   BOOST_CATCH_END
+   BOOST_INTERPROCESS_CATCH_END
 
    std::cerr << p_or_c << " -> Normal termination\n";
 

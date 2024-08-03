@@ -74,17 +74,17 @@ int test_owner_dead_mutex_impl(EOwnerDeadLockType lock_type)
    ipcdetail::OS_thread_t tm1;
    ipcdetail::thread_launch(tm1, thread_adapter<M>(&lock_and_exit, 0, mtx));
    ipcdetail::thread_join(tm1);
-   BOOST_TRY {
+   BOOST_INTERPROCESS_TRY {
       test_owner_dead_mutex_do_lock(mtx, lock_type);
    }
-   BOOST_CATCH(lock_exception& e) {
+   BOOST_INTERPROCESS_CATCH(lock_exception& e) {
       #ifndef BOOST_NO_EXCEPTIONS
       if (e.get_error_code() == not_recoverable){
          //Now try once again to lock it, to make sure it's not recoverable
-         BOOST_TRY {
+         BOOST_INTERPROCESS_TRY {
             test_owner_dead_mutex_do_lock(mtx, lock_type);
          }
-         BOOST_CATCH(lock_exception& e) {
+         BOOST_INTERPROCESS_CATCH(lock_exception& e) {
             if (e.get_error_code() == not_recoverable)
                return 0;
             else{
@@ -92,10 +92,10 @@ int test_owner_dead_mutex_impl(EOwnerDeadLockType lock_type)
                return 3;
             }
          }
-         BOOST_CATCH(...) {
+         BOOST_INTERPROCESS_CATCH(...) {
             std::cerr << "lock_exception not thrown! (2)";
             return 4;
-         } BOOST_CATCH_END
+         } BOOST_INTERPROCESS_CATCH_END
          std::cerr << "Exception not thrown (2)!";
          return 5;
       }
@@ -105,10 +105,10 @@ int test_owner_dead_mutex_impl(EOwnerDeadLockType lock_type)
       }
       #endif   //BOOST_NO_EXCEPTIONS
    }
-   BOOST_CATCH(...) {
+   BOOST_INTERPROCESS_CATCH(...) {
       std::cerr << "lock_exception not thrown!";
       return 2;
-   } BOOST_CATCH_END
+   } BOOST_INTERPROCESS_CATCH_END
    std::cerr << "Exception not thrown!";
    return 3;
 }
