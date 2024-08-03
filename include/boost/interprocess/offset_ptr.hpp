@@ -412,6 +412,22 @@ class offset_ptr
    BOOST_INTERPROCESS_FORCEINLINE reference operator[](difference_type idx) const BOOST_NOEXCEPT
    {  return this->get()[idx];  }
 
+   //!Assignment from raw pointer. Only takes part in overload resolution if T* is convertible to PointedType*
+   //!Never throws.
+
+   template<class T> BOOST_INTERPROCESS_FORCEINLINE 
+   #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
+   typename ipcdetail::enable_if_c
+      < ::boost::move_detail::is_convertible<T*, PointedType*>::value, offset_ptr&>::type
+   #else
+   offset_ptr&
+   #endif
+      operator= (T *ptr) BOOST_NOEXCEPT
+   {
+      this->internal.m_offset = ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(ptr), this);
+      return *this;
+   }
+
    //!Assignment from other offset_ptr.
    //!Never throws.
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr& operator= (const offset_ptr & ptr) BOOST_NOEXCEPT
