@@ -38,7 +38,6 @@
 #include <boost/move/detail/force_ptr.hpp>
 // other boost
 #include <boost/assert.hpp>   //BOOST_ASSERT
-#include <boost/core/no_exceptions_support.hpp>
 // std
 #include <cstddef>   //std::size_t
 

@@ -38,7 +38,6 @@
 // move/detail
 #include <boost/move/detail/force_ptr.hpp>
 // other boost
-#include <boost/static_assert.hpp>
 #include <boost/assert.hpp>
 
 //!\file

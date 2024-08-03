@@ -46,7 +46,6 @@
 #include <boost/intrusive/set.hpp>
 // other boost
 #include <boost/assert.hpp>
-#include <boost/static_assert.hpp>
 // std
 #include <climits>
 #include <cstring>
@@ -340,9 +339,9 @@ class rbtree_best_fit
 
    private:
    //Due to embedded bits in size, Alignment must be at least 4
-   BOOST_STATIC_ASSERT((Alignment >= 4));
+   BOOST_INTERPROCESS_STATIC_ASSERT((Alignment >= 4));
    //Due to rbtree size optimizations, Alignment must have at least pointer alignment
-   BOOST_STATIC_ASSERT((Alignment >= ::boost::container::dtl::alignment_of<void_pointer>::value));
+   BOOST_INTERPROCESS_STATIC_ASSERT((Alignment >= ::boost::container::dtl::alignment_of<void_pointer>::value));
    static const size_type AlignmentMask = (Alignment - 1);
    static const size_type BlockCtrlBytes = ipcdetail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value;
    static const size_type BlockCtrlUnits = BlockCtrlBytes/Alignment;
@@ -354,7 +353,7 @@ class rbtree_best_fit
    static const size_type UsableByPreviousChunk   = sizeof(size_type);
 
    //Make sure the maximum alignment is power of two
-   BOOST_STATIC_ASSERT((0 == (Alignment & (Alignment - size_type(1u)))));
+   BOOST_INTERPROCESS_STATIC_ASSERT((0 == (Alignment & (Alignment - size_type(1u)))));
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    public:
    static const size_type PayloadPerAllocation = AllocatedCtrlBytes - UsableByPreviousChunk;

@@ -23,7 +23,6 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/errors.hpp>
 #include <boost/interprocess/permissions.hpp>
-#include <boost/static_assert.hpp>
 
 #include <climits>
 #include <string>
@@ -593,7 +592,7 @@ inline bool delete_file(const char *name)
 inline bool truncate_file (file_handle_t hnd, std::size_t size)
 {
    typedef boost::move_detail::make_unsigned<off_t>::type uoff_t;
-   BOOST_STATIC_ASSERT(( sizeof(uoff_t) >= sizeof(std::size_t) ));
+   BOOST_INTERPROCESS_STATIC_ASSERT(( sizeof(uoff_t) >= sizeof(std::size_t) ));
    if( uoff_t(-1)/2u < uoff_t(size) ){
       errno = EINVAL;
       return false;
