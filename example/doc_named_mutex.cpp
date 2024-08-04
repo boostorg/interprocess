@@ -25,56 +25,23 @@ int main ()
    BOOST_INTERPROCESS_TRY{
       struct file_remove
       {
-      //<-
-      #if 1
          file_remove() { std::remove(test::get_process_id_name()); }
          ~file_remove(){ std::remove(test::get_process_id_name()); }
-      #else
-      //->
-         file_remove() { std::remove("file_name"); }
-         ~file_remove(){ std::remove("file_name"); }
-      //<-
-      #endif
-      //->
       } file_remover;
       struct mutex_remove
       {
-      //<-
-      #if 1
          mutex_remove() { named_mutex::remove(test::get_process_id_name()); }
          ~mutex_remove(){ named_mutex::remove(test::get_process_id_name()); }
-      #else
-      //->
-         mutex_remove() { named_mutex::remove("fstream_named_mutex"); }
-         ~mutex_remove(){ named_mutex::remove("fstream_named_mutex"); }
-      //<-
-      #endif
-      //->
       } remover;
       //<-
+      (void)file_remover;
       (void)remover;
       //->
 
       //Open or create the named mutex
-   //<-
-   #if 1
       named_mutex mutex(open_or_create, test::get_process_id_name());
-   #else
-   //->
-      named_mutex mutex(open_or_create, "fstream_named_mutex");
-   //<-
-   #endif
-   //->
 
-      //<-
-      #if 1
       std::ofstream file(test::get_process_id_name());
-      #else
-      //->
-      std::ofstream file("file_name");
-      //<-
-      #endif
-      //->
 
       for(int i = 0; i < 10; ++i){
 

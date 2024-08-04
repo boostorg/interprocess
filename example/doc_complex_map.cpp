@@ -63,32 +63,15 @@ int main ()
    //Remove shared memory on construction and destruction
    struct shm_remove
    {
-      //<-
-      #if 1
       shm_remove() { shared_memory_object::remove(test::get_process_id_name()); }
       ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()); }
-      #else
-      //->
-      shm_remove() { shared_memory_object::remove("MySharedMemory"); }
-      ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
-      //<-
-      #endif
-      //->
    } remover;
    //<-
    (void)remover;
    //->
 
    //Create shared memory
-   //<-
-   #if 1
    managed_shared_memory segment(create_only,test::get_process_id_name(), 65536);
-   #else
-   //->
-   managed_shared_memory segment(create_only,"MySharedMemory", 65536);
-   //<-
-   #endif
-   //->
 
    //An allocator convertible to any allocator<T, segment_manager_t> type
    void_allocator alloc_inst (segment.get_segment_manager());

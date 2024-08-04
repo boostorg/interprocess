@@ -24,7 +24,9 @@
 [def BOOST_INTERPROCESS_RETHROW throw;]
 [def BOOST_INTERPROCESS_CATCH_END]
 
-[def test::get_process_id_name() "MySharedMemory"]
+[def test::get_process_id_name() "MyName"]
+[def argv[2] "MyName"]
+
 
 
 [section:intro Introduction]
@@ -3195,7 +3197,7 @@ To use a managed shared memory, you must include the following header:
 [c++]
 
    //1.  Creates a new shared memory object
-   //    called "MySharedMemory".
+   //    called "MyName".
    //2.  Maps the whole object to this
    //    process' address space.
    //3.  Constructs some objects in shared memory
@@ -3203,21 +3205,21 @@ To use a managed shared memory, you must include the following header:
    //!!  If anything fails, throws interprocess_exception
    //
    managed_shared_memory segment      ( create_only
-                                      , "MySharedMemory" //Shared memory object name
-                                      , 65536);          //Shared memory object size in bytes
+                                      , "MyName"    //Shared memory object name
+                                      , 65536);     //Shared memory object size in bytes
 
 
 [c++]
 
    //1.  Opens a shared memory object
-   //    called "MySharedMemory".
+   //    called "MyName".
    //2.  Maps the whole object to this
    //    process' address space.
    //3.  Obtains pointers to constructed internal objects
    //    to implement managed features.
    //!!  If anything fails, throws interprocess_exception
    //
-   managed_shared_memory segment      (open_only,       "MySharedMemory");//Shared memory object name
+   managed_shared_memory segment (open_only, "MyName"); //Shared memory object name
 
 
 [c++]
@@ -3228,8 +3230,8 @@ To use a managed shared memory, you must include the following header:
    //!!  If anything fails, throws interprocess_exception
    //
    managed_shared_memory segment      ( open_or_create
-                                      , "MySharedMemory" //Shared memory object name
-                                      , 65536);          //Shared memory object size in bytes
+                                      , "MyName"    //Shared memory object name
+                                      , 65536);     //Shared memory object size in bytes
 
 
 When the `managed_shared_memory` object is destroyed, the shared memory
