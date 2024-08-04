@@ -46,12 +46,12 @@
 
 #if (BOOST_CXX_VERSION >= 201103L)
 #define BOOST_INTERPROCESS_DATE_TIME_AVAILABLE
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #endif
 
 #ifdef BOOST_INTERPROCESS_BOOST_CHRONO_AVAILABLE
 #define BOOST_CHRONO_HEADER_ONLY
 #include <boost/chrono/system_clocks.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #endif
 
 #include <boost/version.hpp>
