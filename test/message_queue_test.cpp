@@ -11,8 +11,8 @@
 #include <boost/interprocess/ipc/message_queue.hpp>
 #include <boost/interprocess/managed_external_buffer.hpp>
 #include <boost/interprocess/managed_heap_memory.hpp>
-#include <boost/interprocess/containers/map.hpp>
-#include <boost/interprocess/containers/set.hpp>
+#include <boost/container/map.hpp>
+#include <boost/container/set.hpp>
 #include <boost/interprocess/allocators/node_allocator.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 // intrusive/detail
@@ -121,7 +121,7 @@ bool test_serialize_db()
    typedef std::less<std::size_t>   MyLess;
    typedef node_allocator<MyPair, managed_external_buffer::segment_manager>
       node_allocator_t;
-   typedef map<std::size_t,
+   typedef boost::container::map<std::size_t,
                std::size_t,
                std::less<std::size_t>,
                node_allocator_t>
@@ -433,4 +433,3 @@ int main ()
    message_queue::remove(test::get_process_id_name());
    return ret;
 }
-

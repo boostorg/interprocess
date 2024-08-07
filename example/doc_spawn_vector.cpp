@@ -11,7 +11,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 //[doc_spawn_vector
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/containers/vector.hpp>
+#include <boost/container/vector.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <string>
 #include <cstdlib> //std::system
@@ -27,7 +27,7 @@ typedef allocator<int, managed_shared_memory::segment_manager>  ShmemAllocator;
 
 //Alias a vector that uses the previous STL-like allocator so that allocates
 //its values from the segment
-typedef vector<int, ShmemAllocator> MyVector;
+typedef boost::container::vector<int, ShmemAllocator> MyVector;
 
 //Main function. For parent process argc == 1, for child process argc == 2
 int main(int argc, char *argv[])

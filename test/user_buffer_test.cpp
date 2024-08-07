@@ -15,7 +15,7 @@
 #include <functional>
 #include <boost/interprocess/managed_external_buffer.hpp>
 #include <boost/interprocess/managed_heap_memory.hpp>
-#include <boost/interprocess/containers/list.hpp>
+#include <boost/container/list.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/move/detail/type_traits.hpp>
 #include <boost/interprocess/allocators/node_allocator.hpp>
@@ -38,8 +38,8 @@ typedef node_allocator
    <int, wmanaged_heap_memory::segment_manager> heap_node_allocator_t;
 
 //Alias list types
-typedef list<int, user_node_allocator_t>    MyUserList;
-typedef list<int, heap_node_allocator_t>    MyHeapList;
+typedef boost::container::list<int, user_node_allocator_t>    MyUserList;
+typedef boost::container::list<int, heap_node_allocator_t>    MyHeapList;
 typedef std::list<int>                      MyStdList;
 
 //Function to check if both lists are equal

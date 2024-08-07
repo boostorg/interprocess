@@ -11,8 +11,8 @@
 #include <boost/interprocess/detail/workaround.hpp>
 //[doc_where_allocate
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/containers/vector.hpp>
-#include <boost/interprocess/containers/string.hpp>
+#include <boost/container/vector.hpp>
+#include <boost/container/string.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 //<-
 #include "../test/get_process_id_name.hpp"
@@ -24,11 +24,11 @@ int main ()
    //Typedefs
    typedef allocator<char, managed_shared_memory::segment_manager>
       CharAllocator;
-   typedef basic_string<char, std::char_traits<char>, CharAllocator>
+   typedef boost::container::basic_string<char, std::char_traits<char>, CharAllocator>
       MyShmString;
    typedef allocator<MyShmString, managed_shared_memory::segment_manager>
       StringAllocator;
-   typedef vector<MyShmString, StringAllocator>
+   typedef boost::container::vector<MyShmString, StringAllocator>
       MyShmStringVector;
 
    //Open shared memory

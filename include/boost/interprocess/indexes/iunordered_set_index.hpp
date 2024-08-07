@@ -24,7 +24,7 @@
 
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/interprocess/containers/vector.hpp>
+#include <boost/container/vector.hpp>
 #include <boost/intrusive/unordered_set.hpp>
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
 #include <boost/intrusive/detail/minimal_less_equal_header.hpp>   //std::less

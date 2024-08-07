@@ -10,7 +10,7 @@
 
 #include <boost/interprocess/detail/workaround.hpp>
 //[doc_cont
-#include <boost/interprocess/containers/vector.hpp>
+#include <boost/container/vector.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 //<-
@@ -39,7 +39,7 @@ int main ()
       ShmemAllocator;
 
    //Alias a vector that uses the previous STL-like allocator
-   typedef vector<int, ShmemAllocator> MyVector;
+   typedef boost::container::vector<int, ShmemAllocator> MyVector;
 
    int initVal[]        = {0, 1, 2, 3, 4, 5, 6 };
    const int *begVal    = initVal;
@@ -53,9 +53,9 @@ int main ()
    MyVector *myvector =
       segment.construct<MyVector>
          ("MyVector")/*object name*/
-         (begVal     /*first ctor parameter*/,
-         endVal     /*second ctor parameter*/,
-         alloc_inst /*third ctor parameter*/);
+         (begVal     /*first ctor parameter*/
+         ,endVal     /*second ctor parameter*/
+         ,alloc_inst /*third ctor parameter*/);
 
    //Use vector as your want
    std::sort(myvector->rbegin(), myvector->rend());

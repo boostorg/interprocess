@@ -12,7 +12,7 @@
 //[doc_multi_index
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/interprocess/containers/string.hpp>
+#include <boost/container/string.hpp>
 
 //<-
 //Shield against external warnings
@@ -32,7 +32,7 @@ using namespace boost::interprocess;
 namespace bmi = boost::multi_index;
 
 typedef managed_shared_memory::allocator<char>::type              char_allocator;
-typedef basic_string<char, std::char_traits<char>, char_allocator>shm_string;
+typedef boost::container::basic_string<char, std::char_traits<char>, char_allocator>shm_string;
 
 //Data to insert in shared memory
 struct employee

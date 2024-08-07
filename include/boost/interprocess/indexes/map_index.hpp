@@ -23,7 +23,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
-#include <boost/interprocess/containers/map.hpp>
+#include <boost/container/map.hpp>
 #include <boost/interprocess/allocators/private_adaptive_pool.hpp>
 #include <boost/intrusive/detail/minimal_pair_header.hpp>         //std::pair
 #include <boost/intrusive/detail/minimal_less_equal_header.hpp>   //std::less
@@ -50,7 +50,7 @@ struct map_index_aux
                typename MapConfig::
          segment_manager_base>                     allocator_type;
 
-   typedef boost::interprocess::map
+   typedef boost::container::map
       <key_type,  mapped_type,
        key_less, allocator_type>                   index_t;
 };

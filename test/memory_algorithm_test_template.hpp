@@ -13,7 +13,7 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 
-#include <boost/interprocess/containers/vector.hpp>
+#include <boost/container/vector.hpp>
 
 #include <vector>
 #include <iostream>
@@ -865,7 +865,7 @@ bool test_many_deallocation(Allocator &a)
 
    typedef typename Allocator::multiallocation_chain multiallocation_chain;
    const std::size_t ArraySize = 11;
-   vector<multiallocation_chain> buffers;
+   boost::container::vector<multiallocation_chain> buffers;
    typename Allocator::size_type requested_sizes[ArraySize];
    for(std::size_t i = 0; i < ArraySize; ++i){
       requested_sizes[i] = 4*i;

@@ -10,8 +10,8 @@
 
 #include <boost/interprocess/detail/workaround.hpp>
 //[doc_vectorstream
-#include <boost/interprocess/containers/vector.hpp>
-#include <boost/interprocess/containers/string.hpp>
+#include <boost/container/vector.hpp>
+#include <boost/container/string.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/streams/vectorstream.hpp>
@@ -26,8 +26,8 @@ typedef allocator<int, managed_shared_memory::segment_manager>
    IntAllocator;
 typedef allocator<char, managed_shared_memory::segment_manager>
    CharAllocator;
-typedef vector<int, IntAllocator>   MyVector;
-typedef basic_string
+typedef boost::container::vector<int, IntAllocator>   MyVector;
+typedef boost::container::basic_string
    <char, std::char_traits<char>, CharAllocator>   MyString;
 typedef basic_vectorstream<MyString>               MyVectorStream;
 

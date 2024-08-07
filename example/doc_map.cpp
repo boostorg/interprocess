@@ -11,7 +11,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 //[doc_map
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/containers/map.hpp>
+#include <boost/container/map.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <functional>
 #include <utility>
@@ -53,7 +53,7 @@ int main ()
    //Alias a map of ints that uses the previous STL-like allocator.
    //Note that the third parameter argument is the ordering function
    //of the map, just like with std::map, used to compare the keys.
-   typedef map<KeyType, MappedType, std::less<KeyType>, ShmemAllocator> MyMap;
+   typedef boost::container::map<KeyType, MappedType, std::less<KeyType>, ShmemAllocator> MyMap;
 
    //Initialize the shared memory STL-compatible allocator
    ShmemAllocator alloc_inst (segment.get_segment_manager());

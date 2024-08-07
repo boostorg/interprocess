@@ -22,7 +22,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 // interprocess
-#include <boost/interprocess/containers/flat_map.hpp>
+#include <boost/container/flat_map.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 // intrusive/detail
 #include <boost/intrusive/detail/minimal_pair_header.hpp>         //std::pair
@@ -50,8 +50,8 @@ struct flat_map_index_aux
    typedef std::pair<key_type, mapped_type>        value_type;
    typedef allocator<value_type
                     ,segment_manager_base>   allocator_type;
-   typedef flat_map<key_type,  mapped_type,
-                    key_less, allocator_type>      index_t;
+   typedef boost::container::flat_map<key_type,  mapped_type,
+                                      key_less, allocator_type>      index_t;
 };
 
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
