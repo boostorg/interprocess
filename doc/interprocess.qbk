@@ -6770,12 +6770,6 @@ thank them:
 * Deprecated `<boost/interprocess/containers/*.hpp>` headers. They were the original source of [*Boost.Container] in 2011, but no longer maintained.
   As a long transition, Boost.Interprocess has maintained those headers for compatibility. They will be removed in a future Boost release.
 
-[endsect]
-
-Bug in boost::interprocess::ipcdetail::sync_handles::obtain_mutex #210
-
-[section:release_notes_boost_1_87_00 Boost 1.87 Release]
-
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/210   GitHub #210 (['"Bug in boost::interprocess::ipcdetail::sync_handles::obtain_mutex"])].
    * [@https://github.com/boostorg/interprocess/issues/192   GitHub #192 (['"managed_windows_shared_memory crash on destruction"])].
