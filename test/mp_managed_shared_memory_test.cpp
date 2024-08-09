@@ -10,7 +10,7 @@
 
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
-#include <boost/interprocess/containers/list.hpp>
+#include <boost/container/list.hpp>
 #include <cstring>
 #include <cstdlib>
 #include <string>
@@ -29,7 +29,7 @@ struct shm_remove
 
 const std::size_t MemSize = 64u*1024u;
 
-typedef list<int, allocator<int, managed_shared_memory::segment_manager> >
+typedef boost::container::list<int, allocator<int, managed_shared_memory::segment_manager> >
    MyList;
 
 int main(int argc, char *argv[])

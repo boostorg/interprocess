@@ -114,7 +114,7 @@ int set_test ()
 
          MyShmSet *shmset3 =
             segment.template construct<MyShmSet>("MyShmSet3")
-               ( ordered_unique_range
+               (boost::container::ordered_unique_range
                , ::boost::make_move_iterator(&aux_vect[0])
                , ::boost::make_move_iterator(aux_vect + 50)
                , std::less<IntType>(), segment.get_segment_manager());
@@ -123,7 +123,7 @@ int set_test ()
 
          MyShmMultiSet *shmmultiset3 =
             segment.template construct<MyShmMultiSet>("MyShmMultiSet3")
-               ( ordered_range
+               (boost::container::ordered_range
                , ::boost::make_move_iterator(&aux_vect3[0])
                , ::boost::make_move_iterator(aux_vect3 + 50)
                , std::less<IntType>(), segment.get_segment_manager());

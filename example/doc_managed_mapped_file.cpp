@@ -11,7 +11,7 @@
 
 #if defined(BOOST_INTERPROCESS_MAPPED_FILES)
 
-#include <boost/interprocess/containers/list.hpp>
+#include <boost/container/list.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <cstddef>
@@ -22,7 +22,7 @@
 //->
 
 using namespace boost::interprocess;
-typedef list<int, allocator<int, managed_mapped_file::segment_manager> >
+typedef boost::container::list<int, allocator<int, managed_mapped_file::segment_manager> >
    MyList;
 
 int main ()

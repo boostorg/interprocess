@@ -13,7 +13,7 @@
 #if defined(BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS)
 
 #include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/interprocess/containers/vector.hpp>
+#include <boost/container/vector.hpp>
 #include <boost/interprocess/managed_xsi_shared_memory.hpp>
 #include <boost/interprocess/detail/file_wrapper.hpp>
 #include <boost/interprocess/file_mapping.hpp>
@@ -65,7 +65,7 @@ int main ()
    typedef allocator<int, managed_xsi_shared_memory::segment_manager>
       allocator_int_t;
    //A vector that uses that allocator
-   typedef boost::interprocess::vector<int, allocator_int_t> MyVect;
+   typedef boost::container::vector<int, allocator_int_t> MyVect;
 
    {
       //Remove the shmem it is already created

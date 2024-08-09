@@ -13,7 +13,7 @@
 #ifdef BOOST_INTERPROCESS_WINDOWS
 
 #include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/interprocess/containers/vector.hpp>
+#include <boost/container/vector.hpp>
 #include <boost/interprocess/managed_windows_shared_memory.hpp>
 #include <cstdio>
 #include <string>
@@ -30,7 +30,7 @@ int main ()
    typedef allocator<int, managed_windows_shared_memory::segment_manager>
       allocator_int_t;
    //A vector that uses that allocator
-   typedef boost::interprocess::vector<int, allocator_int_t> MyVect;
+   typedef boost::container::vector<int, allocator_int_t> MyVect;
 
    {
       const int max              = 100;

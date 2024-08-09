@@ -10,8 +10,8 @@
 
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/containers/vector.hpp>
-#include <boost/interprocess/containers/list.hpp>
+#include <boost/container/vector.hpp>
+#include <boost/container/list.hpp>
 #include <iostream>
 #include <functional>
 #include "print_container.hpp"
@@ -49,7 +49,7 @@ int main ()
          inst_allocator_t;
       const inst_allocator_t myallocator (segment.get_segment_manager());
 
-      typedef vector<InstanceCounter, inst_allocator_t> MyVect;
+      typedef boost::container::vector<InstanceCounter, inst_allocator_t> MyVect;
 
       //We'll provoke an exception, let's see if exception handling works
       BOOST_INTERPROCESS_TRY{

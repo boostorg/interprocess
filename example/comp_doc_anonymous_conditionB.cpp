@@ -15,6 +15,9 @@
 #include <iostream>
 #include <cstring>
 #include "doc_anonymous_condition_shared_data.hpp"
+//<-
+#include "../test/get_process_id_name.hpp"
+//->
 
 using namespace boost::interprocess;
 
@@ -23,7 +26,7 @@ int main ()
    //Create a shared memory object.
    shared_memory_object shm
       (open_only                    //only create
-      ,"MySharedMemory"              //name
+      , test::get_process_id_name() //name
       ,read_write                   //read-write mode
       );
 

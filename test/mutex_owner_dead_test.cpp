@@ -12,7 +12,6 @@
 
 //Robust mutex handling is only supported in conforming POSIX systems
 #if !defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) || !defined(BOOST_INTERPROCESS_POSIX_ROBUST_MUTEXES)
-
 int main()
 {
    return 0;
@@ -132,13 +131,13 @@ int main ()
 {
    using namespace boost::interprocess;
    int ret;
-   std::cerr << "Testing interprocess_mutex";
+   std::cerr << "Testing interprocess_mutex\n";
    ret = test::test_owner_dead_mutex<interprocess_mutex>();
    if (ret)
       return ret;
 
    #ifdef BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES
-   std::cerr << "Testing interprocess_recursive_mutex";
+   std::cerr << "Testing interprocess_recursive_mutex\n";
    ret = test::test_owner_dead_mutex<interprocess_recursive_mutex>();
    if (ret)
       return ret;

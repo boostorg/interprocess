@@ -46,6 +46,7 @@ doxygen autodoc
                                    \"BOOST_RV_REF_END=&&\" \\
                                    \"BOOST_FWD_REF(T)=T&&\" \\
                                    \"BOOST_INTERPROCESS_FORCEINLINE=inline\" \\
+                                   \"op_nullptr_t=std::nullptr_t\" \\
                                    "
 
         <xsl:param>"boost.doxygen.reftitle=Boost.Interprocess Header Reference"

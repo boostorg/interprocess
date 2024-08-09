@@ -14,7 +14,7 @@
 #include <list>
 
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/containers/deque.hpp>
+#include <boost/container/deque.hpp>
 #include <boost/interprocess/indexes/flat_map_index.hpp>
 #include "print_container.hpp"
 #include "check_equal_containers.hpp"
@@ -118,7 +118,7 @@ bool do_test()
       shmem_allocator_t;
 
    //Alias deque types
-   typedef deque<IntType, shmem_allocator_t>   MyShmDeque;
+   typedef boost::container::deque<IntType, shmem_allocator_t>   MyShmDeque;
    typedef std::deque<int>                     MyStdDeque;
    const int Memsize = 128u*1024u;
    const char *const shMemName = test::get_process_id_name();
@@ -302,7 +302,7 @@ int main ()
    const test::EmplaceOptions Options = (test::EmplaceOptions)(test::EMPLACE_BACK | test::EMPLACE_FRONT | test::EMPLACE_BEFORE);
 
    if(!boost::interprocess::test::test_emplace
-      < deque<test::EmplaceInt>, Options>())
+      < boost::container::deque<test::EmplaceInt>, Options>())
       return 1;
 
    return 0;

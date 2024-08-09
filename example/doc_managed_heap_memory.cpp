@@ -10,13 +10,13 @@
 
 #include <boost/interprocess/detail/workaround.hpp>
 //[doc_managed_heap_memory
-#include <boost/interprocess/containers/list.hpp>
+#include <boost/container/list.hpp>
 #include <boost/interprocess/managed_heap_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <cstddef>
 
 using namespace boost::interprocess;
-typedef list<int, allocator<int, managed_heap_memory::segment_manager> >
+typedef boost::container::list<int, allocator<int, managed_heap_memory::segment_manager> >
    MyList;
 
 int main ()
