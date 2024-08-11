@@ -93,34 +93,52 @@ bool test_allocate_deallocate(SegmentManager* seg_mgr, mapped_region& mapping)
 template <class SegmentManager>
 bool test_allocate_aligned(SegmentManager* seg_mgr, mapped_region& mapping)
 {
-   {//test get_free_memory() / allocate()/deallocate()
-      const std::size_t MappedRegionSize = mapping.get_size();
-      const std::size_t free_mem_before = seg_mgr->get_free_memory();
-      const std::size_t Alignment = 128u;
-      void *mem = seg_mgr->allocate_aligned(MappedRegionSize/4, Alignment);
+   const std::size_t MappedRegionSize = mapping.get_size();
+   const std::size_t free_mem_before = seg_mgr->get_free_memory();
+   const std::size_t InitialAlignment = SegmentManager::memory_algorithm::Alignment;
+   const std::size_t RegionAlignment = mapped_region::get_page_size();
+
+   for( std::size_t alignment = InitialAlignment
+      ; (alignment <= MappedRegionSize/4 || alignment <= RegionAlignment/2)
+      ; alignment <<= 1u) {
+
+      //Allocate two buffers and test the alignment inside the mapped region
+      void *mem = seg_mgr->allocate_aligned(MappedRegionSize/8, alignment);
       if(seg_mgr->all_memory_deallocated())
          return false;
+
       std::size_t offset = static_cast<std::size_t>
          (static_cast<const char *>(mem) -  static_cast<const char *>(mapping.get_address()));
-      if(offset & (Alignment-1))
+      if(offset & (alignment -1))
          return false;
-      void *mem2 = seg_mgr->allocate_aligned(MappedRegionSize/4, Alignment, std::nothrow);
+      void *mem2 = seg_mgr->allocate_aligned(MappedRegionSize/4, alignment, std::nothrow);
       std::size_t offset2 = static_cast<std::size_t>
          (static_cast<const char *>(mem2) -  static_cast<const char *>(mapping.get_address()));
-      if(offset2 & (Alignment-1))
+      if(offset2 & (alignment -1))
          return false;
+
+      //Deallocate them
       seg_mgr->deallocate(mem);
       seg_mgr->deallocate(mem2);
       if(!seg_mgr->all_memory_deallocated())
          return false;
       if(seg_mgr->get_free_memory() != free_mem_before)
          return false;
-      BOOST_INTERPROCESS_TRY{  seg_mgr->allocate_aligned(MappedRegionSize*2, Alignment);  }
-      BOOST_INTERPROCESS_CATCH(interprocess_exception&){}
+
+      //Try an imposible size to test error is signalled
+      bool allocate_aligned_throws = false;
+      BOOST_INTERPROCESS_TRY{  seg_mgr->allocate_aligned(MappedRegionSize*2, alignment);  }
+      BOOST_INTERPROCESS_CATCH(interprocess_exception&){ allocate_aligned_throws = true; }
       BOOST_INTERPROCESS_CATCH_END
+      if (!allocate_aligned_throws)
+         return false;
+
+      if (seg_mgr->allocate_aligned(MappedRegionSize*2, alignment, std::nothrow))
+         return false;
+
       if(seg_mgr->get_free_memory() != free_mem_before)
          return false;
-      if(seg_mgr->allocate_aligned(MappedRegionSize*2, Alignment, std::nothrow))
+      if(seg_mgr->allocate_aligned(MappedRegionSize*2, alignment, std::nothrow))
          return false;
       if(seg_mgr->get_free_memory() != free_mem_before)
          return false;
@@ -511,6 +529,9 @@ bool test_segment_manager()
    shared_memory_object sh_mem( create_only, shmname.c_str(), read_write );
    sh_mem.truncate( MappedRegionSize );
    mapped_region mapping( sh_mem, read_write );
+
+   //Remove shared memory to minimize risk of garbage on crash
+   shared_memory_object::remove(shmname.c_str());
 
    SegmentManager* seg_mgr = new( mapping.get_address() ) SegmentManager( MappedRegionSize );
    std::size_t size_before = seg_mgr->get_size();
