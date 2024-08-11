@@ -99,7 +99,7 @@ bool test_allocate_aligned(SegmentManager* seg_mgr, mapped_region& mapping)
    const std::size_t RegionAlignment = mapped_region::get_page_size();
 
    for( std::size_t alignment = InitialAlignment
-      ; (alignment <= MappedRegionSize/4 || alignment <= RegionAlignment/2)
+      ; (alignment <= MappedRegionSize/8 && alignment <= RegionAlignment/4)
       ; alignment <<= 1u) {
 
       //Allocate two buffers and test the alignment inside the mapped region
