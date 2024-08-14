@@ -38,9 +38,9 @@ struct in_place_interface
    :  alignment(alignm), size(sz), type_name(tname)
    {}
 
-   std::size_t alignment;
-   std::size_t size;
-   const char *type_name;
+   const std::size_t alignment;
+   const std::size_t size;
+   const char * const type_name;
 
    virtual void construct_n(void *mem, std::size_t num) = 0;
    virtual void destroy_n(void *mem, std::size_t num) = 0;
