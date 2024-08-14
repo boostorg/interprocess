@@ -180,14 +180,19 @@ class rbtree_best_fit
 
    //Functions for single segment management
 
-   //!Allocates bytes, returns 0 if there is not more memory
+   //!Allocates bytes, returns 0 if there is not more memory.
+   //!Returned memory is aligned to Alignment bytes.
    void* allocate             (size_type nbytes);
+
+   //!Deallocates previously allocated bytes
+   void   deallocate(void* addr);
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //Experimental. Dont' use
 
    //!Multiple element allocation, same size
+   //!Experimental. Dont' use
    void allocate_many(size_type elem_bytes, size_type num_elements, multiallocation_chain &chain)
    {
       //-----------------------
@@ -197,6 +202,7 @@ class rbtree_best_fit
    }
 
    //!Multiple element allocation, different size
+   //!Experimental. Dont' use
    void allocate_many(const size_type *elem_sizes, size_type n_elements, size_type sizeof_element, multiallocation_chain &chain)
    {
       //-----------------------
@@ -206,12 +212,18 @@ class rbtree_best_fit
    }
 
    //!Multiple element allocation, different size
+   //!Experimental. Dont' use
    void deallocate_many(multiallocation_chain &chain);
 
-   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
+   template<class T>
+   T* allocation_command(boost::interprocess::allocation_type command, size_type limit_size,
+      size_type& prefer_in_recvd_out_size, T*& reuse);
 
-   //!Deallocates previously allocated bytes
-   void   deallocate          (void *addr);
+   void* raw_allocation_command(boost::interprocess::allocation_type command, size_type limit_object,
+      size_type& prefer_in_recvd_out_size,
+      void*& reuse_ptr, size_type sizeof_object = 1);
+
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    //!Returns the size of the memory segment
    size_type get_size()  const;
@@ -236,14 +248,6 @@ class rbtree_best_fit
    //!Makes an internal sanity check
    //!and returns true if success
    bool check_sanity();
-
-   template<class T>
-   T * allocation_command  (boost::interprocess::allocation_type command, size_type limit_size,
-                           size_type &prefer_in_recvd_out_size, T *&reuse);
-
-   void * raw_allocation_command (boost::interprocess::allocation_type command,   size_type limit_object,
-                              size_type &prefer_in_recvd_out_size,
-                              void *&reuse_ptr, size_type sizeof_object = 1);
 
    //!Returns the size of the buffer previously allocated pointed by ptr
    size_type size(const void *ptr) const;

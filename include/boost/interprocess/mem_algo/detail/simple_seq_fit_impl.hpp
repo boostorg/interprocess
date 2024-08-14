@@ -146,7 +146,15 @@ class simple_seq_fit_impl
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
+   template<class T>
+   T *allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
+                           size_type &prefer_in_recvd_out_size, T *&reuse);
+
+   void * raw_allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
+                               size_type &prefer_in_recvd_out_size, void *&reuse_ptr, size_type sizeof_object = 1);
+
    //!Multiple element allocation, same size
+   //!Experimental. Dont' use
    void allocate_many(size_type elem_bytes, size_type num_elements, multiallocation_chain &chain)
    {
       //-----------------------
@@ -156,6 +164,7 @@ class simple_seq_fit_impl
    }
 
    //!Multiple element allocation, different size
+   //!Experimental. Dont' use
    void allocate_many(const size_type *elem_sizes, size_type n_elements, size_type sizeof_element, multiallocation_chain &chain)
    {
       //-----------------------
@@ -165,6 +174,7 @@ class simple_seq_fit_impl
    }
 
    //!Multiple element deallocation
+   //!Experimental. Dont' use
    void deallocate_many(multiallocation_chain &chain);
 
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
@@ -193,13 +203,6 @@ class simple_seq_fit_impl
    //!Initializes to zero all the memory that's not in use.
    //!This function is normally used for security reasons.
    void zero_free_memory();
-
-   template<class T>
-   T *allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
-                           size_type &prefer_in_recvd_out_size, T *&reuse);
-
-   void * raw_allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
-                               size_type &prefer_in_recvd_out_size, void *&reuse_ptr, size_type sizeof_object = 1);
 
    //!Returns the size of the buffer previously allocated pointed by ptr
    size_type size(const void *ptr) const;
