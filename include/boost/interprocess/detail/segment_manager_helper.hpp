@@ -472,6 +472,16 @@ struct segment_manager_iterator_transform
    {  return result_type(arg); }
 };
 
+
+template<class T>
+inline T* null_or_bad_alloc(bool dothrow)
+{
+   if (dothrow)
+      throw bad_alloc();
+   else
+      return 0;
+}
+
 }  //namespace ipcdetail {
 
 //These pointers are the ones the user will use to

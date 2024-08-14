@@ -286,13 +286,8 @@ class segment_manager_base
 
       //Check if there is enough memory
       if(!ptr_struct){
-         if(dothrow){
-            throw bad_alloc();
+         return ipcdetail::null_or_bad_alloc<void>(dothrow);
          }
-         else{
-            return 0;
-         }
-      }
 
       //Build scoped ptr to avoid leaks with constructor exception
       ipcdetail::mem_algo_deallocator<MemoryAlgorithm> mem(ptr_struct, *this);
@@ -322,10 +317,8 @@ class segment_manager_base
       //scoped_lock<rmutex> guard(m_header);
       //-------------------------------
 
-      if(ctrl_data->alloc_type() != anonymous_type){
          //This is not an anonymous object, the pointer is wrong!
-         BOOST_ASSERT(0);
-      }
+      BOOST_ASSERT(ctrl_data->alloc_type() == anonymous_type);
 
       //Call destructors and free memory
       //Build scoped ptr to avoid leaks with destructor exception
@@ -759,10 +752,7 @@ class segment_manager
       void *ret;
       //Security overflow check
       if(num > ((std::size_t)-1)/table.size){
-         if(dothrow)
-            throw bad_alloc();
-         else
-            return 0;
+         return ipcdetail::null_or_bad_alloc<void>(dothrow);
       }
       if(name == 0){
          ret = this->prot_anonymous_construct(num, dothrow, table);
