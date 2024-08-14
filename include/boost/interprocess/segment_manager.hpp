@@ -281,10 +281,8 @@ class segment_manager_base
                                  , 1
                                  , 0);
 
-      //Allocate memory
-      void *ptr_struct = this->allocate(block_info.total_size(), nothrow<>::get());
-
       //Check if there is enough memory
+      void *ptr_struct = this->allocate_aligned(block_info.total_size(), table.alignment, nothrow<>::get());
       if(!ptr_struct){
          return ipcdetail::null_or_bad_alloc<void>(dothrow);
          }
