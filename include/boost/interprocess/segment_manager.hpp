@@ -285,7 +285,7 @@ class segment_manager_base
       void *ptr_struct = this->allocate_aligned(block_info.total_size(), table.alignment, nothrow<>::get());
       if(!ptr_struct){
          return ipcdetail::null_or_bad_alloc<void>(dothrow);
-         }
+      }
 
       //Build scoped ptr to avoid leaks with constructor exception
       ipcdetail::mem_algo_deallocator<MemoryAlgorithm> mem(ptr_struct, *this);
@@ -298,7 +298,7 @@ class segment_manager_base
       //Now call constructors
       table.construct_n(ptr, num);
 
-      //All constructors successful, we don't want erase memory
+      //All constructors successful, disable rollback
       mem.release();
       return ptr;
    }
@@ -315,7 +315,7 @@ class segment_manager_base
       //scoped_lock<rmutex> guard(m_header);
       //-------------------------------
 
-         //This is not an anonymous object, the pointer is wrong!
+      //This is not an anonymous object, the pointer is wrong!
       BOOST_ASSERT(ctrl_data->alloc_type() == anonymous_type);
 
       //Call destructors and free memory
@@ -1061,7 +1061,7 @@ class segment_manager
       IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index, ipcdetail::true_ is_intrusive)
    {
       (void)is_intrusive;
-     std::size_t namelen  = std::char_traits<CharT>::length(name);
+      std::size_t namelen  = std::char_traits<CharT>::length(name);
 
       block_header_t block_info ( size_type(table.size*num)
                                  , size_type(table.alignment)
@@ -1112,34 +1112,21 @@ class segment_manager
          if(try2find){
             return it->get_block_header()->value();
          }
-         if(dothrow){
-            throw interprocess_exception(already_exists_error);
-         }
-         else{
-            return 0;
-         }
+         return ipcdetail::null_or_already_exists<void>(dothrow);
       }
 
       //Allocates buffer for name + data, this can throw (it hurts)
-      void *buffer_ptr;
+      void *buffer_ptr = this->allocate
+            (block_info.template total_size_with_header<intrusive_value_type>(), nothrow<>::get());
 
       //Check if there is enough memory
-      if(dothrow){
-         buffer_ptr = this->allocate
-            (block_info.template total_size_with_header<intrusive_value_type>());
-      }
-      else{
-         buffer_ptr = this->allocate
-            (block_info.template total_size_with_header<intrusive_value_type>(), nothrow<>::get());
-         if(!buffer_ptr)
-            return 0;
-      }
+      if (!buffer_ptr)
+         return ipcdetail::null_or_bad_alloc<void>(dothrow);
 
       //Now construct the intrusive hook plus the header
       intrusive_value_type * intrusive_hdr = ::new(buffer_ptr, boost_container_new_t()) intrusive_value_type();
-      block_header_t * hdr = ::new(intrusive_hdr->get_block_header(), boost_container_new_t())block_header_t(block_info);
-      void *ptr = 0; //avoid gcc warning
-      ptr = hdr->value();
+      block_header_t * hdr = ::new(intrusive_hdr->get_block_header(), boost_container_new_t()) block_header_t(block_info);
+      void *ptr = hdr->value();
 
       //Copy name to memory segment and insert data
       CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
@@ -1229,15 +1216,13 @@ class segment_manager
 
       index_it it = insert_ret.first;
 
-      //If found and this is find or construct, return data
-      //else return null
+      //If found and this is find or construct, return data, error otherwise
       if(!insert_ret.second){
          if(try2find){
-            block_header_t *hdr = static_cast<block_header_t*>
-               (ipcdetail::to_raw_pointer(it->second.m_ptr));
+            block_header_t *hdr = static_cast<block_header_t*>(ipcdetail::to_raw_pointer(it->second.m_ptr));
             return hdr->value();
          }
-         return 0;
+         return ipcdetail::null_or_already_exists<void>(dothrow);
       }
       //Initialize the node value_eraser to erase inserted node
       //if something goes wrong
@@ -1248,34 +1233,24 @@ class segment_manager
       block_header_t * hdr;
 
       //Allocate and construct the headers
-      if(is_node_index_t::value){
+      BOOST_IF_CONSTEXPR(is_node_index_t::value){
          size_type total_size = block_info.template total_size_with_header<index_it>();
-         if(dothrow){
-            buffer_ptr = this->allocate(total_size);
-         }
-         else{
-            buffer_ptr = this->allocate(total_size, nothrow<>::get());
-            if(!buffer_ptr)
-               return 0;
-         }
+         buffer_ptr = this->allocate(total_size, nothrow<>::get());
+         if(!buffer_ptr)
+            return ipcdetail::null_or_bad_alloc<void>(dothrow);
          index_it *idr = ::new(buffer_ptr, boost_container_new_t()) index_it(it);
          hdr = block_header_t::template from_first_header<index_it>(idr);
       }
       else{
-         if(dothrow){
-            buffer_ptr = this->allocate(block_info.total_size());
-         }
-         else{
-            buffer_ptr = this->allocate(block_info.total_size(), nothrow<>::get());
-            if(!buffer_ptr)
-               return 0;
-         }
+         buffer_ptr = this->allocate(block_info.total_size(), nothrow<>::get());
+         //Check if there is enough memory
+         if (!buffer_ptr)
+            return ipcdetail::null_or_bad_alloc<void>(dothrow);
          hdr = static_cast<block_header_t*>(buffer_ptr);
       }
 
-      hdr = ::new(hdr, boost_container_new_t())block_header_t(block_info);
-      void *ptr = 0; //avoid gcc warning
-      ptr = hdr->value();
+      hdr = ::new(hdr, boost_container_new_t()) block_header_t(block_info);
+      void *ptr = hdr->value();
 
       //Copy name to memory segment and insert data
       CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
