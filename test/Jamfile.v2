@@ -18,7 +18,6 @@
 project : requirements
     <library>/boost/interprocess//boost_interprocess
     <library>/boost/date_time//boost_date_time
-    <library>/boost/multi_index//boost_multi_index
     <toolset>acc:<linkflags>-lrt
     <toolset>acc-pa_risc:<linkflags>-lrt
     <toolset>gcc,<target-os>windows:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
