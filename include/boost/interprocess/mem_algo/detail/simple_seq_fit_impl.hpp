@@ -280,8 +280,6 @@ class simple_seq_fit_impl
    private:
    static const size_type BlockCtrlBytes = ipcdetail::ct_rounded_size<sizeof(block_ctrl), Alignment>::value;
    static const size_type BlockCtrlUnits = BlockCtrlBytes/Alignment;
-   static const size_type MinBlockUnits  = BlockCtrlUnits;
-   static const size_type MinBlockSize   = MinBlockUnits*Alignment;
    static const size_type AllocatedCtrlBytes = BlockCtrlBytes;
    static const size_type AllocatedCtrlUnits = BlockCtrlUnits;
    static const size_type UsableByPreviousChunk = 0;
@@ -359,7 +357,7 @@ inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::grow(size_type extra_
    m_header.m_size += extra_size;
 
    //We need at least MinBlockSize blocks to create a new block
-   if((m_header.m_size - old_end) < MinBlockSize){
+   if((m_header.m_size - old_end) < BlockCtrlBytes){
       return;
    }
 
@@ -460,8 +458,8 @@ inline void simple_seq_fit_impl<MutexFamily, VoidPointer>::priv_add_segment(void
 {
    algo_impl_t::assert_alignment(addr);
    //Check size
-   BOOST_ASSERT(!(segment_size < MinBlockSize));
-   if(segment_size < MinBlockSize)
+   BOOST_ASSERT(!(segment_size < BlockCtrlBytes));
+   if(segment_size < BlockCtrlBytes)
       return;
    //Construct big block using the new segment
    block_ctrl *new_block   = static_cast<block_ctrl *>(addr);
@@ -493,7 +491,7 @@ simple_seq_fit_impl<MutexFamily, VoidPointer>::
 {
    return ipcdetail::get_rounded_size((size_type)sizeof(simple_seq_fit_impl),Alignment) +
           ipcdetail::get_rounded_size(extra_hdr_bytes,Alignment)
-          + MinBlockSize;
+          + BlockCtrlBytes;
 }
 
 template<class MutexFamily, class VoidPointer>

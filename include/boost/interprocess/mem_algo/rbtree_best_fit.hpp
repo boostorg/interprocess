@@ -108,9 +108,12 @@ class rbtree_best_fit
    struct SizeHolder
    {
       static const size_type size_mask = size_type(-1) >> 2;
+      //!Previous block's memory size (including block_ctrl
+      //!header) in Alignment units. This field (UsableByPreviousChunk bytes)
+      //!is OVERWRITTEN by the previous block if allocated (m_prev_allocated)
+      size_type m_prev_size;
       //!This block's memory size (including block_ctrl
       //!header) in Alignment units
-      size_type m_prev_size;
       size_type m_size      :  sizeof(size_type)*CHAR_BIT - 2;
       size_type m_prev_allocated :  1;
       size_type m_allocated :  1;
@@ -118,15 +121,22 @@ class rbtree_best_fit
 
    //!Block control structure
    struct block_ctrl
-      :  public SizeHolder, public TreeHook
+      :  public SizeHolder
+      //This tree hook is overwritten when this block is used
+      , public TreeHook
    {
       block_ctrl()
-      {  this->m_size = 0; this->m_allocated = 0, this->m_prev_allocated = 0;  }
+      {
+         this->SizeHolder::m_size = 0;
+         this->SizeHolder::m_allocated = 0;
+         this->SizeHolder::m_prev_allocated = 0;
+      }
 
       friend bool operator<(const block_ctrl &a, const block_ctrl &b)
-      {  return a.m_size < b.m_size;  }
+      {  return a.SizeHolder::m_size < b.SizeHolder::m_size;  }
+
       friend bool operator==(const block_ctrl &a, const block_ctrl &b)
-      {  return a.m_size == b.m_size;  }
+      {  return a.SizeHolder::m_size == b.SizeHolder::m_size;  }
    };
 
    struct size_block_ctrl_compare
@@ -353,7 +363,6 @@ class rbtree_best_fit
    static const size_type AllocatedCtrlUnits  = AllocatedCtrlBytes/Alignment;
    static const size_type EndCtrlBlockBytes   = ipcdetail::ct_rounded_size<sizeof(SizeHolder), Alignment>::value;
    static const size_type EndCtrlBlockUnits   = EndCtrlBlockBytes/Alignment;
-   static const size_type MinBlockUnits       = BlockCtrlUnits;
    static const size_type UsableByPreviousChunk   = sizeof(size_type);
 
    //Make sure the maximum alignment is power of two
@@ -401,7 +410,7 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    priv_mark_as_free_block (first_big_block);
    #ifdef BOOST_INTERPROCESS_RBTREE_BEST_FIT_ABI_V1_HPP
    first_big_block->m_prev_size = end_block->m_size =
-      size_type(reinterpret_cast<char*>(first_big_block) - reinterpret_cast<char*>(end_block))/Alignmen) & block_ctrl::size_mask;
+      size_type(reinterpret_cast<char*>(first_big_block) - reinterpret_cast<char*>(end_block))/Alignment) & block_ctrl::size_mask;
    #else
    first_big_block->m_prev_size = end_block->m_size =
       size_type(reinterpret_cast<char*>(end_block) - reinterpret_cast<char*>(first_big_block))/Alignment & block_ctrl::size_mask;
@@ -481,8 +490,8 @@ void rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::grow(size_type ext
    //Update managed buffer's size
    m_header.m_size += extra_size;
 
-   //We need at least MinBlockUnits blocks to create a new block
-   if((m_header.m_size - old_border_offset) < MinBlockUnits){
+   //We need at least BlockCtrlBytes blocks to create a new block
+   if((m_header.m_size - old_border_offset) < BlockCtrlBytes){
       return;
    }
 
@@ -614,7 +623,7 @@ rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
 {
    return (algo_impl_t::ceil_units(sizeof(rbtree_best_fit)) +
            algo_impl_t::ceil_units(extra_hdr_bytes) +
-           MinBlockUnits + EndCtrlBlockUnits)*Alignment;
+           BlockCtrlUnits + EndCtrlBlockUnits)*Alignment;
 }
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
