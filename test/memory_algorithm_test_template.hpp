@@ -417,6 +417,7 @@ bool test_aligned_allocation(Allocator &a)
 
          if(((std::size_t)ptr & (j - 1)) != 0)
             return false;
+         std::memset(ptr, 0xFF, i - 1);
          a.deallocate(ptr);
          if(!a.all_memory_deallocated() || !a.check_sanity()){
             return false;
