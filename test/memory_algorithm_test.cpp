@@ -83,6 +83,9 @@ int main ()
    if(test_rbtree_best_fit<4*void_ptr_align>()){
       return 1;
    }
+   if (test_rbtree_best_fit<8*void_ptr_align>()) {
+      return 1;
+   }
 
    return 0;
 }
