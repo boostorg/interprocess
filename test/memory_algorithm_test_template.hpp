@@ -92,15 +92,17 @@ template<class Allocator>
 bool test_allocation_shrink(Allocator &a)
 {
    std::vector<void*> buffers;
+   std::vector<std::size_t> sizes;
 
    //Allocate buffers with extra memory
    for(std::size_t i = 0; true; ++i){
       void *ptr = a.allocate(i*2, std::nothrow);
       if(!ptr)
          break;
-     std::size_t size = a.size(ptr);
+      std::size_t size = a.size(ptr);
       std::memset(ptr, 0, size);
       buffers.push_back(ptr);
+      sizes.push_back(size);
    }
 
    //Now shrink to half
@@ -110,15 +112,20 @@ bool test_allocation_shrink(Allocator &a)
       typename Allocator::size_type received_size;
       char *reuse = static_cast<char*>(buffers[i]);
       if(a.template allocation_command<char>
-         ( boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, i*2
+         ( boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, sizes[i]
          , received_size = i, reuse)){
-         if(received_size > std::size_t(i*2)){
+         if(received_size > sizes[i]){
             return false;
          }
          if(received_size < std::size_t(i)){
             return false;
          }
-       std::memset(buffers[i], 0, a.size(buffers[i]));
+         const std::size_t sz = a.size(buffers[i]);
+         if (received_size != sz) {
+            return false;
+         }
+
+         std::memset(buffers[i], 0, sz);
       }
    }
 
