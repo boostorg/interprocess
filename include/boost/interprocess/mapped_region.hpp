@@ -477,7 +477,7 @@ inline mapped_region::mapped_region
                                  (native_mapping_handle,
                                  map_access,
                                  ::boost::ulong_long_type(offset - page_offset),
-                                 static_cast<std::size_t>(page_offset + size),
+                                 static_cast<std::size_t>(page_offset) + size,
                                  const_cast<void*>(address));
       //Check error
       if(!base){

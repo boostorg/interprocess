@@ -126,11 +126,11 @@ inline bool get_temporary_path(char *buffer, std::size_t buf_len, std::size_t &r
    required_len = 0;
    //std::size_t is always bigger or equal than unsigned long in Windows systems
    //In case std::size_t is bigger than unsigned long
-   unsigned long buf = buf_len;
-   if(buf_len != buf){   //maybe overflowed
+   unsigned long ulbuflen = static_cast<unsigned long>(buf_len); //Potentially losing convertion in 64 bits
+   if(buf_len != ulbuflen){   //maybe overflowed
       return false;
    }
-   required_len = winapi::get_temp_path(buf_len, buffer);
+   required_len = winapi::get_temp_path(ulbuflen, buffer);
    const bool ret = required_len && (buf_len > required_len);
    if(ret && buffer[required_len-1] == '\\'){
       buffer[required_len-1] = '\0';
@@ -143,11 +143,11 @@ inline bool get_temporary_path(wchar_t *buffer, std::size_t buf_len, std::size_t
    required_len = 0;
    //std::size_t is always bigger or equal than unsigned long in Windows systems
    //In case std::size_t is bigger than unsigned long
-   unsigned long buf = buf_len;
-   if(buf_len != buf){   //maybe overflowed
+   unsigned long ulbuflen = static_cast<unsigned long>(buf_len); //Potentially losing convertion in 64 bits
+   if(buf_len != ulbuflen){   //maybe overflowed
       return false;
    }
-   required_len = winapi::get_temp_path(buf_len, buffer);
+   required_len = winapi::get_temp_path(ulbuflen, buffer);
    const bool ret = !(buf_len < required_len);
    if(ret && buffer[required_len-1] == L'\\'){
       buffer[required_len-1] = L'\0';
@@ -225,7 +225,7 @@ inline bool truncate_file (file_handle_t hnd, std::size_t size)
       }
    }
    else{
-      if(!winapi::set_file_pointer(hnd, size, 0, winapi::file_begin)){
+      if(!winapi::set_file_pointer(hnd, static_cast<unsigned long>(size), 0, winapi::file_begin)){
          return false;
       }
       if(!winapi::set_end_of_file(hnd)){
