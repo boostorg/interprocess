@@ -450,8 +450,8 @@ inline void thread_sleep_tick()
 inline void thread_sleep_ms(unsigned int ms)
 {
    struct timespec rqt;
-   rqt.tv_sec = ms/1000u;
-   rqt.tv_nsec = (ms%1000u)*1000000u;
+   rqt.tv_sec = static_cast<time_t>(ms/1000u);
+   rqt.tv_nsec = static_cast<long int>((ms%1000u)*1000000u);
 
    struct timespec rmn;
    while (0 != ::nanosleep(&rqt, &rmn) && errno == EINTR) {
