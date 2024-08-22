@@ -730,7 +730,7 @@ inline bool delete_subdirectories_recursive
    struct dir_close
    {
       DIR *d_;
-      dir_close(DIR *d) : d_(d) {}
+      dir_close(DIR *dirp) : d_(dirp) {}
       ~dir_close() { ::closedir(d_); }
    } dc(d); (void)dc;
 
