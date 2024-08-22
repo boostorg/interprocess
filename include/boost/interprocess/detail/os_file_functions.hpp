@@ -779,7 +779,7 @@ inline bool for_each_file_in_dir(const char *dir, Function f)
    struct dir_close
    {
       DIR *d_;
-      dir_close(DIR *d) : d_(d) {}
+      dir_close(DIR *dirp) : d_(dirp) {}
       ~dir_close() { ::closedir(d_); }
    } dc(d); (void)dc;
 
