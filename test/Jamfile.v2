@@ -18,13 +18,15 @@
 project : requirements
     <library>/boost/interprocess//boost_interprocess
     <library>/boost/date_time//boost_date_time
+    <library>/boost/chrono//boost_chrono
     <toolset>acc:<linkflags>-lrt
     <toolset>acc-pa_risc:<linkflags>-lrt
     <toolset>gcc,<target-os>windows:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
     <target-os>hpux,<toolset>gcc:<linkflags>"-Wl,+as,mpas"
     <target-os>windows,<toolset>clang:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
     <target-os>linux:<linkflags>"-lrt"
-    <library>/boost/chrono//boost_chrono
+    #cygwin with -std=c++XX does not include POSIX
+    <target-os>cygwin:<define>_XOPEN_SOURCE=600
     ;
 
 rule test_all
@@ -40,3 +42,4 @@ rule test_all
 }
 
 test-suite interprocess_test : [ test_all r ] : <threading>multi ;
+;

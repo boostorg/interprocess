@@ -115,9 +115,13 @@ inline bool semaphore_open
 inline void semaphore_close(sem_t *handle)
 {
    int ret = sem_close(handle);
-   if(ret != 0){
-      BOOST_ASSERT(0);
-   }
+   #ifdef __CYGWIN__
+   //Cygwin returns EINVAL in some valid use cases
+   if (ret == -1 && errno == EINVAL)
+      ret = 0;
+   #endif
+   BOOST_ASSERT(ret == 0);
+   (void)ret;
 }
 
 inline bool semaphore_unlink(const char *semname)
