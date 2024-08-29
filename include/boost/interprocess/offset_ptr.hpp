@@ -24,6 +24,7 @@
 #include <boost/move/detail/type_traits.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
+#include <boost/interprocess/interprocess_printers.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/cast_tags.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
