@@ -268,62 +268,6 @@ class segment_manager_base
    //!Returns the size of the buffer previously allocated pointed by ptr
    size_type size(const void *ptr) const
    {   return MemoryAlgorithm::size(ptr); }
-
-   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
-   protected:
-   void * prot_anonymous_construct
-      (size_type num, bool dothrow, ipcdetail::in_place_interface &table)
-   {
-      typedef ipcdetail::block_header<size_type> block_header_t;
-      block_header_t block_info (  size_type(table.size*num)
-                                 , size_type(table.alignment)
-                                 , anonymous_type
-                                 , 1
-                                 , 0);
-
-      //Check if there is enough memory
-      void *ptr_struct = this->allocate_aligned(block_info.total_size(), table.alignment, nothrow<>::get());
-      if(!ptr_struct){
-         return ipcdetail::null_or_bad_alloc<void>(dothrow);
-      }
-
-      //Build scoped ptr to avoid leaks with constructor exception
-      ipcdetail::mem_algo_deallocator<MemoryAlgorithm> mem(ptr_struct, *this);
-
-      //Now construct the header
-      block_header_t * hdr = ::new(ptr_struct, boost_container_new_t()) block_header_t(block_info);
-      void *ptr = 0; //avoid gcc warning
-      ptr = hdr->value();
-
-      //Now call constructors
-      table.construct_n(ptr, num);
-
-      //All constructors successful, disable rollback
-      mem.release();
-      return ptr;
-   }
-
-   //!Calls the destructor and makes an anonymous deallocate
-   void prot_anonymous_destroy(const void *object, ipcdetail::in_place_interface &table)
-   {
-
-      //Get control data from associated with this object
-      typedef ipcdetail::block_header<size_type> block_header_t;
-      block_header_t *ctrl_data = block_header_t::block_header_from_value(object, table.size, table.alignment);
-
-      //-------------------------------
-      //scoped_lock<rmutex> guard(m_header);
-      //-------------------------------
-
-      //This is not an anonymous object, the pointer is wrong!
-      BOOST_ASSERT(ctrl_data->alloc_type() == anonymous_type);
-
-      //Call destructors and free memory
-      //Build scoped ptr to avoid leaks with destructor exception
-      table.destroy_n(const_cast<void*>(object), ctrl_data->m_value_bytes/table.size);
-      this->deallocate(ctrl_data);
-   }
-   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 //!This object is placed in the beginning of memory segment and
@@ -533,15 +477,14 @@ class segment_manager
    bool destroy(char_ptr_holder_t name)
    {
       BOOST_ASSERT(!name.is_anonymous());
-      ipcdetail::placement_destroy<T> dtor;
 
       if(name.is_unique()){
-         return this->priv_generic_named_destroy<char>
-            ( typeid(T).name(), m_header.m_unique_index , dtor, is_intrusive_t());
+         return this->priv_generic_named_destroy<T, char>
+            ( typeid(T).name(), m_header.m_unique_index, is_intrusive_t());
       }
       else{
-         return this->priv_generic_named_destroy<CharType>
-            ( name.get(), m_header.m_named_index, dtor, is_intrusive_t());
+         return this->priv_generic_named_destroy<T, CharType>
+            ( name.get(), m_header.m_named_index, is_intrusive_t());
       }
    }
 
@@ -550,10 +493,7 @@ class segment_manager
    template <class T>
    void destroy_ptr(const T *p)
    {
-      //If T is void transform it to char
-      typedef typename ipcdetail::char_if_void<T>::type data_t;
-      ipcdetail::placement_destroy<data_t> dtor;
-      priv_destroy_ptr(p, dtor);
+      priv_destroy_ptr(p);
    }
 
    //!Returns the name of an object created with construct/find_or_construct
@@ -699,15 +639,27 @@ class segment_manager
    //!Generic named/anonymous new function. Offers all the possibilities,
    //!such as throwing, search before creating, and the constructor is
    //!encapsulated in an object function.
-   template<class T>
-   T *generic_construct(const CharType *name,
-                        size_type num,
-                         bool try2find,
-                         bool dothrow,
-                         ipcdetail::in_place_interface &table)
+   template<class Proxy>
+   typename Proxy::object_type * generic_construct
+      (Proxy& pr, const CharType *name, size_type num, bool try2find, bool dothrow)
    {
-      return static_cast<T*>
-         (priv_generic_construct(name, num, try2find, dothrow, table));
+      typedef typename Proxy::object_type object_type;
+
+      //Security overflow check
+      if(num > ((size_type)-1)/sizeof(object_type)){
+         return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
+      }
+      if(name == 0){
+         return this->priv_anonymous_construct(pr, num, dothrow);
+      }
+      else if(name == reinterpret_cast<const CharType*>(-1)){
+         return this->priv_generic_named_construct
+            (pr, unique_type, typeid(object_type).name(), num, try2find, dothrow, m_header.m_unique_index, is_intrusive_t());
+      }
+      else{
+         return this->priv_generic_named_construct
+            (pr, named_type, name, num, try2find, dothrow, m_header.m_named_index, is_intrusive_t());
+      }
    }
 
    private:
@@ -719,15 +671,14 @@ class segment_manager
    {
       //The name can't be null, no anonymous object can be found by name
       BOOST_ASSERT(name != 0);
-      ipcdetail::placement_destroy<T> table;
       size_type sz;
       void *ret;
 
       if(name == reinterpret_cast<const CharType*>(-1)){
-         ret = priv_generic_find<char> (typeid(T).name(), m_header.m_unique_index, table, sz, is_intrusive_t(), lock);
+         ret = priv_generic_find<T>(typeid(T).name(), m_header.m_unique_index, sz, is_intrusive_t(), lock);
       }
       else{
-         ret = priv_generic_find<CharType> (name, m_header.m_named_index, table, sz, is_intrusive_t(), lock);
+         ret = priv_generic_find<T>(name, m_header.m_named_index, sz, is_intrusive_t(), lock);
       }
       return std::pair<T*, size_type>(static_cast<T*>(ret), sz);
    }
@@ -736,52 +687,86 @@ class segment_manager
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
-   std::pair<T*, size_type> priv_find_impl (const ipcdetail::unique_instance_t* name, bool lock)
+   std::pair<T*, size_type> priv_find_impl (const ipcdetail::unique_instance_t*, bool lock)
    {
-      ipcdetail::placement_destroy<T> table;
       size_type size;
-      void *ret = priv_generic_find<char>(name, m_header.m_unique_index, table, size, is_intrusive_t(), lock);
+      void *ret = priv_generic_find<T>(typeid(T).name(), m_header.m_unique_index, size, is_intrusive_t(), lock);
       return std::pair<T*, size_type>(static_cast<T*>(ret), size);
    }
 
-   void *priv_generic_construct
-      (const CharType *name, size_type num, bool try2find, bool dothrow, ipcdetail::in_place_interface &table)
+
+   template<class Proxy>
+   typename Proxy::object_type * priv_anonymous_construct(Proxy pr, size_type num, bool dothrow)
    {
-      void *ret;
-      //Security overflow check
-      if(num > ((std::size_t)-1)/table.size){
-         return ipcdetail::null_or_bad_alloc<void>(dothrow);
+      typedef typename Proxy::object_type object_type;
+      BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment = boost::move_detail::alignment_of<object_type>::value;
+      block_header_t block_info (  size_type(sizeof(object_type)*num)
+                                 , size_type(t_alignment)
+                                 , anonymous_type
+                                 , 1
+                                 , 0);
+
+      //Check if there is enough memory
+      void *ptr_struct = this->allocate(block_info.total_size(), nothrow<>::get());
+      if(!ptr_struct){
+         return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
       }
-      if(name == 0){
-         ret = this->prot_anonymous_construct(num, dothrow, table);
-      }
-      else if(name == reinterpret_cast<const CharType*>(-1)){
-         ret = this->priv_generic_named_construct<char>
-            (unique_type, table.type_name, num, try2find, dothrow, table, m_header.m_unique_index, is_intrusive_t());
-      }
-      else{
-         ret = this->priv_generic_named_construct<CharType>
-            (named_type, name, num, try2find, dothrow, table, m_header.m_named_index, is_intrusive_t());
-      }
-      return ret;
+
+      //Build scoped ptr to avoid leaks with constructor exception
+      ipcdetail::mem_algo_deallocator<segment_manager_base_type> mem
+         (ptr_struct, *static_cast<segment_manager_base_type*>(this));
+
+      //Now construct the header
+      block_header_t * hdr = ::new(ptr_struct, boost_container_new_t()) block_header_t(block_info);
+      void *ptr = 0; //avoid gcc warning
+      ptr = hdr->value();
+
+      //Now call constructors
+      pr.construct_n(ptr, num);
+
+      //All constructors successful, disable rollback
+      mem.release();
+      return static_cast<object_type*>(ptr);
    }
 
-   void priv_destroy_ptr(const void *ptr, ipcdetail::in_place_interface &dtor)
+   //!Calls the destructor and makes an anonymous deallocate
+   template <class T>
+   void priv_anonymous_destroy(const T *object)
    {
-      block_header_t *ctrl_data = block_header_t::block_header_from_value(ptr, dtor.size, dtor.alignment);
+
+      //Get control data from associated with this object
+      block_header_t *ctrl_data = block_header_t::block_header_from_value(object);
+
+      //-------------------------------
+      //scoped_lock<rmutex> guard(m_header);
+      //-------------------------------
+
+      //This is not an anonymous object, the pointer is wrong!
+      BOOST_ASSERT(ctrl_data->alloc_type() == anonymous_type);
+
+      //Call destructors and free memory
+      //Build scoped ptr to avoid leaks with destructor exception
+      priv_destroy_n(object, ctrl_data->m_value_bytes/sizeof(T));
+      this->deallocate(ctrl_data);
+   }
+
+   template<class T>
+   void priv_destroy_ptr(const T *ptr)
+   {
+      block_header_t *ctrl_data = block_header_t::block_header_from_value(ptr);
       switch(ctrl_data->alloc_type()){
          case anonymous_type:
-            this->prot_anonymous_destroy(ptr, dtor);
+            this->priv_anonymous_destroy(ptr);
          break;
 
          case named_type:
-            this->priv_generic_named_destroy<CharType>
-               (ctrl_data, m_header.m_named_index, dtor, is_node_index_t());
+            this->priv_generic_named_destroy<T, CharType>
+               (ctrl_data, m_header.m_named_index, is_node_index_t());
          break;
 
          case unique_type:
-            this->priv_generic_named_destroy<char>
-               (ctrl_data, m_header.m_unique_index, dtor, is_node_index_t());
+            this->priv_generic_named_destroy<T, char>
+               (ctrl_data, m_header.m_unique_index, is_node_index_t());
          break;
 
          default:
@@ -789,6 +774,13 @@ class segment_manager
             BOOST_ASSERT(0);
          break;
       }
+   }
+
+   template<class T>
+   static void priv_destroy_n(T* memory, std::size_t num)
+   {
+      for (std::size_t destroyed = 0; destroyed < num; ++destroyed)
+         (memory++)->~T();
    }
 
    //!Returns the name of an object created with construct/find_or_construct
@@ -832,11 +824,10 @@ class segment_manager
       return sizeof(segment_manager) - sizeof(segment_manager_base_t);
    }
 
-   template <class CharT>
-   void *priv_generic_find
+   template <class T, class CharT>
+   T *priv_generic_find
       (const CharT* name,
        IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-       ipcdetail::in_place_interface &table,
        size_type &length, ipcdetail::true_ is_intrusive, bool use_lock)
    {
       (void)is_intrusive;
@@ -861,19 +852,18 @@ class segment_manager
          block_header_t *ctrl_data = it->get_block_header();
 
          //Sanity check
-         BOOST_ASSERT((ctrl_data->m_value_bytes % table.size) == 0);
+         BOOST_ASSERT((ctrl_data->m_value_bytes % sizeof(T)) == 0);
          BOOST_ASSERT(ctrl_data->sizeof_char() == sizeof(CharT));
          ret_ptr  = ctrl_data->value();
-         length  = ctrl_data->m_value_bytes/table.size;
+         length  = ctrl_data->m_value_bytes/ sizeof(T);
       }
-      return ret_ptr;
+      return static_cast<T*>(ret_ptr);
    }
 
-   template <class CharT>
-   void *priv_generic_find
+   template <class T, class CharT>
+   T *priv_generic_find
       (const CharT* name,
        IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-       ipcdetail::in_place_interface &table,
        size_type &length, ipcdetail::false_ is_intrusive, bool use_lock)
    {
       (void)is_intrusive;
@@ -898,43 +888,42 @@ class segment_manager
                                     (ipcdetail::to_raw_pointer(it->second.m_ptr));
 
          //Sanity check
-         BOOST_ASSERT((ctrl_data->m_value_bytes % table.size) == 0);
+         BOOST_ASSERT((ctrl_data->m_value_bytes % sizeof(T)) == 0);
          BOOST_ASSERT(ctrl_data->sizeof_char() == sizeof(CharT));
          ret_ptr  = ctrl_data->value();
-         length  = ctrl_data->m_value_bytes/table.size;
+         length  = ctrl_data->m_value_bytes/sizeof(T);
       }
-      return ret_ptr;
+      return static_cast<T*>(ret_ptr);
    }
 
-   template <class CharT>
+   template <class T, class CharT>
    bool priv_generic_named_destroy
-     (block_header_t *block_header,
-      IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-      ipcdetail::in_place_interface &table, ipcdetail::true_ is_node_index)
+     (block_header_t *block_header
+     ,IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index
+     ,ipcdetail::true_ is_node_index)
    {
       (void)is_node_index;
       typedef typename IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >::iterator index_it;
 
       index_it *ihdr = block_header_t::template to_first_header<index_it>(block_header);
-      return this->priv_generic_named_destroy_impl<CharT>(*ihdr, index, table);
+      return this->priv_generic_named_destroy_impl<T, CharT>(*ihdr, index);
    }
 
-   template <class CharT>
+   template <class T, class CharT>
    bool priv_generic_named_destroy
-     (block_header_t *block_header,
-      IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-      ipcdetail::in_place_interface &table,
-      ipcdetail::false_ is_node_index)
+     (block_header_t *block_header
+     ,IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index
+     ,ipcdetail::false_ is_node_index)
    {
       (void)is_node_index;
       CharT *name = static_cast<CharT*>(block_header->template name<CharT>());
-      return this->priv_generic_named_destroy<CharT>(name, index, table, is_intrusive_t());
+      return this->priv_generic_named_destroy<T, CharT>(name, index, is_intrusive_t());
    }
 
-   template <class CharT>
+   template <class T, class CharT>
    bool priv_generic_named_destroy(const CharT *name,
                                    IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-                                   ipcdetail::in_place_interface &table, ipcdetail::true_ is_intrusive_index)
+                                   ipcdetail::true_ is_intrusive_index)
    {
       (void)is_intrusive_index;
       typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >         index_type_t;
@@ -959,30 +948,28 @@ class segment_manager
       block_header_t *ctrl_data = it->get_block_header();
       intrusive_value_type *iv = intrusive_value_type::get_intrusive_value_type(ctrl_data);
       void *memory = iv;
-      void *values = ctrl_data->value();
-      std::size_t num = ctrl_data->m_value_bytes/table.size;
 
       //Sanity check
-      BOOST_ASSERT((ctrl_data->m_value_bytes % table.size) == 0);
+      BOOST_ASSERT((ctrl_data->m_value_bytes % sizeof(T)) == 0);
       BOOST_ASSERT(sizeof(CharT) == ctrl_data->sizeof_char());
 
       //Erase node from index
       index.erase(it);
 
+      //Call destructors and free memory
+      priv_destroy_n(static_cast<T*>(ctrl_data->value()), ctrl_data->m_value_bytes/sizeof(T));
+
       //Destroy the headers
       ctrl_data->~block_header_t();
       iv->~intrusive_value_type();
 
-      //Call destructors and free memory
-      table.destroy_n(values, num);
       this->deallocate(memory);
       return true;
    }
 
-   template <class CharT>
+   template <class T, class CharT>
    bool priv_generic_named_destroy(const CharT *name,
                                    IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-                                   ipcdetail::in_place_interface &table,
                                    ipcdetail::false_ is_intrusive_index)
    {
       (void)is_intrusive_index;
@@ -1003,14 +990,13 @@ class segment_manager
          //BOOST_ASSERT(0);
          return false;
       }
-      return this->priv_generic_named_destroy_impl<CharT>(it, index, table);
+      return this->priv_generic_named_destroy_impl<T, CharT>(it, index);
    }
 
-   template <class CharT>
+   template <class T, class CharT>
    bool priv_generic_named_destroy_impl
       (const typename IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >::iterator &it,
-      IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-      ipcdetail::in_place_interface &table)
+      IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index)
    {
       typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >      char_aware_index_type;
       typedef typename char_aware_index_type::iterator        index_it;
@@ -1021,21 +1007,15 @@ class segment_manager
       char *stored_name       = static_cast<char*>(static_cast<void*>(const_cast<CharT*>(it->first.name())));
       (void)stored_name;
 
-      //Check if the distance between the name pointer and the memory pointer
-      //is correct (this can detect incorrect type in destruction)
-      std::size_t num = ctrl_data->m_value_bytes/table.size;
-      void *values = ctrl_data->value();
 
-      //Sanity check
-      BOOST_ASSERT((ctrl_data->m_value_bytes % table.size) == 0);
-      BOOST_ASSERT(static_cast<void*>(stored_name) == static_cast<void*>(ctrl_data->template name<CharT>()));
+      //Sanity checks
+      BOOST_ASSERT((ctrl_data->m_value_bytes % sizeof(T)) == 0);
       BOOST_ASSERT(sizeof(CharT) == ctrl_data->sizeof_char());
+      //Check if the distance between the name pointer and the memory pointer
+      BOOST_ASSERT(static_cast<void*>(stored_name) == static_cast<void*>(ctrl_data->template name<CharT>()));
 
       //Erase node from index
       index.erase(it);
-
-      //Destroy the header
-      ctrl_data->~block_header_t();
 
       void *memory;
       if(is_node_index_t::value){
@@ -1049,25 +1029,31 @@ class segment_manager
       }
 
       //Call destructors and free memory
-      table.destroy_n(values, num);
+      priv_destroy_n(static_cast<T*>(ctrl_data->value()), ctrl_data->m_value_bytes/sizeof(T));
+
+      //Destroy the header
+      ctrl_data->~block_header_t();
+
       this->deallocate(memory);
       return true;
    }
 
-   template<class CharT>
-   void * priv_generic_named_construct
-      (unsigned char type, const CharT *name, size_type num, bool try2find,
-      bool dothrow, ipcdetail::in_place_interface &table, 
+   template<class Proxy, class CharT>
+   typename Proxy::object_type * priv_generic_named_construct
+      (Proxy pr, unsigned char type, const CharT *name, size_type num, bool try2find, bool dothrow,
       IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index, ipcdetail::true_ is_intrusive)
    {
       (void)is_intrusive;
-      std::size_t namelen  = std::char_traits<CharT>::length(name);
 
-      block_header_t block_info ( size_type(table.size*num)
-                                 , size_type(table.alignment)
-                                 , type
-                                 , sizeof(CharT)
-                                 , namelen);
+      typedef typename Proxy::object_type object_type;
+      std::size_t namelen  = std::char_traits<CharT>::length(name);
+      BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment = boost::move_detail::alignment_of<object_type>::value;
+
+      block_header_t block_info ( size_type(sizeof(object_type)*num)
+                                , size_type(t_alignment)
+                                , type
+                                , sizeof(CharT)
+                                , namelen);
 
       typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >            index_type_t;
       typedef typename index_type_t::iterator              index_it;
@@ -1110,9 +1096,9 @@ class segment_manager
       //else return null
       if(!insert_ret.second){
          if(try2find){
-            return it->get_block_header()->value();
+            return static_cast<object_type*>(it->get_block_header()->value());
          }
-         return ipcdetail::null_or_already_exists<void>(dothrow);
+         return ipcdetail::null_or_already_exists<object_type>(dothrow);
       }
 
       //Allocates buffer for name + data, this can throw (it hurts)
@@ -1121,7 +1107,7 @@ class segment_manager
 
       //Check if there is enough memory
       if (!buffer_ptr)
-         return ipcdetail::null_or_bad_alloc<void>(dothrow);
+         return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
 
       //Now construct the intrusive hook plus the header
       intrusive_value_type * intrusive_hdr = ::new(buffer_ptr, boost_container_new_t()) intrusive_value_type();
@@ -1156,30 +1142,31 @@ class segment_manager
       value_eraser<index_type_t> v_eraser(index, it);
 
       //Construct array, this can throw
-      table.construct_n(ptr, num);
+      pr.construct_n(ptr, num);
 
       //Release rollbacks since construction was successful
       v_eraser.release();
       mem.release();
-      return ptr;
+      return static_cast<object_type*>(ptr);
    }
 
    //!Generic named new function for
    //!named functions
-   template<class CharT>
-   void * priv_generic_named_construct
-      (unsigned char type, const CharT *name, size_type num, bool try2find, bool dothrow,
-      ipcdetail::in_place_interface &table, 
+   template<class Proxy, class CharT>
+   typename Proxy::object_type * priv_generic_named_construct
+      (Proxy pr, unsigned char type, const CharT *name, size_type num, bool try2find, bool dothrow,
       IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index, ipcdetail::false_ is_intrusive)
    {
       (void)is_intrusive;
+      typedef typename Proxy::object_type object_type;
       std::size_t namelen  = std::char_traits<CharT>::length(name);
+      BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment = boost::move_detail::alignment_of<object_type>::value;
 
-      block_header_t block_info ( size_type(table.size*num)
-                                 , size_type(table.alignment)
-                                 , type
-                                 , sizeof(CharT)
-                                 , namelen);
+      block_header_t block_info ( size_type(sizeof(object_type)*num)
+                                , size_type(t_alignment)
+                                , type
+                                , sizeof(CharT)
+                                , namelen);
 
       typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >            index_type_t;
       typedef typename index_type_t::key_type              key_type;
@@ -1220,9 +1207,9 @@ class segment_manager
       if(!insert_ret.second){
          if(try2find){
             block_header_t *hdr = static_cast<block_header_t*>(ipcdetail::to_raw_pointer(it->second.m_ptr));
-            return hdr->value();
+            return static_cast<object_type*>(hdr->value());
          }
-         return ipcdetail::null_or_already_exists<void>(dothrow);
+         return ipcdetail::null_or_already_exists<object_type>(dothrow);
       }
       //Initialize the node value_eraser to erase inserted node
       //if something goes wrong
@@ -1237,7 +1224,7 @@ class segment_manager
          size_type total_size = block_info.template total_size_with_header<index_it>();
          buffer_ptr = this->allocate(total_size, nothrow<>::get());
          if(!buffer_ptr)
-            return ipcdetail::null_or_bad_alloc<void>(dothrow);
+            return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
          index_it *idr = ::new(buffer_ptr, boost_container_new_t()) index_it(it);
          hdr = block_header_t::template from_first_header<index_it>(idr);
       }
@@ -1245,7 +1232,7 @@ class segment_manager
          buffer_ptr = this->allocate(block_info.total_size(), nothrow<>::get());
          //Check if there is enough memory
          if (!buffer_ptr)
-            return ipcdetail::null_or_bad_alloc<void>(dothrow);
+            return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
          hdr = static_cast<block_header_t*>(buffer_ptr);
       }
 
@@ -1267,14 +1254,14 @@ class segment_manager
          (buffer_ptr, *static_cast<segment_manager_base_type*>(this));
 
       //Construct array, this can throw
-      table.construct_n(ptr, num);
+      pr.construct_n(ptr, num);
 
       //All constructors successful, we don't want to release memory
       mem.release();
 
       //Release node v_eraser since construction was successful
       v_eraser.release();
-      return ptr;
+      return static_cast<object_type*>(ptr);
    }
 
    private:
