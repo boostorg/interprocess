@@ -27,7 +27,6 @@
 // interprocess/detail
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/in_place_interface.hpp>
 // container/detail
 #include <boost/container/detail/type_traits.hpp> //alignment_of
 #include <boost/container/detail/minimal_char_traits_header.hpp>
@@ -41,9 +40,6 @@
 // std
 #include <cstddef>   //std::size_t
 
-//!\file
-//!Describes the object placed in a memory segment that provides
-//!named object allocation capabilities.
 
 namespace boost{
 namespace interprocess{
@@ -94,10 +90,6 @@ struct block_header
       ,  m_value_alignment((unsigned char)val_alignment)
       ,  m_alloc_type_sizeof_char( (unsigned char)((al_type << 5u) | ((unsigned char)szof_char & 0x1F)) )
    {};
-
-   template<class T>
-   block_header &operator= (const T& )
-   {  return *this;  }
 
    size_type total_size() const
    {
@@ -169,18 +161,17 @@ struct block_header
 
    template<class T>
    static block_header *block_header_from_value(T *value)
-   {  return block_header_from_value(value, sizeof(T), ::boost::container::dtl::alignment_of<T>::value);  }
-
-   static block_header *block_header_from_value(const void *value, std::size_t sz, std::size_t algn)
    {
-      block_header * hdr =
+      //      BOOST_ASSERT(is_ptr_aligned(value, algn));
+      const std::size_t algn = ::boost::container::dtl::alignment_of<T>::value;
+      block_header* hdr =
          const_cast<block_header*>
-            (move_detail::force_ptr<const block_header*>(reinterpret_cast<const char*>(value) -
-               get_rounded_size(sizeof(block_header), algn)));
-      (void)sz;
+         (move_detail::force_ptr<const block_header*>(reinterpret_cast<const char*>(value) -
+            get_rounded_size(sizeof(block_header), algn)));
+
       //Some sanity checks
       BOOST_ASSERT(hdr->m_value_alignment == algn);
-      BOOST_ASSERT(hdr->m_value_bytes % sz == 0);
+      BOOST_ASSERT(hdr->m_value_bytes % sizeof(T) == 0);
       return hdr;
    }
 
