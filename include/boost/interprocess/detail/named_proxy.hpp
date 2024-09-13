@@ -243,6 +243,7 @@ template
    >
 class named_proxy
 {
+   typedef T         object_type;
    typedef typename SegmentManager::char_type char_type;
    const char_type *    mp_name;
    SegmentManager *     mp_mngr;
