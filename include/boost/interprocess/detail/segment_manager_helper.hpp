@@ -78,10 +78,10 @@ class mem_algo_deallocator
 template<class size_type>
 struct block_header
 {
-   size_type      m_value_bytes;
-   unsigned short m_num_char;
-   unsigned char  m_value_alignment;
-   unsigned char  m_alloc_type_sizeof_char;
+   const size_type      m_value_bytes;
+   const unsigned short m_num_char;
+   const unsigned char  m_value_alignment;
+   const unsigned char  m_alloc_type_sizeof_char;
 
    block_header(size_type val_bytes
                ,size_type val_alignment
