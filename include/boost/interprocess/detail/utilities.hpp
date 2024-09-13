@@ -30,6 +30,7 @@
 #include <boost/interprocess/detail/min_max.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/container/detail/type_traits.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/cstdint.hpp>
@@ -202,6 +203,17 @@ class value_eraser
    typename Cont::iterator m_index_it;
    bool                    m_erase;
 };
+
+template<class T>
+inline bool is_ptr_aligned(T* ptr)
+{
+   return (((std::size_t)ptr) % ::boost::container::dtl::alignment_of<T>::value) == 0;
+}
+
+inline bool is_ptr_aligned(const volatile void* ptr, std::size_t align)
+{
+   return (((std::size_t)ptr) % align) == 0;
+}
 
 }  //namespace interprocess {
 }  //namespace boost {
