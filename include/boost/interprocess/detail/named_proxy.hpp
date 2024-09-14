@@ -43,28 +43,18 @@ namespace interprocess {
 namespace ipcdetail {
 
 template<class T>
-struct placement_destroy
+inline void named_construct_placement_destroy(void *mem, std::size_t num)
 {
-   placement_destroy()
-   {}
-
-   virtual void destroy_n(void *mem, std::size_t num)
-   {
-      T* memory = static_cast<T*>(mem);
-      for(std::size_t destroyed = 0; destroyed < num; ++destroyed)
-         (memory++)->~T();
-   }
-
-   private:
-   void destroy(void *mem)
-   {  static_cast<T*>(mem)->~T();   }
+   T* memory = static_cast<T*>(mem); \
+   for(std::size_t destroyed = 0; destroyed < num; ++destroyed)
+      (memory++)->~T();
 };
 
 
 #ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
 
 template<class T, bool is_iterator, class ...Args>
-struct CtorArgN : public placement_destroy<T>
+struct CtorArgN
 {
    typedef T object_type;
    typedef bool_<is_iterator> IsIterator;
@@ -94,7 +84,7 @@ struct CtorArgN : public placement_destroy<T>
          }
       }
       BOOST_INTERPROCESS_CATCH(...) {
-         this->placement_destroy<T>::destroy_n(mem, constructed);
+         named_construct_placement_destroy<T>(mem, constructed);
          BOOST_INTERPROCESS_RETHROW
       } BOOST_INTERPROCESS_CATCH_END
    }
@@ -165,7 +155,7 @@ class named_proxy
 #define BOOST_INTERPROCESS_NAMED_PROXY_CTORARGN(N)\
 \
 template<class T BOOST_MOVE_I##N BOOST_MOVE_CLASS##N >  \
-struct CtorArg##N : placement_destroy<T>\
+struct CtorArg##N\
 {\
    typedef T object_type;\
    typedef CtorArg##N self_t;\
@@ -183,7 +173,7 @@ struct CtorArg##N : placement_destroy<T>\
          }\
       }\
       BOOST_INTERPROCESS_CATCH(...) {\
-         this->placement_destroy<T>::destroy_n(mem, constructed);\
+         named_construct_placement_destroy<T>(mem, constructed);\
          BOOST_INTERPROCESS_RETHROW\
       } BOOST_INTERPROCESS_CATCH_END\
    }\
@@ -198,7 +188,7 @@ BOOST_MOVE_ITERATE_0TO9(BOOST_INTERPROCESS_NAMED_PROXY_CTORARGN)
 #define BOOST_INTERPROCESS_NAMED_PROXY_CTORITN(N)\
 \
 template<class T BOOST_MOVE_I##N BOOST_MOVE_CLASS##N > \
-struct CtorIt##N : public placement_destroy<T>\
+struct CtorIt##N\
 {\
    typedef T object_type;\
    typedef CtorIt##N self_t;\
@@ -222,7 +212,7 @@ struct CtorIt##N : public placement_destroy<T>\
          }\
       }\
       BOOST_INTERPROCESS_CATCH(...) {\
-         this->placement_destroy<T>::destroy_n(mem, constructed);\
+         named_construct_placement_destroy<T>(mem, constructed);\
          BOOST_INTERPROCESS_RETHROW\
       } BOOST_INTERPROCESS_CATCH_END\
    }\
