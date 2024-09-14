@@ -9,6 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/interprocess/detail/workaround.hpp>
+#if BOOST_CXX_VERSION >= 201103L
 //[doc_multi_index
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
@@ -99,3 +100,11 @@ int main ()
 }
 //]
 
+#else ////#if BOOST_CXX_VERSION >= 201103L
+
+int main()
+{
+   return 0;
+}
+
+#endif   //#if BOOST_CXX_VERSION >= 201103L
