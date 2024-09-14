@@ -48,7 +48,7 @@ inline void named_construct_placement_destroy(void *mem, std::size_t num)
    T* memory = static_cast<T*>(mem); \
    for(std::size_t destroyed = 0; destroyed < num; ++destroyed)
       (memory++)->~T();
-};
+}
 
 
 #ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
