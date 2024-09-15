@@ -58,8 +58,7 @@ struct iunordered_set_index_aux
    typedef typename MapConfig::template
       intrusive_value_type<derivation_hook>::type     value_type;
 
-   typedef typename MapConfig::
-      intrusive_compare_key_type                      intrusive_compare_key_type;
+   typedef typename MapConfig::compare_key_type       compare_key_type;
 
    typedef std::equal_to<value_type>                  value_equal;
 
@@ -67,14 +66,14 @@ struct iunordered_set_index_aux
 
    struct equal_function
    {
-      bool operator()(const intrusive_compare_key_type &i, const value_type &b) const
+      bool operator()(const compare_key_type&i, const value_type &b) const
       {
          return (i.m_len == b.name_length()) &&
                   (std::char_traits<char_type>::compare
                      (i.mp_str, b.name(), i.m_len) == 0);
       }
 
-      bool operator()(const value_type &b, const intrusive_compare_key_type &i) const
+      bool operator()(const value_type &b, const compare_key_type&i) const
       {
          return (i.m_len == b.name_length()) &&
                   (std::char_traits<char_type>::compare
@@ -111,7 +110,7 @@ struct iunordered_set_index_aux
          return hash_char_range(beg, end);
       }
 
-      std::size_t operator()(const intrusive_compare_key_type &i) const
+      std::size_t operator()(const compare_key_type&i) const
       {
          const char_type *beg = i.mp_str,
                            *end = beg + i.m_len;
@@ -152,8 +151,6 @@ class iunordered_set_index
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    typedef iunordered_set_index_aux<MapConfig>           index_aux;
    typedef typename index_aux::index_t                   index_type;
-   typedef typename MapConfig::
-      intrusive_compare_key_type                         intrusive_compare_key_type;
    typedef typename index_aux::equal_function            equal_function;
    typedef typename index_aux::hash_function             hash_function;
    typedef typename MapConfig::char_type                 char_type;
@@ -161,6 +158,8 @@ class iunordered_set_index
       iunordered_set_index_aux<MapConfig>::allocator_type      allocator_type;
    typedef typename
       iunordered_set_index_aux<MapConfig>::allocator_holder    allocator_holder;
+   public:
+   typedef typename MapConfig::compare_key_type          compare_key_type;
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
@@ -337,14 +336,14 @@ class iunordered_set_index
       }
    }
 
-   iterator find(const intrusive_compare_key_type &key)
+   iterator find(const compare_key_type&key)
    {  return index_type::find(key, hash_function(), equal_function());  }
 
-   const_iterator find(const intrusive_compare_key_type &key) const
+   const_iterator find(const compare_key_type&key) const
    {  return index_type::find(key, hash_function(), equal_function());  }
 
    std::pair<iterator, bool>insert_check
-      (const intrusive_compare_key_type &key, insert_commit_data &commit_data)
+      (const compare_key_type&key, insert_commit_data &commit_data)
    {  return index_type::insert_check(key, hash_function(), equal_function(), commit_data); }
 
    iterator insert_commit(value_type &val, insert_commit_data &commit_data)

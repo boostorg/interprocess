@@ -211,6 +211,25 @@ struct intrusive_compare_key
    std::size_t    m_len;
 };
 
+template<class IndexType, bool IsIntrusive>
+struct compare_key_impl
+{
+   typedef typename IndexType::compare_key_type type;
+};
+
+template<class IndexType>
+struct compare_key_impl<IndexType, false>
+{
+   typedef typename IndexType::key_type type;
+};
+
+
+template<class IndexType>
+struct compare_key
+   : compare_key_impl<IndexType, is_intrusive_index<IndexType>::value>
+{};
+
+
 //!This struct indicates an anonymous object creation
 //!allocation
 template<instance_type type>
@@ -390,8 +409,8 @@ struct index_config
 {
    typedef typename MemoryAlgorithm::void_pointer        void_pointer;
    typedef CharT                                         char_type;
-   typedef index_key<CharT, void_pointer>        key_type;
-   typedef index_data<void_pointer>              mapped_type;
+   typedef index_key<CharT, void_pointer>                key_type;
+   typedef index_data<void_pointer>                      mapped_type;
    typedef typename segment_manager_base_type
       <MemoryAlgorithm>::type                            segment_manager_base;
 
@@ -399,7 +418,7 @@ struct index_config
    struct intrusive_value_type
    {  typedef intrusive_value_type_impl<HeaderBase, CharT, typename segment_manager_base::size_type>  type; };
 
-   typedef intrusive_compare_key<CharT>            intrusive_compare_key_type;
+   typedef intrusive_compare_key<CharT>                  compare_key_type;
 };
 
 template<class Iterator, bool intrusive>

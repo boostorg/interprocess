@@ -73,8 +73,6 @@ class iset_index
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    typedef iset_index_aux<MapConfig>                     index_aux;
    typedef typename index_aux::index_t                   index_type;
-   typedef typename MapConfig::
-      intrusive_compare_key_type                         intrusive_compare_key_type;
    typedef typename MapConfig::char_type                 char_type;
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
@@ -83,13 +81,14 @@ class iset_index
    typedef typename index_type::const_iterator           const_iterator;
    typedef typename index_type::insert_commit_data       insert_commit_data;
    typedef typename index_type::value_type               value_type;
+   typedef typename MapConfig::compare_key_type          compare_key_type;
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
 
    struct intrusive_key_value_less
    {
-      bool operator()(const intrusive_compare_key_type &i, const value_type &b) const
+      bool operator()(const compare_key_type&i, const value_type &b) const
       {
          std::size_t blen = b.name_length();
          return (i.m_len < blen) ||
@@ -98,7 +97,7 @@ class iset_index
                      (i.mp_str, b.name(), i.m_len) < 0);
       }
 
-      bool operator()(const value_type &b, const intrusive_compare_key_type &i) const
+      bool operator()(const value_type &b, const compare_key_type&i) const
       {
          std::size_t blen = b.name_length();
          return (blen < i.m_len) ||
@@ -127,14 +126,14 @@ class iset_index
    void shrink_to_fit()
    {  /*Does nothing, this intrusive index does not allocate memory;*/   }
 
-   iterator find(const intrusive_compare_key_type &key)
+   iterator find(const compare_key_type&key)
    {  return index_type::find(key, intrusive_key_value_less());  }
 
-   const_iterator find(const intrusive_compare_key_type &key) const
+   const_iterator find(const compare_key_type&key) const
    {  return index_type::find(key, intrusive_key_value_less());  }
 
    std::pair<iterator, bool>insert_check
-      (const intrusive_compare_key_type &key, insert_commit_data &commit_data)
+      (const compare_key_type&key, insert_commit_data &commit_data)
    {  return index_type::insert_check(key, intrusive_key_value_less(), commit_data); }
 };
 

@@ -675,10 +675,10 @@ class segment_manager
       void *ret;
 
       if(name == reinterpret_cast<const CharType*>(-1)){
-         ret = priv_generic_find<T>(typeid(T).name(), m_header.m_unique_index, sz, is_intrusive_t(), lock);
+         ret = priv_generic_find<T>(typeid(T).name(), m_header.m_unique_index, sz, lock);
       }
       else{
-         ret = priv_generic_find<T>(name, m_header.m_named_index, sz, is_intrusive_t(), lock);
+         ret = priv_generic_find<T>(name, m_header.m_named_index, sz, lock);
       }
       return std::pair<T*, size_type>(static_cast<T*>(ret), sz);
    }
@@ -690,7 +690,7 @@ class segment_manager
    std::pair<T*, size_type> priv_find_impl (const ipcdetail::unique_instance_t*, bool lock)
    {
       size_type size;
-      void *ret = priv_generic_find<T>(typeid(T).name(), m_header.m_unique_index, size, is_intrusive_t(), lock);
+      void *ret = priv_generic_find<T>(typeid(T).name(), m_header.m_unique_index, size, lock);
       return std::pair<T*, size_type>(static_cast<T*>(ret), size);
    }
 
@@ -828,18 +828,17 @@ class segment_manager
    T *priv_generic_find
       (const CharT* name,
        IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-       size_type &length, ipcdetail::true_ is_intrusive, bool use_lock)
+       size_type &length, bool use_lock)
    {
-      (void)is_intrusive;
-      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >         index_type_t;
-      typedef typename index_type_t::iterator           index_it;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >  index_type_t;
+      typedef typename index_type_t::iterator                              index_it;
+      typedef typename ipcdetail::compare_key<index_type_t>::type          compare_key_t;
 
       //-------------------------------
       scoped_lock<rmutex> guard(priv_get_lock(use_lock));
       //-------------------------------
       //Find name in index
-      ipcdetail::intrusive_compare_key<CharT> key
-         (name, std::char_traits<CharT>::length(name));
+      compare_key_t key (name, std::char_traits<CharT>::length(name));
       index_it it = index.find(key);
 
       //Initialize return values
@@ -849,49 +848,13 @@ class segment_manager
       //If found, assign values
       if(it != index.end()){
          //Get header
-         block_header_t *ctrl_data = it->get_block_header();
+         block_header_t *ctrl_data = priv_block_header_from_it(it, is_intrusive_t());
 
          //Sanity check
          BOOST_ASSERT((ctrl_data->m_value_bytes % sizeof(T)) == 0);
          BOOST_ASSERT(ctrl_data->sizeof_char() == sizeof(CharT));
          ret_ptr  = ctrl_data->value();
          length  = ctrl_data->m_value_bytes/ sizeof(T);
-      }
-      return static_cast<T*>(ret_ptr);
-   }
-
-   template <class T, class CharT>
-   T *priv_generic_find
-      (const CharT* name,
-       IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-       size_type &length, ipcdetail::false_ is_intrusive, bool use_lock)
-   {
-      (void)is_intrusive;
-      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >      char_aware_index_type;
-      typedef typename char_aware_index_type::key_type        key_type;
-      typedef typename char_aware_index_type::iterator        index_it;
-
-      //-------------------------------
-      scoped_lock<rmutex> guard(priv_get_lock(use_lock));
-      //-------------------------------
-      //Find name in index
-      index_it it = index.find(key_type(name, std::char_traits<CharT>::length(name)));
-
-      //Initialize return values
-      void *ret_ptr  = 0;
-      length         = 0;
-
-      //If found, assign values
-      if(it != index.end()){
-         //Get header
-         block_header_t *ctrl_data = reinterpret_cast<block_header_t*>
-                                    (ipcdetail::to_raw_pointer(it->second.m_ptr));
-
-         //Sanity check
-         BOOST_ASSERT((ctrl_data->m_value_bytes % sizeof(T)) == 0);
-         BOOST_ASSERT(ctrl_data->sizeof_char() == sizeof(CharT));
-         ret_ptr  = ctrl_data->value();
-         length  = ctrl_data->m_value_bytes/sizeof(T);
       }
       return static_cast<T*>(ret_ptr);
    }
@@ -923,9 +886,9 @@ class segment_manager
    template <class T, class CharT>
    bool priv_generic_named_destroy(const CharT *name,
                                    IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-                                   ipcdetail::true_ is_intrusive_index)
+                                   ipcdetail::true_ is_intrusive)
    {
-      (void)is_intrusive_index;
+      (void)is_intrusive;
       typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >         index_type_t;
       typedef typename index_type_t::iterator           index_it;
       typedef typename index_type_t::value_type         intrusive_value_type;
@@ -945,7 +908,7 @@ class segment_manager
          return false;
       }
 
-      block_header_t *ctrl_data = it->get_block_header();
+      block_header_t *ctrl_data = priv_block_header_from_it(it, is_intrusive);
       intrusive_value_type *iv = intrusive_value_type::get_intrusive_value_type(ctrl_data);
       void *memory = iv;
 
@@ -1002,8 +965,7 @@ class segment_manager
       typedef typename char_aware_index_type::iterator        index_it;
 
       //Get allocation parameters
-      block_header_t *ctrl_data = reinterpret_cast<block_header_t*>
-                                 (ipcdetail::to_raw_pointer(it->second.m_ptr));
+      block_header_t *ctrl_data = priv_block_header_from_it(it, is_intrusive_t());
       char *stored_name       = static_cast<char*>(static_cast<void*>(const_cast<CharT*>(it->first.name())));
       (void)stored_name;
 
@@ -1018,7 +980,7 @@ class segment_manager
       index.erase(it);
 
       void *memory;
-      if(is_node_index_t::value){
+      BOOST_IF_CONSTEXPR(is_node_index_t::value){
          index_it *ihdr = block_header_t::template
             to_first_header<index_it>(ctrl_data);
          ihdr->~index_it();
@@ -1038,13 +1000,24 @@ class segment_manager
       return true;
    }
 
+   template<class IndexIt>
+   static block_header_t* priv_block_header_from_it(IndexIt it, ipcdetail::true_) //is_intrusive
+   {
+      return it->get_block_header();
+   }
+
+   template<class IndexIt>
+   static block_header_t* priv_block_header_from_it(IndexIt it, ipcdetail::false_ ) //!is_intrusive
+   {
+      return static_cast<block_header_t*>(ipcdetail::to_raw_pointer(it->second.m_ptr));
+   }
+
    template<class Proxy, class CharT>
    typename Proxy::object_type * priv_generic_named_construct
       (Proxy pr, unsigned char type, const CharT *name, size_type num, bool try2find, bool dothrow,
       IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index, ipcdetail::true_ is_intrusive)
    {
       (void)is_intrusive;
-
       typedef typename Proxy::object_type object_type;
       std::size_t namelen  = std::char_traits<CharT>::length(name);
       BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment = boost::move_detail::alignment_of<object_type>::value;
@@ -1057,30 +1030,25 @@ class segment_manager
 
       typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >            index_type_t;
       typedef typename index_type_t::iterator              index_it;
-      typedef std::pair<index_it, bool>                  index_ib;
 
       //-------------------------------
       scoped_lock<rmutex> guard(m_header);
       //-------------------------------
-      //Insert the node. This can throw.
       //First, we want to know if the key is already present before
       //we allocate any memory, and if the key is not present, we
       //want to allocate all memory in a single buffer that will
       //contain the name and the user buffer.
-      //
-      //Since equal_range(key) + insert(hint, value) approach is
-      //quite inefficient in container implementations
-      //(they re-test if the position is correct), I've chosen
-      //to insert the node, do an ugly un-const cast and modify
-      //the key (which is a smart pointer) to an equivalent one
-      index_ib insert_ret;
+      index_it existing_it;
+      bool found = false;
+      typedef typename index_type_t::value_type	      value_type;
 
-      typename index_type_t::insert_commit_data   commit_data;
-      typedef typename index_type_t::value_type   intrusive_value_type;
-
+      typename index_type_t::insert_commit_data	      commit_data;
       BOOST_INTERPROCESS_TRY{
+         typedef std::pair<index_it, bool>                  index_ib;
          ipcdetail::intrusive_compare_key<CharT> key(name, namelen);
-         insert_ret = index.insert_check(key, commit_data);
+         index_ib insert_ret = index.insert_check(key, commit_data);
+         existing_it = insert_ret.first;
+         found = !insert_ret.second;
       }
       //Ignore exceptions
       BOOST_INTERPROCESS_CATCH(...){
@@ -1090,27 +1058,24 @@ class segment_manager
       }
       BOOST_INTERPROCESS_CATCH_END
 
-      index_it it = insert_ret.first;
-
-      //If found and this is find or construct, return data
-      //else return null
-      if(!insert_ret.second){
+      //If found and this is find or construct, return data, error otherwise
+      if(found){
          if(try2find){
-            return static_cast<object_type*>(it->get_block_header()->value());
+            return static_cast<object_type*>(priv_block_header_from_it(existing_it, is_intrusive)->value());
          }
          return ipcdetail::null_or_already_exists<object_type>(dothrow);
       }
 
       //Allocates buffer for name + data, this can throw (it hurts)
       void *buffer_ptr = this->allocate
-            (block_info.template total_size_with_header<intrusive_value_type>(), nothrow<>::get());
+            (block_info.template total_size_with_header<value_type>(), nothrow<>::get());
 
       //Check if there is enough memory
       if (!buffer_ptr)
          return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
 
       //Now construct the intrusive hook plus the header
-      intrusive_value_type * intrusive_hdr = ::new(buffer_ptr, boost_container_new_t()) intrusive_value_type();
+      value_type* intrusive_hdr = ::new(buffer_ptr, boost_container_new_t()) value_type();
       block_header_t * hdr = ::new(intrusive_hdr->get_block_header(), boost_container_new_t()) block_header_t(block_info);
       void *ptr = hdr->value();
 
@@ -1118,6 +1083,7 @@ class segment_manager
       CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
       std::char_traits<CharT>::copy(name_ptr, name, namelen+1);
 
+      index_it it;
       BOOST_INTERPROCESS_TRY{
          //Now commit the insertion using previous context data
          it = index.insert_commit(*intrusive_hdr, commit_data);
@@ -1169,51 +1135,39 @@ class segment_manager
                                 , namelen);
 
       typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >            index_type_t;
-      typedef typename index_type_t::key_type              key_type;
-      typedef typename index_type_t::mapped_type           mapped_type;
-      typedef typename index_type_t::value_type            value_type;
       typedef typename index_type_t::iterator              index_it;
-      typedef std::pair<index_it, bool>                  index_ib;
 
       //-------------------------------
       scoped_lock<rmutex> guard(m_header);
       //-------------------------------
-      //Insert the node. This can throw.
       //First, we want to know if the key is already present before
       //we allocate any memory, and if the key is not present, we
       //want to allocate all memory in a single buffer that will
       //contain the name and the user buffer.
-      //
-      //Since equal_range(key) + insert(hint, value) approach is
-      //quite inefficient in container implementations
-      //(they re-test if the position is correct), I've chosen
-      //to insert the node, do an ugly un-const cast and modify
-      //the key (which is a smart pointer) to an equivalent one
-      index_ib insert_ret;
+      index_it existing_it;
+      bool found = false;
+      typedef typename index_type_t::value_type	      value_type;
+
       BOOST_INTERPROCESS_TRY{
-         insert_ret = index.insert(value_type(key_type (name, namelen), mapped_type(0)));
+         typedef typename index_type_t::key_type      key_type;
+         existing_it = index.find(key_type(name, namelen));
+         found = existing_it != index.end();
       }
       //Ignore exceptions
       BOOST_INTERPROCESS_CATCH(...){
          if(dothrow)
-            BOOST_INTERPROCESS_RETHROW;
+            BOOST_INTERPROCESS_RETHROW
          return 0;
       }
       BOOST_INTERPROCESS_CATCH_END
 
-      index_it it = insert_ret.first;
-
       //If found and this is find or construct, return data, error otherwise
-      if(!insert_ret.second){
+      if(found){
          if(try2find){
-            block_header_t *hdr = static_cast<block_header_t*>(ipcdetail::to_raw_pointer(it->second.m_ptr));
-            return static_cast<object_type*>(hdr->value());
+            return static_cast<object_type*>(priv_block_header_from_it(existing_it, is_intrusive)->value());
          }
          return ipcdetail::null_or_already_exists<object_type>(dothrow);
       }
-      //Initialize the node value_eraser to erase inserted node
-      //if something goes wrong
-      value_eraser<index_type_t> v_eraser(index, it);
 
       //Allocates buffer for name + data, this can throw (it hurts)
       void *buffer_ptr;
@@ -1225,8 +1179,7 @@ class segment_manager
          buffer_ptr = this->allocate(total_size, nothrow<>::get());
          if(!buffer_ptr)
             return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
-         index_it *idr = ::new(buffer_ptr, boost_container_new_t()) index_it(it);
-         hdr = block_header_t::template from_first_header<index_it>(idr);
+         hdr = block_header_t::template from_first_header<index_it>(static_cast<index_it*>(buffer_ptr));
       }
       else{
          buffer_ptr = this->allocate(block_info.total_size(), nothrow<>::get());
@@ -1237,30 +1190,45 @@ class segment_manager
       }
 
       hdr = ::new(hdr, boost_container_new_t()) block_header_t(block_info);
-      void *ptr = hdr->value();
-
-      //Copy name to memory segment and insert data
-      CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
-      std::char_traits<CharT>::copy(name_ptr, name, namelen+1);
-
-      //Do the ugly cast, please mama, forgive me!
-      //This new key points to an identical string, so it must have the
-      //same position than the overwritten key according to the predicate
-      const_cast<key_type &>(it->first).name(name_ptr);
-      it->second.m_ptr  = hdr;
 
       //Build scoped ptr to avoid leaks with constructor exception
       ipcdetail::mem_algo_deallocator<segment_manager_base_type> mem
          (buffer_ptr, *static_cast<segment_manager_base_type*>(this));
 
+      void *ptr = hdr->value(); 
+
+      //Copy name to memory segment and insert data
+      CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
+      std::char_traits<CharT>::copy(name_ptr, name, namelen+1);
+
+      index_it it;
+      BOOST_INTERPROCESS_TRY{
+         //Now commit the insertion using previous context data
+         typedef typename index_type_t::mapped_type   mapped_type;
+         typedef typename index_type_t::key_type      key_type;
+         it = index.insert(value_type(key_type(name_ptr, namelen), mapped_type(hdr))).first;
+         BOOST_IF_CONSTEXPR(is_node_index_t::value) {
+            ::new(buffer_ptr, boost_container_new_t()) index_it(it);
+         }
+      }
+      //Ignore exceptions
+      BOOST_INTERPROCESS_CATCH(...){
+         if(dothrow)
+            BOOST_INTERPROCESS_RETHROW
+         return 0;
+      }
+      BOOST_INTERPROCESS_CATCH_END
+
+      //Initialize the node value_eraser to erase inserted node
+      //if something goes wrong
+      value_eraser<index_type_t> v_eraser(index, it);
+
       //Construct array, this can throw
       pr.construct_n(ptr, num);
 
-      //All constructors successful, we don't want to release memory
-      mem.release();
-
-      //Release node v_eraser since construction was successful
+      //Release rollbacks since construction was successful
       v_eraser.release();
+      mem.release();
       return static_cast<object_type*>(ptr);
    }
 
