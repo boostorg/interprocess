@@ -146,7 +146,7 @@ template <class MapConfig>
 class iunordered_set_index
       //Derive class from map specialization
    :  private iunordered_set_index_aux<MapConfig>::allocator_holder
-   ,  public iunordered_set_index_aux<MapConfig>::index_t
+   ,  private iunordered_set_index_aux<MapConfig>::index_t
 {
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    typedef iunordered_set_index_aux<MapConfig>           index_aux;
@@ -172,6 +172,7 @@ class iunordered_set_index
    typedef typename index_type::bucket_traits            bucket_traits;
    typedef typename index_type::size_type                size_type;
    typedef typename index_type::difference_type          difference_type;
+   typedef value_type                                    index_data_t;
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
@@ -260,6 +261,11 @@ class iunordered_set_index
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
+   using index_type::begin;
+   using index_type::end;
+   using index_type::size;
+   using index_type::erase;
+
    //!Constructor. Takes a pointer to the
    //!segment manager. Can throw
    iunordered_set_index(segment_manager_base *mngr)
@@ -346,7 +352,8 @@ class iunordered_set_index
       (const compare_key_type&key, insert_commit_data &commit_data)
    {  return index_type::insert_check(key, hash_function(), equal_function(), commit_data); }
 
-   iterator insert_commit(value_type &val, insert_commit_data &commit_data)
+   iterator insert_commit
+      (const compare_key_type &, void *, index_data_t &val, insert_commit_data& commit_data)
    {
       iterator it = index_type::insert_commit(val, commit_data);
       size_type cur_size      = this->size();

@@ -144,21 +144,6 @@ struct block_header
       return get_rounded_size(size_type(sizeof(block_header)), size_type(m_value_alignment));
    }
 
-   template<class CharType>
-   bool less_comp(const block_header &b) const
-   {
-      return m_num_char < b.m_num_char ||
-             (m_num_char < b.m_num_char &&
-              std::char_traits<CharType>::compare(name<CharType>(), b.name<CharType>(), m_num_char) < 0);
-   }
-
-   template<class CharType>
-   bool equal_comp(const block_header &b) const
-   {
-      return m_num_char == b.m_num_char &&
-             std::char_traits<CharType>::compare(name<CharType>(), b.name<CharType>(), m_num_char) == 0;
-   }
-
    template<class T>
    static block_header *block_header_from_value(T *value)
    {
@@ -187,6 +172,10 @@ struct block_header
    }
 
    template<class Header>
+   static const block_header *from_first_header(const Header *header)
+   {  return from_first_header(const_cast<Header*>(header));   }
+
+   template<class Header>
    static Header *to_first_header(block_header *bheader)
    {
       Header * hdr =
@@ -207,27 +196,15 @@ struct intrusive_compare_key
       :  mp_str(str), m_len(len)
    {}
 
+   const CharT *str() const
+   {  return mp_str; }
+
+   std::size_t len() const
+   {  return m_len; }
+
    const CharT *  mp_str;
    std::size_t    m_len;
 };
-
-template<class IndexType, bool IsIntrusive>
-struct compare_key_impl
-{
-   typedef typename IndexType::compare_key_type type;
-};
-
-template<class IndexType>
-struct compare_key_impl<IndexType, false>
-{
-   typedef typename IndexType::key_type type;
-};
-
-
-template<class IndexType>
-struct compare_key
-   : compare_key_impl<IndexType, is_intrusive_index<IndexType>::value>
-{};
 
 
 //!This struct indicates an anonymous object creation
@@ -270,26 +247,14 @@ struct intrusive_value_type_impl
 
    intrusive_value_type_impl(){}
 
-   enum  {  BlockHdrAlignment = ::boost::container::dtl::alignment_of<block_header_t>::value  };
+   block_header_t *get_block_header()
+   {  return block_header_t::from_first_header(this); }
 
-   block_header_t *get_block_header() const
-   {
-      return const_cast<block_header_t*>
-         (move_detail::force_ptr<const block_header_t *>(reinterpret_cast<const char*>(this) +
-            get_rounded_size(size_type(sizeof(*this)), size_type(BlockHdrAlignment))));
-   }
-
-   bool operator <(const intrusive_value_type_impl<Hook, CharType, SizeType> & other) const
-   {  return (this->get_block_header())->template less_comp<CharType>(*other.get_block_header());  }
-
-   bool operator ==(const intrusive_value_type_impl<Hook, CharType, SizeType> & other) const
-   {  return (this->get_block_header())->template equal_comp<CharType>(*other.get_block_header());  }
+   const block_header_t *get_block_header() const
+   {  return block_header_t::from_first_header(this); }
 
    static intrusive_value_type_impl *get_intrusive_value_type(block_header_t *hdr)
-   {
-      return move_detail::force_ptr<intrusive_value_type_impl*>(reinterpret_cast<char*>(hdr) -
-         get_rounded_size(size_type(sizeof(intrusive_value_type_impl)), size_type(BlockHdrAlignment)));
-   }
+   {  return block_header_t::template to_first_header<intrusive_value_type_impl>(hdr); }
 
    CharType *name() const
    {  return get_block_header()->template name<CharType>(); }

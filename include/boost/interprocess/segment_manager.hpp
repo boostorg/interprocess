@@ -479,12 +479,10 @@ class segment_manager
       BOOST_ASSERT(!name.is_anonymous());
 
       if(name.is_unique()){
-         return this->priv_generic_named_destroy<T, char>
-            ( typeid(T).name(), m_header.m_unique_index, is_intrusive_t());
+         return this->priv_generic_named_destroy<T, char>(typeid(T).name(), m_header.m_unique_index);
       }
       else{
-         return this->priv_generic_named_destroy<T, CharType>
-            ( name.get(), m_header.m_named_index, is_intrusive_t());
+         return this->priv_generic_named_destroy<T, CharType>(name.get(), m_header.m_named_index);
       }
    }
 
@@ -654,11 +652,11 @@ class segment_manager
       }
       else if(name == reinterpret_cast<const CharType*>(-1)){
          return this->priv_generic_named_construct
-            (pr, unique_type, typeid(object_type).name(), num, try2find, dothrow, m_header.m_unique_index, is_intrusive_t());
+            (pr, unique_type, typeid(object_type).name(), num, try2find, dothrow, m_header.m_unique_index);
       }
       else{
          return this->priv_generic_named_construct
-            (pr, named_type, name, num, try2find, dothrow, m_header.m_named_index, is_intrusive_t());
+            (pr, named_type, name, num, try2find, dothrow, m_header.m_named_index);
       }
    }
 
@@ -830,9 +828,10 @@ class segment_manager
        IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
        size_type &length, bool use_lock)
    {
-      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >  index_type_t;
-      typedef typename index_type_t::iterator                              index_it;
-      typedef typename ipcdetail::compare_key<index_type_t>::type          compare_key_t;
+      typedef IndexType<ipcdetail::index_config
+                           <CharT, MemoryAlgorithm> > index_t;
+      typedef typename index_t::iterator              index_it;
+      typedef typename index_t::compare_key_type      compare_key_t;
 
       //-------------------------------
       scoped_lock<rmutex> guard(priv_get_lock(use_lock));
@@ -866,10 +865,11 @@ class segment_manager
      ,ipcdetail::true_ is_node_index)
    {
       (void)is_node_index;
-      typedef typename IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >::iterator index_it;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >  index_t;
+      typedef typename index_t::index_data_t         index_data_t;
 
-      index_it *ihdr = block_header_t::template to_first_header<index_it>(block_header);
-      return this->priv_generic_named_destroy_impl<T, CharT>(*ihdr, index);
+      index_data_t *si = priv_index_header_from_block<index_t>(block_header, is_intrusive_t());
+      return this->priv_generic_named_destroy_impl<T, CharT>(*si, index);
    }
 
    template <class T, class CharT>
@@ -880,72 +880,23 @@ class segment_manager
    {
       (void)is_node_index;
       CharT *name = static_cast<CharT*>(block_header->template name<CharT>());
-      return this->priv_generic_named_destroy<T, CharT>(name, index, is_intrusive_t());
+      return this->priv_generic_named_destroy<T, CharT>(name, index);
    }
 
    template <class T, class CharT>
    bool priv_generic_named_destroy(const CharT *name,
-                                   IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-                                   ipcdetail::true_ is_intrusive)
+                                   IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index)
    {
-      (void)is_intrusive;
-      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >         index_type_t;
-      typedef typename index_type_t::iterator           index_it;
-      typedef typename index_type_t::value_type         intrusive_value_type;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >  index_t;
+      typedef typename index_t::iterator              index_it;
+      typedef typename index_t::compare_key_type      compare_key_t;
 
       //-------------------------------
       scoped_lock<rmutex> guard(m_header);
       //-------------------------------
       //Find name in index
-      ipcdetail::intrusive_compare_key<CharT> key
-         (name, std::char_traits<CharT>::length(name));
+      compare_key_t key(name, std::char_traits<CharT>::length(name));
       index_it it = index.find(key);
-
-      //If not found, return false
-      if(it == index.end()){
-         //This name is not present in the index, wrong pointer or name!
-         //BOOST_ASSERT(0);
-         return false;
-      }
-
-      block_header_t *ctrl_data = priv_block_header_from_it(it, is_intrusive);
-      intrusive_value_type *iv = intrusive_value_type::get_intrusive_value_type(ctrl_data);
-      void *memory = iv;
-
-      //Sanity check
-      BOOST_ASSERT((ctrl_data->m_value_bytes % sizeof(T)) == 0);
-      BOOST_ASSERT(sizeof(CharT) == ctrl_data->sizeof_char());
-
-      //Erase node from index
-      index.erase(it);
-
-      //Call destructors and free memory
-      priv_destroy_n(static_cast<T*>(ctrl_data->value()), ctrl_data->m_value_bytes/sizeof(T));
-
-      //Destroy the headers
-      ctrl_data->~block_header_t();
-      iv->~intrusive_value_type();
-
-      this->deallocate(memory);
-      return true;
-   }
-
-   template <class T, class CharT>
-   bool priv_generic_named_destroy(const CharT *name,
-                                   IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index,
-                                   ipcdetail::false_ is_intrusive_index)
-   {
-      (void)is_intrusive_index;
-      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >            char_aware_index_type;
-      typedef typename char_aware_index_type::iterator              index_it;
-      typedef typename char_aware_index_type::key_type              key_type;
-
-      //-------------------------------
-      scoped_lock<rmutex> guard(m_header);
-      //-------------------------------
-      //Try to find the name in the index
-      index_it it = index.find(key_type (name,
-                                     std::char_traits<CharT>::length(name)));
 
       //If not found, return false
       if(it == index.end()){
@@ -961,29 +912,23 @@ class segment_manager
       (const typename IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >::iterator &it,
       IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index)
    {
-      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >      char_aware_index_type;
-      typedef typename char_aware_index_type::iterator        index_it;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >  index_t;
+      typedef typename index_t::index_data_t         index_data_t;
 
       //Get allocation parameters
       block_header_t *ctrl_data = priv_block_header_from_it(it, is_intrusive_t());
-      char *stored_name       = static_cast<char*>(static_cast<void*>(const_cast<CharT*>(it->first.name())));
-      (void)stored_name;
-
 
       //Sanity checks
       BOOST_ASSERT((ctrl_data->m_value_bytes % sizeof(T)) == 0);
       BOOST_ASSERT(sizeof(CharT) == ctrl_data->sizeof_char());
-      //Check if the distance between the name pointer and the memory pointer
-      BOOST_ASSERT(static_cast<void*>(stored_name) == static_cast<void*>(ctrl_data->template name<CharT>()));
 
       //Erase node from index
       index.erase(it);
 
       void *memory;
-      BOOST_IF_CONSTEXPR(is_node_index_t::value){
-         index_it *ihdr = block_header_t::template
-            to_first_header<index_it>(ctrl_data);
-         ihdr->~index_it();
+      BOOST_IF_CONSTEXPR(is_node_index_t::value || is_intrusive_t::value){
+         index_data_t*ihdr = priv_index_header_from_block<index_t>(ctrl_data, is_intrusive_t());
+         ihdr->~index_data_t();
          memory = ihdr;
       }
       else{
@@ -993,7 +938,7 @@ class segment_manager
       //Call destructors and free memory
       priv_destroy_n(static_cast<T*>(ctrl_data->value()), ctrl_data->m_value_bytes/sizeof(T));
 
-      //Destroy the header
+      //Destroy the headers
       ctrl_data->~block_header_t();
 
       this->deallocate(memory);
@@ -1003,7 +948,7 @@ class segment_manager
    template<class IndexIt>
    static block_header_t* priv_block_header_from_it(IndexIt it, ipcdetail::true_) //is_intrusive
    {
-      return it->get_block_header();
+      return block_header_t::from_first_header(&*it);
    }
 
    template<class IndexIt>
@@ -1012,12 +957,26 @@ class segment_manager
       return static_cast<block_header_t*>(ipcdetail::to_raw_pointer(it->second.m_ptr));
    }
 
+   template<class IndexT>
+   static typename IndexT::index_data_t * priv_index_header_from_block(block_header_t *bh, ipcdetail::true_) //is_intrusive
+   {
+      return IndexT::index_data_t::get_intrusive_value_type(bh);
+   }
+
+   template<class IndexT>
+   static typename IndexT::index_data_t * priv_index_header_from_block(block_header_t* bh, ipcdetail::false_) //!is_intrusive
+   {
+      return block_header_t::template to_first_header
+         <typename IndexT::index_data_t>(bh);
+   }
+
+   //!Generic named new function for
+   //!named functions
    template<class Proxy, class CharT>
    typename Proxy::object_type * priv_generic_named_construct
       (Proxy pr, unsigned char type, const CharT *name, size_type num, bool try2find, bool dothrow,
-      IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index, ipcdetail::true_ is_intrusive)
+      IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index)
    {
-      (void)is_intrusive;
       typedef typename Proxy::object_type object_type;
       std::size_t namelen  = std::char_traits<CharT>::length(name);
       BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment = boost::move_detail::alignment_of<object_type>::value;
@@ -1028,8 +987,11 @@ class segment_manager
                                 , sizeof(CharT)
                                 , namelen);
 
-      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >            index_type_t;
-      typedef typename index_type_t::iterator              index_it;
+      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >  index_t;
+      typedef typename index_t::iterator                       index_it;
+      typedef typename index_t::compare_key_type               compare_key_t;
+      typedef typename index_t::insert_commit_data   commit_data_t;
+      typedef typename index_t::index_data_t  index_data_t;
 
       //-------------------------------
       scoped_lock<rmutex> guard(m_header);
@@ -1040,13 +1002,11 @@ class segment_manager
       //contain the name and the user buffer.
       index_it existing_it;
       bool found = false;
-      typedef typename index_type_t::value_type	      value_type;
 
-      typename index_type_t::insert_commit_data	      commit_data;
+      commit_data_t	      commit_data;
       BOOST_INTERPROCESS_TRY{
          typedef std::pair<index_it, bool>                  index_ib;
-         ipcdetail::intrusive_compare_key<CharT> key(name, namelen);
-         index_ib insert_ret = index.insert_check(key, commit_data);
+         index_ib insert_ret = index.insert_check(compare_key_t(name, namelen), commit_data);
          existing_it = insert_ret.first;
          found = !insert_ret.second;
       }
@@ -1061,110 +1021,7 @@ class segment_manager
       //If found and this is find or construct, return data, error otherwise
       if(found){
          if(try2find){
-            return static_cast<object_type*>(priv_block_header_from_it(existing_it, is_intrusive)->value());
-         }
-         return ipcdetail::null_or_already_exists<object_type>(dothrow);
-      }
-
-      //Allocates buffer for name + data, this can throw (it hurts)
-      void *buffer_ptr = this->allocate
-            (block_info.template total_size_with_header<value_type>(), nothrow<>::get());
-
-      //Check if there is enough memory
-      if (!buffer_ptr)
-         return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
-
-      //Now construct the intrusive hook plus the header
-      value_type* intrusive_hdr = ::new(buffer_ptr, boost_container_new_t()) value_type();
-      block_header_t * hdr = ::new(intrusive_hdr->get_block_header(), boost_container_new_t()) block_header_t(block_info);
-      void *ptr = hdr->value();
-
-      //Copy name to memory segment and insert data
-      CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
-      std::char_traits<CharT>::copy(name_ptr, name, namelen+1);
-
-      index_it it;
-      BOOST_INTERPROCESS_TRY{
-         //Now commit the insertion using previous context data
-         it = index.insert_commit(*intrusive_hdr, commit_data);
-      }
-      //Ignore exceptions
-      BOOST_INTERPROCESS_CATCH(...){
-         if(dothrow)
-            BOOST_INTERPROCESS_RETHROW
-         return 0;
-      }
-      BOOST_INTERPROCESS_CATCH_END
-
-      //Avoid constructions if constructor is trivial
-      //Build scoped ptr to avoid leaks with constructor exception
-      ipcdetail::mem_algo_deallocator<segment_manager_base_type> mem
-         (buffer_ptr, *static_cast<segment_manager_base_type*>(this));
-
-      //Initialize the node value_eraser to erase inserted node
-      //if something goes wrong. This will be executed *before*
-      //the memory allocation as the intrusive value is built in that
-      //memory
-      value_eraser<index_type_t> v_eraser(index, it);
-
-      //Construct array, this can throw
-      pr.construct_n(ptr, num);
-
-      //Release rollbacks since construction was successful
-      v_eraser.release();
-      mem.release();
-      return static_cast<object_type*>(ptr);
-   }
-
-   //!Generic named new function for
-   //!named functions
-   template<class Proxy, class CharT>
-   typename Proxy::object_type * priv_generic_named_construct
-      (Proxy pr, unsigned char type, const CharT *name, size_type num, bool try2find, bool dothrow,
-      IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index, ipcdetail::false_ is_intrusive)
-   {
-      (void)is_intrusive;
-      typedef typename Proxy::object_type object_type;
-      std::size_t namelen  = std::char_traits<CharT>::length(name);
-      BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment = boost::move_detail::alignment_of<object_type>::value;
-
-      block_header_t block_info ( size_type(sizeof(object_type)*num)
-                                , size_type(t_alignment)
-                                , type
-                                , sizeof(CharT)
-                                , namelen);
-
-      typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >            index_type_t;
-      typedef typename index_type_t::iterator              index_it;
-
-      //-------------------------------
-      scoped_lock<rmutex> guard(m_header);
-      //-------------------------------
-      //First, we want to know if the key is already present before
-      //we allocate any memory, and if the key is not present, we
-      //want to allocate all memory in a single buffer that will
-      //contain the name and the user buffer.
-      index_it existing_it;
-      bool found = false;
-      typedef typename index_type_t::value_type	      value_type;
-
-      BOOST_INTERPROCESS_TRY{
-         typedef typename index_type_t::key_type      key_type;
-         existing_it = index.find(key_type(name, namelen));
-         found = existing_it != index.end();
-      }
-      //Ignore exceptions
-      BOOST_INTERPROCESS_CATCH(...){
-         if(dothrow)
-            BOOST_INTERPROCESS_RETHROW
-         return 0;
-      }
-      BOOST_INTERPROCESS_CATCH_END
-
-      //If found and this is find or construct, return data, error otherwise
-      if(found){
-         if(try2find){
-            return static_cast<object_type*>(priv_block_header_from_it(existing_it, is_intrusive)->value());
+            return static_cast<object_type*>(priv_block_header_from_it(existing_it, is_intrusive_t())->value());
          }
          return ipcdetail::null_or_already_exists<object_type>(dothrow);
       }
@@ -1174,12 +1031,12 @@ class segment_manager
       block_header_t * hdr;
 
       //Allocate and construct the headers
-      BOOST_IF_CONSTEXPR(is_node_index_t::value){
-         size_type total_size = block_info.template total_size_with_header<index_it>();
+      BOOST_IF_CONSTEXPR(is_node_index_t::value || is_intrusive_t::value){
+         size_type total_size = block_info.template total_size_with_header<index_data_t>();
          buffer_ptr = this->allocate(total_size, nothrow<>::get());
          if(!buffer_ptr)
             return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
-         hdr = block_header_t::template from_first_header<index_it>(static_cast<index_it*>(buffer_ptr));
+         hdr = block_header_t::template from_first_header<index_data_t>(static_cast<index_data_t*>(buffer_ptr));
       }
       else{
          buffer_ptr = this->allocate(block_info.total_size(), nothrow<>::get());
@@ -1195,7 +1052,7 @@ class segment_manager
       ipcdetail::mem_algo_deallocator<segment_manager_base_type> mem
          (buffer_ptr, *static_cast<segment_manager_base_type*>(this));
 
-      void *ptr = hdr->value(); 
+      void *ptr = hdr->value();
 
       //Copy name to memory segment and insert data
       CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
@@ -1203,12 +1060,13 @@ class segment_manager
 
       index_it it;
       BOOST_INTERPROCESS_TRY{
-         //Now commit the insertion using previous context data
-         typedef typename index_type_t::mapped_type   mapped_type;
-         typedef typename index_type_t::key_type      key_type;
-         it = index.insert(value_type(key_type(name_ptr, namelen), mapped_type(hdr))).first;
-         BOOST_IF_CONSTEXPR(is_node_index_t::value) {
-            ::new(buffer_ptr, boost_container_new_t()) index_it(it);
+         BOOST_IF_CONSTEXPR(is_node_index_t::value || is_intrusive_t::value) {
+            index_data_t* index_data = ::new(buffer_ptr, boost_container_new_t()) index_data_t();
+            it = index.insert_commit(compare_key_t(name_ptr, namelen), hdr, *index_data, commit_data);
+         }
+         else{
+            index_data_t id;
+            it = index.insert_commit(compare_key_t(name_ptr, namelen), hdr, id, commit_data);
          }
       }
       //Ignore exceptions
@@ -1221,7 +1079,7 @@ class segment_manager
 
       //Initialize the node value_eraser to erase inserted node
       //if something goes wrong
-      value_eraser<index_type_t> v_eraser(index, it);
+      value_eraser<index_t> v_eraser(index, it);
 
       //Construct array, this can throw
       pr.construct_n(ptr, num);
