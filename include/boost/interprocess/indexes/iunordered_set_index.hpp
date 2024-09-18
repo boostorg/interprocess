@@ -113,7 +113,7 @@ struct iunordered_set_index_aux
       std::size_t operator()(const compare_key_type&i) const
       {
          const char_type *beg = i.mp_str,
-                           *end = beg + i.m_len;
+                         *end = beg + i.m_len;
          return hash_char_range(beg, end);
       }
    };

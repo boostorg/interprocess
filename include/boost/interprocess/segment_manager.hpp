@@ -868,7 +868,7 @@ class segment_manager
       typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >  index_t;
       typedef typename index_t::index_data_t         index_data_t;
 
-      index_data_t *si = priv_index_header_from_block<index_t>(block_header, is_intrusive_t());
+      index_data_t* si = block_header_t::template to_first_header<index_data_t>(block_header);
       return this->priv_generic_named_destroy_impl<T, CharT>(*si, index);
    }
 
@@ -927,7 +927,7 @@ class segment_manager
 
       void *memory;
       BOOST_IF_CONSTEXPR(is_node_index_t::value || is_intrusive_t::value){
-         index_data_t*ihdr = priv_index_header_from_block<index_t>(ctrl_data, is_intrusive_t());
+         index_data_t*ihdr = block_header_t::template to_first_header<index_data_t>(ctrl_data);
          ihdr->~index_data_t();
          memory = ihdr;
       }
@@ -955,19 +955,6 @@ class segment_manager
    static block_header_t* priv_block_header_from_it(IndexIt it, ipcdetail::false_ ) //!is_intrusive
    {
       return static_cast<block_header_t*>(ipcdetail::to_raw_pointer(it->second.m_ptr));
-   }
-
-   template<class IndexT>
-   static typename IndexT::index_data_t * priv_index_header_from_block(block_header_t *bh, ipcdetail::true_) //is_intrusive
-   {
-      return IndexT::index_data_t::get_intrusive_value_type(bh);
-   }
-
-   template<class IndexT>
-   static typename IndexT::index_data_t * priv_index_header_from_block(block_header_t* bh, ipcdetail::false_) //!is_intrusive
-   {
-      return block_header_t::template to_first_header
-         <typename IndexT::index_data_t>(bh);
    }
 
    //!Generic named new function for

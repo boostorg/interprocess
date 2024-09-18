@@ -129,19 +129,9 @@ struct block_header
    unsigned short name_length() const
    {  return m_num_char;   }
 
-   size_type name_offset() const
-   {
-      return this->value_offset() + get_rounded_size(size_type(m_value_bytes), size_type(sizeof_char()));
-   }
-
    void *value() const
    {
       return const_cast<char*>((reinterpret_cast<const char*>(this) + this->value_offset()));
-   }
-
-   size_type value_offset() const
-   {
-      return get_rounded_size(size_type(sizeof(block_header)), size_type(m_value_alignment));
    }
 
    template<class T>
@@ -184,6 +174,17 @@ struct block_header
                        , size_type(::boost::container::dtl::alignment_of<block_header >::value)));
       //Some sanity checks
       return hdr;
+   }
+
+   private:
+   size_type value_offset() const
+   {
+      return get_rounded_size(size_type(sizeof(block_header)), size_type(m_value_alignment));
+   }
+
+   size_type name_offset() const
+   {
+      return this->value_offset() + get_rounded_size(size_type(m_value_bytes), size_type(sizeof_char()));
    }
 };
 
@@ -247,15 +248,6 @@ struct intrusive_value_type_impl
 
    intrusive_value_type_impl(){}
 
-   block_header_t *get_block_header()
-   {  return block_header_t::from_first_header(this); }
-
-   const block_header_t *get_block_header() const
-   {  return block_header_t::from_first_header(this); }
-
-   static intrusive_value_type_impl *get_intrusive_value_type(block_header_t *hdr)
-   {  return block_header_t::template to_first_header<intrusive_value_type_impl>(hdr); }
-
    CharType *name() const
    {  return get_block_header()->template name<CharType>(); }
 
@@ -264,6 +256,10 @@ struct intrusive_value_type_impl
 
    void *value() const
    {  return get_block_header()->value(); }
+
+   private:
+   const block_header_t *get_block_header() const
+   {  return block_header_t::from_first_header(this); }
 };
 
 template<class CharType>
