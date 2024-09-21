@@ -71,6 +71,12 @@ class mem_algo_deallocator
    {  if(m_ptr) m_algo.deallocate(m_ptr);  }
 };
 
+#if !defined(BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI)
+#define BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI 2
+#endif   //#if !defined(BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI)
+
+#if (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI == 1)
+
 template<class size_type>
 struct block_header
 {
@@ -91,6 +97,7 @@ struct block_header
       ,  m_alloc_type_sizeof_char( (unsigned char)((al_type << 5u) | ((unsigned char)szof_char & 0x1F)) )
    {};
 
+   template<std::size_t>
    size_type total_size() const
    {
       if(alloc_type() != anonymous_type){
@@ -104,13 +111,13 @@ struct block_header
    size_type value_bytes() const
    {  return m_value_bytes;   }
 
-   template<class Header>
+   template<std::size_t , class Header>
    size_type total_size_with_header() const
    {
       return get_rounded_size
                ( size_type(sizeof(Header))
             , size_type(::boost::container::dtl::alignment_of<block_header<size_type> >::value))
-           + total_size();
+           + this->template total_size<0>();
    }
 
    unsigned char alloc_type() const
@@ -176,6 +183,10 @@ struct block_header
       return hdr;
    }
 
+   template<std::size_t, class >
+   static size_type front_space()
+   {  return 0u;  }
+
    private:
    size_type value_offset() const
    {
@@ -188,25 +199,199 @@ struct block_header
    }
 };
 
+#elif (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI == 2)
+
+template <class BlockHeader, class Header>
+struct header_to_block_header_offset
+{
+   BOOST_STATIC_CONSTEXPR std::size_t value = sizeof(Header)
+      + ct_rounded_size< sizeof(BlockHeader)
+                       , boost::move_detail::alignment_of<Header>::value
+                       >::value
+      - sizeof(BlockHeader);
+};
+
+template <std::size_t MemAlignment, class BlockHeader, class Header>
+struct prefix_offsets
+{
+   BOOST_INTERPROCESS_STATIC_ASSERT(MemAlignment >= boost::move_detail::alignment_of<Header>::value);
+   BOOST_INTERPROCESS_STATIC_ASSERT(MemAlignment >= boost::move_detail::alignment_of<BlockHeader>::value);
+
+   BOOST_STATIC_CONSTEXPR std::size_t both_headers =
+      header_to_block_header_offset<BlockHeader, Header>::value + sizeof(BlockHeader);
+
+   BOOST_STATIC_CONSTEXPR std::size_t total_prefix = ct_rounded_size<both_headers, MemAlignment>::value;
+
+   BOOST_STATIC_CONSTEXPR std::size_t block_header_prefix = total_prefix - sizeof(BlockHeader);
+
+   BOOST_STATIC_CONSTEXPR std::size_t front_space = total_prefix - both_headers;
+};
+
+template <std::size_t MemAlignment, class BlockHeader>
+struct prefix_offsets<MemAlignment, BlockHeader, void>
+{
+   BOOST_INTERPROCESS_STATIC_ASSERT(MemAlignment >= boost::move_detail::alignment_of<BlockHeader>::value);
+
+   BOOST_STATIC_CONSTEXPR std::size_t total_prefix = ct_rounded_size<sizeof(BlockHeader), MemAlignment>::value;
+
+   BOOST_STATIC_CONSTEXPR std::size_t block_header_prefix = total_prefix - sizeof(BlockHeader);
+
+   BOOST_STATIC_CONSTEXPR std::size_t front_space = block_header_prefix;
+};
+
+template<class size_type>
+struct block_header
+{
+   const size_type      m_value_bytes;
+   const unsigned short m_num_char;
+   const unsigned char  m_alloc_type_sizeof_char;
+
+   block_header(size_type val_bytes
+               ,size_type 
+               ,unsigned char al_type
+               ,std::size_t szof_char
+               ,std::size_t num_char
+               )
+      :  m_value_bytes(val_bytes)
+      ,  m_num_char((unsigned short)num_char)
+      ,  m_alloc_type_sizeof_char( (unsigned char)((al_type << 5u) | ((unsigned char)szof_char & 0x1F)) )
+   {};
+
+   template<std::size_t MemAlignment>
+   size_type total_size() const
+   {
+      BOOST_CONSTEXPR_OR_CONST std::size_t block_header_prefix =
+         prefix_offsets<MemAlignment, block_header, void>::block_header_prefix;
+      if(alloc_type() != anonymous_type){
+         return block_header_prefix + name_offset() + (m_num_char+1u)*sizeof_char();
+      }
+      else{
+         return block_header_prefix + this->value_offset() + m_value_bytes;
+      }
+   }
+
+   template<std::size_t MemAlignment, class Header>
+   size_type total_size_with_header() const
+   {
+      BOOST_CONSTEXPR_OR_CONST std::size_t block_header_prefix =
+         prefix_offsets<MemAlignment, block_header, Header>::block_header_prefix;
+      return block_header_prefix + name_offset() + (m_num_char + 1u) * sizeof_char();
+   }
+
+   size_type value_bytes() const
+   {  return m_value_bytes;   }
+
+   unsigned char alloc_type() const
+   {  return (m_alloc_type_sizeof_char >> 5u)&(unsigned char)0x7;  }
+
+   unsigned char sizeof_char() const
+   {  return m_alloc_type_sizeof_char & (unsigned char)0x1F;  }
+
+   template<class CharType>
+   CharType *name() const
+   {
+      return const_cast<CharType*>(move_detail::force_ptr<const CharType*>
+         (reinterpret_cast<const char*>(this) + name_offset()));
+   }
+
+   unsigned short name_length() const
+   {  return m_num_char;   }
+
+   void *value() const
+   {
+      return const_cast<char*>((reinterpret_cast<const char*>(this) + this->value_offset()));
+   }
+
+   template<class T>
+   static block_header *block_header_from_value(T *value)
+   {
+      BOOST_ASSERT(is_ptr_aligned(value, ::boost::container::dtl::alignment_of<T>::value));
+      block_header* hdr =
+         const_cast<block_header*>
+            (move_detail::force_ptr<const block_header*>
+               (reinterpret_cast<const char*>(value) - value_offset()));
+
+      //Some sanity checks
+      BOOST_ASSERT(hdr->m_value_bytes % sizeof(T) == 0);
+      return hdr;
+   }
+
+   template<class Header>
+   static block_header *from_first_header(Header *header)
+   {
+      BOOST_ASSERT(is_ptr_aligned(header));
+      block_header * const hdr = move_detail::force_ptr<block_header*>(
+            reinterpret_cast<char*>(header) + header_to_block_header_offset<block_header, Header>::value
+         );
+      //Some sanity checks
+      BOOST_ASSERT(is_ptr_aligned(hdr));
+      return hdr;
+   }
+
+   template<class Header>
+   static const block_header *from_first_header(const Header *header)
+   {  return from_first_header(const_cast<Header*>(header));   }
+
+   template<class Header>
+   static Header *to_first_header(block_header *bheader)
+   {
+      BOOST_ASSERT(is_ptr_aligned(bheader));
+      Header * hdr = move_detail::force_ptr<Header*>(
+         reinterpret_cast<char*>(bheader) - header_to_block_header_offset<block_header, Header>::value
+         );
+      //Some sanity checks
+      BOOST_ASSERT(is_ptr_aligned(hdr));
+      return hdr;
+   }
+
+   template<std::size_t MemAlignment, class Header>
+   static size_type front_space()
+   {
+      return prefix_offsets<MemAlignment, block_header, Header>::front_space;
+   }
+
+   private:
+
+   static size_type value_offset()
+   {
+      return size_type(sizeof(block_header));
+   }
+
+   size_type name_offset() const
+   {
+      return this->value_offset() + get_rounded_size(size_type(m_value_bytes), size_type(sizeof_char()));
+   }
+};
+
+
+#else //(BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI == )
+
+#error "Incorrect BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI value!"
+
+#endif
+
 template<class CharT>
 struct intrusive_compare_key
 {
    typedef CharT char_type;
 
-   intrusive_compare_key(const CharT *str, std::size_t len)
-      :  mp_str(str), m_len(len)
+   intrusive_compare_key(const CharT* str, std::size_t len)
+      : mp_str(str), m_len(len)
    {}
 
-   const CharT *str() const
-   {  return mp_str; }
+   const CharT* str() const
+   {
+      return mp_str;
+   }
 
    std::size_t len() const
-   {  return m_len; }
+   {
+      return m_len;
+   }
 
-   const CharT *  mp_str;
+   const CharT* mp_str;
    std::size_t    m_len;
 };
-
 
 //!This struct indicates an anonymous object creation
 //!allocation
@@ -377,7 +562,13 @@ struct index_config
 
    template<class HeaderBase>
    struct intrusive_value_type
-   {  typedef intrusive_value_type_impl<HeaderBase, CharT, typename segment_manager_base::size_type>  type; };
+   {
+      typedef intrusive_value_type_impl
+         < HeaderBase
+         , CharT
+         , typename segment_manager_base::size_type
+         >  type;
+   };
 
    typedef intrusive_compare_key<CharT>                  compare_key_type;
 };

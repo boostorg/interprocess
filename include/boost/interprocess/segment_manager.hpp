@@ -75,6 +75,7 @@ class segment_manager_base
    typedef segment_manager_base<MemoryAlgorithm> segment_manager_base_type;
    typedef typename MemoryAlgorithm::void_pointer  void_pointer;
    typedef typename MemoryAlgorithm::mutex_family  mutex_family;
+   static const std::size_t MemAlignment = MemoryAlgorithm::Alignment;
    typedef MemoryAlgorithm memory_algorithm;
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
@@ -310,6 +311,7 @@ class segment_manager
    typedef segment_manager_base<MemoryAlgorithm>   segment_manager_base_type;
 
    static const size_type PayloadPerAllocation = segment_manager_base_t::PayloadPerAllocation;
+   static const size_type MemAlignment         = segment_manager_base_t::MemAlignment;
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
@@ -698,6 +700,7 @@ class segment_manager
    {
       typedef typename Proxy::object_type object_type;
       BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment = boost::move_detail::alignment_of<object_type>::value;
+      BOOST_CONSTEXPR_OR_CONST std::size_t alloc_alignment = t_alignment > MemAlignment ? t_alignment : MemAlignment;
       block_header_t block_info (  size_type(sizeof(object_type)*num)
                                  , size_type(t_alignment)
                                  , anonymous_type
@@ -705,7 +708,12 @@ class segment_manager
                                  , 0);
 
       //Check if there is enough memory
-      void *ptr_struct = this->allocate(block_info.total_size(), nothrow<>::get());
+      const std::size_t total_size = block_info.template total_size<alloc_alignment>();
+      #if (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI < 2)
+      void *ptr_struct = this->allocate(total_size, nothrow<>::get());
+      #else
+      void* ptr_struct = this->allocate_aligned(total_size, alloc_alignment, nothrow<>::get());
+      #endif
       if(!ptr_struct){
          return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
       }
@@ -715,7 +723,10 @@ class segment_manager
          (ptr_struct, *static_cast<segment_manager_base_type*>(this));
 
       //Now construct the header
-      block_header_t * hdr = ::new(ptr_struct, boost_container_new_t()) block_header_t(block_info);
+      const std::size_t front_space = block_header_t::template front_space< alloc_alignment, void>();
+
+      block_header_t * const hdr = ::new((char*)ptr_struct + front_space, boost_container_new_t()) block_header_t(block_info);
+      BOOST_ASSERT(is_ptr_aligned(hdr));
       void *ptr = 0; //avoid gcc warning
       ptr = hdr->value();
 
@@ -724,14 +735,16 @@ class segment_manager
 
       //All constructors successful, disable rollback
       mem.release();
-      return static_cast<object_type*>(ptr);
+      object_type* const pret = static_cast<object_type*>(ptr);
+      BOOST_ASSERT(is_ptr_aligned(pret));
+      return pret;
    }
 
    //!Calls the destructor and makes an anonymous deallocate
    template <class T>
    void priv_anonymous_destroy(const T *object)
    {
-
+      BOOST_ASSERT(is_ptr_aligned(object));
       //Get control data from associated with this object
       block_header_t *ctrl_data = block_header_t::block_header_from_value(object);
 
@@ -745,12 +758,19 @@ class segment_manager
       //Call destructors and free memory
       //Build scoped ptr to avoid leaks with destructor exception
       priv_destroy_n(object, ctrl_data->m_value_bytes/sizeof(T));
-      this->deallocate(ctrl_data);
+
+      BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment =
+         boost::move_detail::alignment_of<T>::value;
+      BOOST_CONSTEXPR_OR_CONST std::size_t alloc_alignment =
+         t_alignment > MemAlignment ? t_alignment : MemAlignment;
+      const std::size_t front_space = block_header_t::template front_space<alloc_alignment, void>();
+      this->deallocate((char*)ctrl_data-front_space);
    }
 
    template<class T>
    void priv_destroy_ptr(const T *ptr)
    {
+      BOOST_ASSERT(is_ptr_aligned(ptr));
       block_header_t *ctrl_data = block_header_t::block_header_from_value(ptr);
       switch(ctrl_data->alloc_type()){
          case anonymous_type:
@@ -909,7 +929,7 @@ class segment_manager
 
    template <class T, class CharT>
    bool priv_generic_named_destroy_impl
-      (const typename IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >::iterator &it,
+      (typename IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >::iterator it,
       IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> > &index)
    {
       typedef IndexType<ipcdetail::index_config<CharT, MemoryAlgorithm> >  index_t;
@@ -926,13 +946,20 @@ class segment_manager
       index.erase(it);
 
       void *memory;
+      BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment =
+         boost::move_detail::alignment_of<T>::value;
+      BOOST_CONSTEXPR_OR_CONST std::size_t alloc_alignment =
+         t_alignment > MemAlignment ? t_alignment : MemAlignment;
+
       BOOST_IF_CONSTEXPR(is_node_index_t::value || is_intrusive_t::value){
          index_data_t*ihdr = block_header_t::template to_first_header<index_data_t>(ctrl_data);
+         const std::size_t front_space = block_header_t::template front_space<alloc_alignment, index_data_t>();
+         memory = (char*)ihdr - front_space;
          ihdr->~index_data_t();
-         memory = ihdr;
       }
       else{
-         memory = ctrl_data;
+         const std::size_t front_space = block_header_t::template front_space<alloc_alignment, void>();
+         memory = (char*)ctrl_data - front_space;
       }
 
       //Call destructors and free memory
@@ -967,6 +994,7 @@ class segment_manager
       typedef typename Proxy::object_type object_type;
       std::size_t namelen  = std::char_traits<CharT>::length(name);
       BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment = boost::move_detail::alignment_of<object_type>::value;
+      BOOST_CONSTEXPR_OR_CONST std::size_t alloc_alignment = t_alignment > MemAlignment ? t_alignment: MemAlignment ;
 
       block_header_t block_info ( size_type(sizeof(object_type)*num)
                                 , size_type(t_alignment)
@@ -1016,23 +1044,40 @@ class segment_manager
       //Allocates buffer for name + data, this can throw (it hurts)
       void *buffer_ptr;
       block_header_t * hdr;
+      std::size_t front_space;
 
       //Allocate and construct the headers
       BOOST_IF_CONSTEXPR(is_node_index_t::value || is_intrusive_t::value){
-         size_type total_size = block_info.template total_size_with_header<index_data_t>();
+         const size_type total_size = block_info.template total_size_with_header<alloc_alignment, index_data_t>();
+         #if (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI < 2)
          buffer_ptr = this->allocate(total_size, nothrow<>::get());
+         #else
+         buffer_ptr = this->allocate_aligned(total_size, alloc_alignment, nothrow<>::get());
+         #endif
+         
          if(!buffer_ptr)
             return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
-         hdr = block_header_t::template from_first_header<index_data_t>(static_cast<index_data_t*>(buffer_ptr));
+
+         front_space = block_header_t::template front_space<alloc_alignment, index_data_t>();
+         hdr = block_header_t::template from_first_header(reinterpret_cast<index_data_t*>((void*)((char*)buffer_ptr+front_space)));
       }
       else{
-         buffer_ptr = this->allocate(block_info.total_size(), nothrow<>::get());
+         const size_type total_size = block_info.template total_size<alloc_alignment>();
+         #if (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI < 2)
+         buffer_ptr = this->allocate(total_size, nothrow<>::get());
+         #else
+         buffer_ptr = this->allocate_aligned(total_size, alloc_alignment, nothrow<>::get());
+         #endif
+
+         front_space = block_header_t::template front_space<alloc_alignment, void>();
+         
          //Check if there is enough memory
          if (!buffer_ptr)
             return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
-         hdr = static_cast<block_header_t*>(buffer_ptr);
+         hdr = reinterpret_cast<block_header_t*>((void*)((char*)buffer_ptr + front_space));
       }
 
+      BOOST_ASSERT(is_ptr_aligned(hdr));
       hdr = ::new(hdr, boost_container_new_t()) block_header_t(block_info);
 
       //Build scoped ptr to avoid leaks with constructor exception
@@ -1048,7 +1093,8 @@ class segment_manager
       index_it it;
       BOOST_INTERPROCESS_TRY{
          BOOST_IF_CONSTEXPR(is_node_index_t::value || is_intrusive_t::value) {
-            index_data_t* index_data = ::new(buffer_ptr, boost_container_new_t()) index_data_t();
+            index_data_t* index_data = ::new((char*)buffer_ptr + front_space, boost_container_new_t()) index_data_t();
+            BOOST_ASSERT(is_ptr_aligned(index_data));
             it = index.insert_commit(compare_key_t(name_ptr, namelen), hdr, *index_data, commit_data);
          }
          else{
@@ -1074,7 +1120,9 @@ class segment_manager
       //Release rollbacks since construction was successful
       v_eraser.release();
       mem.release();
-      return static_cast<object_type*>(ptr);
+      object_type* const pret = static_cast<object_type*>(ptr);
+      BOOST_ASSERT(is_ptr_aligned(pret));
+      return pret;
    }
 
    private:

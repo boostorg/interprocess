@@ -6774,6 +6774,9 @@ thank them:
 
 * Some workarounds for Cygwin were added. Regression tests now work on Cygwin64.
 
+* [*ABI breaking]: `segment_manager` nows uses a new implementation that supports overaligned types and fixes some existing bugs.
+  You can obtain the pre-Boost 1.87 ABI #defining `BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI` to `1` before including Boost.Interprocess headers.
+
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/210   GitHub #210 (['"Bug in boost::interprocess::ipcdetail::sync_handles::obtain_mutex"])].
    * [@https://github.com/boostorg/interprocess/issues/192   GitHub #192 (['"managed_windows_shared_memory crash on destruction"])].

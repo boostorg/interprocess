@@ -8,5 +8,5 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#define BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI 2
+#define BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI 1
 #include "segment_manager_test.hpp"
