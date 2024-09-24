@@ -700,7 +700,6 @@ class segment_manager
    {
       typedef typename Proxy::object_type object_type;
       BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment = boost::move_detail::alignment_of<object_type>::value;
-      BOOST_CONSTEXPR_OR_CONST std::size_t alloc_alignment = t_alignment > MemAlignment ? t_alignment : MemAlignment;
       block_header_t block_info (  size_type(sizeof(object_type)*num)
                                  , size_type(t_alignment)
                                  , anonymous_type
@@ -708,11 +707,11 @@ class segment_manager
                                  , 0);
 
       //Check if there is enough memory
-      const std::size_t total_size = block_info.template total_anonymous_size<alloc_alignment>();
+      const std::size_t total_size = block_info.template total_anonymous_size<t_alignment>();
       #if (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI < 2)
       void *ptr_struct = this->allocate(total_size, nothrow<>::get());
       #else
-      void* ptr_struct = this->allocate_aligned(total_size, alloc_alignment, nothrow<>::get());
+      void* ptr_struct = this->allocate_aligned(total_size, t_alignment, nothrow<>::get());
       #endif
       if(!ptr_struct){
          return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
@@ -723,7 +722,7 @@ class segment_manager
          (ptr_struct, *static_cast<segment_manager_base_type*>(this));
 
       //Now construct the header
-      const std::size_t front_space = block_header_t::template front_space< alloc_alignment, void>();
+      const std::size_t front_space = block_header_t::template front_space_without_header<t_alignment>();
 
       block_header_t * const hdr = ::new((char*)ptr_struct + front_space, boost_container_new_t()) block_header_t(block_info);
       BOOST_ASSERT(is_ptr_aligned(hdr));
@@ -761,10 +760,8 @@ class segment_manager
 
       BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment =
          boost::move_detail::alignment_of<T>::value;
-      BOOST_CONSTEXPR_OR_CONST std::size_t alloc_alignment =
-         t_alignment > MemAlignment ? t_alignment : MemAlignment;
-      const std::size_t front_space = block_header_t::template front_space<alloc_alignment, void>();
-      this->deallocate((char*)ctrl_data-front_space);
+      const std::size_t front_space = block_header_t::template front_space_without_header<t_alignment>();
+      this->deallocate((char*)ctrl_data - front_space);
    }
 
    template<class T>
@@ -951,12 +948,12 @@ class segment_manager
 
       BOOST_IF_CONSTEXPR(is_node_index_t::value || is_intrusive_t::value){
          index_data_t*ihdr = block_header_t::template to_first_header<index_data_t>(ctrl_data);
-         const std::size_t front_space = block_header_t::template front_space<alloc_alignment, index_data_t>();
+         const std::size_t front_space = block_header_t::template front_space_with_header<alloc_alignment, index_data_t>();
          memory = (char*)ihdr - front_space;
          ihdr->~index_data_t();
       }
       else{
-         const std::size_t front_space = block_header_t::template front_space<alloc_alignment, void>();
+         const std::size_t front_space = block_header_t::template front_space_without_header<t_alignment>();
          memory = (char*)ctrl_data - front_space;
       }
 
@@ -1056,18 +1053,18 @@ class segment_manager
          if(!buffer_ptr)
             return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
 
-         front_space = block_header_t::template front_space<alloc_alignment, index_data_t>();
-         hdr = block_header_t::template from_first_header(reinterpret_cast<index_data_t*>((void*)((char*)buffer_ptr+front_space)));
+         front_space = block_header_t::template front_space_with_header<alloc_alignment, index_data_t>();
+         hdr = block_header_t::template from_first_header(reinterpret_cast<index_data_t*>((void*)((char*)buffer_ptr + front_space)));
       }
       else{
-         const size_type total_size = block_info.template total_named_size<alloc_alignment, CharT>(namelen);
+         const size_type total_size = block_info.template total_named_size<t_alignment, CharT>(namelen);
          #if (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI < 2)
          buffer_ptr = this->allocate(total_size, nothrow<>::get());
          #else
-         buffer_ptr = this->allocate_aligned(total_size, alloc_alignment, nothrow<>::get());
+         buffer_ptr = this->allocate_aligned(total_size, t_alignment, nothrow<>::get());
          #endif
 
-         front_space = block_header_t::template front_space<alloc_alignment, void>();
+         front_space = block_header_t::template front_space_without_header<t_alignment>();
          
          //Check if there is enough memory
          if (!buffer_ptr)
