@@ -708,7 +708,7 @@ class segment_manager
                                  , 0);
 
       //Check if there is enough memory
-      const std::size_t total_size = block_info.template total_size<alloc_alignment>();
+      const std::size_t total_size = block_info.template total_anonymous_size<alloc_alignment>();
       #if (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI < 2)
       void *ptr_struct = this->allocate(total_size, nothrow<>::get());
       #else
@@ -757,7 +757,7 @@ class segment_manager
 
       //Call destructors and free memory
       //Build scoped ptr to avoid leaks with destructor exception
-      priv_destroy_n(object, ctrl_data->m_value_bytes/sizeof(T));
+      priv_destroy_n(object, ctrl_data->value_bytes()/sizeof(T));
 
       BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment =
          boost::move_detail::alignment_of<T>::value;
@@ -807,15 +807,15 @@ class segment_manager
    {
       boost::interprocess::allocation_type type = ctrl_data->alloc_type();
       if(type == anonymous_type){
-         BOOST_ASSERT((type == anonymous_type && ctrl_data->m_num_char == 0) ||
-                (type == unique_type    && ctrl_data->m_num_char != 0) );
+         BOOST_ASSERT(ctrl_data->name_length() == 0);
          return 0;
       }
+
+      BOOST_ASSERT(ctrl_data->name_length() != 0);
       CharType *name = static_cast<CharType*>(ctrl_data->template name<CharType>());
 
       //Sanity checks
-      BOOST_ASSERT(ctrl_data->sizeof_char() == sizeof(CharType));
-      BOOST_ASSERT(ctrl_data->m_num_char == std::char_traits<CharType>::length(name));
+      BOOST_ASSERT(ctrl_data->name_length() == std::char_traits<CharType>::length(name));
       return name;
    }
 
@@ -870,10 +870,9 @@ class segment_manager
          block_header_t *ctrl_data = priv_block_header_from_it(it, is_intrusive_t());
 
          //Sanity check
-         BOOST_ASSERT((ctrl_data->m_value_bytes % sizeof(T)) == 0);
-         BOOST_ASSERT(ctrl_data->sizeof_char() == sizeof(CharT));
+         BOOST_ASSERT((ctrl_data->value_bytes() % sizeof(T)) == 0);
          ret_ptr  = ctrl_data->value();
-         length  = ctrl_data->m_value_bytes/ sizeof(T);
+         length  = ctrl_data->value_bytes()/ sizeof(T);
       }
       return static_cast<T*>(ret_ptr);
    }
@@ -939,8 +938,7 @@ class segment_manager
       block_header_t *ctrl_data = priv_block_header_from_it(it, is_intrusive_t());
 
       //Sanity checks
-      BOOST_ASSERT((ctrl_data->m_value_bytes % sizeof(T)) == 0);
-      BOOST_ASSERT(sizeof(CharT) == ctrl_data->sizeof_char());
+      BOOST_ASSERT((ctrl_data->value_bytes() % sizeof(T)) == 0);
 
       //Erase node from index
       index.erase(it);
@@ -963,7 +961,7 @@ class segment_manager
       }
 
       //Call destructors and free memory
-      priv_destroy_n(static_cast<T*>(ctrl_data->value()), ctrl_data->m_value_bytes/sizeof(T));
+      priv_destroy_n(static_cast<T*>(ctrl_data->value()), ctrl_data->value_bytes()/sizeof(T));
 
       //Destroy the headers
       ctrl_data->~block_header_t();
@@ -1048,7 +1046,7 @@ class segment_manager
 
       //Allocate and construct the headers
       BOOST_IF_CONSTEXPR(is_node_index_t::value || is_intrusive_t::value){
-         const size_type total_size = block_info.template total_size_with_header<alloc_alignment, index_data_t>();
+         const size_type total_size = block_info.template total_named_size_with_header<alloc_alignment, CharT, index_data_t>(namelen);
          #if (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI < 2)
          buffer_ptr = this->allocate(total_size, nothrow<>::get());
          #else
@@ -1062,7 +1060,7 @@ class segment_manager
          hdr = block_header_t::template from_first_header(reinterpret_cast<index_data_t*>((void*)((char*)buffer_ptr+front_space)));
       }
       else{
-         const size_type total_size = block_info.template total_size<alloc_alignment>();
+         const size_type total_size = block_info.template total_named_size<alloc_alignment, CharT>(namelen);
          #if (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI < 2)
          buffer_ptr = this->allocate(total_size, nothrow<>::get());
          #else
@@ -1087,6 +1085,7 @@ class segment_manager
       void *ptr = hdr->value();
 
       //Copy name to memory segment and insert data
+      hdr->store_name_length(static_cast<typename block_header_t::name_len_t>(namelen));
       CharT *name_ptr = static_cast<CharT *>(hdr->template name<CharT>());
       std::char_traits<CharT>::copy(name_ptr, name, namelen+1);
 

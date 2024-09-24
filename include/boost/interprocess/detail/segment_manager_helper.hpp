@@ -30,6 +30,7 @@
 // container/detail
 #include <boost/container/detail/type_traits.hpp> //alignment_of
 #include <boost/container/detail/minimal_char_traits_header.hpp>
+#include <boost/container/detail/placement_new.hpp>
 // intrusive
 #include <boost/intrusive/pointer_traits.hpp>
 // move/detail
@@ -80,10 +81,14 @@ class mem_algo_deallocator
 template<class size_type>
 struct block_header
 {
+   private:
    const size_type      m_value_bytes;
    const unsigned short m_num_char;
    const unsigned char  m_value_alignment;
    const unsigned char  m_alloc_type_sizeof_char;
+
+   public:
+   typedef std::size_t name_len_t;
 
    block_header(size_type val_bytes
                ,size_type val_alignment
@@ -96,29 +101,33 @@ struct block_header
       ,  m_value_alignment((unsigned char)val_alignment)
       ,  m_alloc_type_sizeof_char( (unsigned char)((al_type << 5u) | ((unsigned char)szof_char & 0x1F)) )
    {};
-
+   
    template<std::size_t>
-   size_type total_size() const
+   size_type total_anonymous_size() const
    {
-      if(alloc_type() != anonymous_type){
-         return name_offset() + (m_num_char+1u)*sizeof_char();
-      }
-      else{
-         return this->value_offset() + m_value_bytes;
-      }
+      return this->value_offset() + m_value_bytes;
+   }
+
+   template<std::size_t, class>
+   size_type total_named_size(std::size_t namelen) const
+   {
+      (void)namelen;
+      BOOST_ASSERT(namelen == m_num_char);
+      return name_offset() + (m_num_char+1u)*sizeof_char();
+   }
+
+   template<std::size_t, class, class Header>
+   size_type total_named_size_with_header(std::size_t namelen) const
+   {
+      BOOST_ASSERT(namelen == m_num_char);
+      return get_rounded_size
+               ( size_type(sizeof(Header))
+            , size_type(::boost::container::dtl::alignment_of<block_header<size_type> >::value))
+           + this->template total_named_size<0, char>(namelen);
    }
 
    size_type value_bytes() const
    {  return m_value_bytes;   }
-
-   template<std::size_t , class Header>
-   size_type total_size_with_header() const
-   {
-      return get_rounded_size
-               ( size_type(sizeof(Header))
-            , size_type(::boost::container::dtl::alignment_of<block_header<size_type> >::value))
-           + this->template total_size<0>();
-   }
 
    unsigned char alloc_type() const
    {  return (m_alloc_type_sizeof_char >> 5u)&(unsigned char)0x7;  }
@@ -187,6 +196,9 @@ struct block_header
    static size_type front_space()
    {  return 0u;  }
 
+   void store_name_length(std::size_t)
+   {}
+
    private:
    size_type value_offset() const
    {
@@ -242,65 +254,77 @@ struct prefix_offsets<MemAlignment, BlockHeader, void>
 template<class size_type>
 struct block_header
 {
-   const size_type      m_value_bytes;
-   const unsigned short m_num_char;
-   const unsigned char  m_alloc_type_sizeof_char;
+   private:
+   const size_type  m_alloc_type  : 2;
+   const size_type  m_value_bytes : sizeof(size_type)*CHAR_BIT - 2u;
+
+   public:
+   typedef unsigned short name_len_t;
+
+   BOOST_STATIC_CONSTEXPR size_type value_mask = ~size_type(0) >> 2u;
 
    block_header(size_type val_bytes
                ,size_type 
                ,unsigned char al_type
-               ,std::size_t szof_char
-               ,std::size_t num_char
+               ,std::size_t
+               ,std::size_t
                )
-      :  m_value_bytes(val_bytes)
-      ,  m_num_char((unsigned short)num_char)
-      ,  m_alloc_type_sizeof_char( (unsigned char)((al_type << 5u) | ((unsigned char)szof_char & 0x1F)) )
+      : m_alloc_type(al_type & 3u)
+      , m_value_bytes(val_bytes& (value_mask))
    {};
 
    template<std::size_t MemAlignment>
-   size_type total_size() const
+   size_type total_anonymous_size() const
    {
       BOOST_CONSTEXPR_OR_CONST std::size_t block_header_prefix =
          prefix_offsets<MemAlignment, block_header, void>::block_header_prefix;
-      if(alloc_type() != anonymous_type){
-         return block_header_prefix + name_offset() + (m_num_char+1u)*sizeof_char();
-      }
-      else{
-         return block_header_prefix + this->value_offset() + m_value_bytes;
-      }
+      return block_header_prefix + this->value_offset() + m_value_bytes;
    }
 
-   template<std::size_t MemAlignment, class Header>
-   size_type total_size_with_header() const
+   template<std::size_t MemAlignment, class CharType>
+   size_type total_named_size(std::size_t namelen) const
+   {
+      BOOST_CONSTEXPR_OR_CONST std::size_t block_header_prefix =
+         prefix_offsets<MemAlignment, block_header, void>::block_header_prefix;
+      return block_header_prefix
+         + name_offset< ::boost::move_detail::alignment_of<CharType>::value>()
+         + (namelen + 1u) * sizeof(CharType);
+   }
+
+   template<std::size_t MemAlignment, class CharType, class Header>
+   size_type total_named_size_with_header(std::size_t namelen) const
    {
       BOOST_CONSTEXPR_OR_CONST std::size_t block_header_prefix =
          prefix_offsets<MemAlignment, block_header, Header>::block_header_prefix;
-      return block_header_prefix + name_offset() + (m_num_char + 1u) * sizeof_char();
+      return block_header_prefix
+         + name_offset< ::boost::move_detail::alignment_of<CharType>::value>()
+         + (namelen + 1u) * sizeof(CharType);
    }
 
    size_type value_bytes() const
    {  return m_value_bytes;   }
 
    unsigned char alloc_type() const
-   {  return (m_alloc_type_sizeof_char >> 5u)&(unsigned char)0x7;  }
-
-   unsigned char sizeof_char() const
-   {  return m_alloc_type_sizeof_char & (unsigned char)0x1F;  }
+   {  return m_alloc_type;  }
 
    template<class CharType>
    CharType *name() const
    {
       return const_cast<CharType*>(move_detail::force_ptr<const CharType*>
-         (reinterpret_cast<const char*>(this) + name_offset()));
+         (reinterpret_cast<const char*>(this) +
+          this->template name_offset< ::boost::move_detail::alignment_of<CharType>::value>()));
    }
 
-   unsigned short name_length() const
-   {  return m_num_char;   }
+   name_len_t name_length() const
+   {
+      if(m_alloc_type == anonymous_type)
+         return 0;
+      return *(move_detail::force_ptr<const name_len_t*>
+         (reinterpret_cast<const char*>(this) + this->name_length_offset()));
+   }
 
    void *value() const
-   {
-      return const_cast<char*>((reinterpret_cast<const char*>(this) + this->value_offset()));
-   }
+   {  return const_cast<char*>((reinterpret_cast<const char*>(this) + this->value_offset()));  }
 
    template<class T>
    static block_header *block_header_from_value(T *value)
@@ -346,20 +370,27 @@ struct block_header
 
    template<std::size_t MemAlignment, class Header>
    static size_type front_space()
+   {  return prefix_offsets<MemAlignment, block_header, Header>::front_space; }
+
+   void store_name_length(name_len_t namelen)
    {
-      return prefix_offsets<MemAlignment, block_header, Header>::front_space;
+      ::new( reinterpret_cast<char*>(this) + this->name_length_offset()
+           , boost_container_new_t()
+           ) name_len_t(namelen);
    }
 
    private:
 
    static size_type value_offset()
-   {
-      return size_type(sizeof(block_header));
-   }
+   {  return size_type(sizeof(block_header));   }
 
+   template<std::size_t CharAlign>
    size_type name_offset() const
+   {  return get_rounded_size(this->name_length_offset()+sizeof(name_len_t), CharAlign);  }
+
+   size_type name_length_offset() const
    {
-      return this->value_offset() + get_rounded_size(size_type(m_value_bytes), size_type(sizeof_char()));
+      return this->value_offset() + get_rounded_size(m_value_bytes, ::boost::move_detail::alignment_of<name_len_t>::value);
    }
 };
 
