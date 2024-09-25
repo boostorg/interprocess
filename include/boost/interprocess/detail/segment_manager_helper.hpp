@@ -218,38 +218,39 @@ struct block_header
 #elif (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI == 2)
 
 template <class BlockHeader, class Header>
-struct header_to_block_header_offset
+struct sm_between_headers
 {
-   BOOST_STATIC_CONSTEXPR std::size_t value = sizeof(Header)
-      + ct_rounded_size< sizeof(BlockHeader)
-                       , boost::move_detail::alignment_of<Header>::value
-                       >::value
+   BOOST_STATIC_CONSTEXPR std::size_t value
+      = sizeof(Header)
+      + ct_rounded_size< sizeof(BlockHeader), boost::move_detail::alignment_of<Header>::value>::value
       - sizeof(BlockHeader);
 };
 
-template <std::size_t MemAlignment, class BlockHeader, class Header>
-struct prefix_offsets_with_header
+template <std::size_t TypeAlignment, class BlockHeader, class Header>
+struct sg_offsets_with_header
 {
-   BOOST_INTERPROCESS_STATIC_ASSERT(MemAlignment >= boost::move_detail::alignment_of<Header>::value);
-   BOOST_INTERPROCESS_STATIC_ASSERT(MemAlignment >= boost::move_detail::alignment_of<BlockHeader>::value);
+   private:
+   BOOST_STATIC_CONSTEXPR std::size_t between_headers = sm_between_headers<BlockHeader, Header>::value;
+   BOOST_STATIC_CONSTEXPR std::size_t both_headers = between_headers + sizeof(BlockHeader);
+   BOOST_STATIC_CONSTEXPR std::size_t total_prefix = ct_rounded_size<both_headers, TypeAlignment>::value;
 
-   BOOST_STATIC_CONSTEXPR std::size_t both_headers =
-      header_to_block_header_offset<BlockHeader, Header>::value + sizeof(BlockHeader);
-
-   BOOST_STATIC_CONSTEXPR std::size_t total_prefix = ct_rounded_size<both_headers, MemAlignment>::value;
-
+   public:
    BOOST_STATIC_CONSTEXPR std::size_t block_header_prefix = total_prefix - sizeof(BlockHeader);
-
    BOOST_STATIC_CONSTEXPR std::size_t front_space = total_prefix - both_headers;
+
+   BOOST_INTERPROCESS_STATIC_ASSERT((total_prefix % TypeAlignment) == 0);
+   BOOST_INTERPROCESS_STATIC_ASSERT((front_space % boost::move_detail::alignment_of<Header>::value) == 0);
+   BOOST_INTERPROCESS_STATIC_ASSERT((block_header_prefix % boost::move_detail::alignment_of<BlockHeader>::value) == 0);
+   BOOST_INTERPROCESS_STATIC_ASSERT(total_prefix == (sizeof(BlockHeader) + sizeof(Header) + front_space + (between_headers - sizeof(Header))));
 };
 
 template <std::size_t TypeAlignment, class BlockHeader>
-struct prefix_offsets_without_header
+struct sg_offsets_without_header
 {
    BOOST_STATIC_CONSTEXPR std::size_t total_prefix = ct_rounded_size<sizeof(BlockHeader), TypeAlignment>::value;
 
+   public:
    BOOST_STATIC_CONSTEXPR std::size_t block_header_prefix = total_prefix - sizeof(BlockHeader);
-
    BOOST_STATIC_CONSTEXPR std::size_t front_space = block_header_prefix;
 };
 
@@ -279,7 +280,7 @@ struct block_header
    size_type total_anonymous_size() const
    {
       BOOST_CONSTEXPR_OR_CONST std::size_t block_header_prefix =
-         prefix_offsets_without_header<TypeAlignment, block_header>::block_header_prefix;
+         sg_offsets_without_header<TypeAlignment, block_header>::block_header_prefix;
       return block_header_prefix + this->value_offset() + m_value_bytes;
    }
 
@@ -287,18 +288,17 @@ struct block_header
    size_type total_named_size(std::size_t namelen) const
    {
       BOOST_CONSTEXPR_OR_CONST std::size_t block_header_prefix =
-         prefix_offsets_without_header<TypeAlignment, block_header>::block_header_prefix;
+         sg_offsets_without_header<TypeAlignment, block_header>::block_header_prefix;
       return block_header_prefix
          + name_offset< ::boost::move_detail::alignment_of<CharType>::value>()
          + (namelen + 1u) * sizeof(CharType);
    }
 
-   template<std::size_t MemAlignment, class CharType, class Header>
+   template<std::size_t TypeAlignment, class CharType, class Header>
    size_type total_named_size_with_header(std::size_t namelen) const
    {
-      BOOST_CONSTEXPR_OR_CONST std::size_t block_header_prefix =
-         prefix_offsets_with_header<MemAlignment, block_header, Header>::block_header_prefix;
-      return block_header_prefix
+      typedef sg_offsets_with_header<TypeAlignment, block_header, Header> offsets_t;
+      return offsets_t::block_header_prefix
          + name_offset< ::boost::move_detail::alignment_of<CharType>::value>()
          + (namelen + 1u) * sizeof(CharType);
    }
@@ -347,8 +347,7 @@ struct block_header
    {
       BOOST_ASSERT(is_ptr_aligned(header));
       block_header * const hdr = move_detail::force_ptr<block_header*>(
-            reinterpret_cast<char*>(header) + header_to_block_header_offset<block_header, Header>::value
-         );
+            reinterpret_cast<char*>(header) + sm_between_headers<block_header, Header>::value);
       //Some sanity checks
       BOOST_ASSERT(is_ptr_aligned(hdr));
       return hdr;
@@ -363,20 +362,19 @@ struct block_header
    {
       BOOST_ASSERT(is_ptr_aligned(bheader));
       Header * hdr = move_detail::force_ptr<Header*>(
-         reinterpret_cast<char*>(bheader) - header_to_block_header_offset<block_header, Header>::value
-         );
+         reinterpret_cast<char*>(bheader) - sm_between_headers<block_header, Header>::value);
       //Some sanity checks
       BOOST_ASSERT(is_ptr_aligned(hdr));
       return hdr;
    }
 
-   template<std::size_t MemAlignment, class Header>
+   template<std::size_t TypeAlignment, class Header>
    static size_type front_space_with_header()
-   {  return prefix_offsets_with_header<MemAlignment, block_header, Header>::front_space; }
+   {  return sg_offsets_with_header<TypeAlignment, block_header, Header>::front_space; }
 
    template<std::size_t TypeAlignment>
    static size_type front_space_without_header()
-   {  return prefix_offsets_without_header<TypeAlignment, block_header>::front_space; }
+   {  return sg_offsets_without_header<TypeAlignment, block_header>::front_space; }
 
    void store_name_length(name_len_t namelen)
    {

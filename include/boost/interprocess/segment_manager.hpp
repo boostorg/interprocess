@@ -932,6 +932,8 @@ class segment_manager
       typedef typename index_t::index_data_t         index_data_t;
 
       //Get allocation parameters
+      BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment =
+         boost::move_detail::alignment_of<T>::value;
       block_header_t *ctrl_data = priv_block_header_from_it(it, is_intrusive_t());
 
       //Sanity checks
@@ -941,14 +943,9 @@ class segment_manager
       index.erase(it);
 
       void *memory;
-      BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment =
-         boost::move_detail::alignment_of<T>::value;
-      BOOST_CONSTEXPR_OR_CONST std::size_t alloc_alignment =
-         t_alignment > MemAlignment ? t_alignment : MemAlignment;
-
       BOOST_IF_CONSTEXPR(is_node_index_t::value || is_intrusive_t::value){
          index_data_t*ihdr = block_header_t::template to_first_header<index_data_t>(ctrl_data);
-         const std::size_t front_space = block_header_t::template front_space_with_header<alloc_alignment, index_data_t>();
+         const std::size_t front_space = block_header_t::template front_space_with_header<t_alignment, index_data_t>();
          memory = (char*)ihdr - front_space;
          ihdr->~index_data_t();
       }
@@ -969,9 +966,7 @@ class segment_manager
 
    template<class IndexIt>
    static block_header_t* priv_block_header_from_it(IndexIt it, ipcdetail::true_) //is_intrusive
-   {
-      return block_header_t::from_first_header(&*it);
-   }
+   {  return block_header_t::from_first_header(&*it); }
 
    template<class IndexIt>
    static block_header_t* priv_block_header_from_it(IndexIt it, ipcdetail::false_ ) //!is_intrusive
@@ -989,7 +984,6 @@ class segment_manager
       typedef typename Proxy::object_type object_type;
       std::size_t namelen  = std::char_traits<CharT>::length(name);
       BOOST_CONSTEXPR_OR_CONST std::size_t t_alignment = boost::move_detail::alignment_of<object_type>::value;
-      BOOST_CONSTEXPR_OR_CONST std::size_t alloc_alignment = t_alignment > MemAlignment ? t_alignment: MemAlignment ;
 
       block_header_t block_info ( size_type(sizeof(object_type)*num)
                                 , size_type(t_alignment)
@@ -1043,17 +1037,17 @@ class segment_manager
 
       //Allocate and construct the headers
       BOOST_IF_CONSTEXPR(is_node_index_t::value || is_intrusive_t::value){
-         const size_type total_size = block_info.template total_named_size_with_header<alloc_alignment, CharT, index_data_t>(namelen);
+         const size_type total_size = block_info.template total_named_size_with_header<t_alignment, CharT, index_data_t>(namelen);
          #if (BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI < 2)
          buffer_ptr = this->allocate(total_size, nothrow<>::get());
          #else
-         buffer_ptr = this->allocate_aligned(total_size, alloc_alignment, nothrow<>::get());
+         buffer_ptr = this->allocate_aligned(total_size, t_alignment, nothrow<>::get());
          #endif
          
          if(!buffer_ptr)
             return ipcdetail::null_or_bad_alloc<object_type>(dothrow);
 
-         front_space = block_header_t::template front_space_with_header<alloc_alignment, index_data_t>();
+         front_space = block_header_t::template front_space_with_header<t_alignment, index_data_t>();
          hdr = block_header_t::template from_first_header(reinterpret_cast<index_data_t*>((void*)((char*)buffer_ptr + front_space)));
       }
       else{
