@@ -244,7 +244,11 @@ class segment_manager_base
    //!Increases managed memory in extra_size bytes more. This only works
    //!with single-segment management.
    void grow(size_type extra_size)
-   {  MemoryAlgorithm::grow(extra_size);   }
+   {
+      //Growing managed segments that use raw pointers is UB, so disallow it.
+      BOOST_INTERPROCESS_STATIC_ASSERT(!(ipcdetail::is_same<void*, void_pointer>::value));
+      MemoryAlgorithm::grow(extra_size);
+   }
 
    //!Decreases managed memory to the minimum. This only works
    //!with single-segment management.
