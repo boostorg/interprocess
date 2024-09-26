@@ -6778,8 +6778,11 @@ thank them:
   You can obtain the pre-Boost 1.87 ABI #defining `BOOST_INTERPROCESS_SEGMENT_MANAGER_ABI` to `1` before including Boost.Interprocess headers.
 
 *  Fixed bugs:
-   * [@https://github.com/boostorg/interprocess/issues/210   GitHub #210 (['"Bug in boost::interprocess::ipcdetail::sync_handles::obtain_mutex"])].
    * [@https://github.com/boostorg/interprocess/issues/192   GitHub #192 (['"managed_windows_shared_memory crash on destruction"])].
+   * [@https://github.com/boostorg/interprocess/issues/199   GitHub #199 (['"missing/misused m_is_wide in char_wchar_holder assignment operators"])].
+   * [@https://github.com/boostorg/interprocess/issues/210   GitHub #210 (['"Bug in boost::interprocess::ipcdetail::sync_handles::obtain_mutex"])].
+   * [@https://github.com/boostorg/interprocess/issues/215   GitHub #215 (['"Alignment problem with boost/interprocess/segment_manager on SPARC 32Bit"])].
+
 
 [endsect]
 
