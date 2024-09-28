@@ -410,8 +410,8 @@ struct intrusive_compare_key
 {
    typedef CharT char_type;
 
-   intrusive_compare_key(const CharT* str, std::size_t len)
-      : mp_str(str), m_len(len)
+   intrusive_compare_key(const CharT* str_, std::size_t len_)
+      : mp_str(str_), m_len(len_)
    {}
 
    const CharT* str() const
