@@ -264,8 +264,6 @@ struct block_header
    public:
    typedef unsigned short name_len_t;
 
-   BOOST_STATIC_CONSTEXPR size_type value_mask = ~size_type(0) >> 2u;
-
    block_header(size_type val_bytes
                ,size_type 
                ,unsigned char al_type
@@ -273,7 +271,7 @@ struct block_header
                ,std::size_t
                )
       : m_alloc_type(al_type & 3u)
-      , m_value_bytes(val_bytes& (value_mask))
+      , m_value_bytes(val_bytes & (~size_type(0) >> 2u))
    {};
 
    template<std::size_t TypeAlignment>
