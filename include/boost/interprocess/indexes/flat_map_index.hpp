@@ -67,8 +67,9 @@ class flat_map_index
    typedef flat_map_index_aux<MapConfig>  index_aux;
    typedef typename index_aux::index_t    base_type;
    typedef typename index_aux::
-      segment_manager_base          segment_manager_base;
+      segment_manager_base                   segment_manager_base;
    typedef typename base_type::key_type      key_type;
+   typedef typename base_type::mapped_type   mapped_type;
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
@@ -104,7 +105,6 @@ class flat_map_index
       (const compare_key_type &k, void *context, index_data_t&, insert_commit_data& )
    {
       //Now commit the insertion using previous context data
-      typedef typename base_type::mapped_type   mapped_type;
       return this->base_type::insert(value_type(key_type(k.str(), k.len()), mapped_type(context))).first;
    }
 

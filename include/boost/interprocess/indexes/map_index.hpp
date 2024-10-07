@@ -70,6 +70,7 @@ class map_index
    typedef typename MapConfig::
       segment_manager_base                         segment_manager_base;
    typedef typename base_type::key_type            key_type;
+   typedef typename base_type::mapped_type         mapped_type;
 
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
@@ -114,7 +115,6 @@ class map_index
       (const compare_key_type &k, void *context, index_data_t &index_data, insert_commit_data& )
    {
       //Now commit the insertion using previous context data
-      typedef typename base_type::mapped_type   mapped_type;
       iterator it = this->base_type::insert(value_type(key_type(k.str(), k.len()), mapped_type(context))).first;
       return (index_data = it);
    }
