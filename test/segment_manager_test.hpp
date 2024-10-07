@@ -34,6 +34,13 @@ using namespace boost::interprocess;
 template<std::size_t Align>
 struct IntLike;
 
+//Old GCC versions emit incorrect warnings like
+//"requested alignment 256 is larger than 128"
+#if defined(BOOST_GCC) && (BOOST_GCC <= 100000)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+
 #define BOOST_INTERPROCESS_ALIGNED_INTLIKE(A)\
 template<>\
 struct IntLike<A>\
@@ -56,6 +63,10 @@ BOOST_INTERPROCESS_ALIGNED_INTLIKE(128)
 BOOST_INTERPROCESS_ALIGNED_INTLIKE(256)
 
 #undef BOOST_INTERPROCESS_ALIGNED_INTLIKE
+
+#if defined(BOOST_GCC) && (BOOST_GCC <= 100000)
+#pragma GCC diagnostic pop
+#endif
 
 template <class SegmentManager>
 struct atomic_func_test
