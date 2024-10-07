@@ -441,7 +441,7 @@ inline void thread_sleep_tick()
    rqt.tv_nsec = (long)get_system_tick_ns()/2;
 
    struct timespec rmn;
-   while (0 != ::nanosleep(&rqt, &rmn) && errno == EINTR) {
+   while (0 != BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::nanosleep(&rqt, &rmn)) && errno == EINTR) {
       rqt.tv_sec = rmn.tv_sec;
       rqt.tv_nsec = rmn.tv_nsec;
    }
@@ -454,7 +454,7 @@ inline void thread_sleep_ms(unsigned int ms)
    rqt.tv_nsec = static_cast<long int>((ms%1000u)*1000000u);
 
    struct timespec rmn;
-   while (0 != ::nanosleep(&rqt, &rmn) && errno == EINTR) {
+   while (0 != BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::nanosleep(&rqt, &rmn)) && errno == EINTR) {
       rqt.tv_sec  = rmn.tv_sec;
       rqt.tv_nsec = rmn.tv_nsec;
    }

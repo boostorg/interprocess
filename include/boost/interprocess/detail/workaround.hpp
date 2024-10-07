@@ -351,4 +351,28 @@ namespace boost {
 #define BOOST_INTERPROCESS_GCC_COMPATIBLE_HAS_DIAGNOSTIC_IGNORED
 #endif
 
+
+////////////////////////////////////////////
+//
+//    BOOST_INTERPROCESS_EINTR_RETRY
+//
+////////////////////////////////////////////
+
+//#define DISABLE_BOOST_INTERPROCESS_EINTR_RETRY
+#if !defined(DISABLE_BOOST_INTERPROCESS_EINTR_RETRY) && defined(__GNUC__)
+
+/* taken from glibc unistd.h and fixes musl */
+#define BOOST_INTERPROCESS_EINTR_RETRY(RESULTTYPE, FAILUREVALUE, EXPRESSION) \
+  (__extension__                                   \
+    ({ RESULTTYPE __result;                        \
+       do __result = (RESULTTYPE) (EXPRESSION);    \
+       while (__result == FAILUREVALUE && errno == EINTR);  \
+       __result; }))
+
+#else    //!defined(DISABLE_BOOST_INTERPROCESS_EINTR_RETRY) && defined(__GNUC__)
+
+#define BOOST_INTERPROCESS_EINTR_RETRY(RESULTTYPE, FAILUREVALUE, EXPRESSION) ((RESULTTYPE)(EXPRESSION))
+
+#endif   //!defined(DISABLE_BOOST_INTERPROCESS_EINTR_RETRY) && defined(__GNUC__)
+
 #endif   //#ifndef BOOST_INTERPROCESS_DETAIL_WORKAROUND_HPP

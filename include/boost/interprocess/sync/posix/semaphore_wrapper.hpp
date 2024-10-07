@@ -70,7 +70,7 @@ inline bool semaphore_open
       case DoOpen:
       {
          //No addition
-         handle = ::sem_open(name.c_str(), oflag);
+         handle = BOOST_INTERPROCESS_EINTR_RETRY(sem_t*, BOOST_INTERPROCESS_POSIX_SEM_FAILED, ::sem_open(name.c_str(), oflag));
       }
       break;
       case DoOpenOrCreate:
@@ -78,7 +78,9 @@ inline bool semaphore_open
       {
          while(1){
             oflag = (O_CREAT | O_EXCL);
-            handle = ::sem_open(name.c_str(), oflag, perm.get_permissions(), count);
+            handle = BOOST_INTERPROCESS_EINTR_RETRY
+               ( sem_t*, BOOST_INTERPROCESS_POSIX_SEM_FAILED
+               , ::sem_open(name.c_str(), oflag, perm.get_permissions(), count));
             if(handle != BOOST_INTERPROCESS_POSIX_SEM_FAILED){
                //We can't change semaphore permissions!
                //::fchmod(handle, perm.get_permissions());
@@ -86,7 +88,9 @@ inline bool semaphore_open
             }
             else if(errno == EEXIST && type == DoOpenOrCreate){
                oflag = 0;
-               if( (handle = ::sem_open(name.c_str(), oflag)) != BOOST_INTERPROCESS_POSIX_SEM_FAILED
+               if( (handle = BOOST_INTERPROCESS_EINTR_RETRY
+                  (sem_t*, BOOST_INTERPROCESS_POSIX_SEM_FAILED, ::sem_open(name.c_str(), oflag)))
+                     != BOOST_INTERPROCESS_POSIX_SEM_FAILED
                    || (errno != ENOENT) ){
                   break;
                }
@@ -177,7 +181,7 @@ inline void semaphore_post(sem_t *handle)
 
 inline void semaphore_wait(sem_t *handle)
 {
-   int ret = sem_wait(handle);
+   int ret = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, sem_wait(handle));
    if(ret != 0){
       error_info err = system_error_code();
       throw interprocess_exception(err);
@@ -186,7 +190,7 @@ inline void semaphore_wait(sem_t *handle)
 
 inline bool semaphore_try_wait(sem_t *handle)
 {
-   int res = sem_trywait(handle);
+   int res = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, sem_trywait(handle));
    if(res == 0)
       return true;
    if(system_error_code() == EAGAIN){
@@ -228,7 +232,7 @@ inline bool semaphore_timed_wait(sem_t *handle, const TimePoint &abs_time)
 
    timespec tspec = timepoint_to_timespec(abs_time);
    for (;;){
-      int res = sem_timedwait(handle, &tspec);
+      int res = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, sem_timedwait(handle, &tspec));
       if(res == 0)
          return true;
       if (res > 0){

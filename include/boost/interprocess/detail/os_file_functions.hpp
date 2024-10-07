@@ -509,24 +509,27 @@ inline file_handle_t file_handle_from_mapping_handle(mapping_handle_t hnd)
 inline bool create_directory(const char *path)
 {
    ::mode_t m = ::mode_t(0777);
-   return ::mkdir(path, m) == 0;
+   int r = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::mkdir(path, m));
+   return  r == 0;
 }
 
 inline bool open_or_create_directory(const char *path)
 {
    ::mode_t m = ::mode_t(0777);
-   return ::mkdir(path, m) == 0 || (errno == EEXIST);
+   int r = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::mkdir(path, m));
+   return r == 0 || (errno == EEXIST);
 }
 
 inline bool open_or_create_shared_directory(const char *path)
 {
    const ::mode_t m = ::mode_t(01777);
-   const bool created = ::mkdir(path, m) == 0;
+   int rc = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::mkdir(path, m));
+   const bool created = rc == 0;
    const bool created_or_exists = created || (errno == EEXIST);
    //Try to maximize the chance that the sticky bit is set in shared dirs
    //created with old versions that did not set it (for security reasons)
-   const bool chmoded = ::chmod(path, m) == 0;
-   return created ? chmoded : created_or_exists;
+   rc = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::chmod(path, m));
+   return created ? (rc == 0) : created_or_exists;
 }
 
 inline bool remove_directory(const char *path)
@@ -547,9 +550,10 @@ inline file_handle_t create_new_file
    (const char *name, mode_t mode, const permissions & perm = permissions(), bool temporary = false)
 {
    (void)temporary;
-   int ret = ::open(name, ((int)mode) | O_EXCL | O_CREAT, perm.get_permissions());
+   int ret = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::open(name, ((int)mode) | O_EXCL | O_CREAT, perm.get_permissions()));
    if(ret >= 0){
-      ::fchmod(ret, perm.get_permissions());
+      int rc = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::fchmod(ret, perm.get_permissions()));
+      (void)rc;
    }
    return ret;
 }
@@ -562,13 +566,14 @@ inline file_handle_t create_or_open_file
    //We need a loop to change permissions correctly using fchmod, since
    //with "O_CREAT only" ::open we don't know if we've created or opened the file.
    while(true){
-      ret = ::open(name, ((int)mode) | O_EXCL | O_CREAT, perm.get_permissions());
+      ret = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::open(name, ((int)mode) | O_EXCL | O_CREAT, perm.get_permissions()));
       if(ret >= 0){
-         ::fchmod(ret, perm.get_permissions());
+         int rc = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::fchmod(ret, perm.get_permissions()));
+         (void)rc;
          break;
       }
       else if(errno == EEXIST){
-         if((ret = ::open(name, (int)mode)) >= 0 || errno != ENOENT){
+         if((ret = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::open(name, (int)mode))) >= 0 || errno != ENOENT){
             break;
          }
       }
@@ -583,11 +588,11 @@ inline file_handle_t open_existing_file
    (const char *name, mode_t mode, bool temporary = false)
 {
    (void)temporary;
-   return ::open(name, (int)mode);
+   return BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::open(name, (int)mode));
 }
 
 inline bool delete_file(const char *name)
-{  return ::unlink(name) == 0;   }
+{  return BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::unlink(name)) == 0;   }
 
 inline bool truncate_file (file_handle_t hnd, std::size_t size)
 {
@@ -597,13 +602,13 @@ inline bool truncate_file (file_handle_t hnd, std::size_t size)
       errno = EINVAL;
       return false;
    }
-   return 0 == ::ftruncate(hnd, off_t(size));
+   return 0 == BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::ftruncate(hnd, off_t(size)));
 }
 
 inline bool get_file_size(file_handle_t hnd, offset_t &size)
 {
    struct stat data;
-   bool ret = 0 == ::fstat(hnd, &data);
+   bool ret = 0 == BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::fstat(hnd, &data));
    if(ret){
       size = data.st_size;
    }
@@ -611,16 +616,16 @@ inline bool get_file_size(file_handle_t hnd, offset_t &size)
 }
 
 inline bool set_file_pointer(file_handle_t hnd, offset_t off, file_pos_t pos)
-{  return ((off_t)(-1)) != ::lseek(hnd, off, (int)pos); }
+{  return ((off_t)(-1)) != BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::lseek(hnd, off, (int)pos)); }
 
 inline bool get_file_pointer(file_handle_t hnd, offset_t &off)
 {
-   off = ::lseek(hnd, 0, SEEK_CUR);
+   off = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::lseek(hnd, 0, SEEK_CUR));
    return off != ((off_t)-1);
 }
 
 inline bool write_file(file_handle_t hnd, const void *data, std::size_t numdata)
-{  return (ssize_t(numdata)) == ::write(hnd, data, numdata);  }
+{  return (ssize_t(numdata)) == BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::write(hnd, data, numdata));  }
 
 inline file_handle_t invalid_file()
 {  return -1;  }
@@ -635,7 +640,7 @@ inline bool acquire_file_lock(file_handle_t hnd)
    lock.l_whence  = SEEK_SET;
    lock.l_start   = 0;
    lock.l_len     = 0;
-   return -1 != ::fcntl(hnd, F_SETLKW, &lock);
+   return -1 != BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::fcntl(hnd, F_SETLKW, &lock));
 }
 
 inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
@@ -645,7 +650,7 @@ inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
    lock.l_whence  = SEEK_SET;
    lock.l_start   = 0;
    lock.l_len     = 0;
-   int ret = ::fcntl(hnd, F_SETLK, &lock);
+   int ret = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::fcntl(hnd, F_SETLK, &lock));
    if(ret == -1){
       return (errno == EAGAIN || errno == EACCES) ?
                (acquired = false, true) : false;
@@ -660,7 +665,7 @@ inline bool release_file_lock(file_handle_t hnd)
    lock.l_whence  = SEEK_SET;
    lock.l_start   = 0;
    lock.l_len     = 0;
-   return -1 != ::fcntl(hnd, F_SETLK, &lock);
+   return -1 != BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::fcntl(hnd, F_SETLK, &lock));
 }
 
 inline bool acquire_file_lock_sharable(file_handle_t hnd)
@@ -670,7 +675,7 @@ inline bool acquire_file_lock_sharable(file_handle_t hnd)
    lock.l_whence  = SEEK_SET;
    lock.l_start   = 0;
    lock.l_len     = 0;
-   return -1 != ::fcntl(hnd, F_SETLKW, &lock);
+   return -1 != BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::fcntl(hnd, F_SETLKW, &lock));
 }
 
 inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
@@ -680,7 +685,7 @@ inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
    lock.l_whence  = SEEK_SET;
    lock.l_start   = 0;
    lock.l_len     = 0;
-   int ret = ::fcntl(hnd, F_SETLK, &lock);
+   int ret = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::fcntl(hnd, F_SETLK, &lock));
    if(ret == -1){
       return (errno == EAGAIN || errno == EACCES) ?
                (acquired = false, true) : false;
@@ -693,30 +698,30 @@ inline bool release_file_lock_sharable(file_handle_t hnd)
 
 #if 0
 inline bool acquire_file_lock(file_handle_t hnd)
-{  return 0 == ::flock(hnd, LOCK_EX); }
+{  return 0 == BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::flock(hnd, LOCK_EX)); }
 
 inline bool try_acquire_file_lock(file_handle_t hnd, bool &acquired)
 {
-   int ret = ::flock(hnd, LOCK_EX | LOCK_NB);
+   int ret = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::flock(hnd, LOCK_EX | LOCK_NB));
    acquired = ret == 0;
    return (acquired || errno == EWOULDBLOCK);
 }
 
 inline bool release_file_lock(file_handle_t hnd)
-{  return 0 == ::flock(hnd, LOCK_UN); }
+{  return 0 == BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::flock(hnd, LOCK_UN)); }
 
 inline bool acquire_file_lock_sharable(file_handle_t hnd)
-{  return 0 == ::flock(hnd, LOCK_SH); }
+{  return 0 == BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::flock(hnd, LOCK_SH)); }
 
 inline bool try_acquire_file_lock_sharable(file_handle_t hnd, bool &acquired)
 {
-   int ret = ::flock(hnd, LOCK_SH | LOCK_NB);
+   int ret = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::flock(hnd, LOCK_SH | LOCK_NB));
    acquired = ret == 0;
    return (acquired || errno == EWOULDBLOCK);
 }
 
 inline bool release_file_lock_sharable(file_handle_t hnd)
-{  return 0 == ::flock(hnd, LOCK_UN); }
+{  return 0 == BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::flock(hnd, LOCK_UN)); }
 #endif
 
 inline bool delete_subdirectories_recursive
