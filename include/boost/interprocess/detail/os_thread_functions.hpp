@@ -220,17 +220,18 @@ inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
    return get_invalid_thread_id();
 }
 
-inline long double get_current_process_creation_time()
+inline unsigned long long get_current_process_creation_time()
 {
    winapi::interprocess_filetime CreationTime, ExitTime, KernelTime, UserTime;
 
    winapi::get_process_times
       ( winapi::get_current_process(), &CreationTime, &ExitTime, &KernelTime, &UserTime);
 
-   typedef long double ldouble_t;
-   const ldouble_t resolution = (100.0l/1000000000.0l);
-   return CreationTime.dwHighDateTime*(ldouble_t(1u<<31u)*2.0l*resolution) +
-              CreationTime.dwLowDateTime*resolution;
+   unsigned long long microsecs = CreationTime.dwHighDateTime;
+   microsecs <<= 32u;
+   microsecs |= CreationTime.dwLowDateTime;
+   microsecs /= 10u;
+   return microsecs;
 }
 
 inline unsigned int get_num_cores()
@@ -476,8 +477,8 @@ inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
    return OS_systemwide_thread_id_t(get_invalid_process_id(), get_invalid_thread_id());
 }
 
-inline long double get_current_process_creation_time()
-{ return 0.0L; }
+inline unsigned long long get_current_process_creation_time()
+{ return 0u; }
 
 inline unsigned int get_num_cores()
 {

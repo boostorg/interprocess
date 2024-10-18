@@ -47,8 +47,10 @@ inline void get_pid_creation_time_str(std::string &s)
 {
    std::stringstream stream;
    stream << get_current_process_id() << '_';
-   stream.precision(6);
-   stream << std::fixed << get_current_process_creation_time();
+   const unsigned long long total_microsecs = get_current_process_creation_time();
+   const unsigned long secs  = static_cast<unsigned long>(total_microsecs/1000000ul);
+   const unsigned long usecs = static_cast<unsigned long>(total_microsecs%1000000ul);
+   stream << secs << '.' << usecs;
    s = stream.str();
 }
 
