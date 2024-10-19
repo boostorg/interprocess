@@ -6785,6 +6785,8 @@ thank them:
    * [@https://github.com/boostorg/interprocess/issues/210   GitHub #210 (['"Bug in boost::interprocess::ipcdetail::sync_handles::obtain_mutex"])].
    * [@https://github.com/boostorg/interprocess/issues/215   GitHub #215 (['"Alignment problem with boost/interprocess/segment_manager on SPARC 32Bit"])].
    * [@https://github.com/boostorg/interprocess/issues/217   GitHub #217 (['"managed_map_file find_or_construct does not return Cache aligned memory"])].
+   * [@https://github.com/boostorg/interprocess/issues/230   GitHub #230 (['"`interprocess::ipcdetail::intermodule_singleton` not working on MinGW"])].
+   * [@https://github.com/boostorg/interprocess/issues/236   GitHub #236 (['"` Floating point inaccuracies in `get_current_process_creation_time` lead to `intermodule_singleton` failures"])].
 
 [endsect]
 
