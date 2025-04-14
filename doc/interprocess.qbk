@@ -4158,37 +4158,47 @@ requests and the memory waste.
 
 [endsect]
 
-[section:copy_on_write_read_only Opening managed shared memory and mapped files with Copy On Write or Read Only modes]
+[section:copy_on_write_read_only Opening managed shared memory and mapped files in  ['Copy On Write] or ['Read Only] modes]
 
-When mapping a memory segment based on shared memory or files, there is an option to
-open them using [*open_copy_on_write] option. This option is similar to `open_only` but
-every change the programmer does with this managed segment is kept private to this process
-and is not translated to the underlying device (shared memory or file).
+[section:open_copy_on_write_mode ['open_copy_on_write] mode]
 
-The underlying shared memory or file is opened as read-only so several processes can
-share an initial managed segment and make private changes to it. If many processes
-open a managed segment in copy on write mode and not modified pages from the managed
-segment will be shared between all those processes, with considerable memory savings.
+The programmer can open a managed shared memory or mapped file using the `open_copy_on_write`
+option. This option is similar to `open_only` but
+every change performed on this managed segment is kept private to the process
+and those changes are not translated to the underlying device (shared memory or file).
 
-Opening managed shared memory and mapped files with [*open_read_only] maps the
+This copy-on-write approach can reduce memory consumption:
+
+*  Sharing of identical pages: When multiple processes use `open_copy_on_write`,
+   the operating system initially makes them share the same underlying physical memory pages.
+   No actual copying of the data occurs at the time of opening.
+
+*  Copy only on modification: A private copy of portion of the managed segment is created in process-private memory
+   only when one of the processes attempts to write that portion. Processes that only read most of the data continue to share the
+   original portions (memory pages). This can lead to substantial memory savings, especially when dealing with large datasets or
+   when many processes need to access the same data with only a few modifying it.
+
+[endsect]
+
+[section:open_read_only_mode ['open_read_only] mode]
+
+Opening a managed shared memory or managed mapped file with `open_read_only` maps the
 underlying device in memory with [*read-only] attributes. This means that any attempt
-to write that memory, either creating objects or locking any mutex might result in an
-page-fault error (and thus, program termination) from the OS. Read-only mode opens
-the underlying device (shared memory, file...) in read-only mode and
-can result in considerable memory savings if several processes just want to process
-a managed memory segment without modifying it. Read-only mode operations are limited:
+to write to that memory (including locking any mutex) might result in a
+page-fault error (and thus, program termination) from the OS.
 
-*  Read-only mode must be used only from managed classes. If the programmer obtains
-   the segment manager and tries to use it directly it might result in an access violation.
-   The reason for this is that the segment manager is placed in the underlying device
-   and does not nothing about the mode it's been mapped in memory.
+Due to this, managed shared memory or managed mapped file operations are quite limited on this mode:
 
-*  Only const member functions from managed segments should be used.
+*  Only const member functions from managed shared memory/mapped file should be used.
+   If the programmer obtains the segment manager and tries to use any available operation on that object,
+   it might result in an access violation.
 
 *  Additionally, the `find<>` member function avoids using internal locks and can be
    used to look for named and unique objects.
 
-Here is an example that shows the use of these two open modes:
+[endsect]
+
+Here is an example that shows the use of these two modes:
 
 [import ../example/doc_managed_copy_on_write.cpp]
 [doc_managed_copy_on_write]
