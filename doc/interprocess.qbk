@@ -25,7 +25,7 @@
 [def BOOST_INTERPROCESS_CATCH_END]
 
 [def test::get_process_id_name() "MyName"]
-[def argv[2] "MyName"]
+[def test::get_argv_2(argv) "MyName"]
 
 
 
