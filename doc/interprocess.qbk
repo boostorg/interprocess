@@ -426,7 +426,7 @@ just as if it was a file:
 
 [c++]
 
-      using boost::interprocess;
+      using namespace boost::interprocess;
       shared_memory_object shm_obj
          (create_only                  //only create
          ,"shared_memory"              //name
@@ -437,7 +437,7 @@ just as if it was a file:
 
 [c++]
 
-      using boost::interprocess;
+      using namespace boost::interprocess;
       shared_memory_object shm_obj
          (open_or_create               //open or create
          ,"shared_memory"              //name
@@ -448,7 +448,7 @@ just as if it was a file:
 
 [c++]
 
-      using boost::interprocess;
+      using namespace boost::interprocess;
       shared_memory_object shm_obj
          (open_only                    //only open
          ,"shared_memory"              //name
@@ -470,7 +470,7 @@ still memory mapped by other processes:
 
 [c++]
 
-      using boost::interprocess;
+      using namespace boost::interprocess;
       shared_memory_object::remove("shared_memory");
 
 
@@ -491,7 +491,7 @@ is a `memory_mappable` object:
 
 [c++]
 
-      using boost::interprocess;
+      using namespace boost::interprocess;
       std::size_t ShmSize = ...
 
       //Map the second half of the memory
@@ -773,7 +773,7 @@ achieved in [*Boost.Interprocess] creating a `file_mapping` object:
 
 [c++]
 
-      using boost::interprocess;
+      using namespace boost::interprocess;
       file_mapping m_file
          ("/usr/home/file"       //filename
          ,read_write             //read-write mode
@@ -795,7 +795,7 @@ devices that have also mapping capabilities:
 
 [c++]
 
-      using boost::interprocess;
+      using namespace boost::interprocess;
       std::size_t FileSize = ...
 
       //Map the second half of the file
@@ -1128,7 +1128,7 @@ processes the memory segment can be mapped in a different address in each proces
 
    // ...
 
-   using boost::interprocess;
+   using namespace boost::interprocess;
 
    //Open a shared memory segment
    shared_memory_object shm_obj
@@ -2294,7 +2294,7 @@ Without lock transfer operations, this would be coded like this:
 
 [c++]
 
-   using boost::interprocess;
+   using namespace boost::interprocess;
    interprocess_upgradable_mutex mutex;
 
    //Acquire exclusive lock
@@ -2330,7 +2330,7 @@ We can use [*lock transfer] to simplify all this management:
 
 [c++]
 
-   using boost::interprocess;
+   using namespace boost::interprocess;
    interprocess_upgradable_mutex mutex;
 
    //Acquire exclusive lock
@@ -2927,7 +2927,7 @@ the message queue if shared memory is used).
 
 [c++]
 
-   using boost::interprocess;
+   using namespace boost::interprocess;
    //Create a message_queue. If the queue
    //exists throws an exception
    message_queue mq
@@ -2939,7 +2939,7 @@ the message queue if shared memory is used).
 
 [c++]
 
-   using boost::interprocess;
+   using namespace boost::interprocess;
    //Creates or opens a message_queue. If the queue
    //does not exist creates it, otherwise opens it.
    //Message number and size are ignored if the queue
@@ -2953,7 +2953,7 @@ the message queue if shared memory is used).
 
 [c++]
 
-   using boost::interprocess;
+   using namespace boost::interprocess;
    //Opens a message_queue. If the queue
    //does not exist throws an exception.
    message_queue mq
@@ -2965,7 +2965,7 @@ The message queue is explicitly removed calling the static `remove` function:
 
 [c++]
 
-   using boost::interprocess;
+   using namespace boost::interprocess;
    message_queue::remove("message_queue");
 
 The function can fail if the message queue is still being used by any process.
