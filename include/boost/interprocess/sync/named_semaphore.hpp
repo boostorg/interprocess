@@ -26,6 +26,8 @@
 #include <boost/interprocess/permissions.hpp>
 #include <boost/interprocess/detail/interprocess_tester.hpp>
 
+#include <system_error>
+
 #if defined(BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES)
 #include <boost/interprocess/sync/posix/named_semaphore.hpp>
 //Experimental...
@@ -115,6 +117,11 @@ class named_semaphore
    //!for the semaphore, then one of these processes will return successfully from
    //!its wait function. If there is an error an interprocess_exception exception is thrown.
    void post();
+
+   //!Increments the interprocess_semaphore count. If there are processes/threads blocked waiting
+   //!for the interprocess_semaphore, then one of these processes will return successfully from
+   //!its wait function. If there is an error, it'll return a non-null error code.
+   std::error_code post(std::nothrow_t &) noexcept;
 
    //!Decrements the semaphore. If the semaphore value is not greater than zero,
    //!then the calling process/thread blocks until it can decrement the counter.
@@ -210,6 +217,10 @@ inline void named_semaphore::wait()
 
 inline void named_semaphore::post()
 {  m_sem.post();  }
+
+inline std::error_code named_semaphore::post(std::nothrow_t &) noexcept
+{  return m_sem.post(std::nothrow);  }
+
 
 inline bool named_semaphore::try_wait()
 {  return m_sem.try_wait();  }

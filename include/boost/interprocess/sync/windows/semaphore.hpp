@@ -28,6 +28,10 @@
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/assert.hpp>
 
+extern "C" {
+#include <errhandlingapi.h>
+}
+#include <system_error>
 
 namespace boost {
 namespace interprocess {
@@ -43,6 +47,7 @@ class winapi_semaphore
    ~winapi_semaphore();
 
    void post(unsigned int release_count = 1);
+   std::error_code post(const std::nothrow_t&);
    void wait();
    bool try_wait();
    template<class TimePoint> bool timed_wait(const TimePoint &abs_time);
@@ -106,7 +111,19 @@ inline void winapi_semaphore::post(unsigned release_count)
    sync_handles &handles =
       windows_intermodule_singleton<sync_handles>::get();
    winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, this, initial_count_));
-   sem.post(static_cast<long>(release_count));
+   if (sem.post(static_cast<long>(release_count)) == 0) {
+     throw interprocess_exception(GetLastError());
+   }
+}
+
+std::error_code post(const std::nothrow_t&) {
+   sync_handles &handles =
+      windows_intermodule_singleton<sync_handles>::get();
+   winapi_semaphore_functions sem(handles.obtain_semaphore(this->id_, this, initial_count_));
+   if (sem.post(static_cast<long>(release_count)) == 0) {
+    return {GetLastError(), std::system_category()} ;
+   }
+   return {0, std::system_category()};
 }
 
 

@@ -27,6 +27,8 @@
 #include <boost/interprocess/sync/detail/locks.hpp>
 #include <boost/cstdint.hpp>
 
+#include <system_error>
+
 namespace boost {
 namespace interprocess {
 namespace ipcdetail {
@@ -41,6 +43,8 @@ class spin_semaphore
    ~spin_semaphore();
 
    void post();
+   std::error_code post(const std::nothrow_t &) noexcept;
+
    void wait();
    bool try_wait();
    template<class TimePoint> bool timed_wait(const TimePoint &abs_time);
@@ -60,6 +64,11 @@ inline spin_semaphore::spin_semaphore(unsigned int initialCount)
 inline void spin_semaphore::post()
 {
    ipcdetail::atomic_inc32(&m_count);
+}
+
+inline std::error_code spin_semaphore::post(const std::nothrow_t &) noexcept {
+   post();
+   return {0, std::system_category()};
 }
 
 inline void spin_semaphore::wait()
