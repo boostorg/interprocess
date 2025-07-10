@@ -92,6 +92,14 @@ inline int test_all_semaphore()
    test::test_all_lock<semaphore_test_wrapper<Semaphore> >();
    test::test_all_recursive_lock<recursive_semaphore_test_wrapper<Semaphore> >();
    test::test_all_mutex<semaphore_test_wrapper<Semaphore> >();
+
+   Semaphore s(0);
+   BOOST_INTERPROCESS_CHECK(!s.try_wait());
+   BOOST_INTERPROCESS_CHECK(!s.post(std::nothrow));
+   BOOST_INTERPROCESS_CHECK(s.try_wait());
+   // TODO: not trivial to simulate failure as that would require
+   // failure injection (augmenting implementations for test mode)
+
    return 0;
 }
 

@@ -47,10 +47,10 @@ class winapi_semaphore_functions
       : m_sem_hnd(hnd)
    {}
 
-   void post(long count = 1)
+   int post(long count = 1)
    {
       long prev_count;
-      winapi::release_semaphore(m_sem_hnd, count, &prev_count);
+      return winapi::release_semaphore(m_sem_hnd, count, &prev_count);
    }
 
    void wait()

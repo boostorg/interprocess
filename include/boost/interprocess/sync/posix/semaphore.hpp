@@ -24,6 +24,8 @@
 
 #include <boost/interprocess/sync/posix/semaphore_wrapper.hpp>
 
+#include <system_error>
+
 namespace boost {
 namespace interprocess {
 namespace ipcdetail {
@@ -43,6 +45,13 @@ class posix_semaphore
 
    void post()
    {  semaphore_post(&m_sem); }
+
+   std::error_code post(std::nothrow_t &) noexcept {
+      if (sem_post(&m_sem) != 0) {
+        return {errno, std::system_category()};
+      }
+      return {0, std::system_category()};
+   }
 
    void wait()
    {  semaphore_wait(&m_sem); }

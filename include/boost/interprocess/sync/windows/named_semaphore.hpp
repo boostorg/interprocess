@@ -27,6 +27,12 @@
 #include <boost/interprocess/sync/windows/named_sync.hpp>
 #include <boost/interprocess/sync/windows/winapi_semaphore_wrapper.hpp>
 
+extern "C" {
+#include <errhandlingapi.h>
+}
+
+#include <system_error>
+
 namespace boost {
 namespace interprocess {
 namespace ipcdetail {
@@ -59,6 +65,7 @@ class winapi_named_semaphore
    ~winapi_named_semaphore();
 
    void post();
+   std::error_code post(const std::nothrow_t &) noexcept;
    void wait();
    bool try_wait();
    template<class TimePoint> bool timed_wait(const TimePoint &abs_time);
@@ -192,8 +199,18 @@ inline winapi_named_semaphore::winapi_named_semaphore(open_only_t, const wchar_t
 
 inline void winapi_named_semaphore::post()
 {
-   m_sem_wrapper.post();
+   if (m_sem_wrapper.post() == 0) {
+     throw interprocess_exception(GetLastError());
+   }
 }
+
+inline std::error_code winapi_named_semaphore::post(const std::nothrow_t &) noexcept {
+   if (m_sem_wrapper.post() == 0) {
+     return {GetLastError(), std::system_category()};
+   };
+   return {0, std::system_category()};
+}
+
 
 inline void winapi_named_semaphore::wait()
 {

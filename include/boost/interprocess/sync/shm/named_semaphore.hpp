@@ -30,6 +30,8 @@
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/interprocess/sync/shm/named_creation_functor.hpp>
 
+#include <system_error>
+
 namespace boost {
 namespace interprocess {
 namespace ipcdetail {
@@ -64,6 +66,8 @@ class shm_named_semaphore
    ~shm_named_semaphore();
 
    void post();
+   std::error_code post(std::nothrow_t &) noexcept;
+
    void wait();
    bool try_wait();
    template<class TimePoint> bool timed_wait(const TimePoint &abs_time);
@@ -168,6 +172,11 @@ inline shm_named_semaphore::shm_named_semaphore
 
 inline void shm_named_semaphore::post()
 {  semaphore()->post();   }
+
+std::error_code shm_named_semaphore::post(std::nothrow_t &) noexcept {
+ post();
+ return {0, std::generic_category()};
+}
 
 inline void shm_named_semaphore::wait()
 {  semaphore()->wait();   }

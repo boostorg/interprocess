@@ -29,6 +29,8 @@
 #include <boost/interprocess/sync/detail/locks.hpp>
 #include <boost/interprocess/sync/detail/common_algorithms.hpp>
 
+#include <system_error>
+
 #if   !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && \
        defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)    && \
        defined(BOOST_INTERPROCESS_POSIX_UNNAMED_SEMAPHORES)
@@ -73,6 +75,11 @@ class interprocess_semaphore
    //!for the interprocess_semaphore, then one of these processes will return successfully from
    //!its wait function. If there is an error an interprocess_exception exception is thrown.
    void post();
+
+   //!Increments the interprocess_semaphore count. If there are processes/threads blocked waiting
+   //!for the interprocess_semaphore, then one of these processes will return successfully from
+   //!its wait function. If there is an error, it'll return a non-null error code.
+   std::error_code post(const std::nothrow_t &) noexcept;
 
    //!Decrements the interprocess_semaphore. If the interprocess_semaphore value is not greater than zero,
    //!then the calling process/thread blocks until it can decrement the counter.
@@ -134,6 +141,10 @@ inline bool interprocess_semaphore::timed_wait(const TimePoint &abs_time)
 
 inline void interprocess_semaphore::post()
 { m_sem.post(); }
+
+std::error_code interprocess_semaphore::post(const std::nothrow_t &) noexcept {
+ return m_sem.post(std::nothrow) ;
+}
 
 }  //namespace interprocess {
 }  //namespace boost {
