@@ -6775,6 +6775,13 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_90_00 Boost 1.90 Release]
+
+*  Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/pull/245   GitHub #245 (['"Fix UBSan runtime error (load of 'boost::interprocess::mode_t')"])].
+
+[endsect]
+
 [section:release_notes_boost_1_87_00 Boost 1.87 Release]
 
 * Decreased number of Boost dependencies from 11 (in total) to 7.
