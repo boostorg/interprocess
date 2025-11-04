@@ -6777,8 +6777,10 @@ thank them:
 
 [section:release_notes_boost_1_90_00 Boost 1.90 Release]
 
+* Minor documentation fixes
 *  Fixed bugs:
    * [@https://github.com/boostorg/interprocess/pull/245   GitHub #245 (['"Fix UBSan runtime error (load of 'boost::interprocess::mode_t')"])].
+   * [@https://github.com/boostorg/interprocess/pull/269   GitHub #269 (['"Minor documentation fixes and template parameter renames"])].
 
 [endsect]
 
