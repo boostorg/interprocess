@@ -28,6 +28,7 @@
 
 #if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME) && defined(BOOST_INTERPROCESS_WINDOWS)
    #include <boost/interprocess/detail/windows_intermodule_singleton.hpp>
+   #include <boost/thread/win32/thread_heap_alloc.hpp>
 #endif
 
 namespace boost {
@@ -59,32 +60,57 @@ struct shared_dir_constants<wchar_t>
 
 #if defined(BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME)
    #if defined(BOOST_INTERPROCESS_WINDOWS)
-      //This type will initialize the stamp
-      template<class CharT>
-      struct windows_bootstamp
+      // This type will initialize the stamp.
+      // The namespace allows future changes to the memory layout without
+      // causing a crash in older or newer versions of the code being used
+      // in the same process.
+      // If the memory layout is changed then the class name version suffix must
+      // be incremented.
+      // Note that we use winapi::HeapAlloc/HeapFree for memory allocation
+      // to avoid any differences in heap allocation across modules
+      namespace windows_bootstamp
       {
-         windows_bootstamp()
+         template<class CharT>
+         struct version1
          {
-            //Throw if bootstamp not available
-            if(!winapi::get_last_bootup_time(stamp)){
-               error_info err = system_error_code();
-               throw interprocess_exception(err);
+            version1()
+            {
+               std::basic_string<CharT> stamp;
+               //Throw if bootstamp not available
+               if(!winapi::get_last_bootup_time(stamp)){
+                  error_info err = system_error_code();
+                  throw interprocess_exception(err);
+               }
+               unsigned bytes = (stamp.length() + 1) * sizeof(CharT);
+               data = static_cast<CharT*>(boost::detail::allocate_raw_heap_memory(bytes));
+               length = static_cast<uint32_t>(stamp.length());
+               stamp.copy(data, length);
+               data[length] = 0;
             }
-         }
-         //Use std::string. Even if this will be constructed in shared memory, all
-         //modules/dlls are from this process so internal raw pointers to heap are always valid
-         std::basic_string<CharT> stamp;
-      };
+            ~version1()
+            {
+               if (data)
+                  boost::detail::free_raw_heap_memory(data);
+               data = nullptr;
+               length = 0;
+            }
+
+            uint32_t length{};
+            CharT * data {};
+         };
+      }
 
       template <class CharT>
       inline void get_bootstamp(std::basic_string<CharT> &s, bool add = false)
       {
-         const windows_bootstamp<CharT> &bootstamp = windows_intermodule_singleton<windows_bootstamp<CharT> >::get();
+         using bootstamp_type = windows_bootstamp::version1<CharT>;
+         const bootstamp_type &bootstamp = windows_intermodule_singleton<bootstamp_type>::get();
+         std::basic_string_view<CharT> stamp(bootstamp.data, bootstamp.length);
          if(add){
-            s += bootstamp.stamp;
+            s += stamp;
          }
          else{
-            s = bootstamp.stamp;
+            s = stamp;
          }
       }
    #elif defined(BOOST_INTERPROCESS_HAS_BSD_KERNEL_BOOTTIME)
