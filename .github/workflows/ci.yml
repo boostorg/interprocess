@@ -494,8 +494,8 @@ jobs:
             echo REF: $REF
             BOOST_BRANCH=develop && [ "$REF" = "master" ] && BOOST_BRANCH=master || true
             echo BOOST_BRANCH: $BOOST_BRANCH
-            echo BUILD_JOBS: $BUILD_JOBS
             BUILD_JOBS=$((nproc || sysctl -n hw.ncpu) 2> /dev/null)
+            echo BUILD_JOBS: $BUILD_JOBS
             echo "BUILD_JOBS=$BUILD_JOBS" >> $GITHUB_ENV
             echo "CMAKE_BUILD_PARALLEL_LEVEL=$BUILD_JOBS" >> $GITHUB_ENV
             DEPINST_ARGS=()
