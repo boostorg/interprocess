@@ -609,9 +609,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
+         #------------------
+         #Windows runners are much slower, split 32/64 bit jobs
           - toolset: msvc-14.3
             cxxstd: "14,17,20,latest"
-            addrmd: 32,64
+            addrmd: 32
+            os: windows-2025
+          - toolset: msvc-14.3
+            cxxstd: "14,17,20,latest"
+            addrmd: 64
             os: windows-2025
           - toolset: clang-win
             cxxstd: "14,17,latest"
@@ -629,6 +635,7 @@ jobs:
       - name: Setup Boost
         shell: cmd
         run: |
+            Set-MpPreference -DisableRealtimeMonitoring $true
             echo GITHUB_REPOSITORY: %GITHUB_REPOSITORY%
             for /f %%i in ("%GITHUB_REPOSITORY%") do set LIBRARY=%%~nxi
             echo LIBRARY: %LIBRARY%
