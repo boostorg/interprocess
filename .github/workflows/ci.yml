@@ -627,7 +627,6 @@ jobs:
       - name: Setup Boost
         shell: cmd
         run: |
-            Set-MpPreference -DisableRealtimeMonitoring $true
             echo GITHUB_REPOSITORY: %GITHUB_REPOSITORY%
             for /f %%i in ("%GITHUB_REPOSITORY%") do set LIBRARY=%%~nxi
             echo LIBRARY: %LIBRARY%
