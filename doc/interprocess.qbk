@@ -6780,6 +6780,7 @@ thank them:
 * Minor documentation fixes
 * Fixed bugs:
    * [@https://github.com/boostorg/interprocess/pull/245   GitHub #245 (['"Fix UBSan runtime error (load of 'boost::interprocess::mode_t')"])].
+   * [@https://github.com/boostorg/interprocess/issues/261 GitHub #261 (['"Memory Mapping Empty Files Fails"])].
    * [@https://github.com/boostorg/interprocess/pull/269   GitHub #269 (['"Minor documentation fixes and template parameter renames"])].
    * [@https://github.com/boostorg/interprocess/issues/272 GitHub #272 (['"Regression boost 1.87: offset_ptr conversion from void no longer works"])].
    * [@https://github.com/boostorg/interprocess/pull/275   GitHub #275 (['"Allow injection of custom atexit procedure"])].
