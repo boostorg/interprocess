@@ -171,7 +171,7 @@ also the comparison functor when an allocator is passed in the constructor:
 [doc_map]
 
 For a more advanced example including containers of containers, see the section
-[link interprocess.allocators_containers.containers_explained.containers_of_containers Containers of containers].
+[link interprocess.containers_explained.containers_of_containers Containers of containers].
 
 [endsect]
 
