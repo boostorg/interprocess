@@ -162,19 +162,32 @@ class cache_impl
    multiallocation_chain         m_cached_nodes;
    size_type                     m_max_cached_nodes;
 
+   BOOST_COPYABLE_AND_MOVABLE_ALT(cache_impl)
+
    public:
    typedef typename NodePool::segment_manager            segment_manager;
 
    cache_impl(segment_manager *segment_mngr, size_type max_cached_nodes)
       : mp_node_pool(get_or_create_node_pool<NodePool>(segment_mngr))
+      , m_cached_nodes()
       , m_max_cached_nodes(max_cached_nodes)
    {}
 
    cache_impl(const cache_impl &other)
       : mp_node_pool(other.get_node_pool())
+      , m_cached_nodes()
       , m_max_cached_nodes(other.get_max_cached_nodes())
    {
       mp_node_pool->inc_ref_count();
+   }
+
+   cache_impl(BOOST_RV_REF(cache_impl) other)
+      : mp_node_pool(BOOST_MOVE_TO_LV(other).get_node_pool())
+      , m_cached_nodes()
+      , m_max_cached_nodes(BOOST_MOVE_TO_LV(other).get_max_cached_nodes())
+   {
+      mp_node_pool->inc_ref_count();
+      m_cached_nodes.swap(BOOST_MOVE_TO_LV(other).m_cached_nodes);
    }
 
    ~cache_impl()
@@ -565,6 +578,8 @@ class cached_allocator_impl
    typedef typename base_t::multiallocation_chain        multiallocation_chain;
    typedef typename base_t::value_type                   value_type;
 
+   BOOST_COPYABLE_AND_MOVABLE_ALT(cached_allocator_impl)
+
    public:
    static const std::size_t DEFAULT_MAX_CACHED_NODES = 64;
 
@@ -574,6 +589,10 @@ class cached_allocator_impl
 
    cached_allocator_impl(const cached_allocator_impl &other)
       : m_cache(other.m_cache)
+   {}
+
+   cached_allocator_impl(BOOST_RV_REF(cached_allocator_impl) other)
+      : m_cache(boost::move(BOOST_MOVE_TO_LV(other).m_cache))
    {}
 
    //!Copy constructor from related cached_adaptive_pool_base. If not present, constructs

@@ -6783,6 +6783,13 @@ thank them:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_91_00 Boost 1.91 Release]
+
+* Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/issues/247 GitHub #247 (['"destruction of move-constructed map using private_adaptive_pool triggers Assertion"])].
+
+[endsect]
+
 [section:release_notes_boost_1_90_00 Boost 1.90 Release]
 
 * Minor documentation fixes

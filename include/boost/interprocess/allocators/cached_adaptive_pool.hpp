@@ -59,6 +59,7 @@ class cached_adaptive_pool_v1
             >
          , 1>
 {
+   BOOST_COPYABLE_AND_MOVABLE_ALT(cached_adaptive_pool_v1)
    public:
    typedef ipcdetail::cached_allocator_impl
          < T
@@ -90,6 +91,14 @@ class cached_adaptive_pool_v1
       (const cached_adaptive_pool_v1
          <T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> &other)
       : base_t(other)
+   {}
+
+   cached_adaptive_pool_v1(const cached_adaptive_pool_v1 &other)
+      : base_t(other)
+   {}
+
+   cached_adaptive_pool_v1(BOOST_RV_REF(cached_adaptive_pool_v1) other)
+      : base_t(BOOST_MOVE_BASE(base_t, other))
    {}
 };
 
@@ -148,6 +157,7 @@ class cached_adaptive_pool
             >
          , 2> base_t;
 
+   BOOST_COPYABLE_AND_MOVABLE_ALT(cached_adaptive_pool)
    public:
    typedef boost::interprocess::version_type<cached_adaptive_pool, 2>   version;
 
@@ -167,6 +177,14 @@ class cached_adaptive_pool
    cached_adaptive_pool
       (const cached_adaptive_pool<T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> &other)
       : base_t(other)
+   {}
+
+   cached_adaptive_pool(const cached_adaptive_pool &other)
+      : base_t(other)
+   {}
+
+   cached_adaptive_pool(BOOST_RV_REF(cached_adaptive_pool) other)
+      : base_t(BOOST_MOVE_BASE(base_t, other))
    {}
 
    #else
@@ -211,6 +229,10 @@ class cached_adaptive_pool
    //!Copy constructor from other cached_adaptive_pool. Increments the reference
    //!count of the associated node pool. Never throws
    cached_adaptive_pool(const cached_adaptive_pool &other);
+
+   //!Move constructor from other. Increments the reference
+   //!count of the associated node pool and captures the cache. Never throws
+   cached_adaptive_pool(cached_adaptive_pool &&other);
 
    //!Copy constructor from related cached_adaptive_pool. If not present, constructs
    //!a node pool. Increments the reference count of the associated node pool.

@@ -59,6 +59,7 @@ class private_node_allocator_base
    , SegmentManager
    >
 {
+   BOOST_COPYABLE_AND_MOVABLE_ALT(private_node_allocator_base)
    public:
    //Segment manager
    typedef SegmentManager                                segment_manager;
@@ -141,6 +142,13 @@ class private_node_allocator_base
       : m_node_pool(other.get_segment_manager())
    {}
 
+   //!Move constructor from other private_node_allocator_base. Never throws
+   private_node_allocator_base(BOOST_RV_REF(private_node_allocator_base) other)
+      : m_node_pool(other.get_segment_manager())
+   {
+      m_node_pool.swap(BOOST_MOVE_TO_LV(other).m_node_pool);
+   }
+
    //!Copy constructor from related private_node_allocator_base. Never throws.
    template<class T2>
    private_node_allocator_base
@@ -196,6 +204,7 @@ class private_node_allocator_v1
          , NodesPerBlock
          >
 {
+   BOOST_COPYABLE_AND_MOVABLE_ALT(private_node_allocator_v1)
    public:
    typedef ipcdetail::private_node_allocator_base
          < 1, T, SegmentManager, NodesPerBlock> base_t;
@@ -214,6 +223,14 @@ class private_node_allocator_v1
    private_node_allocator_v1
       (const private_node_allocator_v1<T2, SegmentManager, NodesPerBlock> &other)
       : base_t(other)
+   {}
+
+   private_node_allocator_v1(const private_node_allocator_v1 &other)
+      : base_t(other)
+   {}
+
+   private_node_allocator_v1(BOOST_RV_REF(private_node_allocator_v1) other)
+      : base_t(BOOST_MOVE_BASE(base_t, other))
    {}
 };
 
@@ -245,6 +262,8 @@ class private_node_allocator
    #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    typedef ipcdetail::private_node_allocator_base
          < 2, T, SegmentManager, NodesPerBlock> base_t;
+
+   BOOST_COPYABLE_AND_MOVABLE_ALT(private_node_allocator)
    public:
    typedef boost::interprocess::version_type<private_node_allocator, 2>   version;
 
@@ -263,6 +282,14 @@ class private_node_allocator
    private_node_allocator
       (const private_node_allocator<T2, SegmentManager, NodesPerBlock> &other)
       : base_t(other)
+   {}
+
+   private_node_allocator(const private_node_allocator &other)
+      : base_t(other)
+   {}
+
+   private_node_allocator(BOOST_RV_REF(private_node_allocator) other)
+      : base_t(BOOST_MOVE_BASE(base_t, other))
    {}
 
    #else
@@ -308,6 +335,10 @@ class private_node_allocator
    //!Copy constructor from other private_node_allocator. Increments the reference
    //!count of the associated node pool. Never throws
    private_node_allocator(const private_node_allocator &other);
+
+   //!Move constructor from other. Increments the reference
+   //!count of the associated node pool and captures the cache. Never throws
+   private_node_allocator(private_node_allocator &&other);
 
    //!Copy constructor from related private_node_allocator. If not present, constructs
    //!a node pool. Increments the reference count of the associated node pool.

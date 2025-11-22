@@ -56,6 +56,7 @@ class cached_node_allocator_v1
             >
          , 1>
 {
+   BOOST_COPYABLE_AND_MOVABLE_ALT(cached_node_allocator_v1)
    public:
    typedef ipcdetail::cached_allocator_impl
          < T
@@ -85,6 +86,14 @@ class cached_node_allocator_v1
       (const cached_node_allocator_v1
          <T2, SegmentManager, NodesPerBlock> &other)
       : base_t(other)
+   {}
+
+   cached_node_allocator_v1(const cached_node_allocator_v1 &other)
+      : base_t(other)
+   {}
+
+   cached_node_allocator_v1(BOOST_RV_REF(cached_node_allocator_v1) other)
+      : base_t(BOOST_MOVE_BASE(base_t, other))
    {}
 };
 
@@ -120,6 +129,8 @@ class cached_node_allocator
             >
          , 2> base_t;
 
+   BOOST_COPYABLE_AND_MOVABLE_ALT(cached_node_allocator)
+
    public:
    typedef boost::interprocess::version_type<cached_node_allocator, 2>   version;
    typedef typename base_t::size_type size_type;
@@ -139,6 +150,14 @@ class cached_node_allocator
    cached_node_allocator
       (const cached_node_allocator<T2, SegmentManager, NodesPerBlock> &other)
       : base_t(other)
+   {}
+
+   cached_node_allocator(const cached_node_allocator & other)
+      : base_t(other)
+   {}
+
+   cached_node_allocator(BOOST_RV_REF(cached_node_allocator) other)
+      : base_t(BOOST_MOVE_BASE(base_t, other))
    {}
 
    #else
@@ -183,6 +202,10 @@ class cached_node_allocator
    //!Copy constructor from other cached_node_allocator. Increments the reference
    //!count of the associated node pool. Never throws
    cached_node_allocator(const cached_node_allocator &other);
+
+   //!Move constructor from other. Increments the reference
+   //!count of the associated node pool and captures the cache. Never throws
+   cached_node_allocator(cached_node_allocator &&other);
 
    //!Copy constructor from related cached_node_allocator. If not present, constructs
    //!a node pool. Increments the reference count of the associated node pool.

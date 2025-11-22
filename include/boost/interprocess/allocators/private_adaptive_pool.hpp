@@ -129,6 +129,9 @@ class private_adaptive_pool_base
    };
 
    private:
+
+   BOOST_COPYABLE_AND_MOVABLE_ALT(private_adaptive_pool_base)
+
    //!Not assignable from related private_adaptive_pool_base
    template<unsigned int Version2, class T2, class MemoryAlgorithm2, std::size_t N2, std::size_t F2, unsigned char OP2>
    private_adaptive_pool_base& operator=
@@ -149,7 +152,14 @@ class private_adaptive_pool_base
       : m_node_pool(other.get_segment_manager())
    {}
 
-   //!Copy constructor from related private_adaptive_pool_base. Never throws.
+   //!Copy constructor from other private_adaptive_pool_base. Never throws
+   private_adaptive_pool_base(BOOST_RV_REF(private_adaptive_pool_base) other)
+      : m_node_pool(other.get_segment_manager())
+   {
+      m_node_pool.swap(BOOST_MOVE_TO_LV(other).m_node_pool);
+   }
+
+   //!Move constructor from related private_adaptive_pool_base. Never throws.
    template<class T2>
    private_adaptive_pool_base
       (const private_adaptive_pool_base
@@ -208,6 +218,7 @@ class private_adaptive_pool_v1
          , OverheadPercent
          >
 {
+   BOOST_COPYABLE_AND_MOVABLE_ALT(private_adaptive_pool_v1)
    public:
    typedef ipcdetail::private_adaptive_pool_base
          < 1, T, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> base_t;
@@ -226,6 +237,14 @@ class private_adaptive_pool_v1
    private_adaptive_pool_v1
       (const private_adaptive_pool_v1<T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> &other)
       : base_t(other)
+   {}
+
+   private_adaptive_pool_v1(const private_adaptive_pool_v1 &other)
+      : base_t(other)
+   {}
+
+   private_adaptive_pool_v1(BOOST_RV_REF(private_adaptive_pool_v1) other)
+      : base_t(BOOST_MOVE_BASE(base_t, other))
    {}
 };
 
@@ -268,6 +287,8 @@ class private_adaptive_pool
    #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    typedef ipcdetail::private_adaptive_pool_base
          < 2, T, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> base_t;
+
+   BOOST_COPYABLE_AND_MOVABLE_ALT(private_adaptive_pool)
    public:
    typedef boost::interprocess::version_type<private_adaptive_pool, 2>   version;
 
@@ -286,6 +307,14 @@ class private_adaptive_pool
    private_adaptive_pool
       (const private_adaptive_pool<T2, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> &other)
       : base_t(other)
+   {}
+
+   private_adaptive_pool(const private_adaptive_pool &other)
+      : base_t(other)
+   {}
+
+   private_adaptive_pool(BOOST_RV_REF(private_adaptive_pool) other)
+      : base_t(BOOST_MOVE_BASE(base_t, other))
    {}
 
    #else
@@ -331,6 +360,10 @@ class private_adaptive_pool
    //!Copy constructor from other private_adaptive_pool. Increments the reference
    //!count of the associated node pool. Never throws
    private_adaptive_pool(const private_adaptive_pool &other);
+
+   //!Move constructor from other. Increments the reference
+   //!count of the associated node pool and captures the cache. Never throws
+   private_adaptive_pool(private_adaptive_pool &&other);
 
    //!Copy constructor from related private_adaptive_pool. If not present, constructs
    //!a node pool. Increments the reference count of the associated node pool.

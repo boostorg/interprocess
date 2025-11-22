@@ -136,6 +136,11 @@ int list_test (bool copied_allocators_equal = true)
       if(!CheckEqualContainers(shmlist, stdlist)) return 1;
 
       {
+         MyShmList m(boost::move(*shmlist));
+         *shmlist = boost::move(m);
+      }
+
+      {
          IntType aux_vect[50];
          for(int i = 0; i < 50; ++i){
             IntType move_me(-1);

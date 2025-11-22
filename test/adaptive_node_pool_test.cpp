@@ -25,3 +25,32 @@ int main ()
 
    return 0;
 }
+/*
+
+#include <boost/interprocess/allocators/private_adaptive_pool.hpp>
+#include <boost/interprocess/containers/map.hpp>
+#include <boost/interprocess/managed_heap_memory.hpp>
+#include <cstdint>
+
+typedef boost::interprocess::managed_heap_memory::segment_manager
+    segment_manager_t;
+
+typedef boost::interprocess::map<
+    uint32_t, uint32_t, std::less<uint32_t>,
+    boost::interprocess::private_adaptive_pool<
+        std::pair<const uint32_t, uint32_t>, segment_manager_t>>
+    mymap_t;
+
+int main() {
+  boost::interprocess::managed_heap_memory heap_mem(1u << 20);
+
+  {
+    mymap_t bbmap(heap_mem.get_segment_manager());
+
+    bbmap.emplace(1, 2);
+
+    mymap_t bbmap2(boost::move(bbmap));
+  } // <= CRASHES HERE
+
+  return 0;
+}*/
