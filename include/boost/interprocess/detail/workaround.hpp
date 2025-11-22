@@ -34,7 +34,7 @@
 #else
    #include <unistd.h>
 
-   #if defined (__CYGWIN__) && (!defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE < 200112L))
+   #if defined (__CYGWIN__) && (!defined(_POSIX_C_SOURCE) || (_POSIX_C_SOURCE < 200112L))
    #error "Error: Compiling on Cygwin without POSIX is not supported. Please define _XOPEN_SOURCE >= 600 or _POSIX_C_SOURCE >= 200112 when compiling"
    #endif
 
