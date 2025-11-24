@@ -281,13 +281,18 @@ class cached_adaptive_pool
    //!Never throws
    const_pointer address(const_reference value) const;
 
-   //!Copy construct an object.
-   //!Throws if T's copy constructor throws
-   void construct(const pointer &ptr, const_reference v);
-
-   //!Destroys object. Throws if object's
-   //!destructor throws
-   void destroy(const pointer &ptr);
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator
+   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //!   is well-formed. [Note: uses-allocator construction is always well formed for
+   //!   types that do not use allocators. - end note]
+   //!
+   //! <b>Effects</b>: Construct a T object at p by uses-allocator construction with allocator
+   //!   argument constructible from `segment_manager*`
+   //!  and constructor arguments `std::forward<Args>(args)...`.
+   //!
+   //! <b>Throws</b>: Nothing unless the constructor for T throws.
+   template <typename U, class ...Args>
+   void construct(U* p, BOOST_FWD_REF(Args)...args);
 
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold. This size only works for memory allocated with

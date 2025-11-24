@@ -32,7 +32,9 @@
 #include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+
+#include <boost/container/detail/dispatch_uses_allocator.hpp>
+
 #include <boost/move/adl_move_swap.hpp>
 #include <cstddef>
 
@@ -174,6 +176,24 @@ class private_adaptive_pool_base
    //!Returns the segment manager. Never throws
    segment_manager* get_segment_manager()const
    {  return m_node_pool.get_segment_manager(); }
+
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator
+   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //!   is well-formed. [Note: uses-allocator construction is always well formed for
+   //!   types that do not use allocators. - end note]
+   //!
+   //! <b>Effects</b>: Construct a T object at p by uses-allocator construction with allocator
+   //!   argument constructible from `segment_manager*`
+   //!  and constructor arguments `std::forward<Args>(args)...`.
+   //!
+   //! <b>Throws</b>: Nothing unless the constructor for T throws.
+   template < typename U, class ...Args>
+   inline void construct(U* p, BOOST_FWD_REF(Args)...args)
+   {
+      boost::container::dtl::allocator_traits_dummy<U> atd;
+      boost::container::dtl::dispatch_uses_allocator
+         (atd, this->get_segment_manager(), p, ::boost::forward<Args>(args)...);
+   }
 
    //!Returns the internal node pool. Never throws
    node_pool_t* get_node_pool() const
@@ -412,13 +432,18 @@ class private_adaptive_pool
    //!Never throws
    const_pointer address(const_reference value) const;
 
-   //!Copy construct an object.
-   //!Throws if T's copy constructor throws
-   void construct(const pointer &ptr, const_reference v);
-
-   //!Destroys object. Throws if object's
-   //!destructor throws
-   void destroy(const pointer &ptr);
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator
+   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //!   is well-formed. [Note: uses-allocator construction is always well formed for
+   //!   types that do not use allocators. - end note]
+   //!
+   //! <b>Effects</b>: Construct a T object at p by uses-allocator construction with allocator
+   //!   argument constructible from `segment_manager*`
+   //!  and constructor arguments `std::forward<Args>(args)...`.
+   //!
+   //! <b>Throws</b>: Nothing unless the constructor for T throws.
+   template <typename U, class ...Args>
+   void construct(U* p, BOOST_FWD_REF(Args)...args);
 
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold. This size only works for memory allocated with

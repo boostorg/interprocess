@@ -22,19 +22,24 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/intrusive/pointer_traits.hpp>
-
-#include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/assert.hpp>
-#include <boost/container/detail/addressof.hpp>
-#include <boost/interprocess/detail/utilities.hpp>
-#include <boost/interprocess/detail/type_traits.hpp>
-#include <boost/interprocess/allocators/detail/adaptive_node_pool.hpp>
+
+#include <boost/intrusive/pointer_traits.hpp>
+#include <boost/interprocess/interprocess_fwd.hpp>
+
 #include <boost/interprocess/containers/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#include <boost/interprocess/allocators/detail/allocator_common.hpp>
-#include <boost/container/detail/multiallocation_chain.hpp>
+
+#include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/mpl.hpp>
+#include <boost/interprocess/allocators/detail/adaptive_node_pool.hpp>
+#include <boost/interprocess/allocators/detail/allocator_common.hpp>
+
+#include <boost/container/detail/multiallocation_chain.hpp>
+#include <boost/container/detail/dispatch_uses_allocator.hpp>
+#include <boost/container/detail/addressof.hpp>
+
 #include <boost/move/adl_move_swap.hpp>
 #include <cstddef>
 
@@ -167,6 +172,24 @@ class adaptive_pool_base
    //!Never throws
    segment_manager* get_segment_manager()const
    {  return node_pool<0>::get(ipcdetail::to_raw_pointer(mp_node_pool))->get_segment_manager();  }
+
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator
+   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //!   is well-formed. [Note: uses-allocator construction is always well formed for
+   //!   types that do not use allocators. - end note]
+   //!
+   //! <b>Effects</b>: Construct a T object at p by uses-allocator construction with allocator
+   //!   argument constructible from `segment_manager*`
+   //!  and constructor arguments `std::forward<Args>(args)...`.
+   //!
+   //! <b>Throws</b>: Nothing unless the constructor for T throws.
+   template < typename U, class ...Args>
+   inline void construct(U* p, BOOST_FWD_REF(Args)...args)
+   {
+      boost::container::dtl::allocator_traits_dummy<U> atd;
+      boost::container::dtl::dispatch_uses_allocator
+         (atd, this->get_segment_manager(), p, ::boost::forward<Args>(args)...);
+   }
 
    //!Swaps allocators. Does not throw. If each allocator is placed in a
    //!different memory segment, the result is undefined.
@@ -378,15 +401,20 @@ class adaptive_pool
    //!Returns address of non mutable object.
    //!Never throws
    const_pointer address(const_reference value) const;
-/*
-   //!Copy construct an object.
-   //!Throws if T's copy constructor throws
-   void construct(const pointer &ptr, const_reference v);
 
-   //!Destroys object. Throws if object's
-   //!destructor throws
-   void destroy(const pointer &ptr);
-*/
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator
+   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //!   is well-formed. [Note: uses-allocator construction is always well formed for
+   //!   types that do not use allocators. - end note]
+   //!
+   //! <b>Effects</b>: Construct a T object at p by uses-allocator construction with allocator
+   //!   argument constructible from `segment_manager*`
+   //!  and constructor arguments `std::forward<Args>(args)...`.
+   //!
+   //! <b>Throws</b>: Nothing unless the constructor for T throws.
+   template <typename U, class ...Args>
+   void construct(U* p, BOOST_FWD_REF(Args)...args);
+
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold. This size only works for memory allocated with
    //!allocate, allocation_command and allocate_many.

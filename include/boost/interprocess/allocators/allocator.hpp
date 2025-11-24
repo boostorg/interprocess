@@ -32,9 +32,11 @@
 #include <boost/interprocess/containers/version_type.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/assert.hpp>
-#include <boost/container/detail/addressof.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
+
 #include <boost/container/detail/placement_new.hpp>
+#include <boost/container/detail/addressof.hpp>
+#include <boost/container/detail/dispatch_uses_allocator.hpp>
 
 #include <cstddef>
 #include <stdexcept>
@@ -157,6 +159,24 @@ class allocator
    //!Never throws
    void deallocate(const pointer &ptr, size_type)
    {  mp_mngr->deallocate((void*)ipcdetail::to_raw_pointer(ptr));  }
+
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator
+   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //!   is well-formed. [Note: uses-allocator construction is always well formed for
+   //!   types that do not use allocators. - end note]
+   //!
+   //! <b>Effects</b>: Construct a T object at p by uses-allocator construction with allocator
+   //!   argument constructible from `segment_manager*`
+   //!  and constructor arguments `std::forward<Args>(args)...`.
+   //!
+   //! <b>Throws</b>: Nothing unless the constructor for T throws.
+   template < typename U, class ...Args>
+   inline void construct(U* p, BOOST_FWD_REF(Args)...args)
+   {
+      boost::container::dtl::allocator_traits_dummy<U> atd;
+      boost::container::dtl::dispatch_uses_allocator
+         (atd, this->get_segment_manager(), p, ::boost::forward<Args>(args)...);
+   }
 
    //!Returns the number of elements that could be allocated.
    //!Never throws

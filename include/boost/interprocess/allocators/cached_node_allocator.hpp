@@ -23,12 +23,15 @@
 #include <boost/interprocess/detail/workaround.hpp>
 
 #include <boost/interprocess/interprocess_fwd.hpp>
+
 #include <boost/interprocess/allocators/detail/node_pool.hpp>
 #include <boost/interprocess/allocators/detail/allocator_common.hpp>
-#include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/allocators/detail/node_tools.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/containers/version_type.hpp>
-#include <boost/interprocess/allocators/detail/node_tools.hpp>
+
+#include <boost/container/detail/dispatch_uses_allocator.hpp>
+
 #include <cstddef>
 
 //!\file
@@ -250,13 +253,18 @@ class cached_node_allocator
    //!Never throws
    pointer address(reference value) const;
 
-   //!Returns address of non mutable object.
-   //!Never throws
-   const_pointer address(const_reference value) const;
-
-   //!Default construct an object.
-   //!Throws if T's default constructor throws
-   void construct(const pointer &ptr, const_reference v);
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator
+   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //!   is well-formed. [Note: uses-allocator construction is always well formed for
+   //!   types that do not use allocators. - end note]
+   //!
+   //! <b>Effects</b>: Construct a T object at p by uses-allocator construction with allocator
+   //!   argument constructible from `segment_manager*`
+   //!  and constructor arguments `std::forward<Args>(args)...`.
+   //!
+   //! <b>Throws</b>: Nothing unless the constructor for T throws.
+   template <typename U, class ...Args>
+   void construct(U* p, BOOST_FWD_REF(Args)...args);
 
    //!Destroys object. Throws if object's
    //!destructor throws

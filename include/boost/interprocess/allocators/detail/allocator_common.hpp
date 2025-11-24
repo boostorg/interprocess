@@ -22,22 +22,27 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
-#include <boost/intrusive/pointer_traits.hpp>
+#include <boost/assert.hpp>   //BOOST_ASSERT
 
 #include <boost/interprocess/interprocess_fwd.hpp>
-#include <boost/interprocess/detail/utilities.hpp> //to_raw_pointer
-#include <boost/container/detail/addressof.hpp> //boost::container::dtl:addressof
-#include <boost/assert.hpp>   //BOOST_ASSERT
+
 #include <boost/interprocess/exceptions.hpp> //bad_alloc
 #include <boost/interprocess/sync/scoped_lock.hpp> //scoped_lock
 #include <boost/interprocess/containers/allocation_type.hpp> //boost::interprocess::allocation_type
-#include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/interprocess/mem_algo/detail/mem_algo_common.hpp>
+
 #include <boost/interprocess/detail/segment_manager_helper.hpp>
-#include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
-#include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/utilities.hpp> //to_raw_pointer
+
+#include <boost/intrusive/pointer_traits.hpp>
+
 #include <boost/container/detail/placement_new.hpp>
+#include <boost/container/detail/dispatch_uses_allocator.hpp>
+#include <boost/container/detail/multiallocation_chain.hpp>
+#include <boost/container/detail/addressof.hpp> //boost::container::dtl:addressof
+
+#include <boost/move/utility_core.hpp>
 #include <boost/move/adl_move_swap.hpp>
 
 namespace boost {
@@ -614,6 +619,24 @@ class cached_allocator_impl
    //!Never throws
    segment_manager* get_segment_manager()const
    {  return m_cache.get_segment_manager();   }
+
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator
+   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //!   is well-formed. [Note: uses-allocator construction is always well formed for
+   //!   types that do not use allocators. - end note]
+   //!
+   //! <b>Effects</b>: Construct a T object at p by uses-allocator construction with allocator
+   //!   argument constructible from `segment_manager*`
+   //!  and constructor arguments `std::forward<Args>(args)...`.
+   //!
+   //! <b>Throws</b>: Nothing unless the constructor for T throws.
+   template < typename U, class ...Args>
+   inline void construct(U* p, BOOST_FWD_REF(Args)...args)
+   {
+      boost::container::dtl::allocator_traits_dummy<U> atd;
+      boost::container::dtl::dispatch_uses_allocator
+         (atd, this->get_segment_manager(), p, ::boost::forward<Args>(args)...);
+   }
 
    //!Sets the new max cached nodes value. This can provoke deallocations
    //!if "newmax" is less than current cached nodes. Never throws
