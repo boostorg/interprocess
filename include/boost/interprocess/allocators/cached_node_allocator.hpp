@@ -264,7 +264,7 @@ class cached_node_allocator
    //!
    //! <b>Throws</b>: Nothing unless the constructor for T throws.
    template <typename U, class ...Args>
-   void construct(U* p, BOOST_FWD_REF(Args)...args);
+   void construct(U* p, Args&& ...args);
 
    //!Destroys object. Throws if object's
    //!destructor throws

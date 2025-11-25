@@ -172,6 +172,7 @@ class node_allocator_base
    segment_manager* get_segment_manager()const
    {  return node_pool<0>::get(ipcdetail::to_raw_pointer(mp_node_pool))->get_segment_manager();  }
 
+   #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
    //! <b>Requires</b>: Uses-allocator construction of T with allocator
    //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
@@ -189,6 +190,22 @@ class node_allocator_base
       boost::container::dtl::dispatch_uses_allocator
          (atd, this->get_segment_manager(), p, ::boost::forward<Args>(args)...);
    }
+
+   #else // #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
+
+   #define BOOST_CONTAINER_ALLOCATORS_NODE_ALLOCATOR_CONSTRUCT_CODE(N) \
+   template < typename U BOOST_MOVE_I##N BOOST_MOVE_CLASSQ##N >\
+   void construct(U* p BOOST_MOVE_I##N BOOST_MOVE_UREFQ##N)\
+   {\
+      boost::container::dtl::allocator_traits_dummy<U> atd;\
+      boost::container::dtl::dispatch_uses_allocator\
+         (atd, this->get_segment_manager(), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
+   }\
+   //
+   BOOST_MOVE_ITERATE_0TO9(BOOST_CONTAINER_ALLOCATORS_NODE_ALLOCATOR_CONSTRUCT_CODE)
+   #undef BOOST_CONTAINER_ALLOCATORS_NODE_ALLOCATOR_CONSTRUCT_CODE
+
+   #endif   //#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
 
    //!Swaps allocators. Does not throw. If each allocator is placed in a
    //!different memory segment, the result is undefined.
@@ -398,7 +415,7 @@ class node_allocator
    //!
    //! <b>Throws</b>: Nothing unless the constructor for T throws.
    template <typename U, class ...Args>
-   void construct(U* p, BOOST_FWD_REF(Args)...args);
+   void construct(U* p, Args&& ...args);
 
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold. This size only works for memory allocated with

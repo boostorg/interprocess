@@ -160,6 +160,7 @@ class allocator
    void deallocate(const pointer &ptr, size_type)
    {  mp_mngr->deallocate((void*)ipcdetail::to_raw_pointer(ptr));  }
 
+   #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
    //! <b>Requires</b>: Uses-allocator construction of T with allocator
    //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
@@ -177,6 +178,22 @@ class allocator
       boost::container::dtl::dispatch_uses_allocator
          (atd, this->get_segment_manager(), p, ::boost::forward<Args>(args)...);
    }
+
+   #else // #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
+
+   #define BOOST_CONTAINER_ALLOCATORS_ALLOCATOR_CONSTRUCT_CODE(N) \
+   template < typename U BOOST_MOVE_I##N BOOST_MOVE_CLASSQ##N >\
+   void construct(U* p BOOST_MOVE_I##N BOOST_MOVE_UREFQ##N)\
+   {\
+      boost::container::dtl::allocator_traits_dummy<U> atd;\
+      boost::container::dtl::dispatch_uses_allocator\
+         (atd, this->get_segment_manager(), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
+   }\
+   //
+   BOOST_MOVE_ITERATE_0TO9(BOOST_CONTAINER_ALLOCATORS_ALLOCATOR_CONSTRUCT_CODE)
+   #undef BOOST_CONTAINER_ALLOCATORS_ALLOCATOR_CONSTRUCT_CODE
+
+   #endif   //#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
 
    //!Returns the number of elements that could be allocated.
    //!Never throws
