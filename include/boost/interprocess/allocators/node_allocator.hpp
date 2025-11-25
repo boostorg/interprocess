@@ -184,7 +184,7 @@ class node_allocator_base
    //!
    //! <b>Throws</b>: Nothing unless the constructor for T throws.
    template < typename U, class ...Args>
-   inline void construct(U* p, BOOST_FWD_REF(Args)...args)
+   inline void construct(U* p, Args&& ...args)
    {
       boost::container::dtl::allocator_traits_dummy<U> atd;
       boost::container::dtl::dispatch_uses_allocator
