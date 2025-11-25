@@ -1,4 +1,4 @@
-Boost.Container
+Boost.Interprocess
 ==========
 
 Boost.Interprocess simplifies the use of common interprocess communication and synchronization mechanisms and offers a wide range of them:
@@ -14,7 +14,7 @@ Boost.Interprocess simplifies the use of common interprocess communication and s
 * Message queues.
 
 Also offers higher-level interprocess mechanisms to dynamically allocate portions of a shared memory or a memory mapped file.
-Using these mechanisms, it  offers useful tools to construct C++ objects, including STL-like containers, in shared memory and memory mapped files
+Using these mechanisms, it offers useful tools to construct C++ objects, including STL-like containers, in shared memory and memory mapped files.
 
 ### License
 
