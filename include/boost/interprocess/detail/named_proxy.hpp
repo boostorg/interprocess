@@ -73,7 +73,7 @@ struct CtorArgN
       :  args_(args...)
    {}
 
-   virtual void construct_n(void *mem, std::size_t num)
+   void construct_n(void *mem, std::size_t num)
    {
       std::size_t constructed = 0;
       BOOST_INTERPROCESS_TRY{
@@ -92,11 +92,11 @@ struct CtorArgN
    private:
    template<std::size_t ...IdxPack>
    void construct(void *mem, true_, const index_tuple<IdxPack...>&)
-   {  ::new((void*)mem, boost_container_new_t())T(*boost::forward<Args>((get<IdxPack>)(args_))...); }
+   {  ::new((void*)mem, boost_container_new_t()) T(*boost::forward<Args>((get<IdxPack>)(args_))...); }
 
    template<std::size_t ...IdxPack>
    void construct(void *mem, false_, const index_tuple<IdxPack...>&)
-   {  ::new((void*)mem, boost_container_new_t())T(boost::forward<Args>((get<IdxPack>)(args_))...); }
+   {  ::new((void*)mem, boost_container_new_t()) T(boost::forward<Args>((get<IdxPack>)(args_))...); }
 
    template<std::size_t ...IdxPack>
    void do_increment(true_, const index_tuple<IdxPack...>&)
@@ -163,7 +163,7 @@ struct CtorArg##N\
    CtorArg##N ( BOOST_MOVE_UREF##N  )\
       BOOST_MOVE_COLON##N BOOST_MOVE_FWD_INIT##N{}\
    \
-   virtual void construct_n(void *mem, std::size_t num)\
+   void construct_n(void *mem, std::size_t num)\
    {\
       std::size_t constructed = 0;\
       BOOST_INTERPROCESS_TRY{\
@@ -201,7 +201,7 @@ struct CtorIt##N\
    CtorIt##N ( BOOST_MOVE_VAL##N  )\
       BOOST_MOVE_COLON##N BOOST_MOVE_VAL_INIT##N{}\
    \
-   virtual void construct_n(void *mem, std::size_t num)\
+   void construct_n(void *mem, std::size_t num)\
    {\
       std::size_t constructed = 0;\
       BOOST_INTERPROCESS_TRY{\
