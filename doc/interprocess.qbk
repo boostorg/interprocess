@@ -6785,6 +6785,10 @@ thank them:
 
 [section:release_notes_boost_1_91_00 Boost 1.91 Release]
 
+* Adds uses-allocator-construction (for types where `boost::container::uses_allocator<T>::value == true`), in the following utilities:
+   * Segment managers in their `construct` methods
+   * Allocators
+
 * Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/247 GitHub #247 (['"destruction of move-constructed map using private_adaptive_pool triggers Assertion"])].
 

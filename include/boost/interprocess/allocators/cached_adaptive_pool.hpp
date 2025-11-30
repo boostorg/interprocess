@@ -72,6 +72,8 @@ class cached_adaptive_pool_v1
             >
          , 1> base_t;
 
+   typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;
+
    template<class T2>
    struct rebind
    {
@@ -84,6 +86,11 @@ class cached_adaptive_pool_v1
    cached_adaptive_pool_v1(SegmentManager *segment_mngr,
                            size_type max_cached_nodes = base_t::DEFAULT_MAX_CACHED_NODES)
       : base_t(segment_mngr, max_cached_nodes)
+   {}
+
+   cached_adaptive_pool_v1(uses_segment_manager_t usm,
+                           size_type max_cached_nodes = base_t::DEFAULT_MAX_CACHED_NODES)
+      : base_t(usm.get_segment_manager(), max_cached_nodes)
    {}
 
    template<class T2>
@@ -160,6 +167,7 @@ class cached_adaptive_pool
    BOOST_COPYABLE_AND_MOVABLE_ALT(cached_adaptive_pool)
    public:
    typedef boost::interprocess::version_type<cached_adaptive_pool, 2>   version;
+   typedef uses_segment_manager<SegmentManager>                         uses_segment_manager_t;
 
    template<class T2>
    struct rebind
@@ -171,6 +179,11 @@ class cached_adaptive_pool
    cached_adaptive_pool(SegmentManager *segment_mngr,
                          std::size_t max_cached_nodes = base_t::DEFAULT_MAX_CACHED_NODES)
       : base_t(segment_mngr, max_cached_nodes)
+   {}
+
+   cached_adaptive_pool(uses_segment_manager_t usm,
+                        std::size_t max_cached_nodes = base_t::DEFAULT_MAX_CACHED_NODES)
+      : base_t(usm.get_segment_manager(), max_cached_nodes)
    {}
 
    template<class T2>
@@ -281,8 +294,8 @@ class cached_adaptive_pool
    //!Never throws
    const_pointer address(const_reference value) const;
 
-   //! <b>Requires</b>: Uses-allocator construction of T with allocator
-   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
+   //!   `uses_segment_manager_t` and additional constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
    //!   types that do not use allocators. - end note]
    //!

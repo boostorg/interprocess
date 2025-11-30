@@ -69,6 +69,7 @@ class cached_node_allocator_v1
             , NodesPerBlock
             >
          , 1> base_t;
+   typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;
 
    template<class T2>
    struct rebind
@@ -82,6 +83,11 @@ class cached_node_allocator_v1
    cached_node_allocator_v1(SegmentManager *segment_mngr,
                          size_type max_cached_nodes = base_t::DEFAULT_MAX_CACHED_NODES)
       : base_t(segment_mngr, max_cached_nodes)
+   {}
+
+   cached_node_allocator_v1(uses_segment_manager_t usm,
+                            size_type max_cached_nodes = base_t::DEFAULT_MAX_CACHED_NODES)
+      : base_t(usm.get_segment_manager(), max_cached_nodes)
    {}
 
    template<class T2>
@@ -135,8 +141,9 @@ class cached_node_allocator
    BOOST_COPYABLE_AND_MOVABLE_ALT(cached_node_allocator)
 
    public:
-   typedef boost::interprocess::version_type<cached_node_allocator, 2>   version;
-   typedef typename base_t::size_type size_type;
+   typedef boost::interprocess::version_type<cached_node_allocator, 2>  version;
+   typedef typename base_t::size_type                                   size_type;
+   typedef uses_segment_manager<SegmentManager>                         uses_segment_manager_t;
 
    template<class T2>
    struct rebind
@@ -147,6 +154,11 @@ class cached_node_allocator
    cached_node_allocator(SegmentManager *segment_mngr,
                          size_type max_cached_nodes = base_t::DEFAULT_MAX_CACHED_NODES)
       : base_t(segment_mngr, max_cached_nodes)
+   {}
+
+   cached_node_allocator(uses_segment_manager_t usm,
+                         size_type max_cached_nodes = base_t::DEFAULT_MAX_CACHED_NODES)
+      : base_t(usm.get_segment_manager(), max_cached_nodes)
    {}
 
    template<class T2>
@@ -253,8 +265,8 @@ class cached_node_allocator
    //!Never throws
    pointer address(reference value) const;
 
-   //! <b>Requires</b>: Uses-allocator construction of T with allocator
-   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
+   //!   `uses_segment_manager_t` and additional constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
    //!   types that do not use allocators. - end note]
    //!

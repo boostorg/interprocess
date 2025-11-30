@@ -104,6 +104,7 @@ class private_adaptive_pool_base
       <private_adaptive_pool_base, Version>              version;
    typedef boost::container::dtl::transform_multiallocation_chain
       <typename SegmentManager::multiallocation_chain, T>multiallocation_chain;
+   typedef uses_segment_manager<SegmentManager>          uses_segment_manager_t;
 
    //!Obtains node_allocator from other node_allocator
    template<class T2>
@@ -178,8 +179,8 @@ class private_adaptive_pool_base
    {  return m_node_pool.get_segment_manager(); }
 
    #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
-   //! <b>Requires</b>: Uses-allocator construction of T with allocator
-   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
+   //!   `uses_segment_manager_t` and additional constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
    //!   types that do not use allocators. - end note]
    //!
@@ -193,7 +194,7 @@ class private_adaptive_pool_base
    {
       boost::container::dtl::allocator_traits_dummy<U> atd;
       boost::container::dtl::dispatch_uses_allocator
-         (atd, this->get_segment_manager(), p, ::boost::forward<Args>(args)...);
+         (atd, uses_segment_manager_t(this->get_segment_manager()), p, ::boost::forward<Args>(args)...);
    }
 
    #else // #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
@@ -204,7 +205,7 @@ class private_adaptive_pool_base
    {\
       boost::container::dtl::allocator_traits_dummy<U> atd;\
       boost::container::dtl::dispatch_uses_allocator\
-         (atd, this->get_segment_manager(), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
+         (atd, uses_segment_manager_t(this->get_segment_manager()), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
    }\
    //
    BOOST_MOVE_ITERATE_0TO9(BOOST_CONTAINER_ALLOCATORS_PRIVATE_ADAPTIVE_POOL_CONSTRUCT_CODE)
@@ -260,6 +261,7 @@ class private_adaptive_pool_v1
    typedef ipcdetail::private_adaptive_pool_base
          < 1, T, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> base_t;
 
+   typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;
    template<class T2>
    struct rebind
    {
@@ -268,6 +270,10 @@ class private_adaptive_pool_v1
 
    private_adaptive_pool_v1(SegmentManager *segment_mngr)
       : base_t(segment_mngr)
+   {}
+
+   private_adaptive_pool_v1(uses_segment_manager_t usm)
+      : base_t(usm.get_segment_manager())
    {}
 
    template<class T2>
@@ -327,7 +333,8 @@ class private_adaptive_pool
 
    BOOST_COPYABLE_AND_MOVABLE_ALT(private_adaptive_pool)
    public:
-   typedef boost::interprocess::version_type<private_adaptive_pool, 2>   version;
+   typedef boost::interprocess::version_type<private_adaptive_pool, 2>  version;
+   typedef uses_segment_manager<SegmentManager>                         uses_segment_manager_t;
 
    template<class T2>
    struct rebind
@@ -338,6 +345,10 @@ class private_adaptive_pool
 
    private_adaptive_pool(SegmentManager *segment_mngr)
       : base_t(segment_mngr)
+   {}
+
+   private_adaptive_pool(uses_segment_manager_t usm)
+      : base_t(usm.get_segment_manager())
    {}
 
    template<class T2>
@@ -449,8 +460,8 @@ class private_adaptive_pool
    //!Never throws
    const_pointer address(const_reference value) const;
 
-   //! <b>Requires</b>: Uses-allocator construction of T with allocator
-   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
+   //!   `uses_segment_manager_t` and additional constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
    //!   types that do not use allocators. - end note]
    //!

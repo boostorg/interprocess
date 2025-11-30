@@ -78,6 +78,21 @@ struct sizeof_value<const volatile void>
    static const std::size_t value = sizeof(void*);
 };
 
+template<class SegmentManager>
+class uses_segment_manager
+{
+   private:
+   SegmentManager *const m_mngr;
+
+   public:
+   explicit uses_segment_manager(SegmentManager *mngr)
+      : m_mngr(mngr)
+   {}
+
+   SegmentManager *get_segment_manager()
+   {  return m_mngr;  }
+};
+
 namespace ipcdetail {
 
 //!Object function that creates the node allocator if it is not created and
@@ -582,6 +597,7 @@ class cached_allocator_impl
    typedef typename base_t::size_type                    size_type;
    typedef typename base_t::multiallocation_chain        multiallocation_chain;
    typedef typename base_t::value_type                   value_type;
+   typedef uses_segment_manager<segment_manager>         uses_segment_manager_t;
 
    BOOST_COPYABLE_AND_MOVABLE_ALT(cached_allocator_impl)
 
@@ -621,8 +637,8 @@ class cached_allocator_impl
    {  return m_cache.get_segment_manager();   }
 
    #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
-   //! <b>Requires</b>: Uses-allocator construction of T with allocator
-   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
+   //!   `uses_segment_manager_t` and additional constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
    //!   types that do not use allocators. - end note]
    //!
@@ -636,7 +652,7 @@ class cached_allocator_impl
    {
       boost::container::dtl::allocator_traits_dummy<U> atd;
       boost::container::dtl::dispatch_uses_allocator
-         (atd, this->get_segment_manager(), p, ::boost::forward<Args>(args)...);
+         (atd, uses_segment_manager_t(this->get_segment_manager()), p, ::boost::forward<Args>(args)...);
    }
 
    #else // #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
@@ -647,7 +663,7 @@ class cached_allocator_impl
    {\
       boost::container::dtl::allocator_traits_dummy<U> atd;\
       boost::container::dtl::dispatch_uses_allocator\
-         (atd, this->get_segment_manager(), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
+         (atd, uses_segment_manager_t(this->get_segment_manager()), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
    }\
    //
    BOOST_MOVE_ITERATE_0TO9(BOOST_CONTAINER_ALLOCATORS_ALLOCATOR_COMMON_CONSTRUCT_CODE)

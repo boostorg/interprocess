@@ -105,6 +105,7 @@ class adaptive_pool_base
                      <const value_type>::type            const_reference;
    typedef typename segment_manager::size_type           size_type;
    typedef typename segment_manager::difference_type     difference_type;
+   typedef uses_segment_manager<SegmentManager>          uses_segment_manager_t;
 
    typedef boost::interprocess::version_type<adaptive_pool_base, Version>   version;
    typedef boost::container::dtl::transform_multiallocation_chain
@@ -124,6 +125,8 @@ class adaptive_pool_base
    template<unsigned int Version2, class T2, class SegmentManager2, std::size_t N2, std::size_t F2, unsigned char O2>
    adaptive_pool_base& operator=
       (const adaptive_pool_base<Version2, T2, SegmentManager2, N2, F2, O2>&);
+
+   public:
 
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
@@ -174,8 +177,8 @@ class adaptive_pool_base
    {  return node_pool<0>::get(ipcdetail::to_raw_pointer(mp_node_pool))->get_segment_manager();  }
 
    #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
-   //! <b>Requires</b>: Uses-allocator construction of T with allocator
-   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
+   //!   `uses_segment_manager_t` and additional constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
    //!   types that do not use allocators. - end note]
    //!
@@ -189,7 +192,7 @@ class adaptive_pool_base
    {
       boost::container::dtl::allocator_traits_dummy<U> atd;
       boost::container::dtl::dispatch_uses_allocator
-         (atd, this->get_segment_manager(), p, ::boost::forward<Args>(args)...);
+         (atd, uses_segment_manager_t(this->get_segment_manager()), p, ::boost::forward<Args>(args)...);
    }
 
    #else // #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
@@ -200,7 +203,7 @@ class adaptive_pool_base
    {\
       boost::container::dtl::allocator_traits_dummy<U> atd;\
       boost::container::dtl::dispatch_uses_allocator\
-         (atd, this->get_segment_manager(), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
+         (atd, uses_segment_manager_t(this->get_segment_manager()), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
    }\
    //
    BOOST_MOVE_ITERATE_0TO9(BOOST_CONTAINER_ALLOCATORS_ADAPTIVE_POOL_CONSTRUCT_CODE)
@@ -253,6 +256,8 @@ class adaptive_pool_v1
    typedef ipcdetail::adaptive_pool_base
          < 1, T, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> base_t;
 
+   typedef uses_segment_manager<SegmentManager>          uses_segment_manager_t;
+
    template<class T2>
    struct rebind
    {
@@ -261,6 +266,10 @@ class adaptive_pool_v1
 
    adaptive_pool_v1(SegmentManager *segment_mngr)
       : base_t(segment_mngr)
+   {}
+
+   adaptive_pool_v1(uses_segment_manager_t usm)
+      : base_t(usm.get_segment_manager())
    {}
 
    template<class T2>
@@ -311,7 +320,8 @@ class adaptive_pool
    typedef ipcdetail::adaptive_pool_base
          < 2, T, SegmentManager, NodesPerBlock, MaxFreeBlocks, OverheadPercent> base_t;
    public:
-   typedef boost::interprocess::version_type<adaptive_pool, 2>   version;
+   typedef boost::interprocess::version_type<adaptive_pool, 2> version;
+   typedef uses_segment_manager<SegmentManager>                uses_segment_manager_t;
 
    template<class T2>
    struct rebind
@@ -321,6 +331,10 @@ class adaptive_pool
 
    adaptive_pool(SegmentManager *segment_mngr)
       : base_t(segment_mngr)
+   {}
+
+   adaptive_pool(uses_segment_manager_t usm)
+      : base_t(usm.get_segment_manager())
    {}
 
    template<class T2>
@@ -419,8 +433,8 @@ class adaptive_pool
    //!Never throws
    const_pointer address(const_reference value) const;
 
-   //! <b>Requires</b>: Uses-allocator construction of T with allocator
-   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
+   //!   `uses_segment_manager_t` and additional constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
    //!   types that do not use allocators. - end note]
    //!

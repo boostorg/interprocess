@@ -105,6 +105,7 @@ class allocator
                      <const value_type>::type   const_reference;
    typedef typename segment_manager::size_type               size_type;
    typedef typename segment_manager::difference_type         difference_type;
+   typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;
 
    typedef boost::interprocess::version_type<allocator, 2>   version;
 
@@ -113,6 +114,7 @@ class allocator
    //Experimental. Don't use.
    typedef boost::container::dtl::transform_multiallocation_chain
       <typename SegmentManager::multiallocation_chain, T>multiallocation_chain;
+
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    //!Obtains an allocator that allocates
@@ -132,6 +134,12 @@ class allocator
    //!Never throws
    allocator(segment_manager *segment_mngr)
       : mp_mngr(segment_mngr) { }
+
+   //!Constructor that enables uses-allocator
+   //!Never throws
+   allocator(uses_segment_manager_t usm)
+      : mp_mngr(usm.get_segment_manager())
+   {}
 
    //!Constructor from other allocator.
    //!Never throws
@@ -161,8 +169,8 @@ class allocator
    {  mp_mngr->deallocate((void*)ipcdetail::to_raw_pointer(ptr));  }
 
    #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
-   //! <b>Requires</b>: Uses-allocator construction of T with allocator
-   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
+   //!   `uses_segment_manager` and constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
    //!   types that do not use allocators. - end note]
    //!
@@ -176,7 +184,7 @@ class allocator
    {
       boost::container::dtl::allocator_traits_dummy<U> atd;
       boost::container::dtl::dispatch_uses_allocator
-         (atd, this->get_segment_manager(), p, ::boost::forward<Args>(args)...);
+         (atd, uses_segment_manager_t(this->get_segment_manager()), p, ::boost::forward<Args>(args)...);
    }
 
    #else // #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
@@ -187,7 +195,7 @@ class allocator
    {\
       boost::container::dtl::allocator_traits_dummy<U> atd;\
       boost::container::dtl::dispatch_uses_allocator\
-         (atd, this->get_segment_manager(), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
+         (atd, uses_segment_manager_t(this->get_segment_manager()), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
    }\
    //
    BOOST_MOVE_ITERATE_0TO9(BOOST_CONTAINER_ALLOCATORS_ALLOCATOR_CONSTRUCT_CODE)

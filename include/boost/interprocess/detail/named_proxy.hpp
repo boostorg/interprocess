@@ -32,6 +32,8 @@
 #include <boost/interprocess/detail/variadic_templates_tools.hpp>
 #endif   //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
 #include <boost/container/detail/placement_new.hpp>
+#include <boost/container/detail/dispatch_uses_allocator.hpp>
+#include <boost/interprocess/allocators/detail/allocator_common.hpp>
 
 #include <cstddef>
 
@@ -73,13 +75,14 @@ struct CtorArgN
       :  args_(args...)
    {}
 
-   void construct_n(void *mem, std::size_t num)
+   template<class SegmentManager>
+   void construct_n(void *mem, SegmentManager *segment_manager, std::size_t num)
    {
       std::size_t constructed = 0;
       BOOST_INTERPROCESS_TRY{
          T* memory      = static_cast<T*>(mem);
          for(constructed = 0; constructed < num; ++constructed){
-            this->construct(memory++, IsIterator(), index_tuple_t());
+            this->construct(memory++, segment_manager, IsIterator(), index_tuple_t());
             this->do_increment(IsIterator(), index_tuple_t());
          }
       }
@@ -90,14 +93,26 @@ struct CtorArgN
    }
 
    private:
-   template<std::size_t ...IdxPack>
-   void construct(void *mem, true_, const index_tuple<IdxPack...>&)
-   {  ::new((void*)mem, boost_container_new_t()) T(*boost::forward<Args>((get<IdxPack>)(args_))...); }
+   template<class SegmentManager, std::size_t ...IdxPack>
+   void construct(void* mem, SegmentManager *segment_manager, true_, const index_tuple<IdxPack...>&)
+   {
+      boost::container::dtl::allocator_traits_dummy<T> atd;
+      typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;
+      boost::container::dtl::dispatch_uses_allocator
+         (atd, uses_segment_manager_t(segment_manager), static_cast<T*>(mem), *boost::forward<Args>((get<IdxPack>)(args_))...);
+   }
 
-   template<std::size_t ...IdxPack>
-   void construct(void *mem, false_, const index_tuple<IdxPack...>&)
-   {  ::new((void*)mem, boost_container_new_t()) T(boost::forward<Args>((get<IdxPack>)(args_))...); }
+   //{  ::new((void*)mem, boost_container_new_t()) T(*boost::forward<Args>((get<IdxPack>)(args_))...); }
 
+   template<class SegmentManager, std::size_t ...IdxPack>
+   void construct(void *mem, SegmentManager *segment_manager, false_, const index_tuple<IdxPack...>&)
+   {
+      typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;
+      boost::container::dtl::allocator_traits_dummy<T> atd;
+      boost::container::dtl::dispatch_uses_allocator
+         (atd, uses_segment_manager_t(segment_manager), static_cast<T*>(mem), boost::forward<Args>((get<IdxPack>)(args_))...);
+   }
+   
    template<std::size_t ...IdxPack>
    void do_increment(true_, const index_tuple<IdxPack...>&)
    {
@@ -163,13 +178,17 @@ struct CtorArg##N\
    CtorArg##N ( BOOST_MOVE_UREF##N  )\
       BOOST_MOVE_COLON##N BOOST_MOVE_FWD_INIT##N{}\
    \
-   void construct_n(void *mem, std::size_t num)\
+   template<class SegmentManager>\
+   void construct_n(void *mem, SegmentManager *segment_manager, std::size_t num)\
    {\
       std::size_t constructed = 0;\
       BOOST_INTERPROCESS_TRY{\
          T* memory = static_cast<T*>(mem);\
          for (constructed = 0; constructed < num; ++constructed) {\
-            ::new((void*)memory++) T ( BOOST_MOVE_MFWD##N );\
+            boost::container::dtl::allocator_traits_dummy<T> atd;\
+            typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;\
+            boost::container::dtl::dispatch_uses_allocator\
+               (atd, uses_segment_manager_t(segment_manager), memory++ BOOST_MOVE_I##N BOOST_MOVE_MFWD##N);\
          }\
       }\
       BOOST_INTERPROCESS_CATCH(...) {\
@@ -201,13 +220,17 @@ struct CtorIt##N\
    CtorIt##N ( BOOST_MOVE_VAL##N  )\
       BOOST_MOVE_COLON##N BOOST_MOVE_VAL_INIT##N{}\
    \
-   void construct_n(void *mem, std::size_t num)\
+   template<class SegmentManager>\
+   void construct_n(void *mem, SegmentManager *segment_manager, std::size_t num)\
    {\
       std::size_t constructed = 0;\
       BOOST_INTERPROCESS_TRY{\
          T* memory      = static_cast<T*>(mem);\
          for(constructed = 0; constructed < num; ++constructed){\
-            ::new((void*)memory++) T( BOOST_MOVE_MITFWD##N );\
+            boost::container::dtl::allocator_traits_dummy<T> atd;\
+            typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;\
+            boost::container::dtl::dispatch_uses_allocator\
+               (atd, uses_segment_manager_t(segment_manager), memory++ BOOST_MOVE_I##N BOOST_MOVE_MITFWD##N);\
             ++(*this);\
          }\
       }\

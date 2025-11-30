@@ -66,6 +66,7 @@ class private_node_allocator_base
    //Segment manager
    typedef SegmentManager                                segment_manager;
    typedef typename SegmentManager::void_pointer         void_pointer;
+   typedef uses_segment_manager<SegmentManager>          uses_segment_manager_t;
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
@@ -168,8 +169,8 @@ class private_node_allocator_base
    {  return m_node_pool.get_segment_manager(); }
 
    #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
-   //! <b>Requires</b>: Uses-allocator construction of T with allocator
-   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
+   //!   `uses_segment_manager_t` and additional constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
    //!   types that do not use allocators. - end note]
    //!
@@ -183,7 +184,7 @@ class private_node_allocator_base
    {
       boost::container::dtl::allocator_traits_dummy<U> atd;
       boost::container::dtl::dispatch_uses_allocator
-         (atd, this->get_segment_manager(), p, ::boost::forward<Args>(args)...);
+         (atd, uses_segment_manager_t(this->get_segment_manager()), p, ::boost::forward<Args>(args)...);
    }
 
    #else // #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
@@ -194,7 +195,7 @@ class private_node_allocator_base
    {\
       boost::container::dtl::allocator_traits_dummy<U> atd;\
       boost::container::dtl::dispatch_uses_allocator\
-         (atd, this->get_segment_manager(), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
+         (atd, uses_segment_manager_t(this->get_segment_manager()), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
    }\
    //
    BOOST_MOVE_ITERATE_0TO9(BOOST_CONTAINER_ALLOCATORS_PRIVATE_NODE_ALLOCATOR_CONSTRUCT_CODE)
@@ -245,6 +246,7 @@ class private_node_allocator_v1
    public:
    typedef ipcdetail::private_node_allocator_base
          < 1, T, SegmentManager, NodesPerBlock> base_t;
+   typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;
 
    template<class T2>
    struct rebind
@@ -254,6 +256,10 @@ class private_node_allocator_v1
 
    private_node_allocator_v1(SegmentManager *segment_mngr)
       : base_t(segment_mngr)
+   {}
+
+   private_node_allocator_v1(uses_segment_manager_t usm)
+      : base_t(usm.get_segment_manager())
    {}
 
    template<class T2>
@@ -302,7 +308,9 @@ class private_node_allocator
 
    BOOST_COPYABLE_AND_MOVABLE_ALT(private_node_allocator)
    public:
-   typedef boost::interprocess::version_type<private_node_allocator, 2>   version;
+   typedef boost::interprocess::version_type<private_node_allocator, 2> version;
+   typedef uses_segment_manager<SegmentManager>                         uses_segment_manager_t;
+
 
    template<class T2>
    struct rebind
@@ -313,6 +321,10 @@ class private_node_allocator
 
    private_node_allocator(SegmentManager *segment_mngr)
       : base_t(segment_mngr)
+   {}
+
+   private_node_allocator(uses_segment_manager_t usm)
+      : base_t(usm.get_segment_manager())
    {}
 
    template<class T2>
@@ -424,8 +436,8 @@ class private_node_allocator
    //!Never throws
    const_pointer address(const_reference value) const;
 
-   //! <b>Requires</b>: Uses-allocator construction of T with allocator
-   //!   `segment_manager*` and constructor arguments `std::forward<Args>(args)...`
+   //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
+   //!   `uses_segment_manager_t` and additional constructor arguments `std::forward<Args>(args)...`
    //!   is well-formed. [Note: uses-allocator construction is always well formed for
    //!   types that do not use allocators. - end note]
    //!

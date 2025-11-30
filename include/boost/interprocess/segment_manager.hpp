@@ -734,7 +734,7 @@ class segment_manager
       ptr = hdr->value();
 
       //Now call constructors
-      pr.construct_n(ptr, num);
+      pr.construct_n(ptr, this, num);
 
       //All constructors successful, disable rollback
       mem.release();
@@ -1109,7 +1109,7 @@ class segment_manager
       value_eraser<index_t> v_eraser(index, it);
 
       //Construct array, this can throw
-      pr.construct_n(ptr, num);
+      pr.construct_n(ptr, this, num);
 
       //Release rollbacks since construction was successful
       v_eraser.release();
