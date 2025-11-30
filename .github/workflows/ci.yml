@@ -548,7 +548,7 @@ jobs:
             rm -rf "../snapshot"
             git submodule update --init tools/boostdep
             DEPINST_ARGS+=("$LIBRARY")
-            python tools/boostdep/depinst/depinst.py "${DEPINST_ARGS[@]}"
+            python tools/boostdep/depinst/depinst.py -C "${DEPINST_ARGS[@]}"
             ./bootstrap.sh
             ./b2 headers
             if [ -n "${{matrix.compiler}}" -o -n "$GCC_TOOLCHAIN_ROOT" ]
@@ -657,7 +657,7 @@ jobs:
             move /Y "..\snapshot\%LIBRARY%-%GITHUB_SHA%" "libs\%LIBRARY%"
             rmdir /s /q "..\snapshot"
             git submodule update --init tools/boostdep
-            python tools/boostdep/depinst/depinst.py --git_args "--jobs %GIT_FETCH_JOBS%" %LIBRARY%
+            python tools/boostdep/depinst/depinst.py -C --git_args "--jobs %GIT_FETCH_JOBS%" %LIBRARY%
             cmd /c bootstrap
             b2 -d0 headers
 
