@@ -132,6 +132,12 @@ jobs:
             container: ubuntu:24.04
             install: g++-14-multilib
             address-model: 32,64
+          # Linux, gcc-15
+          - toolset: gcc-15
+            cxxstd: "11,14,17,20,23,2c"
+            os: ubuntu-latest
+            container: ubuntu:26.04
+            install: g++-15-multilib
           # Linux, gcc-12 UBSAN
           - name: UBSAN
             toolset: gcc-12
@@ -322,6 +328,13 @@ jobs:
             container: ubuntu:24.04
             os: ubuntu-latest
             install: clang-19
+          # Linux, clang-20
+          - toolset: clang
+            compiler: clang++-20
+            cxxstd: "11,14,17,20,23,2c"
+            container: ubuntu:26.04
+            os: ubuntu-latest
+            install: clang-20
           # Linux, clang-15 libc++
           - toolset: clang
             compiler: clang++-15
