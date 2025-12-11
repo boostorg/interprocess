@@ -857,3 +857,273 @@ jobs:
             fi
             B2_ARGS+=("libs/$LIBRARY/test")
             ./b2 "${B2_ARGS[@]}"
+
+  bsd:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - toolset: clang
+            vm: freebsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "13.5"
+
+          - toolset: clang
+            vm: freebsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "14.0"
+
+          - toolset: clang
+            vm: freebsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "14.1"
+
+          - toolset: clang
+            vm: freebsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "14.2"
+
+          - toolset: clang
+            vm: freebsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "14.3"
+
+          - toolset: clang
+            vm: openbsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "7.3"
+
+          - toolset: clang
+            vm: openbsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "7.4"
+
+          - toolset: clang
+            vm: openbsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "7.5"
+
+          - toolset: clang
+            vm: openbsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "7.6"
+
+          - toolset: clang
+            vm: openbsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "7.7"
+
+          - toolset: clang
+            vm: openbsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "7.8"
+
+          - toolset: gcc
+            vm: netbsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "9.2"
+
+          - toolset: gcc
+            vm: netbsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "9.3"
+
+          - toolset: gcc
+            vm: netbsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "9.4"
+
+          - toolset: gcc
+            vm: netbsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "10.0"
+
+          - toolset: gcc
+            vm: netbsd
+            cxxflags: -pipe
+            os: ubuntu-latest
+            bsd_version: "10.1"
+
+    timeout-minutes: 240
+    runs-on: ${{matrix.os}}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test on ${{matrix.vm}}
+        uses: cross-platform-actions/action@v0.30.0
+        with:
+          operating_system: ${{matrix.vm}}
+          version: ${{matrix.bsd_version}}
+          environment_variables: GIT_FETCH_JOBS NET_RETRY_COUNT DEFAULT_BUILD_VARIANT
+          sync_files: false
+          shell: bash
+          run: |
+            export PATH=/usr/pkg/bin:/sbin:/usr/local/bin:$PATH >> ~/.profile
+            export PATH=/usr/pkg/bin:/sbin:/usr/local/bin:$PATH
+            uname -mrs
+            sysctl hw.model
+            sysctl hw.ncpu
+            sysctl hw.physmem
+            sysctl hw.usermem
+            pwd
+            ls -la
+            set -e
+            
+            # Install required packages
+            echo "Installing packages..."
+            if [ "${{matrix.vm}}" == "freebsd" ]
+            then
+                echo "Executing: sudo pkg git bash python3 curl"
+                sudo pkg install -y git bash python3 curl
+            fi
+            if [ "${{matrix.vm}}" == "openbsd" ]
+            then
+                pkg_info -Q python
+                echo "Executing: sudo pkg_add git bash python%3.11 curl"            
+                sudo pkg_add -v git bash python%3.11 curl
+                # Check if python3 binary exists
+                if ! command -v python3 >/dev/null 2>&1; then
+                    echo "python3 not found, creating symlink..."
+                    sudo ln -sf /usr/local/bin/python3.11 /usr/local/bin/python3
+                    echo "Symlink created: /usr/local/bin/python3 -> /usr/local/bin/python3.11"
+                else
+                    echo "python3 is already available at: $(which python3)"
+                fi
+            fi
+            if [ "${{matrix.vm}}" == "netbsd" ]
+            then
+                echo "Executing: pkgin -y install git-base bash python311 curl ca-certificates mozilla-rootcerts mozilla-rootcerts-openssl"            
+                sudo sh -c '
+                    export PKG_PATH="http://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/$(uname -p)/$(uname -r | cut -d_ -f1)/All/"
+                    echo "$PKG_PATH" > /usr/pkg/etc/pkgin/repositories.conf
+                    pkgin update
+                    pkgin -V -y install git-base bash python311 curl ca-certificates mozilla-rootcerts mozilla-rootcerts-openssl
+                    ln -s /usr/pkg/bin/python3.11 /usr/pkg/bin/python3
+                '
+            fi
+            echo GITHUB_REPOSITORY: $GITHUB_REPOSITORY
+            LIBRARY=${GITHUB_REPOSITORY#*/}
+            echo LIBRARY: $LIBRARY
+            echo GITHUB_BASE_REF: $GITHUB_BASE_REF
+            echo GITHUB_REF: $GITHUB_REF
+            REF=${GITHUB_BASE_REF:-$GITHUB_REF}
+            REF=${REF#refs/heads/}
+            echo REF: $REF
+            BOOST_BRANCH=develop && [ "$REF" = "master" ] && BOOST_BRANCH=master || true
+            echo BOOST_BRANCH: $BOOST_BRANCH
+            BUILD_JOBS=$(sysctl -n hw.ncpu)
+            echo BUILD_JOBS: $BUILD_JOBS
+            DEPINST_ARGS=()
+            DEPINST_ARGS+=("--git_args" "--jobs $GIT_FETCH_JOBS")
+
+            mkdir -p snapshot
+            cd snapshot
+            echo "Downloading library snapshot: https://github.com/${GITHUB_REPOSITORY}/archive/${GITHUB_SHA}.tar.gz"
+            curl -L --retry "$NET_RETRY_COUNT" -o "${LIBRARY}-${GITHUB_SHA}.tar.gz" "https://github.com/${GITHUB_REPOSITORY}/archive/${GITHUB_SHA}.tar.gz"
+            tar -xzf "${LIBRARY}-${GITHUB_SHA}.tar.gz"
+            if [ ! -d "${LIBRARY}-${GITHUB_SHA}" ]
+            then
+                echo "Library snapshot does not contain the library directory ${LIBRARY}-${GITHUB_SHA}:"
+                ls -la
+                exit 1
+            fi
+            rm -f "${LIBRARY}-${GITHUB_SHA}.tar.gz"
+            cd ..
+
+            git clone -b "$BOOST_BRANCH" --depth 1 "https://github.com/boostorg/boost.git" "boost-root"
+            cd boost-root
+            mkdir -p libs
+            rm -rf "libs/$LIBRARY"
+            mv -f "../snapshot/${LIBRARY}-${GITHUB_SHA}" "libs/$LIBRARY"
+            rm -rf "../snapshot"
+            git submodule update --init tools/boostdep
+            DEPINST_ARGS+=("$LIBRARY")
+            python3 --version
+            python3 tools/boostdep/depinst/depinst.py "${DEPINST_ARGS[@]}"
+            ./bootstrap.sh
+            ./b2 headers
+
+            if [ -n "${{matrix.compiler}}" -o -n "$GCC_TOOLCHAIN_ROOT" ]
+            then
+                echo -n "using ${{matrix.toolset}} : : ${{matrix.compiler}}" > ~/user-config.jam
+                if [ -n "$GCC_TOOLCHAIN_ROOT" ]
+                then
+                    echo -n " : <compileflags>\"--gcc-toolchain=$GCC_TOOLCHAIN_ROOT\" <linkflags>\"--gcc-toolchain=$GCC_TOOLCHAIN_ROOT\"" >> ~/user-config.jam
+                fi
+                echo " ;" >> ~/user-config.jam
+            fi
+
+            # Run tests
+            ${{matrix.toolset}} --version
+            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}" "cxxstd=${{matrix.cxxstd}}" "debug-symbols=off")
+
+            # Build variant
+            if [ -n "${{matrix.build_variant}}" ]
+            then
+                B2_ARGS+=("variant=${{matrix.build_variant}}")
+            else
+                B2_ARGS+=("variant=$DEFAULT_BUILD_VARIANT")
+            fi
+
+            # Threading
+            if [ -n "${{matrix.threading}}" ]
+            then
+                B2_ARGS+=("threading=${{matrix.threading}}")
+            fi
+
+            # UBSAN options
+            if [ -n "${{matrix.ubsan}}" ]
+            then
+                export UBSAN_OPTIONS="verbosity=1:print_stacktrace=1"
+                B2_ARGS+=("undefined-sanitizer=norecover" "define=UBSAN=1")
+            fi
+
+            # ASAN options
+            if [ -n "${{matrix.asan}}" ]
+            then
+                export ASAN_OPTIONS="verbosity=1:print_stacktrace=1"
+                B2_ARGS+=("address-sanitizer=norecover" "define=ASAN=1")
+            fi
+
+            # Common UBSAN / ASAN options
+            if [ -n "${{matrix.asan}}" ] || [ -n "${{matrix.ubsan}}" ]
+            then
+                B2_ARGS+=("debug-symbols=on" "visibility=global")
+            fi
+
+            # cxxflags
+            if [ -n "${{matrix.cxxflags}}" ]
+            then
+                B2_ARGS+=("cxxflags=${{matrix.cxxflags}}")
+            fi
+
+            # address-model
+            if [ -n "${{matrix.address-model}}" ]
+            then
+                B2_ARGS+=("address-model=${{matrix.address-model}}")
+            fi
+
+            # link-flags
+            if [ -n "${{matrix.linkflags}}" ]
+            then
+                B2_ARGS+=("linkflags=${{matrix.linkflags}}")
+            fi
+
+            B2_ARGS+=("libs/$LIBRARY/test")
+            ./b2 "${B2_ARGS[@]}"
+
