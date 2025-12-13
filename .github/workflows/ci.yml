@@ -14,7 +14,7 @@ env:
   DEFAULT_BUILD_VARIANT: debug,release
 
 jobs:
-  posix:
+  linux_and_mac:
     defaults:
       run:
         shell: bash
@@ -735,7 +735,6 @@ jobs:
       matrix:
         include:
           - toolset: gcc
-            cxxstd: "03,11,14,17"
             cxxflags: -pipe
             os: windows-latest
 
