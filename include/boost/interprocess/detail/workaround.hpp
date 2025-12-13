@@ -25,7 +25,7 @@
 
 //#define BOOST_INTERPROCESS_FORCE_NATIVE_EMULATION
 
-#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+#if !defined(__CYGWIN__) && (defined(_WIN32) || defined(__WIN32__) || defined(WIN32))
    #define BOOST_INTERPROCESS_WINDOWS
    #if !defined(BOOST_INTERPROCESS_FORCE_NATIVE_EMULATION) && !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION)
       #define BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION
