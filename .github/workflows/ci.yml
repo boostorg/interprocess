@@ -14,7 +14,7 @@ env:
   DEFAULT_BUILD_VARIANT: debug,release
 
 jobs:
-  linux_and_mac:
+  posix:
     defaults:
       run:
         shell: bash
