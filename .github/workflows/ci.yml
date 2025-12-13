@@ -808,6 +808,8 @@ jobs:
         if: matrix.cmake_tests == ''
         shell: C:\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
+            /usr/sbin/cygserver &
+            sleep 2
             cd boost-root
             ${{matrix.toolset}} --version
             B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}" "cxxstd=${{matrix.cxxstd}}" "debug-symbols=off")
@@ -867,91 +869,13 @@ jobs:
             vm: freebsd
             cxxflags: -pipe
             os: ubuntu-latest
-            bsd_version: "13.5"
-
-          - toolset: clang
-            vm: freebsd
-            cxxflags: -pipe
-            os: ubuntu-latest
-            bsd_version: "14.0"
-
-          - toolset: clang
-            vm: freebsd
-            cxxflags: -pipe
-            os: ubuntu-latest
-            bsd_version: "14.1"
-
-          - toolset: clang
-            vm: freebsd
-            cxxflags: -pipe
-            os: ubuntu-latest
-            bsd_version: "14.2"
-
-          - toolset: clang
-            vm: freebsd
-            cxxflags: -pipe
-            os: ubuntu-latest
             bsd_version: "14.3"
 
           - toolset: clang
             vm: openbsd
             cxxflags: -pipe
             os: ubuntu-latest
-            bsd_version: "7.3"
-
-          - toolset: clang
-            vm: openbsd
-            cxxflags: -pipe
-            os: ubuntu-latest
-            bsd_version: "7.4"
-
-          - toolset: clang
-            vm: openbsd
-            cxxflags: -pipe
-            os: ubuntu-latest
-            bsd_version: "7.5"
-
-          - toolset: clang
-            vm: openbsd
-            cxxflags: -pipe
-            os: ubuntu-latest
-            bsd_version: "7.6"
-
-          - toolset: clang
-            vm: openbsd
-            cxxflags: -pipe
-            os: ubuntu-latest
-            bsd_version: "7.7"
-
-          - toolset: clang
-            vm: openbsd
-            cxxflags: -pipe
-            os: ubuntu-latest
             bsd_version: "7.8"
-
-          - toolset: gcc
-            vm: netbsd
-            cxxflags: -pipe
-            os: ubuntu-latest
-            bsd_version: "9.2"
-
-          - toolset: gcc
-            vm: netbsd
-            cxxflags: -pipe
-            os: ubuntu-latest
-            bsd_version: "9.3"
-
-          - toolset: gcc
-            vm: netbsd
-            cxxflags: -pipe
-            os: ubuntu-latest
-            bsd_version: "9.4"
-
-          - toolset: gcc
-            vm: netbsd
-            cxxflags: -pipe
-            os: ubuntu-latest
-            bsd_version: "10.0"
 
           - toolset: gcc
             vm: netbsd
