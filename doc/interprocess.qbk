@@ -6660,6 +6660,9 @@ This library treats Cygwin as a Unix-like operating system and uses Unix-like sy
 of using the Windows API. You might need to define `_XOPEN_SOURCE=600` / `_POSIX_C_SOURCE=200112L` or higher so that the minimal Unix API
 is visible for the library.
 
+Please take in care that, for XSI synchronization primitives (e.g. `xsi_shared_memory`, `managed_xsi_shared_memory`), Cygwin requires launching the 
+[@https://cygwin.com/cygwin-ug-net/using-cygserver.html Cygserver program].
+
 [endsect]
 
 [section:notes_linux Notes for Linux users]
