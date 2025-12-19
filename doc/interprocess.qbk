@@ -3476,18 +3476,26 @@ and arrays of objects. An array can be constructed with the same
 parameters for all objects within the array or we can define a different
 parameter from a list of iterators.
 
-Since Boost 1.91, [*Boost.Interprocess] uses [Boost.Container's]
+Since Boost 1.91, [*Boost.Interprocess] uses [*Boost.Container]'s
 extended uses-allocator construction utilities like `uninitialized_construct_using_allocator`
-(see [@https://www.boost.org/doc/libs/latest/doc/html/container/cpp_conformance.html Boost.Container]
+(see [@https://www.boost.org/doc/libs/latest/doc/html/container/cpp_conformance.html Boost.Container])
 so that constructing objects that use shared-memory allocators is simplified. A
-user taking advantage of the uses-allocator protocol:
+user that defines types taking advantage of the uses-allocator protocol:
 
 * Does not longer need to explicitly pass allocator arguments when constructing an
-  object by means of the managed memory segment utilities.
+  object and its subjobects.
 
-* [*Boost.Inteprocess] allocators' `construct` operations, in cooperation with [*Boost.Containers]
-  take advantage of the uses-allocator protocol to automatically propagate the state of the shared
-  memory allocator to compatible types.
+* [*Boost.Inteprocess] allocators' `construct` operations, in cooperation with [*Boost.Container] containers
+  and uses-allocator utilities, take advantage of the protocol to automatically propagate the state
+  of the allocator to the compatible types stored in those containers.
+  Containers of containers automatically propagate the state recursively.
+
+If a managed memory segment's construction utility takes the arguments `par1, par2` to construct a type
+named `MyType`, then `MyType` instances are constructed as follows:
+
+*  If `MyType` does not support the uses-allocator protocol, it calls `MyType(par1, par2)`
+*  Otherwise, if the constructor is viable, it calls `MyType(arg0, par1, par2)`
+*  Otherwise, if the constructor is viable, it calls `MyType(allocator_arg, uses_segment_manager, par1, par2)`
 
 [endsect]
 
@@ -3500,27 +3508,27 @@ can construct a single object or an array of objects.
 
 [c++]
 
-   //!Allocates and constructs an object of type MyType (throwing version)
+   //!Allocates and uses-allocator constructs an object of type MyType (throwing version).
    MyType *ptr = managed_memory_segment.construct<MyType>("Name") (par1, par2...);
 
-   //!Allocates and constructs an array of objects of type MyType (throwing version)
-   //!Each object receives the same parameters (par1, par2, ...)
+   //!Allocates and uses-allocator constructs an array of objects of type MyType (throwing version).
+   //!Each object receives the same parameters.
    MyType *ptr = managed_memory_segment.construct<MyType>("Name")[count](par1, par2...);
 
    //!Tries to find a previously created object. If not present, allocates
-   //!and constructs an object of type MyType (throwing version)
+   //!and uses-allocator constructs an object of type MyType (throwing version)
    MyType *ptr = managed_memory_segment.find_or_construct<MyType>("Name") (par1, par2...);
 
    //!Tries to find a previously created object. If not present, allocates and
-   //!constructs an array of objects of type MyType (throwing version). Each object
+   //!uses-allocator constructs an array of objects of type MyType (throwing version). Each object
    //!receives the same parameters (par1, par2, ...)
    MyType *ptr = managed_memory_segment.find_or_construct<MyType>("Name")[count](par1, par2...);
 
-   //!Allocates and constructs an array of objects of type MyType (throwing version)
+   //!Allocates and uses-allocator constructs an array of objects of type MyType (throwing version)
    //!Each object receives parameters returned with the expression (*it1++, *it2++,... )
    MyType *ptr = managed_memory_segment.construct_it<MyType>("Name")[count](it1, it2...);
 
-   //!Tries to find a previously created object. If not present, allocates and constructs
+   //!Tries to find a previously created object. If not present, allocates and uses-allocator constructs
    //!an array of objects of type MyType (throwing version).  Each object receives
    //!parameters returned with the expression (*it1++, *it2++,... )
    MyType *ptr = managed_memory_segment.find_or_construct_it<MyType>("Name")[count](it1, it2...);
@@ -3541,7 +3549,7 @@ For example, for simple object construction:
 
 [c++]
 
-   //!Allocates and constructs an object of type MyType (no throwing version)
+   //!Allocates and uses-allocator constructs an object of type MyType (no throwing version)
    MyType *ptr = managed_memory_segment.construct<MyType>("Name", std::nothrow) (par1, par2...);
 
 [endsect]
@@ -3550,8 +3558,8 @@ For example, for simple object construction:
 
 Sometimes, the user doesn't want to create class objects associated with a name.
 For this purpose, [*Boost.Interprocess] can create anonymous objects in a managed
-memory segment. All named object construction functions are available to construct
-anonymous objects. To allocate an anonymous objects, the user must use
+memory segment. All named object construction functions are available to uses-allocator
+construct anonymous objects. To allocate an anonymous objects, the user must use
 "boost::interprocess::anonymous_instance" name instead of a normal name:
 
 [c++]
@@ -3572,8 +3580,8 @@ We can only destroy the anonymous object via pointer.
 [section:unique Unique instance construction]
 
 Sometimes, the user wants to emulate a singleton in a managed memory segment. Obviously,
-as the managed memory segment is constructed at run-time, the user must construct and
-destroy this object explicitly. But how can the user be sure that the object is the only
+as the managed memory segment is constructed at run-time, a user must construct and
+destroy this object explicitly. But how can a user be sure that the object is the only
 object of its type in the managed memory segment? This can be emulated using
 a named object and checking if it is present before trying to create one, but
 all processes must agree in the object's name, that can also conflict with
@@ -3588,7 +3596,7 @@ of the class as a key.
 
 [c++]
 
-   // Construct
+   // Uses-allocator constructs a unique (segment-wide) instance of MyType
    MyType *ptr = managed_memory_segment.construct<MyType>(unique_instance) (par1, par2...);
 
    // Find it
