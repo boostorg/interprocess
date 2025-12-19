@@ -47,17 +47,21 @@ class complex_data
    //->
 };
 
+//<-
 struct lessthan //A transparent comparison functor
 {
    typedef void is_transparent;
    template<class T, class U> bool operator() (const T &t, const U &u) const { return t < u; }
 };
-
-//Definition of the map holding a string as key and complex_data as mapped type
-typedef std::pair<const string_t, complex_data>                   map_value_type;
-typedef allocator<map_value_type, seg_mngr_t>                     map_value_type_allocator;
-typedef boost::container::map< string_t, complex_data, lessthan
-                             , map_value_type_allocator>          complex_map_type;
+//->
+//Definition of a shared memory map<string_t, complex_data...> with transparent comparison
+typedef std::pair<const string_t, complex_data>          map_value_type;
+typedef allocator<map_value_type, seg_mngr_t>            map_value_type_allocator;
+//=typedef bc::map< string_t, complex_data, std::less<>
+//<-
+typedef bc::map< string_t, complex_data, lessthan
+//->
+               , map_value_type_allocator>               complex_map_type;
 
 int main ()
 {
@@ -75,7 +79,7 @@ int main ()
    //Construct the map calling map(key_compare, allocator_type), the allocator argument is implicit
    complex_map_type *mymap = segment.construct<complex_map_type>("MyMap")();
 
-   //Take advantage of transparent insertion, string_t and complex_data are constructed with implicit allocators
+   //Efficient transparent insertion, string_t and complex_data are constructed in-place with implicit allocators
    mymap->try_emplace("key_str", "default_name");
 
    return 0;

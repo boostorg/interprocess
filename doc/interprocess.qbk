@@ -4688,7 +4688,7 @@ pool is used for each node size. This is not possible if you try to share
 a node allocator between processes. To achieve this sharing
 [classref boost::interprocess::node_allocator node_allocator]
 uses the segment manager's unique type allocation service
-(see [link interprocess.managed_memory_segments.managed_memory_segment_object_construction.unique Unique instance construction] section).
+(see [link interprocess.managed_memory_segment_object_construction.unique Unique instance construction] section).
 
 In the initialization, a
 [classref boost::interprocess::node_allocator node_allocator]
@@ -5226,7 +5226,8 @@ and the mapped type is a class that stores several containers:
 [doc_complex_map]
 
 This example can be simplified if the user designs a type compatible with the
-uses-allocator construction. Simplifies code and allows more efficient
+[link interprocess.managed_memory_segment_object_construction.uses_allocator uses-allocator construction].
+This simplifies code and allows more efficient
 operations like the use of transparent functions for lookups and insertions:
 
 [import ../example/doc_complex_map_uses_allocator.cpp]

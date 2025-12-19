@@ -46,7 +46,7 @@ class complex_data
    //->
 };
 
-//Definition of the map holding a string as key and complex_data as mapped type
+//Definition of a shared memory map<string_t,complex_data...>
 typedef std::pair<const string_t, complex_data>                map_value_type;
 typedef allocator<map_value_type, seg_mngr_t>                  map_value_type_allocator;
 typedef bc::map< string_t, complex_data, std::less<string_t>
