@@ -3419,6 +3419,8 @@ For more information about managed mapped file capabilities, see
 
 [endsect]
 
+[endsect]
+
 [section:managed_memory_segment_features Managed Memory Segment Features]
 
 The following features are common to all managed memory segment classes, but
@@ -3463,13 +3465,38 @@ of a managed memory segment or objects constructed in the managed segment.
 
 [endsect]
 
-[section:allocation_types Object construction function family]
+[section:object_constrution Object construction and uses-allocator protocol]
+
+[*Boost.Interprocess]' managed memory segments allows a varied object
+construction styles: associated with a name, anonymous or "singleton-like"
+objects.
+
+The object construction API allows constructing both individual elements
+and arrays of objects. An array can be constructed with the same 
+parameters for all objects within the array or we can define a different
+parameter from a list of iterators.
+
+Since Boost 1.91, [*Boost.Interprocess] uses [Boost.Container's]
+extended uses-allocator construction utilities like `uninitialized_construct_using_allocator`
+(see [@https://www.boost.org/doc/libs/latest/doc/html/container/cpp_conformance.html Boost.Container]
+so that constructing objects that use shared-memory allocators is simplified. A
+user taking advantage of the uses-allocator protocol:
+
+* Does not longer need to explicitly pass allocator arguments when constructing an
+  object by means of the managed memory segment utilities.
+
+* [*Boost.Inteprocess] allocators' `construct` operations, in cooperation with [*Boost.Containers]
+  take advantage of the uses-allocator protocol to automatically propagate the state of the shared
+  memory allocator to compatible types.
+
+[endsect]
+
+[section:named Named Object construction function family]
 
 When constructing objects in a managed memory segment (managed shared memory,
 managed mapped files...) associated with a name, the user has a varied object
 construction family to "construct" or to "construct if not found". [*Boost.Interprocess]
-can construct a single object or an array of objects. The array can be constructed with
-the same parameters for all objects or we can define each parameter from a list of iterators:
+can construct a single object or an array of objects. 
 
 [c++]
 
@@ -4423,8 +4450,6 @@ through a message queue and duplicated in another buffer:
 
 [import ../test/message_queue_test.cpp]
 [message_queue_test_test_serialize_db]
-
-[endsect]
 
 [endsect]
 

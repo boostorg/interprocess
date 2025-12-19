@@ -31,8 +31,9 @@
 #include <boost/move/utility_core.hpp>
 #include <boost/interprocess/detail/variadic_templates_tools.hpp>
 #endif   //#ifdef BOOST_INTERPROCESS_PERFECT_FORWARDING
+
+#include <boost/container/uses_allocator_construction.hpp>
 #include <boost/container/detail/placement_new.hpp>
-#include <boost/container/detail/dispatch_uses_allocator.hpp>
 #include <boost/interprocess/allocators/detail/allocator_common.hpp>
 
 #include <cstddef>
@@ -96,21 +97,17 @@ struct CtorArgN
    template<class SegmentManager, std::size_t ...IdxPack>
    void construct(void* mem, SegmentManager *segment_manager, true_, const index_tuple<IdxPack...>&)
    {
-      boost::container::dtl::allocator_traits_dummy<T> atd;
       typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;
-      boost::container::dtl::dispatch_uses_allocator
-         (atd, uses_segment_manager_t(segment_manager), static_cast<T*>(mem), *boost::forward<Args>((get<IdxPack>)(args_))...);
+      boost::container::uninitialized_construct_using_allocator
+         (static_cast<T*>(mem), uses_segment_manager_t(segment_manager), *boost::forward<Args>((get<IdxPack>)(args_))...);
    }
-
-   //{  ::new((void*)mem, boost_container_new_t()) T(*boost::forward<Args>((get<IdxPack>)(args_))...); }
 
    template<class SegmentManager, std::size_t ...IdxPack>
    void construct(void *mem, SegmentManager *segment_manager, false_, const index_tuple<IdxPack...>&)
    {
       typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;
-      boost::container::dtl::allocator_traits_dummy<T> atd;
-      boost::container::dtl::dispatch_uses_allocator
-         (atd, uses_segment_manager_t(segment_manager), static_cast<T*>(mem), boost::forward<Args>((get<IdxPack>)(args_))...);
+      boost::container::uninitialized_construct_using_allocator
+         (static_cast<T*>(mem), uses_segment_manager_t(segment_manager), boost::forward<Args>((get<IdxPack>)(args_))...);
    }
    
    template<std::size_t ...IdxPack>
