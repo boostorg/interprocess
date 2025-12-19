@@ -368,11 +368,13 @@ class array_allocation_impl
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold. This size only works for memory allocated with
    //!allocate, allocation_command and allocate_many.
+   BOOST_INTERPROCESS_NODISCARD
    size_type size(const pointer &p) const
    {
       return (size_type)this->derived()->get_segment_manager()->size(ipcdetail::to_raw_pointer(p))/sizeof(T);
    }
 
+   BOOST_INTERPROCESS_NODISCARD
    pointer allocation_command(boost::interprocess::allocation_type command,
                          size_type limit_size, size_type &prefer_in_recvd_out_size, pointer &reuse)
    {
@@ -416,16 +418,19 @@ class array_allocation_impl
 
    //!Returns the number of elements that could be
    //!allocated. Never throws
+   BOOST_INTERPROCESS_NODISCARD
    size_type max_size() const
    {  return this->derived()->get_segment_manager()->get_size()/sizeof(T);  }
 
    //!Returns address of mutable object.
    //!Never throws
+   BOOST_INTERPROCESS_NODISCARD
    pointer address(reference value) const
    {  return pointer(boost::container::dtl::addressof(value));  }
 
    //!Returns address of non mutable object.
    //!Never throws
+   BOOST_INTERPROCESS_NODISCARD
    const_pointer address(const_reference value) const
    {  return const_pointer(boost::container::dtl::addressof(value));  }
 
@@ -489,6 +494,7 @@ class node_pool_allocation_impl
    public:
    //!Allocate memory for an array of count elements.
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
+   BOOST_INTERPROCESS_NODISCARD
    pointer allocate(size_type count, cvoid_pointer hint = 0)
    {
       (void)hint;
@@ -522,6 +528,7 @@ class node_pool_allocation_impl
    //!Allocates just one object. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
+   BOOST_INTERPROCESS_NODISCARD
    pointer allocate_one()
    {
       typedef typename node_pool<0>::type node_pool_t;
@@ -678,11 +685,13 @@ class cached_allocator_impl
 
    //!Returns the max cached nodes parameter.
    //!Never throws
+   BOOST_INTERPROCESS_NODISCARD
    size_type get_max_cached_nodes() const
    {  return m_cache.get_max_cached_nodes();   }
 
    //!Allocate memory for an array of count elements.
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
+   BOOST_INTERPROCESS_NODISCARD
    pointer allocate(size_type count, cvoid_pointer hint = 0)
    {
       (void)hint;
@@ -714,6 +723,7 @@ class cached_allocator_impl
    //!Allocates just one object. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
+   BOOST_INTERPROCESS_NODISCARD
    pointer allocate_one()
    {  return pointer(static_cast<value_type*>(this->m_cache.cached_allocation()));   }
 
@@ -809,6 +819,7 @@ class shared_pool_impl
    {}
 
    //!Allocates array of count elements. Can throw boost::interprocess::bad_alloc
+   BOOST_INTERPROCESS_NODISCARD
    void *allocate_node()
    {
       //-----------------------

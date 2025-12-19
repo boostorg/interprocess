@@ -154,6 +154,7 @@ class allocator
 
    //!Allocates memory for an array of count elements.
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
+   BOOST_INTERPROCESS_NODISCARD
    pointer allocate(size_type count, cvoid_ptr hint = 0)
    {
       (void)hint;
@@ -216,11 +217,13 @@ class allocator
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold. This size only works for memory allocated with
    //!allocate, allocation_command and allocate_many.
+   BOOST_INTERPROCESS_NODISCARD
    size_type size(const pointer &p) const
    {
       return (size_type)mp_mngr->size(ipcdetail::to_raw_pointer(p))/sizeof(T);
    }
 
+   BOOST_INTERPROCESS_NODISCARD
    pointer allocation_command(boost::interprocess::allocation_type command,
                            size_type limit_size, size_type &prefer_in_recvd_out_size, pointer &reuse)
    {
@@ -264,6 +267,7 @@ class allocator
    //!Allocates just one object. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
+   BOOST_INTERPROCESS_NODISCARD
    pointer allocate_one()
    {  return this->allocate(1);  }
 
@@ -293,11 +297,13 @@ class allocator
 
    //!Returns address of mutable object.
    //!Never throws
+   BOOST_INTERPROCESS_NODISCARD
    pointer address(reference value) const
    {  return pointer(boost::container::dtl::addressof(value));  }
 
    //!Returns address of non mutable object.
    //!Never throws
+   BOOST_INTERPROCESS_NODISCARD
    const_pointer address(const_reference value) const
    {  return const_pointer(boost::container::dtl::addressof(value));  }
 };

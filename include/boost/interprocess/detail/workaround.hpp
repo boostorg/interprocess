@@ -379,4 +379,18 @@ namespace boost {
    #define BOOST_INTERPROCESS_ATEXIT(f) std::atexit((f))
 #endif   //!defined(BOOST_INTERPROCESS_ATEXIT)
 
+#if defined(BOOST_INTERPROCESS_DISABLE_ATTRIBUTE_NODISCARD)
+   #define BOOST_INTERPROCESS_ATTRIBUTE_NODISCARD
+#else
+   #if   defined(BOOST_GCC) && ((BOOST_GCC < 100000) || (__cplusplus < 201703L))
+      //Avoid using it in C++ < 17 and GCC < 10 because it warns in SFINAE contexts
+      //(see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89070)
+      #define BOOST_INTERPROCESS_NODISCARD
+   #else
+      #define BOOST_INTERPROCESS_NODISCARD BOOST_ATTRIBUTE_NODISCARD
+   #endif
+#endif
+
+
+
 #endif   //#ifndef BOOST_INTERPROCESS_DETAIL_WORKAROUND_HPP

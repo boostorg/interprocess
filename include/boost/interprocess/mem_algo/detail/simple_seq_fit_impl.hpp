@@ -142,14 +142,17 @@ class simple_seq_fit_impl
    //Functions for single segment management
 
    //!Allocates bytes, returns 0 if there is not more memory
+   BOOST_INTERPROCESS_NODISCARD
    void* allocate             (size_type nbytes);
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    template<class T>
+   BOOST_INTERPROCESS_NODISCARD
    T *allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
                            size_type &prefer_in_recvd_out_size, T *&reuse);
 
+   BOOST_INTERPROCESS_NODISCARD
    void * raw_allocation_command  (boost::interprocess::allocation_type command,   size_type limit_size,
                                size_type &prefer_in_recvd_out_size, void *&reuse_ptr, size_type sizeof_object = 1);
 
@@ -183,9 +186,11 @@ class simple_seq_fit_impl
    void   deallocate          (void *addr);
 
    //!Returns the size of the memory segment
+   BOOST_INTERPROCESS_NODISCARD
    size_type get_size()  const;
 
    //!Returns the number of free bytes of the memory segment
+   BOOST_INTERPROCESS_NODISCARD
    size_type get_free_memory()  const;
 
    //!Increases managed memory in extra_size bytes more
@@ -195,6 +200,7 @@ class simple_seq_fit_impl
    void shrink_to_fit();
 
    //!Returns true if all allocated memory has been deallocated
+   BOOST_INTERPROCESS_NODISCARD
    bool all_memory_deallocated();
 
    //!Makes an internal sanity check and returns true if success
@@ -205,10 +211,12 @@ class simple_seq_fit_impl
    void zero_free_memory();
 
    //!Returns the size of the buffer previously allocated pointed by ptr
+   BOOST_INTERPROCESS_NODISCARD
    size_type size(const void *ptr) const;
 
    //!Allocates aligned bytes, returns 0 if there is not more memory.
    //!Alignment must be power of 2
+   BOOST_INTERPROCESS_NODISCARD
    void* allocate_aligned     (size_type nbytes, size_type alignment);
 
    private:

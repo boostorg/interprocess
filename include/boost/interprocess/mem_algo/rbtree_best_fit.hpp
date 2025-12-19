@@ -192,6 +192,7 @@ class rbtree_best_fit
 
    //!Allocates bytes, returns 0 if there is not more memory.
    //!Returned memory is aligned to Alignment bytes.
+   BOOST_INTERPROCESS_NODISCARD
    void* allocate             (size_type nbytes);
 
    //!Deallocates previously allocated bytes
@@ -226,9 +227,11 @@ class rbtree_best_fit
    void deallocate_many(multiallocation_chain &chain);
 
    template<class T>
+   BOOST_INTERPROCESS_NODISCARD
    T* allocation_command(boost::interprocess::allocation_type command, size_type limit_size,
       size_type& prefer_in_recvd_out_size, T*& reuse);
 
+   BOOST_INTERPROCESS_NODISCARD
    void* raw_allocation_command(boost::interprocess::allocation_type command, size_type limit_object,
       size_type& prefer_in_recvd_out_size,
       void*& reuse_ptr, size_type sizeof_object = 1);
@@ -236,9 +239,11 @@ class rbtree_best_fit
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    //!Returns the size of the memory segment
+   BOOST_INTERPROCESS_NODISCARD
    size_type get_size()  const;
 
    //!Returns the number of free bytes of the segment
+   BOOST_INTERPROCESS_NODISCARD
    size_type get_free_memory()  const;
 
    //!Initializes to zero all the memory that's not in use.
@@ -253,6 +258,7 @@ class rbtree_best_fit
    void shrink_to_fit();
 
    //!Returns true if all allocated memory has been deallocated
+   BOOST_INTERPROCESS_NODISCARD
    bool all_memory_deallocated();
 
    //!Makes an internal sanity check
@@ -260,10 +266,12 @@ class rbtree_best_fit
    bool check_sanity();
 
    //!Returns the size of the buffer previously allocated pointed by ptr
+   BOOST_INTERPROCESS_NODISCARD
    size_type size(const void *ptr) const;
 
    //!Allocates aligned bytes, returns 0 if there is not more memory.
    //!Alignment must be power of 2
+   BOOST_INTERPROCESS_NODISCARD
    void* allocate_aligned     (size_type nbytes, size_type alignment);
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
@@ -677,6 +685,7 @@ bool rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
 }
 
 template<class MutexFamily, class VoidPointer, std::size_t MemAlignment>
+BOOST_INTERPROCESS_NODISCARD
 inline void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::
    allocate(size_type nbytes)
 {

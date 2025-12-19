@@ -361,6 +361,7 @@ class basic_managed_memory_impl
    //!array was being constructed, destructors of created objects are called
    //!before freeing the memory.
    template <class T>
+   BOOST_INTERPROCESS_NODISCARD
    typename segment_manager::template construct_proxy<T>::type
       construct(char_ptr_holder_t name)
    {   return mp_header->template construct<T>(name);  }
@@ -445,6 +446,7 @@ class basic_managed_memory_impl
    //!Memory is freed automatically if T's constructor throws and
    //!destructors of created objects are called before freeing the memory.
    template <class T>
+   BOOST_INTERPROCESS_NODISCARD
    typename segment_manager::template construct_iter_proxy<T>::type
       construct_it(char_ptr_holder_t name)
    {   return mp_header->template construct_it<T>(name);  }
