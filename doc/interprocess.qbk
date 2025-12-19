@@ -3452,36 +3452,6 @@ The object construction API allows constructing a type `T` in a managed memory s
 
 [endsect]
 
-[section:uses_allocator Uses-allocator protocol for object construction]
-
-Since Boost 1.91, [*Boost.Interprocess] uses [*Boost.Container]'s
-extended [*uses-allocator construction] utilities
-(see [@https://www.boost.org/doc/libs/latest/doc/html/container/cpp_conformance.html Boost.Container])
-so that constructing objects that use [*Boost.Interprocess] allocators is simplified. As a result a user:
-
-* Does not longer need to explicitly pass allocator arguments (or `segment_manager*` arguments that are convertible
-  to allocators) when constructing an object and its subobjects.
-* [*Boost.Inteprocess] allocators' `construct` methods, in cooperation with [*Boost.Container] containers
-  and uses-allocator utilities, take advantage of the protocol to automatically propagate the state
-  of the allocator to the uses_allocator compatible types stored in those containers.
-* Containers of containers automatically propagate the allocator recursively without the user explicitly needing to do so.
-
-More formally, a type `T` is compatible with the [*Boost.Interprocess] `uses_allocator` protocol for a managed segment `MS` if:
-
-* Defines `T::allocator_type` as one of [*Boost.Interprocess] allocator types and
-   uses one of the following conventions when constructed from an argument list `args...`
-   * The leading-allocator convention: `T` is constructible as `T(allocator_arg, alloc, args...)` -->
-   * The trailing-allocator convention `T` is constructible as `T(args..., alloc)`.
-
-If a managed memory segment's construction utility takes the arguments `par1, par2` to construct a type
-named `MyType`, then `MyType` instances are constructed as follows:
-
-*  If `MyType` does not support the uses-allocator protocol, it calls `MyType(par1, par2)`
-*  Otherwise, if the constructor is viable, it calls `MyType(arg0, par1, par2)`
-*  Otherwise, if the constructor is viable, it calls `MyType(allocator_arg, uses_segment_manager, par1, par2)`
-
-[endsect]
-
 [section:named Named Object construction function family]
 
 When constructing objects in a managed memory segment (managed shared memory,
@@ -3654,6 +3624,39 @@ Here is an example showing this functionality:
 
 [import ../example/doc_managed_construction_info.cpp]
 [doc_managed_construction_info]
+
+[endsect]
+
+[section:uses_allocator Uses-allocator protocol for object construction]
+
+Since Boost 1.91, [*Boost.Interprocess] uses [*Boost.Container]'s
+extended [*uses-allocator construction] utilities
+(see [@https://www.boost.org/doc/libs/latest/doc/html/container/cpp_conformance.html Boost.Container])
+so that constructing objects that use [*Boost.Interprocess] allocators is simplified. As a result a user:
+
+* Does not longer need to explicitly pass allocator arguments (or `segment_manager*` arguments that are convertible
+  to allocators) when constructing an object and its subobjects.
+* [*Boost.Inteprocess] allocators' `construct` methods, in cooperation with [*Boost.Container] containers
+  and uses-allocator utilities, take advantage of the protocol to automatically propagate the state
+  of the allocator to the uses_allocator compatible types stored in those containers.
+* Containers of containers, all using [*Boost.Interprocess] allocators, automatically propagate the allocator
+  state recursively without the user explicitly needing to do so.
+
+More formally, a type `T` is compatible with the [*Boost.Interprocess] implicit allocator
+propagation protocol for a managed segment instance `ms` if the following conditions are fulfilled
+when a user tries a `ms.construct<T>` or `ms.construct_it<T>` operation with argument list `args...`:
+
+* `T::allocator_type` is one of [*Boost.Interprocess] allocator types (a void allocator fulfills this requirement)
+* `T` can be constructed with one of the following conventions:
+   * The leading-allocator convention: `T` is constructible as `T(allocator_arg, allocator_type, args...)` -->
+   * The trailing-allocator convention `T` is constructible as `T(args..., allocator_type)`.
+
+See the following example to see the difference between a type that does follow the uses-allocator
+protocol (`UAType`) and another that does not (`Type`). Note how when constructing `UAType` using
+the managed memory construction functions, the allocator is implicitly passed in constructors:
+
+[import ../example/doc_uses_allocator_construction.cpp]
+[doc_uses_allocator_construction]
 
 [endsect]
 
