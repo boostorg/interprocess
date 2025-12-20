@@ -182,10 +182,9 @@ struct CtorArg##N\
       BOOST_INTERPROCESS_TRY{\
          T* memory = static_cast<T*>(mem);\
          for (constructed = 0; constructed < num; ++constructed) {\
-            boost::container::dtl::allocator_traits_dummy<T> atd;\
             typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;\
-            boost::container::dtl::dispatch_uses_allocator\
-               (atd, uses_segment_manager_t(segment_manager), memory++ BOOST_MOVE_I##N BOOST_MOVE_MFWD##N);\
+            boost::container::uninitialized_construct_using_allocator\
+               (memory++, uses_segment_manager_t(segment_manager) BOOST_MOVE_I##N BOOST_MOVE_MFWD##N);\
          }\
       }\
       BOOST_INTERPROCESS_CATCH(...) {\
@@ -224,10 +223,9 @@ struct CtorIt##N\
       BOOST_INTERPROCESS_TRY{\
          T* memory      = static_cast<T*>(mem);\
          for(constructed = 0; constructed < num; ++constructed){\
-            boost::container::dtl::allocator_traits_dummy<T> atd;\
             typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;\
-            boost::container::dtl::dispatch_uses_allocator\
-               (atd, uses_segment_manager_t(segment_manager), memory++ BOOST_MOVE_I##N BOOST_MOVE_MITFWD##N);\
+            boost::container::uninitialized_construct_using_allocator\
+               (memory++, uses_segment_manager_t(segment_manager) BOOST_MOVE_I##N BOOST_MOVE_MITFWD##N);\
             ++(*this);\
          }\
       }\

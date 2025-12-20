@@ -35,7 +35,7 @@
 #include <boost/interprocess/detail/type_traits.hpp>
 
 
-#include <boost/container/detail/dispatch_uses_allocator.hpp>
+#include <boost/container/uses_allocator_construction.hpp>
 #include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/container/detail/addressof.hpp>
 
@@ -187,9 +187,8 @@ class node_allocator_base
    template < typename U, class ...Args>
    inline void construct(U* p, Args&& ...args)
    {
-      boost::container::dtl::allocator_traits_dummy<U> atd;
-      boost::container::dtl::dispatch_uses_allocator
-         (atd, uses_segment_manager_t(this->get_segment_manager()), p, ::boost::forward<Args>(args)...);
+      boost::container::uninitialized_construct_using_allocator
+         (p, uses_segment_manager_t(this->get_segment_manager()), ::boost::forward<Args>(args)...);
    }
 
    #else // #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || defined(BOOST_CONTAINER_DOXYGEN_INVOKED)
@@ -198,9 +197,8 @@ class node_allocator_base
    template < typename U BOOST_MOVE_I##N BOOST_MOVE_CLASSQ##N >\
    void construct(U* p BOOST_MOVE_I##N BOOST_MOVE_UREFQ##N)\
    {\
-      boost::container::dtl::allocator_traits_dummy<U> atd;\
-      boost::container::dtl::dispatch_uses_allocator\
-         (atd, uses_segment_manager_t(this->get_segment_manager()), p BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
+      boost::container::uninitialized_construct_using_allocator\
+         (p, uses_segment_manager_t(this->get_segment_manager()) BOOST_MOVE_I##N BOOST_MOVE_FWDQ##N);\
    }\
    //
    BOOST_MOVE_ITERATE_0TO9(BOOST_CONTAINER_ALLOCATORS_NODE_ALLOCATOR_CONSTRUCT_CODE)

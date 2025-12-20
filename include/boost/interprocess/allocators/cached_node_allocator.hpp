@@ -30,7 +30,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/containers/version_type.hpp>
 
-#include <boost/container/detail/dispatch_uses_allocator.hpp>
+#include <boost/container/uses_allocator_construction.hpp>
 
 #include <cstddef>
 
