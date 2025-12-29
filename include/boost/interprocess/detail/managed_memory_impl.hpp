@@ -226,31 +226,31 @@ class basic_managed_memory_impl
 
    //!Returns the base address of the memory in this process. Never throws.
    void *   get_address   () const
-   {   return reinterpret_cast<char*>(mp_header) - Offset; }
+   {   return mp_header ? reinterpret_cast<char*>(mp_header) - Offset : 0; }
 
    //!Returns the size of memory segment. Never throws.
    size_type   get_size   () const
-   {   return mp_header->get_size() + Offset;  }
+   {   return mp_header ? mp_header->get_size() + Offset : 0u;  }
 
    //!Returns the number of free bytes of the memory
    //!segment
    size_type get_free_memory() const
-   {  return mp_header->get_free_memory();  }
+   {  return mp_header ? mp_header->get_free_memory() : 0;  }
 
    //!Returns the result of "all_memory_deallocated()" function
    //!of the used memory algorithm
    bool all_memory_deallocated()
-   {   return mp_header->all_memory_deallocated(); }
+   {   return mp_header ? mp_header->all_memory_deallocated() : true; }
 
    //!Returns the result of "check_sanity()" function
    //!of the used memory algorithm
    bool check_sanity()
-   {   return mp_header->check_sanity(); }
+   {   return mp_header ? mp_header->check_sanity() : true; }
 
    //!Writes to zero free memory (memory not yet allocated) of
    //!the memory algorithm
    void zero_free_memory()
-   {   mp_header->zero_free_memory(); }
+   {   if (mp_header) mp_header->zero_free_memory(); }
 
    //!Transforms an absolute address into an offset from base address.
    //!The address must belong to the memory segment. Never throws.
