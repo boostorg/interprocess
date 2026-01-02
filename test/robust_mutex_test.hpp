@@ -63,8 +63,10 @@ int robust_mutex_test(int argc, char *argv[])
       std::string s(argv[0]); s += " child ";
       s += get_process_id_name();
       std::cout << "... launching child" << std::endl;
-      if(0 != std::system(s.c_str()))
+      if(0 != std::system(s.c_str())){
+         std::cout << "'std::system " << s.c_str() << "FAILED!" << std::endl;
          return 1;
+      }
 
       //Wait until child locks the mutexes and dies
       spin_wait swait;
@@ -79,8 +81,10 @@ int robust_mutex_test(int argc, char *argv[])
          //Done, now try to lock it to see if robust
          //mutex recovery works
          instance[0].lock();
-         if(!instance[0].previous_owner_dead())
+         if(!instance[0].previous_owner_dead()){
+            std::cout << "instance[0].previous_owner_dead() FAILED!" << std::endl;
             return 1;
+         }
          instance[0].consistent();
          instance[0].unlock();
          //Since it's consistent, locking is possible again
@@ -94,8 +98,10 @@ int robust_mutex_test(int argc, char *argv[])
          //Done, now try to lock it to see if robust
          //mutex recovery works
          instance[1].lock();
-         if(!instance[1].previous_owner_dead())
+         if(!instance[1].previous_owner_dead()){
+            std::cout << "instance[1].previous_owner_dead() FAILED!" << std::endl;
             return 1;
+         }
          //Unlock a recovered mutex without putting it into
          //into consistent state marks mutex as unusable.
          instance[1].unlock();
@@ -108,6 +114,7 @@ int robust_mutex_test(int argc, char *argv[])
             exception_thrown = true;
          } BOOST_INTERPROCESS_CATCH_END
          if(!exception_thrown){
+            std::cout << "instance[1].lock() did NOT throw an exception!" << std::endl;
             return 1;
          }
       }
@@ -118,8 +125,10 @@ int robust_mutex_test(int argc, char *argv[])
          //Done, now try to lock it to see if robust
          //mutex recovery works
          instance[2].lock();
-         if(!instance[2].previous_owner_dead())
+         if(!instance[2].previous_owner_dead()){
+            std::cout << "instance[2].previous_owner_dead() FAILED" << std::endl;
             return 1;
+         }
          //Unlock a recovered mutex without putting it into
          //into consistent state marks mutex as unusable.
          instance[2].unlock();
@@ -132,6 +141,7 @@ int robust_mutex_test(int argc, char *argv[])
             exception_thrown = true;
          } BOOST_INTERPROCESS_CATCH_END
          if(!exception_thrown){
+            std::cout << "instance[2].lock() did not throw an Exception!" << std::endl;
             return 1;
          }
       }
@@ -150,8 +160,10 @@ int robust_mutex_test(int argc, char *argv[])
          //Lock, flag and die
          bool try_lock_res = instance[0].try_lock() && instance[1].try_lock();
          assert(try_lock_res);
-         if(!try_lock_res)
+         if(!try_lock_res){
+            std::cout << "'instance[0].try_lock() && instance[1].try_lock()' FAILED!" << std::endl;
             return 1;
+         }
 
          bool *go_ahead2 = segment.construct<bool>("go ahead2")(false);
          assert(go_ahead2);
@@ -174,6 +186,7 @@ int robust_mutex_test(int argc, char *argv[])
          //mutex recovery works
          instance[2].lock();
          if(!instance[2].previous_owner_dead()){
+            std::cout << "instance[2].previous_owner_dead() FAILED!" << std::endl;
             return 1;
          }
          *go_ahead = true;
@@ -187,6 +200,7 @@ int robust_mutex_test(int argc, char *argv[])
          bool try_lock_res = instance[2].try_lock();
          assert(try_lock_res);
          if(!try_lock_res){
+            std::cout << "instance[2].try_lock() FAILED!" << std::endl;
             return 1;
          }
          *go_ahead2 = true;
