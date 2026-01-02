@@ -187,13 +187,19 @@ int robust_mutex_test(int argc, char *argv[])
             swait.yield();
          }
 
+         std::cout << "CHILD: go ahead2 received" << std::endl;
+
          //Done, now try to lock number 3 to see if robust
          //mutex recovery works
          instance[2].lock();
+
+         std::cout << "CHILD: instance[2].lock() OK" << std::endl;
+
          if(!instance[2].previous_owner_dead()){
             std::cout << "CHILD: instance[2].previous_owner_dead() FAILED!" << std::endl;
             return 1;
          }
+         std::cout << "CHILD: instance[2].previous_owner_dead() OK" << std::endl;
          *go_ahead = true;
          std::cout << "CHILD: Exiting" << std::endl;
       }
@@ -205,6 +211,7 @@ int robust_mutex_test(int argc, char *argv[])
          //Lock, flag and die
          bool try_lock_res = instance[2].try_lock();
          assert(try_lock_res);
+         std::cout << "GRANDCHILD: instance[2].try_lock() OK" << std::endl;
          if(!try_lock_res){
             std::cout << "GRANDCHILD: instance[2].try_lock() FAILED!" << std::endl;
             return 1;
