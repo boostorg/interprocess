@@ -62,9 +62,10 @@ int robust_mutex_test(int argc, char *argv[])
       //Launch child process
       std::string s(argv[0]); s += " child ";
       s += get_process_id_name();
-      std::cout << "... launching child" << std::endl;
-      if(0 != std::system(s.c_str())){
-         std::cout << "'std::system " << s.c_str() << "FAILED!" << std::endl;
+      std::cout << "... launching child: " << s << std::endl;
+      int r = std::system(s.c_str());
+      if(0 != r){
+         std::cout << "From PARENT --> std::system" << s.c_str() << " FAILED with " << r << std::endl;
          return 1;
       }
 
@@ -153,7 +154,7 @@ int robust_mutex_test(int argc, char *argv[])
       RobustMutex *instance = segment.find<RobustMutex>("robust mutex").first;
       assert(instance);
       if(std::string(argv[1]) == std::string("child")){
-         std::cout << "launched child" << std::endl;
+         std::cout << "Launched child" << std::endl;
          //Find flag
          bool *go_ahead = segment.find<bool>("go ahead").first;
          assert(go_ahead);
@@ -170,9 +171,10 @@ int robust_mutex_test(int argc, char *argv[])
          //Launch grandchild
          std::string s(argv[0]); s += " grandchild ";
          s += argv[2];
-         std::cout << "... launching grandchild" << std::endl;
-         if(0 != std::system(s.c_str())){
-            std::cout << "launched terminated with error" << std::endl;
+         std::cout << "... launching grandchild: " << s << std::endl;
+         int r = std::system(s.c_str());
+         if(0 != r){
+            std::cout << "From CHILD --> std::system" << s.c_str() << " FAILED with " << r << std::endl;
             return 1;
          }
 
@@ -190,9 +192,10 @@ int robust_mutex_test(int argc, char *argv[])
             return 1;
          }
          *go_ahead = true;
+         std::cout << "Exiting child" << std::endl;
       }
       else{
-         std::cout << "launched grandchild" << std::endl;
+         std::cout << "Launched grandchild" << std::endl;
          //grandchild locks the lock and dies
          bool *go_ahead2 = segment.find<bool>("go ahead2").first;
          assert(go_ahead2);
@@ -204,6 +207,7 @@ int robust_mutex_test(int argc, char *argv[])
             return 1;
          }
          *go_ahead2 = true;
+         std::cout << "Exiting grandchild" << std::endl;
       }
    }
    }BOOST_INTERPROCESS_CATCH(...){
