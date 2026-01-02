@@ -6730,9 +6730,9 @@ Please take in care that, for XSI synchronization primitives (e.g. `xsi_shared_m
 
 [endsect]
 
-[section:notes_linux Notes for Linux users]
+[section:notes_unix Notes for Unix users]
 
-[section:notes_linux_shm_folder Shared memory emulation folder]
+[section:notes_unix_shm_folder Shared memory emulation folder]
 
 On systems without POSIX shared memory support, shared memory objects are implemented as memory mapped files, using a directory
 placed in "/tmp" that can include (if `BOOST_INTERPROCESS_HAS_KERNEL_BOOTTIME` is defined) the last bootup time (if the OS supports it).
@@ -6752,6 +6752,10 @@ to determine the shared directory at runtime, define `BOOST_INTERPROCESS_SHARED_
 
 
 [endsect]
+
+[endsect]
+
+[section:notes_linux Notes for Linux users]
 
 [section:notes_linux_overcommit Overcommit]
 
@@ -6774,25 +6778,15 @@ change this overcommit behaviour.
 
 [endsect]
 
-[section:notes_freebsd Notes for FreeBSD users]
+[section:notes_macos_bsd Notes for MacOS and BSD users]
 
-[section:notes_freebsd_umtx_vnode_persistent Process-shared synchronization primitives and ['kern.ipc.umtx_vnode_persistent]]
-
-Starting from FreeBSD 11, declares the macro _POSIX_THREAD_PROCESS_SHARED. However, the default behavior is different from the one on Linux.
-If you want to use this feature, according to the man page of libthr(3), you should check sysctl's ['kern.ipc.umtx_vnode_persistent]:
-
-* ['kern.ipc.umtx_vnode_persistent]: By default, a shared lock backed by a mapped file in memory is automatically destroyed on the last
-   unmap of the corresponding file's page, which is allowed by POSIX. Setting the sysctl to 1 makes such a shared lock object persist until
-   the vnode is recycled by the Virtual File System. Note that in case file is not opened and not mapped, the kernel might recycle it at
-   any moment, making this sysctl less useful than it sounds.
-
-If you want mapped files to remain useful after the last handle is closed, set this variable to 1.
+Support for _POSIX_THREAD_PROCESS_SHARED is inexistent (OpenBSD/NetBSD, old FreeBSD) or incomplete/buggy (FreeBSD>=11, MacOS).
+Process-shared synchronization primitives are emulated with atomics, which have suboptimal performance and are unrecoverable
+under process crashes while holding the lock.
 
 [endsect]
 
-[endsect]
-
-[section:notes_freebsd Notes for MacOs users]
+[section:notes_macos Notes for MacOs users]
 
 [section:notes_macos_sandboxed Limitations for sandboxed applications]
 
@@ -6805,6 +6799,12 @@ an app can use these technologies to communicate with other members of that appl
 Please see Apple documentation
 [@https://developer.apple.com/library/archive/documentation/Security/Conceptual/AppSandboxDesignGuide/AppSandboxInDepth/AppSandboxInDepth.html#//apple_ref/doc/uid/TP40011183-CH3-SW24
  for limitations and guide on how to use interprocess communications on sandboxed applications].
+
+[endsect]
+
+[section:notes_other_xsi Notes for QNX, Android, Haiku, VxWorks and Emscriptem users]
+
+Those operating system don't offer support XSI IPC mechanisms, so associated utilities are not available.
 
 [endsect]
 
