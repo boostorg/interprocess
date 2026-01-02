@@ -927,10 +927,6 @@ jobs:
             then
                 echo "Executing: sudo pkg git bash python3 curl"
                 sudo pkg install -y git bash python3 curl
-                # Enable persistent umtx for vnode-backed shared memory synchronization
-                # This is needed for process-shared pthread mutexes in memory-mapped files
-                echo "Setting kern.ipc.umtx_vnode_persistent=1"
-                sudo sysctl kern.ipc.umtx_vnode_persistent=1
             fi
             if [ "${{matrix.vm}}" == "openbsd" ]
             then

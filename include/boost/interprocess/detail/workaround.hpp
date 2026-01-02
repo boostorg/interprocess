@@ -65,6 +65,14 @@
          //https://opensource.apple.com/source/libpthread/libpthread-301.30.1/src/pthread_cond.c.auto.html
          //in method pthread_cond_wait
          #define BOOST_INTERPROCESS_BUGGY_POSIX_PROCESS_SHARED
+      #elif defined(__FreeBSD__)
+         //The FreeBSD implementation is not workable for Interprocess as data structures
+         //hold raw pointers and even "kern.ipc.umtx_vnode_persistent" does not solve this issue
+         //because de vnode will be recycled anyway since it is only useful when:
+         // - Multiple processes have the file mapped **simultaneously**
+         // - The kernel needs to coordinate their wait queues
+         //See (https://man.freebsd.org/cgi/man.cgi?query=libthr) for details
+         #define BOOST_INTERPROCESS_BUGGY_POSIX_PROCESS_SHARED
       #endif
 
       //If buggy _POSIX_THREAD_PROCESS_SHARED is detected avoid using it
