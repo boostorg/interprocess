@@ -45,16 +45,32 @@
 #  include <sched.h>
 #  include <time.h>
 #  include <errno.h>
+#  include <sys/types.h>
 #  ifdef BOOST_INTERPROCESS_BSD_DERIVATIVE
       //Some *BSD systems (OpenBSD & NetBSD) need sys/param.h before sys/sysctl.h, whereas
       //others (FreeBSD & Darwin) need sys/types.h
-#     include <sys/types.h>
 #     include <sys/param.h>
 #     include <sys/sysctl.h>
 #  endif
 #if defined(__VXWORKS__) 
 #include <vxCpuLib.h>
 #endif 
+
+#if defined(__linux__)
+   #include <sys/syscall.h>
+#elif defined(__FreeBSD__)
+   #include <pthread_np.h>
+#elif defined(__APPLE__)
+   #include <pthread.h>
+#elif defined(__NetBSD__)
+    #include <lwp.h>
+#elif defined(__OpenBSD__)
+    #include <unistd.h>
+#elif defined(__sun) && defined(__SVR4)
+    #include <thread.h>
+#endif
+
+
 //According to the article "C/C++ tip: How to measure elapsed real time for benchmarking"
 //Check MacOs first as macOS 10.12 SDK defines both CLOCK_MONOTONIC and
 //CLOCK_MONOTONIC_RAW and no clock_gettime.
@@ -94,8 +110,6 @@ struct OS_thread_t
 
    void* m_handle;
 };
-
-typedef OS_thread_id_t OS_systemwide_thread_id_t;
 
 //process
 inline OS_process_id_t get_current_process_id()
@@ -198,26 +212,32 @@ inline void thread_yield()
 inline void thread_sleep_ms(unsigned int ms)
 {  winapi::sleep(ms);  }
 
-//systemwide thread
+
+class OS_systemwide_thread_id_t
+{
+   OS_thread_id_t m_thrhnd;
+
+   public:
+   explicit OS_systemwide_thread_id_t(OS_thread_id_t thid)
+      : m_thrhnd(thid)
+   {}
+
+   OS_systemwide_thread_id_t()
+      : m_thrhnd(get_invalid_thread_id())
+   {}
+
+   friend bool operator == (const OS_systemwide_thread_id_t &id1, const OS_systemwide_thread_id_t &id2)
+   {  return id1.m_thrhnd == id2.m_thrhnd;  }
+};
+
 inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
 {
-   return get_current_thread_id();
-}
-
-inline void systemwide_thread_id_copy
-   (const volatile OS_systemwide_thread_id_t &from, volatile OS_systemwide_thread_id_t &to)
-{
-   to = from;
-}
-
-inline bool equal_systemwide_thread_id(const OS_systemwide_thread_id_t &id1, const OS_systemwide_thread_id_t &id2)
-{
-   return equal_thread_id(id1, id2);
+   return OS_systemwide_thread_id_t(get_current_thread_id());
 }
 
 inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
 {
-   return get_invalid_thread_id();
+   return OS_systemwide_thread_id_t(get_invalid_thread_id());
 }
 
 inline unsigned long long get_current_process_creation_time()
@@ -248,44 +268,6 @@ typedef pthread_t OS_thread_t;
 typedef pthread_t OS_thread_id_t;
 typedef pid_t     OS_process_id_t;
 
-struct OS_systemwide_thread_id_t
-{
-   OS_systemwide_thread_id_t()
-      :  pid(), tid()
-   {}
-
-   OS_systemwide_thread_id_t(pid_t p, pthread_t t)
-      :  pid(p), tid(t)
-   {}
-
-   OS_systemwide_thread_id_t(const OS_systemwide_thread_id_t &x)
-      :  pid(x.pid), tid(x.tid)
-   {}
-
-   OS_systemwide_thread_id_t(const volatile OS_systemwide_thread_id_t &x)
-      :  pid(x.pid), tid(x.tid)
-   {}
-
-   OS_systemwide_thread_id_t & operator=(const OS_systemwide_thread_id_t &x)
-   {  pid = x.pid;   tid = x.tid;   return *this;   }
-
-   OS_systemwide_thread_id_t & operator=(const volatile OS_systemwide_thread_id_t &x)
-   {  pid = x.pid;   tid = x.tid;   return *this;  }
-
-   void operator=(const OS_systemwide_thread_id_t &x) volatile
-   {  pid = x.pid;   tid = x.tid;   }
-
-   pid_t       pid;
-   pthread_t   tid;
-};
-
-inline void systemwide_thread_id_copy
-   (const volatile OS_systemwide_thread_id_t &from, volatile OS_systemwide_thread_id_t &to)
-{
-   to.pid = from.pid;
-   to.tid = from.tid;
-}
-
 //process
 inline OS_process_id_t get_current_process_id()
 {  return ::getpid();  }
@@ -305,6 +287,107 @@ inline OS_thread_id_t get_invalid_thread_id()
 
 inline bool equal_thread_id(OS_thread_id_t id1, OS_thread_id_t id2)
 {  return 0 != pthread_equal(id1, id2);  }
+
+
+#if defined(__linux__)
+
+typedef pid_t OS_systemwide_thread_id_t;
+
+inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
+{  return (pid_t)syscall(SYS_gettid);  }
+
+inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
+{  return (pid_t)(-1); }
+
+#elif defined(__FreeBSD__)
+
+typedef int OS_systemwide_thread_id_t;
+
+inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
+{  return pthread_getthreadid_np();  }
+
+inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
+{  return -1;   }
+
+#elif defined(__APPLE__)
+
+typedef uint64_t OS_systemwide_thread_id_t;
+
+inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
+{  uint64_t tid; pthread_threadid_np(NULL, &tid); return tid;   }
+
+inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
+{  return (uint64_t)(-1);  }
+
+#elif defined(__NetBSD__)
+
+typedef lwpid_t OS_systemwide_thread_id_t;
+
+inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
+{  return _lwp_self();   }
+
+inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
+{  return (lwpid_t)(-1);  }
+
+#elif defined(__OpenBSD__)
+
+typedef pid_t OS_systemwide_thread_id_t;
+
+inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
+{  return getthrid();   }
+
+inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
+{  return (pid_t)(-1);  }
+
+#elif defined(__sun) && defined(__SVR4)
+
+typedef thread_t OS_systemwide_thread_id_t;
+
+inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
+{  return thr_self();   }
+
+inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
+{  return (thread_t)(-1);  }
+
+#else //fallback to fragile pthread-based solution
+
+class OS_systemwide_thread_id_t
+{
+   pid_t       pid;
+   pthread_t   tid;
+
+   public:
+   OS_systemwide_thread_id_t()
+      :  pid(), tid()
+   {}
+
+   OS_systemwide_thread_id_t(pid_t p, pthread_t t)
+      :  pid(p), tid(t)
+   {}
+
+   OS_systemwide_thread_id_t(const OS_systemwide_thread_id_t &x)
+      :  pid(x.pid), tid(x.tid)
+   {}
+
+   OS_systemwide_thread_id_t & operator=(const OS_systemwide_thread_id_t &x)
+   {  pid = x.pid;   tid = x.tid;   return *this;   }
+
+   friend bool operator == (const OS_systemwide_thread_id_t &id1, const OS_systemwide_thread_id_t &id2)
+   {  return id1.pid == id2.pid && (0 != pthread_equal(id1.tid, id2.tid));  }
+};
+
+//systemwide thread
+inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
+{
+   return OS_systemwide_thread_id_t(::getpid(), ::pthread_self());
+}
+
+inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
+{
+   return OS_systemwide_thread_id_t(get_invalid_process_id(), get_invalid_thread_id());
+}
+
+#endif
 
 inline void thread_yield()
 {  ::sched_yield();  }
@@ -459,22 +542,6 @@ inline void thread_sleep_ms(unsigned int ms)
       rqt.tv_sec  = rmn.tv_sec;
       rqt.tv_nsec = rmn.tv_nsec;
    }
-}
-
-//systemwide thread
-inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
-{
-   return OS_systemwide_thread_id_t(::getpid(), ::pthread_self());
-}
-
-inline bool equal_systemwide_thread_id(const OS_systemwide_thread_id_t &id1, const OS_systemwide_thread_id_t &id2)
-{
-   return (0 != pthread_equal(id1.tid, id2.tid)) && (id1.pid == id2.pid);
-}
-
-inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
-{
-   return OS_systemwide_thread_id_t(get_invalid_process_id(), get_invalid_thread_id());
 }
 
 inline unsigned long long get_current_process_creation_time()
