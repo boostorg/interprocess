@@ -6857,6 +6857,12 @@ thank them:
    * Segment managers in their `construct` methods
    * Allocators
 
+* [*ABI breaking]: Some utilities like spin-based recursive mutexes needed to use a systemwide thread identifier. The method used for Unix systems
+  was based on pid_t+pthread_t identifiers, something incorrect (as pthread_t was not suppossed to identify a thread, even inside a process).
+  In this version, several Unix-like systems use a particular and correct global thread identifier (`gettid()` on Linux, 
+  `pthread_getthreadid_np` on FreeBSD, `pthread_threadid_np` on MacOS, `_lwp_self` on NetBSD, `getthrid` on OpenBSD, `thr_self` on Solaris,
+  `GetCurrentThreadId` on Cygwin, `gettid` on QNX, etc...).
+
 * Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/242 GitHub #242 (['"Cygwin compatibility issues"])].
    * [@https://github.com/boostorg/interprocess/issues/247 GitHub #247 (['"destruction of move-constructed map using private_adaptive_pool triggers Assertion"])].
