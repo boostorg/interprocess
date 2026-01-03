@@ -66,8 +66,10 @@
    #include <lwp.h>
 #elif defined(__OpenBSD__)
    #include <unistd.h>
-#elif defined(__sun) && defined(__SVR4)
+#elif defined(__sun)
    #include <thread.h>
+#elif defined(_AIX)
+   #include <sys/thread.h>
 #elif defined(__CYGWIN__)
    #ifndef __LP64__	// 32 bit target
    typedef unsigned long BOOSTIPC_CYGWIN_DWORD;
@@ -77,6 +79,10 @@
    extern "C" {
    __declspec(dllimport) BOOSTIPC_CYGWIN_DWORD __stdcall GetCurrentThreadId (void);
    }  //extern "C" {
+#elif defined(__VXWORKS__)
+   #include <taskLib.h>
+#elif defined(__QNXNTO__)
+   #include <process.h>
 #endif
 
 
@@ -298,7 +304,7 @@ inline bool equal_thread_id(OS_thread_id_t id1, OS_thread_id_t id2)
 {  return 0 != pthread_equal(id1, id2);  }
 
 
-#if defined(__linux__)
+#if defined(__linux__) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
 
 typedef pid_t OS_systemwide_thread_id_t;
 
@@ -308,7 +314,7 @@ inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
 inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
 {  return (pid_t)(-1); }
 
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
 
 typedef int OS_systemwide_thread_id_t;
 
@@ -318,7 +324,7 @@ inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
 inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
 {  return -1;   }
 
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
 
 typedef uint64_t OS_systemwide_thread_id_t;
 
@@ -328,7 +334,7 @@ inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
 inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
 {  return (uint64_t)(-1);  }
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
 
 typedef lwpid_t OS_systemwide_thread_id_t;
 
@@ -338,7 +344,7 @@ inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
 inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
 {  return (lwpid_t)(-1);  }
 
-#elif defined(__OpenBSD__)
+#elif defined(__OpenBSD__) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
 
 typedef pid_t OS_systemwide_thread_id_t;
 
@@ -348,7 +354,7 @@ inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
 inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
 {  return (pid_t)(-1);  }
 
-#elif defined(__sun) && defined(__SVR4)
+#elif defined(__sun) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
 
 typedef thread_t OS_systemwide_thread_id_t;
 
@@ -358,7 +364,17 @@ inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
 inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
 {  return (thread_t)(-1);  }
 
-#elif defined(__CYGWIN__)
+#elif defined(_AIX) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
+
+typedef tid_t OS_systemwide_thread_id_t;
+
+inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
+{  return thread_self();   }
+
+inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
+{  return (thread_t)(-1);  }
+
+#elif defined(__CYGWIN__) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
 
 typedef BOOSTIPC_CYGWIN_DWORD OS_systemwide_thread_id_t;
 
@@ -368,7 +384,27 @@ inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
 inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
 {  return (OS_systemwide_thread_id_t)(-1);  }
 
-#else //fallback to fragile nad mostly wrong pthread-based solution
+#elif defined(__VXWORKS__) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
+
+typedef int OS_systemwide_thread_id_t;
+
+inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
+{  return taskIdSelf();   }
+
+inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
+{  return (OS_systemwide_thread_id_t)(-1);  }
+
+#elif defined(__QNXNTO__) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
+
+typedef int OS_systemwide_thread_id_t;
+
+inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
+{  return gettid();   }
+
+inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
+{  return (OS_systemwide_thread_id_t)(-1);  }
+
+#else //fallback to fragile and mostly wrong pthread-based solution
 
 class OS_systemwide_thread_id_t
 {
