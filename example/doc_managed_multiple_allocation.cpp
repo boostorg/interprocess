@@ -14,7 +14,6 @@
 //[doc_managed_multiple_allocation
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/move/utility_core.hpp> //boost::move
-#include <cassert>//assert
 #include <cstring>//std::memset
 #include <new>    //std::nothrow
 #include <vector> //std::vector
