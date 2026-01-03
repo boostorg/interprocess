@@ -63,11 +63,20 @@
 #elif defined(__APPLE__)
    #include <pthread.h>
 #elif defined(__NetBSD__)
-    #include <lwp.h>
+   #include <lwp.h>
 #elif defined(__OpenBSD__)
-    #include <unistd.h>
+   #include <unistd.h>
 #elif defined(__sun) && defined(__SVR4)
-    #include <thread.h>
+   #include <thread.h>
+#elif defined(__CYGWIN__)
+   #ifndef __LP64__	// 32 bit target
+   typedef unsigned long BOOSTIPC_CYGWIN_DWORD;
+   #else			// 64 bit Cygwin target
+   typedef unsigned int BOOSTIPC_CYGWIN_DWORD;
+   #endif
+   extern "C" {
+   __declspec(dllimport) BOOSTIPC_CYGWIN_DWORD __stdcall GetCurrentThreadId (void);
+   }  //extern "C" {
 #endif
 
 
@@ -349,7 +358,17 @@ inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
 inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
 {  return (thread_t)(-1);  }
 
-#else //fallback to fragile pthread-based solution
+#elif defined(__CYGWIN__)
+
+typedef BOOSTIPC_CYGWIN_DWORD OS_systemwide_thread_id_t;
+
+inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
+{  return ::GetCurrentThreadId();   }
+
+inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
+{  return (OS_systemwide_thread_id_t)(-1);  }
+
+#else //fallback to fragile nad mostly wrong pthread-based solution
 
 class OS_systemwide_thread_id_t
 {
