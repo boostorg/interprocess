@@ -417,6 +417,7 @@ void test_cast()
       pcint = static_cast<pcint_t>(pcvoid);
 
       BOOST_TEST(pint == pvoid);
+      BOOST_TEST(pcint == pcvoid);
       BOOST_TEST(pcint == pint);
 
       //Test valid static_pointer_cast conversions
