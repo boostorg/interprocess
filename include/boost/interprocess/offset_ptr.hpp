@@ -375,18 +375,19 @@ class offset_ptr
       : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(ptr.get()), this))
    {}
 
-   //!Constructor from other offset_ptr. Only takes part in overload resolution
-   //!if PointedType* is constructible from T2* other than via a conversion (e.g. cast to a derived class). Never throws.
+   //!Constructor from other offset_ptr available so that static_cast<> works according to Allocator::pointer requirements:
+   //!   static_cast<pointer>(void_pointer()) + static_cast<const_pointer>(const_void_pointer())
+   //!Discouraged for any other conversion, static_pointer_cast is the way for downcasts and other static_cast-like conversions.
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE explicit offset_ptr(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &ptr
              #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
-             , typename ipcdetail::enable_if_c<
+             , typename ipcdetail::enable_if_c< ipcdetail::is_cv_same<T2, void>::value && //Allow only void to something casts for static_cast
                                                 !::boost::move_detail::is_convertible<T2*, PointedType*>::value &&
                                                 ipcdetail::is_ptr_constructible<T2*, PointedType*>::value
                                               >::type * = 0
              #endif
-             ) BOOST_NOEXCEPT
-      : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(ptr.get()), this))
+             ) BOOST_NOEXCEPT //void -> T conversion is address-preserving, so take advantage of that
+      : internal(ipcdetail::offset_ptr_to_offset_from_other(this, &ptr, ptr.get_offset()))
    {}
 
    #endif
