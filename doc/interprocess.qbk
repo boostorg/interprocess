@@ -6867,13 +6867,7 @@ thank them:
    * [@https://github.com/boostorg/interprocess/issues/242 GitHub #242 (['"Cygwin compatibility issues"])].
    * [@https://github.com/boostorg/interprocess/issues/247 GitHub #247 (['"destruction of move-constructed map using private_adaptive_pool triggers Assertion"])].
    * [@https://github.com/boostorg/interprocess/issues/252 GitHub #252 (['"[regression] no viable constructor for offset_ptr with clang from 1.87.0"])].
-   * [@https://github.com/boostorg/interprocess/issues/276 GitHub #276 (['"-Wundef warning in boost/interprocess/allocators/allocator.hpp)].
-
-https://github.com/boostorg/interprocess/pull/46
-
-https://github.com/boostorg/interprocess/pull/188
-
-Thanks for the report.
+   * [@https://github.com/boostorg/interprocess/issues/276 GitHub #276 (['"-Wundef warning in boost/interprocess/allocators/allocator.hpp])].
 
 [endsect]
 
