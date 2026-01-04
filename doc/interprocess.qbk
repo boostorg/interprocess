@@ -5167,7 +5167,9 @@ To place any of these containers in managed memory segments, we must
 define the allocator template parameter with a [*Boost.Interprocess] allocator
 so that the container allocates the values in the managed memory segment.
 To place the container itself in shared memory, we construct it
-in the managed memory segment just like any other object with [*Boost.Interprocess]:
+in the managed memory segment just like any other object with [*Boost.Interprocess].
+Note how these containers also support the uses-allocator protocol that simplifies
+usage due to the implicit allocator passing protocol:
 
 [import ../example/doc_cont.cpp]
 [doc_cont]
@@ -5263,7 +5265,9 @@ and those strings need to be placed in shared memory. Shared memory strings requ
 an allocator in their constructors so this usually makes object insertion a bit more
 complicated.
 
-Here is an example that shows how to put a multi index container in shared memory:
+Here is an example that shows how to put a multi index container in shared memory. Note
+also how MultiIndex supports the [link interprocess.managed_memory_segment_object_construction.uses_allocator uses-allocator construction]
+so that allocator arguments can be automatically propagated into internal allocator-aware components:
 
 [import ../example/doc_multi_index.cpp]
 [doc_multi_index]
@@ -6853,7 +6857,8 @@ thank them:
 
 [section:release_notes_boost_1_91_00 Boost 1.91 Release]
 
-* Adds uses-allocator-construction (for types where `boost::container::uses_allocator<T>::value == true`), in the following utilities:
+* Adds [link interprocess.managed_memory_segment_object_construction.uses_allocator uses-allocator construction]
+   (for types where `boost::container::uses_allocator<T>::value == true`), in the following utilities:
    * Segment managers in their `construct` methods
    * Allocators
 
