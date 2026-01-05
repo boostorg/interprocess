@@ -22,9 +22,6 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/container/detail/version_type.hpp>
 
-#include <boost/config/header_deprecated.hpp>
-BOOST_HEADER_DEPRECATED("<boost/container/detail/version_type.hpp>")
-
 namespace boost {
 namespace interprocess {
 
