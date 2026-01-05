@@ -22,6 +22,9 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/container/detail/allocation_type.hpp>
 
+#include <boost/config/header_deprecated.hpp>
+BOOST_HEADER_DEPRECATED("[[no replacement]]")
+
 namespace boost {
 namespace interprocess {
 
