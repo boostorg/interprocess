@@ -6862,6 +6862,9 @@ thank them:
    * Segment managers in their `construct` methods
    * Allocators
 
+* [*Unlikely ABI breaking in practice]: Undefining `BOOST_INTERPROCESS_MSG_QUEUE_CIRCULAR_INDEX` (which was the default since Boost 1.52 fom 2012)
+  is no longer available. `message_queue` has now a single implementation using the circular queue estrategy.
+
 * [*ABI breaking]: Some utilities like spin-based recursive mutexes needed to use a systemwide thread identifier. The method used for Unix systems
   was based on pid_t+pthread_t identifiers, something incorrect (as pthread_t was not suppossed to identify a thread, even inside a process).
   In this version, several Unix-like systems use a particular and correct global thread identifier (`gettid()` on Linux, 
