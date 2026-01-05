@@ -86,7 +86,7 @@
    //////////////////////////////////////////////////////
    //    BOOST_INTERPROCESS_POSIX_ROBUST_MUTEXES
    //////////////////////////////////////////////////////
-   #if (_XOPEN_SOURCE >= 700 || _POSIX_C_SOURCE >= 200809L)
+   #if ( defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 700) ) || ( defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200809L) )
       #define BOOST_INTERPROCESS_POSIX_ROBUST_MUTEXES
    #endif
 
@@ -178,7 +178,7 @@
    //////////////////////////////////////////////////////
    //posix_fallocate
    //////////////////////////////////////////////////////
-   #if (_XOPEN_SOURCE >= 600 || _POSIX_C_SOURCE >= 200112L)
+   #if ( defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 600) ) || ( defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L) )
    #define BOOST_INTERPROCESS_POSIX_FALLOCATE
    #endif
 
