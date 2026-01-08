@@ -149,46 +149,51 @@ bool test_allocation_expand(SegMngr &sm)
 {
    std::vector<void*> buffers;
 
-   //Allocate buffers with extra memory
-   for(std::size_t i = 0; true; ++i){
-      void *ptr = sm.allocate(i, std::nothrow);
-      if(!ptr)
-         break;
-     std::size_t size = sm.size(ptr);
-      std::memset(ptr, 0, size);
-      buffers.push_back(ptr);
-   }
-
-   //Now try to expand to the double of the size
-   for(std::size_t i = 0, max = buffers.size()
-      ;i < max
-      ;++i){
-      typename SegMngr::size_type received_size;
-      std::size_t min_size = i+1;
-      std::size_t preferred_size = i*2;
-      preferred_size = min_size > preferred_size ? min_size : preferred_size;
-
-      char *reuse = static_cast<char*>(buffers[i]);
-      while(sm.template allocation_command<char>
-         ( boost::interprocess::expand_fwd | boost::interprocess::nothrow_allocation, min_size
-         , received_size = preferred_size, reuse)){
-         //Check received size is bigger than minimum
-         if(received_size < min_size){
-            return false;
-         }
-         //Now, try to expand further
-       min_size       = received_size+1;
-         preferred_size = min_size*2;
+   //We will repeat this test for different sized elements and alignments
+   for(std::size_t al = 1; al <= SegMngr::MemAlignment*32u; al *= 2u) {
+      //Allocate buffers with extra memory
+      for(std::size_t i = 0; true; ++i){
+         void *ptr = al > SegMngr::MemAlignment
+                   ? sm.allocate_aligned(i, al, std::nothrow)
+                   : sm.allocate(i, std::nothrow);
+         if(!ptr)
+            break;
+         std::size_t size = sm.size(ptr);
+         std::memset(ptr, 0, size);
+         buffers.push_back(ptr);
       }
-   }
 
-   //Deallocate it in non sequential order
-   for(std::size_t j = 0, max = buffers.size()
-      ;j < max
-      ;++j){
-      std::size_t pos = (j%4)*(buffers.size())/4;
-      sm.deallocate(buffers[pos]);
-      buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+      //Now try to expand to the double of the size
+      for(std::size_t i = 0, max = buffers.size()
+         ;i < max
+         ;++i){
+         typename SegMngr::size_type received_size;
+         std::size_t min_size = i+1;
+         std::size_t preferred_size = i*2;
+         preferred_size = min_size > preferred_size ? min_size : preferred_size;
+
+         char *reuse = static_cast<char*>(buffers[i]);
+         while(sm.template allocation_command<char>
+            ( boost::interprocess::expand_fwd | boost::interprocess::nothrow_allocation, min_size
+            , received_size = preferred_size, reuse)){
+            //Check received size is bigger than minimum
+            if(received_size < min_size){
+               return false;
+            }
+            //Now, try to expand further
+            min_size       = received_size+1;
+            preferred_size = min_size*2;
+         }
+      }
+
+      //Deallocate it in non sequential order
+      for(std::size_t j = 0, max = buffers.size()
+         ;j < max
+         ;++j){
+         std::size_t pos = (j%4)*(buffers.size())/4;
+         sm.deallocate(buffers[pos]);
+         buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+      }
    }
 
    return sm.all_memory_deallocated() && sm.check_sanity();
@@ -351,13 +356,16 @@ bool test_allocation_deallocation_expand(SegMngr &sm)
 template<class SegMngr>
 bool test_allocation_with_reuse(SegMngr &sm)
 {
-   //We will repeat this test for different sized elements
+   //We will repeat this test for different sized elements and alignments
+   for(std::size_t al = 1; al <= SegMngr::MemAlignment*32u; al *= 2u)
    for(std::size_t sizeof_object = 1; sizeof_object < 20u; ++sizeof_object){
       std::vector<void*> buffers;
 
       //Allocate buffers with extra memory
       for(std::size_t i = 0; true; ++i){
-         void *ptr = sm.allocate(i*sizeof_object, std::nothrow);
+         void *ptr = al > SegMngr::MemAlignment
+                   ? sm.allocate_aligned(i*sizeof_object, al, std::nothrow)
+                   : sm.allocate(i*sizeof_object, std::nothrow);
          if(!ptr)
             break;
          std::size_t size = sm.size(ptr);
@@ -379,16 +387,17 @@ bool test_allocation_with_reuse(SegMngr &sm)
 
       //Now allocate with reuse
       typename SegMngr::size_type received_size = 0;
-//      for(std::size_t al = 0; al <= 512u; ++h){
       for(std::size_t i = 0; true; ++i){
          std::size_t min_size = (received_size + 1);
          std::size_t prf_size = (received_size + (i+1)*2);
          void *reuse = ptr;
-         void *ret = sm.raw_allocation_command
+         void *ret = sm.allocation_command
             ( boost::interprocess::expand_bwd | boost::interprocess::nothrow_allocation, min_size
-            , received_size = prf_size, reuse, sizeof_object/*, alignof_object*/);
+            , received_size = prf_size, reuse, sizeof_object, al);
          if(!ret)
             break;
+         if(((std::size_t)ret & (al - 1)) != 0)
+            return 1;
          //If we have memory, this must be a buffer reuse
          if(!reuse)
             return 1;
@@ -992,15 +1001,6 @@ bool test_all_allocation(SegMngr &sm)
       return false;
    }
 
-   std::cout << "Starting test_allocation_with_reuse. Class: "
-             << typeid(sm).name() << std::endl;
-
-   if(!test_allocation_with_reuse(sm)){
-      std::cout << "test_allocation_with_reuse failed. Class: "
-                << typeid(sm).name() << std::endl;
-      return false;
-   }
-
    std::cout << "Starting test_aligned_allocation. Class: "
              << typeid(sm).name() << std::endl;
 
@@ -1015,6 +1015,15 @@ bool test_all_allocation(SegMngr &sm)
 
    if(!test_continuous_aligned_allocation(sm)){
       std::cout << "test_continuous_aligned_allocation failed. Class: "
+                << typeid(sm).name() << std::endl;
+      return false;
+   }
+
+   std::cout << "Starting test_allocation_with_reuse. Class: "
+             << typeid(sm).name() << std::endl;
+
+   if(!test_allocation_with_reuse(sm)){
+      std::cout << "test_allocation_with_reuse failed. Class: "
                 << typeid(sm).name() << std::endl;
       return false;
    }
