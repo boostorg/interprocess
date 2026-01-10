@@ -125,9 +125,9 @@ class memory_algorithm_common
    {  return get_rounded_size(size, Alignment);  }
 
    static void allocate_many
-      (MemoryAlgorithm *memory_algo, size_type elem_bytes, size_type n_elements, multiallocation_chain &chain)
+      (MemoryAlgorithm *memory_algo, size_type elem_bytes, size_type n_elements, size_type alignment, multiallocation_chain &chain)
    {
-      return this_type::priv_allocate_many(memory_algo, &elem_bytes, n_elements, 0, chain);
+      return this_type::priv_allocate_many(memory_algo, &elem_bytes, n_elements, alignment, 0, chain);
    }
 
    static void deallocate_many(MemoryAlgorithm *memory_algo, multiallocation_chain &chain)
@@ -235,9 +235,10 @@ class memory_algorithm_common
       , const size_type *elem_sizes
       , size_type n_elements
       , size_type sizeof_element
+      , size_type alignment
       , multiallocation_chain &chain)
    {
-      this_type::priv_allocate_many(memory_algo, elem_sizes, n_elements, sizeof_element, chain);
+      this_type::priv_allocate_many(memory_algo, elem_sizes, n_elements, sizeof_element, alignment, chain);
    }
 
    static void* allocate_aligned(MemoryAlgorithm * const memory_algo, const size_type nbytes, const size_type alignment)
@@ -487,6 +488,7 @@ class memory_algorithm_common
       ( MemoryAlgorithm *memory_algo
       , const size_type *elem_sizes
       , size_type n_elements
+      , size_type alignment
       , size_type sizeof_element
       , multiallocation_chain &chain)
    {
@@ -530,7 +532,7 @@ class memory_algorithm_common
             size_type received_size = total_bytes;
             void *ignore_reuse = 0;
             void *ret = memory_algo->priv_allocate
-               (boost::interprocess::allocate_new, min_allocation, received_size, ignore_reuse);
+               (boost::interprocess::allocate_new, min_allocation, received_size, ignore_reuse, 1, alignment);
             if(!ret){
                break;
             }

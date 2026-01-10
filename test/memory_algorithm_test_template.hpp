@@ -40,7 +40,7 @@ bool test_allocation(SegMngr &sm)
          void *ptr = sm.allocate(i, std::nothrow);
          if(!ptr)
             break;
-       std::size_t size = sm.size(ptr);
+         std::size_t size = sm.size(ptr);
          std::memset(ptr, 0, size);
          buffers.push_back(ptr);
       }
@@ -700,72 +700,74 @@ bool test_many_equal_allocation(SegMngr &sm)
          return false;
 
       typedef typename SegMngr::multiallocation_chain multiallocation_chain;
-      std::vector<void*> buffers;
-      for(std::size_t i = 0; true; ++i){
-         multiallocation_chain chain;
-         sm.allocate_many(std::nothrow, i+1, (i+1)*2, chain);
-         if(chain.empty())
-            break;
+      for(std::size_t al = 1; al <= SegMngr::MemAlignment*32u; al *= 2u) {
+         std::vector<void*> buffers;
+         for(std::size_t i = 0; true; ++i){
+            multiallocation_chain chain;
+            sm.allocate_many(std::nothrow, i+1, (i+1)*2, al, chain);
+            if(chain.empty())
+               break;
 
-         typename multiallocation_chain::size_type n = chain.size();
-         while(!chain.empty()){
-            buffers.push_back(ipcdetail::to_raw_pointer(chain.pop_front()));
+            typename multiallocation_chain::size_type n = chain.size();
+            while(!chain.empty()){
+               buffers.push_back(ipcdetail::to_raw_pointer(chain.pop_front()));
+            }
+            if(n != std::size_t((i+1)*2))
+               return false;
          }
-         if(n != std::size_t((i+1)*2))
+
+         if(!sm.check_sanity())
             return false;
-      }
 
-      if(!sm.check_sanity())
-         return false;
-
-      switch(t){
-         case DirectDeallocation:
-         {
-            for(std::size_t j = 0, max = buffers.size()
-               ;j < max
-               ;++j){
-               sm.deallocate(buffers[j]);
+         switch(t){
+            case DirectDeallocation:
+            {
+               for(std::size_t j = 0, max = buffers.size()
+                  ;j < max
+                  ;++j){
+                  sm.deallocate(buffers[j]);
+               }
             }
-         }
-         break;
-         case InverseDeallocation:
-         {
-            for(std::size_t j = buffers.size()
-               ;j--
-               ;){
-               sm.deallocate(buffers[j]);
+            break;
+            case InverseDeallocation:
+            {
+               for(std::size_t j = buffers.size()
+                  ;j--
+                  ;){
+                  sm.deallocate(buffers[j]);
+               }
             }
-         }
-         break;
-         case MixedDeallocation:
-         {
-            for(std::size_t j = 0, max = buffers.size()
-               ;j < max
-               ;++j){
-               std::size_t pos = (j%4)*(buffers.size())/4;
-               sm.deallocate(buffers[pos]);
-               buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+            break;
+            case MixedDeallocation:
+            {
+               for(std::size_t j = 0, max = buffers.size()
+                  ;j < max
+                  ;++j){
+                  std::size_t pos = (j%4)*(buffers.size())/4;
+                  sm.deallocate(buffers[pos]);
+                  buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+               }
             }
+            break;
+            default:
+            break;
          }
-         break;
-         default:
-         break;
+
+         //Deallocate the rest of the blocks
+
+         //Deallocate it in non sequential order
+         for(std::size_t j = 0, max = buffers2.size()
+            ;j < max
+            ;++j){
+            std::size_t pos = (j%4)*(buffers2.size())/4;
+            sm.deallocate(buffers2[pos]);
+            buffers2.erase(buffers2.begin()+std::ptrdiff_t(pos));
+         }
+
+         bool ok = free_memory == sm.get_free_memory() &&
+                  sm.all_memory_deallocated() && sm.check_sanity();
+         if(!ok)  return ok;
       }
-
-      //Deallocate the rest of the blocks
-
-      //Deallocate it in non sequential order
-      for(std::size_t j = 0, max = buffers2.size()
-         ;j < max
-         ;++j){
-         std::size_t pos = (j%4)*(buffers2.size())/4;
-         sm.deallocate(buffers2[pos]);
-         buffers2.erase(buffers2.begin()+std::ptrdiff_t(pos));
-      }
-
-      bool ok = free_memory == sm.get_free_memory() &&
-               sm.all_memory_deallocated() && sm.check_sanity();
-      if(!ok)  return ok;
    }
    return true;
 }
@@ -776,12 +778,13 @@ template<class SegMngr>
 bool test_many_different_allocation(SegMngr &sm)
 {
    typedef typename SegMngr::multiallocation_chain multiallocation_chain;
-   const std::size_t ArraySize = 11;
+   const std::size_t ArraySize = 22;
    typename SegMngr::size_type requested_sizes[ArraySize];
    for(std::size_t i = 0; i < ArraySize; ++i){
       requested_sizes[i] = 4*i;
    }
 
+   for(std::size_t al = 1; al <= SegMngr::MemAlignment*32u; al *= 2u)
    for( deallocation_type t = DirectDeallocation
       ; t != EndDeallocationType
       ; t = (deallocation_type)((int)t + 1)){
@@ -791,7 +794,9 @@ bool test_many_different_allocation(SegMngr &sm)
 
       //Allocate buffers with extra memory
       for(std::size_t i = 0; true; ++i){
-         void *ptr = sm.allocate(i, std::nothrow);
+         void *ptr = al > SegMngr::MemAlignment
+                   ? sm.allocate_aligned(i, al, std::nothrow)
+                   : sm.allocate(i, std::nothrow);
          if(!ptr)
             break;
        std::size_t size = sm.size(ptr);
@@ -813,7 +818,7 @@ bool test_many_different_allocation(SegMngr &sm)
       std::vector<void*> buffers;
       while(true){
          multiallocation_chain chain;
-         sm.allocate_many(std::nothrow, requested_sizes, ArraySize, 1, chain);
+         sm.allocate_many(std::nothrow, requested_sizes, ArraySize, 1, al, chain);
          if(chain.empty())
             break;
          typename multiallocation_chain::size_type n = chain.size();
@@ -882,8 +887,6 @@ template<class SegMngr>
 bool test_many_deallocation(SegMngr &sm)
 {
    typedef typename SegMngr::multiallocation_chain multiallocation_chain;
-
-   typedef typename SegMngr::multiallocation_chain multiallocation_chain;
    const std::size_t ArraySize = 11;
    boost::container::vector<multiallocation_chain> buffers;
    typename SegMngr::size_type requested_sizes[ArraySize];
@@ -892,10 +895,11 @@ bool test_many_deallocation(SegMngr &sm)
    }
    typename SegMngr::size_type free_memory = sm.get_free_memory();
 
+   for(std::size_t al = 1; al <= SegMngr::MemAlignment*32u; al *= 2u)
    {
       while(true){
          multiallocation_chain chain;
-         sm.allocate_many(std::nothrow, requested_sizes, ArraySize, 1, chain);
+         sm.allocate_many(std::nothrow, requested_sizes, ArraySize, 1, al, chain);
          if(chain.empty())
             break;
          buffers.push_back(boost::move(chain));
@@ -909,10 +913,11 @@ bool test_many_deallocation(SegMngr &sm)
       if(!ok)  return ok;
    }
 
+   for(std::size_t al = 1; al <= SegMngr::MemAlignment*32u; al *= 2u)
    {
       for(std::size_t i = 0; true; ++i){
          multiallocation_chain chain;
-         sm.allocate_many(std::nothrow, i*4, ArraySize, chain);
+         sm.allocate_many(std::nothrow, i*4, ArraySize, al, chain);
          if(chain.empty())
             break;
          buffers.push_back(boost::move(chain));

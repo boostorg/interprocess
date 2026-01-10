@@ -3986,7 +3986,7 @@ Here is a small example showing how aligned allocation is used:
 
 [section:managed_memory_segment_multiple_allocations Multiple allocation functions]
 
-[caution This feature is experimental, interface and ABI are unstable]
+[caution This feature is experimental, API and ABI are unstable]
 
 If an application needs to allocate a lot of memory buffers but it needs
 to deallocate them independently, the application is normally forced to loop
@@ -6873,6 +6873,12 @@ thank them:
   to go back to the old `pthread_t` based behaviour, but this option is deprecated and will be removed in a few releases.
 
 * Added `BOOST_HEADER_DEPRECATED` to `<boost/interprocess/containers/*.hpp> headers. They were deprecated several releases ago, but this
+  message will annoy existing users to switch to Boost.Container headers.
+
+* Changed the interface of [link managed_memory_segment_advanced_features.managed_memory_segment_multiple_allocations Multiple allocation functions]
+  (still experimental and API/ABI unstable) to support alignment.
+
+Added `BOOST_HEADER_DEPRECATED` to `<boost/interprocess/containers/*.hpp> headers. They were deprecated several releases ago, but this
   message will annoy existing users to switch to Boost.Container headers.
 
 * Fixed bugs:

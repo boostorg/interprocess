@@ -157,22 +157,22 @@ class simple_seq_fit_impl
 
    //!Multiple element allocation, same size
    //!Experimental. Dont' use
-   void allocate_many(size_type elem_bytes, size_type num_elements, multiallocation_chain &chain)
+   void allocate_many(size_type elem_bytes, size_type num_elements, size_type alignment, multiallocation_chain &chain)
    {
       //-----------------------
       boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
       //-----------------------
-      algo_impl_t::allocate_many(this, elem_bytes, num_elements, chain);
+      algo_impl_t::allocate_many(this, elem_bytes, num_elements, alignment, chain);
    }
 
    //!Multiple element allocation, different size
    //!Experimental. Dont' use
-   void allocate_many(const size_type *elem_sizes, size_type n_elements, size_type sizeof_element, multiallocation_chain &chain)
+   void allocate_many(const size_type *elem_sizes, size_type n_elements, size_type sizeof_element, size_type alignment, multiallocation_chain &chain)
    {
       //-----------------------
       boost::interprocess::scoped_lock<interprocess_mutex> guard(m_header);
       //-----------------------
-      algo_impl_t::allocate_many(this, elem_sizes, n_elements, sizeof_element, chain);
+      algo_impl_t::allocate_many(this, elem_sizes, n_elements, sizeof_element, alignment, chain);
    }
 
    //!Multiple element deallocation
@@ -229,7 +229,7 @@ class simple_seq_fit_impl
    //!Real allocation algorithm with min allocation option
    void * priv_allocate(boost::interprocess::allocation_type command
                         ,size_type min_size
-                        ,size_type &prefer_in_recvd_out_size, void *&reuse_ptr, size_type alignof_object = Alignment);
+                        ,size_type &prefer_in_recvd_out_size, void *&reuse_ptr, size_type sizeof_object = 1, size_type alignof_object = Alignment);
 
    //!Returns the number of total units that a user buffer
    //!of "userbytes" bytes really occupies (including header)
@@ -635,7 +635,7 @@ simple_seq_fit_impl<MutexFamily, VoidPointer>::
 template<class MutexFamily, class VoidPointer>
 void * simple_seq_fit_impl<MutexFamily, VoidPointer>::
    priv_allocate(boost::interprocess::allocation_type command
-                ,size_type limit_size, size_type &prefer_in_recvd_out_size, void *&reuse_ptr, size_type alignof_object)
+                ,size_type limit_size, size_type &prefer_in_recvd_out_size, void *&reuse_ptr, size_type /*sizeof_object*/, size_type alignof_object)
 {
    //Backwards expansion not supported
    command &= ~boost::interprocess::expand_bwd;

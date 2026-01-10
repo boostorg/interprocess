@@ -307,24 +307,24 @@ class basic_managed_memory_impl
 
    //!Allocates n_elements of elem_bytes bytes.
    //!Throws bad_alloc on failure. chain.size() is not increased on failure.
-   void allocate_many(size_type elem_bytes, size_type n_elements, multiallocation_chain &chain)
-   {  mp_header->allocate_many(elem_bytes, n_elements, chain); }
+   void allocate_many(size_type elem_bytes, size_type n_elements, size_type alignment, multiallocation_chain &chain)
+   {  mp_header->allocate_many(elem_bytes, n_elements, alignment, chain); }
 
    //!Allocates n_elements, each one of element_lengths[i]*sizeof_element bytes.
    //!Throws bad_alloc on failure. chain.size() is not increased on failure.
-   void allocate_many(const size_type *element_lengths, size_type n_elements, size_type sizeof_element, multiallocation_chain &chain)
-   {  mp_header->allocate_many(element_lengths, n_elements, sizeof_element, chain); }
+   void allocate_many(const size_type *element_lengths, size_type n_elements, size_type sizeof_element, size_type alignment, multiallocation_chain &chain)
+   {  mp_header->allocate_many(element_lengths, n_elements, sizeof_element, alignment, chain); }
 
    //!Allocates n_elements of elem_bytes bytes.
    //!Non-throwing version. chain.size() is not increased on failure.
-   void allocate_many(const std::nothrow_t &tag, size_type elem_bytes, size_type n_elements, multiallocation_chain &chain)
-   {  mp_header->allocate_many(tag, elem_bytes, n_elements, chain); }
+   void allocate_many(const std::nothrow_t &tag, size_type elem_bytes, size_type n_elements, size_type alignment, multiallocation_chain &chain)
+   {  mp_header->allocate_many(tag, elem_bytes, n_elements, alignment, chain); }
 
    //!Allocates n_elements, each one of
    //!element_lengths[i]*sizeof_element bytes.
    //!Non-throwing version. chain.size() is not increased on failure.
-   void allocate_many(const std::nothrow_t &tag, const size_type *elem_sizes, size_type n_elements, size_type sizeof_element, multiallocation_chain &chain)
-   {  mp_header->allocate_many(tag, elem_sizes, n_elements, sizeof_element, chain); }
+   void allocate_many(const std::nothrow_t &tag, const size_type *elem_sizes, size_type n_elements, size_type sizeof_element, size_type alignment, multiallocation_chain &chain)
+   {  mp_header->allocate_many(tag, elem_sizes, n_elements, sizeof_element, alignment, chain); }
 
    //!Deallocates all elements contained in chain.
    //!Never throws.

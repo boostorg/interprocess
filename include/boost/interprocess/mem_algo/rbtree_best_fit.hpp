@@ -204,22 +204,22 @@ class rbtree_best_fit
 
    //!Multiple element allocation, same size
    //!Experimental. Dont' use
-   void allocate_many(size_type elem_bytes, size_type num_elements, multiallocation_chain &chain)
+   void allocate_many(size_type elem_bytes, size_type num_elements, size_type alignment, multiallocation_chain &chain)
    {
       //-----------------------
       boost::interprocess::scoped_lock<mutex_type> guard(m_header);
       //-----------------------
-      algo_impl_t::allocate_many(this, elem_bytes, num_elements, chain);
+      algo_impl_t::allocate_many(this, elem_bytes, num_elements, alignment, chain);
    }
 
    //!Multiple element allocation, different size
    //!Experimental. Dont' use
-   void allocate_many(const size_type *elem_sizes, size_type n_elements, size_type sizeof_element, multiallocation_chain &chain)
+   void allocate_many(const size_type *elem_sizes, size_type n_elements, size_type sizeof_element, size_type alignment, multiallocation_chain &chain)
    {
       //-----------------------
       boost::interprocess::scoped_lock<mutex_type> guard(m_header);
       //-----------------------
-      algo_impl_t::allocate_many(this, elem_sizes, n_elements, sizeof_element, chain);
+      algo_impl_t::allocate_many(this, elem_sizes, n_elements, sizeof_element, alignment, chain);
    }
 
    //!Multiple element allocation, different size
