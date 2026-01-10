@@ -21,6 +21,15 @@
 #include <cstring>   //std::memset
 #include <typeinfo>
 
+namespace {
+
+bool is_aligned(void *ptr, std::size_t alignment)
+{
+   return ((std::size_t)ptr & (alignment - 1)) == 0;
+}
+
+}  //namespace {
+
 namespace boost { namespace interprocess { namespace test {
 
 enum deallocation_type { DirectDeallocation, InverseDeallocation, MixedDeallocation, EndDeallocationType };
@@ -396,8 +405,8 @@ bool test_allocation_with_reuse(SegMngr &sm)
             , received_size = prf_size, reuse, sizeof_object, al);
          if(!ret)
             break;
-         if(((std::size_t)ret & (al - 1)) != 0)
-            return 1;
+         if(!is_aligned(ret, al))
+            return false;
          //If we have memory, this must be a buffer reuse
          if(!reuse)
             return 1;
@@ -432,7 +441,7 @@ bool test_aligned_allocation(SegMngr &sm)
             break;
          }
 
-         if(((std::size_t)ptr & (j - 1)) != 0)
+         if(!is_aligned(ptr, j))
             return false;
          std::memset(ptr, 0xFF, i - 1);
          sm.deallocate(ptr);
@@ -469,7 +478,7 @@ bool test_continuous_aligned_allocation(SegMngr &sm)
                any_allocated = true;
             }
 
-            if(((std::size_t)ptr & (j - 1)) != 0)
+            if(!is_aligned(ptr, j))
                return false;
          }
          //Deallocate all
@@ -710,7 +719,10 @@ bool test_many_equal_allocation(SegMngr &sm)
 
             typename multiallocation_chain::size_type n = chain.size();
             while(!chain.empty()){
-               buffers.push_back(ipcdetail::to_raw_pointer(chain.pop_front()));
+               void *ptr = ipcdetail::to_raw_pointer(chain.pop_front());
+               if(!is_aligned(ptr, al))
+                  return false;
+               buffers.push_back(ptr);
             }
             if(n != std::size_t((i+1)*2))
                return false;
@@ -823,7 +835,10 @@ bool test_many_different_allocation(SegMngr &sm)
             break;
          typename multiallocation_chain::size_type n = chain.size();
          while(!chain.empty()){
-            buffers.push_back(ipcdetail::to_raw_pointer(chain.pop_front()));
+            void *ptr = ipcdetail::to_raw_pointer(chain.pop_front());
+            if(!is_aligned(ptr, al))
+               return false;
+            buffers.push_back(ptr);
          }
          if(n != ArraySize)
             return false;
