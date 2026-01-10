@@ -215,7 +215,9 @@ class allocator
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold. This size only works for memory allocated with
    //!allocate, allocation_command and allocate_many.
+   //!This function is deprecated and will be removed in the future
    BOOST_INTERPROCESS_NODISCARD
+   BOOST_DEPRECATED("This function is deprecated and will be removed in the future")
    size_type size(const pointer &p) const
    {
       return (size_type)mp_mngr->size(ipcdetail::to_raw_pointer(p))/sizeof(T);
@@ -237,6 +239,8 @@ class allocator
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. The elements must be deallocated
    //!with deallocate(...)
+   //!This function is deprecated and will be removed in the future
+   BOOST_DEPRECATED("This function is deprecated and will be removed in the future")
    void allocate_many(size_type elem_size, size_type num_elements, multiallocation_chain &chain)
    {
       if(size_overflows<sizeof(T)>(elem_size)){
@@ -248,6 +252,8 @@ class allocator
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
    //!contiguous block
    //!of memory. The elements must be deallocated
+   //!This function is deprecated and will be removed in the future
+   BOOST_DEPRECATED("This function is deprecated and will be removed in the future")
    void allocate_many(const size_type *elem_sizes, size_type n_elements, multiallocation_chain &chain)
    {
       mp_mngr->allocate_many(elem_sizes, n_elements, sizeof(T), boost::container::dtl::alignment_of<T>::value, chain);
@@ -259,6 +265,8 @@ class allocator
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. The elements must be deallocated
    //!with deallocate(...)
+   //!This function is deprecated and will be removed in the future
+   BOOST_DEPRECATED("This function is deprecated and will be removed in the future")
    void deallocate_many(multiallocation_chain &chain)
    {  mp_mngr->deallocate_many(chain); }
 
@@ -295,13 +303,17 @@ class allocator
 
    //!Returns address of mutable object.
    //!Never throws
+   //!This function is deprecated and will be removed in the future
    BOOST_INTERPROCESS_NODISCARD
+   BOOST_DEPRECATED("This function is deprecated and will be removed in the future")
    pointer address(reference value) const
    {  return pointer(boost::container::dtl::addressof(value));  }
 
    //!Returns address of non mutable object.
    //!Never throws
+   //!This function is deprecated and will be removed in the future
    BOOST_INTERPROCESS_NODISCARD
+   BOOST_DEPRECATED("This function is deprecated and will be removed in the future")
    const_pointer address(const_reference value) const
    {  return const_pointer(boost::container::dtl::addressof(value));  }
 };

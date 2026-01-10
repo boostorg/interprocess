@@ -288,10 +288,12 @@ class cached_adaptive_pool
 
    //!Returns address of mutable object.
    //!Never throws
+   //!This function is deprecated and will be removed in the future
    pointer address(reference value) const;
 
    //!Returns address of non mutable object.
    //!Never throws
+   //!This function is deprecated and will be removed in the future
    const_pointer address(const_reference value) const;
 
    //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
@@ -310,6 +312,7 @@ class cached_adaptive_pool
    //!Returns maximum the number of objects the previously allocated memory
    //!pointed by p can hold. This size only works for memory allocated with
    //!allocate, allocation_command and allocate_many.
+   //!This function is deprecated and will be removed in the future
    size_type size(const pointer &p) const;
 
    pointer allocation_command(boost::interprocess::allocation_type command,
@@ -321,11 +324,13 @@ class cached_adaptive_pool
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. The elements must be deallocated
    //!with deallocate(...)
+   //!This function is deprecated and will be removed in the future
    void allocate_many(size_type elem_size, size_type num_elements, multiallocation_chain &chain);
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
    //!contiguous block
    //!of memory. The elements must be deallocated
+   //!This function is deprecated and will be removed in the future
    void allocate_many(const size_type *elem_sizes, size_type n_elements, multiallocation_chain &chain);
 
    //!Allocates many elements of size elem_size in a contiguous block
@@ -334,6 +339,7 @@ class cached_adaptive_pool
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. The elements must be deallocated
    //!with deallocate(...)
+   //!This function is deprecated and will be removed in the future
    void deallocate_many(multiallocation_chain &chain);
 
    //!Allocates just one object. Memory allocated with this function

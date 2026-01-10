@@ -6878,8 +6878,11 @@ thank them:
 * Changed the interface of [link managed_memory_segment_advanced_features.managed_memory_segment_multiple_allocations Multiple allocation functions]
   (still experimental and API/ABI unstable) to support alignment.
 
-Added `BOOST_HEADER_DEPRECATED` to `<boost/interprocess/containers/*.hpp> headers. They were deprecated several releases ago, but this
+* Added `BOOST_HEADER_DEPRECATED` to `<boost/interprocess/containers/*.hpp> headers. They were deprecated several releases ago, but this
   message will annoy existing users to switch to Boost.Container headers.
+
+* Deprecated `size()`, `allocate_many` and `deallocate_many`, `address` and `size` functions for allocators. They were not used in
+  Boost.Container and will be removed in the future.
 
 * Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/242 GitHub #242 (['"Cygwin compatibility issues"])].
