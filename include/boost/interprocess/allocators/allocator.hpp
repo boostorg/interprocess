@@ -284,7 +284,7 @@ class allocator
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
    void allocate_individual(size_type num_elements, multiallocation_chain &chain)
-   {  this->allocate_many(1, num_elements, chain); }
+   {  mp_mngr->allocate_many(sizeof(T), num_elements, boost::container::dtl::alignment_of<T>::value, chain);  }
 
    //!Deallocates memory previously allocated with allocate_one().
    //!You should never use deallocate_one to deallocate memory allocated
@@ -299,7 +299,7 @@ class allocator
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
    void deallocate_individual(multiallocation_chain &chain)
-   {  this->deallocate_many(chain); }
+   {  mp_mngr->deallocate_many(chain); }
 
    //!Returns address of mutable object.
    //!Never throws
