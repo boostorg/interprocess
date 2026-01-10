@@ -161,7 +161,7 @@ class allocator
       if(size_overflows<sizeof(T)>(count)){
          throw bad_alloc();
       }
-      return pointer(static_cast<value_type*>(mp_mngr->allocate(count*sizeof(T))));
+      return pointer(static_cast<value_type*>(mp_mngr->allocate_aligned(count*sizeof(T), boost::container::dtl::alignment_of<T>::value)));
    }
 
    //!Deallocates memory previously allocated.
@@ -242,7 +242,7 @@ class allocator
       if(size_overflows<sizeof(T)>(elem_size)){
          throw bad_alloc();
       }
-      mp_mngr->allocate_many(elem_size*sizeof(T), num_elements, chain);
+      mp_mngr->allocate_many(elem_size*sizeof(T), num_elements, boost::container::dtl::alignment_of<T>::value, chain);
    }
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
@@ -250,7 +250,7 @@ class allocator
    //!of memory. The elements must be deallocated
    void allocate_many(const size_type *elem_sizes, size_type n_elements, multiallocation_chain &chain)
    {
-      mp_mngr->allocate_many(elem_sizes, n_elements, sizeof(T), chain);
+      mp_mngr->allocate_many(elem_sizes, n_elements, sizeof(T), boost::container::dtl::alignment_of<T>::value, chain);
    }
 
    //!Allocates many elements of size elem_size in a contiguous block

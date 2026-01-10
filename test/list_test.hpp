@@ -98,7 +98,7 @@ int list_test (bool copied_allocators_equal = true)
 {
    typedef std::list<int> MyStdList;
    typedef typename MyShmList::value_type IntType;
-   const int Memsize = 128u * 1024u;
+   const int Memsize = 256u * 1024u;
    const char *const shMemName = test::get_process_id_name();
    const int max = 100;
    typedef push_data_function<DoublyLinked> push_data_t;
