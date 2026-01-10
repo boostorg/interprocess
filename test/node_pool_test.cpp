@@ -22,5 +22,11 @@ int main ()
    if(!test::test_all_node_pool<node_pool_t>())
       return 1;
 
+   typedef ipcdetail::shared_node_pool
+      <segment_manager_t, 4, 64> shared_node_pool_t;
+
+   if(!test::test_all_node_pool<shared_node_pool_t>())
+      return 1;
+
    return 0;
 }
