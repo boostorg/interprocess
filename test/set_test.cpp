@@ -10,16 +10,13 @@
 #include <set>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/container/set.hpp>
-#include <boost/container/map.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/indexes/map_index.hpp>
 #include <boost/interprocess/indexes/iset_index.hpp>
 #include <boost/interprocess/mem_algo/simple_seq_fit.hpp>
 #include "print_container.hpp"
 #include "movable_int.hpp"
-#include "dummy_test_allocator.hpp"
 #include "set_test.hpp"
-#include "map_test.hpp"
 #include "emplace_test.hpp"
 
 ///////////////////////////////////////////////////////////////////
@@ -43,30 +40,20 @@ typedef basic_managed_shared_memory
 //Alias an integer node allocator type
 typedef allocator<int, my_managed_shared_memory::segment_manager>
    shmem_allocator_t;
-typedef allocator<std::pair<const int, int>, my_managed_shared_memory::segment_manager>
-   shmem_node_pair_allocator_t;
 typedef allocator<test::movable_int, my_managed_shared_memory::segment_manager>
    shmem_movable_allocator_t;
-typedef allocator<std::pair<const test::movable_int, test::movable_int>, my_managed_shared_memory::segment_manager>
-   shmem_movable_node_pair_allocator_t;
 typedef allocator<test::movable_and_copyable_int, my_managed_shared_memory::segment_manager>
    shmem_move_copy_allocator_t;
 typedef allocator<test::copyable_int, my_managed_shared_memory::segment_manager>
    shmem_copy_allocator_t;
-typedef allocator<std::pair<const test::movable_and_copyable_int, test::movable_and_copyable_int>, my_managed_shared_memory::segment_manager>
-   shmem_move_copy_node_pair_allocator_t;
 
 //Alias standard types
 typedef std::set<int>                                          MyStdSet;
 typedef std::multiset<int>                                     MyStdMultiSet;
-typedef std::map<int, int>                                     MyStdMap;
-typedef std::multimap<int, int>                                MyStdMultiMap;
 
 //Alias non-movable types
 typedef boost::container::set<int, std::less<int>, shmem_allocator_t>       MyShmSet;
 typedef boost::container::multiset<int, std::less<int>, shmem_allocator_t>  MyShmMultiSet;
-typedef boost::container::map<int, int, std::less<int>, shmem_node_pair_allocator_t>  MyShmMap;
-typedef boost::container::multimap<int, int, std::less<int>, shmem_node_pair_allocator_t>  MyShmMultiMap;
 
 //Alias movable types
 typedef boost::container::set<test::movable_int, std::less<test::movable_int>
@@ -74,12 +61,6 @@ typedef boost::container::set<test::movable_int, std::less<test::movable_int>
 typedef boost::container::multiset<test::movable_int,
       std::less<test::movable_int>,
       shmem_movable_allocator_t>                          MyMovableShmMultiSet;
-typedef boost::container::map<test::movable_int, test::movable_int,
-      std::less<test::movable_int>,
-      shmem_movable_node_pair_allocator_t>                     MyMovableShmMap;
-typedef boost::container::multimap<test::movable_int, test::movable_int,
-      std::less<test::movable_int>,
-      shmem_movable_node_pair_allocator_t>                     MyMovableShmMultiMap;
 
 typedef boost::container::set<test::movable_and_copyable_int
            ,std::less<test::movable_and_copyable_int>
@@ -94,16 +75,6 @@ typedef boost::container::set<test::copyable_int
 typedef boost::container::multiset<test::copyable_int,
       std::less<test::copyable_int>,
       shmem_copy_allocator_t>                        MyCopyShmMultiSet;
-
-
-typedef boost::container::map<test::movable_and_copyable_int
-           ,test::movable_and_copyable_int
-           ,std::less<test::movable_and_copyable_int>
-           ,shmem_move_copy_node_pair_allocator_t>             MyMoveCopyShmMap;
-typedef boost::container::multimap<test::movable_and_copyable_int
-                ,test::movable_and_copyable_int
-                ,std::less<test::movable_and_copyable_int>
-                ,shmem_move_copy_node_pair_allocator_t>        MyMoveCopyShmMultiMap;
 
 int main ()
 {
@@ -149,47 +120,10 @@ int main ()
       return 1;
    }
 
-   if (0 != test::map_test<my_managed_shared_memory
-                  ,MyShmMap
-                  ,MyStdMap
-                  ,MyShmMultiMap
-                  ,MyStdMultiMap>()){
-      return 1;
-   }
-
-   if(0 != test::map_test_copyable<my_managed_shared_memory
-                        ,MyShmMap
-                        ,MyStdMap
-                        ,MyShmMultiMap
-                        ,MyStdMultiMap>()){
-      return 1;
-   }
-
-//   if (0 != test::map_test<my_managed_shared_memory
-//                  ,MyMovableShmMap
-//                  ,MyStdMap
-//                  ,MyMovableShmMultiMap
-//                  ,MyStdMultiMap>()){
-//      return 1;
-//   }
-
-   if (0 != test::map_test<my_managed_shared_memory
-                  ,MyMoveCopyShmMap
-                  ,MyStdMap
-                  ,MyMoveCopyShmMultiMap
-                  ,MyStdMultiMap>()){
-      return 1;
-   }
-
    const test::EmplaceOptions SetOptions = (test::EmplaceOptions)(test::EMPLACE_HINT | test::EMPLACE_ASSOC);
    if(!boost::interprocess::test::test_emplace<boost::container::set<test::EmplaceInt>, SetOptions>())
       return 1;
    if(!boost::interprocess::test::test_emplace<boost::container::multiset<test::EmplaceInt>, SetOptions>())
-      return 1;
-   const test::EmplaceOptions MapOptions = (test::EmplaceOptions)(test::EMPLACE_HINT_PAIR | test::EMPLACE_ASSOC_PAIR);
-   if(!boost::interprocess::test::test_emplace<boost::container::map<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
-      return 1;
-   if(!boost::interprocess::test::test_emplace<boost::container::multimap<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
       return 1;
 
    return 0;
