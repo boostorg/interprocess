@@ -73,9 +73,10 @@ class private_node_allocator_base
    typedef private_node_allocator_base
       < Version, T, SegmentManager, NodesPerBlock>       self_t;
    typedef ipcdetail::private_node_pool
-      <SegmentManager
-      , sizeof_value<T>::value
-      , NodesPerBlock
+         < SegmentManager
+         , sizeof_value<T>::value
+         , NodesPerBlock
+         , alignof_value<T>::value
       > node_pool_t;
 
    BOOST_INTERPROCESS_STATIC_ASSERT((Version <=2));
@@ -115,9 +116,10 @@ class private_node_allocator_base
    struct node_pool
    {
       typedef ipcdetail::private_node_pool
-      <SegmentManager
-      , sizeof_value<T>::value
-      , NodesPerBlock
+         < SegmentManager
+         , sizeof_value<T>::value
+         , NodesPerBlock
+         , alignof_value<T>::value
       > type;
 
       static type *get(void *p)

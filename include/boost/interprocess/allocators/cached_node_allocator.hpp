@@ -56,6 +56,7 @@ class cached_node_allocator_v1
             < SegmentManager
             , sizeof_value<T>::value
             , NodesPerBlock
+            , alignof_value<T>::value
             >
          , 1>
 {
@@ -67,6 +68,7 @@ class cached_node_allocator_v1
             < SegmentManager
             , sizeof_value<T>::value
             , NodesPerBlock
+            , alignof_value<T>::value
             >
          , 1> base_t;
    typedef uses_segment_manager<SegmentManager> uses_segment_manager_t;
@@ -77,7 +79,7 @@ class cached_node_allocator_v1
       typedef cached_node_allocator_v1
          <T2, SegmentManager, NodesPerBlock>  other;
    };
-
+               
    typedef typename base_t::size_type size_type;
 
    cached_node_allocator_v1(SegmentManager *segment_mngr,
@@ -122,6 +124,7 @@ class cached_node_allocator
             < SegmentManager
             , sizeof_value<T>::value
             , NodesPerBlock
+            , alignof_value<T>::value
             >
          , 2>
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
@@ -135,6 +138,7 @@ class cached_node_allocator
             < SegmentManager
             , sizeof_value<T>::value
             , NodesPerBlock
+            , alignof_value<T>::value
             >
          , 2> base_t;
 

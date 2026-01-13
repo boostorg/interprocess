@@ -62,21 +62,45 @@ struct sizeof_value<void>
 
 template <>
 struct sizeof_value<const void>
-{
-   static const std::size_t value = sizeof(void*);
-};
+   : sizeof_value<void>
+{};
 
 template <>
 struct sizeof_value<volatile void>
-{
-   static const std::size_t value = sizeof(void*);
-};
+   : sizeof_value<void>
+{};
 
 template <>
 struct sizeof_value<const volatile void>
+   : sizeof_value<void>
+{};
+
+template <class T>
+struct alignof_value
 {
-   static const std::size_t value = sizeof(void*);
+   static const std::size_t value = boost::container::dtl::alignment_of<T>::value;
 };
+
+template <>
+struct alignof_value<void>
+{
+   static const std::size_t value = boost::container::dtl::alignment_of<void*>::value;
+};
+
+template <>
+struct alignof_value<const void>
+   : alignof_value<void>
+{};
+
+template <>
+struct alignof_value<volatile void>
+   : alignof_value<void>
+{};
+
+template <>
+struct alignof_value<const volatile void>
+   : alignof_value<void>
+{};
 
 template<class SegmentManager>
 class uses_segment_manager
@@ -523,7 +547,7 @@ class node_pool_allocation_impl
       }
       else{
          return pointer(static_cast<value_type*>
-            (pool->get_segment_manager()->allocate(count*sizeof(T))));
+            (pool->get_segment_manager()->allocate_aligned(count*sizeof(T), boost::container::dtl::alignment_of<T>::value)));
       }
    }
 

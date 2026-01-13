@@ -78,7 +78,11 @@ class node_allocator_base
    struct node_pool
    {
       typedef ipcdetail::shared_node_pool
-      < SegmentManager, sizeof_value<T>::value, NodesPerBlock> type;
+         < SegmentManager
+         , sizeof_value<T>::value
+         , NodesPerBlock
+         , alignof_value<T>::value
+         > type;
 
       static type *get(void *p)
       {  return static_cast<type*>(p);  }
