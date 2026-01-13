@@ -739,7 +739,8 @@ class cached_allocator_impl
          ret = m_cache.cached_allocation();
       }
       else{
-         ret = this->get_segment_manager()->allocate(count*sizeof(T));
+         ret = this->get_segment_manager()->allocate_aligned
+                  (count*sizeof(T), boost::container::dtl::alignment_of<T>::value);
       }
       return pointer(static_cast<T*>(ret));
    }
