@@ -120,7 +120,7 @@ class allocator_v1
       }
       (void)hint;
       return pointer(static_cast<T*>
-         (mp_mngr->allocate_aligned(count*sizeof(T), , boost::container::dtl::alignment_of<T>::value)));
+         (mp_mngr->allocate_aligned(count*sizeof(T), boost::container::dtl::alignment_of<T>::value)));
    }
 
    //!Deallocates memory previously allocated. Never throws
