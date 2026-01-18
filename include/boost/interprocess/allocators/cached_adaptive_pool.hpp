@@ -56,6 +56,7 @@ class cached_adaptive_pool_v1
             , NodesPerBlock
             , MaxFreeBlocks
             , OverheadPercent
+            , alignof_value<T>::value
             >
          , 1>
 {
@@ -69,6 +70,7 @@ class cached_adaptive_pool_v1
             , NodesPerBlock
             , MaxFreeBlocks
             , OverheadPercent
+            , alignof_value<T>::value
             >
          , 1> base_t;
 
@@ -146,6 +148,7 @@ class cached_adaptive_pool
             , NodesPerBlock
             , MaxFreeBlocks
             , OverheadPercent
+            , alignof_value<T>::value
             >
          , 2>
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
@@ -161,6 +164,7 @@ class cached_adaptive_pool
             , NodesPerBlock
             , MaxFreeBlocks
             , OverheadPercent
+            , alignof_value<T>::value
             >
          , 2> base_t;
 

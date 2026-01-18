@@ -80,6 +80,7 @@ class private_adaptive_pool_base
       , NodesPerBlock
       , MaxFreeBlocks
       , OverheadPercent
+      , alignof_value<T>::value
       > node_pool_t;
 
    BOOST_INTERPROCESS_STATIC_ASSERT((Version <=2));
@@ -125,6 +126,7 @@ class private_adaptive_pool_base
       , NodesPerBlock
       , MaxFreeBlocks
       , OverheadPercent
+      , alignof_value<T>::value
       > type;
 
       static type *get(void *p)
