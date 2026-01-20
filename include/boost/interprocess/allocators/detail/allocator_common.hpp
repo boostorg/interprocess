@@ -533,9 +533,8 @@ class node_pool_allocation_impl
    //!Allocate memory for an array of count elements.
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    BOOST_INTERPROCESS_NODISCARD
-   pointer allocate(size_type count, cvoid_pointer hint = 0)
+   pointer allocate(size_type count)
    {
-      (void)hint;
       typedef typename node_pool<0>::type node_pool_t;
       node_pool_t *pool = node_pool<0>::get(this->derived()->get_node_pool());
       if(size_overflows<sizeof(T)>(count)){
@@ -728,9 +727,8 @@ class cached_allocator_impl
    //!Allocate memory for an array of count elements.
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    BOOST_INTERPROCESS_NODISCARD
-   pointer allocate(size_type count, cvoid_pointer hint = 0)
+   pointer allocate(size_type count)
    {
-      (void)hint;
       void * ret;
       if(size_overflows<sizeof(T)>(count)){
          throw bad_alloc();

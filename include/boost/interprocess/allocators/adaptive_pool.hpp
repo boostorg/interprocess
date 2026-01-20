@@ -415,7 +415,7 @@ class adaptive_pool
 
    //!Allocate memory for an array of count elements.
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
-   pointer allocate(size_type count, cvoid_pointer hint = 0);
+   pointer allocate(size_type count);
 
    //!Deallocate allocated memory.
    //!Never throws
