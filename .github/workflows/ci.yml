@@ -411,6 +411,12 @@ jobs:
               - clang-20
               - libc++-20-dev
               - libc++abi-20-dev
+          # Linux, ARM64
+          - toolset: gcc
+            cxxstd: "03,11,14,17,20,2b"
+            cxxflags: -pipe
+            os: ubuntu-24.04-arm
+            install: g++
           #------------------
           # MacOS, clang
           #------------------
@@ -687,6 +693,19 @@ jobs:
             cxxstd: "03,11,14,17,2a"
             addrmd: 64
             os: windows-2025
+          - toolset: msvc-14.5
+            cxxstd: "14,17,20,latest"
+            addrmd: 32
+            os: windows-2025-vs2026
+          - toolset: msvc-14.5
+            cxxstd: "14,17,20,latest"
+            addrmd: 64
+            os: windows-2025-vs2026
+         #Now ARM version
+          - toolset: msvc-14.3
+            cxxstd: "14,17,20,latest"
+            addrmd: 64
+            os: windows-11-arm
 
     timeout-minutes: 240
     runs-on: ${{matrix.os}}
