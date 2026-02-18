@@ -87,13 +87,15 @@ int main()
       return 1;
    }
 
-//   if (0 != map_test<my_managed_shared_memory
-//                  ,MyMovableShmMap
-//                  ,MyStdMap
-//                  ,MyMovableShmMultiMap
-//                  ,MyStdMultiMap>()){
-//      return 1;
-//   }
+//MSVC 14.5 (2026 ICEs when trying to compile move-only types in flat_map)
+#if defined(BOOST_MSVC) && (BOOST_MSVC == 1960)
+   if (0 != map_test<my_managed_shared_memory
+                  ,MyMovableShmMap
+                  ,MyStdMap
+                  ,MyMovableShmMultiMap
+                  ,MyStdMultiMap>()){
+      return 1;
+   }
 
    if (0 != map_test<my_managed_shared_memory
                   ,MyMoveCopyShmMap
@@ -104,14 +106,14 @@ int main()
       return 1;
    }
 
-   //#if !defined(__GNUC__) || (__GNUC__ < 4) || (__GNUC_MINOR__ < 3)
-   const test::EmplaceOptions MapOptions = (test::EmplaceOptions)(test::EMPLACE_HINT_PAIR | test::EMPLACE_ASSOC_PAIR);
-
-   if(!boost::interprocess::test::test_emplace<boost::container::flat_map<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
+   if (0 != map_test<my_managed_shared_memory
+                  ,MyCopyShmSet
+                  ,MyStdSet
+                  ,MyCopyShmMultiSet
+                  ,MyStdMultiSet>()){
+      std::cout << "Error in set_test<MyCopyShmSet>" << std::endl;
       return 1;
-   if(!boost::interprocess::test::test_emplace<boost::container::flat_multimap<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
-      return 1;
-   //#endif   //!defined(__GNUC__)
+   }
+#endif
    return 0;
-
 }

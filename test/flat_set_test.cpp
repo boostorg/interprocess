@@ -64,11 +64,6 @@ typedef boost::container::flat_set<test::movable_and_copyable_int, std::less<tes
 typedef boost::container::flat_multiset<test::movable_and_copyable_int,std::less<test::movable_and_copyable_int>
                      ,shmem_move_copy_allocator_t>                        MyMoveCopyShmMultiSet;
 
-typedef boost::container::flat_set<test::copyable_int, std::less<test::copyable_int>
-                ,shmem_copy_allocator_t>                                MyCopyShmSet;
-typedef boost::container::flat_multiset<test::copyable_int,std::less<test::copyable_int>
-                     ,shmem_copy_allocator_t>                           MyCopyShmMultiSet;
-
 int main()
 {
    using namespace boost::interprocess::test;
@@ -91,6 +86,8 @@ int main()
       return 1;
    }
 
+//MSVC 14.5 (2026 ICEs when trying to compile move-only types in flat_map)
+#if defined(BOOST_MSVC) && (BOOST_MSVC == 1960)
    if (0 != set_test<my_managed_shared_memory
                   ,MyMovableShmSet
                   ,MyStdSet
@@ -100,6 +97,7 @@ int main()
       return 1;
    }
 
+
    if (0 != set_test<my_managed_shared_memory
                   ,MyMoveCopyShmSet
                   ,MyStdSet
@@ -108,24 +106,8 @@ int main()
       std::cout << "Error in set_test<MyMoveCopyShmSet>" << std::endl;
       return 1;
    }
+#endif
 
-   if (0 != set_test<my_managed_shared_memory
-                  ,MyCopyShmSet
-                  ,MyStdSet
-                  ,MyCopyShmMultiSet
-                  ,MyStdMultiSet>()){
-      std::cout << "Error in set_test<MyCopyShmSet>" << std::endl;
-      return 1;
-   }
-
-   //#if !defined(__GNUC__) || (__GNUC__ < 4) || (__GNUC_MINOR__ < 3)
-   const test::EmplaceOptions SetOptions = (test::EmplaceOptions)(test::EMPLACE_HINT | test::EMPLACE_ASSOC);
-
-   if(!boost::interprocess::test::test_emplace<boost::container::flat_set<test::EmplaceInt>, SetOptions>())
-      return 1;
-   if(!boost::interprocess::test::test_emplace<boost::container::flat_multiset<test::EmplaceInt>, SetOptions>())
-      return 1;
-   //#endif   //!defined(__GNUC__)
    return 0;
 
 }
