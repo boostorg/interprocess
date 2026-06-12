@@ -680,11 +680,11 @@ jobs:
           - toolset: msvc-14.3
             cxxstd: "14,17,20,latest"
             addrmd: 32
-            os: windows-2025
+            os: windows-2022
           - toolset: msvc-14.3
             cxxstd: "14,17,20,latest"
             addrmd: 64
-            os: windows-2025
+            os: windows-2022
           - toolset: clang-win
             cxxstd: "14,17,latest"
             addrmd: 64
@@ -696,11 +696,11 @@ jobs:
           - toolset: msvc-14.5
             cxxstd: "14,17,20,latest"
             addrmd: 32
-            os: windows-2025-vs2026
+            os: windows-2025
           - toolset: msvc-14.5
             cxxstd: "14,17,20,latest"
             addrmd: 64
-            os: windows-2025-vs2026
+            os: windows-2025
          #Now ARM version
           - toolset: msvc-14.3
             cxxstd: "14,17,20,latest"
