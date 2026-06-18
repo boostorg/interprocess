@@ -137,27 +137,35 @@ jobs:
             cxxstd: "03,11,14,17,20,23,2c"
             cxxflags: -pipe
             os: ubuntu-latest
-            container: ubuntu:25.04
+            container: ubuntu:26.04
             install: g++-15-multilib
             address-model: 32,64
-          # Linux, gcc-15, ubsan
+          # Linux, gcc-16
+          - toolset: gcc-16
+            cxxstd: "03,11,14,17,20,23,2c"
+            cxxflags: -pipe
+            os: ubuntu-latest
+            container: ubuntu:26.04
+            install: g++-16-multilib
+            address-model: 32,64
+          # Linux, gcc-16, ubsan
           - name: UBSAN
-            toolset: gcc-15
+            toolset: gcc-16
             cxxstd: "03,11,14,17,20,23"
             cxxflags: -pipe
             ubsan: 1
             os: ubuntu-latest
-            container: ubuntu:25.04
-            install: g++-15
-          # Linux, gcc-15, asan
+            container: ubuntu:26.04
+            install: g++-16
+          # Linux, gcc-16, asan
           - name: ASAN
-            toolset: gcc-15
+            toolset: gcc-16
             cxxstd: "03,11,14,17,20,23"
             cxxflags: -pipe
             asan: 1
             os: ubuntu-latest
-            container: ubuntu:25.04
-            install: g++-15
+            container: ubuntu:26.04
+            install: g++-16
           #------------------
           # Linux, clang
           #------------------
@@ -344,9 +352,25 @@ jobs:
             compiler: clang++-20
             cxxstd: "03,11,14,17,20,23,2c"
             cxxflags: -pipe
-            container: ubuntu:25.04
+            container: ubuntu:26.04
             os: ubuntu-latest
             install: clang-20
+          # Linux, clang-21
+          - toolset: clang
+            compiler: clang++-21
+            cxxstd: "03,11,14,17,20,23,2c"
+            cxxflags: -pipe
+            container: ubuntu:26.04
+            os: ubuntu-latest
+            install: clang-21
+          # Linux, clang-22
+          - toolset: clang
+            compiler: clang++-22
+            cxxstd: "03,11,14,17,20,23,2c"
+            cxxflags: -pipe
+            container: ubuntu:26.04
+            os: ubuntu-latest
+            install: clang-22
           # Linux, clang-15 libc++
           - toolset: clang
             compiler: clang++-15
@@ -376,7 +400,7 @@ jobs:
             compiler: clang++-20
             cxxstd: "11,14,17,20,23,2c"
             os: ubuntu-latest
-            container: ubuntu:25.04
+            container: ubuntu:26.04
             install:
               - clang-20
               - libc++-20-dev
@@ -392,7 +416,7 @@ jobs:
             linkflags: -stdlib=libc++
             ubsan: 1
             os: ubuntu-latest
-            container: ubuntu:25.04
+            container: ubuntu:26.04
             install:
               - clang-20
               - libc++-20-dev
@@ -406,17 +430,23 @@ jobs:
             linkflags: -stdlib=libc++
             asan: 1
             os: ubuntu-latest
-            container: ubuntu:25.04
+            container: ubuntu:26.04
             install:
               - clang-20
               - libc++-20-dev
               - libc++abi-20-dev
-          # Linux, ARM64
+          # Linux, ARM64 GCC
           - toolset: gcc
             cxxstd: "03,11,14,17,20,2b"
             cxxflags: -pipe
             os: ubuntu-24.04-arm
             install: g++
+          # Linux, ARM64 Clang
+          - toolset: clang
+            cxxstd: "03,11,14,17,20,2b"
+            cxxflags: -pipe
+            os: ubuntu-24.04-arm
+            install: clang
           #------------------
           # MacOS, clang
           #------------------
@@ -919,9 +949,9 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Test on ${{matrix.vm}}
-        uses: cross-platform-actions/action@v0.30.0
+        uses: cross-platform-actions/action@v1.2.0
         with:
           operating_system: ${{matrix.vm}}
           version: ${{matrix.bsd_version}}
@@ -1075,9 +1105,6 @@ jobs:
             B2_ARGS+=("libs/$LIBRARY/test")
             ./b2 "${B2_ARGS[@]}"
 
-            B2_ARGS+=("libs/$LIBRARY/test")
-            ./b2 "${B2_ARGS[@]}"
-
 
   docs:
     defaults:
@@ -1096,7 +1123,7 @@ jobs:
     container: ${{matrix.container}}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 3
 
