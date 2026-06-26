@@ -6858,7 +6858,9 @@ thank them:
 [section:release_notes_boost_1_92_00 Boost 1.92 Release]
 
 * Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/pull/280   GitHub #280 (['"AIX build fix: Fix return type in get_invalid_systemwide_thread_id"])].
    * [@https://github.com/boostorg/interprocess/issues/281 GitHub #281 (['"Locks in message_queue_t cover more code than intended?"])].
+
 
 [endsect]
 
