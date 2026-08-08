@@ -179,7 +179,14 @@ void lock_and_sleep(void *arg, M &sm)
 {
    data<M> *pdata = static_cast<data<M>*>(arg);
    boost::interprocess::scoped_lock<M> l(sm);
-   if(pdata->m_msecs){
+   //Announce the lock is owned, so that the launcher does not need to guess it
+   //with a sleep, which is unreliable under heavy CPU load
+   pdata->m_acquired.signal();
+   if(pdata->m_block){
+      //Keep the lock until the test says otherwise
+      BOOST_INTERPROCESS_CHECK(pdata->m_release.wait());
+   }
+   else if(pdata->m_msecs){
       boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(pdata->m_msecs));
    }
    else{
@@ -210,7 +217,14 @@ void try_lock_and_sleep(void *arg, M &sm)
    data<M> *pdata = static_cast<data<M>*>(arg);
    boost::interprocess::scoped_lock<M> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
-      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(2*BaseMs));
+      pdata->m_acquired.signal();
+      if(pdata->m_block){
+         //Keep the lock until the test says otherwise
+         BOOST_INTERPROCESS_CHECK(pdata->m_release.wait());
+      }
+      else{
+         boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(2*BaseMs));
+      }
       ++shared_val;
       pdata->m_value = shared_val;
    }
@@ -242,7 +256,14 @@ void timed_lock_and_sleep(void *arg, M &sm)
    }
 
    if (r){
-      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(2*BaseMs));
+      pdata->m_acquired.signal();
+      if(pdata->m_block){
+         //Keep the lock until the test says otherwise
+         BOOST_INTERPROCESS_CHECK(pdata->m_release.wait());
+      }
+      else{
+         boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(2*BaseMs));
+      }
       ++shared_val;
       pdata->m_value = shared_val;
    }
@@ -262,8 +283,9 @@ void test_mutex_lock()
    boost::interprocess::ipcdetail::OS_thread_t tm1;
    boost::interprocess::ipcdetail::thread_launch(tm1, thread_adapter<M>(&lock_and_sleep, &d1, mtx));
 
-   //Wait 1*BaseMs
-   boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs));
+   //Wait until tm1 really owns the lock, so that the order in which both
+   //threads take it is guaranteed no matter how loaded the machine is
+   BOOST_INTERPROCESS_CHECK(d1.m_acquired.wait());
 
    // Locker two launches, but it won't hold the lock for 2*BaseMs seconds.
    boost::interprocess::ipcdetail::OS_thread_t tm2;
@@ -286,22 +308,25 @@ void test_mutex_lock_timeout()
 
    unsigned wait_time_ms = BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS;
 
-   data<M> d1(1, (int)wait_time_ms * 3);
+   //tm1 keeps the lock until tm2 is done, so that tm2 provably tries to lock
+   //an owned mutex and the library timeout is what makes it fail
+   data<M> d1(1, 0, 0, true);
    data<M> d2(2, (int)wait_time_ms * 1);
 
-   // Locker one launches, and holds the lock for wait_time_ms * 3.
+   // Locker one launches, and holds the lock until released.
    boost::interprocess::ipcdetail::OS_thread_t tm1;
    boost::interprocess::ipcdetail::thread_launch(tm1, thread_adapter<M>(&lock_and_sleep, &d1, mtx));
 
-   //Wait until tm1 acquires the lock
-   boost::interprocess::ipcdetail::thread_sleep_ms(wait_time_ms);
+   //Wait until tm1 really owns the lock
+   BOOST_INTERPROCESS_CHECK(d1.m_acquired.wait());
 
-   // Locker two launches, and attempts to hold the lock for wait_time_ms * 2.
+   // Locker two launches, and should fail to lock after the library timeout.
    boost::interprocess::ipcdetail::OS_thread_t tm2;
    boost::interprocess::ipcdetail::thread_launch(tm2, thread_adapter<M>(&lock_and_catch_errors, &d2, mtx));
 
-   //Wait completion
+   //Wait completion. Only once tm2 is done the lock can be released
    boost::interprocess::ipcdetail::thread_join(tm2);
+   d1.m_release.signal();
    boost::interprocess::ipcdetail::thread_join(tm1);
 
    BOOST_INTERPROCESS_CHECK(d1.m_value == 1);
@@ -317,23 +342,26 @@ void test_mutex_try_lock()
 
    M mtx;
 
-   data<M> d1(1);
+   //tm1 keeps the lock until tm2 is done, so that tm2 provably tries to lock
+   //an owned mutex instead of relying on tm1 still sleeping by then
+   data<M> d1(1, 0, 0, true);
    data<M> d2(2);
 
-   // Locker one launches, holds the lock for 2*BaseMs seconds.
+   // Locker one launches, holds the lock until released.
    boost::interprocess::ipcdetail::OS_thread_t tm1;
    boost::interprocess::ipcdetail::thread_launch(tm1, thread_adapter<M>(&try_lock_and_sleep, &d1, mtx));
 
-   //Wait 1*BaseMs
-   boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs));
+   //Wait until tm1 really owns the lock
+   BOOST_INTERPROCESS_CHECK(d1.m_acquired.wait());
 
    // Locker two launches, but it should fail acquiring the lock
    boost::interprocess::ipcdetail::OS_thread_t tm2;
    boost::interprocess::ipcdetail::thread_launch(tm2, thread_adapter<M>(&try_lock_and_sleep, &d2, mtx));
 
-   //Wait completion
-   boost::interprocess::ipcdetail::thread_join(tm1);
+   //Wait completion. Only once tm2 is done the lock can be released
    boost::interprocess::ipcdetail::thread_join(tm2);
+   d1.m_release.signal();
+   boost::interprocess::ipcdetail::thread_join(tm1);
 
    //Only the first should succeed locking
    BOOST_INTERPROCESS_CHECK(d1.m_value == 1);
@@ -350,15 +378,19 @@ void test_mutex_timed_lock()
 
       M mtx, m2;
 
+      //tm1 keeps the lock for 2*BaseMs once acquired. Both lockers must succeed
+      //here, so tm2 gets a timeout with a wide margin over that hold time: a
+      //loaded machine must not be able to make the timeout expire
       data<M> d1(1, 2*BaseMs, flag);
-      data<M> d2(2, 2*BaseMs, flag);
+      data<M> d2(2, 8*BaseMs, flag);
 
       // Locker one launches, holds the lock for 2*BaseMs seconds.
       boost::interprocess::ipcdetail::OS_thread_t tm1;
       boost::interprocess::ipcdetail::thread_launch(tm1, thread_adapter<M>(&timed_lock_and_sleep, &d1, mtx));
 
-      //Wait 1*BaseMs
-      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs));
+      //Wait until tm1 really owns the lock, so that the order in which both
+      //threads take it is guaranteed no matter how loaded the machine is
+      BOOST_INTERPROCESS_CHECK(d1.m_acquired.wait());
 
       // Locker two launches, holds the lock for 2*BaseMs seconds.
       boost::interprocess::ipcdetail::OS_thread_t tm2;

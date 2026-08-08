@@ -24,7 +24,10 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
+#include <boost/interprocess/detail/atomic.hpp>
+#include <boost/interprocess/sync/spin/wait.hpp>
 #include <boost/interprocess/timed_utils.hpp>
+#include <boost/cstdint.hpp>
 
 #if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic push
@@ -135,6 +138,60 @@ inline boost::posix_time::time_duration ptime_ms(unsigned msecs)
    {  return usduration_from_milliseconds(msecs); }
 #endif
 
+// test_event
+
+//!Upper bound used by test_event::wait() so that a broken test fails instead
+//!of hanging forever. It is deliberately much larger than any legitimate wait,
+//!as it must never trigger on a heavily loaded but otherwise working machine.
+static const unsigned WatchdogMs = 120u*1000u;
+
+//!A one-shot event flag used to synchronize test threads.
+//!
+//!Sleeping for a while to "make sure" that another thread has already reached
+//!a given state (e.g. that it owns a mutex) is not a synchronization method:
+//!under heavy CPU load (specially on shared cloud CPUs) a thread can be
+//!descheduled for an arbitrarily long time, so the assumed ordering can be
+//!inverted and the test fails without anything being broken.
+//!
+//!Threads signal the state they reached and their peers wait for it, which
+//!makes the ordering deterministic no matter how loaded the machine is.
+//!Both sides live in the same process, so a plain atomic flag is enough.
+class test_event
+{
+   public:
+   test_event() : m_signaled(0u) {}
+
+   //!Announces that the awaited state has been reached
+   void signal()
+   {  ipcdetail::atomic_write32(&m_signaled, 1u);  }
+
+   bool signaled()
+   {  return 0u != ipcdetail::atomic_read32(&m_signaled);  }
+
+   //!Waits until the event is signaled. Returns false if the watchdog expires,
+   //!so that a broken test fails instead of hanging forever. The watchdog is
+   //!not a test deadline: it must stay generous enough to never trigger on a
+   //!loaded but working machine.
+   bool wait(unsigned timeout_ms = WatchdogMs)
+   {
+      const ustime deadline = ustime_delay_milliseconds(timeout_ms);
+      spin_wait swait;
+      while(!this->signaled()){
+         if(ustime(ipcdetail::universal_time_u64_us()) > deadline){
+            return false;
+         }
+         swait.yield();
+      }
+      return true;
+   }
+
+   private:
+   test_event(const test_event &);
+   test_event &operator=(const test_event &);
+
+   volatile boost::uint32_t m_signaled;
+};
+
 // thread_adapter + data
 
 template <typename P>
@@ -163,7 +220,14 @@ struct data
    int            m_msecs;
    error_code_t   m_error;
    int            m_flags;
+   //!When true, the thread keeps the lock until m_release is signaled, instead
+   //!of holding it for a fixed amount of time. This lets a test guarantee that
+   //!a peer operation really happens while the lock is taken.
    bool           m_block;
+   //!Signaled by the thread once it owns the lock
+   test_event     m_acquired;
+   //!Signaled by the test to let a m_block thread release the lock
+   test_event     m_release;
 };
 
 int shared_val = 0;
