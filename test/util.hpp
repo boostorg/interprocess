@@ -224,6 +224,11 @@ struct data
    //!of holding it for a fixed amount of time. This lets a test guarantee that
    //!a peer operation really happens while the lock is taken.
    bool           m_block;
+   //!Signaled by the thread just before it starts locking. Waiting for it does
+   //!not prove the thread is already blocked on the lock, but it does remove
+   //!the unbounded part of that wait (creating and scheduling the thread),
+   //!which is what a sleep can't cope with on a loaded machine
+   test_event     m_locking;
    //!Signaled by the thread once it owns the lock
    test_event     m_acquired;
    //!Signaled by the test to let a m_block thread release the lock

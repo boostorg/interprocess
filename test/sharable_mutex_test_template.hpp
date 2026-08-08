@@ -54,6 +54,7 @@ template<typename SM>
 void plain_exclusive(void *arg, SM &sm)
 {
    data<SM> *pdata = static_cast<data<SM>*>(arg);
+   pdata->m_locking.signal();
    boost::interprocess::scoped_lock<SM> l(sm);
    hold_lock(pdata, unsigned(3*BaseMs));
    shared_val += 10;
@@ -111,15 +112,19 @@ void test_plain_sharable_mutex()
       //the first writer no matter how loaded the machine is
       BOOST_INTERPROCESS_CHECK(e1.m_acquired.wait());
 
-      // Writer two launches, tries to grab the lock, "clearly"
-      //  after Writer one will already be holding it.
+      // Writer two launches and tries to grab the lock, which writer one
+      //  is already holding.
       boost::interprocess::ipcdetail::OS_thread_t tw2;
       boost::interprocess::ipcdetail::thread_launch(tw2, thread_adapter<SM>(plain_exclusive, &e2, mtx));
 
-      boost::interprocess::ipcdetail::thread_sleep_ms(unsigned(1*BaseMs));
+      // Wait until writer two is about to lock, so that the readers below
+      //  arrive with a writer already queued. This only shapes the scenario,
+      //  no check depends on it: e2 is the only other writer, so it ends up
+      //  with the value 20 whatever the order turns out to be.
+      BOOST_INTERPROCESS_CHECK(e2.m_locking.wait());
 
-      // Readers launche, "clearly" after writer two, and "clearly"
-      //   while writer 1 still holds the lock
+      // Readers launch, after writer two, and while writer 1 still holds
+      //   the lock
       boost::interprocess::ipcdetail::OS_thread_t thr1;
       boost::interprocess::ipcdetail::thread_launch(thr1, thread_adapter<SM>(plain_shared,&s1, mtx));
       boost::interprocess::ipcdetail::OS_thread_t thr2;
