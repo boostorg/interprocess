@@ -29,7 +29,7 @@ struct condition_deleter
    ~condition_deleter()
    {
       if(name.empty())
-         NamedCondition::remove(test::add_to_process_id_name("named_condition"));
+         NamedCondition::remove(test::add_to_process_id_name("nmcnd"));
       else
          NamedCondition::remove(name.c_str());
    }
@@ -45,7 +45,7 @@ struct condition_deleter_w
    ~condition_deleter_w()
    {
       if(name.empty())
-         NamedCondition::remove(test::add_to_process_id_name(L"named_condition"));
+         NamedCondition::remove(test::add_to_process_id_name(L"nmcnd"));
       else
          NamedCondition::remove(name.c_str());
    }
@@ -67,9 +67,9 @@ class named_condition_test_wrapper
 
    named_condition_test_wrapper()
       :  NamedCondition(open_or_create,
-             (test::add_to_process_id_name("test_cond") + num_to_string(count)).c_str())
+             (test::add_to_process_id_name("tcnd") + num_to_string(count)).c_str())
    {
-      condition_deleter<NamedCondition>::name += test::add_to_process_id_name("test_cond");
+      condition_deleter<NamedCondition>::name += test::add_to_process_id_name("tcnd");
       condition_deleter<NamedCondition>::name += num_to_string(count);
       ++count;
    }
@@ -134,15 +134,15 @@ class named_condition_creation_test_wrapper
 {
    public:
    named_condition_creation_test_wrapper(create_only_t)
-      :  NamedCondition(create_only, test::add_to_process_id_name("named_condition"))
+      :  NamedCondition(create_only, test::add_to_process_id_name("nmcnd"))
    {  ++count_;   }
 
    named_condition_creation_test_wrapper(open_only_t)
-      :  NamedCondition(open_only, test::add_to_process_id_name("named_condition"))
+      :  NamedCondition(open_only, test::add_to_process_id_name("nmcnd"))
    {  ++count_;   }
 
    named_condition_creation_test_wrapper(open_or_create_t)
-      :  NamedCondition(open_or_create, test::add_to_process_id_name("named_condition"))
+      :  NamedCondition(open_or_create, test::add_to_process_id_name("nmcnd"))
    {  ++count_;   }
 
    ~named_condition_creation_test_wrapper()   {
@@ -167,15 +167,15 @@ class named_condition_creation_test_wrapper_w
 {
    public:
    named_condition_creation_test_wrapper_w(create_only_t)
-      :  NamedCondition(create_only, test::add_to_process_id_name(L"named_condition"))
+      :  NamedCondition(create_only, test::add_to_process_id_name(L"nmcnd"))
    {  ++count_;   }
 
    named_condition_creation_test_wrapper_w(open_only_t)
-      :  NamedCondition(open_only, test::add_to_process_id_name(L"named_condition"))
+      :  NamedCondition(open_only, test::add_to_process_id_name(L"nmcnd"))
    {  ++count_;   }
 
    named_condition_creation_test_wrapper_w(open_or_create_t)
-      :  NamedCondition(open_or_create, test::add_to_process_id_name(L"named_condition"))
+      :  NamedCondition(open_or_create, test::add_to_process_id_name(L"nmcnd"))
    {  ++count_;   }
 
    ~named_condition_creation_test_wrapper_w()   {
@@ -200,7 +200,7 @@ struct mutex_deleter
    ~mutex_deleter()
    {
       if(name.empty())
-         NamedMutex::remove(test::add_to_process_id_name("named_mutex"));
+         NamedMutex::remove(test::add_to_process_id_name("nmmtx"));
       else
          NamedMutex::remove(name.c_str());
    }
@@ -215,9 +215,9 @@ class named_mutex_test_wrapper
    public:
    named_mutex_test_wrapper()
       :  NamedMutex(open_or_create,
-             (test::add_to_process_id_name("test_mutex") + num_to_string(count)).c_str())
+             (test::add_to_process_id_name("tmtx") + num_to_string(count)).c_str())
    {
-      mutex_deleter<NamedMutex>::name += test::add_to_process_id_name("test_mutex");
+      mutex_deleter<NamedMutex>::name += test::add_to_process_id_name("tmtx");
       mutex_deleter<NamedMutex>::name += num_to_string(count);
       ++count;
    }
@@ -242,20 +242,20 @@ int test_named_condition()
    int ret = 0;
    BOOST_INTERPROCESS_TRY{
       //Remove previous mutexes and conditions
-      NamedMutex::remove(test::add_to_process_id_name("test_mutex0"));
-      NamedCondition::remove(test::add_to_process_id_name("test_cond0"));
-      NamedCondition::remove(test::add_to_process_id_name("test_cond1"));
-      NamedCondition::remove(test::add_to_process_id_name("named_condition"));
-      NamedMutex::remove(test::add_to_process_id_name("named_mutex"));
+      NamedMutex::remove(test::add_to_process_id_name("tmtx0"));
+      NamedCondition::remove(test::add_to_process_id_name("tcnd0"));
+      NamedCondition::remove(test::add_to_process_id_name("tcnd1"));
+      NamedCondition::remove(test::add_to_process_id_name("nmcnd"));
+      NamedMutex::remove(test::add_to_process_id_name("nmmtx"));
 
       test::test_named_creation<test::named_condition_creation_test_wrapper<NamedCondition> >();
       #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
       //Remove previous mutexes and conditions
-      NamedMutex::remove(test::add_to_process_id_name("test_mutex0"));
-      NamedCondition::remove(test::add_to_process_id_name("test_cond0"));
-      NamedCondition::remove(test::add_to_process_id_name("test_cond1"));
-      NamedCondition::remove(test::add_to_process_id_name("named_condition"));
-      NamedMutex::remove(test::add_to_process_id_name("named_mutex"));
+      NamedMutex::remove(test::add_to_process_id_name("tmtx0"));
+      NamedCondition::remove(test::add_to_process_id_name("tcnd0"));
+      NamedCondition::remove(test::add_to_process_id_name("tcnd1"));
+      NamedCondition::remove(test::add_to_process_id_name("nmcnd"));
+      NamedMutex::remove(test::add_to_process_id_name("nmmtx"));
       test::test_named_creation<test::named_condition_creation_test_wrapper_w<NamedCondition> >();
       #endif
       test::do_test_condition<test::named_condition_test_wrapper<NamedCondition>
@@ -265,11 +265,11 @@ int test_named_condition()
       std::cout << ex.what() << std::endl;
       ret = 1;
    } BOOST_INTERPROCESS_CATCH_END
-   NamedMutex::remove(test::add_to_process_id_name("test_mutex0"));
-   NamedCondition::remove(test::add_to_process_id_name("test_cond0"));
-   NamedCondition::remove(test::add_to_process_id_name("test_cond1"));
-   NamedCondition::remove(test::add_to_process_id_name("named_condition"));
-   NamedMutex::remove(test::add_to_process_id_name("named_mutex"));
+   NamedMutex::remove(test::add_to_process_id_name("tmtx0"));
+   NamedCondition::remove(test::add_to_process_id_name("tcnd0"));
+   NamedCondition::remove(test::add_to_process_id_name("tcnd1"));
+   NamedCondition::remove(test::add_to_process_id_name("nmcnd"));
+   NamedMutex::remove(test::add_to_process_id_name("nmmtx"));
    return ret;
 }
 

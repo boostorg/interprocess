@@ -15,6 +15,7 @@
 #include <string>    //std::string
 #include <sstream>   //std::stringstream
 #include <ctime>     //std::time
+#include <cstddef>   //std::size_t
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 
@@ -33,12 +34,17 @@ inline long get_process_unique_stamp()
    return stamp;
 }
 
+//Create short names since some OSes have a tight limit on the length of names
+//for shared resources (e.g. MacOs rejects names longer than 31 chars, and the
+//leading '/' that POSIX named semaphores need counts towards that limit).
+//Values are written in hexadecimal and without separators, as that is
+//noticeably shorter than decimal: the timestamp goes from 10 to 8 chars and a
+//pointer avoids the "0x" prefix that streams add for pointer types.
 inline void get_process_id_name(std::string &str)
 {
-   //Create a short name since some OSes have a limit on the length
-   //of names for shared resources like shared memory (e.g. 31 chars MacOs)
    std::stringstream sstr;
-   sstr << "bip" << boost::interprocess::ipcdetail::get_current_process_id()
+   sstr << "bip" << std::hex
+        << boost::interprocess::ipcdetail::get_current_process_id()
         << get_process_unique_stamp() << std::ends;
    str = sstr.str().c_str();
 }
@@ -46,8 +52,10 @@ inline void get_process_id_name(std::string &str)
 inline void get_process_id_ptr_name(std::string &str, const void *ptr)
 {
    std::stringstream sstr;
-   sstr << "process_" << boost::interprocess::ipcdetail::get_current_process_id()
-        << "_" << get_process_unique_stamp() << "_" << ptr << std::ends;
+   sstr << "bip" << std::hex
+        << boost::interprocess::ipcdetail::get_current_process_id()
+        << get_process_unique_stamp()
+        << reinterpret_cast<std::size_t>(ptr) << std::ends;
    str = sstr.str().c_str();
 }
 
@@ -108,7 +116,8 @@ namespace test {
 inline void get_process_id_wname(std::wstring &str)
 {
    std::wstringstream sstr;
-   sstr << L"bip" << boost::interprocess::ipcdetail::get_current_process_id()
+   sstr << L"bip" << std::hex
+        << boost::interprocess::ipcdetail::get_current_process_id()
         << get_process_unique_stamp() << std::ends;
    str = sstr.str().c_str();
 }
