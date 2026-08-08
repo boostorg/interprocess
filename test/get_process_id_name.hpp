@@ -35,6 +35,8 @@ inline long get_process_unique_stamp()
 
 inline void get_process_id_name(std::string &str)
 {
+   //Create a short name since some OSes have a limit on the length
+   //of names for shared resources like shared memory (e.g. 31 chars MacOs)
    std::stringstream sstr;
    sstr << "bip" << boost::interprocess::ipcdetail::get_current_process_id()
         << get_process_unique_stamp() << std::ends;
@@ -106,8 +108,8 @@ namespace test {
 inline void get_process_id_wname(std::wstring &str)
 {
    std::wstringstream sstr;
-   sstr << L"process_" << boost::interprocess::ipcdetail::get_current_process_id()
-        << L"_" << get_process_unique_stamp() << std::ends;
+   sstr << L"bip" << boost::interprocess::ipcdetail::get_current_process_id()
+        << get_process_unique_stamp() << std::ends;
    str = sstr.str().c_str();
 }
 
