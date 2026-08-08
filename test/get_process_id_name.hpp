@@ -36,8 +36,8 @@ inline long get_process_unique_stamp()
 inline void get_process_id_name(std::string &str)
 {
    std::stringstream sstr;
-   sstr << "process_" << boost::interprocess::ipcdetail::get_current_process_id()
-        << "_" << get_process_unique_stamp() << std::ends;
+   sstr << "bip" << boost::interprocess::ipcdetail::get_current_process_id()
+        << get_process_unique_stamp() << std::ends;
    str = sstr.str().c_str();
 }
 
