@@ -1328,6 +1328,31 @@ inline bool unlink_file(const CharT *filename)
          //(to exclude concurrent threads) should be enough
          const std::size_t RenNameNumChars =
             std::size_t(BootAndSystemstampLength + sizeof(unsigned long) + sizeof(boost::uint32_t))*2u;
+
+         //Build the name in its own buffer. It can't be written directly into the
+         //FileName member of the rename information because that member is declared
+         //as a one element array, and compilers rightfully warn when writing past it.
+         wchar_t ren_name[RenNameNumChars];
+
+         //Add the boot & system timestamp
+         std::size_t s = RenNameNumChars;
+         if(!get_boot_and_system_time_wstr(ren_name, s)){
+            return false;
+         }
+         std::size_t filename_string_length = s;
+
+         //Add the process id
+         const unsigned long pid = get_current_process_id();
+         buffer_to_wide_str(&pid, sizeof(pid), &ren_name[filename_string_length]);
+         filename_string_length += sizeof(pid)*2u;
+
+         //Add the atomic count
+         static volatile boost::uint32_t u32_count = 0;
+         interlocked_decrement(reinterpret_cast<volatile long*>(&u32_count));
+         buffer_to_wide_str(const_cast<const boost::uint32_t *>(&u32_count), sizeof(boost::uint32_t), &ren_name[filename_string_length]);
+         filename_string_length += sizeof(boost::uint32_t)*2u;
+
+         //Memory big enough to hold the rename information plus the name
          union rename_mem_t
          {
             file_rename_information_t info;
@@ -1335,28 +1360,15 @@ inline bool unlink_file(const CharT *filename)
          } ren_mem;
          file_rename_information_t *const pfri = &ren_mem.info;
 
-         //Add the boot & system timestamp
-         std::size_t s = RenNameNumChars;
-         if(!get_boot_and_system_time_wstr(pfri->FileName, s)){
-            return false;
-         }
-         std::size_t filename_string_length = s;
-
-         //Add the process id
-         const unsigned long pid = get_current_process_id();
-         buffer_to_wide_str(&pid, sizeof(pid), &pfri->FileName[filename_string_length]);
-         filename_string_length += sizeof(pid)*2u;
-
-         //Add the atomic count
-         static volatile boost::uint32_t u32_count = 0;
-         interlocked_decrement(reinterpret_cast<volatile long*>(&u32_count));
-         buffer_to_wide_str(const_cast<const boost::uint32_t *>(&u32_count), sizeof(boost::uint32_t), &pfri->FileName[filename_string_length]);
-         filename_string_length += sizeof(boost::uint32_t)*2u;
-
          //Fill rename information (FileNameLength is in bytes)
-         pfri->FileNameLength = static_cast<unsigned long>(sizeof(wchar_t)*(filename_string_length));
+         const std::size_t ren_name_bytes = sizeof(wchar_t)*filename_string_length;
+         pfri->FileNameLength = static_cast<unsigned long>(ren_name_bytes);
          pfri->Replace = 1;
          pfri->RootDir = 0;
+
+         //Copy the name through the char member of the union, as writing it
+         //through FileName would again index past a one element array
+         std::memcpy(&ren_mem.bytes[offsetof(file_rename_information_t, FileName)], ren_name, ren_name_bytes);
 
          //Change the name of the in-use file...
          io_status_block_t io;
