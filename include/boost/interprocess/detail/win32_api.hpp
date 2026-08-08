@@ -138,6 +138,12 @@ struct file_rename_information_t {
    wchar_t FileName[1];
 };
 
+//Equivalent to FILE_DISPOSITION_INFORMATION_EX, used with
+//the FileDispositionInformationEx information class
+struct file_disposition_information_ex_t {
+   unsigned long Flags;
+};
+
 struct unicode_string_t {
    unsigned short Length;
    unsigned short MaximumLength;
@@ -548,6 +554,12 @@ static const int file_share_valid_flags = 0x00000007;
 static const long file_delete_on_close = 0x00001000L;
 static const long obj_case_insensitive = 0x00000040L;
 static const long delete_flag = 0x00010000L;
+
+//FileDispositionInformationEx information class value and flag values
+//(FILE_DISPOSITION_INFORMATION_EX, supported in Windows 10 1607 (RS1) and later)
+static const int           file_disposition_information_ex  = 64;
+static const unsigned long file_disposition_delete          = 0x00000001;
+static const unsigned long file_disposition_posix_semantics = 0x00000002;
 
 static const unsigned long movefile_copy_allowed            = 0x02;
 static const unsigned long movefile_delay_until_reboot      = 0x04;
@@ -1223,60 +1235,6 @@ class handle_closer
    {  close_handle(handle_);  }
 };
 
-union ntquery_mem_t
-{
-   object_name_information_t name;
-   struct ren_t
-   {
-      file_rename_information_t info;
-      wchar_t buf[1];
-   } ren;
-};
-
-class nt_query_mem_deleter
-{
-   static const std::size_t rename_offset = offsetof(ntquery_mem_t, ren.info.FileName) -
-      offsetof(ntquery_mem_t, name.Name.Buffer);
-   //                                           Timestamp                      process id              atomic count
-   static const std::size_t rename_suffix =
-      (SystemTimeOfDayInfoLength + sizeof(unsigned long) + sizeof(boost::winapi::DWORD_))*2;
-
-   public:
-   explicit nt_query_mem_deleter(unsigned long object_name_info_size)
-      : m_size(static_cast<unsigned long>(object_name_info_size + rename_offset + rename_suffix))
-      , m_buf(new char [m_size])
-   {}
-
-   ~nt_query_mem_deleter()
-   {
-      delete[]m_buf;
-   }
-
-   void realloc_mem(std::size_t num_bytes)
-   {
-      num_bytes += rename_suffix + rename_offset;
-      char *buf = m_buf;
-      m_buf = new char[num_bytes];
-      delete[]buf;
-      m_size = num_bytes;
-   }
-
-   ntquery_mem_t *query_mem() const
-   {  return static_cast<ntquery_mem_t *>(static_cast<void*>(m_buf));  }
-
-   unsigned long object_name_information_size() const
-   {
-      return static_cast<unsigned long>(m_size - rename_offset - SystemTimeOfDayInfoLength*2);
-   }
-
-   unsigned long file_rename_information_size() const
-   {  return static_cast<unsigned long>(m_size);  }
-
-   private:
-   std::size_t m_size;
-   char *m_buf;
-};
-
 class c_heap_deleter
 {
    public:
@@ -1318,80 +1276,91 @@ inline bool unlink_file(const CharT *filename)
 
    //This functions tries to emulate UNIX unlink semantics in windows.
    //
-   //- Open the file and mark the handle as delete-on-close
-   //- Rename the file to an arbitrary name based on a random number
-   //- Close the handle. If there are no file users, it will be deleted.
-   //  Otherwise it will be used by already connected handles but the
-   //  file name can't be used to open this file again
+   //- Open the file requesting only DELETE access, the only right needed
+   //  by both deletion strategies below. Requesting additional rights would
+   //  provoke unneeded sharing violations (against handles opened without
+   //  FILE_SHARE_READ) and unneeded permission failures.
+   //- Try to delete the file with FILE_DISPOSITION_POSIX_SEMANTICS
+   //  (Windows 10 1607 (RS1) and later, on filesystems that support it, like
+   //  NTFS). This unlinks the name immediately even if other handles to the
+   //  file are still open, which is exactly the semantics we want to emulate.
+   //- If that fails (older Windows, FAT/network filesystems, mapped file...)
+   //  fall back to the classic emulation:
+   //   - Rename the file, inside its original directory, to an arbitrary
+   //     name based on a random number
+   //   - Reopen it and mark the new handle as delete-on-close
+   //   - Close the handle. If there are no file users, it will be deleted.
+   //     Otherwise it will be used by already connected handles but the
+   //     file name can't be used to open this file again
    BOOST_INTERPROCESS_TRY{
       NtSetInformationFile_t pNtSetInformationFile =
          reinterpret_cast<NtSetInformationFile_t>(dll_func::get(dll_func::NtSetInformationFile));
 
-      NtQueryObject_t pNtQueryObject = reinterpret_cast<NtQueryObject_t>(dll_func::get(dll_func::NtQueryObject));
-
       //First step: Obtain a handle to the file using Win32 rules. This resolves relative paths
-      void *fh = create_file(filename, generic_read | delete_access, open_existing, 0, 0);
+      void *fh = create_file(filename, delete_access, open_existing, 0, 0);
       if(fh == invalid_handle_value){
          return false;
       }
 
       handle_closer h_closer(fh);
+
+      //Second step: try the POSIX semantics deletion fast path
       {
-         //Obtain name length
-         unsigned long size;
-         const std::size_t initial_string_mem = 512u;
-
-         nt_query_mem_deleter nt_query_mem(sizeof(ntquery_mem_t)+initial_string_mem);
-         //Obtain file name with guessed length
-         if(pNtQueryObject(fh, object_name_information, nt_query_mem.query_mem(), nt_query_mem.object_name_information_size(), &size)){
-            //Obtain file name with exact length buffer
-            nt_query_mem.realloc_mem(size);
-            if(pNtQueryObject(fh, object_name_information, nt_query_mem.query_mem(), nt_query_mem.object_name_information_size(), &size)){
-               return false;
-            }
+         file_disposition_information_ex_t dispos_ex;
+         dispos_ex.Flags = file_disposition_delete | file_disposition_posix_semantics;
+         io_status_block_t io;
+         if(0 == pNtSetInformationFile(fh, &io, &dispos_ex, sizeof(dispos_ex), file_disposition_information_ex)){
+            //The name is unlinked at this point, the file itself will be
+            //removed when the last handle to it is closed
+            return true;
          }
-         ntquery_mem_t *pmem = nt_query_mem.query_mem();
-         file_rename_information_t *pfri = &pmem->ren.info;
-         const std::size_t RenMaxNumChars =
-            std::size_t(((char*)(pmem) + nt_query_mem.file_rename_information_size()) - (char*)&pmem->ren.info.FileName[0])/sizeof(wchar_t);
+         //Fall back to the rename + delete-on-close emulation
+      }
+      //Third step: change the name of the in-use file to a random name so that
+      //the original name becomes immediately reusable. As documented for
+      //FILE_RENAME_INFORMATION, a null RootDir plus a FileName without path
+      //separators renames the file inside its original directory, so there is
+      //no need to query the full path of the file.
+      {
+         //The random name is hex encoded (2 wchar_t's per byte): the boot & system
+         //timestamp plus, as sometimes the precision of the timestamp is not enough,
+         //the process id (to exclude concurrent processes) and an atomic count
+         //(to exclude concurrent threads) should be enough
+         const std::size_t RenNameNumChars =
+            std::size_t(BootAndSystemstampLength + sizeof(unsigned long) + sizeof(boost::uint32_t))*2u;
+         union rename_mem_t
+         {
+            file_rename_information_t info;
+            char bytes[sizeof(file_rename_information_t) + RenNameNumChars*sizeof(wchar_t)];
+         } ren_mem;
+         file_rename_information_t *const pfri = &ren_mem.info;
 
-         //Copy filename to the rename member
-         std::memmove(pmem->ren.info.FileName, pmem->name.Name.Buffer, pmem->name.Name.Length);
-         std::size_t filename_string_length = pmem->name.Name.Length/sizeof(wchar_t);
-
-         //Search '\\' character to replace from it
-         for(std::size_t i = filename_string_length; i != 0; --filename_string_length){
-            if(pmem->ren.info.FileName[--i] == L'\\')
-               break;
-         }
-
-         //Add random number
-         std::size_t s = RenMaxNumChars - filename_string_length;
-         if(!get_boot_and_system_time_wstr(&pfri->FileName[filename_string_length], s)){
+         //Add the boot & system timestamp
+         std::size_t s = RenNameNumChars;
+         if(!get_boot_and_system_time_wstr(pfri->FileName, s)){
             return false;
          }
-         filename_string_length += s;
+         std::size_t filename_string_length = s;
 
-         //Sometimes the precission of the timestamp is not enough and we need to add another random number.
-         //The process id (to exclude concurrent processes) and an atomic count (to exclude concurrent threads).
-         //should be enough
+         //Add the process id
          const unsigned long pid = get_current_process_id();
          buffer_to_wide_str(&pid, sizeof(pid), &pfri->FileName[filename_string_length]);
-         filename_string_length += sizeof(pid)*2;
+         filename_string_length += sizeof(pid)*2u;
 
+         //Add the atomic count
          static volatile boost::uint32_t u32_count = 0;
          interlocked_decrement(reinterpret_cast<volatile long*>(&u32_count));
          buffer_to_wide_str(const_cast<const boost::uint32_t *>(&u32_count), sizeof(boost::uint32_t), &pfri->FileName[filename_string_length]);
-         filename_string_length += sizeof(boost::uint32_t)*2;
+         filename_string_length += sizeof(boost::uint32_t)*2u;
 
          //Fill rename information (FileNameLength is in bytes)
          pfri->FileNameLength = static_cast<unsigned long>(sizeof(wchar_t)*(filename_string_length));
          pfri->Replace = 1;
          pfri->RootDir = 0;
 
-         //Cange the name of the in-use file...
+         //Change the name of the in-use file...
          io_status_block_t io;
-         if(0 != pNtSetInformationFile(fh, &io, pfri, nt_query_mem.file_rename_information_size(), file_rename_information)){
+         if(0 != pNtSetInformationFile(fh, &io, pfri, sizeof(ren_mem), file_rename_information)){
             return false;
          }
       }
