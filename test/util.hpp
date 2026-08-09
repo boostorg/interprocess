@@ -145,6 +145,17 @@ inline boost::posix_time::time_duration ptime_ms(unsigned msecs)
 //!as it must never trigger on a heavily loaded but otherwise working machine.
 static const unsigned WatchdogMs = 120u*1000u;
 
+//!Number of times a wait taking a predicate is retried before the test gives
+//!up. Such a wait returning false only means that its deadline expired before
+//!the predicate became true, and on a loaded machine that just means the
+//!notifying thread was late: it has to be woken up, scheduled and re-acquire
+//!the mutex before it can update the state and notify, and while it does the
+//!mutex stays free, so the waiter can time out and see the old state.
+//!Each retry rechecks the predicate (the predicate overloads test it on entry
+//!and on timeout), so no notification can be missed, and the accumulated
+//!budget is large enough that only a real failure to notify exhausts it.
+static const unsigned PredicateWaitRetries = 10u;
+
 //!A one-shot event flag used to synchronize test threads.
 //!
 //!Sleeping for a while to "make sure" that another thread has already reached

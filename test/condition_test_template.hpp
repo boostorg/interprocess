@@ -183,9 +183,14 @@ void condition_test_waits(condition_test_data<Condition, Mutex>* data)
     data->awoken++;
     data->condition.notify_one();
 
-    // Test predicate timed_wait.
+    // Test predicate timed_wait. Retry on timeout, as that only means the
+    // deadline expired during the unlocked re-acquisition window, which a
+    // loaded machine can always provoke
    {
-    bool ret = data->condition.timed_wait(lock, boost_systemclock_delay_ms(5*BaseMs), cond_predicate (data->notified, 4));
+    bool ret = false;
+    for(unsigned i = 0; !ret && i != PredicateWaitRetries; ++i){
+       ret = data->condition.timed_wait(lock, boost_systemclock_delay_ms(5*BaseMs), cond_predicate (data->notified, 4));
+    }
     BOOST_INTERPROCESS_CHECK(ret);(void)ret;
     BOOST_INTERPROCESS_CHECK(lock ? true : false);
     BOOST_INTERPROCESS_CHECK(data->notified == 4);
@@ -209,9 +214,12 @@ void condition_test_waits(condition_test_data<Condition, Mutex>* data)
     data->awoken++;
     data->condition.notify_one();
 
-    // Test predicate wait_until.
+    // Test predicate wait_until. Retry on timeout, see above
    {
-    bool ret = data->condition.wait_until(lock, boost_systemclock_delay_ms(5*BaseMs), cond_predicate (data->notified, 7));
+    bool ret = false;
+    for(unsigned i = 0; !ret && i != PredicateWaitRetries; ++i){
+       ret = data->condition.wait_until(lock, boost_systemclock_delay_ms(5*BaseMs), cond_predicate (data->notified, 7));
+    }
     BOOST_INTERPROCESS_CHECK(ret);(void)ret;
     BOOST_INTERPROCESS_CHECK(lock ? true : false);
     BOOST_INTERPROCESS_CHECK(data->notified == 7);
@@ -229,7 +237,10 @@ void condition_test_waits(condition_test_data<Condition, Mutex>* data)
 
     // Test predicate wait_for.
    {
-    bool ret = data->condition.wait_for(lock, ptime_ms(5*BaseMs), cond_predicate (data->notified, 9));
+    bool ret = false;
+    for(unsigned i = 0; !ret && i != PredicateWaitRetries; ++i){
+       ret = data->condition.wait_for(lock, ptime_ms(5*BaseMs), cond_predicate (data->notified, 9));
+    }
     BOOST_INTERPROCESS_CHECK(ret);(void)ret;
     BOOST_INTERPROCESS_CHECK(lock ? true : false);
     BOOST_INTERPROCESS_CHECK(data->notified == 9);
@@ -247,7 +258,10 @@ void condition_test_waits(condition_test_data<Condition, Mutex>* data)
 
     // Test predicate wait_for.
    {
-    bool ret = data->condition.wait_for(lock, boost_systemclock_ms(5*BaseMs), cond_predicate (data->notified, 11));
+    bool ret = false;
+    for(unsigned i = 0; !ret && i != PredicateWaitRetries; ++i){
+       ret = data->condition.wait_for(lock, boost_systemclock_ms(5*BaseMs), cond_predicate (data->notified, 11));
+    }
     BOOST_INTERPROCESS_CHECK(ret);(void)ret;
     BOOST_INTERPROCESS_CHECK(lock ? true : false);
     BOOST_INTERPROCESS_CHECK(data->notified == 11);
@@ -265,7 +279,10 @@ void condition_test_waits(condition_test_data<Condition, Mutex>* data)
 
     // Test predicate wait_for.
    {
-    bool ret = data->condition.wait_for(lock, std_systemclock_ms(5*BaseMs), cond_predicate (data->notified, 13));
+    bool ret = false;
+    for(unsigned i = 0; !ret && i != PredicateWaitRetries; ++i){
+       ret = data->condition.wait_for(lock, std_systemclock_ms(5*BaseMs), cond_predicate (data->notified, 13));
+    }
     BOOST_INTERPROCESS_CHECK(ret);(void)ret;
     BOOST_INTERPROCESS_CHECK(lock ? true : false);
     BOOST_INTERPROCESS_CHECK(data->notified == 13);
