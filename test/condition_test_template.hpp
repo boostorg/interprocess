@@ -64,6 +64,12 @@ struct condition_test_data
    Condition  condition;
    int notified;
    int awoken;
+   //!Increased by each waiting thread once it owns the mutex and is about to
+   //!wait on the condition. Once a peer manages to lock the mutex after that,
+   //!the waiter is necessarily inside the wait, as that is the only place
+   //!where it releases the mutex. Sleeping for a while instead is both slower
+   //!and unreliable, as a loaded machine can delay the thread arbitrarily.
+   test_counter waiting;
 };
 
 template <class Condition, class Mutex>
@@ -72,6 +78,7 @@ void condition_test_thread(condition_test_data<Condition, Mutex>* data)
     boost::interprocess::scoped_lock<Mutex>
       lock(data->mutex);
     BOOST_INTERPROCESS_CHECK(lock ? true : false);
+    data->waiting.increment();
     while (!(data->notified > 0))
         data->condition.wait(lock);
     BOOST_INTERPROCESS_CHECK(lock ? true : false);
@@ -97,8 +104,9 @@ void do_test_condition_notify_one()
 
    boost::interprocess::ipcdetail::OS_thread_t thread;
    boost::interprocess::ipcdetail::thread_launch(thread, bind_function(&condition_test_thread<Condition, Mutex>, &data));
-   //Make sure thread is blocked
-   boost::interprocess::ipcdetail::thread_sleep_ms(1*BaseMs);
+   //Wait until the thread owns the mutex and is about to wait. Locking the
+   //mutex below then makes sure it is already blocked in the condition
+   BOOST_INTERPROCESS_CHECK(data.waiting.wait_at_least(1u));
    {
       boost::interprocess::scoped_lock<Mutex>
          lock(data.mutex);
@@ -123,8 +131,9 @@ void do_test_condition_notify_all()
       boost::interprocess::ipcdetail::thread_launch(thgroup[i], bind_function(&condition_test_thread<Condition, Mutex>, &data));
    }
 
-   //Make sure all threads are blocked
-   boost::interprocess::ipcdetail::thread_sleep_ms(1*BaseMs);
+   //Wait until every thread owns the mutex and is about to wait. Locking the
+   //mutex below then makes sure they are all blocked in the condition
+   BOOST_INTERPROCESS_CHECK(data.waiting.wait_at_least(boost::uint32_t(NUMTHREADS)));
    {
       boost::interprocess::scoped_lock<Mutex>
          lock(data.mutex);
@@ -144,7 +153,8 @@ void do_test_condition_waits_step( condition_test_data<Condition, Mutex> &data
                                  , boost::interprocess::scoped_lock<Mutex> &lock
                                  , int awoken)
 {
-      boost::interprocess::ipcdetail::thread_sleep_ms(1*BaseMs);
+      //No wait is needed here: the caller owns the mutex, and it could only
+      //take it because the waiting thread released it inside its own wait
       data.notified++;
       data.condition.notify_one();
       while (data.awoken != awoken)
@@ -159,6 +169,7 @@ void condition_test_waits(condition_test_data<Condition, Mutex>* data)
     boost::interprocess::scoped_lock<Mutex>
       lock(data->mutex);
     BOOST_INTERPROCESS_CHECK(lock ? true : false);
+    data->waiting.increment();
 
     // Test wait.
     while (data->notified != 1)
@@ -298,6 +309,10 @@ void do_test_condition_waits()
    boost::interprocess::ipcdetail::OS_thread_t thread;
    boost::interprocess::ipcdetail::thread_launch(thread, bind_function(&condition_test_waits<Condition, Mutex>, &data));
 
+   //Wait until the thread owns the mutex and is about to wait, so that locking
+   //it below blocks until the thread is really waiting on the condition. From
+   //there on every step keeps that invariant without any sleep
+   BOOST_INTERPROCESS_CHECK(data.waiting.wait_at_least(1u));
    {
       boost::interprocess::scoped_lock<Mutex>
          lock(data.mutex);

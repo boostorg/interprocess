@@ -203,6 +203,43 @@ class test_event
    volatile boost::uint32_t m_signaled;
 };
 
+//!Same purpose as test_event, but for a state that more than one thread
+//!reaches: each of them increases the counter and their peers wait until the
+//!expected number of threads has arrived.
+class test_counter
+{
+   public:
+   test_counter() : m_count(0u) {}
+
+   //!Announces that this thread reached the awaited state
+   void increment()
+   {  ipcdetail::atomic_inc32(&m_count);  }
+
+   boost::uint32_t get()
+   {  return ipcdetail::atomic_read32(&m_count);  }
+
+   //!Waits until at least "count" threads arrived. Returns false if the
+   //!watchdog expires, so that a broken test fails instead of hanging forever.
+   bool wait_at_least(boost::uint32_t count, unsigned timeout_ms = WatchdogMs)
+   {
+      const ustime deadline = ustime_delay_milliseconds(timeout_ms);
+      spin_wait swait;
+      while(this->get() < count){
+         if(ustime(ipcdetail::universal_time_u64_us()) > deadline){
+            return false;
+         }
+         swait.yield();
+      }
+      return true;
+   }
+
+   private:
+   test_counter(const test_counter &);
+   test_counter &operator=(const test_counter &);
+
+   volatile boost::uint32_t m_count;
+};
+
 //!Returns the current time in microseconds, to measure how long an operation
 //!really took
 inline boost::uint64_t elapsed_now_us()
