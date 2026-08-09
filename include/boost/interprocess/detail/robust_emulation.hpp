@@ -339,7 +339,7 @@ inline void robust_spin_mutex<Mutex>::consistent()
 {
    //This function supposes the previous state was "fixing"
    //and the current process holds the mutex
-   if(atomic_read32(&this->state) != fixing_state &&
+   if(atomic_read32(&this->state) != fixing_state ||
       atomic_read32(&this->owner) != (boost::uint32_t)get_current_process_id()){
       throw interprocess_exception(lock_error, "Broken id");
    }
