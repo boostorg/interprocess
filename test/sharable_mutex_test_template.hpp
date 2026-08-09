@@ -230,6 +230,7 @@ void timed_exclusive(void *arg, SM &sm)
       l (sm, boost::interprocess::defer_lock);
 
    bool r = false;
+   const boost::uint64_t start_us = elapsed_now_us();
    if(pdata->m_flags == (int)TimedLock){
       r = l.timed_lock(std_systemclock_delay_ms(unsigned(pdata->m_msecs)));
    }
@@ -239,6 +240,9 @@ void timed_exclusive(void *arg, SM &sm)
    else if (pdata->m_flags == (int)TryLockFor) {
       r = l.try_lock_for(boost_systemclock_ms(unsigned(pdata->m_msecs)));
    }
+   //Record how long the attempt took, so that a test expecting it to fail can
+   //tell the timeout apart from an immediate failure
+   pdata->m_elapsed_us = elapsed_now_us() - start_us;
 
    if (r){
       hold_lock(pdata, unsigned(3*BaseMs));
@@ -255,6 +259,7 @@ void timed_shared(void *arg, SM &sm)
       l(sm, boost::interprocess::defer_lock);
 
    bool r = false;
+   const boost::uint64_t start_us = elapsed_now_us();
    if(pdata->m_flags == (int)TimedLock){
       r = l.timed_lock(std_systemclock_delay_ms(unsigned(pdata->m_msecs)));
    }
@@ -264,6 +269,9 @@ void timed_shared(void *arg, SM &sm)
    else if (pdata->m_flags == (int)TryLockFor) {
       r = l.try_lock_for(boost_systemclock_ms(unsigned(pdata->m_msecs)));
    }
+   //Record how long the attempt took, so that a test expecting it to fail can
+   //tell the timeout apart from an immediate failure
+   pdata->m_elapsed_us = elapsed_now_us() - start_us;
 
    if (r){
       hold_lock(pdata, unsigned(3*BaseMs));
@@ -327,6 +335,10 @@ void test_timed_sharable_mutex()
       BOOST_INTERPROCESS_CHECK(e2.m_value == -1);
       BOOST_INTERPROCESS_CHECK(s1.m_value == -1);
       BOOST_INTERPROCESS_CHECK(s2.m_value == 10);
+      //Both failures must come from waiting for the timeout, and not from
+      //giving up at once, which the value alone can't tell apart
+      BOOST_INTERPROCESS_CHECK(waited_at_least(e2.m_elapsed_us, unsigned(e2.m_msecs)));
+      BOOST_INTERPROCESS_CHECK(waited_at_least(s1.m_elapsed_us, unsigned(s1.m_msecs)));
    }
 }
 

@@ -200,13 +200,17 @@ void lock_and_sleep(void *arg, M &sm)
 template<typename M>
 void lock_and_catch_errors(void *arg, M &sm)
 {
+   data<M>* pdata = static_cast<data<M>*>(arg);
+   const boost::uint64_t start_us = elapsed_now_us();
    BOOST_INTERPROCESS_TRY
    {
       lock_and_sleep(arg, sm);
    }
    BOOST_INTERPROCESS_CATCH(interprocess_exception const & e)
    {
-      data<M>* pdata = static_cast<data<M>*>(arg);
+      //Record how long the locking attempt took, so that the test can tell a
+      //failure caused by the timeout from a failure happening right away
+      pdata->m_elapsed_us = elapsed_now_us() - start_us;
       pdata->m_error = e.get_error_code();
    } BOOST_INTERPROCESS_CATCH_END
 }
@@ -333,6 +337,9 @@ void test_mutex_lock_timeout()
    BOOST_INTERPROCESS_CHECK(d2.m_value == -1);
    BOOST_INTERPROCESS_CHECK(d1.m_error == no_error);
    BOOST_INTERPROCESS_CHECK(d2.m_error == boost::interprocess::timeout_when_locking_error);
+   //The error must come from waiting for the timeout, not from giving up at
+   //once, which the error code alone can't tell apart
+   BOOST_INTERPROCESS_CHECK(waited_at_least(d2.m_elapsed_us, wait_time_ms));
 }
 
 template<typename M>

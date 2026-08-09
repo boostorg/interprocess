@@ -192,6 +192,26 @@ class test_event
    volatile boost::uint32_t m_signaled;
 };
 
+//!Returns the current time in microseconds, to measure how long an operation
+//!really took
+inline boost::uint64_t elapsed_now_us()
+{  return ipcdetail::universal_time_u64_us();  }
+
+//!Checks that a timed operation that was expected to fail really waited for
+//!its timeout instead of failing right away.
+//!
+//!Only a lower bound can be checked: a loaded machine can make the wait
+//!longer, never shorter, so this can't become a source of spurious failures.
+//!Checking an upper bound instead would be exactly the kind of assertion that
+//!a busy CPU breaks. A small tolerance absorbs the resolution difference
+//!between the clock used to build the deadline and the one measuring here.
+inline bool waited_at_least(boost::uint64_t elapsed_us, unsigned timeout_ms)
+{
+   const boost::uint64_t timeout_us   = boost::uint64_t(timeout_ms)*1000u;
+   const boost::uint64_t tolerance_us = timeout_us/10u;
+   return (elapsed_us + tolerance_us) >= timeout_us;
+}
+
 // thread_adapter + data
 
 template <typename P>
@@ -212,7 +232,8 @@ template <typename P>
 struct data
 {
    explicit data(int id, int msecs=0, int flags = 0, bool block = false)
-      : m_id(id), m_value(-1), m_msecs(msecs), m_error(no_error), m_flags(flags), m_block(block)
+      : m_id(id), m_value(-1), m_msecs(msecs), m_error(no_error), m_flags(flags)
+      , m_elapsed_us(0u), m_block(block)
    {}
 
    int            m_id;
@@ -220,6 +241,10 @@ struct data
    int            m_msecs;
    error_code_t   m_error;
    int            m_flags;
+   //!Time the locking operation really took. A test that expects an operation
+   //!to fail because of its timeout can only tell that apart from an operation
+   //!failing right away by looking at how long it waited.
+   boost::uint64_t m_elapsed_us;
    //!When true, the thread keeps the lock until m_release is signaled, instead
    //!of holding it for a fixed amount of time. This lets a test guarantee that
    //!a peer operation really happens while the lock is taken.
