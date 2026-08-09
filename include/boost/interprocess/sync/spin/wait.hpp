@@ -33,29 +33,30 @@
 #endif
 
 //Forward declaration of MSVC intrinsics
+//Note: ARM64EC also defines _M_AMD64/_M_X64, so it must be tested first
 #if defined(_MSC_VER)
-#if defined(_M_AMD64) || defined(_M_IX86) || defined(_M_X64)
-extern "C" void _mm_pause(void);
-#if defined(BOOST_MSVC)
-#pragma intrinsic(_mm_pause)
-#endif
-#elif defined(_M_ARM64) || defined(_M_ARM)
+#if defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM)
 extern "C" void __yield(void);
 #if defined(BOOST_MSVC)
 #pragma intrinsic(__yield)
+#endif
+#elif defined(_M_AMD64) || defined(_M_IX86) || defined(_M_X64)
+extern "C" void _mm_pause(void);
+#if defined(BOOST_MSVC)
+#pragma intrinsic(_mm_pause)
 #endif
 #endif
 #endif
 
 // BOOST_INTERPROCESS_SMT_PAUSE
 
-#if defined(_MSC_VER) && ( defined(_M_IX86) || defined(_M_X64) || defined(_M_AMD64) )
-
-#define BOOST_INTERPROCESS_SMT_PAUSE _mm_pause();
-
-#elif defined(_MSC_VER) && ( defined(_M_ARM64) || defined(_M_ARM) )
+#if defined(_MSC_VER) && ( defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM) )
 
 #define BOOST_INTERPROCESS_SMT_PAUSE __yield();
+
+#elif defined(_MSC_VER) && ( defined(_M_IX86) || defined(_M_X64) || defined(_M_AMD64) )
+
+#define BOOST_INTERPROCESS_SMT_PAUSE _mm_pause();
 
 #elif defined(__GNUC__) && ( defined(__i386__) || defined(__x86_64__) ) && !defined(_CRAYC)
 

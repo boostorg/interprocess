@@ -69,17 +69,41 @@ inline boost::uint32_t atomic_cas32
 
 #include <boost/interprocess/detail/win32_api.hpp>
 
-#if defined( _MSC_VER )
-   extern "C" void _ReadWriteBarrier(void);
-   #pragma intrinsic(_ReadWriteBarrier)
+//All the operations of this header are sequentially consistent.
+//atomic_write32 uses a full barrier interlocked operation, so issuing
+//BOOST_INTERPROCESS_READ_BARRIER right after a plain load is enough to make
+//atomic_read32 sequentially consistent too.
+//
+//Note that atomic_read32 must NOT be implemented with an interlocked
+//(read-modify-write) operation, as it's also used on read-only mapped regions.
+#if defined(__ATOMIC_ACQUIRE)
+   //Clang (clang-cl included) and GCC 4.7 and later. On x86/x64 this fence
+   //emits no instruction, it just constrains the compiler.
+   #define BOOST_INTERPROCESS_READ_BARRIER __atomic_thread_fence(__ATOMIC_ACQUIRE)
+#elif defined( _MSC_VER )
+   #if defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM)
+      //ARM is weakly ordered, so a compiler-only barrier is not enough here:
+      //a real hardware barrier is required.
+      #include <intrin.h>
+      #if defined(_M_ARM)
+         #define BOOST_INTERPROCESS_READ_BARRIER __dmb(_ARM_BARRIER_ISH)
+      #else
+         #define BOOST_INTERPROCESS_READ_BARRIER __dmb(_ARM64_BARRIER_ISH)
+      #endif
+   #else
+      //x86/x64 never reorders a load with the loads and stores that follow it,
+      //so only the compiler must be kept in place.
+      extern "C" void _ReadWriteBarrier(void);
+      #pragma intrinsic(_ReadWriteBarrier)
 
-#define BOOST_INTERPROCESS_READ_WRITE_BARRIER \
-            BOOST_INTERPROCESS_DISABLE_DEPRECATED_WARNING \
-            _ReadWriteBarrier() \
-            BOOST_INTERPROCESS_RESTORE_WARNING
-
+      #define BOOST_INTERPROCESS_READ_BARRIER \
+                  BOOST_INTERPROCESS_DISABLE_DEPRECATED_WARNING \
+                  _ReadWriteBarrier() \
+                  BOOST_INTERPROCESS_RESTORE_WARNING
+   #endif
 #elif defined(__GNUC__)
-#  define BOOST_INTERPROCESS_READ_WRITE_BARRIER __sync_synchronize()
+   //GCC 4.1 to 4.6, only the legacy __sync builtins are available
+   #define BOOST_INTERPROCESS_READ_BARRIER __sync_synchronize()
 #else
 #  error "Unsupported Compiler for Window"
 #endif
@@ -103,9 +127,9 @@ inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
 //! Atomically read an boost::uint32_t from memory
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
 {
-    const boost::uint32_t val = *mem;
-    BOOST_INTERPROCESS_READ_WRITE_BARRIER;
-    return val;
+   const boost::uint32_t val = *mem;
+   BOOST_INTERPROCESS_READ_BARRIER;
+   return val;
 }
 
 //! Atomically set an boost::uint32_t in memory
@@ -154,10 +178,6 @@ inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
 inline boost::uint32_t atomic_dec32(volatile boost::uint32_t *mem)
 {  return atomic_add32(mem, (boost::uint32_t)-1);   }
 
-//! Atomically read an boost::uint32_t from memory
-inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
-{  boost::uint32_t old_val = *mem; __sync_synchronize(); return old_val;  }
-
 //! Compare an boost::uint32_t's value with "cmp".
 //! If they are the same swap the value with "with"
 //! "mem": pointer to the value
@@ -168,11 +188,33 @@ inline boost::uint32_t atomic_cas32
    (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
 {  return __sync_val_compare_and_swap(const_cast<boost::uint32_t *>(mem), cmp, with);   }
 
+//! Atomically read an boost::uint32_t from memory
+//! Note: this must NOT be a read-modify-write operation, as atomic_read32
+//! is also used on read-only mapped regions
+inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_SEQ_CST)
+   //GCC 4.7 and later: a real atomic load, the compiler emits the optimal
+   //sequentially consistent load for the target
+   return __atomic_load_n(mem, __ATOMIC_SEQ_CST);
+   #else
+   const boost::uint32_t old_val = *mem; __sync_synchronize(); return old_val;
+   #endif
+}
+
 //! Atomically set an boost::uint32_t in memory
 //! "mem": pointer to the object
 //! "param": val value that the object will assume
 inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
-{  __sync_synchronize(); *mem = val;  }
+{
+   #if defined(__ATOMIC_SEQ_CST)
+   __atomic_store_n(mem, val, __ATOMIC_SEQ_CST);
+   #else
+   //The trailing fence is what gives StoreLoad ordering, needed to make
+   //this store sequentially consistent
+   __sync_synchronize(); *mem = val; __sync_synchronize();
+   #endif
+}
 
 }  //namespace ipcdetail{
 }  //namespace interprocess{
