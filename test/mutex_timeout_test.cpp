@@ -9,7 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 // enable timeout feature
-#define BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS boost::interprocess::test::BaseMs
+#define BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS boost::interprocess::test::FailTimeoutMs
 #define BOOST_INTERPROCESS_ENABLE_TIMEOUT_WHEN_LOCKING
 
 #include "util.hpp"

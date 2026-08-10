@@ -56,7 +56,7 @@ void plain_exclusive(void *arg, SM &sm)
    data<SM> *pdata = static_cast<data<SM>*>(arg);
    pdata->m_locking.signal();
    boost::interprocess::scoped_lock<SM> l(sm);
-   hold_lock(pdata, unsigned(3*BaseMs));
+   hold_lock(pdata, 0u);
    shared_val += 10;
    pdata->m_value = shared_val;
 }
@@ -65,6 +65,7 @@ template<typename SM>
 void plain_shared(void *arg, SM &sm)
 {
    data<SM> *pdata = static_cast<data<SM>*>(arg);
+   pdata->m_locking.signal();
    boost::interprocess::sharable_lock<SM> l(sm);
    hold_lock(pdata, unsigned(pdata->m_msecs));
    pdata->m_value = shared_val;
@@ -74,9 +75,10 @@ template<typename SM>
 void try_exclusive(void *arg, SM &sm)
 {
    data<SM> *pdata = static_cast<data<SM>*>(arg);
+   pdata->m_locking.signal();
    boost::interprocess::scoped_lock<SM> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
-      hold_lock(pdata, unsigned(3*BaseMs));
+      hold_lock(pdata, 0u);
       shared_val += 10;
       pdata->m_value = shared_val;
    }
@@ -86,6 +88,7 @@ template<typename SM>
 void try_shared(void *arg, SM &sm)
 {
    data<SM> *pdata = static_cast<data<SM>*>(arg);
+   pdata->m_locking.signal();
    boost::interprocess::sharable_lock<SM> l(sm, boost::interprocess::defer_lock);
    if (l.try_lock()){
       hold_lock(pdata, unsigned(pdata->m_msecs));
@@ -99,12 +102,15 @@ void test_plain_sharable_mutex()
    {
       shared_val = 0;
       SM mtx;
-      data<SM> e1(1);
+      //e1 keeps the lock until every other thread is about to take it, so
+      //that they provably find it owned. Holding it for a fixed time can't
+      //guarantee that: launching a thread can take longer than the hold
+      data<SM> e1(1, 0, 0, true);
       data<SM> e2(2);
       data<SM> s1(1);
       data<SM> s2(2);
 
-      // Writer one launches, holds the lock for 3*BaseMs seconds.
+      // Writer one launches and holds the lock until released.
       boost::interprocess::ipcdetail::OS_thread_t tw1;
       boost::interprocess::ipcdetail::thread_launch(tw1, thread_adapter<SM>(plain_exclusive, &e1, mtx));
 
@@ -130,6 +136,12 @@ void test_plain_sharable_mutex()
       boost::interprocess::ipcdetail::OS_thread_t thr2;
       boost::interprocess::ipcdetail::thread_launch(thr2, thread_adapter<SM>(plain_shared,&s2, mtx));
 
+      //Only once every peer is about to lock can writer one release, so all
+      //of them provably find the mutex owned
+      BOOST_INTERPROCESS_CHECK(s1.m_locking.wait());
+      BOOST_INTERPROCESS_CHECK(s2.m_locking.wait());
+      e1.m_release.signal();
+
       boost::interprocess::ipcdetail::thread_join(thr2);
       boost::interprocess::ipcdetail::thread_join(thr1);
       boost::interprocess::ipcdetail::thread_join(tw2);
@@ -145,12 +157,14 @@ void test_plain_sharable_mutex()
       shared_val = 0;
       SM mtx;
 
-      data<SM> s1(1, 3);
-      data<SM> s2(2, 3);
+      //The readers keep the sharable lock until both writers are about to
+      //take it, so that the writers provably find it owned
+      data<SM> s1(1, 0, 0, true);
+      data<SM> s2(2, 0, 0, true);
       data<SM> e1(1);
       data<SM> e2(2);
 
-      //We launch 2 readers, that will block for 3*BaseTime seconds
+      //We launch 2 readers, that will keep the sharable lock until released
       boost::interprocess::ipcdetail::OS_thread_t thr1;
       boost::interprocess::ipcdetail::thread_launch(thr1, thread_adapter<SM>(plain_shared,&s1, mtx));
       boost::interprocess::ipcdetail::OS_thread_t thr2;
@@ -167,6 +181,12 @@ void test_plain_sharable_mutex()
 
       boost::interprocess::ipcdetail::OS_thread_t tw2;
       boost::interprocess::ipcdetail::thread_launch(tw2, thread_adapter<SM>(plain_exclusive,&e2, mtx));
+
+      //Only once both writers are about to lock can the readers release
+      BOOST_INTERPROCESS_CHECK(e1.m_locking.wait());
+      BOOST_INTERPROCESS_CHECK(e2.m_locking.wait());
+      s1.m_release.signal();
+      s2.m_release.signal();
 
       boost::interprocess::ipcdetail::thread_join(tw2);
       boost::interprocess::ipcdetail::thread_join(tw1);
@@ -229,6 +249,7 @@ void timed_exclusive(void *arg, SM &sm)
    boost::interprocess::scoped_lock<SM>
       l (sm, boost::interprocess::defer_lock);
 
+   pdata->m_locking.signal();
    bool r = false;
    const boost::uint64_t start_us = elapsed_now_us();
    if(pdata->m_flags == (int)TimedLock){
@@ -245,7 +266,7 @@ void timed_exclusive(void *arg, SM &sm)
    pdata->m_elapsed_us = elapsed_now_us() - start_us;
 
    if (r){
-      hold_lock(pdata, unsigned(3*BaseMs));
+      hold_lock(pdata, 0u);
       shared_val += 10;
       pdata->m_value = shared_val;
    }
@@ -258,6 +279,7 @@ void timed_shared(void *arg, SM &sm)
    boost::interprocess::sharable_lock<SM>
       l(sm, boost::interprocess::defer_lock);
 
+   pdata->m_locking.signal();
    bool r = false;
    const boost::uint64_t start_us = elapsed_now_us();
    if(pdata->m_flags == (int)TimedLock){
@@ -274,7 +296,7 @@ void timed_shared(void *arg, SM &sm)
    pdata->m_elapsed_us = elapsed_now_us() - start_us;
 
    if (r){
-      hold_lock(pdata, unsigned(3*BaseMs));
+      hold_lock(pdata, 0u);
       pdata->m_value = shared_val;
    }
 }
@@ -289,12 +311,12 @@ void test_timed_sharable_mutex()
       //for a fixed time instead is not enough: under heavy CPU load a thread
       //can take longer to start than the hold time, find the mutex already
       //free and succeed, which would defeat the purpose of the test
-      data<SM> e1(3, 3*BaseMs, flag, true);
-      data<SM> e2(4, 1*BaseMs, flag);
-      data<SM> s1(1, 1*BaseMs, flag);
+      data<SM> e1(3, SuccessTimeoutMs, flag, true);
+      data<SM> e2(4, FailTimeoutMs, flag);
+      data<SM> s1(1, FailTimeoutMs, flag);
       //s2 is the only one that must succeed. It is launched just before
       //releasing e1, so its timeout only has to cover that short window
-      data<SM> s2(2, 9*BaseMs, flag);
+      data<SM> s2(2, SuccessTimeoutMs, flag);
 
       // We begin with some specialized tests for "timed" behavior
 
@@ -309,12 +331,12 @@ void test_timed_sharable_mutex()
       BOOST_INTERPROCESS_CHECK(e1.m_acquired.wait());
 
       // Writer two tries for the lock while writer one holds it, waiting up to
-      //  1*BaseMs seconds. This write will fail.
+      //  FailTimeoutMs. This write will fail.
       boost::interprocess::ipcdetail::OS_thread_t tw2;
       boost::interprocess::ipcdetail::thread_launch(tw2, thread_adapter<SM>(timed_exclusive,&e2,mtx));
 
       // Reader one also tries while writer one holds the lock, waiting up to
-      //  1*BaseMs seconds, and will fail to get it.
+      //  FailTimeoutMs, and will fail to get it.
       boost::interprocess::ipcdetail::OS_thread_t thr1;
       boost::interprocess::ipcdetail::thread_launch(thr1, thread_adapter<SM>(timed_shared,&s1,mtx));
 

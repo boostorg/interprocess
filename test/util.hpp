@@ -255,8 +255,17 @@ inline boost::uint64_t elapsed_now_us()
 //!between the clock used to build the deadline and the one measuring here.
 inline bool waited_at_least(boost::uint64_t elapsed_us, unsigned timeout_ms)
 {
-   const boost::uint64_t timeout_us   = boost::uint64_t(timeout_ms)*1000u;
-   const boost::uint64_t tolerance_us = timeout_us/10u;
+   const boost::uint64_t timeout_us = boost::uint64_t(timeout_ms)*1000u;
+   //A 10% tolerance, but never less than a couple of system timer ticks. The
+   //deadline is built with one clock and measured with another, and on Windows
+   //the latter has a 15.6ms resolution by default, so a wait that did last the
+   //whole timeout can still be measured as slightly shorter. Without this
+   //floor a small timeout would make the check fail on its own.
+   const boost::uint64_t min_tolerance_us = 25000u;
+   boost::uint64_t tolerance_us = timeout_us/10u;
+   if(tolerance_us < min_tolerance_us){
+      tolerance_us = min_tolerance_us;
+   }
    return (elapsed_us + tolerance_us) >= timeout_us;
 }
 
@@ -309,7 +318,33 @@ struct data
 };
 
 int shared_val = 0;
-static const unsigned BaseMs = 1000;
+
+//The three constants below used to be a single one (BaseMs), which made every
+//duration in the tests a multiple of it. That conflated values with opposite
+//needs: the time a lock is held is paid in full by every run, while the
+//timeout of an operation that must not expire costs nothing and is precisely
+//the margin that absorbs a loaded machine. Scaling both together meant that
+//making the tests faster also made them more fragile.
+
+//There is no constant for "how long a thread keeps a lock taken". Holding it
+//for a fixed time can never guarantee that a peer finds it locked: launching
+//the peer thread can take seconds on a loaded machine, far longer than any
+//hold worth paying for. Threads announce that they are about to lock
+//(m_locking) and the owner releases only then (m_block), which makes the
+//contended path deterministic and costs no time at all.
+
+//!Timeout of the operations that are expected to expire. Also paid in full,
+//!but it can't be too short: the tests check that such an operation really
+//!waited for its timeout (see waited_at_least), and that check must stay
+//!comfortably above the resolution of the clock used to measure it, which is
+//!15.6ms by default on Windows.
+static const unsigned FailTimeoutMs = 250;
+
+//!Timeout of the operations that must NOT expire. Unlike the two above, this
+//!costs nothing, as the operation returns as soon as the resource is free.
+//!It is generous on purpose: it is the margin that a loaded machine eats into,
+//!and it must not shrink when the tests are made faster.
+static const unsigned SuccessTimeoutMs = 5000;
 
 }  //namespace test {
 }  //namespace interprocess {
