@@ -69,27 +69,39 @@ inline boost::uint32_t atomic_cas32
 
 #include <boost/interprocess/detail/win32_api.hpp>
 
-//All the operations of this header are sequentially consistent.
-//atomic_write32 uses a full barrier interlocked operation, so issuing
-//BOOST_INTERPROCESS_READ_BARRIER right after a plain load is enough to make
-//atomic_read32 sequentially consistent too.
+//All the operations of this header are sequentially consistent. atomic_read32
+//and atomic_write32 are implemented with one of these two mappings:
+//
+// - BOOST_INTERPROCESS_ATOMIC_LOAD32 / BOOST_INTERPROCESS_ATOMIC_STORE32, a
+//   load-acquire/store-release pair. On ARMv8 this pair is sequentially
+//   consistent (a load-acquire can't be reordered before a previous
+//   store-release), so no explicit barrier is needed.
+//
+// - A plain load followed by BOOST_INTERPROCESS_READ_BARRIER, combined with
+//   the full barrier interlocked exchange of atomic_write32. The full barrier
+//   of the store is what makes the plain load sequentially consistent.
 //
 //Note that atomic_read32 must NOT be implemented with an interlocked
 //(read-modify-write) operation, as it's also used on read-only mapped regions.
-#if defined(__ATOMIC_ACQUIRE)
-   //Clang (clang-cl included) and GCC 4.7 and later. On x86/x64 this fence
-   //emits no instruction, it just constrains the compiler.
-   #define BOOST_INTERPROCESS_READ_BARRIER __atomic_thread_fence(__ATOMIC_ACQUIRE)
+#if defined(__ATOMIC_SEQ_CST)
+   //Clang (clang-cl included) and GCC 4.7 and later: the compiler emits the
+   //optimal sequentially consistent load/store for the target
+   #define BOOST_INTERPROCESS_ATOMIC_LOAD32(mem) __atomic_load_n((mem), __ATOMIC_SEQ_CST)
+   #define BOOST_INTERPROCESS_ATOMIC_STORE32(mem, val) __atomic_store_n((mem), (val), __ATOMIC_SEQ_CST)
 #elif defined( _MSC_VER )
-   #if defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM)
-      //ARM is weakly ordered, so a compiler-only barrier is not enough here:
-      //a real hardware barrier is required.
+   #if defined(_M_ARM64EC) || defined(_M_ARM64)
+      //ARMv8 has load-acquire/store-release instructions, so no explicit
+      //barrier and no interlocked operation are needed
       #include <intrin.h>
-      #if defined(_M_ARM)
-         #define BOOST_INTERPROCESS_READ_BARRIER __dmb(_ARM_BARRIER_ISH)
-      #else
-         #define BOOST_INTERPROCESS_READ_BARRIER __dmb(_ARM64_BARRIER_ISH)
-      #endif
+      #define BOOST_INTERPROCESS_ATOMIC_LOAD32(mem) \
+                  (boost::uint32_t)__ldar32(reinterpret_cast<unsigned __int32 volatile *>(mem))
+      #define BOOST_INTERPROCESS_ATOMIC_STORE32(mem, val) \
+                  __stlr32(reinterpret_cast<unsigned __int32 volatile *>(mem), (unsigned __int32)(val))
+   #elif defined(_M_ARM)
+      //ARMv7 is weakly ordered and has no load-acquire instruction, so a real
+      //hardware barrier is required after the load
+      #include <intrin.h>
+      #define BOOST_INTERPROCESS_READ_BARRIER __dmb(_ARM_BARRIER_ISH)
    #else
       //x86/x64 never reorders a load with the loads and stores that follow it,
       //so only the compiler must be kept in place.
@@ -127,16 +139,26 @@ inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
 //! Atomically read an boost::uint32_t from memory
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
 {
+   #if defined(BOOST_INTERPROCESS_ATOMIC_LOAD32)
+   return BOOST_INTERPROCESS_ATOMIC_LOAD32(mem);
+   #else
    const boost::uint32_t val = *mem;
    BOOST_INTERPROCESS_READ_BARRIER;
    return val;
+   #endif
 }
 
 //! Atomically set an boost::uint32_t in memory
 //! "mem": pointer to the object
 //! "param": val value that the object will assume
 inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
-{  winapi::interlocked_exchange(reinterpret_cast<volatile long*>(mem), (long)val);  }
+{
+   #if defined(BOOST_INTERPROCESS_ATOMIC_STORE32)
+   BOOST_INTERPROCESS_ATOMIC_STORE32(mem, val);
+   #else
+   winapi::interlocked_exchange(reinterpret_cast<volatile long*>(mem), (long)val);
+   #endif
+}
 
 //! Compare an boost::uint32_t's value with "cmp".
 //! If they are the same swap the value with "with"
