@@ -97,8 +97,14 @@ inline void spin_mutex::lock(void)
 
 inline bool spin_mutex::try_lock(void)
 {
-   boost::uint32_t prev_s = ipcdetail::atomic_cas32(const_cast<boost::uint32_t*>(&m_s), 1, 0);
-   return m_s == 1 && prev_s == 0;
+   //Taking the mutex must be an acquire, so that everything the previous owner
+   //did before releasing it is visible here. Nothing has to be ordered when the
+   //mutex is already taken and the swap fails
+   boost::uint32_t prev_s = ipcdetail::atomic_cas32_acquire(const_cast<boost::uint32_t*>(&m_s), 1, 0);
+   //A zero previous value means this thread performed the swap and owns the
+   //mutex. Re-reading m_s would add nothing: no other thread can change it
+   //while it is owned here
+   return prev_s == 0;
 }
 
 template<class TimePoint>
@@ -106,7 +112,13 @@ inline bool spin_mutex::timed_lock(const TimePoint &abs_time)
 {  return ipcdetail::try_based_timed_lock(*this, abs_time); }
 
 inline void spin_mutex::unlock(void)
-{  ipcdetail::atomic_cas32(const_cast<boost::uint32_t*>(&m_s), 0, 1);   }
+{
+   //Only the owner unlocks, and no other thread can change m_s while it is
+   //owned, so nothing has to be compared: a store is enough. It must be a
+   //release, so that everything done inside the critical section is visible to
+   //the next thread that takes the mutex
+   ipcdetail::atomic_write32_release(const_cast<boost::uint32_t*>(&m_s), 0);
+}
 
 }  //namespace ipcdetail {
 }  //namespace interprocess {

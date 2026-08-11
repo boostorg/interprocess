@@ -54,9 +54,12 @@ public:
     ~sp_counted_base() // nothrow
     {}
 
+    //Taking one more reference publishes nothing and reads nothing that has to
+    //be ordered: the caller already owns a reference, so the object can't go
+    //away meanwhile. A relaxed increment is enough
     void add_ref_copy()
     {
-        ipcdetail::atomic_inc32( &use_count_ );
+        ipcdetail::atomic_inc32_relaxed( &use_count_ );
     }
 
     bool add_ref_lock() // true on success
@@ -65,17 +68,27 @@ public:
         {
             boost::uint32_t tmp = static_cast< boost::uint32_t const volatile& >( use_count_ );
             if( tmp == 0 ) return false;
-            if( ipcdetail::atomic_cas32( &use_count_, tmp + 1, tmp ) == tmp )
+            //On success this thread starts using the object, so it must acquire
+            //what the thread that created it released. Nothing is published
+            //here, and a failed swap only leads to another round of the loop
+            if( ipcdetail::atomic_cas32_acquire( &use_count_, tmp + 1, tmp ) == tmp )
                return true;
         }
     }
 
+   //Dropping a reference must be a release, so that the thread that destroys
+   //the object sees the work of all the threads that dropped theirs before,
+   //and an acquire for the thread that finds the last one, so that it sees
+   //that work before destroying. That is exactly the read-modify-write order
+   //of atomic_dec32: a plain release would leave the destroying thread without
+   //the acquire and race with the others
    bool ref_release() // nothrow
    { return 1 == ipcdetail::atomic_dec32( &use_count_ );  }
 
    void weak_add_ref() // nothrow
-   { ipcdetail::atomic_inc32( &weak_count_ ); }
+   { ipcdetail::atomic_inc32_relaxed( &weak_count_ ); }
 
+   //Same reasoning as ref_release
    bool weak_release() // nothrow
    { return 1 == ipcdetail::atomic_dec32( &weak_count_ ); }
 

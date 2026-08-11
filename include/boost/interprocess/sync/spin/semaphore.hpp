@@ -55,11 +55,18 @@ inline spin_semaphore::~spin_semaphore()
 {}
 
 inline spin_semaphore::spin_semaphore(unsigned int initialCount)
-{  ipcdetail::atomic_write32(&this->m_count, boost::uint32_t(initialCount));  }
+{
+   //A release is enough to publish the initial count to whoever finds this
+   //semaphore afterwards, nothing has to be ordered after it
+   ipcdetail::atomic_write32_release(&this->m_count, boost::uint32_t(initialCount));
+}
 
 inline void spin_semaphore::post()
 {
-   ipcdetail::atomic_inc32(&m_count);
+   //Posting hands work over to whoever waits, so everything done before must
+   //be visible to the thread that takes the count. Nothing has to be ordered
+   //after it, so a release is enough
+   ipcdetail::atomic_inc32_release(&m_count);
 }
 
 inline void spin_semaphore::wait()
@@ -70,7 +77,22 @@ inline void spin_semaphore::wait()
 
 inline bool spin_semaphore::try_wait()
 {
-   return ipcdetail::atomic_add_unless32(&m_count, boost::uint32_t(-1), boost::uint32_t(0));
+   //Take one count unless there is none left. The initial read only looks for
+   //a candidate value, the swap is what takes the count, so the weakest
+   //available order is enough for it
+   boost::uint32_t count = ipcdetail::atomic_read32_acquire(&m_count);
+   while(count != 0u){
+      //Taking a count is an acquire: it consumes what the thread that posted
+      //released. A failed swap takes nothing and only leads to another round,
+      //so nothing has to be ordered in that case
+      const boost::uint32_t prev =
+         ipcdetail::atomic_cas32_acquire(&m_count, count - 1u, count);
+      if(prev == count){
+         return true;
+      }
+      count = prev;
+   }
+   return false;
 }
 
 template<class TimePoint>
