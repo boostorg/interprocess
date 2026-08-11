@@ -27,13 +27,6 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/cstdint.hpp>
 
-#if !defined(_AIX)
-#define BOOST_INTERPROCESS_DETAIL_PPC_ASM_LABEL(label) label ":\n\t"
-#define BOOST_INTERPROCESS_DETAIL_PPC_ASM_JUMP(insn, label, offset) insn " " label "\n\t"
-#else
-#define BOOST_INTERPROCESS_DETAIL_PPC_ASM_LABEL(label)
-#define BOOST_INTERPROCESS_DETAIL_PPC_ASM_JUMP(insn, label, offset) insn " $" offset "\n\t"
-#endif
 
 namespace boost{
 namespace interprocess{
@@ -44,13 +37,52 @@ namespace ipcdetail{
 //! Returns the old value pointed to by mem
 inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem);
 
+//! Same as atomic_inc32, but with relaxed semantics: only the increment itself
+//! is atomic, nothing is ordered around it. Enough when the value is a plain
+//! count that publishes nothing, like taking a new reference to an object that
+//! the caller already owns a reference to.
+inline boost::uint32_t atomic_inc32_relaxed(volatile boost::uint32_t *mem);
+
+//! Same as atomic_inc32, but with release semantics: everything done before it
+//! is visible to whoever acquires the value afterwards. This is what handing
+//! work over needs, like posting to a semaphore.
+inline boost::uint32_t atomic_inc32_release(volatile boost::uint32_t *mem);
+
+//! Atomically decrement an boost::uint32_t by 1
+//! "mem": pointer to the atomic value
+//! Returns the old value pointed to by mem
+inline boost::uint32_t atomic_dec32(volatile boost::uint32_t *mem);
+
+//! Same as atomic_dec32, but with relaxed semantics: only the decrement itself
+//! is atomic, nothing is ordered around it.
+inline boost::uint32_t atomic_dec32_relaxed(volatile boost::uint32_t *mem);
+
+//! Same as atomic_dec32, but with release semantics: everything done before it
+//! is visible to whoever acquires the value afterwards. This is what dropping
+//! a reference needs, so that the thread destroying the object sees all the
+//! work of the threads that released their references before.
+//!
+//! Note that a reference count also needs the destroying thread to acquire
+//! what the others released. As this header has no standalone fence, the last
+//! decrement, the one that sees a previous value of 1, must be followed by an
+//! acquire operation on the same variable, or use atomic_dec32 instead.
+inline boost::uint32_t atomic_dec32_release(volatile boost::uint32_t *mem);
+
 //! Atomically read an boost::uint32_t from memory
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem);
+
+//! Atomically read an boost::uint32_t from memory with acquire semantics
+inline boost::uint32_t atomic_read32_acquire(volatile boost::uint32_t *mem);
 
 //! Atomically set an boost::uint32_t in memory
 //! "mem": pointer to the object
 //! "param": val value that the object will assume
 inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val);
+
+//! Atomically set an boost::uint32_t in memory with release semantics
+//! "mem": pointer to the object
+//! "param": val value that the object will assume
+inline void atomic_write32_release(volatile boost::uint32_t *mem, boost::uint32_t val);
 
 //! Compare an boost::uint32_t's value with "cmp".
 //! If they are the same swap the value with "with"
@@ -58,7 +90,21 @@ inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val);
 //! "with": what to swap it with
 //! "cmp": the value to compare it to
 //! Returns the old value of *mem
+//!
+//! This is a strong compare and swap
 inline boost::uint32_t atomic_cas32
+   (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp);
+
+//! Same as atomic_cas32, but the operation is ordered with acquire semantics
+//! when the swap succeeds. The failure case is only guaranteed to be relaxed
+//! and callers must not rely on any ordering there.
+inline boost::uint32_t atomic_cas32_acquire
+   (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp);
+
+//! Same as atomic_cas32, but the operation is ordered with release semantics
+//! when the swap succeeds. A failed compare is only guaranteed to be relaxed
+//! and callers must not rely on any ordering there.
+inline boost::uint32_t atomic_cas32_release
    (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp);
 
 }  //namespace ipcdetail{
@@ -85,26 +131,33 @@ inline boost::uint32_t atomic_cas32
 //(read-modify-write) operation, as it's also used on read-only mapped regions.
 #if defined(__ATOMIC_SEQ_CST)
    //Clang (clang-cl included) and GCC 4.7 and later: the compiler emits the
-   //optimal sequentially consistent load/store for the target
-   #define BOOST_INTERPROCESS_ATOMIC_LOAD32(mem) __atomic_load_n((mem), __ATOMIC_SEQ_CST)
-   #define BOOST_INTERPROCESS_ATOMIC_STORE32(mem, val) __atomic_store_n((mem), (val), __ATOMIC_SEQ_CST)
+   //optimal load/store for the target and the requested memory order
+   #define BOOST_INTERPROCESS_ATOMIC_LOAD32(mem)           __atomic_load_n((mem), __ATOMIC_SEQ_CST)
+   #define BOOST_INTERPROCESS_ATOMIC_LOAD32_ACQ(mem)       __atomic_load_n((mem), __ATOMIC_ACQUIRE)
+   #define BOOST_INTERPROCESS_ATOMIC_STORE32(mem, val)     __atomic_store_n((mem), (val), __ATOMIC_SEQ_CST)
+   #define BOOST_INTERPROCESS_ATOMIC_STORE32_REL(mem, val) __atomic_store_n((mem), (val), __ATOMIC_RELEASE)
 #elif defined( _MSC_VER )
    #if defined(_M_ARM64EC) || defined(_M_ARM64)
       //ARMv8 has load-acquire/store-release instructions, so no explicit
-      //barrier and no interlocked operation are needed
+      //barrier and no interlocked operation are needed. As the pair is also
+      //sequentially consistent, the same instruction serves both orders.
       #include <intrin.h>
       #define BOOST_INTERPROCESS_ATOMIC_LOAD32(mem) \
                   (boost::uint32_t)__ldar32(reinterpret_cast<unsigned __int32 volatile *>(mem))
       #define BOOST_INTERPROCESS_ATOMIC_STORE32(mem, val) \
                   __stlr32(reinterpret_cast<unsigned __int32 volatile *>(mem), (unsigned __int32)(val))
+      #define BOOST_INTERPROCESS_ATOMIC_LOAD32_ACQ(mem)       BOOST_INTERPROCESS_ATOMIC_LOAD32(mem)
+      #define BOOST_INTERPROCESS_ATOMIC_STORE32_REL(mem, val) BOOST_INTERPROCESS_ATOMIC_STORE32(mem, val)
    #elif defined(_M_ARM)
-      //ARMv7 is weakly ordered and has no load-acquire instruction, so a real
-      //hardware barrier is required after the load
+      //ARMv7 is weakly ordered and has no load-acquire/store-release
+      //instructions, so real hardware barriers are required
       #include <intrin.h>
-      #define BOOST_INTERPROCESS_READ_BARRIER __dmb(_ARM_BARRIER_ISH)
+      #define BOOST_INTERPROCESS_READ_BARRIER  __dmb(_ARM_BARRIER_ISH)
+      #define BOOST_INTERPROCESS_WRITE_BARRIER __dmb(_ARM_BARRIER_ISH)
    #else
       //x86/x64 never reorders a load with the loads and stores that follow it,
-      //so only the compiler must be kept in place.
+      //nor a store with the loads and stores that precede it, so only the
+      //compiler must be kept in place.
       extern "C" void _ReadWriteBarrier(void);
       #pragma intrinsic(_ReadWriteBarrier)
 
@@ -112,10 +165,12 @@ inline boost::uint32_t atomic_cas32
                   BOOST_INTERPROCESS_DISABLE_DEPRECATED_WARNING \
                   _ReadWriteBarrier() \
                   BOOST_INTERPROCESS_RESTORE_WARNING
+      #define BOOST_INTERPROCESS_WRITE_BARRIER BOOST_INTERPROCESS_READ_BARRIER
    #endif
 #elif defined(__GNUC__)
    //GCC 4.1 to 4.6, only the legacy __sync builtins are available
-   #define BOOST_INTERPROCESS_READ_BARRIER __sync_synchronize()
+   #define BOOST_INTERPROCESS_READ_BARRIER  __sync_synchronize()
+   #define BOOST_INTERPROCESS_WRITE_BARRIER __sync_synchronize()
 #else
 #  error "Unsupported Compiler for Window"
 #endif
@@ -136,11 +191,75 @@ inline boost::uint32_t atomic_dec32(volatile boost::uint32_t *mem)
 inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
 {  return (boost::uint32_t)winapi::interlocked_increment(reinterpret_cast<volatile long*>(mem))-1;  }
 
+//! Same as atomic_inc32, but with relaxed semantics
+inline boost::uint32_t atomic_inc32_relaxed(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_RELAXED)
+   return __atomic_fetch_add(mem, 1u, __ATOMIC_RELAXED);
+   #elif defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM)
+   //ARM has unordered interlocked operations, cheaper than the full barrier
+   //ones used by atomic_inc32
+   return (boost::uint32_t)_InterlockedIncrement_nf(reinterpret_cast<volatile long*>(mem))-1;
+   #else
+   //x86/x64 has no weaker atomic read-modify-write instruction, LOCK XADD is
+   //always a full barrier
+   return atomic_inc32(mem);
+   #endif
+}
+
+//! Same as atomic_inc32, but with release semantics
+inline boost::uint32_t atomic_inc32_release(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_RELEASE)
+   return __atomic_fetch_add(mem, 1u, __ATOMIC_RELEASE);
+   #elif defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM)
+   return (boost::uint32_t)_InterlockedIncrement_rel(reinterpret_cast<volatile long*>(mem))-1;
+   #else
+   return atomic_inc32(mem);
+   #endif
+}
+
+//! Same as atomic_dec32, but with relaxed semantics
+inline boost::uint32_t atomic_dec32_relaxed(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_RELAXED)
+   return __atomic_fetch_sub(mem, 1u, __ATOMIC_RELAXED);
+   #elif defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM)
+   return (boost::uint32_t)_InterlockedDecrement_nf(reinterpret_cast<volatile long*>(mem))+1;
+   #else
+   return atomic_dec32(mem);
+   #endif
+}
+
+//! Same as atomic_dec32, but with release semantics
+inline boost::uint32_t atomic_dec32_release(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_RELEASE)
+   return __atomic_fetch_sub(mem, 1u, __ATOMIC_RELEASE);
+   #elif defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM)
+   return (boost::uint32_t)_InterlockedDecrement_rel(reinterpret_cast<volatile long*>(mem))+1;
+   #else
+   return atomic_dec32(mem);
+   #endif
+}
+
 //! Atomically read an boost::uint32_t from memory
 inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
 {
    #if defined(BOOST_INTERPROCESS_ATOMIC_LOAD32)
    return BOOST_INTERPROCESS_ATOMIC_LOAD32(mem);
+   #else
+   const boost::uint32_t val = *mem;
+   BOOST_INTERPROCESS_READ_BARRIER;
+   return val;
+   #endif
+}
+
+//! Atomically read an boost::uint32_t from memory with acquire semantics
+inline boost::uint32_t atomic_read32_acquire(volatile boost::uint32_t *mem)
+{
+   #if defined(BOOST_INTERPROCESS_ATOMIC_LOAD32_ACQ)
+   return BOOST_INTERPROCESS_ATOMIC_LOAD32_ACQ(mem);
    #else
    const boost::uint32_t val = *mem;
    BOOST_INTERPROCESS_READ_BARRIER;
@@ -160,6 +279,19 @@ inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
    #endif
 }
 
+//! Atomically set an boost::uint32_t in memory with release semantics
+//! "mem": pointer to the object
+//! "param": val value that the object will assume
+inline void atomic_write32_release(volatile boost::uint32_t *mem, boost::uint32_t val)
+{
+   #if defined(BOOST_INTERPROCESS_ATOMIC_STORE32_REL)
+   BOOST_INTERPROCESS_ATOMIC_STORE32_REL(mem, val);
+   #else
+   BOOST_INTERPROCESS_WRITE_BARRIER;
+   *mem = val;
+   #endif
+}
+
 //! Compare an boost::uint32_t's value with "cmp".
 //! If they are the same swap the value with "with"
 //! "mem": pointer to the value
@@ -169,6 +301,55 @@ inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
 inline boost::uint32_t atomic_cas32
    (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
 {  return (boost::uint32_t)winapi::interlocked_compare_exchange(reinterpret_cast<volatile long*>(mem), (long)with, (long)cmp);  }
+
+//! Same as atomic_cas32, but with acquire semantics for the success case
+//! and relaxed semantics for the failure case
+inline boost::uint32_t atomic_cas32_acquire
+   (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
+{
+   #if defined(__ATOMIC_ACQUIRE)
+   //On failure "cmp" receives the current value and on success it is left
+   //untouched, already holding the old value, so it is the old value in both
+   //cases, just like the value returned by atomic_cas32.
+   //A failed compare and swap performs no store, so nothing has to be ordered
+   //in that case and the cheapest failure order is used
+   //The "false" argument requests a strong compare and swap, which this
+   //interface requires: see the note in the declaration of atomic_cas32
+   __atomic_compare_exchange_n(mem, &cmp, with, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
+   return cmp;
+   #elif defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM)
+   //ARM has acquire/release interlocked operations, cheaper than the full
+   //barrier ones used by atomic_cas32. This intrinsic takes a single memory
+   //order, so it also orders the failure case: stronger than promised, which
+   //callers must not depend on
+   return (boost::uint32_t)_InterlockedCompareExchange_acq
+      (reinterpret_cast<volatile long*>(mem), (long)with, (long)cmp);
+   #else
+   //x86/x64 has no weaker atomic read-modify-write instruction, LOCK CMPXCHG
+   //is always a full barrier
+   return atomic_cas32(mem, with, cmp);
+   #endif
+}
+
+//! Same as atomic_cas32, but with release semantics with the success case
+//! and relaxed semantics for the failure case
+inline boost::uint32_t atomic_cas32_release
+   (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
+{
+   #if defined(__ATOMIC_RELEASE)
+   //A failed compare and swap performs no store, so its memory order can't be
+   //release: relaxed is the strongest order allowed for the failure case
+   //The "false" argument requests a strong compare and swap, which this
+   //interface requires: see the note in the declaration of atomic_cas32
+   __atomic_compare_exchange_n(mem, &cmp, with, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+   return cmp;
+   #elif defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM)
+   return (boost::uint32_t)_InterlockedCompareExchange_rel
+      (reinterpret_cast<volatile long*>(mem), (long)with, (long)cmp);
+   #else
+   return atomic_cas32(mem, with, cmp);
+   #endif
+}
 
 }  //namespace ipcdetail{
 }  //namespace interprocess{
@@ -180,25 +361,57 @@ namespace boost {
 namespace interprocess {
 namespace ipcdetail{
 
-//! Atomically add 'val' to an boost::uint32_t
-//! "mem": pointer to the object
-//! "val": amount to add
-//! Returns the old value pointed to by mem
-inline boost::uint32_t atomic_add32
-   (volatile boost::uint32_t *mem, boost::uint32_t val)
-{  return __sync_fetch_and_add(const_cast<boost::uint32_t *>(mem), val);   }
-
 //! Atomically increment an apr_uint32_t by 1
 //! "mem": pointer to the object
 //! Returns the old value pointed to by mem
 inline boost::uint32_t atomic_inc32(volatile boost::uint32_t *mem)
-{  return atomic_add32(mem, 1);  }
+{  return __sync_fetch_and_add(const_cast<boost::uint32_t *>(mem), 1);   }
 
 //! Atomically decrement an boost::uint32_t by 1
 //! "mem": pointer to the atomic value
 //! Returns the old value pointed to by mem
 inline boost::uint32_t atomic_dec32(volatile boost::uint32_t *mem)
-{  return atomic_add32(mem, (boost::uint32_t)-1);   }
+{  return __sync_fetch_and_add(const_cast<boost::uint32_t *>(mem), (boost::uint32_t)-1);   }
+
+//! Same as atomic_inc32, but with relaxed semantics
+inline boost::uint32_t atomic_inc32_relaxed(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_RELAXED)
+   return __atomic_fetch_add(mem, 1u, __ATOMIC_RELAXED);
+   #else
+   return atomic_inc32(mem);
+   #endif
+}
+
+//! Same as atomic_inc32, but with release semantics
+inline boost::uint32_t atomic_inc32_release(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_RELEASE)
+   return __atomic_fetch_add(mem, 1u, __ATOMIC_RELEASE);
+   #else
+   return atomic_inc32(mem);
+   #endif
+}
+
+//! Same as atomic_dec32, but with relaxed semantics
+inline boost::uint32_t atomic_dec32_relaxed(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_RELAXED)
+   return __atomic_fetch_sub(mem, 1u, __ATOMIC_RELAXED);
+   #else
+   return atomic_dec32(mem);
+   #endif
+}
+
+//! Same as atomic_dec32, but with release semantics
+inline boost::uint32_t atomic_dec32_release(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_RELEASE)
+   return __atomic_fetch_sub(mem, 1u, __ATOMIC_RELEASE);
+   #else
+   return atomic_dec32(mem);
+   #endif
+}
 
 //! Compare an boost::uint32_t's value with "cmp".
 //! If they are the same swap the value with "with"
@@ -210,6 +423,41 @@ inline boost::uint32_t atomic_cas32
    (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
 {  return __sync_val_compare_and_swap(const_cast<boost::uint32_t *>(mem), cmp, with);   }
 
+//! Same as atomic_cas32, but with acquire semantics
+inline boost::uint32_t atomic_cas32_acquire
+   (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
+{
+   #if defined(__ATOMIC_ACQUIRE)
+   //On failure "cmp" receives the current value and on success it is left
+   //untouched, already holding the old value, so it is the old value in both
+   //cases, just like the value returned by atomic_cas32.
+   //A failed compare and swap performs no store, so nothing has to be ordered
+   //in that case and the cheapest failure order is used
+   //The "false" argument requests a strong compare and swap, which this
+   //interface requires: see the note in the declaration of atomic_cas32
+   __atomic_compare_exchange_n(mem, &cmp, with, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
+   return cmp;
+   #else
+   return __sync_val_compare_and_swap(const_cast<boost::uint32_t *>(mem), cmp, with);
+   #endif
+}
+
+//! Same as atomic_cas32, but with release semantics
+inline boost::uint32_t atomic_cas32_release
+   (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
+{
+   #if defined(__ATOMIC_RELEASE)
+   //A failed compare and swap performs no store, so its memory order can't be
+   //release: relaxed is the strongest order allowed for the failure case
+   //The "false" argument requests a strong compare and swap, which this
+   //interface requires: see the note in the declaration of atomic_cas32
+   __atomic_compare_exchange_n(mem, &cmp, with, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+   return cmp;
+   #else
+   return __sync_val_compare_and_swap(const_cast<boost::uint32_t *>(mem), cmp, with);
+   #endif
+}
+
 //! Atomically read an boost::uint32_t from memory
 //! Note: this must NOT be a read-modify-write operation, as atomic_read32
 //! is also used on read-only mapped regions
@@ -219,6 +467,18 @@ inline boost::uint32_t atomic_read32(volatile boost::uint32_t *mem)
    //GCC 4.7 and later: a real atomic load, the compiler emits the optimal
    //sequentially consistent load for the target
    return __atomic_load_n(mem, __ATOMIC_SEQ_CST);
+   #else
+   const boost::uint32_t old_val = *mem; __sync_synchronize(); return old_val;
+   #endif
+}
+
+//! Atomically read an boost::uint32_t from memory with acquire semantics
+//! Note: this must NOT be a read-modify-write operation, as it is also
+//! used on read-only mapped regions
+inline boost::uint32_t atomic_read32_acquire(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_ACQUIRE)
+   return __atomic_load_n(mem, __ATOMIC_ACQUIRE);
    #else
    const boost::uint32_t old_val = *mem; __sync_synchronize(); return old_val;
    #endif
@@ -235,6 +495,19 @@ inline void atomic_write32(volatile boost::uint32_t *mem, boost::uint32_t val)
    //The trailing fence is what gives StoreLoad ordering, needed to make
    //this store sequentially consistent
    __sync_synchronize(); *mem = val; __sync_synchronize();
+   #endif
+}
+
+//! Atomically set an boost::uint32_t in memory with release semantics
+//! "mem": pointer to the object
+//! "param": val value that the object will assume
+inline void atomic_write32_release(volatile boost::uint32_t *mem, boost::uint32_t val)
+{
+   #if defined(__ATOMIC_RELEASE)
+   __atomic_store_n(mem, val, __ATOMIC_RELEASE);
+   #else
+   //No trailing fence: a release store does not need StoreLoad ordering
+   __sync_synchronize(); *mem = val;
    #endif
 }
 
