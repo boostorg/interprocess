@@ -266,7 +266,7 @@ struct thread_safe_global_map_dependant<managed_global_memory>
          else{
             //If the lock file is ok, increment reference count of
             //attached modules to shared memory
-            atomic_inc32(&pserial_id->modules_attached_to_gmem_count);
+            atomic_add32(&pserial_id->modules_attached_to_gmem_count, 1u);
          }
       }
 
@@ -305,7 +305,7 @@ struct thread_safe_global_map_dependant<managed_global_memory>
             mshm_.find<locking_file_serial_id>
                ("lock_file_fd").first;
          BOOST_ASSERT(0 != pserial_id);
-         if(1 == atomic_dec32(&pserial_id->modules_attached_to_gmem_count)){
+         if(1 == atomic_sub32(&pserial_id->modules_attached_to_gmem_count, 1u)){
             int fd = pserial_id->fd;
             if(fd > 0){
                pserial_id->fd = GMemMarkToBeRemoved;

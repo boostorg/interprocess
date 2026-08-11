@@ -135,7 +135,7 @@ class intermodule_singleton_common
                //Increment the module reference count that reflects how many
                //singletons this module holds, so that we can safely destroy
                //module global map object when no singleton is left
-               atomic_inc32(&this_module_singleton_count);
+               atomic_add32(&this_module_singleton_count, 1u);
                //Insert a barrier before assigning the pointer to
                //make sure this assignment comes after the initialization
                atomic_write32(&this_module_singleton_initialized, Initializing);
@@ -202,7 +202,7 @@ class intermodule_singleton_common
          //Note: singletons are destroyed when the module is unloaded
          //so no threads should be executing or holding references
          //to this module
-         if(1 == atomic_dec32(&this_module_singleton_count)){
+         if(1 == atomic_sub32(&this_module_singleton_count, 1u)){
             destroy_global_map_handle();
          }
       }
@@ -423,7 +423,7 @@ class intermodule_singleton_impl
          //if(Phoenix){
             BOOST_INTERPROCESS_ATEXIT(&atexit_work);
          //}
-         atomic_inc32(&rcount->singleton_ref_count);
+         atomic_add32(&rcount->singleton_ref_count, 1u);
          ret_ptr = rcount->ptr;
       }
       void *data() const
@@ -450,7 +450,7 @@ class intermodule_singleton_impl
          BOOST_ASSERT(rcount);
          BOOST_ASSERT(rcount->singleton_ref_count > 0);
          //Check if last reference
-         if(atomic_dec32(&rcount->singleton_ref_count) == 1){
+         if(atomic_sub32(&rcount->singleton_ref_count, 1u) == 1){
             //If last, destroy the object
             BOOST_ASSERT(rcount->ptr != 0);
             C *pc = static_cast<C*>(rcount->ptr);

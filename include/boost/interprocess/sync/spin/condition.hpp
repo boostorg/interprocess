@@ -148,7 +148,7 @@ class spin_condition
          //We increment the waiting thread count protected so that it will be
          //always constant when another thread enters the notification logic.
          //The increment marks this thread as "waiting on spin_condition"
-         atomic_inc32(const_cast<boost::uint32_t*>(&m_num_waiters));
+         atomic_add32(const_cast<boost::uint32_t*>(&m_num_waiters), 1u);
 
          //We unlock the external mutex atomically with the increment
          mut.unlock();
@@ -193,7 +193,7 @@ class spin_condition
          //If a timeout occurred, the mutex will not execute checking logic
          if(TimeoutEnabled && timed_out){
             //Decrement wait count
-            atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
+            atomic_sub32(const_cast<boost::uint32_t*>(&m_num_waiters), 1u);
             unlock_enter_mut = true;
             break;
          }
@@ -211,13 +211,13 @@ class spin_condition
                //so no other thread will exit.
                //Decrement wait count.
                unlock_enter_mut = true;
-               atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
+               atomic_sub32(const_cast<boost::uint32_t*>(&m_num_waiters), 1u);
                break;
             }
             else{
                //If it is a NOTIFY_ALL command, all threads should return
                //from do_timed_wait function. Decrement wait count.
-               unlock_enter_mut = 1 == atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
+               unlock_enter_mut = 1 == atomic_sub32(const_cast<boost::uint32_t*>(&m_num_waiters), 1u);
                //Check if this is the last thread of notify_all waiters
                //Only the last thread will release the mutex
                if(unlock_enter_mut){

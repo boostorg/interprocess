@@ -66,7 +66,7 @@ inline void spin_semaphore::post()
    //Posting hands work over to whoever waits, so everything done before must
    //be visible to the thread that takes the count. Nothing has to be ordered
    //after it, so a release is enough
-   ipcdetail::atomic_inc32_release(&m_count);
+   ipcdetail::atomic_add32_release(&m_count, 1u);
 }
 
 inline void spin_semaphore::wait()

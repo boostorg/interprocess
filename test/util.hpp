@@ -213,7 +213,7 @@ class test_counter
 
    //!Announces that this thread reached the awaited state
    void increment()
-   {  ipcdetail::atomic_inc32(&m_count);  }
+   {  ipcdetail::atomic_add32(&m_count, 1u);  }
 
    boost::uint32_t get()
    {  return ipcdetail::atomic_read32(&m_count);  }

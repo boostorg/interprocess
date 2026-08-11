@@ -59,7 +59,7 @@ public:
     //away meanwhile. A relaxed increment is enough
     void add_ref_copy()
     {
-        ipcdetail::atomic_inc32_relaxed( &use_count_ );
+        ipcdetail::atomic_add32_relaxed( &use_count_, 1u);
     }
 
     bool add_ref_lock() // true on success
@@ -80,17 +80,17 @@ public:
    //the object sees the work of all the threads that dropped theirs before,
    //and an acquire for the thread that finds the last one, so that it sees
    //that work before destroying. That is exactly the read-modify-write order
-   //of atomic_dec32: a plain release would leave the destroying thread without
+   //of atomic_sub32: a plain release would leave the destroying thread without
    //the acquire and race with the others
    bool ref_release() // nothrow
-   { return 1 == ipcdetail::atomic_dec32( &use_count_ );  }
+   { return 1 == ipcdetail::atomic_sub32( &use_count_, 1u);  }
 
    void weak_add_ref() // nothrow
-   { ipcdetail::atomic_inc32_relaxed( &weak_count_ ); }
+   { ipcdetail::atomic_add32_relaxed( &weak_count_, 1u); }
 
    //Same reasoning as ref_release
    bool weak_release() // nothrow
-   { return 1 == ipcdetail::atomic_dec32( &weak_count_ ); }
+   { return 1 == ipcdetail::atomic_sub32( &weak_count_, 1u); }
 
    long use_count() const // nothrow
    { return (long)static_cast<boost::uint32_t const volatile &>( use_count_ ); }

@@ -22,8 +22,8 @@ using boost::interprocess::ipcdetail::atomic_read32;
 using boost::interprocess::ipcdetail::atomic_read32_acquire;
 using boost::interprocess::ipcdetail::atomic_write32;
 using boost::interprocess::ipcdetail::atomic_write32_release;
-using boost::interprocess::ipcdetail::atomic_inc32;
-using boost::interprocess::ipcdetail::atomic_dec32;
+using boost::interprocess::ipcdetail::atomic_add32;
+using boost::interprocess::ipcdetail::atomic_sub32;
 using boost::interprocess::ipcdetail::atomic_cas32;
 using boost::interprocess::ipcdetail::atomic_cas32_acquire;
 using boost::interprocess::ipcdetail::atomic_cas32_release;
@@ -83,27 +83,27 @@ void test_read_write()
    BOOST_INTERPROCESS_CHECK(v == 7u);
 }
 
-void test_inc_dec()
+void test_add_sub()
 {
    volatile boost::uint32_t v = 0u;
 
    //Both must return the *old* value
-   BOOST_INTERPROCESS_CHECK(atomic_inc32(&v) == 0u);
+   BOOST_INTERPROCESS_CHECK(atomic_add32(&v, 1u) == 0u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 1u);
-   BOOST_INTERPROCESS_CHECK(atomic_inc32(&v) == 1u);
+   BOOST_INTERPROCESS_CHECK(atomic_add32(&v, 1u) == 1u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 2u);
 
-   BOOST_INTERPROCESS_CHECK(atomic_dec32(&v) == 2u);
+   BOOST_INTERPROCESS_CHECK(atomic_sub32(&v, 1u) == 2u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 1u);
-   BOOST_INTERPROCESS_CHECK(atomic_dec32(&v) == 1u);
+   BOOST_INTERPROCESS_CHECK(atomic_sub32(&v, 1u) == 1u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 0u);
 
    //Wrap around, the operations are modulo 2^32
    const boost::uint32_t all_ones = ~boost::uint32_t(0);
    atomic_write32(&v, all_ones);
-   BOOST_INTERPROCESS_CHECK(atomic_inc32(&v) == all_ones);
+   BOOST_INTERPROCESS_CHECK(atomic_add32(&v, 1u) == all_ones);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 0u);
-   BOOST_INTERPROCESS_CHECK(atomic_dec32(&v) == 0u);
+   BOOST_INTERPROCESS_CHECK(atomic_sub32(&v, 1u) == 0u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == all_ones);
 }
 
@@ -215,7 +215,7 @@ class rendezvous
 
    void wait(boost::uint32_t expected)
    {
-      atomic_inc32(&m_arrived);
+      atomic_add32(&m_arrived, 1u);
       spin_wait swait;
       while(atomic_read32(&m_arrived) < expected){
          swait.yield();
@@ -227,7 +227,7 @@ class rendezvous
 };
 
 //----------------------------------------------------------------------------
-// Increment/decrement stress: no update may be lost
+// Add/subtract stress: no update may be lost
 //----------------------------------------------------------------------------
 
 struct counter_data
@@ -246,13 +246,13 @@ class counter_thread
    {
       m_data->m_rendezvous.wait(NumThreads);
       for(boost::uint32_t i = 0; i != NumIterations; ++i){
-         atomic_inc32(&m_data->m_counter);
+         atomic_add32(&m_data->m_counter, 1u);
       }
       for(boost::uint32_t i = 0; i != NumIterations; ++i){
-         atomic_dec32(&m_data->m_counter);
+         atomic_sub32(&m_data->m_counter, 1u);
       }
       for(boost::uint32_t i = 0; i != NumIterations; ++i){
-         atomic_inc32(&m_data->m_counter);
+         atomic_add32(&m_data->m_counter, 1u);
       }
    }
 
@@ -356,7 +356,7 @@ class add_unless_thread
       //Every thread tries to take more tokens than exist in total
       for(boost::uint32_t i = 0; i != NumIterations; ++i){
          if(dec_unless_zero(&m_data->m_tokens)){
-            atomic_inc32(&m_data->m_taken);
+            atomic_add32(&m_data->m_taken, 1u);
          }
       }
    }
@@ -453,7 +453,7 @@ class consumer_thread
          //Having seen the flag, the whole payload must already be visible
          for(std::size_t i = 0; i != PayloadSize; ++i){
             if(m_data->m_payload[i] != seen){
-               atomic_inc32(&m_data->m_failures);
+               atomic_add32(&m_data->m_failures, 1u);
             }
          }
          //Acknowledge, letting the publisher start the next round
@@ -611,7 +611,7 @@ class cache_line_disturber
    {
       m_data->m_rendezvous.wait(2u);
       while(atomic_read32(&m_data->m_stop) == 0u){
-         atomic_inc32(&m_data->m_neighbour);
+         atomic_add32(&m_data->m_neighbour, 1u);
       }
    }
 
@@ -661,7 +661,7 @@ int main()
    //BOOST_INTERPROCESS_CHECK reports and throws on failure, as in the rest
    //of the test suite, so a failing check aborts the test
    test_read_write();
-   test_inc_dec();
+   test_add_sub();
    test_cas();
    test_cas_acquire_release();
    test_dec_unless_zero();
