@@ -27,6 +27,7 @@ using boost::interprocess::ipcdetail::atomic_sub32;
 using boost::interprocess::ipcdetail::atomic_cas32;
 using boost::interprocess::ipcdetail::atomic_cas32_acquire;
 using boost::interprocess::ipcdetail::atomic_cas32_release;
+using boost::interprocess::ipcdetail::atomic_cas32_acq_rel;
 
 //!"Take one unless the value is already zero", the compare and swap loop that
 //!a counting semaphore needs. It used to be a primitive of its own
@@ -144,17 +145,24 @@ void test_cas_acquire_release()
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 100u);
    BOOST_INTERPROCESS_CHECK(atomic_cas32_release(&v, 1u, 99u) == 100u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 100u);
+   BOOST_INTERPROCESS_CHECK(atomic_cas32_acq_rel(&v, 1u, 99u) == 100u);
+   BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 100u);
 
    //Successful compare: value swapped, old value returned
    BOOST_INTERPROCESS_CHECK(atomic_cas32_acquire(&v, 200u, 100u) == 100u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 200u);
    BOOST_INTERPROCESS_CHECK(atomic_cas32_release(&v, 300u, 200u) == 200u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 300u);
+   BOOST_INTERPROCESS_CHECK(atomic_cas32_acq_rel(&v, 400u, 300u) == 300u);
+   BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 400u);
+   atomic_write32(&v, 300u);
 
    //Swapping a value for itself is still a successful compare
    BOOST_INTERPROCESS_CHECK(atomic_cas32_acquire(&v, 300u, 300u) == 300u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 300u);
    BOOST_INTERPROCESS_CHECK(atomic_cas32_release(&v, 300u, 300u) == 300u);
+   BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 300u);
+   BOOST_INTERPROCESS_CHECK(atomic_cas32_acq_rel(&v, 300u, 300u) == 300u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 300u);
 
    //Zero and all-ones as comparand and as new value
@@ -162,6 +170,10 @@ void test_cas_acquire_release()
    BOOST_INTERPROCESS_CHECK(atomic_cas32_acquire(&v, all_ones, 0u) == 0u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == all_ones);
    BOOST_INTERPROCESS_CHECK(atomic_cas32_release(&v, 0u, all_ones) == all_ones);
+   BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 0u);
+   BOOST_INTERPROCESS_CHECK(atomic_cas32_acq_rel(&v, all_ones, 0u) == 0u);
+   BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == all_ones);
+   BOOST_INTERPROCESS_CHECK(atomic_cas32_acq_rel(&v, 0u, all_ones) == all_ones);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 0u);
 }
 
@@ -642,6 +654,10 @@ void test_cas_is_strong()
 
       atomic_write32(&d.m_value, A);
       BOOST_INTERPROCESS_CHECK(atomic_cas32_release(&d.m_value, B, A) == A);
+      BOOST_INTERPROCESS_CHECK(atomic_read32(&d.m_value) == B);
+
+      atomic_write32(&d.m_value, A);
+      BOOST_INTERPROCESS_CHECK(atomic_cas32_acq_rel(&d.m_value, B, A) == A);
       BOOST_INTERPROCESS_CHECK(atomic_read32(&d.m_value) == B);
 
       //A comparand that does not match must never swap, no matter the noise

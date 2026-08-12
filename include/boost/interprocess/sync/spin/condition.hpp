@@ -307,16 +307,15 @@ class spin_condition
       }
 
       //Notify that all threads should execute wait logic. Release semantics
-      //are needed: a successful swap publishes the command and hands the
-      //ownership of the still locked enter mutex over to the waiters that
-      //consume it, which will be the ones releasing it. The compare can only
-      //fail while another notification is being consumed, and that can't
-      //happen here: the enter mutex is owned and any consumed command is
-      //restored to SLEEP before its ownership is released
-      spin_wait swait;
-      while(SLEEP != atomic_cas32_release(const_cast<boost::uint32_t*>(&m_command), command, SLEEP)){
-         swait.yield();
-      }
+      //are needed: the store publishes the command and hands the ownership of
+      //the still locked enter mutex over to the waiters that consume it,
+      //which will be the ones releasing it.
+      //No compare is needed: the command is necessarily SLEEP here. This
+      //thread owns the enter mutex, so no other notification can be in
+      //flight (any consumed command is restored to SLEEP before the mutex
+      //ownership is released), and the consuming compare and swap of the
+      //waiters only writes when it reads NOTIFY_ONE, never over SLEEP
+      atomic_write32_release(const_cast<boost::uint32_t*>(&m_command), command);
       //The enter mutex will rest locked until the last waiting thread unlocks it
    }
 
