@@ -112,6 +112,14 @@ BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_acquire
 BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_release
    (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp);
 
+//! Same as atomic_cas32, but the operation is ordered with acquire and release
+//! semantics when the swap succeeds and, unlike the other variants, with
+//! acquire semantics when it fails. This is the variant for protocols where
+//! both outcomes consume a value published by another thread (like inheriting
+//! the ownership of a mutex), so even a failed compare has to be ordered.
+BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_acq_rel
+   (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp);
+
 }  //namespace ipcdetail{
 }  //namespace interprocess{
 }  //namespace boost{
@@ -356,6 +364,26 @@ BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_release
    #endif
 }
 
+//! Same as atomic_cas32, but with acquire-release semantics on success and
+//! acquire semantics on failure
+BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_acq_rel
+   (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
+{
+   #if defined(__ATOMIC_ACQ_REL)
+   //Acquire is the strongest order allowed for the failure case, as a failed
+   //compare and swap performs no store.
+   //The "false" argument requests a strong compare and swap, which this
+   //interface requires: see the note in the declaration of atomic_cas32
+   __atomic_compare_exchange_n(mem, &cmp, with, false, __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE);
+   return cmp;
+   #else
+   //There is no acquire-release interlocked intrinsic (ARM Windows only
+   //offers _acq/_rel/_nf), so the full barrier operation used by
+   //atomic_cas32 is the closest available
+   return atomic_cas32(mem, with, cmp);
+   #endif
+}
+
 }  //namespace ipcdetail{
 }  //namespace interprocess{
 }  //namespace boost{
@@ -459,6 +487,23 @@ BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_release
    //The "false" argument requests a strong compare and swap, which this
    //interface requires: see the note in the declaration of atomic_cas32
    __atomic_compare_exchange_n(mem, &cmp, with, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+   return cmp;
+   #else
+   return __sync_val_compare_and_swap(const_cast<boost::uint32_t *>(mem), cmp, with);
+   #endif
+}
+
+//! Same as atomic_cas32, but with acquire-release semantics on success and
+//! acquire semantics on failure
+BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_acq_rel
+   (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp)
+{
+   #if defined(__ATOMIC_ACQ_REL)
+   //Acquire is the strongest order allowed for the failure case, as a failed
+   //compare and swap performs no store.
+   //The "false" argument requests a strong compare and swap, which this
+   //interface requires: see the note in the declaration of atomic_cas32
+   __atomic_compare_exchange_n(mem, &cmp, with, false, __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE);
    return cmp;
    #else
    return __sync_val_compare_and_swap(const_cast<boost::uint32_t *>(mem), cmp, with);
