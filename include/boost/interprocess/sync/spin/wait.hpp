@@ -32,6 +32,29 @@
 #include <iostream>
 #endif
 
+//////////////////////////////////////////////////////////////////////////////
+//
+//                   BOOST_INTERPROCESS_SMT_PAUSE
+//
+//! Emits the processor hint that marks a spin loop. It saves power and, on
+//! simultaneous multithreading processors, hands the shared execution
+//! resources over to the sibling hardware threads, which is what lets the
+//! thread holding the lock make progress.
+//!
+//! It's always defined: on processors with no such hint it expands to
+//! nothing, so that spin_wait follows the same strategy everywhere.
+//
+//////////////////////////////////////////////////////////////////////////////
+
+//Detect the portable x86 pause builtin (Clang, GCC 10 and later). Excluded on
+//MSVC ARM targets, where the x86 spellings of the architecture macros are also
+//defined but the builtin is not available.
+#if defined(__has_builtin) && !defined(_M_ARM64EC) && !defined(_M_ARM64) && !defined(_M_ARM)
+#  if __has_builtin(__builtin_ia32_pause) && !defined(__INTEL_COMPILER)
+#     define BOOST_INTERPROCESS_HAS_BUILTIN_IA32_PAUSE
+#  endif
+#endif
+
 //Forward declaration of MSVC intrinsics
 //Note: ARM64EC also defines _M_AMD64/_M_X64, so it must be tested first
 #if defined(_MSC_VER)
@@ -48,9 +71,12 @@ extern "C" void _mm_pause(void);
 #endif
 #endif
 
-// BOOST_INTERPROCESS_SMT_PAUSE
+#if defined(BOOST_INTERPROCESS_HAS_BUILTIN_IA32_PAUSE)
 
-#if defined(_MSC_VER) && ( defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM) )
+//x86/x86-64 PAUSE, without inline assembly
+#define BOOST_INTERPROCESS_SMT_PAUSE   __builtin_ia32_pause();
+
+#elif defined(_MSC_VER) && ( defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM) )
 
 #define BOOST_INTERPROCESS_SMT_PAUSE __yield();
 
@@ -62,10 +88,45 @@ extern "C" void _mm_pause(void);
 
 #define BOOST_INTERPROCESS_SMT_PAUSE   __asm__ __volatile__("rep; nop" : : : "memory");
 
-#elif defined(__GNUC__) && ((defined(__ARM_ARCH) && __ARM_ARCH >= 8) || defined(__ARM_ARCH_8A__) || defined(__aarch64__))
+#elif defined(__GNUC__) &&\
+      (  defined(__aarch64__) || defined(__ARM_ARCH_8A__)\
+      || (defined(__ARM_ARCH) && __ARM_ARCH >= 7)\
+      || defined(__ARM_ARCH_7__)   || defined(__ARM_ARCH_7A__)  || defined(__ARM_ARCH_7R__)\
+      || defined(__ARM_ARCH_7M__)  || defined(__ARM_ARCH_7EM__) || defined(__ARM_ARCH_7S__)\
+      || defined(__ARM_ARCH_6K__)  || defined(__ARM_ARCH_6KZ__) || defined(__ARM_ARCH_6ZK__) )
 
-#define BOOST_INTERPROCESS_SMT_PAUSE   __asm__ __volatile__("yield;" : : : "memory");
-    
+//YIELD, available on AArch64 and on 32 bit ARM since ARMv6K/ARMv7. Older ARM
+//processors have no such hint, and the instruction does not even assemble.
+#define BOOST_INTERPROCESS_SMT_PAUSE   __asm__ __volatile__("yield" : : : "memory");
+
+#elif defined(__GNUC__) &&\
+      ( defined(__powerpc__) || defined(__powerpc64__) || defined(__ppc__)\
+     || defined(__ppc64__)   || defined(__PPC__)       || defined(__PPC64__) || defined(_ARCH_PPC) )
+
+//Drop this thread's program priority to low while spinning and restore it to
+//medium right afterwards, which is how a POWER processor is told to give its
+//shared resources to the sibling threads. Both are "or rX,rX,rX" forms, which
+//are plain no-ops on processors that don't implement the priority hints, so
+//they are safe everywhere.
+#define BOOST_INTERPROCESS_SMT_PAUSE   __asm__ __volatile__("or 1,1,1\n\tor 2,2,2" : : : "memory");
+
+#elif defined(__GNUC__) && defined(__riscv)
+
+//PAUSE (Zihintpause extension). It's encoded in the FENCE space and defined
+//as a no-op on processors that don't implement it, so it's always safe to
+//emit. It's written as an encoding rather than as the "pause" mnemonic
+//because assemblers without Zihintpause support reject the mnemonic, notably
+//on 32 bit RISC-V.
+#define BOOST_INTERPROCESS_SMT_PAUSE   __asm__ __volatile__(".insn i 0x0F, 0, x0, x0, 0x010" : : : "memory");
+
+#endif
+
+#if !defined(BOOST_INTERPROCESS_SMT_PAUSE)
+
+//No spin loop hint is known for this processor. Defined empty so that
+//spin_wait needs no conditional code.
+#define BOOST_INTERPROCESS_SMT_PAUSE
+
 #endif
 
 
@@ -128,12 +189,10 @@ class spin_wait
       if( m_k < (nop_pause_limit >> 2) ){
 
       }
-      //Pause tries if the processor supports it
-      #if defined(BOOST_INTERPROCESS_SMT_PAUSE)
+      //Pause tries
       else if( m_k < nop_pause_limit ){
          BOOST_INTERPROCESS_SMT_PAUSE
       }
-      #endif
       //Yield/Sleep strategy
       else{
          //Lazy initialization of tick information
@@ -175,7 +234,7 @@ class spin_wait
       if(!m_ul_yield_only_counts){  //If yield-only limit was reached then yield one in every two tries
          return (m_k & 1u) != 0;
       }
-      else{ //Try to see if we've reched yield-only time limit
+      else{ //Try to see if we've reached yield-only time limit
          const ipcdetail::OS_highres_count_t now = ipcdetail::get_current_system_highres_count();
          const ipcdetail::OS_highres_count_t elapsed = ipcdetail::system_highres_count_subtract(now, m_count_start);
          if(!ipcdetail::system_highres_count_less_ul(elapsed, m_ul_yield_only_counts)){
