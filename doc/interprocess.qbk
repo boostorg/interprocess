@@ -6860,6 +6860,9 @@ thank them:
 * Use of FILE_DISPOSITION_POSIX_SEMANTICS semantics on Windows for unlink operations,
   fallbacks to optimized classic approach for older Windows versions and filesystems.
 
+* Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/issues/283 GitHub #283 (['"Regression on macOS: pthread_threadid_np was not declared"])].
+
 [endsect]
 
 [section:release_notes_boost_1_92_00 Boost 1.92 Release]

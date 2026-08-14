@@ -61,7 +61,32 @@
 #elif defined(__FreeBSD__)
    #include <pthread_np.h>
 #elif defined(__APPLE__)
+   // TargetConditionals.h first: the TARGET_OS_* tests below depend on it.
+   // Availability.h defines __MAC_OS_X_VERSION_MIN_REQUIRED and
+   // __IPHONE_OS_VERSION_MIN_REQUIRED (pthread.h pulls it in transitively,
+   // but don't rely on that).
+   #include <TargetConditionals.h>
+   #include <Availability.h>
    #include <pthread.h>
+
+   // pthread_threadid_np: macOS 10.6+, iOS 3.2+; every tvOS, watchOS and
+   // visionOS release provides it.
+   #if (defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) \
+        && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1060) \
+      || (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \
+           && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1060) \
+      || (defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__) \
+           && __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ >= 30200) \
+      || (defined(__IPHONE_OS_VERSION_MIN_REQUIRED) \
+           && __IPHONE_OS_VERSION_MIN_REQUIRED >= 30200) \
+      || defined(__ENVIRONMENT_TV_OS_VERSION_MIN_REQUIRED__) \
+      || defined(__ENVIRONMENT_WATCH_OS_VERSION_MIN_REQUIRED__) \
+      || (defined(TARGET_OS_TV) && TARGET_OS_TV) \
+      || (defined(TARGET_OS_WATCH) && TARGET_OS_WATCH) \
+      || (defined(TARGET_OS_VISION) && TARGET_OS_VISION) \
+      || (defined(TARGET_OS_XR) && TARGET_OS_XR)
+      #define BOOST_INTERPROCESS_HAS_PTHREAD_THREADID_NP
+   #endif   //macOS 10.6+, iOS 3.2+; tvOS, watchOS, visionOS
 #elif defined(__NetBSD__)
    #include <lwp.h>
 #elif defined(__OpenBSD__)
@@ -324,7 +349,7 @@ inline OS_systemwide_thread_id_t get_current_systemwide_thread_id()
 inline OS_systemwide_thread_id_t get_invalid_systemwide_thread_id()
 {  return -1;   }
 
-#elif defined(__APPLE__) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
+#elif defined(BOOST_INTERPROCESS_HAS_PTHREAD_THREADID_NP) && !defined(BOOST_INTERPROCESS_USE_PTHREAD_AS_SYSTEMWIDE_THREAD_ID)
 
 typedef uint64_t OS_systemwide_thread_id_t;
 
