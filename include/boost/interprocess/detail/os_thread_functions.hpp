@@ -69,24 +69,30 @@
    #include <Availability.h>
    #include <pthread.h>
 
-   // pthread_threadid_np: macOS 10.6+, iOS 3.2+; every tvOS, watchOS and
-   // visionOS release provides it.
-   #if (defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) \
-        && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1060) \
-      || (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \
-           && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1060) \
-      || (defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__) \
-           && __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ >= 30200) \
-      || (defined(__IPHONE_OS_VERSION_MIN_REQUIRED) \
-           && __IPHONE_OS_VERSION_MIN_REQUIRED >= 30200) \
-      || defined(__ENVIRONMENT_TV_OS_VERSION_MIN_REQUIRED__) \
-      || defined(__ENVIRONMENT_WATCH_OS_VERSION_MIN_REQUIRED__) \
-      || (defined(TARGET_OS_TV) && TARGET_OS_TV) \
-      || (defined(TARGET_OS_WATCH) && TARGET_OS_WATCH) \
-      || (defined(TARGET_OS_VISION) && TARGET_OS_VISION) \
-      || (defined(TARGET_OS_XR) && TARGET_OS_XR)
-      #define BOOST_INTERPROCESS_HAS_PTHREAD_THREADID_NP
-   #endif   //macOS 10.6+, iOS 3.2+; tvOS, watchOS, visionOS
+   // Officially MacOs 10.6 does not support PPC although
+   // early developer previews did include a working PowerPC kernel.
+   // There is a community-created 10.6.8 for PPC that works on G4 and G5 Macs
+   // but does not support pthread_threadid_np. So we will disable it for all PPC platforms.
+   #if !defined(__ppc__) && !defined(__ppc64__) 
+      // pthread_threadid_np: macOS 10.6+, iOS 3.2+; every tvOS, watchOS and
+      // visionOS release provides it.
+      #if (defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) \
+           && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1060) \
+         || (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \
+              && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1060) \
+         || (defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__) \
+              && __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ >= 30200) \
+         || (defined(__IPHONE_OS_VERSION_MIN_REQUIRED) \
+              && __IPHONE_OS_VERSION_MIN_REQUIRED >= 30200) \
+         || defined(__ENVIRONMENT_TV_OS_VERSION_MIN_REQUIRED__) \
+         || defined(__ENVIRONMENT_WATCH_OS_VERSION_MIN_REQUIRED__) \
+         || (defined(TARGET_OS_TV) && TARGET_OS_TV) \
+         || (defined(TARGET_OS_WATCH) && TARGET_OS_WATCH) \
+         || (defined(TARGET_OS_VISION) && TARGET_OS_VISION) \
+         || (defined(TARGET_OS_XR) && TARGET_OS_XR)
+         #define BOOST_INTERPROCESS_HAS_PTHREAD_THREADID_NP
+      #endif   //macOS 10.6+, iOS 3.2+; tvOS, watchOS, visionOS
+   #endif   //PPC
 #elif defined(__NetBSD__)
    #include <lwp.h>
 #elif defined(__OpenBSD__)
