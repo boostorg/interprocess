@@ -580,6 +580,7 @@ static const unsigned long file_attribute_archive     = 0x00000020;
 static const unsigned long file_attribute_device      = 0x00000040;
 static const unsigned long file_attribute_normal      = 0x00000080;
 static const unsigned long file_attribute_temporary   = 0x00000100;
+static const unsigned long file_attribute_not_content_indexed = 0x00002000;
 
 static const unsigned long generic_read         = 0x80000000L;
 static const unsigned long generic_write        = 0x40000000L;

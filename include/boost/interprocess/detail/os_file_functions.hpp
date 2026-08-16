@@ -159,7 +159,8 @@ template<class CharT>
 inline file_handle_t create_new_file
    (const CharT *name, mode_t mode, const permissions & perm = permissions(), bool temporary = false)
 {
-   unsigned long attr = temporary ? winapi::file_attribute_temporary : 0;
+   unsigned long attr = winapi::file_attribute_not_content_indexed
+      | (temporary ? winapi::file_attribute_temporary : 0);
    return winapi::create_file
       ( name, (unsigned int)mode, winapi::create_new, attr
       , (winapi::interprocess_security_attributes*)perm.get_permissions());
@@ -169,7 +170,8 @@ template <class CharT>
 inline file_handle_t create_or_open_file
    (const CharT *name, mode_t mode, const permissions & perm = permissions(), bool temporary = false)
 {
-   unsigned long attr = temporary ? winapi::file_attribute_temporary : 0;
+   unsigned long attr = winapi::file_attribute_not_content_indexed
+      | (temporary ? winapi::file_attribute_temporary : 0);
    return winapi::create_file
       ( name, (unsigned int)mode, winapi::open_always, attr
       , (winapi::interprocess_security_attributes*)perm.get_permissions());
@@ -179,7 +181,10 @@ template<class CharT>
 inline file_handle_t open_existing_file
    (const CharT *name, mode_t mode, bool temporary = false)
 {
-   unsigned long attr = temporary ? winapi::file_attribute_temporary : 0;
+   //Note: CreateFile ignores dwFlagsAndAttributes when opening an existing file,
+   //so this attribute has no effect here; kept for symmetry with the other overloads.
+   unsigned long attr = winapi::file_attribute_not_content_indexed
+      | (temporary ? winapi::file_attribute_temporary : 0);
    return winapi::create_file
       (name, (unsigned int)mode, winapi::open_existing, attr, 0);
 }
