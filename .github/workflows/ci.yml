@@ -166,6 +166,15 @@ jobs:
             os: ubuntu-latest
             container: ubuntu:26.04
             install: g++-16
+          # Linux, gcc-16, tsan
+          - name: TSAN
+            toolset: gcc-16
+            cxxstd: "03,11,14,17,20,23,26"
+            cxxflags: -pipe
+            tsan: 1
+            os: ubuntu-latest
+            container: ubuntu:26.04
+            install: g++-16
           #------------------
           # Linux, clang
           #------------------
@@ -435,6 +444,20 @@ jobs:
               - clang-20
               - libc++-20-dev
               - libc++abi-20-dev
+          # Linux, clang-20 libc++, tsan
+          - name: TSAN
+            toolset: clang
+            compiler: clang++-20
+            cxxstd: "11,14,17,20,23,23,26"
+            cxxflags: -pipe -stdlib=libc++
+            linkflags: -stdlib=libc++
+            tsan: 1
+            os: ubuntu-latest
+            container: ubuntu:26.04
+            install:
+              - clang-20
+              - libc++-20-dev
+              - libc++abi-20-dev
           # Linux, ARM64 GCC
           - toolset: gcc
             cxxstd: "03,11,14,17,20,23,26"
@@ -673,8 +696,14 @@ jobs:
                 export ASAN_OPTIONS="verbosity=1:print_stacktrace=1"
                 B2_ARGS+=("address-sanitizer=norecover" "define=ASAN=1")
             fi
-            #Common UBSAN / ASAN options
-            if [ -n "${{matrix.asan}}" ] || [ -n "${{matrix.ubsan}}" ]
+            #TSAN options
+            if [ -n "${{matrix.tsan}}" ]
+            then
+                export TSAN_OPTIONS="verbosity=1:print_stacktrace=1"
+                B2_ARGS+=("thread-sanitizer=norecover" "define=TSAN=1")
+            fi
+            #Common UBSAN / ASAN / TSAN options
+            if [ -n "${{matrix.asan}}" ] || [ -n "${{matrix.ubsan}}" ] || [ -n "${{matrix.tsan}}" ]
             then
                 B2_ARGS+=("debug-symbols=on" "visibility=global")
             fi
@@ -896,8 +925,14 @@ jobs:
                 export ASAN_OPTIONS="verbosity=1:print_stacktrace=1"
                 B2_ARGS+=("address-sanitizer=norecover" "define=ASAN=1")
             fi
-            #Common UBSAN / ASAN options
-            if [ -n "${{matrix.asan}}" ] || [ -n "${{matrix.ubsan}}" ]
+            #TSAN options
+            if [ -n "${{matrix.tsan}}" ]
+            then
+                export TSAN_OPTIONS="verbosity=1:print_stacktrace=1"
+                B2_ARGS+=("thread-sanitizer=norecover" "define=TSAN=1")
+            fi
+            #Common UBSAN / ASAN / TSAN options
+            if [ -n "${{matrix.asan}}" ] || [ -n "${{matrix.ubsan}}" ] || [ -n "${{matrix.tsan}}" ]
             then
                 B2_ARGS+=("debug-symbols=on" "visibility=global")
             fi
@@ -1087,8 +1122,14 @@ jobs:
                 export ASAN_OPTIONS="verbosity=1:print_stacktrace=1"
                 B2_ARGS+=("address-sanitizer=norecover" "define=ASAN=1")
             fi
-            #Common UBSAN / ASAN options
-            if [ -n "${{matrix.asan}}" ] || [ -n "${{matrix.ubsan}}" ]
+            #TSAN options
+            if [ -n "${{matrix.tsan}}" ]
+            then
+                export TSAN_OPTIONS="verbosity=1:print_stacktrace=1"
+                B2_ARGS+=("thread-sanitizer=norecover" "define=TSAN=1")
+            fi
+            #Common UBSAN / ASAN / TSAN options
+            if [ -n "${{matrix.asan}}" ] || [ -n "${{matrix.ubsan}}" ] || [ -n "${{matrix.tsan}}" ]
             then
                 B2_ARGS+=("debug-symbols=on" "visibility=global")
             fi
