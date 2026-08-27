@@ -699,7 +699,8 @@ jobs:
             #TSAN options
             if [ -n "${{matrix.tsan}}" ]
             then
-                export TSAN_OPTIONS="verbosity=1:print_stacktrace=1"
+                #print_stacktrace is not a ThreadSanitizer option
+                export TSAN_OPTIONS="verbosity=1"
                 B2_ARGS+=("thread-sanitizer=norecover" "define=TSAN=1")
             fi
             #Common UBSAN / ASAN / TSAN options
@@ -939,7 +940,8 @@ jobs:
             #TSAN options
             if [ -n "${{matrix.tsan}}" ]
             then
-                export TSAN_OPTIONS="verbosity=1:print_stacktrace=1"
+                #print_stacktrace is not a ThreadSanitizer option
+                export TSAN_OPTIONS="verbosity=1"
                 B2_ARGS+=("thread-sanitizer=norecover" "define=TSAN=1")
             fi
             #Common UBSAN / ASAN / TSAN options
@@ -1136,7 +1138,8 @@ jobs:
             #TSAN options
             if [ -n "${{matrix.tsan}}" ]
             then
-                export TSAN_OPTIONS="verbosity=1:print_stacktrace=1"
+                #print_stacktrace is not a ThreadSanitizer option
+                export TSAN_OPTIONS="verbosity=1"
                 B2_ARGS+=("thread-sanitizer=norecover" "define=TSAN=1")
             fi
             #Common UBSAN / ASAN / TSAN options

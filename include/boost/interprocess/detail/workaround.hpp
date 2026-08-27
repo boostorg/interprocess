@@ -188,6 +188,33 @@
 #  define BOOST_INTERPROCESS_MAPPED_FILES
 #endif
 
+//////////////////////////////////////////////////////
+//    BOOST_INTERPROCESS_THREAD_SANITIZER
+//////////////////////////////////////////////////////
+#if defined(__has_feature)
+   #if __has_feature(thread_sanitizer)
+      #define BOOST_INTERPROCESS_THREAD_SANITIZER
+   #endif
+#endif
+#if !defined(BOOST_INTERPROCESS_THREAD_SANITIZER) && defined(__SANITIZE_THREAD__)
+   #define BOOST_INTERPROCESS_THREAD_SANITIZER
+#endif
+
+//////////////////////////////////////////////////////
+//    BOOST_INTERPROCESS_TSAN_ROBUST_TIMEDLOCK_WORKAROUND
+//////////////////////////////////////////////////////
+//ThreadSanitizer's pthread_mutex_lock and pthread_mutex_trylock interceptors
+//know that an EOWNERDEAD return from a robust mutex means the mutex *was*
+//acquired, but its pthread_mutex_timedlock interceptor does not. The mutex is
+//not registered as owned by the caller and the mandatory unlock that marks it
+//as unrecoverable is then reported as "unlock of an unlocked mutex". Emulate
+//the timed lock with try_lock while that limitation lasts.
+#if defined(BOOST_INTERPROCESS_THREAD_SANITIZER)
+   #if defined(BOOST_INTERPROCESS_POSIX_TIMEOUTS) && defined(BOOST_INTERPROCESS_POSIX_ROBUST_MUTEXES)
+      #define BOOST_INTERPROCESS_TSAN_ROBUST_TIMEDLOCK_WORKAROUND
+   #endif
+#endif
+
 //Now declare some Boost.Interprocess features depending on the implementation
 #if defined(BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES) && !defined(BOOST_INTERPROCESS_POSIX_SEMAPHORES_NO_UNLINK)
    #define BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES

@@ -44,7 +44,7 @@
 #include <boost/interprocess/sync/posix/timepoint_to_timespec.hpp>
 #include <boost/interprocess/timed_utils.hpp>
 #include <boost/interprocess/exceptions.hpp>
-#ifndef BOOST_INTERPROCESS_POSIX_TIMEOUTS
+#if !defined(BOOST_INTERPROCESS_POSIX_TIMEOUTS) || defined(BOOST_INTERPROCESS_TSAN_ROBUST_TIMEDLOCK_WORKAROUND)
 #  include <boost/interprocess/detail/os_thread_functions.hpp>
 #  include <boost/interprocess/sync/detail/common_algorithms.hpp>
 #endif
@@ -127,7 +127,7 @@ inline bool posix_recursive_mutex::try_lock()
 template<class TimePoint>
 inline bool posix_recursive_mutex::timed_lock(const TimePoint &abs_time)
 {
-   #ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
+   #if defined(BOOST_INTERPROCESS_POSIX_TIMEOUTS) && !defined(BOOST_INTERPROCESS_TSAN_ROBUST_TIMEDLOCK_WORKAROUND)
    //Posix does not support infinity absolute time so handle it here
    if(ipcdetail::is_pos_infinity(abs_time)){
       this->lock();
