@@ -133,10 +133,10 @@ class rbtree_best_fit
       }
 
       friend bool operator<(const block_ctrl &a, const block_ctrl &b)
-      {  return a.SizeHolder::m_size < b.SizeHolder::m_size;  }
+      {  return a.m_size < b.m_size;  }
 
       friend bool operator==(const block_ctrl &a, const block_ctrl &b)
-      {  return a.SizeHolder::m_size == b.SizeHolder::m_size;  }
+      {  return a.m_size == b.m_size;  }
    };
 
    struct size_block_ctrl_compare
