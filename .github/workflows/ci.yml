@@ -767,6 +767,15 @@ jobs:
             cxxstd: "14,17,20,latest"
             addrmd: 64
             os: windows-11-arm
+         #ARM64EC: ARM64 code with the x64 ABI. The binaries are
+         #native ARM64 with emulation for x64. b2 has no
+         #architecture value for it so we need explicit flags.
+          - name: ARM64EC
+            toolset: msvc-14.3
+            cxxstd: "14,17,20,latest"
+            addrmd: 64
+            os: windows-11-arm
+            arm64ec: 1
 
     timeout-minutes: 240
     runs-on: ${{matrix.os}}
@@ -813,7 +822,9 @@ jobs:
         shell: cmd
         run: |
             cd boost-root
-            b2 -j %NUMBER_OF_PROCESSORS% libs/%LIBRARY%/test toolset=${{matrix.toolset}} cxxstd=${{matrix.cxxstd}} address-model=${{matrix.addrmd}} variant=debug,release embed-manifest-via=linker debug-symbols=off
+            set B2_ARM64EC=
+            if not "${{matrix.arm64ec}}" == "" set B2_ARM64EC=architecture=arm cflags=/arm64EC linkflags=/MACHINE:ARM64EC
+            b2 -j %NUMBER_OF_PROCESSORS% libs/%LIBRARY%/test toolset=${{matrix.toolset}} cxxstd=${{matrix.cxxstd}} address-model=${{matrix.addrmd}} variant=debug,release embed-manifest-via=linker debug-symbols=off %B2_ARM64EC%
 
   cygwin:
     defaults:
