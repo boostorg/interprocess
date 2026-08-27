@@ -697,7 +697,6 @@ inline mapped_region::mapped_region
             error_info err(mode_error);
             throw interprocess_exception(err);
          }
-      break;
    }
 
    //Map it to the address space

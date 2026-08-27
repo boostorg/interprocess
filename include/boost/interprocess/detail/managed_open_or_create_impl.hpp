@@ -344,7 +344,10 @@ class managed_open_or_create_impl
          } BOOST_INTERPROCESS_CATCH_END
          swait.yield();
       }
-      return false;
+      //The loop above never exits normally, every path returns or throws.
+      //Compilers that do not detect this need a return statement here, the
+      //ones that do (e.g. nvc++) would warn about it being unreachable.
+      BOOST_UNREACHABLE_RETURN(false)
    }
 
    template <class ConstructFunc>

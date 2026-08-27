@@ -245,7 +245,9 @@ inline bool semaphore_timed_wait(sem_t *handle, const TimePoint &abs_time)
       error_info err = system_error_code();
       throw interprocess_exception(err);
    }
-   return false;
+   //Every path inside the loop above returns or throws, so this is only needed
+   //by compilers that don't detect it and would ask for a return statement.
+   BOOST_UNREACHABLE_RETURN(false)
    #else //#ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
 
    semaphore_wrapper_try_wrapper swtw(handle);

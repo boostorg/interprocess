@@ -814,7 +814,6 @@ inline bool message_queue_t<VoidPointer>::do_send(
                case non_blocking :
                   --p_hdr->m_blocked_senders;
                   return false;
-               break;
 
                case blocking :
                   do{
@@ -925,7 +924,6 @@ inline bool
                case non_blocking :
                   --p_hdr->m_blocked_receivers;
                   return false;
-               break;
 
                case blocking :
                   do{

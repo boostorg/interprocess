@@ -53,9 +53,6 @@ int main ()
    const int NumMsg = 100;
 
    int extracted_data [NumMsg];
-   //<-
-   (void)extracted_data;
-   //->
 
    //Extract the data
    for(int i = 0; i < NumMsg; ++i){
@@ -65,6 +62,16 @@ int main ()
       data->mutex.post();
       data->nempty.post();
    }
+   //<-
+   //Read back the extracted values. The producer stores "i" in the i-th
+   //message, so this checks the protocol and, incidentally, keeps compilers
+   //from reporting extracted_data as set but never used.
+   for(int i = 0; i < NumMsg; ++i){
+      if(extracted_data[i] != i){
+         return 1;
+      }
+   }
+   //->
    return 0;
 }
 //]

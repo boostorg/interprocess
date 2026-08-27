@@ -51,18 +51,15 @@ class named_creation_functor
       switch(m_creation_type){
          case DoOpen:
             return true;
-         break;
          case DoCreate:
          case DoOpenOrCreate:
             if(created){
                construct<Arg>(address);
             }
             return true;
-         break;
 
          default:
             return false;
-         break;
       }
    }
 
