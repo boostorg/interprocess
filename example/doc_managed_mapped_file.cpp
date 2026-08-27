@@ -41,69 +41,72 @@ int main ()
    //->
 
    const std::size_t FileSize = 1000;
-   file_mapping::remove(FileName);
 
-   BOOST_INTERPROCESS_TRY{
-      MyList::size_type old_size = 0;
-      managed_mapped_file::handle_t list_handle;
-      {
-         managed_mapped_file mfile_memory(create_only, FileName, FileSize);
-         MyList *mylist = mfile_memory.construct<MyList>("MyList")
-                              (mfile_memory.get_segment_manager());
+   //Remove the mapped file on construction and destruction
+   struct file_remove
+   {
+      file_remove(const char *FileName)
+         : FileName_(FileName) { file_mapping::remove(FileName_); }
+      ~file_remove(){ file_mapping::remove(FileName_); }
+      const char *FileName_;
+   } remover(FileName);
+   //<-
+   (void)remover;
+   //->
 
-         //Obtain handle, that identifies the list in the buffer
-         list_handle = mfile_memory.get_handle_from_address(mylist);
+   MyList::size_type old_size = 0;
+   managed_mapped_file::handle_t list_handle;
+   {
+      managed_mapped_file mfile_memory(create_only, FileName, FileSize);
+      MyList *mylist = mfile_memory.construct<MyList>("MyList")
+                           (mfile_memory.get_segment_manager());
 
-         //Fill list until there is no more room in the file
-         BOOST_INTERPROCESS_TRY{
-            while(1) {
-               mylist->insert(mylist->begin(), 0);
-            }
+      //Obtain handle, that identifies the list in the buffer
+      list_handle = mfile_memory.get_handle_from_address(mylist);
+
+      //Fill list until there is no more room in the file
+      BOOST_INTERPROCESS_TRY{
+         while(1) {
+            mylist->insert(mylist->begin(), 0);
          }
-         BOOST_INTERPROCESS_CATCH(const bad_alloc &){
-            //mapped file is full
-         } BOOST_INTERPROCESS_CATCH_END
-         //Let's obtain the size of the list
-         old_size = mylist->size();
       }
-      //To make the list bigger, let's increase the mapped file
-      //in FileSize bytes more.
-      managed_mapped_file::grow(FileName, FileSize*2);
-
-      {
-         managed_mapped_file mfile_memory(open_only, FileName);
-
-
-         //If mapping address has changed, the old pointer is invalid,
-         //so use previously obtained handle to find the new pointer.
-         MyList *mylist = static_cast<MyList *>
-                           (mfile_memory.get_address_from_handle(list_handle));
-
-         //Fill list until there is no more room in the file
-         BOOST_INTERPROCESS_TRY{
-            while(1) {
-               mylist->insert(mylist->begin(), 0);
-            }
-         }
-         BOOST_INTERPROCESS_CATCH(const bad_alloc &){
-            //mapped file is full
-         } BOOST_INTERPROCESS_CATCH_END
-
-         //Let's obtain the new size of the list
-         MyList::size_type new_size = mylist->size();
-
-         //Destroy list
-         mfile_memory.destroy_ptr(mylist);
-
-         return (new_size > old_size) ? 0 : 1;
-      }
+      BOOST_INTERPROCESS_CATCH(const bad_alloc &){
+         //mapped file is full
+      } BOOST_INTERPROCESS_CATCH_END
+      //Let's obtain the size of the list
+      old_size = mylist->size();
    }
-   BOOST_INTERPROCESS_CATCH(...){
-      file_mapping::remove(FileName);
-      BOOST_INTERPROCESS_RETHROW
-   } BOOST_INTERPROCESS_CATCH_END
-   file_mapping::remove(FileName);
-   return 0;
+   //To make the list bigger, let's increase the mapped file
+   //in FileSize bytes more.
+   managed_mapped_file::grow(FileName, FileSize*2);
+
+   {
+      managed_mapped_file mfile_memory(open_only, FileName);
+
+
+      //If mapping address has changed, the old pointer is invalid,
+      //so use previously obtained handle to find the new pointer.
+      MyList *mylist = static_cast<MyList *>
+                        (mfile_memory.get_address_from_handle(list_handle));
+
+      //Fill list until there is no more room in the file
+      BOOST_INTERPROCESS_TRY{
+         while(1) {
+            mylist->insert(mylist->begin(), 0);
+         }
+      }
+      BOOST_INTERPROCESS_CATCH(const bad_alloc &){
+         //mapped file is full
+      } BOOST_INTERPROCESS_CATCH_END
+
+      //Let's obtain the new size of the list
+      MyList::size_type new_size = mylist->size();
+
+      //Destroy list
+      mfile_memory.destroy_ptr(mylist);
+
+      return (new_size > old_size) ? 0 : 1;
+   }
 }
 
 #else //#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
