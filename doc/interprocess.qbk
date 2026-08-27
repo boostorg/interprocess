@@ -6860,6 +6860,9 @@ thank them:
 * Use of FILE_DISPOSITION_POSIX_SEMANTICS semantics on Windows for unlink operations,
   fallbacks to optimized classic approach for older Windows versions and filesystems.
 
+* Optimized spin-based synchronization utilities using acquire/release semantics instead of
+  classic strong semantics.
+
 * Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/283 GitHub #283 (['"Regression on macOS: pthread_threadid_np was not declared"])].
 
