@@ -47,9 +47,36 @@
 #include <boost/interprocess/timed_utils.hpp>
 #include <boost/assert.hpp>
 
+#if defined(BOOST_INTERPROCESS_THREAD_SANITIZER)
+//ThreadSanitizer's runtime always exports these, but <sanitizer/tsan_interface.h>
+//does not declare them
+extern "C" void __tsan_ignore_thread_begin();
+extern "C" void __tsan_ignore_thread_end();
+#endif
+
 namespace boost {
 namespace interprocess {
 namespace ipcdetail {
+
+//!spin_recursive_mutex has to know whether the calling thread is already the
+//!owner of the mutex before locking it, so it reads the stored owner id without
+//!holding the internal mutex. Only the owner writes that id, and a thread can
+//!only read its own id while it really is the owner, so the outcome of the test
+//!is always correct, but ThreadSanitizer sees a plain read concurrent with the
+//!write of the owner thread and reports a data race. Hide only that read from
+//!ThreadSanitizer.
+BOOST_INTERPROCESS_FORCEINLINE OS_systemwide_thread_id_t
+   load_owner_id(const volatile OS_systemwide_thread_id_t &id)
+{
+   #if defined(BOOST_INTERPROCESS_THREAD_SANITIZER)
+   __tsan_ignore_thread_begin();
+   const OS_systemwide_thread_id_t ret = const_cast<const OS_systemwide_thread_id_t &>(id);
+   __tsan_ignore_thread_end();
+   return ret;
+   #else
+   return const_cast<const OS_systemwide_thread_id_t &>(id);
+   #endif
+}
 
 class spin_recursive_mutex
 {
@@ -88,7 +115,7 @@ inline spin_recursive_mutex::~spin_recursive_mutex(){}
 inline void spin_recursive_mutex::lock()
 {
    const OS_systemwide_thread_id_t thr_id(ipcdetail::get_current_systemwide_thread_id());
-   OS_systemwide_thread_id_t old_id = const_cast<OS_systemwide_thread_id_t &>(m_nOwner);
+   OS_systemwide_thread_id_t old_id = ipcdetail::load_owner_id(m_nOwner);
 
    if(thr_id == old_id){
       if((unsigned int)(m_nLockCount+1) == 0){
@@ -107,7 +134,7 @@ inline void spin_recursive_mutex::lock()
 inline bool spin_recursive_mutex::try_lock()
 {
    OS_systemwide_thread_id_t thr_id(ipcdetail::get_current_systemwide_thread_id());
-   OS_systemwide_thread_id_t old_id = const_cast<OS_systemwide_thread_id_t &>(m_nOwner);
+   OS_systemwide_thread_id_t old_id = ipcdetail::load_owner_id(m_nOwner);
 
    if(thr_id == old_id) {  // we own it
       if((unsigned int)(m_nLockCount+1) == 0){
@@ -129,7 +156,7 @@ template<class TimePoint>
 inline bool spin_recursive_mutex::timed_lock(const TimePoint &abs_time)
 {
    OS_systemwide_thread_id_t thr_id(ipcdetail::get_current_systemwide_thread_id());
-   OS_systemwide_thread_id_t old_id = const_cast<OS_systemwide_thread_id_t &>(m_nOwner);
+   OS_systemwide_thread_id_t old_id = ipcdetail::load_owner_id(m_nOwner);
 
    if(thr_id == old_id) {  // we own it
       if((unsigned int)(m_nLockCount+1) == 0){
