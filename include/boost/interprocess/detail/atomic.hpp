@@ -120,6 +120,20 @@ BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_release
 BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_acq_rel
    (volatile boost::uint32_t *mem, boost::uint32_t with, boost::uint32_t cmp);
 
+//! Unconditionally swap "with" into memory, whatever the memory holds, with
+//! acquire semantics. Returns the old value of *mem.
+//! "mem": pointer to the value
+//! "with": what to swap in
+//!
+//! This is the operation a lock word wants: where a compare and swap declines
+//! to write when the comparison fails, an exchange writes the same value that
+//! is already there, which for a word that only ever holds "free" or "taken"
+//! is not observable. It leaves the compiler a free choice of register, while
+//! a compare and swap pins the comparand (EAX on x86), which costs at call
+//! sites inlined into large functions.
+BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_xchg32_acquire
+   (volatile boost::uint32_t *mem, boost::uint32_t with);
+
 }  //namespace ipcdetail{
 }  //namespace interprocess{
 }  //namespace boost{
@@ -344,6 +358,28 @@ BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_acquire
    #endif
 }
 
+//! Atomically swap "with" into memory with acquire semantics
+//! "mem": pointer to the value
+//! "with": what to swap in
+//! Returns the old value of *mem
+BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_xchg32_acquire
+   (volatile boost::uint32_t *mem, boost::uint32_t with)
+{
+   #if defined(__ATOMIC_ACQUIRE)
+   return __atomic_exchange_n(mem, with, __ATOMIC_ACQUIRE);
+   #elif defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM)
+   //ARM has acquire/release interlocked operations, cheaper than the full
+   //barrier ones
+   return (boost::uint32_t)_InterlockedExchange_acq
+      (reinterpret_cast<volatile long*>(mem), (long)with);
+   #else
+   //x86/x64: XCHG with a memory operand is locked implicitly and is always a
+   //full barrier, so there is no weaker form to ask for
+   return (boost::uint32_t)winapi::interlocked_exchange
+      (reinterpret_cast<volatile long*>(mem), (long)with);
+   #endif
+}
+
 //! Same as atomic_cas32, but with release semantics with the success case
 //! and relaxed semantics for the failure case
 BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_release
@@ -474,6 +510,33 @@ BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_cas32_acquire
    return cmp;
    #else
    return __sync_val_compare_and_swap(const_cast<boost::uint32_t *>(mem), cmp, with);
+   #endif
+}
+
+//! Atomically swap "with" into memory with acquire semantics
+//! "mem": pointer to the value
+//! "with": what to swap in
+//! Returns the old value of *mem
+BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_xchg32_acquire
+   (volatile boost::uint32_t *mem, boost::uint32_t with)
+{
+   #if defined(__ATOMIC_ACQUIRE)
+   return __atomic_exchange_n(mem, with, __ATOMIC_ACQUIRE);
+   #else
+   //Not __sync_lock_test_and_set: it is documented as a lock-acquire barrier,
+   //but on targets with reduced support the only value it is guaranteed to be
+   //able to store is 1, which would silently break any other exchange. A
+   //compare and swap retried until it wins is a real exchange everywhere, and
+   //this path only serves GCC 4.1 to 4.6
+   boost::uint32_t old = *mem;
+   for(;;){
+      const boost::uint32_t prev =
+         __sync_val_compare_and_swap(const_cast<boost::uint32_t *>(mem), old, with);
+      if(prev == old){
+         return prev;
+      }
+      old = prev;
+   }
    #endif
 }
 

@@ -29,6 +29,66 @@ namespace boost {
 namespace interprocess {
 namespace ipcdetail {
 
+//////////////////////////////////////////////////////////////////////////////
+//
+//    Optional cheap probe: MutexType::maybe_lockable()
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+// A mutex may offer "bool maybe_lockable()", a cheap, conservative answer to
+// "would try_lock() have a chance right now?". It is a hint, subject to two
+// rules:
+//    - returning true is always allowed: the caller then performs the real
+//      try_lock(), which is what actually decides,
+//    - it must not keep returning false while the mutex is in fact free, or a
+//      spinning caller would never take it. Re-reading the state each call is
+//      enough to satisfy this.
+//
+// The point is that for a spin mutex try_lock() is a read-modify-write, and a
+// failed one still takes the cache line for writing, so a loop that retries it
+// makes every other core's copy of the line invalid on every spin. A plain
+// load only needs the line shared, so the spinning threads stop fighting each
+// other and the holder can make progress. This is the classic
+// test-and-test-and-set, expressed once here instead of in each mutex.
+//
+// Mutexes without the member are unaffected: the probe then answers true
+// unconditionally and the loops behave exactly as before.
+//
+template<class MutexType>
+struct has_maybe_lockable
+{
+   typedef char one_type;
+   struct two_type { char dummy[2]; };
+
+   //Viable only when "m.maybe_lockable()" is a valid expression
+   template<class U> static one_type test(char (*)[sizeof(((U*)0)->maybe_lockable(), 1)]);
+   template<class U> static two_type test(...);
+
+   static const bool value = sizeof(test<MutexType>(0)) == sizeof(one_type);
+};
+
+template<class MutexType, bool HasProbe>
+struct maybe_lockable_impl
+{
+   //No probe available: always let the caller attempt the real try_lock
+   BOOST_INTERPROCESS_FORCEINLINE static bool call(MutexType &)
+   {  return true;  }
+};
+
+template<class MutexType>
+struct maybe_lockable_impl<MutexType, true>
+{
+   BOOST_INTERPROCESS_FORCEINLINE static bool call(MutexType &m)
+   {  return m.maybe_lockable();  }
+};
+
+template<class MutexType>
+inline bool maybe_lockable(MutexType &m)
+{
+   return maybe_lockable_impl
+      <MutexType, has_maybe_lockable<MutexType>::value>::call(m);
+}
+
 template<class MutexType, class TimePoint>
 bool try_based_timed_lock(MutexType &m, const TimePoint &abs_time)
 {
@@ -47,7 +107,10 @@ bool try_based_timed_lock(MutexType &m, const TimePoint &abs_time)
    else{
       spin_wait swait;
       while(microsec_clock<TimePoint>::universal_time() < abs_time){
-         if(m.try_lock()){
+         //Probe before the real attempt, so a mutex that can answer cheaply is
+         //not hammered with read-modify-writes while it is held. One yield per
+         //iteration either way, so the back-off progression is unchanged
+         if(maybe_lockable(m) && m.try_lock()){
             return true;
          }
          swait.yield();
@@ -59,10 +122,13 @@ bool try_based_timed_lock(MutexType &m, const TimePoint &abs_time)
 template<class MutexType>
 void try_based_lock(MutexType &m)
 {
+   //The first attempt is unconditional: it must not be gated by a hint, both
+   //because taking a free mutex has to be immediate and because POSIX requires
+   //it of the timed variant
    if(!m.try_lock()){
       spin_wait swait;
       do{
-         if(m.try_lock()){
+         if(maybe_lockable(m) && m.try_lock()){
             break;
          }
          else{

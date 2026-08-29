@@ -43,6 +43,7 @@ class spin_mutex
 
    void lock();
    bool try_lock();
+   bool maybe_lockable();
    template<class TimePoint>
    bool timed_lock(const TimePoint &abs_time);
 
@@ -76,7 +77,7 @@ class spin_mutex
    };
 };
 
-inline spin_mutex::spin_mutex()
+BOOST_INTERPROCESS_FORCEINLINE spin_mutex::spin_mutex()
    : m_s(0)
 {
    //Note that this class is initialized to zero.
@@ -84,7 +85,7 @@ inline spin_mutex::spin_mutex()
    //initialized mutex
 }
 
-inline spin_mutex::~spin_mutex()
+BOOST_INTERPROCESS_FORCEINLINE spin_mutex::~spin_mutex()
 {
    //Trivial destructor
 }
@@ -95,12 +96,18 @@ inline void spin_mutex::lock(void)
    ipcdetail::timeout_when_locking_aware_lock(clw);
 }
 
-inline bool spin_mutex::try_lock(void)
+//A plain load, which only needs the cache line shared, where try_lock() needs
+//it exclusive. Used by the spin loops in common_algorithms.hpp to avoid
+//hammering the line while the mutex is held.
+BOOST_INTERPROCESS_FORCEINLINE bool spin_mutex::maybe_lockable(void)
+{  return ipcdetail::atomic_read32(const_cast<boost::uint32_t*>(&m_s)) == 0u;  }
+
+BOOST_INTERPROCESS_FORCEINLINE bool spin_mutex::try_lock(void)
 {
    //Taking the mutex must be an acquire, so that everything the previous owner
    //did before releasing it is visible here. Nothing has to be ordered when the
    //mutex is already taken and the swap fails
-   boost::uint32_t prev_s = ipcdetail::atomic_cas32_acquire(const_cast<boost::uint32_t*>(&m_s), 1, 0);
+   boost::uint32_t prev_s = ipcdetail::atomic_xchg32_acquire(const_cast<boost::uint32_t*>(&m_s), 1);
    //A zero previous value means this thread performed the swap and owns the
    //mutex. Re-reading m_s would add nothing: no other thread can change it
    //while it is owned here
@@ -108,10 +115,10 @@ inline bool spin_mutex::try_lock(void)
 }
 
 template<class TimePoint>
-inline bool spin_mutex::timed_lock(const TimePoint &abs_time)
+BOOST_INTERPROCESS_FORCEINLINE bool spin_mutex::timed_lock(const TimePoint &abs_time)
 {  return ipcdetail::try_based_timed_lock(*this, abs_time); }
 
-inline void spin_mutex::unlock(void)
+BOOST_INTERPROCESS_FORCEINLINE void spin_mutex::unlock(void)
 {
    //Only the owner unlocks, and no other thread can change m_s while it is
    //owned, so nothing has to be compared: a store is enough. It must be a
