@@ -36,13 +36,16 @@ namespace ipcdetail {
 //////////////////////////////////////////////////////////////////////////////
 //
 // A mutex may offer "bool maybe_lockable()", a cheap, conservative answer to
-// "would try_lock() have a chance right now?". It is a hint, subject to two
+// "would try_lock() have a chance right now?". It is a hint, subject to three
 // rules:
 //    - returning true is always allowed: the caller then performs the real
 //      try_lock(), which is what actually decides,
 //    - it must not keep returning false while the mutex is in fact free, or a
 //      spinning caller would never take it. Re-reading the state each call is
-//      enough to satisfy this.
+//      enough to satisfy this,
+//    - and, less obviously, a mutex whose try_lock() has side effects the
+//      waiter depends on must NOT implement it. robust_spin_mutex is the
+//      example
 //
 // The point is that for a spin mutex try_lock() is a read-modify-write, and a
 // failed one still takes the cache line for writing, so a loop that retries it

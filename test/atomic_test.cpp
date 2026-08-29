@@ -20,6 +20,7 @@
 using namespace boost::interprocess;
 using boost::interprocess::ipcdetail::atomic_read32;
 using boost::interprocess::ipcdetail::atomic_read32_acquire;
+using boost::interprocess::ipcdetail::atomic_read32_relaxed;
 using boost::interprocess::ipcdetail::atomic_write32;
 using boost::interprocess::ipcdetail::atomic_write32_release;
 using boost::interprocess::ipcdetail::atomic_add32;
@@ -58,19 +59,23 @@ void test_read_write()
 
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 0u);
    BOOST_INTERPROCESS_CHECK(atomic_read32_acquire(&v) == 0u);
+   BOOST_INTERPROCESS_CHECK(atomic_read32_relaxed(&v) == 0u);
 
    atomic_write32(&v, 12345u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 12345u);
    BOOST_INTERPROCESS_CHECK(atomic_read32_acquire(&v) == 12345u);
+   BOOST_INTERPROCESS_CHECK(atomic_read32_relaxed(&v) == 12345u);
 
    atomic_write32_release(&v, 54321u);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 54321u);
    BOOST_INTERPROCESS_CHECK(atomic_read32_acquire(&v) == 54321u);
+   BOOST_INTERPROCESS_CHECK(atomic_read32_relaxed(&v) == 54321u);
 
    //The whole 32 bit range must survive a write/read round trip
    const boost::uint32_t all_ones = ~boost::uint32_t(0);
    atomic_write32(&v, all_ones);
    BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == all_ones);
+   BOOST_INTERPROCESS_CHECK(atomic_read32_relaxed(&v) == all_ones);
    atomic_write32_release(&v, all_ones);
    BOOST_INTERPROCESS_CHECK(atomic_read32_acquire(&v) == all_ones);
 
@@ -80,6 +85,7 @@ void test_read_write()
    for(int i = 0; i != 8; ++i){
       BOOST_INTERPROCESS_CHECK(atomic_read32(&v) == 7u);
       BOOST_INTERPROCESS_CHECK(atomic_read32_acquire(&v) == 7u);
+      BOOST_INTERPROCESS_CHECK(atomic_read32_relaxed(&v) == 7u);
    }
    BOOST_INTERPROCESS_CHECK(v == 7u);
 }
@@ -315,7 +321,13 @@ class cas_lock_thread
          //the previous owner is visible to this thread
          spin_wait swait;
          while(atomic_cas32_acquire(&m_data->m_lock, 1u, 0u) != 0u){
-            swait.yield();
+            //Poll with a relaxed load until the lock looks free before
+            //retrying the acquire CAS - spin_mutex's maybe_lockable()
+            //idiom: a read only needs the cache line shared. The value is
+            //just a hint, only the CAS above can actually take the lock
+            while(atomic_read32_relaxed(&m_data->m_lock) != 0u){
+               swait.yield();
+            }
          }
          ++m_data->m_guarded;
          //Unlock with release semantics, so that the write above is visible

@@ -96,11 +96,11 @@ inline void spin_mutex::lock(void)
    ipcdetail::timeout_when_locking_aware_lock(clw);
 }
 
-//A plain load, which only needs the cache line shared, where try_lock() needs
-//it exclusive. Used by the spin loops in common_algorithms.hpp to avoid
-//hammering the line while the mutex is held.
+//A relaxed load, which only needs the cache line shared, where try_lock()
+//needs it exclusive. Used by the spin loops to avoid
+//hammering the line while the mutex is held, as answer is only a hint.
 BOOST_INTERPROCESS_FORCEINLINE bool spin_mutex::maybe_lockable(void)
-{  return ipcdetail::atomic_read32(const_cast<boost::uint32_t*>(&m_s)) == 0u;  }
+{  return ipcdetail::atomic_read32_relaxed(&m_s) == 0u;  }
 
 BOOST_INTERPROCESS_FORCEINLINE bool spin_mutex::try_lock(void)
 {

@@ -79,6 +79,9 @@ BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_read32(volatile boost::uin
 //! Atomically read an boost::uint32_t from memory with acquire semantics
 BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_read32_acquire(volatile boost::uint32_t *mem);
 
+//! Atomically read an boost::uint32_t from memory with relaxed semantics.
+BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_read32_relaxed(volatile boost::uint32_t *mem);
+
 //! Atomically set an boost::uint32_t in memory
 //! "mem": pointer to the object
 //! "param": val value that the object will assume
@@ -291,6 +294,26 @@ BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_read32_acquire(volatile bo
    const boost::uint32_t val = *mem;
    BOOST_INTERPROCESS_READ_BARRIER;
    return val;
+   #endif
+}
+
+//! Same as atomic_read32, but with relaxed semantics
+BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_read32_relaxed(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_RELAXED)
+   //Clang (clang-cl included) and GCC: the same plain load instruction a
+   //volatile read would give, but one that participates in the memory model,
+   //so ThreadSanitizer does not flag it as racing other threads' writes
+   return __atomic_load_n(mem, __ATOMIC_RELAXED);
+   #elif defined(_M_ARM64EC) || defined(_M_ARM64) || defined(_M_ARM)
+   //A plain 32 bit load the compiler cannot tear or widen and, unlike a
+   //volatile read under /volatile:ms, one that carries no barrier
+   return (boost::uint32_t)__iso_volatile_load32(reinterpret_cast<const volatile __int32*>(mem));
+   #else
+   //x86/x64: an aligned volatile load is a single MOV, and a relaxed load
+   //needs no barrier, not even a compiler-only one: the value is a hint
+   //that only a later acquire operation may act on
+   return *mem;
    #endif
 }
 
@@ -596,6 +619,22 @@ BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_read32_acquire(volatile bo
    return __atomic_load_n(mem, __ATOMIC_ACQUIRE);
    #else
    const boost::uint32_t old_val = *mem; __sync_synchronize(); return old_val;
+   #endif
+}
+
+//! Same as atomic_read32, but with relaxed semantics
+BOOST_INTERPROCESS_FORCEINLINE boost::uint32_t atomic_read32_relaxed(volatile boost::uint32_t *mem)
+{
+   #if defined(__ATOMIC_RELAXED)
+   //GCC 4.7 and later, Clang: the same plain load instruction a volatile
+   //read would give, but one that participates in the memory model, so
+   //ThreadSanitizer does not flag it as racing other threads' writes
+   return __atomic_load_n(mem, __ATOMIC_RELAXED);
+   #else
+   //GCC 4.1 to 4.6: no __atomic builtins and no ThreadSanitizer either. An
+   //aligned volatile load is a single load instruction on every supported
+   //target, and a relaxed load needs no barrier around it
+   return *mem;
    #endif
 }
 
