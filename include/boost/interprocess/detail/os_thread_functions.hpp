@@ -63,6 +63,8 @@
    #include <cstdlib>
 #elif defined(__FreeBSD__)
    #include <pthread_np.h>
+   //struct kinfo_proc lives here
+   #include <sys/user.h>
 #elif defined(__APPLE__)
    // TargetConditionals.h first: the TARGET_OS_* tests below depend on it.
    // Availability.h defines __MAC_OS_X_VERSION_MIN_REQUIRED and
@@ -711,7 +713,22 @@ inline unsigned long long get_boot_time_us()
 //Absolute wall-clock process start time in microseconds since the epoch.
 inline unsigned long long get_process_start_time_us()
 {
-   #if defined(__NetBSD__) || defined(__OpenBSD__)
+   #if defined(__APPLE__) || defined(__FreeBSD__)
+   struct ::kinfo_proc info;
+   std::size_t len = sizeof(info);
+   int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, static_cast<int>(::getpid()) };
+   if(0 != ::sysctl(mib, 4, &info, &len, 0, 0)){
+      return 0u;
+   }
+   #if defined(__APPLE__)
+   const struct ::timeval &tv = info.kp_proc.p_starttime;
+   #else //__FreeBSD__
+   const struct ::timeval &tv = info.ki_start;
+   #endif
+   return static_cast<unsigned long long>(tv.tv_sec) * 1000000ull
+        + static_cast<unsigned long long>(tv.tv_usec);
+   #elif defined(KERN_PROC2)
+   //NetBSD, and OpenBSD before 5.1
    struct ::kinfo_proc2 info;
    std::size_t len = sizeof(info);
    int mib[6] = { CTL_KERN, KERN_PROC2, KERN_PROC_PID, static_cast<int>(::getpid())
@@ -722,19 +739,17 @@ inline unsigned long long get_process_start_time_us()
    return static_cast<unsigned long long>(info.p_ustart_sec) * 1000000ull
         + static_cast<unsigned long long>(info.p_ustart_usec);
    #else
+   //OpenBSD 5.1 renamed KERN_PROC2/kinfo_proc2 to KERN_PROC/kinfo_proc, keeping
+   //the six element mib and the p_ustart_* fields
    struct ::kinfo_proc info;
    std::size_t len = sizeof(info);
-   int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, static_cast<int>(::getpid()) };
-   if(0 != ::sysctl(mib, 4, &info, &len, 0, 0)){
+   int mib[6] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, static_cast<int>(::getpid())
+                , static_cast<int>(sizeof(info)), 1 };
+   if(0 != ::sysctl(mib, 6, &info, &len, 0, 0)){
       return 0u;
    }
-      #if defined(__APPLE__)
-   const struct ::timeval &tv = info.kp_proc.p_starttime;
-      #else //__FreeBSD__
-   const struct ::timeval &tv = info.ki_start;
-      #endif
-   return static_cast<unsigned long long>(tv.tv_sec) * 1000000ull
-        + static_cast<unsigned long long>(tv.tv_usec);
+   return static_cast<unsigned long long>(info.p_ustart_sec) * 1000000ull
+        + static_cast<unsigned long long>(info.p_ustart_usec);
    #endif
 }
 
