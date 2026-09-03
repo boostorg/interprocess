@@ -6865,6 +6865,7 @@ thank them:
 
 * Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/209 GitHub #209 (['"There is a bug in boost/interprocess/detail/os_thread_function.hpp"])].
+   * [@https://github.com/boostorg/interprocess/issues/250 GitHub #250 (['"managed_shared_memory can't allocate a chunk of more than half its allocation any more"])].
    * [@https://github.com/boostorg/interprocess/pull/282   GitHub #282 (['"Improvements on rbtree_best_fit::check_sanity"])].
    * [@https://github.com/boostorg/interprocess/issues/283 GitHub #283 (['"Regression on macOS: pthread_threadid_np was not declared"])].
 

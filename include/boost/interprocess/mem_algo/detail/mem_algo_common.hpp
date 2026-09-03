@@ -358,7 +358,7 @@ class memory_algorithm_common
       //However, there is a minimum allocation unit count (BlockCtrlUnits) to be able to deallocate the buffer,
       //The allocation will give us a part of it (AllocatedCtrlUnits) so (BlockCtrlUnits - AllocatedCtrlUnits)
       //is the minimum ammount of blocks we need to allocate.
-      needed_units += max_value(needed_units, BlockCtrlUnits - AllocatedCtrlUnits);
+      needed_units = max_value(needed_units, BlockCtrlUnits - AllocatedCtrlUnits);
       //If we need to align, we need to at least move enough to create a new block at the beginning
       //that can be marked as free, so we need BlockCtrlUnits units for that
       needed_units += BlockCtrlUnits;

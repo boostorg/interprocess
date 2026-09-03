@@ -454,6 +454,35 @@ bool test_aligned_allocation(SegMngr &sm)
    return sm.all_memory_deallocated() && sm.check_sanity();
 }
 
+template<class SegMngr>
+bool test_overaligned_large_allocation(SegMngr &sm)
+{
+   const std::size_t alignment = SegMngr::MemAlignment * 2u;
+   const typename SegMngr::size_type free_memory = sm.get_free_memory();
+   const std::size_t nbytes = static_cast<std::size_t>(free_memory / 6u * 5u);
+   void *ptr = sm.allocate_aligned(nbytes, alignment, std::nothrow);
+   if(!ptr)
+      return false;
+   if(!is_aligned(ptr, alignment))
+      return false;
+   std::memset(ptr, 0xFF, nbytes);
+   sm.deallocate(ptr);
+   return sm.all_memory_deallocated() && sm.check_sanity();
+}
+
+template<class SegMngr>
+bool test_large_allocation(SegMngr &sm)
+{
+   const typename SegMngr::size_type free_memory = sm.get_free_memory();
+   const std::size_t nbytes = static_cast<std::size_t>(free_memory / 6u * 5u);
+   void *ptr = sm.allocate(nbytes, std::nothrow);
+   if(!ptr)
+      return false;
+   std::memset(ptr, 0xFF, nbytes);
+   sm.deallocate(ptr);
+   return sm.all_memory_deallocated() && sm.check_sanity();
+}
+
 //This test allocates memory with different alignments
 //and checks returned memory is aligned.
 template<class SegMngr>
@@ -1026,6 +1055,24 @@ bool test_all_allocation(SegMngr &sm)
 
    if(!test_aligned_allocation(sm)){
       std::cout << "test_aligned_allocation failed. Class: "
+                << typeid(sm).name() << std::endl;
+      return false;
+   }
+
+   std::cout << "Starting test_large_allocation. Class: "
+             << typeid(sm).name() << std::endl;
+
+   if(!test_large_allocation(sm)){
+      std::cout << "test_large_allocation failed. Class: "
+                << typeid(sm).name() << std::endl;
+      return false;
+   }
+
+   std::cout << "Starting test_overaligned_large_allocation. Class: "
+             << typeid(sm).name() << std::endl;
+
+   if(!test_overaligned_large_allocation(sm)){
+      std::cout << "test_overaligned_large_allocation failed. Class: "
                 << typeid(sm).name() << std::endl;
       return false;
    }
