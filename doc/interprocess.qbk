@@ -6864,6 +6864,8 @@ thank them:
   classic strong semantics.
 
 * Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/issues/209 GitHub #209 (['"There is a bug in boost/interprocess/detail/os_thread_function.hpp"])].
+   * [@https://github.com/boostorg/interprocess/pull/282   GitHub #282 (['"Improvements on rbtree_best_fit::check_sanity"])].
    * [@https://github.com/boostorg/interprocess/issues/283 GitHub #283 (['"Regression on macOS: pthread_threadid_np was not declared"])].
 
 [endsect]
@@ -6923,6 +6925,7 @@ thank them:
    * [@https://github.com/boostorg/interprocess/pull/269   GitHub #269 (['"Minor documentation fixes and template parameter renames"])].
    * [@https://github.com/boostorg/interprocess/issues/272 GitHub #272 (['"Regression boost 1.87: offset_ptr conversion from void no longer works"])].
    * [@https://github.com/boostorg/interprocess/pull/275   GitHub #275 (['"Allow injection of custom atexit procedure"])].
+   * [@https://github.com/boostorg/interprocess/issues/209 GitHub #209 (['"intermodule_singleton hangs after pid reuse because get_current_process_creation_time returned 0 on non-Windows; it now returns a real, RTC-stable process creation time on Linux and the BSD/Darwin family"])].
 
 [endsect]
 

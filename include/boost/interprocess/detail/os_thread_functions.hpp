@@ -58,6 +58,9 @@
 
 #if defined(__linux__)
    #include <sys/syscall.h>
+   #include <fcntl.h>
+   #include <cstring>
+   #include <cstdlib>
 #elif defined(__FreeBSD__)
    #include <pthread_np.h>
 #elif defined(__APPLE__)
@@ -630,8 +633,130 @@ inline void thread_sleep_ms(unsigned int ms)
    }
 }
 
+#if defined(__linux__)
+
+//On Linux the process start time (field 22 of /proc/self/stat) is expressed in
+//clock ticks since system boot. Combined with the pid it yields a value that
+//changes when the kernel reuses a pid, which is what the intermodule singleton
+//map name needs to stay unique. /dev/shm is cleared on reboot, so a
+//boot-relative value is enough. The value is invariant for the process, so it
+//is parsed once and cached instead of re-reading /proc on every call.
+inline unsigned long long read_process_start_time_us()
+{
+   int fd = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::open("/proc/self/stat", O_RDONLY));
+   if(fd < 0){
+      return 0u;
+   }
+   char buf[512];
+   std::size_t total = 0u;
+   ssize_t r;
+   while(total < (sizeof(buf) - 1u) &&
+         (r = BOOST_INTERPROCESS_EINTR_RETRY(ssize_t, -1, ::read(fd, buf + total, sizeof(buf) - 1u - total))) > 0){
+      total += static_cast<std::size_t>(r);
+   }
+   ::close(fd);
+   buf[total] = '\0';
+
+   //The comm field (2nd) is enclosed in parentheses and may itself contain
+   //spaces or ')', so scan from the last ')' to reach the numeric fields.
+   char *p = std::strrchr(buf, ')');
+   if(!p){
+      return 0u;
+   }
+   ++p;
+   //Skip fields 3 (state) up to 21 (itrealvalue), 19 fields, then read
+   //field 22 (starttime).
+   for(unsigned i = 0; i != 19u; ++i){
+      while(*p == ' ') ++p;
+      while(*p && *p != ' ') ++p;
+   }
+   while(*p == ' ') ++p;
+
+   unsigned long long ticks = std::strtoull(p, 0, 10);
+   long clk_tck = ::sysconf(_SC_CLK_TCK);
+   if(clk_tck <= 0){
+      return ticks;
+   }
+   return ticks * 1000000ull / static_cast<unsigned long long>(clk_tck);
+}
+
+inline unsigned long long get_current_process_creation_time()
+{
+   static const unsigned long long creation_time = read_process_start_time_us();
+   return creation_time;
+}
+
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+
+//On these systems the kernel only exposes a wall-clock process start time.
+//Return it as a value relative to the estimated boot time, computed once. This
+//matters because kern.boottime is recomputed as (now - uptime) on every
+//wall-clock step, while the stored process start time is frozen at fork: a
+//boot-relative value read repeatedly would drift after an RTC change, so it is
+//cached to stay stable (and RTC-immune) for the whole process lifetime.
+
+//Estimated system boot time in microseconds since the epoch, 0 if unavailable.
+inline unsigned long long get_boot_time_us()
+{
+   struct ::timeval bt;
+   std::size_t len = sizeof(bt);
+   int mib[2] = { CTL_KERN, KERN_BOOTTIME };
+   if(0 != ::sysctl(mib, 2, &bt, &len, 0, 0)){
+      return 0u;
+   }
+   return static_cast<unsigned long long>(bt.tv_sec) * 1000000ull
+        + static_cast<unsigned long long>(bt.tv_usec);
+}
+
+//Absolute wall-clock process start time in microseconds since the epoch.
+inline unsigned long long get_process_start_time_us()
+{
+   #if defined(__NetBSD__) || defined(__OpenBSD__)
+   struct ::kinfo_proc2 info;
+   std::size_t len = sizeof(info);
+   int mib[6] = { CTL_KERN, KERN_PROC2, KERN_PROC_PID, static_cast<int>(::getpid())
+                , static_cast<int>(sizeof(info)), 1 };
+   if(0 != ::sysctl(mib, 6, &info, &len, 0, 0)){
+      return 0u;
+   }
+   return static_cast<unsigned long long>(info.p_ustart_sec) * 1000000ull
+        + static_cast<unsigned long long>(info.p_ustart_usec);
+   #else
+   struct ::kinfo_proc info;
+   std::size_t len = sizeof(info);
+   int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, static_cast<int>(::getpid()) };
+   if(0 != ::sysctl(mib, 4, &info, &len, 0, 0)){
+      return 0u;
+   }
+      #if defined(__APPLE__)
+   const struct ::timeval &tv = info.kp_proc.p_starttime;
+      #else //__FreeBSD__
+   const struct ::timeval &tv = info.ki_start;
+      #endif
+   return static_cast<unsigned long long>(tv.tv_sec) * 1000000ull
+        + static_cast<unsigned long long>(tv.tv_usec);
+   #endif
+}
+
+inline unsigned long long compute_boot_relative_start_time_us()
+{
+   const unsigned long long start = get_process_start_time_us();
+   const unsigned long long boot  = get_boot_time_us();
+   return (boot && boot <= start) ? (start - boot) : start;
+}
+
+inline unsigned long long get_current_process_creation_time()
+{
+   static const unsigned long long creation_time = compute_boot_relative_start_time_us();
+   return creation_time;
+}
+
+#else
+
 inline unsigned long long get_current_process_creation_time()
 { return 0u; }
+
+#endif
 
 inline unsigned int get_num_cores()
 {
