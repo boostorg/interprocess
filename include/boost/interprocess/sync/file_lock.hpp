@@ -21,7 +21,9 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
+#include <boost/interprocess/permissions.hpp>
 #include <boost/interprocess/timed_utils.hpp>
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
@@ -59,6 +61,15 @@ class file_lock
    //!exist or there are no operating system resources.
    file_lock(const char *name);
 
+   //!Opens a file lock, creating the file with permissions "perm" if it does not
+   //!exist. The file is created and opened in a single atomic operation, so no
+   //!other process can delete or create the file in between.
+   //!Throws interprocess_exception if the file can't be created or opened, or
+   //!if there are no operating system resources.
+   //!
+   //!Note: The file is not erased by the destructor.
+   file_lock(open_or_create_t, const char *name, const permissions &perm = permissions());
+
    #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    //!Opens a file lock. Throws interprocess_exception if the file does not
    //!exist or there are no operating system resources.
@@ -66,6 +77,18 @@ class file_lock
    //!Note: This function is only available on operating systems with
    //!      native wchar_t APIs (e.g. Windows).
    file_lock(const wchar_t *name);
+
+   //!Opens a file lock, creating the file with permissions "perm" if it does not
+   //!exist. The file is created and opened in a single atomic operation, so no
+   //!other process can delete or create the file in between.
+   //!Throws interprocess_exception if the file can't be created or opened, or
+   //!if there are no operating system resources.
+   //!
+   //!Note: The file is not erased by the destructor.
+   //!
+   //!Note: This function is only available on operating systems with
+   //!      native wchar_t APIs (e.g. Windows).
+   file_lock(open_or_create_t, const wchar_t *name, const permissions &perm = permissions());
    #endif
 
    //!Moves the ownership of "moved"'s file mapping object to *this.
@@ -231,11 +254,31 @@ inline file_lock::file_lock(const char *name)
    }
 }
 
+inline file_lock::file_lock(open_or_create_t, const char *name, const permissions &perm)
+{
+   m_file_hnd = ipcdetail::create_or_open_file(name, read_write, perm);
+
+   if(m_file_hnd == ipcdetail::invalid_file()){
+      error_info err(system_error_code());
+      throw interprocess_exception(err);
+   }
+}
+
 #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
 inline file_lock::file_lock(const wchar_t *name)
 {
    m_file_hnd = ipcdetail::open_existing_file(name, read_write);
+
+   if(m_file_hnd == ipcdetail::invalid_file()){
+      error_info err(system_error_code());
+      throw interprocess_exception(err);
+   }
+}
+
+inline file_lock::file_lock(open_or_create_t, const wchar_t *name, const permissions &perm)
+{
+   m_file_hnd = ipcdetail::create_or_open_file(name, read_write, perm);
 
    if(m_file_hnd == ipcdetail::invalid_file()){
       error_info err(system_error_code());
