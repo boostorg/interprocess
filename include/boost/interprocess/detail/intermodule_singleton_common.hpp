@@ -169,6 +169,11 @@ class intermodule_singleton_common
                   BOOST_ASSERT(0);
                }
             }
+            //The initializer thread might have failed (Broken) or the singleton
+            //might have been destroyed meanwhile, so the pointer is not usable
+            if(previous_module_singleton_initialized != Initialized){
+               throw interprocess_exception("boost::interprocess::intermodule_singleton initialization failed");
+            }
          }
          else if(previous_module_singleton_initialized == Initialized){
             //Nothing to do here, the singleton is ready
@@ -258,7 +263,9 @@ class intermodule_singleton_common
                }
             }
             BOOST_INTERPROCESS_CATCH(...){
-               //
+               //Do not leave the map state as Initializing, as other threads
+               //would spin forever. Allow a new attempt from another thread.
+               atomic_write32(&this_module_map_initialized, Uninitialized);
                BOOST_INTERPROCESS_RETHROW
             } BOOST_INTERPROCESS_CATCH_END
          }

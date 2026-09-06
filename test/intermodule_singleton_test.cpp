@@ -9,9 +9,11 @@
 //////////////////////////////////////////////////////////////////////////////
 #include <boost/interprocess/detail/intermodule_singleton.hpp>
 #include <boost/interprocess/detail/portable_intermodule_singleton.hpp>
+#include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <iostream>
 #include <cstdlib> //for std::abort
 #include <typeinfo>
+#include "util.hpp"
 
 using namespace boost::interprocess;
 
@@ -90,6 +92,68 @@ int intermodule_singleton_test()
    }
 
    return 0;
+}
+
+static const boost::uint32_t concurrent_thread_count = 4u;
+
+//A class that throws in the constructor once all test threads have requested
+//the singleton, so that the initializing thread fails while the other threads
+//are waiting for it. Those threads must throw instead of obtaining a
+//reference to a singleton that was never constructed.
+template<class Tag>
+class ConcurrentThrowingClass
+{
+   public:
+   ConcurrentThrowingClass()
+   {
+      arrived.wait_at_least(concurrent_thread_count);
+      //Let the peer threads reach the singleton wait loop before failing
+      for(unsigned i = 0; i != 1000u; ++i){
+         ipcdetail::thread_yield();
+      }
+      throw int(0);
+   }
+
+   static test::test_counter arrived;
+};
+
+template<class Tag>
+test::test_counter ConcurrentThrowingClass<Tag>::arrived;
+
+template<class Tag, class ThrowingSingleton>
+void concurrent_throwing_get(void *, volatile boost::uint32_t &returned_count)
+{
+   ConcurrentThrowingClass<Tag>::arrived.increment();
+   BOOST_INTERPROCESS_TRY{
+      ThrowingSingleton::get();
+      //get() must never return when the singleton could not be constructed
+      ipcdetail::atomic_add32(&returned_count, 1u);
+   }
+   BOOST_INTERPROCESS_CATCH(...){
+   } BOOST_INTERPROCESS_CATCH_END
+}
+
+template < template<class T, bool LazyInit, bool Phoenix> class IntermoduleType >
+int concurrent_throwing_singleton_test()
+{
+   typedef IntermoduleType<char, true, false>            Tag;
+   typedef ConcurrentThrowingClass<Tag>                  ThrowingType;
+   typedef IntermoduleType<ThrowingType, true, false>    ThrowingSingleton;
+
+   volatile boost::uint32_t returned_count = 0u;
+   ipcdetail::OS_thread_t threads[concurrent_thread_count];
+
+   for(boost::uint32_t i = 0; i != concurrent_thread_count; ++i){
+      ipcdetail::thread_launch
+         ( threads[i]
+         , test::thread_adapter<volatile boost::uint32_t>
+            (&concurrent_throwing_get<Tag, ThrowingSingleton>, 0, returned_count));
+   }
+   for(boost::uint32_t i = 0; i != concurrent_thread_count; ++i){
+      ipcdetail::thread_join(threads[i]);
+   }
+
+   return ipcdetail::atomic_read32(&returned_count) ? 1 : 0;
 }
 
 //A class simulating a logger
@@ -303,6 +367,16 @@ int main ()
 
    #ifdef BOOST_INTERPROCESS_WINDOWS
    if(0 != intermodule_singleton_test<win_singleton>()){
+      return 1;
+   }
+   #endif
+
+   if(0 != concurrent_throwing_singleton_test<port_singleton>()){
+      return 1;
+   }
+
+   #ifdef BOOST_INTERPROCESS_WINDOWS
+   if(0 != concurrent_throwing_singleton_test<win_singleton>()){
       return 1;
    }
    #endif

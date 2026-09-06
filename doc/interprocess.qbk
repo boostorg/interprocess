@@ -6917,12 +6917,16 @@ thank them:
   classic strong semantics.
 
 * Fixed bugs:
+Interprocess # (Crash in ipcdetail::get_bootstamp when multi thread racing and 
+   * [@https://github.com/boostorg/interprocess/issues/144 GitHub #144 (['"Crash in ipcdetail::get_bootstamp when multi thread racing and winapi::get_last_bootup_time failed on Windows"])].
    * [@https://github.com/boostorg/interprocess/issues/159 GitHub #159 (['"Remove exception from normal execution path"])].
    * [@https://github.com/boostorg/interprocess/issues/186 GitHub #186 (['"Document platform specific limitations with shared memory"])].
    * [@https://github.com/boostorg/interprocess/issues/209 GitHub #209 (['"There is a bug in boost/interprocess/detail/os_thread_function.hpp"])].
    * [@https://github.com/boostorg/interprocess/issues/250 GitHub #250 (['"managed_shared_memory can't allocate a chunk of more than half its allocation any more"])].
    * [@https://github.com/boostorg/interprocess/pull/282   GitHub #282 (['"Improvements on rbtree_best_fit::check_sanity"])].
    * [@https://github.com/boostorg/interprocess/issues/283 GitHub #283 (['"Regression on macOS: pthread_threadid_np was not declared"])].
+
+
 
 [endsect]
 
