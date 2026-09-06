@@ -47,7 +47,7 @@ class simple_seq_fit
 
    //!Constructor. "size" is the total size of the managed memory segment,
    //!"extra_hdr_bytes" indicates the extra bytes beginning in the sizeof(simple_seq_fit)
-   //!offset that the allocator should not use at all.*/
+   //!offset that the allocator should not use at all.
    simple_seq_fit(size_type segment_size, size_type extra_hdr_bytes)
       : base_t(segment_size, extra_hdr_bytes){}
 };

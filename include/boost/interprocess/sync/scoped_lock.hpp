@@ -250,7 +250,7 @@ class scoped_lock
    }
 
    //!Effects: if (owns()) mp_mutex->unlock().
-   //!Notes: The destructor behavior ensures that the mutex lock is not leaked.*/
+   //!Notes: The destructor behavior ensures that the mutex lock is not leaked.
    ~scoped_lock()
    {
       BOOST_INTERPROCESS_TRY{  if(m_locked && mp_mutex)   mp_mutex->unlock();  }
@@ -291,7 +291,7 @@ class scoped_lock
    //!Notes: The scoped_lock changes from a state of not owning the mutex, to
    //!   owning the mutex, but only if blocking was not required. If the
    //!   mutex_type does not support try_lock(), this function will fail at
-   //!   compile time if instantiated, but otherwise have no effect.*/
+   //!   compile time if instantiated, but otherwise have no effect.
    bool try_lock()
    {
       if(!mp_mutex || m_locked)
@@ -306,7 +306,7 @@ class scoped_lock
    //!Notes: The scoped_lock changes from a state of not owning the mutex, to
    //!   owning the mutex, but only if it can obtain ownership by the specified
    //!   time. If the mutex_type does not support timed_lock (), this function
-   //!   will fail at compile time if instantiated, but otherwise have no effect.*/
+   //!   will fail at compile time if instantiated, but otherwise have no effect.
    template<class TimePoint>
    bool timed_lock(const TimePoint& abs_time)
    {
@@ -322,7 +322,7 @@ class scoped_lock
    //!Notes: The scoped_lock changes from a state of not owning the mutex, to
    //!   owning the mutex, but only if it can obtain ownership by the specified
    //!   time. If the mutex_type does not support timed_lock (), this function
-   //!   will fail at compile time if instantiated, but otherwise have no effect.*/
+   //!   will fail at compile time if instantiated, but otherwise have no effect.
    template<class TimePoint>
    bool try_lock_until(const TimePoint& abs_time)
    {
@@ -338,7 +338,7 @@ class scoped_lock
    //!Notes: The scoped_lock changes from a state of not owning the mutex, to
    //!   owning the mutex, but only if it can obtain ownership by the specified
    //!   time. If the mutex_type does not support timed_lock (), this function
-   //!   will fail at compile time if instantiated, but otherwise have no effect.*/
+   //!   will fail at compile time if instantiated, but otherwise have no effect.
    template<class Duration>
    bool try_lock_for(const Duration& dur)
    {
@@ -352,7 +352,7 @@ class scoped_lock
    //!   exception. Calls unlock() on the referenced mutex.
    //!Postconditions: owns() == false.
    //!Notes: The scoped_lock changes from a state of owning the mutex, to not
-   //!   owning the mutex.*/
+   //!   owning the mutex.
    void unlock()
    {
       if(!mp_mutex || !m_locked)

@@ -39,7 +39,7 @@ namespace interprocess {
 
 //!A basic user memory named object creation class. Inherits all
 //!basic functionality from
-//!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>*/
+//!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>
 template
       <
          class CharType,

@@ -118,7 +118,7 @@ class named_condition
    ~named_condition();
 
    //!If there is a thread waiting on *this, change that
-   //!thread's state to ready. Otherwise there is no effect.*/
+   //!thread's state to ready. Otherwise there is no effect.
    void notify_one();
 
    //!Change the state of all threads waiting on *this to ready.

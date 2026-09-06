@@ -62,7 +62,7 @@ class interprocess_semaphore
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    public:
    //!Creates a interprocess_semaphore with the given initial count.
-   //!interprocess_exception if there is an error.*/
+   //!interprocess_exception if there is an error.
    interprocess_semaphore(unsigned int initialCount);
 
    //!Destroys the interprocess_semaphore.

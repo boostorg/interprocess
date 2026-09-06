@@ -40,7 +40,7 @@ namespace interprocess {
 
 //!A basic heap memory named object creation class. Initializes the
 //!heap memory segment. Inherits all basic functionality from
-//!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>*/
+//!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>
 template
       <
          class CharType,

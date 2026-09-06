@@ -114,7 +114,7 @@ class shm_named_condition_any
    {}
 
    //!If there is a thread waiting on *this, change that
-   //!thread's state to ready. Otherwise there is no effect.*/
+   //!thread's state to ready. Otherwise there is no effect.
    void notify_one()
    {  this->internal_cond().notify_one(); }
 

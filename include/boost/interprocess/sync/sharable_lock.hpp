@@ -49,7 +49,7 @@ namespace interprocess {
 //!the Mutex does not supply, no harm is done. Mutex ownership can be shared among
 //!sharable_locks, and a single upgradable_lock. sharable_lock does not support
 //!copy semantics. But sharable_lock supports ownership transfer from an sharable_lock,
-//!upgradable_lock and scoped_lock via transfer_lock syntax.*/
+//!upgradable_lock and scoped_lock via transfer_lock syntax.
 template <class SharableMutex>
 class sharable_lock
 {
@@ -141,7 +141,7 @@ class sharable_lock
    //!Notes: If upgr is locked, this constructor will lock this sharable_lock while
    //!   unlocking upgr. Only a moved sharable_lock's will match this
    //!   signature. An non-moved upgradable_lock can be moved with the expression:
-   //!   "boost::move(lock);".*/
+   //!   "boost::move(lock);".
    template<class T>
    sharable_lock(BOOST_RV_REF(upgradable_lock<T>) upgr
       , typename ipcdetail::enable_if< ipcdetail::is_same<T, SharableMutex> >::type * = 0)

@@ -68,7 +68,7 @@ class shared_memory_object
    shared_memory_object() BOOST_NOEXCEPT;
 
    //!Creates a shared memory object with name "name" and mode "mode", with the access mode "mode"
-   //!If the file previously exists, throws an error.*/
+   //!If the file previously exists, throws an error.
    shared_memory_object(create_only_t, const char *name, mode_t mode, const permissions &perm = permissions())
    {  this->priv_open_or_create(ipcdetail::DoCreate, name, mode, perm);  }
 

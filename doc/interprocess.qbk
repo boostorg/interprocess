@@ -6901,7 +6901,7 @@ thank them:
 * Added `BOOST_HEADER_DEPRECATED` to `<boost/interprocess/containers/*.hpp> headers. They were deprecated several releases ago, but this
   message will annoy existing users to switch to Boost.Container headers.
 
-* Changed the interface of [link managed_memory_segment_advanced_features.managed_memory_segment_multiple_allocations Multiple allocation functions]
+* Changed the interface of [link interprocess.managed_memory_segment_advanced_features.managed_memory_segment_multiple_allocations Multiple allocation functions]
   (still experimental and API/ABI unstable) to support alignment.
 
 * Added `BOOST_HEADER_DEPRECATED` to `<boost/interprocess/containers/*.hpp> headers. They were deprecated several releases ago, but this

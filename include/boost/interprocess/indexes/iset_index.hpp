@@ -99,7 +99,7 @@ struct iset_index_aux
 
 //!Index type based in boost::intrusive::set.
 //!Just derives from boost::intrusive::set
-//!and defines the interface needed by managed memory segments*/
+//!and defines the interface needed by managed memory segments
 template <class MapConfig>
 class iset_index
    //Derive class from map specialization

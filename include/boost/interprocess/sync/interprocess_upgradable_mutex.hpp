@@ -275,7 +275,7 @@ class interprocess_upgradable_mutex
    //!   fail if there are threads with sharable ownership or timeout reaches, but it
    //!   will maintain upgradable ownership.
    //!Returns: If acquires exclusive ownership, returns true. Otherwise returns false.
-   //!Throws: An exception derived from interprocess_exception on error. */
+   //!Throws: An exception derived from interprocess_exception on error.
    template<class TimePoint>
    bool timed_unlock_upgradable_and_lock(const TimePoint &abs_time);
 

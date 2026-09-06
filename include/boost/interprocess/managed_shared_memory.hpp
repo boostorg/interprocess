@@ -66,7 +66,7 @@ struct shmem_open_or_create
 
 //!A basic shared memory named object creation class. Initializes the
 //!shared memory segment. Inherits all basic functionality from
-//!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>*/
+//!basic_managed_memory_impl<CharType, AllocationAlgorithm, IndexType>
 template
       <
          class CharType,

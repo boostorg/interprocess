@@ -63,7 +63,7 @@ struct segment_manager_type
 //!achieve this, this class uses the reserved space provided by the allocation
 //!algorithm to place a named_allocator_algo, who takes care of name mappings.
 //!The class can be customized with the char type used for object names
-//!and the memory allocation algorithm to be used.*/
+//!and the memory allocation algorithm to be used.
 template <  class CharType
          ,  class MemoryAlgorithm
          ,  template<class IndexConfig> class IndexType
@@ -268,7 +268,7 @@ class basic_managed_memory_impl
    }
 
    //!Transforms previously obtained offset into an absolute address in the
-   //!process space of the current process. Never throws.*/
+   //!process space of the current process. Never throws.
    void *    get_address_from_handle (handle_t offset) const
    {  return reinterpret_cast<char*>(this->get_address()) + offset; }
 
@@ -489,7 +489,7 @@ class basic_managed_memory_impl
    //!-> If T's constructor throws, the function throws that exception.
    //!
    //!Memory is freed automatically if T's constructor throws and
-   //!destructors of created objects are called before freeing the memory.*/
+   //!destructors of created objects are called before freeing the memory.
    template <class T>
    typename segment_manager::template construct_iter_proxy<T>::type
       construct_it(char_ptr_holder_t name, const std::nothrow_t &tag)
@@ -512,7 +512,7 @@ class basic_managed_memory_impl
    //!-> If T's constructor throws, the function throws that exception.
    //!
    //!Memory is freed automatically if T's constructor throws and
-   //!destructors of created objects are called before freeing the memory.*/
+   //!destructors of created objects are called before freeing the memory.
    template <class T>
    typename segment_manager::template construct_iter_proxy<T>::type
       find_or_construct_it(char_ptr_holder_t name, const std::nothrow_t &tag)
