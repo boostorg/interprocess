@@ -8,7 +8,7 @@
 [library Boost.Interprocess
     [quickbook 1.7]
     [authors [Gaztanaga, Ion]]
-    [copyright 2005-2024 Ion Gaztanaga]
+    [copyright 2005-2026 Ion Gaztanaga]
     [id interprocess]
     [dirname interprocess]
     [purpose Interprocess communication utilities]
@@ -6794,23 +6794,76 @@ under process crashes while holding the lock.
 
 [section:notes_macos_sandboxed Limitations for sandboxed applications]
 
-[*Boost.Interprocess] uses POSIX shared memory in MacOS to implement shared memory classes in MacOS.
+[*Boost.Interprocess] uses POSIX shared memory to implement shared memory classes in MacOS.
 
-But sandboxed apps cannot use System V (XSI) semaphores and POSIX semaphores and shared memory can't
-be used by default. However, by specifying an entitlement that requests membership in an application group,
+But sandboxed apps cannot use several interprocess communication mechanisms by default.
+However, by specifying an entitlement that requests membership in an application group,
 an app can use these technologies to communicate with other members of that application group.
 
-Please see Apple documentation
-[@https://developer.apple.com/library/archive/documentation/Security/Conceptual/AppSandboxDesignGuide/AppSandboxInDepth/AppSandboxInDepth.html#//apple_ref/doc/uid/TP40011183-CH3-SW24
- for limitations and guide on how to use interprocess communications on sandboxed applications].
+All applications distributed through the Apple App Store are sandboxed. In a sandboxed application the
+usual symptom is that `shm_open` or `sem_open` fail with `EPERM` (errno 1, ['"Operation not permitted"]),
+which [*Boost.Interprocess] reports as an `interprocess_exception`. The failure does not depend on the
+requested size or on the permissions passed to the constructor, so it is easy to misread it as a library bug.
+
+The rules that apply to a sandboxed application are:
+
+* System V (XSI) mechanisms are never available. `xsi_shared_memory` and `managed_xsi_shared_memory`
+  cannot be used at all.
+* POSIX shared memory and POSIX named semaphores require the `com.apple.security.application-groups`
+  entitlement. Each entry of that entitlement is an application group identifier with the format
+  `<team identifier>.<group name>`. In MacOS `shared_memory_object`, `managed_shared_memory`,
+  `named_condition` and `message_queue` are built on POSIX shared memory, and `named_mutex` and
+  `named_semaphore` are built on POSIX named semaphores.
+* The name of the shared memory object or of the named semaphore must be
+  `<application group identifier>/<your name>` and must not start with a slash. The total length is limited
+  to `PSHMNAMLEN` (shared memory) or `PSEMNAMLEN` (semaphores) characters, which is 31 characters in
+  current MacOS versions and includes the application group prefix.
+* Only members of the same application group can open the object. Two sandboxed applications, or a
+  sandboxed and a non-sandboxed application, must share an application group to communicate.
+
+[important [*Boost.Interprocess] always adds a leading slash to the name before it calls `shm_open` or
+`sem_open`, because that is the portable POSIX form. The resulting name `/<application group identifier>/<your name>`
+is rejected by the MacOS sandbox, so POSIX shared memory and POSIX named semaphores are currently unusable in
+sandboxed applications. See
+[@https://github.com/boostorg/interprocess/issues/232 GitHub #232] for the state of this limitation.
+As a workaround, use file-based mechanisms (`file_mapping`, `managed_mapped_file`, `file_lock`) with files
+placed inside the application group container directory, which the sandbox allows the application to access.]
+
+Please see the Apple documentation for the complete description and for the procedure to enable the
+entitlement:
+
+* [@https://developer.apple.com/library/archive/documentation/Security/Conceptual/AppSandboxDesignGuide/AppSandboxInDepth/AppSandboxInDepth.html#//apple_ref/doc/uid/TP40011183-CH3-SW24
+  App Sandbox in Depth: IPC and POSIX semaphores and shared memory]
+* [@https://developer.apple.com/library/archive/documentation/Security/Conceptual/AppSandboxDesignGuide/AppSandboxInDepth/AppSandboxInDepth.html#//apple_ref/doc/uid/TP40011183-CH3-SW21
+  App Sandbox in Depth: application group containers]
+* [@https://developer.apple.com/library/archive/documentation/Miscellaneous/Reference/EntitlementKeyReference/Chapters/EnablingAppSandbox.html#//apple_ref/doc/uid/TP40011195-CH4-SW19
+  Entitlement Key Reference: com.apple.security.application-groups]
+
+[endsect]
+
+[endsect]
+
+[section:notes_apple_mobile Notes for iOS, iPadOS, tvOS, watchOS and visionOS users]
+
+In these operating systems every application is sandboxed and there is no way to opt out of the sandbox.
+All the limitations described in
+[link interprocess.acknowledgements_notes.notes_macos.notes_macos_sandboxed Limitations for sandboxed applications]
+therefore apply always, with these additional differences:
+
+* The application group identifier must use the `group.<group name>` format and must be registered in the
+  Apple Developer site. The `<team identifier>.<group name>` format is only accepted in MacOS.
+* System V (XSI) mechanisms are not usable. [*Boost.Interprocess] compiles `xsi_shared_memory` and
+  `managed_xsi_shared_memory` because the system headers declare the XSI API, but the calls fail at runtime.
+* Applications distributed in the App Store must not use private or undocumented interfaces, so the
+  application group container is the only supported way to share memory between processes. Use
+  `file_mapping` or `managed_mapped_file` on a file created in the container directory returned by
+  `containerURL(forSecurityApplicationGroupIdentifier:)`.
 
 [endsect]
 
 [section:notes_other_xsi Notes for QNX, Android, Haiku, VxWorks and Emscriptem users]
 
 Those operating system don't offer support XSI IPC mechanisms, so associated utilities are not available.
-
-[endsect]
 
 [endsect]
 
@@ -6865,6 +6918,7 @@ thank them:
 
 * Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/159 GitHub #159 (['"Remove exception from normal execution path"])].
+   * [@https://github.com/boostorg/interprocess/issues/186 GitHub #186 (['"Document platform specific limitations with shared memory"])].
    * [@https://github.com/boostorg/interprocess/issues/209 GitHub #209 (['"There is a bug in boost/interprocess/detail/os_thread_function.hpp"])].
    * [@https://github.com/boostorg/interprocess/issues/250 GitHub #250 (['"managed_shared_memory can't allocate a chunk of more than half its allocation any more"])].
    * [@https://github.com/boostorg/interprocess/pull/282   GitHub #282 (['"Improvements on rbtree_best_fit::check_sanity"])].
