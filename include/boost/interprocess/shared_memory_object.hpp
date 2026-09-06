@@ -39,6 +39,7 @@
 #  include <sys/mman.h>     //shm_xxx
 #  include <unistd.h>       //ftruncate, close
 #  include <sys/stat.h>     //mode_t, S_IRWXG, S_IRWXO, S_IRWXU,
+#  include <boost/interprocess/sync/spin/wait.hpp>
 #  if defined(BOOST_INTERPROCESS_RUNTIME_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
 #     if defined(__FreeBSD__)
 #        include <sys/sysctl.h>
@@ -412,24 +413,34 @@ inline bool shared_memory_object::try_open_or_create
       {
          //We need a create/open loop to change permissions correctly using fchmod, since
          //with "O_CREAT" only we don't know if we've created or opened the shm.
+         //Cap retries: a peer unlinking in a loop must not spin forever.
+         spin_wait swait;
+         unsigned tries = 0;
          while(true){
             //Try to create shared memory
             m_handle = eintr_aware_shm_open(fname.c_str(), oflag | (O_CREAT | O_EXCL), unix_perm);
             //If successful change real permissions
             if(m_handle >= 0){
                ::fchmod(m_handle, unix_perm);
+               break;
             }
             //If already exists, try to open
             else if(errno == EEXIST){
                m_handle = eintr_aware_shm_open(fname.c_str(), oflag, unix_perm);
                //If open fails and errno tells the file does not exist
                //(shm was removed between creation and opening tries), just retry
-               if(m_handle < 0 && errno == ENOENT){
-                  continue;
+               if(m_handle >= 0 || errno != ENOENT){
+                  break;
                }
+               if(++tries == BOOST_INTERPROCESS_MANAGED_OPEN_OR_CREATE_INITIALIZE_MAX_TRIES){
+                  err = corrupted_error;
+                  return false;
+               }
+               swait.yield();
             }
-            //Exit retries
-            break;
+            else{
+               break;
+            }
          }
       }
       break;

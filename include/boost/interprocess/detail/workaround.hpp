@@ -231,7 +231,8 @@
 #endif
 
 
-// Max open or create tries with managed memory segments
+// Max exclusive-create then open retries for open_or_create races
+// (managed segments, shared_memory_object, and file-based helpers)
 #ifndef BOOST_INTERPROCESS_MANAGED_OPEN_OR_CREATE_INITIALIZE_MAX_TRIES
    #define BOOST_INTERPROCESS_MANAGED_OPEN_OR_CREATE_INITIALIZE_MAX_TRIES 20u
 #endif

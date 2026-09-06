@@ -40,6 +40,7 @@
 #     include <dirent.h>
 #     include <cerrno>
 #     include <cstdio>
+#     include <boost/interprocess/sync/spin/wait.hpp>
 #     if 0
 #        include <sys/file.h>
 #     endif
@@ -570,6 +571,9 @@ inline file_handle_t create_or_open_file
    int ret = -1;
    //We need a loop to change permissions correctly using fchmod, since
    //with "O_CREAT only" ::open we don't know if we've created or opened the file.
+   //Cap retries: a peer unlinking in a loop must not spin forever.
+   spin_wait swait;
+   unsigned tries = 0;
    while(true){
       ret = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::open(name, ((int)mode) | O_EXCL | O_CREAT, perm.get_permissions()));
       if(ret >= 0){
@@ -581,6 +585,12 @@ inline file_handle_t create_or_open_file
          if((ret = BOOST_INTERPROCESS_EINTR_RETRY(int, -1, ::open(name, (int)mode))) >= 0 || errno != ENOENT){
             break;
          }
+         if(++tries == BOOST_INTERPROCESS_MANAGED_OPEN_OR_CREATE_INITIALIZE_MAX_TRIES){
+            errno = EBUSY;
+            ret = -1;
+            break;
+         }
+         swait.yield();
       }
       else{
          break;
