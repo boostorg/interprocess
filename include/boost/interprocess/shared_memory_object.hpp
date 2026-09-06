@@ -484,7 +484,7 @@ inline void shared_memory_object::truncate(offset_t length)
       ret = posix_fallocate(m_handle, 0, length);
    }
 
-   if (ret && ret != EOPNOTSUPP && ret != ENODEV){
+   if (ret && ret != EOPNOTSUPP && ret != ENODEV && ret != EINVAL){
       error_info err(ret);
       throw interprocess_exception(err);
    }
