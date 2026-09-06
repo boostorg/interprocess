@@ -292,6 +292,50 @@ class managed_open_or_create_impl
       tmp.swap(dev);
    }
 
+   template<bool dummy, class DeviceId>
+   static bool try_create_device(DeviceAbstraction &dev, const DeviceId & id, std::size_t size, const permissions &perm, error_info &err, false_ /*file_like*/)
+   {
+      DeviceAbstraction tmp;
+      if(!tmp.try_open_or_create(DoCreate, id, read_write, size, perm, err)){
+         return false;
+      }
+      tmp.swap(dev);
+      return true;
+   }
+
+   template<bool dummy, class DeviceId>
+   static bool try_create_device(DeviceAbstraction &dev, const DeviceId & id, std::size_t, const permissions &perm, error_info &err, true_ /*file_like*/)
+   {
+      DeviceAbstraction tmp;
+      if(!tmp.try_open_or_create(DoCreate, id, read_write, perm, err)){
+         return false;
+      }
+      tmp.swap(dev);
+      return true;
+   }
+
+   template<bool dummy, class DeviceId>
+   static bool try_open_device(DeviceAbstraction &dev, const DeviceId & id, error_info &err, false_ /*file_like*/)
+   {
+      DeviceAbstraction tmp;
+      if(!tmp.try_open_or_create(DoOpen, id, read_write, 0u, permissions(), err)){
+         return false;
+      }
+      tmp.swap(dev);
+      return true;
+   }
+
+   template<bool dummy, class DeviceId>
+   static bool try_open_device(DeviceAbstraction &dev, const DeviceId & id, error_info &err, true_ /*file_like*/)
+   {
+      DeviceAbstraction tmp;
+      if(!tmp.try_open_or_create(DoOpen, id, read_write, permissions(), err)){
+         return false;
+      }
+      tmp.swap(dev);
+      return true;
+   }
+
    template <class DeviceId>
    static bool do_create_else_open(DeviceAbstraction &dev, const DeviceId & id, std::size_t size, const permissions &perm)
    {
@@ -302,46 +346,34 @@ class managed_open_or_create_impl
       //some retries if opening also fails because the file does not exist
       //(there is a race, the creator just removed the file after creating it).
       //
+      //Note that create and open are tried with non-throwing functions, as
+      //"the resource already exists" and "the resource does not exist" are
+      //expected outcomes of this logic and not exceptional conditions.
+      //
       //We'll put a maximum retry limit just to avoid possible deadlocks, we don't
       //want to support pathological use cases.
       spin_wait swait;
-      unsigned tries = 0; (void)tries;
+      unsigned tries = 0;
       while(1){
-         BOOST_INTERPROCESS_TRY{
-            create_device<FileBased>(dev, id, size, perm, file_like_t());
+         error_info err;
+         if(try_create_device<FileBased>(dev, id, size, perm, err, file_like_t())){
             return true;
          }
-         BOOST_INTERPROCESS_CATCH(interprocess_exception &ex){
-            #ifndef BOOST_NO_EXCEPTIONS
-            if(ex.get_error_code() != already_exists_error){
-               BOOST_INTERPROCESS_RETHROW
-            }
-            else if (++tries == MaxCreateOrOpenTries) {
-               //File existing when trying to create, but non-existing when
-               //trying to open, and tried MaxCreateOrOpenTries times. Something fishy
-               //is happening here and we can't solve it
-               throw interprocess_exception(error_info(corrupted_error));
-            }
-            else{
-               BOOST_INTERPROCESS_TRY{
-                  DeviceAbstraction tmp(open_only, id, read_write);
-                  dev.swap(tmp);
-                  return false;
-               }
-               BOOST_INTERPROCESS_CATCH(interprocess_exception &e){
-                  if(e.get_error_code() != not_found_error){
-                     BOOST_INTERPROCESS_RETHROW
-                  }
-               }
-               BOOST_INTERPROCESS_CATCH(...){
-                  BOOST_INTERPROCESS_RETHROW
-               } BOOST_INTERPROCESS_CATCH_END
-            }
-            #endif   //#ifndef BOOST_NO_EXCEPTIONS
+         else if(err.get_error_code() != already_exists_error){
+            throw interprocess_exception(err);
          }
-         BOOST_INTERPROCESS_CATCH(...){
-            BOOST_INTERPROCESS_RETHROW
-         } BOOST_INTERPROCESS_CATCH_END
+         else if(++tries == MaxCreateOrOpenTries){
+            //Resource existing when trying to create, but non-existing when
+            //trying to open, and tried MaxCreateOrOpenTries times. Something fishy
+            //is happening here and we can't solve it
+            throw interprocess_exception(error_info(corrupted_error));
+         }
+         else if(try_open_device<FileBased>(dev, id, err, file_like_t())){
+            return false;
+         }
+         else if(err.get_error_code() != not_found_error){
+            throw interprocess_exception(err);
+         }
          swait.yield();
       }
       //The loop above never exits normally, every path returns or throws.

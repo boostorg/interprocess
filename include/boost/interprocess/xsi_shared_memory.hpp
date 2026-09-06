@@ -130,9 +130,20 @@ class xsi_shared_memory
    static bool remove(int shmid);
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+   public:
+
+   //!Opens or creates a XSI shared memory. Returns true on success. On failure
+   //!returns false and stores the cause in "err", so that expected outcomes like
+   //!"the shared memory already exists" or "it does not exist" don't need an exception.
+   bool try_open_or_create( ipcdetail::create_enum_t type
+                          , const xsi_key &key
+                          , const permissions& perm
+                          , std::size_t size
+                          , error_info &err);
+
    private:
 
-   //!Closes a previously opened file mapping. Never throws.
+   //!Opens or creates a XSI shared memory, throwing on failure.
    bool priv_open_or_create( ipcdetail::create_enum_t type
                            , const xsi_key &key
                            , const permissions& perm
@@ -164,6 +175,16 @@ inline mapping_handle_t xsi_shared_memory::get_mapping_handle() const BOOST_NOEX
 inline bool xsi_shared_memory::priv_open_or_create
    (ipcdetail::create_enum_t type, const xsi_key &key, const permissions& permissions, std::size_t size)
 {
+   error_info err;
+   if(!this->try_open_or_create(type, key, permissions, size, err)){
+      throw interprocess_exception(err);
+   }
+   return true;
+}
+
+inline bool xsi_shared_memory::try_open_or_create
+   (ipcdetail::create_enum_t type, const xsi_key &key, const permissions& permissions, std::size_t size, error_info &err)
+{
    int perm = (int)permissions.get_permissions();
    perm &= 0x01FF;
    int shmflg = perm;
@@ -179,10 +200,8 @@ inline bool xsi_shared_memory::priv_open_or_create
          shmflg |= IPC_CREAT;
       break;
       default:
-         {
-            error_info err = other_error;
-            throw interprocess_exception(err);
-         }
+         err = other_error;
+         return false;
    }
 
    int ret = ::shmget(key.get_key(), size, shmflg);
@@ -194,8 +213,8 @@ inline bool xsi_shared_memory::priv_open_or_create
       size = xsi_ds.shm_segsz;
    }
    if(-1 == ret){
-      error_info err = system_error_code();
-      throw interprocess_exception(err);
+      err = system_error_code();
+      return false;
    }
 
    m_shmid = shmid;

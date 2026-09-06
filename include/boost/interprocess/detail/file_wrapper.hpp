@@ -135,10 +135,16 @@ class file_wrapper
    //!to use with mapped_region
    mapping_handle_t get_mapping_handle() const;
 
+   //!Opens or creates a file. Returns true on success. On failure returns false
+   //!and stores the cause in "err", so that expected outcomes like "the file
+   //!already exists" or "the file does not exist" don't need an exception.
+   template <class CharT>
+   bool try_open_or_create(ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, const permissions &perm, error_info &err);
+
    private:
    //!Closes a previously opened file mapping. Never throws.
    void priv_close();
-   //!Closes a previously opened file mapping. Never throws.
+   //!Opens or creates a file, throwing on failure.
    template <class CharT>
    bool priv_open_or_create(ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, const permissions &perm);
 
@@ -173,9 +179,20 @@ template <class CharT>
 inline bool file_wrapper::priv_open_or_create
    ( ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, const permissions &perm)
 {
-   if(mode != read_only && mode != read_write){
-      error_info err(mode_error);
+   error_info err;
+   if(!this->try_open_or_create(type, filename, mode, perm, err)){
       throw interprocess_exception(err);
+   }
+   return true;
+}
+
+template <class CharT>
+inline bool file_wrapper::try_open_or_create
+   ( ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, const permissions &perm, error_info &err)
+{
+   if(mode != read_only && mode != read_write){
+      err = mode_error;
+      return false;
    }
 
    //Open file existing native API to obtain the handle
@@ -190,16 +207,14 @@ inline bool file_wrapper::priv_open_or_create
          m_handle = create_or_open_file(filename, mode, perm);
       break;
       default:
-         {
-            error_info err = other_error;
-            throw interprocess_exception(err);
-         }
+         err = other_error;
+         return false;
    }
 
    //Check for error
    if(m_handle == invalid_file()){
-      error_info err = system_error_code();
-      throw interprocess_exception(err);
+      err = system_error_code();
+      return false;
    }
 
    m_mode = mode;

@@ -144,12 +144,20 @@ class windows_shared_memory
    offset_t get_size() const BOOST_NOEXCEPT;
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+   public:
+
+   //!Opens or creates a native shared memory. Returns true on success. On failure
+   //!returns false and stores the cause in "err", so that expected outcomes like
+   //!"the shared memory already exists" or "it does not exist" don't need an exception.
+   template <class CharT>
+   bool try_open_or_create(ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, std::size_t size, const permissions& perm, error_info &err);
+
    private:
 
    //!Closes a previously opened file mapping. Never throws.
    void priv_close();
 
-   //!Closes a previously opened file mapping. Never throws.
+   //!Opens or creates a native shared memory, throwing on failure.
    template <class CharT>
    bool priv_open_or_create(ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, std::size_t size, const permissions& perm = permissions());
 
@@ -194,6 +202,17 @@ template <class CharT>
 inline bool windows_shared_memory::priv_open_or_create
    (ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, std::size_t size, const permissions& perm)
 {
+   error_info err;
+   if(!this->try_open_or_create(type, filename, mode, size, perm, err)){
+      throw interprocess_exception(err);
+   }
+   return true;
+}
+
+template <class CharT>
+inline bool windows_shared_memory::try_open_or_create
+   (ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, std::size_t size, const permissions& perm, error_info &err)
+{
    if (filename){
       m_name = filename;
    }
@@ -223,11 +242,8 @@ inline bool windows_shared_memory::priv_open_or_create
          map_access   |= winapi::file_map_copy;
       break;
       default:
-         {
-            error_info err(mode_error);
-            throw interprocess_exception(err);
-         }
-      break;
+         err = mode_error;
+         return false;
    }
 
    switch(type){
@@ -243,16 +259,14 @@ inline bool windows_shared_memory::priv_open_or_create
       }
       break;
       default:
-         {
-            error_info err = other_error;
-            throw interprocess_exception(err);
-         }
+         err = other_error;
+         return false;
    }
 
    if(!m_handle || (type == ipcdetail::DoCreate && winapi::get_last_error() == winapi::error_already_exists)){
-      error_info err = system_error_code();
+      err = system_error_code();
       this->priv_close();
-      throw interprocess_exception(err);
+      return false;
    }
 
    m_mode = mode;

@@ -65,6 +65,9 @@ class xsi_shared_memory_file_wrapper
       : xsi_shared_memory(open_only_t(), key)
    {}
 
+   bool try_open_or_create(ipcdetail::create_enum_t type, const xsi_key &key, mode_t, std::size_t size, const permissions& perm, error_info &err)
+   {  return this->xsi_shared_memory::try_open_or_create(type, key, perm.get_permissions(), size, err);  }
+
    xsi_shared_memory_file_wrapper(BOOST_RV_REF(xsi_shared_memory_file_wrapper) moved)
    {  this->swap(moved);   }
 

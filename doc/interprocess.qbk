@@ -6864,6 +6864,7 @@ thank them:
   classic strong semantics.
 
 * Fixed bugs:
+   * [@https://github.com/boostorg/interprocess/issues/159 GitHub #159 (['"Remove exception from normal execution path"])].
    * [@https://github.com/boostorg/interprocess/issues/209 GitHub #209 (['"There is a bug in boost/interprocess/detail/os_thread_function.hpp"])].
    * [@https://github.com/boostorg/interprocess/issues/250 GitHub #250 (['"managed_shared_memory can't allocate a chunk of more than half its allocation any more"])].
    * [@https://github.com/boostorg/interprocess/pull/282   GitHub #282 (['"Improvements on rbtree_best_fit::check_sanity"])].

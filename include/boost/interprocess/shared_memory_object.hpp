@@ -174,12 +174,20 @@ class shared_memory_object
    mapping_handle_t get_mapping_handle() const BOOST_NOEXCEPT;
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
+   public:
+
+   //!Opens or creates a shared memory object. Returns true on success. On failure
+   //!returns false and stores the cause in "err", so that expected outcomes like
+   //!"the object already exists" or "the object does not exist" don't need an exception.
+   template<class CharT>
+   bool try_open_or_create(ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, const permissions &perm, error_info &err);
+
    private:
 
    //!Closes a previously opened file mapping. Never throws.
    void priv_close();
 
-   //!Opens or creates a shared memory object.
+   //!Opens or creates a shared memory object, throwing on failure.
    template<class CharT>
    bool priv_open_or_create(ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, const permissions &perm);
 
@@ -226,11 +234,22 @@ inline mapping_handle_t shared_memory_object::get_mapping_handle() const BOOST_N
 inline mode_t shared_memory_object::get_mode() const BOOST_NOEXCEPT
 {  return m_mode; }
 
-#if !defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
-
 template<class CharT>
 inline bool shared_memory_object::priv_open_or_create
    (ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, const permissions &perm)
+{
+   error_info err;
+   if(!this->try_open_or_create(type, filename, mode, perm, err)){
+      throw interprocess_exception(err);
+   }
+   return true;
+}
+
+#if !defined(BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS)
+
+template<class CharT>
+inline bool shared_memory_object::try_open_or_create
+   (ipcdetail::create_enum_t type, const CharT *filename, mode_t mode, const permissions &perm, error_info &err)
 {
    m_filename = filename;
    std::basic_string<CharT> shmfile;
@@ -238,8 +257,8 @@ inline bool shared_memory_object::priv_open_or_create
 
    //Set accesses
    if (mode != read_write && mode != read_only){
-      error_info err = other_error;
-      throw interprocess_exception(err);
+      err = other_error;
+      return false;
    }
 
    switch(type){
@@ -253,17 +272,15 @@ inline bool shared_memory_object::priv_open_or_create
          m_handle = ipcdetail::create_or_open_file(shmfile.c_str(), mode, perm, true);
       break;
       default:
-         {
-            error_info err = other_error;
-            throw interprocess_exception(err);
-         }
+         err = other_error;
+         return false;
    }
 
    //Check for error
    if(m_handle == ipcdetail::invalid_file()){
-      error_info err = system_error_code();
+      err = system_error_code();
       this->priv_close();
-      throw interprocess_exception(err);
+      return false;
    }
 
    m_mode = mode;
@@ -341,10 +358,10 @@ inline bool use_filesystem_based_posix()
 }  //shared_memory_object_detail
 
 template<class CharT>
-inline bool shared_memory_object::priv_open_or_create
+inline bool shared_memory_object::try_open_or_create
    (ipcdetail::create_enum_t type,
     const CharT *filename,
-    mode_t mode, const permissions &perm)
+    mode_t mode, const permissions &perm, error_info &err)
 {
    #if defined(BOOST_INTERPROCESS_FILESYSTEM_BASED_POSIX_SHARED_MEMORY)
    const bool add_leading_slash = false;
@@ -370,8 +387,8 @@ inline bool shared_memory_object::priv_open_or_create
       oflag |= O_RDWR;
    }
    else{
-      error_info err(mode_error);
-      throw interprocess_exception(err);
+      err = mode_error;
+      return false;
    }
    ::mode_t unix_perm = perm.get_permissions();
 
@@ -418,16 +435,16 @@ inline bool shared_memory_object::priv_open_or_create
       break;
       default:
       {
-         error_info err = other_error;
-         throw interprocess_exception(err);
+         err = other_error;
+         return false;
       }
    }
 
    //Check for error
    if(m_handle < 0){
-      error_info err = errno;
+      err = errno;
       this->priv_close();
-      throw interprocess_exception(err);
+      return false;
    }
 
    m_filename = filename;
