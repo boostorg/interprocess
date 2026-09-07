@@ -133,6 +133,20 @@
    #endif
 
    //////////////////////////////////////////////////////
+   // Application group qualified POSIX names (Apple platforms)
+   //////////////////////////////////////////////////////
+   //Sandboxed Apple applications must name POSIX shared memory objects and POSIX
+   //named semaphores "<application group identifier>/<name>". The leading slash used
+   //by the portable POSIX form is rejected by the sandbox and Darwin does not require
+   //it (the kernel only enforces it when PSXSEM_NAME_RESTRICT is enabled, which is not
+   //the case in shipping systems). When this macro is defined, a name that already
+   //contains a separator is considered already qualified and is passed to
+   //shm_open/sem_open verbatim.
+   #if defined(__APPLE__)
+      #define BOOST_INTERPROCESS_POSIX_APP_GROUP_QUALIFIED_NAMES
+   #endif
+
+   //////////////////////////////////////////////////////
    // _POSIX_BARRIERS (SUSv3/Unix03)
    //////////////////////////////////////////////////////
    #if defined(_POSIX_BARRIERS) && ((_POSIX_BARRIERS + 0) >= 200112L)

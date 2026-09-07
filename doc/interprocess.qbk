@@ -271,6 +271,13 @@ identifier or keyword:
  A to Z. Examples: ['Sharedmemory, sharedmemory, sHaReDmEmOrY...]
 *Can include letters, underscore, or digits. Examples: ['shm1, shm2and3, ShM3plus4...]
 
+There is one exception to this rule. In Apple operating systems a sandboxed application must name
+POSIX shared memory objects and POSIX named semaphores `<application group identifier>/<your name>`,
+so the name can also contain a single slash that separates the application group identifier from the
+identifier described above. Example: ['UBF9AAA6G9.Foo/Bar]. See
+[link interprocess.acknowledgements_notes.notes_macos.notes_macos_sandboxed Limitations for sandboxed applications]
+for details.
+
 [endsect]
 
 
@@ -6811,23 +6818,13 @@ The rules that apply to a sandboxed application are:
   cannot be used at all.
 * POSIX shared memory and POSIX named semaphores require the `com.apple.security.application-groups`
   entitlement. Each entry of that entitlement is an application group identifier with the format
-  `<team identifier>.<group name>`. In MacOS `shared_memory_object`, `managed_shared_memory`,
-  `named_condition` and `message_queue` are built on POSIX shared memory, and `named_mutex` and
-  `named_semaphore` are built on POSIX named semaphores.
+  `<team identifier>.<group name>`.
 * The name of the shared memory object or of the named semaphore must be
   `<application group identifier>/<your name>` and must not start with a slash. The total length is limited
   to `PSHMNAMLEN` (shared memory) or `PSEMNAMLEN` (semaphores) characters, which is 31 characters in
   current MacOS versions and includes the application group prefix.
 * Only members of the same application group can open the object. Two sandboxed applications, or a
   sandboxed and a non-sandboxed application, must share an application group to communicate.
-
-[important [*Boost.Interprocess] always adds a leading slash to the name before it calls `shm_open` or
-`sem_open`, because that is the portable POSIX form. The resulting name `/<application group identifier>/<your name>`
-is rejected by the MacOS sandbox, so POSIX shared memory and POSIX named semaphores are currently unusable in
-sandboxed applications. See
-[@https://github.com/boostorg/interprocess/issues/232 GitHub #232] for the state of this limitation.
-As a workaround, use file-based mechanisms (`file_mapping`, `managed_mapped_file`, `file_lock`) with files
-placed inside the application group container directory, which the sandbox allows the application to access.]
 
 Please see the Apple documentation for the complete description and for the procedure to enable the
 entitlement:
@@ -6838,6 +6835,80 @@ entitlement:
   App Sandbox in Depth: application group containers]
 * [@https://developer.apple.com/library/archive/documentation/Miscellaneous/Reference/EntitlementKeyReference/Chapters/EnablingAppSandbox.html#//apple_ref/doc/uid/TP40011195-CH4-SW19
   Entitlement Key Reference: com.apple.security.application-groups]
+
+[section:notes_macos_sandboxed_names Using application group qualified names]
+
+Starting with [*Boost.Interprocess] 1.93 a name that already contains a slash is considered to be
+['already qualified] and is forwarded to `shm_open` and `sem_open` without any modification. A sandboxed
+application therefore only has to pass the name in the form required by the sandbox:
+
+[c++]
+
+   //Rejected in a sandboxed application: the library creates "/Foo"
+   managed_shared_memory segment(open_or_create, "Foo", 65536);
+
+   //Accepted in a sandboxed application: the library creates "UBF9AAA6G9.Foo/Bar"
+   managed_shared_memory segment(open_or_create, "UBF9AAA6G9.Foo/Bar", 65536);
+
+The same name must be passed to the static `remove` functions, because the object is unlinked with the
+qualified name too:
+
+[c++]
+
+   shared_memory_object::remove("UBF9AAA6G9.Foo/Bar");
+
+Names without a slash keep the previous behaviour, so non-sandboxed applications are not affected.
+Darwin does not require the leading slash for unqualified names either, but it is still added for
+compatibility with names created by previous versions of the library.
+
+[important A name that contains a slash is not portable. Linux and the BSD systems reject it with
+`EINVAL`, filesystem based implementations interpret it as a subdirectory that does not exist, and the
+[link interprocess.some_basic_explanations.names Names Of Interprocess Mechanisms] section forbids it.
+Application group qualified names must therefore be selected with conditional compilation if the same
+code is built for several platforms.]
+
+[endsect]
+
+[section:notes_macos_sandboxed_mechanisms Differences between interprocess mechanisms]
+
+Which limit applies, and whether a qualified name is needed at all, depends on the operating system
+resource that supports each class:
+
+[table Sandboxed MacOS support of Boost.Interprocess mechanisms
+   [[Mechanism][Underlying resource][Name to use in a sandboxed application]]
+   [[`shared_memory_object`, `managed_shared_memory`, `message_queue`, `named_condition`,
+     `named_condition_any`, `named_recursive_mutex`, `named_upgradable_mutex`, `named_sharable_mutex`]
+    [POSIX shared memory (`shm_open`)]
+    [`<application group identifier>/<your name>`, at most `PSHMNAMLEN` (31) characters]]
+   [[`named_mutex`, `named_semaphore`]
+    [POSIX named semaphores (`sem_open`)]
+    [`<application group identifier>/<your name>`, at most `PSEMNAMLEN` (31) characters]]
+   [[`file_mapping`, `managed_mapped_file`, `file_lock`]
+    [A file in the filesystem]
+    [Not a name but a path. The application group naming rules do not apply, but the file must be created
+     inside the application group container directory returned by
+     `containerURL(forSecurityApplicationGroupIdentifier:)`]]
+   [[`xsi_shared_memory`, `managed_xsi_shared_memory`]
+    [System V (XSI) shared memory]
+    [Not usable. The sandbox denies the `shmget` family regardless of the entitlements]]
+   [[`anonymous_shared_memory`, `mapped_region` over an already open mapping, and every unnamed
+     synchronization primitive placed in a shared region]
+    [No system-wide name]
+    [Not affected, because no name reaches the sandbox]]
+]
+
+Two consequences are worth noting:
+
+* `named_condition` and `named_condition_any` are built on POSIX shared memory in MacOS, not on named
+  semaphores, so they consume the `PSHMNAMLEN` budget. `named_mutex` and `named_semaphore` are built on
+  POSIX named semaphores and consume the `PSEMNAMLEN` budget. Both limits are 31 characters, so in
+  practice the rule is the same for all named mechanisms.
+* The 31 character limit includes the application group prefix and the separating slash. A team
+  identifier is 10 characters, so a name like `UBF9AAA6G9.Foo/Bar` already uses 18 of the 31 available
+  characters. Keep both the group name and the object name short, otherwise the call fails with
+  `ENAMETOOLONG` (errno 63).
+
+[endsect]
 
 [endsect]
 
@@ -6851,13 +6922,26 @@ All the limitations described in
 therefore apply always, with these additional differences:
 
 * The application group identifier must use the `group.<group name>` format and must be registered in the
-  Apple Developer site. The `<team identifier>.<group name>` format is only accepted in MacOS.
+  Apple Developer site. The `<team identifier>.<group name>` format is only accepted in MacOS. The name
+  passed to [*Boost.Interprocess] is therefore `group.<group name>/<your name>`, for example
+  `group.com.example.Foo/Bar`.
+* Because the `group.` prefix is longer than a team identifier, the 31 character limit of `PSHMNAMLEN` and
+  `PSEMNAMLEN` is much tighter than in MacOS. `group.com.example.Foo/Bar` already uses 25 of the 31
+  available characters, so both the group name and the object name must be kept very short. Otherwise the
+  constructor fails with `ENAMETOOLONG` (errno 63).
 * System V (XSI) mechanisms are not usable. [*Boost.Interprocess] compiles `xsi_shared_memory` and
   `managed_xsi_shared_memory` because the system headers declare the XSI API, but the calls fail at runtime.
-* Applications distributed in the App Store must not use private or undocumented interfaces, so the
-  application group container is the only supported way to share memory between processes. Use
-  `file_mapping` or `managed_mapped_file` on a file created in the container directory returned by
-  `containerURL(forSecurityApplicationGroupIdentifier:)`.
+* The
+  [link interprocess.acknowledgements_notes.notes_macos.notes_macos_sandboxed.notes_macos_sandboxed_mechanisms
+  table of mechanisms] listed for MacOS applies unchanged: POSIX shared memory backs
+  `shared_memory_object`, `managed_shared_memory`, `message_queue`, `named_condition` and the shared memory
+  based named mutexes, and POSIX named semaphores back `named_mutex` and `named_semaphore`.
+* Applications distributed in the App Store must not use private or undocumented interfaces. Both the
+  application group qualified POSIX names described above and a file placed in the application group
+  container are documented interfaces, so either can be used. If the 31 character limit is too restrictive
+  for the application group identifier, use `file_mapping` or `managed_mapped_file` on a file created in
+  the container directory returned by `containerURL(forSecurityApplicationGroupIdentifier:)`, which is not
+  subject to that limit.
 
 [endsect]
 
@@ -6917,11 +7001,11 @@ thank them:
   classic strong semantics.
 
 * Fixed bugs:
-Interprocess # (Crash in ipcdetail::get_bootstamp when multi thread racing and 
    * [@https://github.com/boostorg/interprocess/issues/144 GitHub #144 (['"Crash in ipcdetail::get_bootstamp when multi thread racing and winapi::get_last_bootup_time failed on Windows"])].
    * [@https://github.com/boostorg/interprocess/issues/159 GitHub #159 (['"Remove exception from normal execution path"])].
    * [@https://github.com/boostorg/interprocess/issues/186 GitHub #186 (['"Document platform specific limitations with shared memory"])].
    * [@https://github.com/boostorg/interprocess/issues/209 GitHub #209 (['"There is a bug in boost/interprocess/detail/os_thread_function.hpp"])].
+   * [@https://github.com/boostorg/interprocess/issues/232 GitHub #232 (['"POSIX named semaphores are broken for sandboxed Mac apps"])].
    * [@https://github.com/boostorg/interprocess/issues/250 GitHub #250 (['"managed_shared_memory can't allocate a chunk of more than half its allocation any more"])].
    * [@https://github.com/boostorg/interprocess/pull/282   GitHub #282 (['"Improvements on rbtree_best_fit::check_sanity"])].
    * [@https://github.com/boostorg/interprocess/issues/283 GitHub #283 (['"Regression on macOS: pthread_threadid_np was not declared"])].

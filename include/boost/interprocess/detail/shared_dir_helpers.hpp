@@ -240,9 +240,34 @@ inline void create_shared_dir_cleaning_old_and_get_filepath(const CharT *filenam
    shared_dir += filename;
 }
 
+//!Returns true if the name already contains a directory separator. Such a name is
+//!considered to be already qualified (e.g. the "<application group identifier>/<name>"
+//!form that sandboxed Apple applications must use) and must be forwarded to
+//!shm_open/sem_open without any modification.
+template<class CharT>
+inline bool is_qualified_posix_name(const CharT *name)
+{
+   const CharT separator = shared_dir_constants<CharT>::dir_separator();
+   for(; *name; ++name){
+      if(*name == separator){
+         return true;
+      }
+   }
+   return false;
+}
+
 template<class CharT>
 inline void add_leading_slash(const CharT *name, std::basic_string<CharT> &new_name)
 {
+   #if defined(BOOST_INTERPROCESS_POSIX_APP_GROUP_QUALIFIED_NAMES)
+   //Sandboxed Apple applications must name POSIX resources
+   //"<application group identifier>/<name>", so an already qualified name is used
+   //verbatim. Darwin does not require the leading separator for unqualified names.
+   if(is_qualified_posix_name(name)){
+      new_name = name;
+      return;
+   }
+   #endif
    if(name[0] != shared_dir_constants<CharT>::dir_separator()){
       new_name = shared_dir_constants<CharT>::dir_separator();
    }
