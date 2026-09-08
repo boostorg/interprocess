@@ -699,8 +699,7 @@ jobs:
             #TSAN options
             if [ -n "${{matrix.tsan}}" ]
             then
-                #print_stacktrace is not a ThreadSanitizer option
-                export TSAN_OPTIONS="verbosity=1"
+                export TSAN_OPTIONS="verbosity=1:print_stacktrace=1"
                 B2_ARGS+=("thread-sanitizer=norecover" "define=TSAN=1")
             fi
             #Common UBSAN / ASAN / TSAN options
@@ -729,6 +728,156 @@ jobs:
                 B2_ARGS+=("cxxstd=${{matrix.cxxstd}}")
             fi
 
+            B2_ARGS+=("libs/$LIBRARY/test")
+            ./b2 "${B2_ARGS[@]}"
+
+  # NVIDIA HPC SDK (nvc++), an EDG-based C++ front-end
+  nvhpc:
+    defaults:
+      run:
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nvhpc_version: "26.5"
+            # Capped at 17 on purpose, see the comment in the "Run tests" step
+            cxxstd: "11,14,17"
+            os: ubuntu-latest
+            container: ubuntu:26.04
+
+    timeout-minutes: 240
+    runs-on: ${{matrix.os}}
+    container: ${{matrix.container}}
+
+    steps:
+      - name: Setup environment
+        run: |
+            echo "DEBIAN_FRONTEND=noninteractive" >> $GITHUB_ENV
+            export DEBIAN_FRONTEND=noninteractive
+            echo "GHA_CONTAINER=${{matrix.container}}" >> $GITHUB_ENV
+            for i in $(seq 1 $NET_RETRY_COUNT); do
+                apt-get update && break || sleep 5
+            done
+            apt-get -o Acquire::Retries=$NET_RETRY_COUNT install -y sudo tzdata wget curl gpg apt-transport-https ca-certificates make build-essential g++ python-is-python3 python3 perl git cmake
+            git config --global pack.threads 0
+
+      - name: Install NVIDIA HPC SDK C++ compiler
+        run: |
+            # The nvhpc .deb bundles the compilers with CUDA toolkits and GPU math/comm
+            # libraries (~14 GB installed, ~19 GB peak with the package). Only the
+            # EDG-based C++ host compiler is needed here, so extract just the
+            # compilers/ subtree (~1.8 GB) from the downloaded package instead of
+            # installing it. makelocalrc and the nvc++ driver expect a sibling
+            # cuda/<X.Y> directory to pick a default CUDA version, so create a stub
+            # one: the version is irrelevant for host-only compilation.
+            NVHPC_VERSION=${{matrix.nvhpc_version}}
+            NVHPC_ROOT="/opt/nvidia/hpc_sdk/Linux_x86_64/$NVHPC_VERSION"
+            curl -fsSL --retry $NET_RETRY_COUNT https://developer.download.nvidia.com/hpc-sdk/ubuntu/DEB-GPG-KEY-NVIDIA-HPC-SDK | gpg --dearmor -o /usr/share/keyrings/nvidia-hpcsdk-archive-keyring.gpg
+            echo 'deb [signed-by=/usr/share/keyrings/nvidia-hpcsdk-archive-keyring.gpg] https://developer.download.nvidia.com/hpc-sdk/ubuntu/amd64 /' > /etc/apt/sources.list.d/nvhpc.list
+            for i in $(seq 1 $NET_RETRY_COUNT); do
+                apt-get update && break || sleep 5
+            done
+            cd /tmp
+            apt-get download "nvhpc-${NVHPC_VERSION/./-}"
+            dpkg --fsys-tarfile nvhpc-*.deb | tar -x -C / "./opt/nvidia/hpc_sdk/Linux_x86_64/$NVHPC_VERSION/compilers"
+            rm -f nvhpc-*.deb
+            mkdir -p "$NVHPC_ROOT/cuda/13.2"
+            "$NVHPC_ROOT/compilers/bin/makelocalrc" -x "$NVHPC_ROOT/compilers/bin"
+            echo "NVHPC_ROOT=$NVHPC_ROOT" >> $GITHUB_ENV
+            echo "$NVHPC_ROOT/compilers/bin" >> $GITHUB_PATH
+            "$NVHPC_ROOT/compilers/bin/nvc++" --version
+
+      - name: Setup Boost
+        run: |
+            echo GITHUB_REPOSITORY: $GITHUB_REPOSITORY
+            LIBRARY=${GITHUB_REPOSITORY#*/}
+            echo LIBRARY: $LIBRARY
+            echo "LIBRARY=$LIBRARY" >> $GITHUB_ENV
+            echo GITHUB_BASE_REF: $GITHUB_BASE_REF
+            echo GITHUB_REF: $GITHUB_REF
+            REF=${GITHUB_BASE_REF:-$GITHUB_REF}
+            REF=${REF#refs/heads/}
+            echo REF: $REF
+            BOOST_BRANCH=develop && [ "$REF" = "master" ] && BOOST_BRANCH=master || true
+            echo BOOST_BRANCH: $BOOST_BRANCH
+            BUILD_JOBS=$((nproc || sysctl -n hw.ncpu) 2> /dev/null)
+            echo BUILD_JOBS: $BUILD_JOBS
+            echo "BUILD_JOBS=$BUILD_JOBS" >> $GITHUB_ENV
+            echo "CMAKE_BUILD_PARALLEL_LEVEL=$BUILD_JOBS" >> $GITHUB_ENV
+            DEPINST_ARGS=()
+            GIT_VERSION="$(git --version | sed -e 's/git version //')"
+            GIT_HAS_JOBS=1
+            if [ -f "/etc/debian_version" ]
+            then
+                if $(dpkg --compare-versions "$GIT_VERSION" lt 2.8.0)
+                then
+                    GIT_HAS_JOBS=0
+                fi
+            else
+                declare -a GIT_VER=(${GIT_VERSION//./ })
+                declare -a GIT_MIN_VER=(2 8 0)
+                for ((i=0; i<${#GIT_VER[@]}; i++))
+                do
+                    if [ -z "${GIT_MIN_VER[i]}" ]
+                    then
+                        GIT_MIN_VER[i]=0
+                    fi
+                    if [ "${GIT_VER[i]}" -lt "${GIT_MIN_VER[i]}" ]
+                    then
+                        GIT_HAS_JOBS=0
+                        break
+                    fi
+                done
+            fi
+            if [ "$GIT_HAS_JOBS" -ne 0 ]
+            then
+                DEPINST_ARGS+=("--git_args" "--jobs $GIT_FETCH_JOBS")
+            fi
+            mkdir -p snapshot
+            cd snapshot
+            echo "Downloading library snapshot: https://github.com/${GITHUB_REPOSITORY}/archive/${GITHUB_SHA}.tar.gz"
+            curl -L --retry "$NET_RETRY_COUNT" -o "${LIBRARY}-${GITHUB_SHA}.tar.gz" "https://github.com/${GITHUB_REPOSITORY}/archive/${GITHUB_SHA}.tar.gz"
+            tar -xf "${LIBRARY}-${GITHUB_SHA}.tar.gz"
+            if [ ! -d "${LIBRARY}-${GITHUB_SHA}" ]
+            then
+                echo "Library snapshot does not contain the library directory ${LIBRARY}-${GITHUB_SHA}:"
+                ls -la
+                exit 1
+            fi
+            rm -f "${LIBRARY}-${GITHUB_SHA}.tar.gz"
+            cd ..
+            git clone -b "$BOOST_BRANCH" --depth 1 "https://github.com/boostorg/boost.git" "boost-root"
+            cd boost-root
+            mkdir -p libs
+            rm -rf "libs/$LIBRARY"
+            mv -f "../snapshot/${LIBRARY}-${GITHUB_SHA}" "libs/$LIBRARY"
+            rm -rf "../snapshot"
+            git submodule update --init tools/boostdep
+            DEPINST_ARGS+=("$LIBRARY")
+            python tools/boostdep/depinst/depinst.py -C "${DEPINST_ARGS[@]}"
+            ./bootstrap.sh
+            ./b2 headers
+            # nvc++ is the successor of the PGI pgc++ compiler (it still ships a pgc++
+            # alias), so b2 drives it through its pgi toolset, which emits flags nvc++
+            # understands natively. The gcc toolset must not be used here: its default
+            # inlining flags (-fno-inline, -finline-functions) are unknown switches that
+            # nvc++ rejects outright.
+            echo "using pgi : : $NVHPC_ROOT/compilers/bin/nvc++ ;" > ~/user-config.jam
+
+      - name: Run tests
+        run: |
+            cd boost-root
+            # Only up to C++17: b2's pgi.jam maps cxxstd=2a, 20 and latest all to
+            # -std=c++17, and has no entry at all for 2b, 23, 2c and 26, so anything
+            # above 17 would silently be compiled as C++17 while the target path still
+            # claimed the requested standard. 98/03/0x/11/1y/14/1z/17 do map correctly,
+            # so those are the ones tested here. Raise this once the mapping is fixed
+            # upstream; nvc++ itself accepts -std=c++20, c++23 and c++26 just fine.
+            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=pgi" "debug-symbols=off")
+            B2_ARGS+=("variant=$DEFAULT_BUILD_VARIANT")
+            B2_ARGS+=("cxxstd=${{matrix.cxxstd}}")
             B2_ARGS+=("libs/$LIBRARY/test")
             ./b2 "${B2_ARGS[@]}"
 
@@ -940,8 +1089,7 @@ jobs:
             #TSAN options
             if [ -n "${{matrix.tsan}}" ]
             then
-                #print_stacktrace is not a ThreadSanitizer option
-                export TSAN_OPTIONS="verbosity=1"
+                export TSAN_OPTIONS="verbosity=1:print_stacktrace=1"
                 B2_ARGS+=("thread-sanitizer=norecover" "define=TSAN=1")
             fi
             #Common UBSAN / ASAN / TSAN options
@@ -1138,8 +1286,7 @@ jobs:
             #TSAN options
             if [ -n "${{matrix.tsan}}" ]
             then
-                #print_stacktrace is not a ThreadSanitizer option
-                export TSAN_OPTIONS="verbosity=1"
+                export TSAN_OPTIONS="verbosity=1:print_stacktrace=1"
                 B2_ARGS+=("thread-sanitizer=norecover" "define=TSAN=1")
             fi
             #Common UBSAN / ASAN / TSAN options
