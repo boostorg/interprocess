@@ -27,6 +27,7 @@ doxygen autodoc
    :
         <doxygen:param>EXTRACT_ALL=NO
         <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+        <doxygen:param>HIDE_UNDOC_CLASSES=YES
         <doxygen:param>EXTRACT_PRIVATE=NO
         <doxygen:param>ENABLE_PREPROCESSING=YES
         <doxygen:param>EXPAND_ONLY_PREDEF=YES
@@ -79,6 +80,12 @@ boostbook standalone
         # Turns on (or off) auto-index-verbose for diagnostic info.
         # This is highly recommended until you have got all the many details correct!
         <auto-index-verbose>on
+
+        # Raise xsltproc's template and parameter limits so large QuickBook
+        # documents do not abort with "potential infinite template recursion"
+        # in source-highlight.xsl.
+        <flags>"--maxdepth 100000"
+        <flags>"--maxvars 300000"
 
         # Choose the indexing method (separately for html and PDF) - see manual.
         # Choose indexing method for PDFs:
