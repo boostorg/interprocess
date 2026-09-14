@@ -122,19 +122,21 @@ namespace ipcdetail {
          >::type alignment_helper;
    };
 
-   //Note: using the address of a local variable to point to another address
-   //is not standard conforming and this can be optimized-away by the compiler.
-   //Non-inlining is a method to remain illegal but correct
 
-   //Undef BOOST_INTERPROCESS_OFFSET_PTR_INLINE_XXX if your compiler can inline
-   //this code without breaking the library
+   //The conversions between a pointer and the stored offset must treat the
+   //null pointer as a special case. Branchless implementations, which replace
+   //that test with an arithmetic mask, are used by default because they are
+   //usually faster.
 
    ////////////////////////////////////////////////////////////////////////
    //
    //                      offset_ptr_to_raw_pointer
    //
    ////////////////////////////////////////////////////////////////////////
+   #if !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS) && \
+       !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS_TO_PTR)
    #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_PTR
+   #endif
    template <class OffsetType>
    BOOST_INTERPROCESS_FORCEINLINE void * offset_ptr_to_raw_pointer(const volatile void *this_ptr, OffsetType offset)
    {
@@ -160,7 +162,10 @@ namespace ipcdetail {
    //                      offset_ptr_to_offset
    //
    ////////////////////////////////////////////////////////////////////////
+   #if !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS) && \
+       !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS_TO_OFF)
    #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_OFF
+   #endif
    template<class OffsetType>
    BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset(const volatile void *ptr, const volatile void *this_ptr)
    {
@@ -194,7 +199,10 @@ namespace ipcdetail {
    //                      offset_ptr_to_offset_from_other
    //
    ////////////////////////////////////////////////////////////////////////
+   #if !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS) && \
+       !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS_TO_OFF_FROM_OTHER)
    #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_OFF_FROM_OTHER
+   #endif
    template<class OffsetType>
    BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other
       (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
