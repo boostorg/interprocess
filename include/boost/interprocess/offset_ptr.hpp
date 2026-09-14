@@ -594,11 +594,6 @@ class offset_ptr
    BOOST_INTERPROCESS_FORCEINLINE friend offset_ptr operator-(offset_ptr left, difference_type diff) BOOST_NOEXCEPT
    {  left -= diff;  return left; }
 
-   //!offset_ptr - diff
-   //!operation
-   BOOST_INTERPROCESS_FORCEINLINE friend offset_ptr operator-(difference_type diff, offset_ptr right) BOOST_NOEXCEPT
-   {  right -= diff; return right; }
-
    //!offset_ptr - offset_ptr
    //!operation
    BOOST_INTERPROCESS_FORCEINLINE friend difference_type operator-(const offset_ptr &pt, const offset_ptr &pt2) BOOST_NOEXCEPT
@@ -712,7 +707,7 @@ inline std::basic_ostream<E, T> & operator<<
 template<class E, class T, class W, class X, class Y, std::size_t Z>
 inline std::basic_istream<E, T> & operator>>
    (std::basic_istream<E, T> & is, offset_ptr<W, X, Y, Z> & p)
-{  return is >> p.get_offset();  }
+{  return is >> p.priv_offset();  }
 
 //!Simulation of static_cast between pointers. Never throws.
 template<class T1, class P, class O, std::size_t A, class T2>
