@@ -559,7 +559,7 @@ class offset_ptr
    BOOST_INTERPROCESS_FORCEINLINE operator unspecified_bool_type() const BOOST_NOEXCEPT
    {  return this->internal.m_offset != 1? &self_t::unspecified_bool_type_func : 0;   }
    #else
-   explicit operator bool() const BOOST_NOEXCEPT
+   BOOST_INTERPROCESS_FORCEINLINE explicit operator bool() const BOOST_NOEXCEPT
    {  return this->internal.m_offset != 1;  }
    #endif
    
