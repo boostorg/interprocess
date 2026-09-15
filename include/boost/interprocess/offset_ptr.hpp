@@ -255,7 +255,7 @@ namespace ipcdetail {
 
    ////////////////////////////////////////////////////////////////////////
    //
-   // Let's assume cast to void and cv cast don't change any target address
+   // Let's assume casts from/to void and cv casts don't change any target address
    //
    ////////////////////////////////////////////////////////////////////////
    template<class From, class To>
@@ -263,6 +263,7 @@ namespace ipcdetail {
    {
       static const bool value =    ipcdetail::is_cv_same<From, To>::value
                                 || ipcdetail::is_cv_same<void, To>::value
+                                || ipcdetail::is_cv_same<void, From>::value
                                 || ipcdetail::is_cv_same<char, To>::value
                                 ;
    };
@@ -422,33 +423,43 @@ class offset_ptr
 
    #endif
 
-   //!Emulates static_cast operator.
+   //!Emulates static_cast operator. Only the pointed type can change, the
+   //!rest of the template parameters must be the same in both pointers.
    //!Never throws.
-   template<class T2, class P2, class O2, std::size_t A2>
-   BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, ipcdetail::static_cast_tag) BOOST_NOEXCEPT
-      : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(r.get()), this))
-   {}
+   template<class T2>
+   BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> & r, ipcdetail::static_cast_tag) BOOST_NOEXCEPT
+      : internal(priv_static_cast_offset(r, this, ipcdetail::bool_
+                  < ipcdetail::offset_ptr_maintains_address<T2, PointedType>::value >()))
+   {  //The cast must be valid even when the offset is rebased instead of cast
+      (void)static_cast<PointedType*>(static_cast<T2*>(0));
+   }
 
-   //!Emulates const_cast operator.
+   //!Emulates const_cast operator. Only the pointed type can change, the
+   //!rest of the template parameters must be the same in both pointers.
    //!Never throws.
-   template<class T2, class P2, class O2, std::size_t A2>
-   BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, ipcdetail::const_cast_tag) BOOST_NOEXCEPT
-      : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(const_cast<PointedType*>(r.get()), this))
-   {}
+   template<class T2>
+   BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> & r, ipcdetail::const_cast_tag) BOOST_NOEXCEPT
+      : internal(ipcdetail::offset_ptr_to_offset_from_other(this, &r, r.get_offset()))
+   {  //A const_cast never changes the address, so only the offset is rebased,
+      //but the cast must still be a valid one
+      (void)const_cast<PointedType*>(static_cast<T2*>(0));
+   }
 
-   //!Emulates dynamic_cast operator.
+   //!Emulates dynamic_cast operator. Only the pointed type can change, the
+   //!rest of the template parameters must be the same in both pointers.
    //!Never throws.
-   template<class T2, class P2, class O2, std::size_t A2>
-   BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, ipcdetail::dynamic_cast_tag) BOOST_NOEXCEPT
+   template<class T2>
+   BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> & r, ipcdetail::dynamic_cast_tag) BOOST_NOEXCEPT
       : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(dynamic_cast<PointedType*>(r.get()), this))
    {}
 
-   //!Emulates reinterpret_cast operator.
+   //!Emulates reinterpret_cast operator. Only the pointed type can change, the
+   //!rest of the template parameters must be the same in both pointers.
    //!Never throws.
-   template<class T2, class P2, class O2, std::size_t A2>
-   BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, P2, O2, A2> & r, ipcdetail::reinterpret_cast_tag) BOOST_NOEXCEPT
-      : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(reinterpret_cast<PointedType*>(r.get()), this))
-   {}
+   template<class T2>
+   BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> & r, ipcdetail::reinterpret_cast_tag) BOOST_NOEXCEPT
+      : internal(ipcdetail::offset_ptr_to_offset_from_other(this, &r, r.get_offset()))
+   {}  //A reinterpret_cast never changes the address, so the offset is rebased
 
    //!Obtains raw pointer from offset.
    //!Never throws.
@@ -701,6 +712,21 @@ class offset_ptr
    }
 
    private:
+   //!A static_cast that can't change the target address is done by rebasing
+   //!the stored offset, which needs a single null pointer test instead of the
+   //!two that a round trip through a raw pointer needs
+   template<class T2>
+   BOOST_INTERPROCESS_FORCEINLINE static OffsetType priv_static_cast_offset
+      (const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &r, const offset_ptr *this_ptr, ipcdetail::bool_<true>) BOOST_NOEXCEPT
+   {  return ipcdetail::offset_ptr_to_offset_from_other(this_ptr, &r, r.get_offset());  }
+
+   //!A static_cast that can change the target address, like a cast between
+   //!classes of a multiple inheritance hierarchy, must go through the pointer
+   template<class T2>
+   BOOST_INTERPROCESS_FORCEINLINE static OffsetType priv_static_cast_offset
+      (const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &r, const offset_ptr *this_ptr, ipcdetail::bool_<false>) BOOST_NOEXCEPT
+   {  return ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(r.get()), this_ptr);  }
+
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE void assign(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &ptr, ipcdetail::bool_<true>) BOOST_NOEXCEPT
    {  //no need to pointer adjustment
