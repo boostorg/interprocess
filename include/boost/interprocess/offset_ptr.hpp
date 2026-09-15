@@ -175,7 +175,16 @@ namespace ipcdetail {
    {
       typedef pointer_offset_caster<void*, OffsetType> caster_t;
       BOOST_ASSERT(offset != 1);
-      return caster_t(caster_t(this_ptr).offset() + offset).pointer();
+      void *p = caster_t(caster_t(this_ptr).offset() + offset).pointer();
+      #if defined(BOOST_GCC) && (BOOST_GCC >= 120000) && (BOOST_GCC < 130000)
+      //Without the null pointer test GCC 12 can no longer prove that an address
+      //derived from "this" does not alias the offset_ptr itself, and reports a
+      //false -Wmaybe-uninitialized
+      //An empty alignment assumption breaks that inference and generates
+      //exactly the same code.
+      p = __builtin_assume_aligned(p, 1);
+      #endif
+      return p;
    }
 
    ////////////////////////////////////////////////////////////////////////
