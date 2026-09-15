@@ -181,6 +181,24 @@ namespace ipcdetail {
 
    ////////////////////////////////////////////////////////////////////////
    //
+   //                 offset_ptr_to_raw_pointer_unchecked
+   //
+   ////////////////////////////////////////////////////////////////////////
+
+   //!Same as offset_ptr_to_raw_pointer, but the null pointer test is omitted.
+   //!The caller must guarantee that the offset does not represent a null
+   //!pointer, which is the case in every operation whose precondition is
+   //!already a dereferenceable pointer.
+   template <class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE void * offset_ptr_to_raw_pointer_unchecked(const volatile void *this_ptr, OffsetType offset)
+   {
+      typedef pointer_offset_caster<void*, OffsetType> caster_t;
+      BOOST_ASSERT(offset != 1);
+      return caster_t(caster_t(this_ptr).offset() + offset).pointer();
+   }
+
+   ////////////////////////////////////////////////////////////////////////
+   //
    //                      offset_ptr_to_offset
    //
    ////////////////////////////////////////////////////////////////////////
@@ -456,15 +474,21 @@ class offset_ptr
    //!   is undefined. Never throws.
    BOOST_INTERPROCESS_FORCEINLINE reference operator*() const BOOST_NOEXCEPT
    {
-      pointer p = this->get();
+      BOOST_ASSERT(this->internal.m_offset != 1);
+      pointer p = static_cast<pointer>
+         (ipcdetail::offset_ptr_to_raw_pointer_unchecked(this, this->internal.m_offset));
       reference r = *p;
       return r;
    }
 
-   //!Indexing operator.
-   //!Never throws.
+   //!Indexing operator, if it is a null offset_ptr behavior
+   //!   is undefined. Never throws.
    BOOST_INTERPROCESS_FORCEINLINE reference operator[](difference_type idx) const BOOST_NOEXCEPT
-   {  return this->get()[idx];  }
+   {
+      BOOST_ASSERT(this->internal.m_offset != 1);
+      return static_cast<pointer>
+         (ipcdetail::offset_ptr_to_raw_pointer_unchecked(this, this->internal.m_offset))[idx];
+   }
 
    //!Assignment from raw pointer. Only takes part in overload resolution if T* is convertible to PointedType*
    //!Never throws.
