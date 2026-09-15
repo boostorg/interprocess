@@ -701,9 +701,10 @@ class offset_ptr
 
    BOOST_INTERPROCESS_FORCEINLINE friend void swap(offset_ptr &left, offset_ptr &right) BOOST_NOEXCEPT
    {
-      pointer ptr = right.get();
-      right = left;
-      left = ptr;
+      const OffsetType left_off  = left.internal.m_offset;
+      const OffsetType right_off = right.internal.m_offset;
+      left.internal.m_offset  = ipcdetail::offset_ptr_to_offset_from_other(&left,  &right, right_off);
+      right.internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other(&right, &left,  left_off);
    }
 
    private:
