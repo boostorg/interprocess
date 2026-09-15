@@ -128,28 +128,6 @@ namespace ipcdetail {
    //that test with an arithmetic mask, are used by default because they are
    //usually faster.
 
-   ////////////////////////////////////////////////////////////////////////
-   //
-   //                     offset_ptr_non_null_mask
-   //
-   ////////////////////////////////////////////////////////////////////////
-
-   //!Returns an all-bits-set mask if 'non_null' is true and zero otherwise.
-   //!This is the value the branchless conversions AND with the computed
-   //!address or offset. Both expressions below are equivalent, but only the
-   //!first one is recognized as a select by GCC, which then emits a
-   //!conditional move instead of the four instructions the second one needs.
-   template<class OffsetType>
-   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_non_null_mask(bool non_null)
-   {
-      #if defined(BOOST_GCC) && !defined(BOOST_CLANG)
-      return OffsetType(0) - OffsetType(non_null);
-      #else
-      OffsetType mask = OffsetType(!non_null);
-      --mask;
-      return mask;
-      #endif
-   }
 
    ////////////////////////////////////////////////////////////////////////
    //
@@ -172,7 +150,10 @@ namespace ipcdetail {
             return caster_t(caster_t(this_ptr).offset() + offset).pointer();
          }
       #else
-         const OffsetType mask = offset_ptr_non_null_mask<OffsetType>(offset != 1);
+         //The mask is written as ~(0 - (x == k)) and not as the equivalent
+         //"m = (x == k); --m;" because only the first form is recognized as
+         //a select (cmov)
+         const OffsetType mask = ~(OffsetType(0) - OffsetType(offset == 1));
          OffsetType target_offset = caster_t(this_ptr).offset() + offset;
          target_offset &= mask;
          return caster_t(target_offset).pointer();
@@ -221,9 +202,12 @@ namespace ipcdetail {
             return offset;
          }
       #else
-         const OffsetType mask = offset_ptr_non_null_mask<OffsetType>(ptr != 0);
          OffsetType offset = caster_t(ptr).offset() - caster_t(this_ptr).offset();
          --offset;
+         //The mask is written as ~(0 - (x == k)) and not as the equivalent
+         //"m = (x == k); --m;" because only the first form is recognized as
+         //a select (cmov)
+         const OffsetType mask = ~(OffsetType(0) - OffsetType(ptr == 0));
          offset &= mask;
          return ++offset;
       #endif
@@ -253,7 +237,7 @@ namespace ipcdetail {
          return offset;
       }
       #else
-      const OffsetType mask = offset_ptr_non_null_mask<OffsetType>(other_offset != 1);
+      const OffsetType mask = ~(OffsetType(0) - OffsetType(other_offset == 1));
       OffsetType offset = caster_t(other_ptr).offset() - caster_t(this_ptr).offset();
       offset &= mask;
       return offset + other_offset;
