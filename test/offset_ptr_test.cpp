@@ -285,6 +285,11 @@ void test_arithmetic()
 
    //ptr - ptr
    BOOST_TEST((pe - p) == NumValues);
+   BOOST_TEST((p - pe) == -NumValues);
+
+   //Two null pointers stored at different addresses subtract to zero, like
+   //two null raw pointers do
+   BOOST_TEST((pint_t() - pint_t()) == 0);
 
    //ptr - integer
    BOOST_TEST((pe - NumValues) == p);

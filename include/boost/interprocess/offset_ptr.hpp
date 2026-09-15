@@ -641,10 +641,24 @@ class offset_ptr
    BOOST_INTERPROCESS_FORCEINLINE friend offset_ptr operator-(offset_ptr left, difference_type diff) BOOST_NOEXCEPT
    {  left -= diff;  return left; }
 
-   //!offset_ptr - offset_ptr
-   //!operation
+   //!offset_ptr - offset_ptr. Both pointers must point into the
+   //!same array, so either both of them are null, or neither of them is.
+   //!Never throws.
    BOOST_INTERPROCESS_FORCEINLINE friend difference_type operator-(const offset_ptr &pt, const offset_ptr &pt2) BOOST_NOEXCEPT
-   {  return difference_type(pt.get()- pt2.get());   }
+   {
+      BOOST_ASSERT((pt.internal.m_offset == 1) == (pt2.internal.m_offset == 1));
+      typedef pointer_offset_caster<void*, OffsetType> caster_t;
+      //Only the first operand needs the address without a null pointer test.
+      //Everything that depends on the second one, its address and the mask
+      //that zeroes the result when both are null, is loop invariant in the
+      //usual "it - begin()" shape and is hoisted out of the loop
+      const pointer p1 = static_cast<pointer>
+         (caster_t(caster_t(&pt).offset() + pt.internal.m_offset).pointer());
+      const pointer p2 = pt2.get();
+      const difference_type mask =
+         ~(difference_type(0) - difference_type(pt2.internal.m_offset == 1));
+      return difference_type(p1 - p2) & mask;
+   }
 
    //Comparison
    BOOST_INTERPROCESS_FORCEINLINE friend bool operator== (const offset_ptr &pt1, const offset_ptr &pt2) BOOST_NOEXCEPT
