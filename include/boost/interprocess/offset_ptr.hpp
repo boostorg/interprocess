@@ -130,6 +130,29 @@ namespace ipcdetail {
 
    ////////////////////////////////////////////////////////////////////////
    //
+   //                     offset_ptr_non_null_mask
+   //
+   ////////////////////////////////////////////////////////////////////////
+
+   //!Returns an all-bits-set mask if 'non_null' is true and zero otherwise.
+   //!This is the value the branchless conversions AND with the computed
+   //!address or offset. Both expressions below are equivalent, but only the
+   //!first one is recognized as a select by GCC, which then emits a
+   //!conditional move instead of the four instructions the second one needs.
+   template<class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_non_null_mask(bool non_null)
+   {
+      #if defined(BOOST_GCC) && !defined(BOOST_CLANG)
+      return OffsetType(0) - OffsetType(non_null);
+      #else
+      OffsetType mask = OffsetType(!non_null);
+      --mask;
+      return mask;
+      #endif
+   }
+
+   ////////////////////////////////////////////////////////////////////////
+   //
    //                      offset_ptr_to_raw_pointer
    //
    ////////////////////////////////////////////////////////////////////////
@@ -149,8 +172,7 @@ namespace ipcdetail {
             return caster_t(caster_t(this_ptr).offset() + offset).pointer();
          }
       #else
-         OffsetType mask = offset == 1;
-         --mask;
+         const OffsetType mask = offset_ptr_non_null_mask<OffsetType>(offset != 1);
          OffsetType target_offset = caster_t(this_ptr).offset() + offset;
          target_offset &= mask;
          return caster_t(target_offset).pointer();
@@ -181,14 +203,9 @@ namespace ipcdetail {
             return offset;
          }
       #else
-         //const OffsetType other = -OffsetType(ptr != 0);
-         //const OffsetType offset = (caster_t(ptr).offset() - caster_t(this_ptr).offset()) & other;
-         //return offset + OffsetType(!other);
-         //
+         const OffsetType mask = offset_ptr_non_null_mask<OffsetType>(ptr != 0);
          OffsetType offset = caster_t(ptr).offset() - caster_t(this_ptr).offset();
          --offset;
-         OffsetType mask = ptr == 0;
-         --mask;
          offset &= mask;
          return ++offset;
       #endif
@@ -218,16 +235,10 @@ namespace ipcdetail {
          return offset;
       }
       #else
-      OffsetType mask = other_offset == 1;
-      --mask;
+      const OffsetType mask = offset_ptr_non_null_mask<OffsetType>(other_offset != 1);
       OffsetType offset = caster_t(other_ptr).offset() - caster_t(this_ptr).offset();
       offset &= mask;
       return offset + other_offset;
-
-      //OffsetType mask = -OffsetType(other_offset != 1);
-      //OffsetType offset = caster_t(other_ptr).offset() - caster_t(this_ptr).offset();
-      //offset &= mask;
-      //return offset + other_offset;
       #endif
    }
 
