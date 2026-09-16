@@ -155,7 +155,7 @@ namespace ipcdetail {
    template <class OffsetType>
    BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_launder(OffsetType off)
    {
-      #if defined(BOOST_GCC) && !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_LAUNDER)
+      #if defined(BOOST_GCC)
       __asm__("" : "+r"(off));
       #endif
       return off;
@@ -163,32 +163,67 @@ namespace ipcdetail {
 
    ////////////////////////////////////////////////////////////////////////
    //
+   //                    Null test: branch or mask
+   //
+   ////////////////////////////////////////////////////////////////////////
+
+   //!Every conversion between a pointer and the stored offset has to treat the
+   //!null pointer as a special case, and that test can be written as a branch
+   //!or as an arithmetic mask. Neither form wins everywhere
+   //!
+   //!The selection is compiler and platform dependant.
+
+   #if defined(BOOST_MSVC)
+      #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_COPY
+      #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_CAST
+      #if defined(_M_IX86)
+      //swap rebases twice and has to keep both offsets live. Only on x86,
+      //where there are not enough registers for that, does the branch pay:
+      //it wins 25% to 36% there on every toolset from 14.16 to 14.51, and
+      //loses up to 12% on x64
+      #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_SWAP
+      #endif
+   #endif
+
+   ////////////////////////////////////////////////////////////////////////
+   //
    //                      offset_ptr_to_raw_pointer
    //
    ////////////////////////////////////////////////////////////////////////
-   #if !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS) && \
-       !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS_TO_PTR)
-   #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_PTR
-   #endif
+
    template <class OffsetType>
-   BOOST_INTERPROCESS_FORCEINLINE void * offset_ptr_to_raw_pointer(const volatile void *this_ptr, OffsetType offset)
+   BOOST_INTERPROCESS_FORCEINLINE void * offset_ptr_to_raw_pointer_branchy(const volatile void *this_ptr, OffsetType offset)
    {
       typedef pointer_offset_caster<void*, OffsetType> caster_t;
-      #ifndef BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_PTR
-         if(offset == 1){
-            return 0;
-         }
-         else{
-            return caster_t(offset_ptr_launder(caster_t(this_ptr).offset() + offset)).pointer();
-         }
+      if(BOOST_UNLIKELY(offset == 1)){
+         return 0;
+      }
+      else{
+         return caster_t(offset_ptr_launder(caster_t(this_ptr).offset() + offset)).pointer();
+      }
+   }
+
+   template <class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE void * offset_ptr_to_raw_pointer_branchless(const volatile void *this_ptr, OffsetType offset)
+   {
+      typedef pointer_offset_caster<void*, OffsetType> caster_t;
+      //The mask is written as ~(0 - (x == k)) and not as the equivalent
+      //"m = (x == k); --m;" because only the first form is recognized as
+      //a select (cmov)
+      const OffsetType mask = ~(OffsetType(0) - OffsetType(offset == 1));
+      OffsetType target_offset = caster_t(this_ptr).offset() + offset;
+      target_offset &= mask;
+      return caster_t(offset_ptr_launder(target_offset)).pointer();
+   }
+
+   //!get() and operator->
+   template <class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE void * offset_ptr_to_raw_pointer_get(const volatile void *this_ptr, OffsetType offset)
+   {
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_GET)
+      return offset_ptr_to_raw_pointer_branchy(this_ptr, offset);
       #else
-         //The mask is written as ~(0 - (x == k)) and not as the equivalent
-         //"m = (x == k); --m;" because only the first form is recognized as
-         //a select (cmov)
-         const OffsetType mask = ~(OffsetType(0) - OffsetType(offset == 1));
-         OffsetType target_offset = caster_t(this_ptr).offset() + offset;
-         target_offset &= mask;
-         return caster_t(offset_ptr_launder(target_offset)).pointer();
+      return offset_ptr_to_raw_pointer_branchless(this_ptr, offset);
       #endif
    }
 
@@ -215,33 +250,56 @@ namespace ipcdetail {
    //                      offset_ptr_to_offset
    //
    ////////////////////////////////////////////////////////////////////////
-   #if !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS) && \
-       !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS_TO_OFF)
-   #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_OFF
-   #endif
+
    template<class OffsetType>
-   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset(const volatile void *ptr, const volatile void *this_ptr)
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_branchy(const volatile void *ptr, const volatile void *this_ptr)
    {
       typedef pointer_offset_caster<void*, OffsetType> caster_t;
-      #ifndef BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_OFF
-         //offset == 1 && ptr != 0 is not legal for this pointer
-         if(!ptr){
-            return 1;
-         }
-         else{
-            OffsetType offset = caster_t(ptr).offset()- caster_t(this_ptr).offset();
-            BOOST_ASSERT(offset != 1);
-            return offset;
-         }
-      #else
+      //offset == 1 && ptr != 0 is not legal for this pointer
+      if(BOOST_UNLIKELY(!ptr)){
+         return 1;
+      }
+      else{
          OffsetType offset = caster_t(ptr).offset() - caster_t(this_ptr).offset();
-         --offset;
-         //The mask is written as ~(0 - (x == k)) and not as the equivalent
-         //"m = (x == k); --m;" because only the first form is recognized as
-         //a select (cmov)
-         const OffsetType mask = ~(OffsetType(0) - OffsetType(ptr == 0));
-         offset &= mask;
-         return ++offset;
+         BOOST_ASSERT(offset != 1);
+         return offset;
+      }
+   }
+
+   template<class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_branchless(const volatile void *ptr, const volatile void *this_ptr)
+   {
+      typedef pointer_offset_caster<void*, OffsetType> caster_t;
+      OffsetType offset = caster_t(ptr).offset() - caster_t(this_ptr).offset();
+      --offset;
+      //See the note on the mask in offset_ptr_to_raw_pointer_branchless
+      const OffsetType mask = ~(OffsetType(0) - OffsetType(ptr == 0));
+      offset &= mask;
+      return ++offset;
+   }
+
+   //!Construction and assignment from a raw pointer
+   template<class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_store(const volatile void *ptr, const volatile void *this_ptr)
+   {
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_STORE)
+      return offset_ptr_to_offset_branchy<OffsetType>(ptr, this_ptr);
+      #else
+      return offset_ptr_to_offset_branchless<OffsetType>(ptr, this_ptr);
+      #endif
+   }
+
+   //!Casts that move the target address, so they go through a raw pointer
+   //!instead of rebasing the offset. That is a different operation from the
+   //!address preserving cast below and it has its own macro, CAST_ADDR: the
+   //!branch has not been measured to help it on any compiler.
+   template<class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_cast(const volatile void *ptr, const volatile void *this_ptr)
+   {
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_CAST_ADDR)
+      return offset_ptr_to_offset_branchy<OffsetType>(ptr, this_ptr);
+      #else
+      return offset_ptr_to_offset_branchless<OffsetType>(ptr, this_ptr);
       #endif
    }
 
@@ -274,32 +332,83 @@ namespace ipcdetail {
 
    ////////////////////////////////////////////////////////////////////////
    //
-   //                      offset_ptr_to_offset_from_other
+   //                      offset_ptr_to_offset_from_other_copy
    //
    ////////////////////////////////////////////////////////////////////////
-   #if !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS) && \
-       !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_BRANCHLESS_TO_OFF_FROM_OTHER)
-   #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_OFF_FROM_OTHER
-   #endif
+
    template<class OffsetType>
-   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_branchy
       (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
    {
       typedef pointer_offset_caster<void*, OffsetType> caster_t;
-      #ifndef BOOST_INTERPROCESS_OFFSET_PTR_BRANCHLESS_TO_OFF_FROM_OTHER
-      if(other_offset == 1){
+      if(BOOST_UNLIKELY(other_offset == 1)){
          return 1;
       }
       else{
-         OffsetType offset = caster_t(other_ptr).offset() - caster_t(this_ptr).offset() + other_offset;
+         const OffsetType offset = caster_t(other_ptr).offset() - caster_t(this_ptr).offset() + other_offset;
          BOOST_ASSERT(offset != 1);
          return offset;
       }
-      #else
+   }
+
+   template<class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_branchless
+      (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
+   {
+      typedef pointer_offset_caster<void*, OffsetType> caster_t;
+      //See the note on the mask in offset_ptr_to_raw_pointer_branchless
       const OffsetType mask = ~(OffsetType(0) - OffsetType(other_offset == 1));
       OffsetType offset = caster_t(other_ptr).offset() - caster_t(this_ptr).offset();
       offset &= mask;
       return offset + other_offset;
+   }
+
+   //!Copy and conversion that keep the target address
+   template<class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_copy
+      (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
+   {
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_COPY)
+      return offset_ptr_to_offset_from_other_branchy(this_ptr, other_ptr, other_offset);
+      #else
+      return offset_ptr_to_offset_from_other_branchless(this_ptr, other_ptr, other_offset);
+      #endif
+   }
+
+   //!static_cast, const_cast and reinterpret_cast that keep the target address
+   template<class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_cast
+      (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
+   {
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_CAST)
+      return offset_ptr_to_offset_from_other_branchy(this_ptr, other_ptr, other_offset);
+      #else
+      return offset_ptr_to_offset_from_other_branchless(this_ptr, other_ptr, other_offset);
+      #endif
+   }
+
+   //!swap
+   template<class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_swap
+      (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
+   {
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_SWAP)
+      return offset_ptr_to_offset_from_other_branchy(this_ptr, other_ptr, other_offset);
+      #else
+      return offset_ptr_to_offset_from_other_branchless(this_ptr, other_ptr, other_offset);
+      #endif
+   }
+
+   //!Pointer arithmetic, which rebases and then shifts. The null test can not
+   //!be dropped here because a null pointer plus zero is a null pointer
+   template<class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_shift
+      (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
+   {
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_SHIFT)
+      return offset_ptr_to_offset_from_other_branchy(this_ptr, other_ptr, other_offset);
+      #else
+      return offset_ptr_to_offset_from_other_branchless(this_ptr, other_ptr, other_offset);
       #endif
    }
 
@@ -309,7 +418,7 @@ namespace ipcdetail {
    //
    ////////////////////////////////////////////////////////////////////////
 
-   //!Same as offset_ptr_to_offset_from_other, but the null pointer test is
+   //!Same as offset_ptr_to_offset_from_other_copy, but the null pointer test is
    //!omitted. The caller must guarantee that 'other_offset' does not represent
    //!a null pointer.
    template<class OffsetType>
@@ -448,13 +557,13 @@ class offset_ptr
              , typename ipcdetail::enable_if< ::boost::move_detail::is_convertible<T*, PointedType*> >::type * = 0
       #endif
       ) BOOST_NOEXCEPT
-      : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(ptr), this))
+      : internal(ipcdetail::offset_ptr_to_offset_store<OffsetType>(static_cast<PointedType*>(ptr), this))
    {}
 
    //!Constructor from other offset_ptr.
    //!Never throws.
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr& ptr) BOOST_NOEXCEPT
-      : internal(ipcdetail::offset_ptr_to_offset_from_other(this, &ptr, ptr.internal.m_offset))
+      : internal(ipcdetail::offset_ptr_to_offset_from_other_copy(this, &ptr, ptr.internal.m_offset))
    {}
 
    //!Constructor from other offset_ptr. Only takes part in overload resolution
@@ -465,7 +574,7 @@ class offset_ptr
              , typename ipcdetail::enable_if_convertible_equal_address<T2, PointedType>::type* = 0
              #endif
              ) BOOST_NOEXCEPT
-      : internal(ipcdetail::offset_ptr_to_offset_from_other(this, &ptr, ptr.get_offset()))
+      : internal(ipcdetail::offset_ptr_to_offset_from_other_copy(this, &ptr, ptr.get_offset()))
    {}
 
    #ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
@@ -473,7 +582,7 @@ class offset_ptr
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr( const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &ptr
              , typename ipcdetail::enable_if_convertible_unequal_address<T2, PointedType>::type* = 0) BOOST_NOEXCEPT
-      : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(ptr.get()), this))
+      : internal(ipcdetail::offset_ptr_to_offset_cast<OffsetType>(static_cast<PointedType*>(ptr.get()), this))
    {}
 
    //!Constructor from other offset_ptr available so that static_cast<> works according to Allocator::pointer requirements:
@@ -488,7 +597,7 @@ class offset_ptr
                                               >::type * = 0
              #endif
              ) BOOST_NOEXCEPT //void -> T conversion is address-preserving, so take advantage of that
-      : internal(ipcdetail::offset_ptr_to_offset_from_other(this, &ptr, ptr.get_offset()))
+      : internal(ipcdetail::offset_ptr_to_offset_from_other_copy(this, &ptr, ptr.get_offset()))
    {}
 
    #endif
@@ -509,7 +618,7 @@ class offset_ptr
    //!Never throws.
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> & r, ipcdetail::const_cast_tag) BOOST_NOEXCEPT
-      : internal(ipcdetail::offset_ptr_to_offset_from_other(this, &r, r.get_offset()))
+      : internal(ipcdetail::offset_ptr_to_offset_from_other_cast(this, &r, r.get_offset()))
    {  //A const_cast never changes the address, so only the offset is rebased,
       //but the cast must still be a valid one
       (void)const_cast<PointedType*>(static_cast<T2*>(0));
@@ -520,7 +629,7 @@ class offset_ptr
    //!Never throws.
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> & r, ipcdetail::dynamic_cast_tag) BOOST_NOEXCEPT
-      : internal(ipcdetail::offset_ptr_to_offset<OffsetType>(dynamic_cast<PointedType*>(r.get()), this))
+      : internal(ipcdetail::offset_ptr_to_offset_cast<OffsetType>(dynamic_cast<PointedType*>(r.get()), this))
    {}
 
    //!Emulates reinterpret_cast operator. Only the pointed type can change, the
@@ -528,13 +637,13 @@ class offset_ptr
    //!Never throws.
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> & r, ipcdetail::reinterpret_cast_tag) BOOST_NOEXCEPT
-      : internal(ipcdetail::offset_ptr_to_offset_from_other(this, &r, r.get_offset()))
+      : internal(ipcdetail::offset_ptr_to_offset_from_other_cast(this, &r, r.get_offset()))
    {}  //A reinterpret_cast never changes the address, so the offset is rebased
 
    //!Obtains raw pointer from offset.
    //!Never throws.
    BOOST_INTERPROCESS_FORCEINLINE pointer get() const BOOST_NOEXCEPT
-   {  return static_cast<pointer>(ipcdetail::offset_ptr_to_raw_pointer(this, this->internal.m_offset));   }
+   {  return static_cast<pointer>(ipcdetail::offset_ptr_to_raw_pointer_get(this, this->internal.m_offset));   }
 
    BOOST_INTERPROCESS_FORCEINLINE offset_type get_offset() const BOOST_NOEXCEPT
    {  return this->internal.m_offset;  }
@@ -576,7 +685,7 @@ class offset_ptr
    #endif
       operator= (T *ptr) BOOST_NOEXCEPT
    {
-      this->internal.m_offset = ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(ptr), this);
+      this->internal.m_offset = ipcdetail::offset_ptr_to_offset_store<OffsetType>(static_cast<PointedType*>(ptr), this);
       return *this;
    }
 
@@ -584,7 +693,7 @@ class offset_ptr
    //!Never throws.
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr& operator= (const offset_ptr & ptr) BOOST_NOEXCEPT
    {
-      this->internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other(this, &ptr, ptr.internal.m_offset);
+      this->internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other_copy(this, &ptr, ptr.internal.m_offset);
       return *this;
    }
 
@@ -802,8 +911,8 @@ class offset_ptr
    {
       const OffsetType left_off  = left.internal.m_offset;
       const OffsetType right_off = right.internal.m_offset;
-      left.internal.m_offset  = ipcdetail::offset_ptr_to_offset_from_other(&left,  &right, right_off);
-      right.internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other(&right, &left,  left_off);
+      left.internal.m_offset  = ipcdetail::offset_ptr_to_offset_from_other_swap(&left,  &right, right_off);
+      right.internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other_swap(&right, &left,  left_off);
    }
 
    private:
@@ -814,25 +923,25 @@ class offset_ptr
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE static OffsetType priv_static_cast_offset
       (const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &r, const offset_ptr *this_ptr, ipcdetail::bool_<true>) BOOST_NOEXCEPT
-   {  return ipcdetail::offset_ptr_to_offset_from_other(this_ptr, &r, r.get_offset());  }
+   {  return ipcdetail::offset_ptr_to_offset_from_other_cast(this_ptr, &r, r.get_offset());  }
 
    //!A static_cast that can change the target address, like a cast between
    //!classes of a multiple inheritance hierarchy, must go through the pointer
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE static OffsetType priv_static_cast_offset
       (const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &r, const offset_ptr *this_ptr, ipcdetail::bool_<false>) BOOST_NOEXCEPT
-   {  return ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(r.get()), this_ptr);  }
+   {  return ipcdetail::offset_ptr_to_offset_cast<OffsetType>(static_cast<PointedType*>(r.get()), this_ptr);  }
 
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE void assign(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &ptr, ipcdetail::bool_<true>) BOOST_NOEXCEPT
    {  //no need to pointer adjustment
-      this->internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other<OffsetType>(this, &ptr, ptr.get_offset());
+      this->internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other_copy<OffsetType>(this, &ptr, ptr.get_offset());
    }
 
    template<class T2>
    BOOST_INTERPROCESS_FORCEINLINE void assign(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &ptr, ipcdetail::bool_<false>) BOOST_NOEXCEPT
    {  //we must convert to raw before calculating the offset
-      this->internal.m_offset = ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(ptr.get()), this);
+      this->internal.m_offset = ipcdetail::offset_ptr_to_offset_cast<OffsetType>(static_cast<PointedType*>(ptr.get()), this);
    }
 
    //!Returns a copy of this pointer displaced 'diff' elements. Taking the
@@ -843,7 +952,7 @@ class offset_ptr
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr priv_shifted(DifferenceType diff) const BOOST_NOEXCEPT
    {
       offset_ptr tmp;
-      tmp.internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other
+      tmp.internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other_shift
          (&tmp, this, this->internal.m_offset);
       tmp.inc_offset(diff * DifferenceType(sizeof(PointedType)));
       return tmp;
@@ -852,7 +961,7 @@ class offset_ptr
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr priv_shifted_back(DifferenceType diff) const BOOST_NOEXCEPT
    {
       offset_ptr tmp;
-      tmp.internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other
+      tmp.internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other_shift
          (&tmp, this, this->internal.m_offset);
       tmp.dec_offset(diff * DifferenceType(sizeof(PointedType)));
       return tmp;
@@ -1002,7 +1111,7 @@ struct pointer_plus_bits<boost::interprocess::offset_ptr<T, P, O, A>, NumBits>
    {
       pointer p;
       O const tmp_off = n.priv_offset() & ~Mask;
-      p.priv_offset() = boost::interprocess::ipcdetail::offset_ptr_to_offset_from_other(&p, &n, tmp_off);
+      p.priv_offset() = boost::interprocess::ipcdetail::offset_ptr_to_offset_from_other_copy(&p, &n, tmp_off);
       return p;
    }
 
