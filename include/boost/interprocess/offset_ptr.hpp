@@ -174,14 +174,14 @@ namespace ipcdetail {
    //!The selection is compiler and platform dependant.
 
    #if defined(BOOST_MSVC)
-      #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_COPY
-      #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_CAST
+      #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHED_COPY
+      #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHED_CAST
       #if defined(_M_IX86)
       //swap rebases twice and has to keep both offsets live. Only on x86,
       //where there are not enough registers for that, does the branch pay:
       //it wins 25% to 36% there on every toolset from 14.16 to 14.51, and
       //loses up to 12% on x64
-      #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_SWAP
+      #define BOOST_INTERPROCESS_OFFSET_PTR_BRANCHED_SWAP
       #endif
    #endif
 
@@ -192,7 +192,7 @@ namespace ipcdetail {
    ////////////////////////////////////////////////////////////////////////
 
    template <class OffsetType>
-   BOOST_INTERPROCESS_FORCEINLINE void * offset_ptr_to_raw_pointer_branchy(const volatile void *this_ptr, OffsetType offset)
+   BOOST_INTERPROCESS_FORCEINLINE void * offset_ptr_to_raw_pointer_branched(const volatile void *this_ptr, OffsetType offset)
    {
       typedef pointer_offset_caster<void*, OffsetType> caster_t;
       if(BOOST_UNLIKELY(offset == 1)){
@@ -220,8 +220,8 @@ namespace ipcdetail {
    template <class OffsetType>
    BOOST_INTERPROCESS_FORCEINLINE void * offset_ptr_to_raw_pointer_get(const volatile void *this_ptr, OffsetType offset)
    {
-      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_GET)
-      return offset_ptr_to_raw_pointer_branchy(this_ptr, offset);
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHED_GET)
+      return offset_ptr_to_raw_pointer_branched(this_ptr, offset);
       #else
       return offset_ptr_to_raw_pointer_branchless(this_ptr, offset);
       #endif
@@ -252,7 +252,7 @@ namespace ipcdetail {
    ////////////////////////////////////////////////////////////////////////
 
    template<class OffsetType>
-   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_branchy(const volatile void *ptr, const volatile void *this_ptr)
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_branched(const volatile void *ptr, const volatile void *this_ptr)
    {
       typedef pointer_offset_caster<void*, OffsetType> caster_t;
       //offset == 1 && ptr != 0 is not legal for this pointer
@@ -282,8 +282,8 @@ namespace ipcdetail {
    template<class OffsetType>
    BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_store(const volatile void *ptr, const volatile void *this_ptr)
    {
-      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_STORE)
-      return offset_ptr_to_offset_branchy<OffsetType>(ptr, this_ptr);
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHED_STORE)
+      return offset_ptr_to_offset_branched<OffsetType>(ptr, this_ptr);
       #else
       return offset_ptr_to_offset_branchless<OffsetType>(ptr, this_ptr);
       #endif
@@ -296,8 +296,8 @@ namespace ipcdetail {
    template<class OffsetType>
    BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_cast(const volatile void *ptr, const volatile void *this_ptr)
    {
-      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_CAST_ADDR)
-      return offset_ptr_to_offset_branchy<OffsetType>(ptr, this_ptr);
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHED_CAST_ADDR)
+      return offset_ptr_to_offset_branched<OffsetType>(ptr, this_ptr);
       #else
       return offset_ptr_to_offset_branchless<OffsetType>(ptr, this_ptr);
       #endif
@@ -337,7 +337,7 @@ namespace ipcdetail {
    ////////////////////////////////////////////////////////////////////////
 
    template<class OffsetType>
-   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_branchy
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_branched
       (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
    {
       typedef pointer_offset_caster<void*, OffsetType> caster_t;
@@ -368,8 +368,8 @@ namespace ipcdetail {
    BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_copy
       (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
    {
-      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_COPY)
-      return offset_ptr_to_offset_from_other_branchy(this_ptr, other_ptr, other_offset);
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHED_COPY)
+      return offset_ptr_to_offset_from_other_branched(this_ptr, other_ptr, other_offset);
       #else
       return offset_ptr_to_offset_from_other_branchless(this_ptr, other_ptr, other_offset);
       #endif
@@ -380,8 +380,8 @@ namespace ipcdetail {
    BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_cast
       (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
    {
-      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_CAST)
-      return offset_ptr_to_offset_from_other_branchy(this_ptr, other_ptr, other_offset);
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHED_CAST)
+      return offset_ptr_to_offset_from_other_branched(this_ptr, other_ptr, other_offset);
       #else
       return offset_ptr_to_offset_from_other_branchless(this_ptr, other_ptr, other_offset);
       #endif
@@ -392,8 +392,8 @@ namespace ipcdetail {
    BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_swap
       (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
    {
-      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_SWAP)
-      return offset_ptr_to_offset_from_other_branchy(this_ptr, other_ptr, other_offset);
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHED_SWAP)
+      return offset_ptr_to_offset_from_other_branched(this_ptr, other_ptr, other_offset);
       #else
       return offset_ptr_to_offset_from_other_branchless(this_ptr, other_ptr, other_offset);
       #endif
@@ -405,8 +405,8 @@ namespace ipcdetail {
    BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_shift
       (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
    {
-      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHY_SHIFT)
-      return offset_ptr_to_offset_from_other_branchy(this_ptr, other_ptr, other_offset);
+      #if defined(BOOST_INTERPROCESS_OFFSET_PTR_BRANCHED_SHIFT)
+      return offset_ptr_to_offset_from_other_branched(this_ptr, other_ptr, other_offset);
       #else
       return offset_ptr_to_offset_from_other_branchless(this_ptr, other_ptr, other_offset);
       #endif
