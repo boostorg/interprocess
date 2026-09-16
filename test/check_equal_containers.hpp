@@ -54,8 +54,7 @@ bool CheckEqualContainers(MyShmCont *shmcont, MyStdCont *stdcont)
    if(dist != shmcont->size()){
       return false;
    }
-   std::size_t i = 0;
-   for(; itshm != itshmend; ++itshm, ++itstd, ++i){
+   for(; itshm != itshmend; ++itshm, ++itstd){
       if(!CheckEqual(*itstd, *itshm))
          return false;
    }
