@@ -20,7 +20,7 @@ project /boost/interprocess
 
 explicit
     [ alias boost_interprocess : : : : <library>$(boost_dependencies) ]
-    [ alias all : boost_interprocess example test ]
+    [ alias all : boost_interprocess example test bench ]
     ;
 
 call-if : boost-library interprocess
