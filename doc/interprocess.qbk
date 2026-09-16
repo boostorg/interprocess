@@ -7000,6 +7000,8 @@ thank them:
 * Optimized spin-based synchronization utilities using acquire/release semantics instead of
   classic strong semantics.
 
+* Improved the performance of several `offset_ptr`'s operations.
+
 * Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/144 GitHub #144 (['"Crash in ipcdetail::get_bootstamp when multi thread racing and winapi::get_last_bootup_time failed on Windows"])].
    * [@https://github.com/boostorg/interprocess/issues/159 GitHub #159 (['"Remove exception from normal execution path"])].
