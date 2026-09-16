@@ -147,7 +147,7 @@ class intrusive_ptr
 
    //!Assignment from pointer. Equivalent to intrusive_ptr(r).swap(*this).
    //!Does not throw
-   intrusive_ptr & operator=(pointer rhs) BOOST_NOEXCEPT
+   intrusive_ptr & operator=(const pointer &rhs) BOOST_NOEXCEPT
    {
       this_type(rhs).swap(*this);
       return *this;

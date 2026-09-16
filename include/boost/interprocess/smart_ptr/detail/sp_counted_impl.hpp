@@ -64,7 +64,7 @@ struct scoped_ptr_dealloc_functor
    scoped_ptr_dealloc_functor(Allocator& a)
       : m_alloc(a) {}
 
-   void operator()(pointer ptr)
+   void operator()(const pointer &ptr)
    {  if (ptr) priv_deallocate(ptr, alloc_version());  }
 };
 
