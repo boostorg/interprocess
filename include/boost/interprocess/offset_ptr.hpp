@@ -654,18 +654,18 @@ class offset_ptr
 
    //!difference_type + offset_ptr
    //!operation
-   BOOST_INTERPROCESS_FORCEINLINE friend offset_ptr operator+(difference_type diff, offset_ptr right) BOOST_NOEXCEPT
-   {  right += diff;  return right;  }
+   BOOST_INTERPROCESS_FORCEINLINE friend offset_ptr operator+(difference_type diff, const offset_ptr &right) BOOST_NOEXCEPT
+   {  return right.priv_shifted(diff);  }
 
    //!offset_ptr + difference_type
    //!operation
-   BOOST_INTERPROCESS_FORCEINLINE friend offset_ptr operator+(offset_ptr left, difference_type diff) BOOST_NOEXCEPT
-   {  left += diff;  return left; }
+   BOOST_INTERPROCESS_FORCEINLINE friend offset_ptr operator+(const offset_ptr &left, difference_type diff) BOOST_NOEXCEPT
+   {  return left.priv_shifted(diff);  }
 
    //!offset_ptr - diff
    //!operation
-   BOOST_INTERPROCESS_FORCEINLINE friend offset_ptr operator-(offset_ptr left, difference_type diff) BOOST_NOEXCEPT
-   {  left -= diff;  return left; }
+   BOOST_INTERPROCESS_FORCEINLINE friend offset_ptr operator-(const offset_ptr &left, difference_type diff) BOOST_NOEXCEPT
+   {  return left.priv_shifted_back(diff);  }
 
    //!offset_ptr - offset_ptr. Both pointers must point into the
    //!same array, so either both of them are null, or neither of them is.
@@ -778,6 +778,29 @@ class offset_ptr
    BOOST_INTERPROCESS_FORCEINLINE void assign(const offset_ptr<T2, DifferenceType, OffsetType, OffsetAlignment> &ptr, ipcdetail::bool_<false>) BOOST_NOEXCEPT
    {  //we must convert to raw before calculating the offset
       this->internal.m_offset = ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(ptr.get()), this);
+   }
+
+   //!Returns a copy of this pointer displaced 'diff' elements. Taking the
+   //!operand by reference and building the result in place needs a single
+   //!rebase, where passing and returning it by value needed two. Adding zero
+   //!to a null pointer must still give a null pointer, so the rebase keeps
+   //!its null pointer test
+   BOOST_INTERPROCESS_FORCEINLINE offset_ptr priv_shifted(DifferenceType diff) const BOOST_NOEXCEPT
+   {
+      offset_ptr tmp;
+      tmp.internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other
+         (&tmp, this, this->internal.m_offset);
+      tmp.inc_offset(diff * DifferenceType(sizeof(PointedType)));
+      return tmp;
+   }
+
+   BOOST_INTERPROCESS_FORCEINLINE offset_ptr priv_shifted_back(DifferenceType diff) const BOOST_NOEXCEPT
+   {
+      offset_ptr tmp;
+      tmp.internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other
+         (&tmp, this, this->internal.m_offset);
+      tmp.dec_offset(diff * DifferenceType(sizeof(PointedType)));
+      return tmp;
    }
 
    BOOST_INTERPROCESS_FORCEINLINE void inc_offset(DifferenceType bytes) BOOST_NOEXCEPT
