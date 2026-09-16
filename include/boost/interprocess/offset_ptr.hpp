@@ -255,6 +255,26 @@ namespace ipcdetail {
 
    ////////////////////////////////////////////////////////////////////////
    //
+   //             offset_ptr_to_offset_from_other_unchecked
+   //
+   ////////////////////////////////////////////////////////////////////////
+
+   //!Same as offset_ptr_to_offset_from_other, but the null pointer test is
+   //!omitted. The caller must guarantee that 'other_offset' does not represent
+   //!a null pointer.
+   template<class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_from_other_unchecked
+      (const volatile void *this_ptr, const volatile void *other_ptr, OffsetType other_offset)
+   {
+      typedef pointer_offset_caster<void*, OffsetType> caster_t;
+      BOOST_ASSERT(other_offset != 1);
+      const OffsetType offset = caster_t(other_ptr).offset() - caster_t(this_ptr).offset() + other_offset;
+      BOOST_ASSERT(offset != 1);
+      return offset;
+   }
+
+   ////////////////////////////////////////////////////////////////////////
+   //
    // Let's assume casts from/to void and cv casts don't change any target address
    //
    ////////////////////////////////////////////////////////////////////////
@@ -573,7 +593,10 @@ class offset_ptr
    //!Never throws.
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr operator++ (int) BOOST_NOEXCEPT
    {
-      offset_ptr tmp(*this);
+      //Incrementing requires an array, so it can not be null
+      offset_ptr tmp;
+      tmp.internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other_unchecked
+         (&tmp, this, this->internal.m_offset);
       this->inc_offset(sizeof (PointedType));
       return tmp;
    }
@@ -587,7 +610,10 @@ class offset_ptr
    //!Never throws.
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr operator-- (int) BOOST_NOEXCEPT
    {
-      offset_ptr tmp(*this);
+      //Decrementing requires an array, so it can not be null
+      offset_ptr tmp;
+      tmp.internal.m_offset = ipcdetail::offset_ptr_to_offset_from_other_unchecked
+         (&tmp, this, this->internal.m_offset);
       this->dec_offset(sizeof (PointedType));
       return tmp;
    }
@@ -726,6 +752,7 @@ class offset_ptr
    }
 
    private:
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    //!A static_cast that can't change the target address is done by rebasing
    //!the stored offset, which needs a single null pointer test instead of the
    //!two that a round trip through a raw pointer needs
@@ -753,7 +780,6 @@ class offset_ptr
       this->internal.m_offset = ipcdetail::offset_ptr_to_offset<OffsetType>(static_cast<PointedType*>(ptr.get()), this);
    }
 
-   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    BOOST_INTERPROCESS_FORCEINLINE void inc_offset(DifferenceType bytes) BOOST_NOEXCEPT
    {  internal.m_offset += OffsetType(bytes);   }
 
