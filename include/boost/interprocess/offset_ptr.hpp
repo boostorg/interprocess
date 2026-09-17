@@ -247,6 +247,25 @@ namespace ipcdetail {
 
    ////////////////////////////////////////////////////////////////////////
    //
+   //                     offset_ptr_to_offset_unchecked
+   //
+   ////////////////////////////////////////////////////////////////////////
+
+   //!Same as offset_ptr_to_offset, but the null pointer test is omitted. The
+   //!caller must guarantee that 'ptr' is not null, which is the case when it
+   //!comes from a reference.
+   template<class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_to_offset_unchecked(const volatile void *ptr, const volatile void *this_ptr)
+   {
+      typedef pointer_offset_caster<void*, OffsetType> caster_t;
+      BOOST_ASSERT(ptr != 0);
+      const OffsetType offset = caster_t(ptr).offset() - caster_t(this_ptr).offset();
+      BOOST_ASSERT(offset != 1);
+      return offset;
+   }
+
+   ////////////////////////////////////////////////////////////////////////
+   //
    //                      offset_ptr_to_offset_from_other
    //
    ////////////////////////////////////////////////////////////////////////
@@ -673,7 +692,12 @@ class offset_ptr
    //!Compatibility with pointer_traits
    //!
    BOOST_INTERPROCESS_FORCEINLINE static offset_ptr pointer_to(typename ipcdetail::op_reference<PointedType>::type r) BOOST_NOEXCEPT
-   { return offset_ptr(&r); }
+   {  //The address of a reference is never null, so the null pointer test of
+      //the general conversion is dead work here
+      offset_ptr p;
+      p.internal.m_offset = ipcdetail::offset_ptr_to_offset_unchecked<OffsetType>(&r, &p);
+      return p;
+   }
 
    //!difference_type + offset_ptr
    //!operation
