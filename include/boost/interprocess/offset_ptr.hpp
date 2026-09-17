@@ -131,6 +131,38 @@ namespace ipcdetail {
 
    ////////////////////////////////////////////////////////////////////////
    //
+   //                         offset_ptr_launder
+   //
+   ////////////////////////////////////////////////////////////////////////
+
+   //!Makes an offset opaque to the optimizer before it is converted back to
+   //!a pointer.
+   //!
+   //!Conversions between a pointer and an integer are implementation-
+   //!defined ([expr.reinterpret.cast]) and GCC defines them as (GCC manual,
+   //!"Implementation-defined behavior / Arrays and pointers"):
+   //!
+   //!   "When casting from pointer to integer and back again, the resulting
+   //!    pointer must reference the same object as the original pointer,
+   //!    otherwise the behavior is undefined. That is, one may not use integer
+   //!    arithmetic to avoid the undefined behavior of pointer arithmetic as
+   //!    proscribed in C99 and C11 6.5.6/8."
+   //!
+   //!Every sum that becomes a pointer to the pointee needs this.
+   //!
+   //!Clang, MSVC and EDG based compilers do not use the provenance this way,
+   //!and the barrier costs them vectorization, so it is applied only to GCC.
+   template <class OffsetType>
+   BOOST_INTERPROCESS_FORCEINLINE OffsetType offset_ptr_launder(OffsetType off)
+   {
+      #if defined(BOOST_GCC) && !defined(BOOST_INTERPROCESS_OFFSET_PTR_NO_LAUNDER)
+      __asm__("" : "+r"(off));
+      #endif
+      return off;
+   }
+
+   ////////////////////////////////////////////////////////////////////////
+   //
    //                      offset_ptr_to_raw_pointer
    //
    ////////////////////////////////////////////////////////////////////////
@@ -147,7 +179,7 @@ namespace ipcdetail {
             return 0;
          }
          else{
-            return caster_t(caster_t(this_ptr).offset() + offset).pointer();
+            return caster_t(offset_ptr_launder(caster_t(this_ptr).offset() + offset)).pointer();
          }
       #else
          //The mask is written as ~(0 - (x == k)) and not as the equivalent
@@ -156,7 +188,7 @@ namespace ipcdetail {
          const OffsetType mask = ~(OffsetType(0) - OffsetType(offset == 1));
          OffsetType target_offset = caster_t(this_ptr).offset() + offset;
          target_offset &= mask;
-         return caster_t(target_offset).pointer();
+         return caster_t(offset_ptr_launder(target_offset)).pointer();
       #endif
    }
 
@@ -175,16 +207,7 @@ namespace ipcdetail {
    {
       typedef pointer_offset_caster<void*, OffsetType> caster_t;
       BOOST_ASSERT(offset != 1);
-      void *p = caster_t(caster_t(this_ptr).offset() + offset).pointer();
-      #if defined(BOOST_GCC) && (BOOST_GCC >= 120000) && (BOOST_GCC < 130000)
-      //Without the null pointer test GCC 12 can no longer prove that an address
-      //derived from "this" does not alias the offset_ptr itself, and reports a
-      //false -Wmaybe-uninitialized
-      //An empty alignment assumption breaks that inference and generates
-      //exactly the same code.
-      p = __builtin_assume_aligned(p, 1);
-      #endif
-      return p;
+      return caster_t(offset_ptr_launder(caster_t(this_ptr).offset() + offset)).pointer();
    }
 
    ////////////////////////////////////////////////////////////////////////
@@ -679,7 +702,7 @@ class offset_ptr
       //that zeroes the result when both are null, is loop invariant in the
       //usual "it - begin()" shape and is hoisted out of the loop
       const pointer p1 = static_cast<pointer>
-         (caster_t(caster_t(&pt).offset() + pt.internal.m_offset).pointer());
+         (caster_t(ipcdetail::offset_ptr_launder(caster_t(&pt).offset() + pt.internal.m_offset)).pointer());
       const pointer p2 = pt2.get();
       const difference_type mask =
          ~(difference_type(0) - difference_type(pt2.internal.m_offset == 1));
