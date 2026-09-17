@@ -16,8 +16,6 @@ project : requirements
     <target-os>windows,<toolset>clang:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
     <target-os>linux:<linkflags>"-lrt"
     <target-os>cygwin:<define>_XOPEN_SOURCE=600
-    <optimization>speed
-    <variant>release
     ;
 
 rule test_all
