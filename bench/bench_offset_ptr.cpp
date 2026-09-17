@@ -15,6 +15,25 @@
 // compares them against raw pointers.
 //
 //////////////////////////////////////////////////////////////////////////////
+//
+// Code alignment
+// --------------
+// The loops measured here run for a few instructions, so on x86 the position
+// of the loop inside a 32/64 byte fetch window changes the result more than the
+// code being measured.
+//
+//   GCC     the pragma below does it, no build option is needed
+//   Clang   the pragma is ignored, the build has to pass
+//           -falign-loops=64 -falign-functions=64
+//   MSVC    offers no equivalent option
+//
+//////////////////////////////////////////////////////////////////////////////
+
+//See the note on code alignment above. Clang accepts the options only on the
+//command line, so it is the build that has to pass them there.
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC optimize("align-loops=64","align-functions=64")
+#endif
 
 //Define LONG_BENCH for a long, high confidence run. Without it the benchmark
 //measures exactly the same thing with fewer repetitions, so that it stays
