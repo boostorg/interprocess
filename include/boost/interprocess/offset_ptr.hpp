@@ -317,9 +317,9 @@ namespace ipcdetail {
    {
       typedef pointer_offset_caster<void*, OffsetType> caster_t;
       BOOST_ASSERT(ptr != 0);
-      #if defined(BOOST_GCC) && (BOOST_GCC < 40900)
-      //GCC 4.8.1 miscompiles the bare difference of the two addresses at -O1
-      //and above. GCC 4.7 and 4.9 are not affected.
+      #if defined(BOOST_GCC) && (BOOST_GCC < 50000)
+      //GCC 4.8 and 4.9 miscompile the bare difference of the two addresses at -O1
+      //and above . GCC 5 and later are not affected.
       OffsetType ptr_off = caster_t(ptr).offset();
       __asm__("" : "+r"(ptr_off));
       const OffsetType offset = ptr_off - caster_t(this_ptr).offset();
