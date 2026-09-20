@@ -2779,29 +2779,10 @@ file locking easier in the presence of exceptions, just like with mutexes:
       //sh_lock's destructor
    }
 
-[c++]
+A complete exclusive-lock program:
 
-   #include <boost/interprocess/sync/file_lock.hpp>
-   #include <boost/interprocess/sync/scoped_lock.hpp>
-
-   //...
-
-   using namespace boost::interprocess;
-   //This process writes the file
-   //    ...
-   //Open the file lock
-   file_lock f_lock("my_file");
-
-   {
-      //Construct an exclusive lock with the file lock.
-      //This will call "f_lock.lock()".
-      scoped_lock<file_lock> e_lock(f_lock);
-
-      //Now write the file...
-
-      //The exclusive lock is automatically released by
-      //e_lock's destructor
-   }
+[import ../example/doc_file_lock.cpp]
+[doc_file_lock]
 
 However, lock transfers are only allowed between same type of locks, that is,
 from a sharable lock to another sharable lock or from a scoped lock to another
