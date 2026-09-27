@@ -913,18 +913,18 @@ jobs:
             addrmd: 64
             os: windows-2025
          #Now ARM version
-          - toolset: msvc-14.3
+          - toolset: msvc-14.5
             cxxstd: "14,17,20,latest"
             addrmd: 64
-            os: windows-11-arm
+            os: windows-11-vs2026-arm
          #ARM64EC: ARM64 code with the x64 ABI. The binaries are
          #native ARM64 with emulation for x64. b2 has no
          #architecture value for it so we need explicit flags.
           - name: ARM64EC
-            toolset: msvc-14.3
+            toolset: msvc-14.5
             cxxstd: "14,17,20,latest"
             addrmd: 64
-            os: windows-11-arm
+            os: windows-11-vs2026-arm
             arm64ec: 1
 
     timeout-minutes: 240
