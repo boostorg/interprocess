@@ -13,6 +13,7 @@
 #include <boost/container/vector.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
+#include <algorithm> //std::sort
 //<-
 #include "../test/get_process_id_name.hpp"
 //->

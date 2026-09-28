@@ -18,6 +18,7 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/streams/vectorstream.hpp>
 #include <iterator>
+#include <algorithm> //std::copy, std::equal
 //<-
 #include "../test/get_process_id_name.hpp"
 //->

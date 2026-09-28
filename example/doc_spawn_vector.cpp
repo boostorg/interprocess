@@ -15,6 +15,7 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <string>
 #include <cstdlib> //std::system
+#include <algorithm> //std::sort
 //<-
 #include "../test/get_process_id_name.hpp"
 //->

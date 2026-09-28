@@ -16,6 +16,7 @@
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <vector>
 #include <iterator>
+#include <algorithm> //std::copy, std::equal
 #include <cstddef>
 //<-
 #include "../test/get_process_id_name.hpp"
