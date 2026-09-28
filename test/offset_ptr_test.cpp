@@ -843,6 +843,28 @@ void test_stream_io()
    std::stringstream ss2;
    ss2 << offset_ptr<int>();
    BOOST_TEST(ss2.str() == "1");
+
+   std::ostringstream os;
+   BOOST_TEST(&(os << p) == &os);
+   std::ostream &ros = os;
+   ros << ' ' << p;
+   std::ostringstream expected;
+   expected << p.get_offset() << ' ' << p.get_offset();
+   BOOST_TEST(os.str() == expected.str());
+
+   std::istringstream is(expected.str());
+   std::istream &ris = is;
+   offset_ptr<int> r1, r2;
+   BOOST_TEST(&(is >> r1) == &is);
+   ris >> r2;
+   BOOST_TEST(r1.get_offset() == p.get_offset());
+   BOOST_TEST(r2.get_offset() == p.get_offset());
+
+   std::wstringstream ws;
+   ws << p;
+   offset_ptr<int> w;
+   ws >> w;
+   BOOST_TEST(w.get_offset() == p.get_offset());
 }
 
 //////////////////////////////////////////////////////////////////////////////

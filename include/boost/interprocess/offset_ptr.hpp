@@ -30,7 +30,7 @@
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/container/detail/type_traits.hpp>  //alignment_of, aligned_storage
 #include <boost/assert.hpp>
-#include <iosfwd>
+#include <boost/move/detail/is_basic_ostream.hpp>
 #include <cstddef>
 
 #if defined(BOOST_GCC) && (BOOST_GCC >= 40700)
@@ -985,19 +985,21 @@ class offset_ptr
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
-//!operator<<
-//!for offset ptr
-template<class E, class T, class W, class X, class Y, std::size_t Z>
-inline std::basic_ostream<E, T> & operator<<
-   (std::basic_ostream<E, T> & os, offset_ptr<W, X, Y, Z> const & p)
-{  return os << p.get_offset();   }
+//!operator<< for offset_ptr: writes the stored offset.
+//!
+template<class Ostream, class W, class X, class Y, std::size_t Z>
+inline BOOST_INTERPROCESS_DOC1ST(Ostream&, typename ipcdetail::enable_if_c
+   < ::boost::move_detail::is_basic_ostream<Ostream>::value BOOST_INTERPROCESS_I Ostream&>::type)
+   operator<< (Ostream & os, offset_ptr<W, X, Y, Z> const & p)
+{  os << p.get_offset();   return os;  }
 
-//!operator>>
-//!for offset ptr
-template<class E, class T, class W, class X, class Y, std::size_t Z>
-inline std::basic_istream<E, T> & operator>>
-   (std::basic_istream<E, T> & is, offset_ptr<W, X, Y, Z> & p)
-{  return is >> p.priv_offset();  }
+//!operator>> for offset_ptr: reads the stored offset.
+//!
+template<class Istream, class W, class X, class Y, std::size_t Z>
+inline BOOST_INTERPROCESS_DOC1ST(Istream&, typename ipcdetail::enable_if_c
+   < ::boost::move_detail::is_basic_istream<Istream>::value BOOST_INTERPROCESS_I Istream&>::type)
+   operator>> (Istream & is, offset_ptr<W, X, Y, Z> & p)
+{  is >> p.priv_offset();  return is;  }
 
 //!Simulation of static_cast between pointers. Never throws.
 template<class T1, class P, class O, std::size_t A, class T2>
