@@ -37,6 +37,7 @@
 #include <boost/container/detail/placement_new.hpp>
 #include <boost/container/detail/addressof.hpp>
 #include <boost/container/uses_allocator_construction.hpp>
+#include <boost/move/adl_move_swap.hpp>
 
 #include <cstddef>
 #include <stdexcept>

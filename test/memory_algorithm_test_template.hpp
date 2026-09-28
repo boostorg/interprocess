@@ -16,6 +16,7 @@
 #include <boost/container/vector.hpp>
 
 #include <vector>
+#include <algorithm> //std::remove
 #include <iostream>
 #include <new> //std::nothrow
 #include <cstring>   //std::memset
