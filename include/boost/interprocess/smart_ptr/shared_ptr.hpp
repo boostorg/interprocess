@@ -38,8 +38,7 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
-
-#include <iosfwd> // for std::basic_ostream
+#include <boost/move/detail/is_basic_ostream.hpp>
 
 //!\file
 //!Describes the smart pointer shared_ptr
@@ -356,10 +355,12 @@ template<class T, class VoidAllocator, class Deleter> inline
 T * to_raw_pointer(shared_ptr<T, VoidAllocator, Deleter> const & p)
 {  return p.get();   }
 
-// operator<<
-template<class E, class T, class Y, class VoidAllocator, class Deleter> inline
-std::basic_ostream<E, T> & operator<<
-   (std::basic_ostream<E, T> & os, shared_ptr<Y, VoidAllocator, Deleter> const & p)
+//!operator<< for shared_ptr: writes p.get().
+//!
+template<class Ostream, class Y, class VoidAllocator, class Deleter>
+inline BOOST_INTERPROCESS_DOC1ST(Ostream&, typename ipcdetail::enable_if_c
+   < ::boost::move_detail::is_basic_ostream<Ostream>::value BOOST_INTERPROCESS_I Ostream&>::type)
+   operator<< (Ostream & os, shared_ptr<Y, VoidAllocator, Deleter> const & p)
 {  os << p.get();   return os;   }
 
 //!Returns the type of a shared pointer

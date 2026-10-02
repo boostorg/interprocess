@@ -30,11 +30,11 @@
 
 #include <boost/assert.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
 #include <boost/move/adl_move_swap.hpp>
 #include <boost/move/core.hpp>
-
-#include <iosfwd>               // for std::basic_ostream
+#include <boost/move/detail/is_basic_ostream.hpp>
 
 #include <boost/intrusive/detail/minimal_less_equal_header.hpp>   //std::less
 
@@ -268,10 +268,12 @@ void swap(intrusive_ptr<T, VP> & lhs,
           intrusive_ptr<T, VP> & rhs) BOOST_NOEXCEPT
 {  lhs.swap(rhs); }
 
-// operator<<
-template<class E, class T, class Y, class VP>
-inline std::basic_ostream<E, T> & operator<<
-   (std::basic_ostream<E, T> & os, intrusive_ptr<Y, VP> const & p) BOOST_NOEXCEPT
+//!operator<< for intrusive_ptr: writes p.get().
+//!
+template<class Ostream, class Y, class VP>
+inline BOOST_INTERPROCESS_DOC1ST(Ostream&, typename ipcdetail::enable_if_c
+   < ::boost::move_detail::is_basic_ostream<Ostream>::value BOOST_INTERPROCESS_I Ostream&>::type)
+   operator<< (Ostream & os, intrusive_ptr<Y, VP> const & p) BOOST_NOEXCEPT
 {  os << p.get(); return os;  }
 
 //!Returns p.get().

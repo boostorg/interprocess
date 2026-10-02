@@ -18,6 +18,7 @@
 #include <boost/move/adl_move_swap.hpp>
 #include <boost/move/core.hpp>
 #include <functional>
+#include <sstream>
 
 typedef boost::interprocess::offset_ptr<void> VP;
 
@@ -524,6 +525,33 @@ void test()
 
 } // namespace n_report_1
 
+namespace n_stream
+{
+
+class X: public N::base
+{};
+
+void test()
+{
+   boost::interprocess::intrusive_ptr<X, VP> p(new X);
+
+   std::ostringstream os;
+   BOOST_TEST(&(os << p) == &os);
+   std::ostream &ros = os;
+   ros << ' ' << p;
+   std::ostringstream expected;
+   expected << p.get() << ' ' << p.get();
+   BOOST_TEST(os.str() == expected.str());
+
+   std::wostringstream ws;
+   ws << p;
+   std::wostringstream wexpected;
+   wexpected << p.get();
+   BOOST_TEST(ws.str() == wexpected.str());
+}
+
+} // namespace n_stream
+
 int main()
 {
    n_element_type::test();
@@ -538,6 +566,7 @@ int main()
 
    n_transitive::test();
    n_report_1::test();
+   n_stream::test();
 
    return boost::report_errors();
 }

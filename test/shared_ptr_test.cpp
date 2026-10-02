@@ -22,6 +22,7 @@
 #include <boost/interprocess/smart_ptr/scoped_ptr.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <string>
+#include <sstream>
 #include "get_process_id_name.hpp"
 
 
@@ -622,6 +623,27 @@ void test_const_shared_from_this()
     BOOST_TEST( cptr->shared_from_this().get() == cptr.get() );
 }
 
+void test_stream_output()
+{
+   shared_ptr<const shared_from_this_tester, std::allocator<void>, std_deleter> p(
+      new shared_from_this_tester()
+   );
+
+   std::ostringstream os;
+   BOOST_TEST(&(os << p) == &os);
+   std::ostream &ros = os;
+   ros << ' ' << p;
+   std::ostringstream expected;
+   expected << p.get() << ' ' << p.get();
+   BOOST_TEST(os.str() == expected.str());
+
+   std::wostringstream ws;
+   ws << p;
+   std::wostringstream wexpected;
+   wexpected << p.get();
+   BOOST_TEST(ws.str() == wexpected.str());
+}
+
 int main()
 {
    if(0 != simple_test())
@@ -635,5 +657,7 @@ int main()
 
    test_alias();
    test_const_shared_from_this();
+   test_stream_output();
+   return boost::report_errors();
 }
 
