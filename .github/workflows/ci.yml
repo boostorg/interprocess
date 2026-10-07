@@ -671,7 +671,7 @@ jobs:
         if: matrix.cmake_tests == ''
         run: |
             cd boost-root
-            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}" "debug-symbols=off")
+            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}")
             #Build variant
             if [ -n "${{matrix.build_variant}}" ]
             then
@@ -706,6 +706,9 @@ jobs:
             if [ -n "${{matrix.asan}}" ] || [ -n "${{matrix.ubsan}}" ] || [ -n "${{matrix.tsan}}" ]
             then
                 B2_ARGS+=("debug-symbols=on" "visibility=global")
+            else
+                #Only one debug-symbols value: b2 builds every value it receives
+                B2_ARGS+=("debug-symbols=off")
             fi
             #cxxflags
             if [ -n "${{matrix.cxxflags}}" ]
@@ -1061,7 +1064,7 @@ jobs:
             /usr/sbin/cygserver &
             sleep 2
             cd boost-root
-            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}" "debug-symbols=off")
+            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}")
             #Build variant
             if [ -n "${{matrix.build_variant}}" ]
             then
@@ -1096,6 +1099,9 @@ jobs:
             if [ -n "${{matrix.asan}}" ] || [ -n "${{matrix.ubsan}}" ] || [ -n "${{matrix.tsan}}" ]
             then
                 B2_ARGS+=("debug-symbols=on" "visibility=global")
+            else
+                #Only one debug-symbols value: b2 builds every value it receives
+                B2_ARGS+=("debug-symbols=off")
             fi
             #cxxflags
             if [ -n "${{matrix.cxxflags}}" ]
@@ -1258,7 +1264,7 @@ jobs:
                 echo " ;" >> ~/user-config.jam
             fi
             # Run tests
-            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}" "debug-symbols=off")
+            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}")
             #Build variant
             if [ -n "${{matrix.build_variant}}" ]
             then
@@ -1293,6 +1299,9 @@ jobs:
             if [ -n "${{matrix.asan}}" ] || [ -n "${{matrix.ubsan}}" ] || [ -n "${{matrix.tsan}}" ]
             then
                 B2_ARGS+=("debug-symbols=on" "visibility=global")
+            else
+                #Only one debug-symbols value: b2 builds every value it receives
+                B2_ARGS+=("debug-symbols=off")
             fi
             #cxxflags
             if [ -n "${{matrix.cxxflags}}" ]
