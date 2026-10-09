@@ -8,6 +8,11 @@ on:
       - develop
       - feature/**
 
+# A new push to the same branch (or pull request) cancels the runs that are still active
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   GIT_FETCH_JOBS: 8
   NET_RETRY_COUNT: 5
