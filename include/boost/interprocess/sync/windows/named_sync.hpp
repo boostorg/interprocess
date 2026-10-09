@@ -130,7 +130,7 @@ inline void windows_named_sync::open_or_create
       if(m_file_hnd != winapi::invalid_handle_value){
          //Now lock the file
          const unsigned long buflen = static_cast<unsigned long>(sync_interface.get_data_size());
-         typedef __int64 unique_id_type;
+         typedef sync_id::internal_type unique_id_type;
          const std::size_t sizeof_file_info = sizeof(unique_id_type) + buflen;
          winapi::interprocess_overlapped overlapped;
          if(winapi::lock_file_ex
@@ -143,7 +143,7 @@ inline void windows_named_sync::open_or_create
                unique_id_type unique_id_val;
                if(static_cast<std::size_t>(filesize) != sizeof_file_info){
                   winapi::set_end_of_file(m_file_hnd);
-                  winapi::query_performance_counter(&unique_id_val);
+                  sync_id::generate(unique_id_val, this);
                   const void *buf = sync_interface.buffer_with_init_data_to_file();
                   //Write unique ID in file. This ID will be used to calculate the semaphore name
                   if(winapi::write_file(m_file_hnd, &unique_id_val, sizeof(unique_id_val), &written_or_read, 0)  &&

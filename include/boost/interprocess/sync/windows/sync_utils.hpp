@@ -84,33 +84,69 @@ inline bool bytes_to_str(const void *mem, const std::size_t mem_length, wchar_t 
    return true;
 }
 
+//!Identifier used to build the name of a native kernel object. The name is
+//!global to the system, so the identifier must be unique among all processes.
+//!
+//!A performance counter value alone is not unique: the counter is shared by
+//!all processes, so two processes (or two consecutive calls in the same
+//!process) can read the same tick and open the same kernel object.
+//!The process id is unique among live processes and the address of the
+//!object is unique among live objects of the process. The counter value
+//!protects against a reused process id or address while the kernel object
+//!of the previous owner is still kept open by other processes.
 class sync_id
 {
    public:
-   typedef __int64 internal_type;
-   sync_id()
-   {  winapi::query_performance_counter(&rand_);  }
+   struct internal_type
+   {
+      __int64 m_tick;
+      __int64 m_pid;
+      __int64 m_addr;
+   };
 
-   explicit sync_id(internal_type val)
-   {  rand_ = val;  }
+   //!The address of the identifier is unique among live identifiers of the
+   //!process, as it is a member of the synchronization object.
+   sync_id()
+   {  generate(m_id, this);  }
+
+   static void generate(internal_type &id, const void *addr)
+   {
+      winapi::query_performance_counter(&id.m_tick);
+      id.m_pid  = static_cast<__int64>(winapi::get_current_process_id());
+      id.m_addr = static_cast<__int64>(reinterpret_cast<std::size_t>(addr));
+   }
 
    const internal_type &internal_pod() const
-   {  return rand_;  }
+   {  return m_id;  }
 
    internal_type &internal_pod()
-   {  return rand_;  }
+   {  return m_id;  }
 
    friend std::size_t hash_value(const sync_id &m)
-   {  return static_cast<std::size_t>(m.rand_);  }
+   {
+      return static_cast<std::size_t>(m.m_id.m_tick)
+           ^ static_cast<std::size_t>(m.m_id.m_pid)
+           ^ static_cast<std::size_t>(m.m_id.m_addr);
+   }
 
    friend bool operator==(const sync_id &l, const sync_id &r)
-   {  return l.rand_ == r.rand_;  }
+   {
+      return l.m_id.m_tick == r.m_id.m_tick
+          && l.m_id.m_pid  == r.m_id.m_pid
+          && l.m_id.m_addr == r.m_id.m_addr;
+   }
 
    friend bool operator<(const sync_id &l, const sync_id &r)
-   {  return l.rand_ < r.rand_;  }
+   {
+      if(l.m_id.m_tick != r.m_id.m_tick)
+         return l.m_id.m_tick < r.m_id.m_tick;
+      if(l.m_id.m_pid != r.m_id.m_pid)
+         return l.m_id.m_pid < r.m_id.m_pid;
+      return l.m_id.m_addr < r.m_id.m_addr;
+   }
 
    private:
-   internal_type rand_;
+   internal_type m_id;
 };
 
 class sync_handles
@@ -193,7 +229,7 @@ class sync_handles
       void *&hnd_val = it->second;
       if(!hnd_val){
          BOOST_ASSERT(map_.find(mapping_address) == map_.end());
-         map_[mapping_address] = id;
+         map_.insert(addr_map_type::value_type(mapping_address, id));
          hnd_val = open_or_create_mutex(id);
          if(popen_created) *popen_created = true;
          ++num_handles_;
@@ -214,7 +250,7 @@ class sync_handles
       void *&hnd_val = it->second;
       if(!hnd_val){
          BOOST_ASSERT(map_.find(mapping_address) == map_.end());
-         map_[mapping_address] = id;
+         map_.insert(addr_map_type::value_type(mapping_address, id));
          hnd_val = open_or_create_semaphore(id, initial_count);
          if(popen_created) *popen_created = true;
          ++num_handles_;

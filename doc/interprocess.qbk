@@ -6709,6 +6709,27 @@ those heavy headers.
 
 [endsect]
 
+[section:notes_windows_native_sync Native synchronization primitives (experimental)]
+
+By default, Windows process-shared synchronization primitives (`interprocess_mutex`, `interprocess_semaphore`,
+`interprocess_condition`, `named_mutex`, `named_semaphore`, etc.) are implemented with generic emulation code
+(`BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION` is defined by default).
+
+If `BOOST_INTERPROCESS_FORCE_NATIVE_EMULATION` is defined, these primitives are implemented with
+Windows kernel objects (named mutexes and semaphores) instead.
+
+[warning `BOOST_INTERPROCESS_FORCE_NATIVE_EMULATION` is [*experimental] and [*not ABI stable]:
+
+* The layout of the synchronization primitives and the names of the kernel objects they use
+  are different from the default implementation, and can change between [*Boost.Interprocess] versions
+  without notice.
+* All modules and processes that share synchronization primitives (in shared memory or as named objects)
+  must be compiled with the same value of this macro and with the same [*Boost.Interprocess] version.
+  Otherwise the behavior is undefined.
+* Do not use it in production code.]
+
+[endsect]
+
 [endsect]
 
 [section:notes_cygwin Notes for Cygwin users]
@@ -6982,6 +7003,12 @@ thank them:
   classic strong semantics.
 
 * Improved the performance of several `offset_ptr`'s operations.
+
+* Documented that `BOOST_INTERPROCESS_FORCE_NATIVE_EMULATION` is experimental and not ABI stable
+  (see [link interprocess.acknowledgements_notes.notes_windows.notes_windows_native_sync Native synchronization primitives (experimental)]).
+  The Windows native implementation now uses the process id and the address of the object, in addition to a
+  performance counter value, to name its kernel objects. Before, two processes could read the same counter value and
+  share the same kernel object by error. [*This is an ABI break] for code that defines this macro.
 
 * Fixed bugs:
    * [@https://github.com/boostorg/interprocess/issues/144 GitHub #144 (['"Crash in ipcdetail::get_bootstamp when multi thread racing and winapi::get_last_bootup_time failed on Windows"])].

@@ -23,6 +23,10 @@
 #error "BOOST_INTERPROCESS_FORCE_NATIVE_EMULATION && BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION can't be defined at the same time"
 #endif
 
+//BOOST_INTERPROCESS_FORCE_NATIVE_EMULATION is EXPERIMENTAL and NOT ABI STABLE: on Windows
+//it uses native kernel objects for process-shared synchronization primitives. The layout and
+//the kernel object names can change between versions. All modules and processes sharing
+//synchronization primitives must use the same value and the same Boost version.
 //#define BOOST_INTERPROCESS_FORCE_NATIVE_EMULATION
 
 #if !defined(__CYGWIN__) && (defined(_WIN32) || defined(__WIN32__) || defined(WIN32))
