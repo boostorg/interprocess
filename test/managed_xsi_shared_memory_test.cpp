@@ -142,10 +142,17 @@ int main ()
       {
          //Now test move semantics
          managed_xsi_shared_memory original(open_only, key);
+         const int orig_shmid = original.get_shmid();
          managed_xsi_shared_memory move_ctor(boost::move(original));
+         if(move_ctor.get_shmid() != orig_shmid || original.get_shmid() != -1)
+            return 1;
          managed_xsi_shared_memory move_assign;
          move_assign = boost::move(move_ctor);
+         if(move_assign.get_shmid() != orig_shmid || move_ctor.get_shmid() != -1)
+            return 1;
          move_assign.swap(original);
+         if(original.get_shmid() != orig_shmid || move_assign.get_shmid() != -1)
+            return 1;
       }
    }
 

@@ -51,6 +51,9 @@ class managed_open_or_create_impl_device_holder
 
    const DeviceAbstraction &get_device() const
    {  static DeviceAbstraction dev; return dev; }
+
+   void swap(managed_open_or_create_impl_device_holder &)
+   {}
 };
 
 template <class DeviceAbstraction>
@@ -62,6 +65,9 @@ class managed_open_or_create_impl_device_holder<true, DeviceAbstraction>
 
    const DeviceAbstraction &get_device() const
    {  return dev; }
+
+   void swap(managed_open_or_create_impl_device_holder &other)
+   {  dev.swap(other.dev);  }
 
    private:
    DeviceAbstraction dev;
@@ -243,6 +249,7 @@ class managed_open_or_create_impl
    void swap(managed_open_or_create_impl &other)
    {
       this->m_mapped_region.swap(other.m_mapped_region);
+      this->DevHolder::swap(other);
    }
 
    bool flush()
