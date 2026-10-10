@@ -40,43 +40,59 @@ class char_wchar_holder
    char_wchar_holder(const char *nstr)
       : m_str(), m_is_wide()
    {
-      m_str.n = new char [std::strlen(nstr)+1];
-      std::strcpy(m_str.n, nstr);
+      m_str.n = priv_dup(nstr);
    }
 
    char_wchar_holder(const wchar_t *wstr)
       : m_str(), m_is_wide(true)
    {
-      m_str.w = new wchar_t [std::wcslen(wstr)+1];
-      std::wcscpy(m_str.w, wstr);
+      m_str.w = priv_dup(wstr);
+   }
+
+   char_wchar_holder(const char_wchar_holder &other)
+      : m_str(), m_is_wide(other.m_is_wide)
+   {
+      if(m_is_wide)
+         m_str.w = other.m_str.w ? priv_dup(other.m_str.w) : 0;
+      else
+         m_str.n = other.m_str.n ? priv_dup(other.m_str.n) : 0;
    }
 
    char_wchar_holder& operator=(const char *nstr)
    {
-      char *tmp = new char [std::strlen(nstr)+1];
+      //Copy before freeing: nstr might point to our own buffer
+      char *tmp = priv_dup(nstr);
       this->delete_mem();
       m_str.n = tmp;
-      std::strcpy(m_str.n, nstr);
       m_is_wide = false;
       return *this;
    }
 
    char_wchar_holder& operator=(const wchar_t *wstr)
    {
-      wchar_t *tmp = new wchar_t [std::wcslen(wstr)+1];
+      //Copy before freeing: wstr might point to our own buffer
+      wchar_t *tmp = priv_dup(wstr);
       this->delete_mem();
       m_str.w = tmp;
-      std::wcscpy(m_str.w, wstr);
       m_is_wide = true;
       return *this;
    }
 
    char_wchar_holder& operator=(const char_wchar_holder &other)
    {
-      if (other.m_is_wide)
-         *this = other.getw();
-      else
-         *this = other.getn();
+      if(this != &other){
+         if(other.m_is_wide){
+            wchar_t *tmp = other.m_str.w ? priv_dup(other.m_str.w) : 0;
+            this->delete_mem();
+            m_str.w = tmp;
+         }
+         else{
+            char *tmp = other.m_str.n ? priv_dup(other.m_str.n) : 0;
+            this->delete_mem();
+            m_str.n = tmp;
+         }
+         m_is_wide = other.m_is_wide;
+      }
       return *this;
    }
 
@@ -104,6 +120,20 @@ class char_wchar_holder
    }
 
    private:
+
+   static char *priv_dup(const char *nstr)
+   {
+      char *p = new char [std::strlen(nstr)+1];
+      std::strcpy(p, nstr);
+      return p;
+   }
+
+   static wchar_t *priv_dup(const wchar_t *wstr)
+   {
+      wchar_t *p = new wchar_t [std::wcslen(wstr)+1];
+      std::wcscpy(p, wstr);
+      return p;
+   }
 
    void delete_mem()
    {
