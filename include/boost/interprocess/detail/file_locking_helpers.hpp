@@ -65,15 +65,6 @@ struct locking_file_serial_id
    volatile boost::uint32_t modules_attached_to_gmem_count;
 };
 
-inline bool lock_locking_file(int fd)
-{
-   int ret = 0;
-   while(ret != 0 && errno == EDEADLK){
-      ret = _locking(fd, _LK_LOCK, 1/*lock_file_contents_length()*/);
-   }
-   return 0 == ret;
-}
-
 inline bool try_lock_locking_file(int fd)
 {
    return 0 == _locking(fd, _LK_NBLCK , 1);
@@ -183,20 +174,6 @@ struct locking_file_serial_id
    //done with the global memory (shared memory)
    volatile boost::uint32_t modules_attached_to_gmem_count;
 };
-
-inline bool lock_locking_file(int fd)
-{
-   int ret = 0;
-   while(ret != 0 && errno != EINTR){
-      struct flock lock;
-      lock.l_type = F_WRLCK;
-      lock.l_whence = SEEK_SET;
-      lock.l_start = 0;
-      lock.l_len = 1;
-      ret = fcntl (fd, F_SETLKW, &lock);
-   }
-   return 0 == ret;
-}
 
 inline bool try_lock_locking_file(int fd)
 {
