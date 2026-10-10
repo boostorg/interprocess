@@ -33,8 +33,9 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
+#include <boost/assert.hpp>
 #include <cstddef>
-#include <cassert>
+#include <cstdlib>
 
 #if defined(BOOST_INTERPROCESS_WINDOWS)
 #  include <boost/interprocess/detail/win32_api.hpp>
@@ -825,7 +826,7 @@ inline void thread_join(OS_thread_t thread)
 {
    int ret = pthread_join(thread, 0);
    (void)ret;
-   assert(0 == ret);
+   BOOST_ASSERT(0 == ret);
 }
 
 #endif   //#if defined (BOOST_INTERPROCESS_WINDOWS)
@@ -860,12 +861,12 @@ inline void thread_join( OS_thread_t thread)
 {
    {
       unsigned long ret = winapi::wait_for_single_object( thread.handle(), winapi::infinite_time );
-      assert(0 == ret);
+      BOOST_ASSERT(0 == ret);
       (void)ret;
    }
    {
       bool ret = winapi::close_handle(thread.handle());
-      assert(true == ret);
+      BOOST_ASSERT(true == ret);
       (void)ret;
    }
 }
@@ -903,12 +904,24 @@ class os_thread_func_ptr_deleter
    T *m_p;
 };
 
+inline void launch_thread_run(void *pv)
+{
+   os_thread_func_ptr_deleter<abstract_thread> pt( static_cast<abstract_thread *>( pv ) );
+   BOOST_INTERPROCESS_TRY{
+      pt->run();
+   }
+   BOOST_INTERPROCESS_CATCH(...){
+      //An exception must not leave the OS thread
+      //entry point (C or WinAPI frame)
+      std::abort();
+   } BOOST_INTERPROCESS_CATCH_END
+}
+
 #if defined(BOOST_INTERPROCESS_WINDOWS)
 
 inline boost::winapi::DWORD_ __stdcall launch_thread_routine(boost::winapi::LPVOID_ pv)
 {
-   os_thread_func_ptr_deleter<abstract_thread> pt( static_cast<abstract_thread *>( pv ) );
-   pt->run();
+   launch_thread_run(pv);
    return 0;
 }
 
@@ -918,8 +931,7 @@ extern "C" void * launch_thread_routine( void * pv );
 
 inline void * launch_thread_routine( void * pv )
 {
-   os_thread_func_ptr_deleter<abstract_thread> pt( static_cast<abstract_thread *>( pv ) );
-   pt->run();
+   launch_thread_run(pv);
    return 0;
 }
 
