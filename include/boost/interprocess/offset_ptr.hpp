@@ -242,6 +242,7 @@ namespace ipcdetail {
    {
       typedef pointer_offset_caster<void*, OffsetType> caster_t;
       BOOST_ASSERT(offset != 1);
+      BOOST_INTERPROCESS_ASSUME(offset != 1);
       return caster_t(offset_ptr_launder(caster_t(this_ptr).offset() + offset)).pointer();
    }
 
@@ -262,6 +263,7 @@ namespace ipcdetail {
       else{
          OffsetType offset = caster_t(ptr).offset() - caster_t(this_ptr).offset();
          BOOST_ASSERT(offset != 1);
+         BOOST_INTERPROCESS_ASSUME(offset != 1);
          return offset;
       }
    }
@@ -275,7 +277,10 @@ namespace ipcdetail {
       //See the note on the mask in offset_ptr_to_raw_pointer_branchless
       const OffsetType mask = ~(OffsetType(0) - OffsetType(ptr == 0));
       offset &= mask;
-      return ++offset;
+      ++offset;
+      BOOST_ASSERT(!ptr || offset != 1);
+      BOOST_INTERPROCESS_ASSUME(!ptr || offset != 1);
+      return offset;
    }
 
    //!Construction and assignment from a raw pointer
@@ -327,6 +332,7 @@ namespace ipcdetail {
       const OffsetType offset = caster_t(ptr).offset() - caster_t(this_ptr).offset();
       #endif
       BOOST_ASSERT(offset != 1);
+      BOOST_INTERPROCESS_ASSUME(offset != 1);
       return offset;
    }
 
@@ -347,6 +353,7 @@ namespace ipcdetail {
       else{
          const OffsetType offset = caster_t(other_ptr).offset() - caster_t(this_ptr).offset() + other_offset;
          BOOST_ASSERT(offset != 1);
+         BOOST_INTERPROCESS_ASSUME(offset != 1);
          return offset;
       }
    }
@@ -360,7 +367,10 @@ namespace ipcdetail {
       const OffsetType mask = ~(OffsetType(0) - OffsetType(other_offset == 1));
       OffsetType offset = caster_t(other_ptr).offset() - caster_t(this_ptr).offset();
       offset &= mask;
-      return offset + other_offset;
+      offset += other_offset;
+      BOOST_ASSERT(other_offset == 1 || offset != 1);
+      BOOST_INTERPROCESS_ASSUME(other_offset == 1 || offset != 1);
+      return offset;
    }
 
    //!Copy and conversion that keep the target address
@@ -429,6 +439,7 @@ namespace ipcdetail {
       BOOST_ASSERT(other_offset != 1);
       const OffsetType offset = caster_t(other_ptr).offset() - caster_t(this_ptr).offset() + other_offset;
       BOOST_ASSERT(offset != 1);
+      BOOST_INTERPROCESS_ASSUME(offset != 1);
       return offset;
    }
 

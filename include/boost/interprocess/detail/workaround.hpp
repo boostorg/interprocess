@@ -287,6 +287,33 @@
    #define BOOST_INTERPROCESS_FORCEINLINE BOOST_FORCEINLINE
 #endif
 
+#ifdef __has_builtin
+#define BOOST_INTERPROCESS_HAS_BUILTIN(x) __has_builtin(x)
+#else
+#define BOOST_INTERPROCESS_HAS_BUILTIN(x) 0
+#endif
+
+//Tells the optimizer that "cond" is always true in release builds. It does
+//not evaluate "cond" in debug builds, so pair it with BOOST_ASSERT.
+#if !defined(NDEBUG)
+#define BOOST_INTERPROCESS_ASSUME(cond)
+#elif BOOST_INTERPROCESS_HAS_BUILTIN(__builtin_assume)
+#define BOOST_INTERPROCESS_ASSUME(cond) __builtin_assume(cond)
+#elif defined(__GNUC__) || \
+      BOOST_INTERPROCESS_HAS_BUILTIN(__builtin_unreachable)
+#define BOOST_INTERPROCESS_ASSUME(cond) \
+  do{                                    \
+    if(!(cond)) __builtin_unreachable(); \
+  } while(0)
+#elif defined(_MSC_VER)
+#define BOOST_INTERPROCESS_ASSUME(cond) __assume(cond)
+#else
+#define BOOST_INTERPROCESS_ASSUME(cond) \
+  do{                                    \
+    static_cast<void>(false && (cond));  \
+  } while(0)
+#endif
+
 #ifdef BOOST_WINDOWS
 
 #define BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
