@@ -117,6 +117,7 @@ class robust_mutex_lock_file
       while(1){
          bool acquired;
          if(!try_acquire_file_lock(fd, acquired) || !acquired ){
+            close_file(fd);
             throw interprocess_exception(other_error, "Robust emulation robust_mutex_lock_file constructor failed: try_acquire_file_lock");
          }
          //Creating exclusively must fail with already_exists_error
