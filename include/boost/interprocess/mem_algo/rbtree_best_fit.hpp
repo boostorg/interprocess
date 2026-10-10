@@ -1245,6 +1245,8 @@ void* rbtree_best_fit<MutexFamily, VoidPointer, MemAlignment>::priv_check_and_al
    size_type upper_nunits = nunits + BlockCtrlUnits;
    imultiset_iterator it_old = Imultiset::s_iterator_to(*block);
    algo_impl_t::assert_alignment(block);
+   BOOST_ASSERT(block->m_size >= nunits);
+   BOOST_INTERPROCESS_ASSUME(block->m_size >= nunits);
 
    if (block->m_size >= upper_nunits){
       //This block is bigger than needed, split it in

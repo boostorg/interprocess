@@ -103,6 +103,7 @@ class memory_algorithm_common
    {
       (void)uint_ptr;
       BOOST_ASSERT(uint_ptr % Alignment == 0);
+      BOOST_INTERPROCESS_ASSUME(uint_ptr % Alignment == 0);
    }
 
    static bool check_alignment(const void *ptr)
