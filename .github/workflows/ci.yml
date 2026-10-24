@@ -489,6 +489,18 @@ jobs:
           - toolset: clang
             cxxstd: "11,14,17,20,23,2c"
             os: macos-26
+          #------------------
+          # CMake: "cmake_tests: 1" builds and runs test/CMakeLists.txt
+          # with ctest instead of b2. "compiler" selects the compiler
+          #------------------
+          - name: CMake
+            cmake_tests: 1
+            compiler: g++
+            os: ubuntu-latest
+          - name: CMake
+            cmake_tests: 1
+            compiler: clang++
+            os: ubuntu-latest
 
     timeout-minutes: 240
     runs-on: ${{matrix.os}}
@@ -660,16 +672,20 @@ jobs:
             git submodule update --init tools/boostdep
             DEPINST_ARGS+=("$LIBRARY")
             python tools/boostdep/depinst/depinst.py -C "${DEPINST_ARGS[@]}"
-            ./bootstrap.sh
-            ./b2 headers
-            if [ -n "${{matrix.compiler}}" -o -n "$GCC_TOOLCHAIN_ROOT" ]
+            #b2 is not used by the CMake runners
+            if [ -z "${{matrix.cmake_tests}}" ]
             then
-                echo -n "using ${{matrix.toolset}} : : ${{matrix.compiler}}" > ~/user-config.jam
-                if [ -n "$GCC_TOOLCHAIN_ROOT" ]
+                ./bootstrap.sh
+                ./b2 headers
+                if [ -n "${{matrix.compiler}}" -o -n "$GCC_TOOLCHAIN_ROOT" ]
                 then
-                    echo -n " : <compileflags>\"--gcc-toolchain=$GCC_TOOLCHAIN_ROOT\" <linkflags>\"--gcc-toolchain=$GCC_TOOLCHAIN_ROOT\"" >> ~/user-config.jam
+                    echo -n "using ${{matrix.toolset}} : : ${{matrix.compiler}}" > ~/user-config.jam
+                    if [ -n "$GCC_TOOLCHAIN_ROOT" ]
+                    then
+                        echo -n " : <compileflags>\"--gcc-toolchain=$GCC_TOOLCHAIN_ROOT\" <linkflags>\"--gcc-toolchain=$GCC_TOOLCHAIN_ROOT\"" >> ~/user-config.jam
+                    fi
+                    echo " ;" >> ~/user-config.jam
                 fi
-                echo " ;" >> ~/user-config.jam
             fi
 
       - name: Run tests
@@ -738,6 +754,17 @@ jobs:
 
             B2_ARGS+=("libs/$LIBRARY/test")
             ./b2 "${B2_ARGS[@]}"
+
+      # The superproject test procedure (tools/cmake/README.md, "Testing Boost
+      # with CMake") applied to this library only
+      - name: Run CMake tests
+        if: matrix.cmake_tests
+        run: |
+            cd boost-root
+            mkdir __build__ && cd __build__
+            cmake -DBOOST_INCLUDE_LIBRARIES=$LIBRARY -DBUILD_TESTING=ON -DCMAKE_CXX_COMPILER=${{matrix.compiler}} ..
+            cmake --build . --target tests -j $BUILD_JOBS
+            ctest --output-on-failure --no-tests=error -j $BUILD_JOBS
 
   # NVIDIA HPC SDK (nvc++), an EDG-based C++ front-end
   nvhpc:
@@ -934,6 +961,15 @@ jobs:
             addrmd: 64
             os: windows-11-vs2026-arm
             arm64ec: 1
+         #CMake: "cmake_tests: 1" builds and runs test/CMakeLists.txt
+         #with ctest instead of b2. "cmake_args" is passed to the configure step
+          - name: CMake
+            cmake_tests: 1
+            os: windows-2022
+          - name: CMake
+            cmake_tests: 1
+            cmake_args: -G "MinGW Makefiles"
+            os: windows-2025
 
     timeout-minutes: 240
     runs-on: ${{matrix.os}}
@@ -973,16 +1009,36 @@ jobs:
             rmdir /s /q "..\snapshot"
             git submodule update --init tools/boostdep
             python tools/boostdep/depinst/depinst.py -C --git_args "--jobs %GIT_FETCH_JOBS%" %LIBRARY%
-            cmd /c bootstrap
-            b2 -d0 headers
+            rem b2 is not used by the CMake runners
+            if "${{matrix.cmake_tests}}" == "" (
+                cmd /c bootstrap
+                b2 -d0 headers
+            )
 
       - name: Run tests
+        if: matrix.cmake_tests == ''
         shell: cmd
         run: |
             cd boost-root
             set B2_ARM64EC=
             if not "${{matrix.arm64ec}}" == "" set B2_ARM64EC=architecture=arm cflags=/arm64EC linkflags=/MACHINE:ARM64EC
             b2 -j %NUMBER_OF_PROCESSORS% libs/%LIBRARY%/test toolset=${{matrix.toolset}} cxxstd=${{matrix.cxxstd}} address-model=${{matrix.addrmd}} variant=debug,release embed-manifest-via=linker debug-symbols=off %B2_ARM64EC%
+
+      # The superproject test procedure (tools/cmake/README.md, "Testing Boost
+      # with CMake") applied to this library only. A single-config generator
+      # (cmake_args: -G "MinGW Makefiles") builds once and runs the tests twice
+      - name: Run CMake tests
+        if: matrix.cmake_tests
+        shell: bash
+        run: |
+            cd boost-root
+            mkdir __build__ && cd __build__
+            cmake -DBOOST_INCLUDE_LIBRARIES=$LIBRARY -DBUILD_TESTING=ON ${{matrix.cmake_args}} ..
+            for CONFIG in Debug Release
+            do
+                cmake --build . --target tests --config $CONFIG -j $NUMBER_OF_PROCESSORS
+                ctest --output-on-failure --no-tests=error -C $CONFIG -j $NUMBER_OF_PROCESSORS
+            done
 
   cygwin:
     defaults:
