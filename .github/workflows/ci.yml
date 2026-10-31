@@ -692,7 +692,8 @@ jobs:
         if: matrix.cmake_tests == ''
         run: |
             cd boost-root
-            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}")
+            #Delete the object files and executables of the passed tests, so the runner disk does not fill up
+            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}" "--remove-test-targets")
             #Build variant
             if [ -n "${{matrix.build_variant}}" ]
             then
@@ -910,7 +911,8 @@ jobs:
             # claimed the requested standard. 98/03/0x/11/1y/14/1z/17 do map correctly,
             # so those are the ones tested here. Raise this once the mapping is fixed
             # upstream; nvc++ itself accepts -std=c++20, c++23 and c++26 just fine.
-            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=pgi" "debug-symbols=off")
+            #Delete the object files and executables of the passed tests, so the runner disk does not fill up
+            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=pgi" "debug-symbols=off" "--remove-test-targets")
             B2_ARGS+=("variant=$DEFAULT_BUILD_VARIANT")
             B2_ARGS+=("cxxstd=${{matrix.cxxstd}}")
             B2_ARGS+=("libs/$LIBRARY/test")
@@ -1022,7 +1024,8 @@ jobs:
             cd boost-root
             set B2_ARM64EC=
             if not "${{matrix.arm64ec}}" == "" set B2_ARM64EC=architecture=arm cflags=/arm64EC linkflags=/MACHINE:ARM64EC
-            b2 -j %NUMBER_OF_PROCESSORS% libs/%LIBRARY%/test toolset=${{matrix.toolset}} cxxstd=${{matrix.cxxstd}} address-model=${{matrix.addrmd}} variant=debug,release embed-manifest-via=linker debug-symbols=off %B2_ARM64EC%
+            rem --remove-test-targets: delete the object files and executables of the passed tests, so the runner disk does not fill up
+            b2 -j %NUMBER_OF_PROCESSORS% --remove-test-targets libs/%LIBRARY%/test toolset=${{matrix.toolset}} cxxstd=${{matrix.cxxstd}} address-model=${{matrix.addrmd}} variant=debug,release embed-manifest-via=linker debug-symbols=off %B2_ARM64EC%
 
       # The superproject test procedure (tools/cmake/README.md, "Testing Boost
       # with CMake") applied to this library only. A single-config generator
@@ -1125,7 +1128,8 @@ jobs:
             /usr/sbin/cygserver &
             sleep 2
             cd boost-root
-            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}")
+            #Delete the object files and executables of the passed tests, so the runner disk does not fill up
+            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}" "--remove-test-targets")
             #Build variant
             if [ -n "${{matrix.build_variant}}" ]
             then
@@ -1325,7 +1329,8 @@ jobs:
                 echo " ;" >> ~/user-config.jam
             fi
             # Run tests
-            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}")
+            #Delete the object files and executables of the passed tests, so the runner disk does not fill up
+            B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}" "--remove-test-targets")
             #Build variant
             if [ -n "${{matrix.build_variant}}" ]
             then
