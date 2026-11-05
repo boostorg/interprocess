@@ -177,6 +177,7 @@ jobs:
             cxxstd: "03,11,14,17,20,23,26"
             cxxflags: -pipe
             tsan: 1
+            container_options: --security-opt seccomp=unconfined
             os: ubuntu-latest
             container: ubuntu:26.04
             install: g++-16
@@ -457,6 +458,7 @@ jobs:
             cxxflags: -pipe -stdlib=libc++
             linkflags: -stdlib=libc++
             tsan: 1
+            container_options: --security-opt seccomp=unconfined
             os: ubuntu-latest
             container: ubuntu:26.04
             install:
@@ -504,7 +506,11 @@ jobs:
 
     timeout-minutes: 240
     runs-on: ${{matrix.os}}
-    container: ${{matrix.container}}
+    container:
+      image: ${{matrix.container}}
+      #TSan runs the test again without ASLR (personality), which the default
+      #seccomp profile of Docker does not allow
+      options: ${{matrix.container_options}}
 
     steps:
       - name: Setup environment
