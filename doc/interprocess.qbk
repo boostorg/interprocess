@@ -7020,6 +7020,14 @@ thank them:
    * [@https://github.com/boostorg/interprocess/pull/282   GitHub #282 (['"Improvements on rbtree_best_fit::check_sanity"])].
    * [@https://github.com/boostorg/interprocess/issues/283 GitHub #283 (['"Regression on macOS: pthread_threadid_np was not declared"])].
 
+* A systematic, AI-assisted review of the library found and fixed bugs that users did
+  not report. The main types of bugs are:
+   * Resource ownership: a file descriptor leak, `managed_xsi_shared_memory` move and swap that did not transfer
+     the XSI device, and a shallow copy and unsafe self-assignment in the internal `char`/`wchar_t` name holder.
+   * Synchronization: kernel object name collisions in the Windows native synchronization primitives,
+     incorrect mutex state detection, unlimited retries in the POSIX `open_or_create` create/unlink race,
+     incorrect SMT pause instructions on ARM and name errors for macOS.
+   * Missing includes that were only included indirectly.
 
 
 [endsect]
