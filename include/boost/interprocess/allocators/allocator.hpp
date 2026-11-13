@@ -159,10 +159,10 @@ class allocator
    pointer allocate(size_type count, cvoid_ptr hint = 0)
    {
       (void)hint;
-      if(size_overflows<sizeof(T)>(count)){
+      if(size_overflows<sizeof_value<T>::value>(count)){
          throw bad_alloc();
       }
-      return pointer(static_cast<value_type*>(mp_mngr->allocate_aligned(count*sizeof(T), boost::container::dtl::alignment_of<T>::value)));
+      return pointer(static_cast<value_type*>(mp_mngr->allocate_aligned(count*sizeof_value<T>::value, alignof_value<T>::value)));
    }
 
    //!Deallocates memory previously allocated.
@@ -206,7 +206,7 @@ class allocator
    //!Returns the number of elements that could be allocated.
    //!Never throws
    size_type max_size() const
-   {  return mp_mngr->get_size()/sizeof(T);   }
+   {  return mp_mngr->get_size()/sizeof_value<T>::value;   }
 
    //!Swap segment manager. Does not throw. If each allocator is placed in
    //!different memory segments, the result is undefined.
@@ -221,17 +221,22 @@ class allocator
    BOOST_DEPRECATED("This function is deprecated and will be removed in the future")
    size_type size(const pointer &p) const
    {
-      return (size_type)mp_mngr->size(ipcdetail::to_raw_pointer(p))/sizeof(T);
+      return (size_type)mp_mngr->size(ipcdetail::to_raw_pointer(p))/sizeof_value<T>::value;
    }
 
    BOOST_INTERPROCESS_NODISCARD
    pointer allocation_command(boost::interprocess::allocation_type command,
                            size_type limit_size, size_type &prefer_in_recvd_out_size, pointer &reuse)
    {
-      value_type *reuse_raw = ipcdetail::to_raw_pointer(reuse);
-      pointer const p = mp_mngr->allocation_command(command, limit_size, prefer_in_recvd_out_size, reuse_raw);
-      reuse = reuse_raw;
-      return p;
+      //Pass the size and alignment of the value type explicitly instead of
+      //calling the typed overload, because that overload uses sizeof(T)
+      //and can not be instantiated for allocator<void>
+      void *reuse_raw = ipcdetail::to_raw_pointer(reuse);
+      void * const ret = mp_mngr->allocation_command
+         (command, limit_size, prefer_in_recvd_out_size, reuse_raw, sizeof_value<T>::value, alignof_value<T>::value);
+      BOOST_ASSERT(0 == ((std::size_t)ret % alignof_value<T>::value));
+      reuse = static_cast<value_type*>(reuse_raw);
+      return pointer(static_cast<value_type*>(ret));
    }
 
    //!Allocates many elements of size elem_size in a contiguous block
@@ -244,10 +249,10 @@ class allocator
    BOOST_DEPRECATED("This function is deprecated and will be removed in the future")
    void allocate_many(size_type elem_size, size_type num_elements, multiallocation_chain &chain)
    {
-      if(size_overflows<sizeof(T)>(elem_size)){
+      if(size_overflows<sizeof_value<T>::value>(elem_size)){
          throw bad_alloc();
       }
-      mp_mngr->allocate_many(elem_size*sizeof(T), num_elements, boost::container::dtl::alignment_of<T>::value, chain);
+      mp_mngr->allocate_many(elem_size*sizeof_value<T>::value, num_elements, alignof_value<T>::value, chain);
    }
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
@@ -257,7 +262,7 @@ class allocator
    BOOST_DEPRECATED("This function is deprecated and will be removed in the future")
    void allocate_many(const size_type *elem_sizes, size_type n_elements, multiallocation_chain &chain)
    {
-      mp_mngr->allocate_many(elem_sizes, n_elements, sizeof(T), boost::container::dtl::alignment_of<T>::value, chain);
+      mp_mngr->allocate_many(elem_sizes, n_elements, sizeof_value<T>::value, alignof_value<T>::value, chain);
    }
 
    //!Allocates many elements of size elem_size in a contiguous block
@@ -285,7 +290,7 @@ class allocator
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
    void allocate_individual(size_type num_elements, multiallocation_chain &chain)
-   {  mp_mngr->allocate_many(sizeof(T), num_elements, boost::container::dtl::alignment_of<T>::value, chain);  }
+   {  mp_mngr->allocate_many(sizeof_value<T>::value, num_elements, alignof_value<T>::value, chain);  }
 
    //!Deallocates memory previously allocated with allocate_one().
    //!You should never use deallocate_one to deallocate memory allocated
