@@ -333,6 +333,20 @@ bool operator!=(const allocator<T, SegmentManager>  &alloc1,
                 const allocator<T, SegmentManager>  &alloc2)
    {  return alloc1.get_segment_manager() != alloc2.get_segment_manager(); }
 
+//!Equality test for allocators with different value types.
+//!Allocators are equal if the segment managers are equal.
+template<class T1, class T2, class SegmentManager> inline
+bool operator==(const allocator<T1, SegmentManager>  &alloc1,
+                const allocator<T2, SegmentManager>  &alloc2)
+   {  return alloc1.get_segment_manager() == alloc2.get_segment_manager(); }
+
+//!Inequality test for allocators with different value types
+//!Allocators are unequal if the segment managers are unequal.
+template<class T1, class T2, class SegmentManager> inline
+bool operator!=(const allocator<T1, SegmentManager>  &alloc1,
+                const allocator<T2, SegmentManager>  &alloc2)
+   {  return alloc1.get_segment_manager() != alloc2.get_segment_manager(); }
+
 }  //namespace interprocess {
 
 #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)

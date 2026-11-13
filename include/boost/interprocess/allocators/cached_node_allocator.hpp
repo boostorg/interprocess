@@ -367,6 +367,20 @@ bool operator!=(const cached_node_allocator<T, S, NPC> &alloc1,
 
 #endif
 
+//!Equality test for cached_node_allocator with different value types.
+//!Allocators are equal if the segment managers are equal.
+template<class T1, class T2, class S, std::size_t NPC> inline
+bool operator==(const cached_node_allocator<T1, S, NPC> &alloc1,
+                const cached_node_allocator<T2, S, NPC> &alloc2)
+   {  return alloc1.get_segment_manager() == alloc2.get_segment_manager(); }
+
+//!Inequality test for cached_node_allocator with different value types.
+//!Allocators are unequal if the segment managers are unequal.
+template<class T1, class T2, class S, std::size_t NPC> inline
+bool operator!=(const cached_node_allocator<T1, S, NPC> &alloc1,
+                const cached_node_allocator<T2, S, NPC> &alloc2)
+   {  return alloc1.get_segment_manager() != alloc2.get_segment_manager(); }
+
 }  //namespace interprocess {
 }  //namespace boost {
 

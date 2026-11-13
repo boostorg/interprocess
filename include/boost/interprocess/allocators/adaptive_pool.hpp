@@ -240,6 +240,20 @@ bool operator!=(const adaptive_pool_base<V, T, S, NPC, F, OP> &alloc1,
                 const adaptive_pool_base<V, T, S, NPC, F, OP> &alloc2)
    {  return alloc1.get_node_pool() != alloc2.get_node_pool(); }
 
+//!Equality test for adaptive_pool_base with different value types.
+//!Allocators are equal if the segment managers are equal.
+template<unsigned int V, class T1, class T2, class S, std::size_t NPC, std::size_t F, unsigned char OP> inline
+bool operator==(const adaptive_pool_base<V, T1, S, NPC, F, OP> &alloc1,
+                const adaptive_pool_base<V, T2, S, NPC, F, OP> &alloc2)
+   {  return alloc1.get_segment_manager() == alloc2.get_segment_manager(); }
+
+//!Inequality test for adaptive_pool_base with different value types.
+//!Allocators are unequal if the segment managers are unequal.
+template<unsigned int V, class T1, class T2, class S, std::size_t NPC, std::size_t F, unsigned char OP> inline
+bool operator!=(const adaptive_pool_base<V, T1, S, NPC, F, OP> &alloc1,
+                const adaptive_pool_base<V, T2, S, NPC, F, OP> &alloc2)
+   {  return alloc1.get_segment_manager() != alloc2.get_segment_manager(); }
+
 template < class T
          , class SegmentManager
          , std::size_t NodesPerBlock = 64
@@ -523,6 +537,17 @@ bool operator==(const adaptive_pool<T, S, NodesPerBlock, F, OP> &alloc1,
 template<class T, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
 bool operator!=(const adaptive_pool<T, S, NodesPerBlock, F, OP> &alloc1,
                 const adaptive_pool<T, S, NodesPerBlock, F, OP> &alloc2);
+
+//!Equality test for adaptive_pool with different value types.
+//!True if both use the same segment manager.
+template<class T1, class T2, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
+bool operator==(const adaptive_pool<T1, S, NodesPerBlock, F, OP> &alloc1,
+                const adaptive_pool<T2, S, NodesPerBlock, F, OP> &alloc2);
+
+//!Inequality test for adaptive_pool with different value types.
+template<class T1, class T2, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
+bool operator!=(const adaptive_pool<T1, S, NodesPerBlock, F, OP> &alloc1,
+                const adaptive_pool<T2, S, NodesPerBlock, F, OP> &alloc2);
 
 #endif
 

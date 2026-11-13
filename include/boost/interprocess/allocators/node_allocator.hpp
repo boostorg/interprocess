@@ -235,6 +235,20 @@ bool operator!=(const node_allocator_base<V, T, S, NPC> &alloc1,
                 const node_allocator_base<V, T, S, NPC> &alloc2)
    {  return alloc1.get_node_pool() != alloc2.get_node_pool(); }
 
+//!Equality test for node_allocator_base with different value types.
+//!Allocators are equal if the segment managers are equal.
+template<unsigned int V, class T1, class T2, class S, std::size_t NPC> inline
+bool operator==(const node_allocator_base<V, T1, S, NPC> &alloc1,
+                const node_allocator_base<V, T2, S, NPC> &alloc2)
+   {  return alloc1.get_segment_manager() == alloc2.get_segment_manager(); }
+
+//!Inequality test for node_allocator_base with different value types.
+//!Allocators are unequal if the segment managers are unequal.
+template<unsigned int V, class T1, class T2, class S, std::size_t NPC> inline
+bool operator!=(const node_allocator_base<V, T1, S, NPC> &alloc1,
+                const node_allocator_base<V, T2, S, NPC> &alloc2)
+   {  return alloc1.get_segment_manager() != alloc2.get_segment_manager(); }
+
 template < class T
          , class SegmentManager
          , std::size_t NodesPerBlock = 64
@@ -501,6 +515,17 @@ bool operator==(const node_allocator<T, S, NPC> &alloc1,
 template<class T, class S, std::size_t NPC> inline
 bool operator!=(const node_allocator<T, S, NPC> &alloc1,
                 const node_allocator<T, S, NPC> &alloc2);
+
+//!Equality test for node_allocator with different value types.
+//!True if both use the same segment manager.
+template<class T1, class T2, class S, std::size_t NPC> inline
+bool operator==(const node_allocator<T1, S, NPC> &alloc1,
+                const node_allocator<T2, S, NPC> &alloc2);
+
+//!Inequality test for node_allocator with different value types.
+template<class T1, class T2, class S, std::size_t NPC> inline
+bool operator!=(const node_allocator<T1, S, NPC> &alloc1,
+                const node_allocator<T2, S, NPC> &alloc2);
 
 #endif
 

@@ -15,6 +15,7 @@
 #include "movable_int.hpp"
 #include "list_test.hpp"
 #include "vector_test.hpp"
+#include "allocator_test_utils.hpp"
 
 using namespace boost::interprocess;
 
@@ -84,6 +85,10 @@ int main ()
    if(test::vector_test<managed_shared_memory, MyOShmVector>())
       return 1;*/
    if(test::vector_test<managed_shared_memory, MyOShmVectorV1>())
+      return 1;
+
+   if(test::allocator_compare_test
+      < node_allocator<int, managed_heap_memory::segment_manager> >())
       return 1;
 
    return 0;

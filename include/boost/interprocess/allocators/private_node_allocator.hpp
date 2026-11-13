@@ -230,6 +230,21 @@ bool operator!=(const private_node_allocator_base<V, T, S, NPC> &alloc1,
                 const private_node_allocator_base<V, T, S, NPC> &alloc2)
 {  return &alloc1 != &alloc2; }
 
+//!Equality test for private_node_allocator_base with different value types.
+//!Always false: a rebound copy creates a new private pool, so memory
+//!allocated by one allocator can not be deallocated by the other.
+template<unsigned int V, class T1, class T2, class S, std::size_t NPC> inline
+bool operator==(const private_node_allocator_base<V, T1, S, NPC> &,
+                const private_node_allocator_base<V, T2, S, NPC> &)
+{  return false; }
+
+//!Inequality test for private_node_allocator_base with different value types.
+//!Always true.
+template<unsigned int V, class T1, class T2, class S, std::size_t NPC> inline
+bool operator!=(const private_node_allocator_base<V, T1, S, NPC> &,
+                const private_node_allocator_base<V, T2, S, NPC> &)
+{  return true; }
+
 template < class T
          , class SegmentManager
          , std::size_t NodesPerBlock = 64
@@ -522,6 +537,18 @@ bool operator==(const private_node_allocator<T, S, NodesPerBlock, F, OP> &alloc1
 template<class T, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
 bool operator!=(const private_node_allocator<T, S, NodesPerBlock, F, OP> &alloc1,
                 const private_node_allocator<T, S, NodesPerBlock, F, OP> &alloc2);
+
+//!Equality test for private_node_allocator with different value types.
+//!Always false: a rebound copy creates a new private pool.
+template<class T1, class T2, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
+bool operator==(const private_node_allocator<T1, S, NodesPerBlock, F, OP> &alloc1,
+                const private_node_allocator<T2, S, NodesPerBlock, F, OP> &alloc2);
+
+//!Inequality test for private_node_allocator with different value types.
+//!Always true.
+template<class T1, class T2, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
+bool operator!=(const private_node_allocator<T1, S, NodesPerBlock, F, OP> &alloc1,
+                const private_node_allocator<T2, S, NodesPerBlock, F, OP> &alloc2);
 
 #endif
 

@@ -397,6 +397,20 @@ bool operator!=(const cached_adaptive_pool<T, S, NodesPerBlock, F, OP> &alloc1,
 
 #endif
 
+//!Equality test for cached_adaptive_pool with different value types.
+//!Allocators are equal if the segment managers are equal.
+template<class T1, class T2, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
+bool operator==(const cached_adaptive_pool<T1, S, NodesPerBlock, F, OP> &alloc1,
+                const cached_adaptive_pool<T2, S, NodesPerBlock, F, OP> &alloc2)
+   {  return alloc1.get_segment_manager() == alloc2.get_segment_manager(); }
+
+//!Inequality test for cached_adaptive_pool with different value types.
+//!Allocators are unequal if the segment managers are unequal.
+template<class T1, class T2, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
+bool operator!=(const cached_adaptive_pool<T1, S, NodesPerBlock, F, OP> &alloc1,
+                const cached_adaptive_pool<T2, S, NodesPerBlock, F, OP> &alloc2)
+   {  return alloc1.get_segment_manager() != alloc2.get_segment_manager(); }
+
 }  //namespace interprocess {
 }  //namespace boost {
 
