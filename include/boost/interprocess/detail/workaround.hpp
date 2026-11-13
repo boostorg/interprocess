@@ -299,6 +299,17 @@
 #define BOOST_INTERPROCESS_ASSUME(cond)
 #elif BOOST_INTERPROCESS_HAS_BUILTIN(__builtin_assume)
 #define BOOST_INTERPROCESS_ASSUME(cond) __builtin_assume(cond)
+#elif defined(BOOST_GCC) && defined(__SEH__) && (BOOST_GCC < 150000)
+//With SEH unwinding (x64 MinGW), GCC 14 breaks exception handling at -O3
+//with "if(!(cond)) __builtin_unreachable()". GCC 15 is not affected.
+//The attribute is not used on other platforms because it gives slower
+//offset_ptr code than the __builtin_unreachable form. GCCs older than 13
+//do not have the attribute.
+#if BOOST_GCC >= 130000
+#define BOOST_INTERPROCESS_ASSUME(cond) __attribute__((assume(cond)))
+#else
+#define BOOST_INTERPROCESS_ASSUME(cond)
+#endif
 #elif defined(__GNUC__) || \
       BOOST_INTERPROCESS_HAS_BUILTIN(__builtin_unreachable)
 #define BOOST_INTERPROCESS_ASSUME(cond) \
