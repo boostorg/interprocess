@@ -214,7 +214,8 @@ class segment_manager_base
    {
       size_type prev_size = chain.size();
       MemoryAlgorithm::allocate_many(elem_bytes, n_elements, alignment, chain);
-      if(!elem_bytes || chain.size() == prev_size){
+      //A request for 0 elements is not an error, although the chain does not grow
+      if(n_elements && (!elem_bytes || chain.size() == prev_size)){
          throw bad_alloc();
       }
    }
@@ -226,7 +227,8 @@ class segment_manager_base
    {
       size_type prev_size = chain.size();
       MemoryAlgorithm::allocate_many(element_lengths, n_elements, sizeof_element, alignment, chain);
-      if(!sizeof_element || chain.size() == prev_size){
+      //A request for 0 elements is not an error, although the chain does not grow
+      if(n_elements && (!sizeof_element || chain.size() == prev_size)){
          throw bad_alloc();
       }
    }
