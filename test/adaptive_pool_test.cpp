@@ -84,9 +84,26 @@ int main ()
    if(test::vector_test<managed_shared_memory, MyOShmVectorV1>())
       return 1;
 
-   if(test::allocator_compare_test
-      < adaptive_pool<int, managed_heap_memory::segment_manager> >())
-      return 1;
+   //Tests for the allocator interface
+   {
+      typedef managed_heap_memory::segment_manager heap_sm_t;
+      //Copies share the pool of the segment, so nothing propagates
+      test::propagation_traits_test< adaptive_pool<int, heap_sm_t>, false, false, false, false>();
+      if(test::allocator_compare_test< adaptive_pool<int, heap_sm_t> >())
+         return 1;
+      if(test::void_allocator_test< adaptive_pool<void, heap_sm_t> >())
+         return 1;
+      if(test::container_transfer_test< adaptive_pool<int, heap_sm_t> >())
+         return 1;
+      if(test::allocate_throws_bad_alloc_test< adaptive_pool<int, heap_sm_t> >())
+         return 1;
+      if(test::extended_pool_allocator_test< adaptive_pool<int, heap_sm_t> >("adaptive_pool<int>"))
+         return 1;
+      if(test::extended_pool_allocator_test< adaptive_pool<double, heap_sm_t> >("adaptive_pool<double>"))
+         return 1;
+      if(test::extended_pool_allocator_test< adaptive_pool<oint_t, heap_sm_t> >("adaptive_pool<overaligned>"))
+         return 1;
+   }
 
    return 0;
 }

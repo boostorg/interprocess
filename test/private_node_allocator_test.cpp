@@ -82,9 +82,28 @@ int main ()
    if(test::vector_test<managed_shared_memory, MyOShmVectorV1>())
       return 1;
 
-   if(test::allocator_compare_test
-      < private_node_allocator<int, managed_heap_memory::segment_manager> >(false))
-      return 1;
+   //Tests for the allocator interface
+   {
+      typedef managed_heap_memory::segment_manager heap_sm_t;
+      //Each copy has its own pool, so the allocator moves with the nodes
+      test::propagation_traits_test< private_node_allocator<int, heap_sm_t>, false, true, true, false>();
+      if(test::allocator_compare_test< private_node_allocator<int, heap_sm_t> >(false))
+         return 1;
+      if(test::void_allocator_test< private_node_allocator<void, heap_sm_t> >(false))
+         return 1;
+      if(test::container_transfer_test< private_node_allocator<int, heap_sm_t> >())
+         return 1;
+      if(test::private_allocator_move_test< private_node_allocator<int, heap_sm_t> >())
+         return 1;
+      if(test::allocate_throws_bad_alloc_test< private_node_allocator<int, heap_sm_t> >())
+         return 1;
+      if(test::extended_pool_allocator_test< private_node_allocator<int, heap_sm_t> >("private_node_allocator<int>"))
+         return 1;
+      if(test::extended_pool_allocator_test< private_node_allocator<double, heap_sm_t> >("private_node_allocator<double>"))
+         return 1;
+      if(test::extended_pool_allocator_test< private_node_allocator<oint_t, heap_sm_t> >("private_node_allocator<overaligned>"))
+         return 1;
+   }
 
    return 0;
 }

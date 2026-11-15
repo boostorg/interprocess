@@ -80,10 +80,6 @@ int main ()
    if(test::vector_test<managed_shared_memory, MyOShmVectorV1>())
       return 1;
 
-   if(test::allocator_compare_test
-      < allocator<int, managed_heap_memory::segment_manager> >())
-      return 1;
-
    //allocator<void> is used as a type erased allocator: it must convert
    //to and from allocators of other value types and compare with them
    {
@@ -100,6 +96,27 @@ int main ()
       boost::container::vector<int, int_alloc_t> v(va);
       v.push_back(1);
       if(v.get_allocator() != va)
+         return 1;
+   }
+
+   //Tests for the allocator interface
+   {
+      typedef managed_heap_memory::segment_manager heap_sm_t;
+      //Copies share the pool of the segment, so nothing propagates
+      test::propagation_traits_test< allocator<int, heap_sm_t>, false, false, false, false>();
+      if(test::allocator_compare_test< allocator<int, heap_sm_t> >())
+         return 1;
+      if(test::void_allocator_test< allocator<void, heap_sm_t> >())
+         return 1;
+      if(test::container_transfer_test< allocator<int, heap_sm_t> >())
+         return 1;
+      if(test::allocate_throws_bad_alloc_test< allocator<int, heap_sm_t> >())
+         return 1;
+      if(test::extended_allocator_test< allocator<int, heap_sm_t> >("allocator<int>"))
+         return 1;
+      if(test::extended_allocator_test< allocator<double, heap_sm_t> >("allocator<double>"))
+         return 1;
+      if(test::extended_allocator_test< allocator<oint_t, heap_sm_t> >("allocator<overaligned>"))
          return 1;
    }
 
