@@ -26,6 +26,7 @@
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/allocators/detail/allocator_common.hpp>
 #include <boost/container/detail/node_pool_impl.hpp>
+#include <boost/move/core.hpp>
 #include <cstddef>
 
 
@@ -53,10 +54,8 @@ class private_node_pool
 {
    typedef boost::container::dtl::private_node_pool_impl
       <typename SegmentManager::segment_manager_base_type> base_t;
-   //Non-copyable
    private_node_pool();
-   private_node_pool(const private_node_pool &);
-   private_node_pool &operator=(const private_node_pool &);
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(private_node_pool)
 
    public:
    typedef SegmentManager              segment_manager;
@@ -72,6 +71,21 @@ class private_node_pool
    private_node_pool(segment_manager *segment_mngr)
       :  base_t(segment_mngr, NodeSize, NodesPerBlock, NodeAlign)
    {}
+
+   //!Move constructor: takes the blocks of other, which is left without blocks.
+   //!Never throws
+   private_node_pool(BOOST_RV_REF(private_node_pool) other)
+      :  base_t(BOOST_MOVE_BASE(base_t, other))
+   {}
+
+   //!Move assignment: deallocates the blocks of *this and takes the blocks of other,
+   //!which is left without blocks. All nodes allocated from *this must be
+   //!deallocated before. Never throws
+   private_node_pool &operator=(BOOST_RV_REF(private_node_pool) other)
+   {
+      base_t::operator=(BOOST_MOVE_BASE(base_t, other));
+      return *this;
+   }
 
    //!Returns the segment manager. Never throws
    segment_manager* get_segment_manager() const

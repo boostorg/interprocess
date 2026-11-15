@@ -32,10 +32,12 @@
 #include <boost/container/detail/multiallocation_chain.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
 
 #include <boost/container/uses_allocator_construction.hpp>
 
 #include <boost/move/adl_move_swap.hpp>
+#include <boost/move/utility_core.hpp>
 #include <cstddef>
 
 //!\file
@@ -102,6 +104,13 @@ class private_node_allocator_base
       <private_node_allocator_base, Version>              version;
    typedef boost::container::dtl::transform_multiallocation_chain
       <typename SegmentManager::multiallocation_chain, T>multiallocation_chain;
+   //!Each copy of the allocator has its own pool, and the nodes must be deallocated
+   //!with the pool that allocated them. So the allocator moves with the nodes
+   //!when containers are move assigned or swapped.
+   typedef ipcdetail::false_type                         propagate_on_container_copy_assignment;
+   typedef ipcdetail::true_type                          propagate_on_container_move_assignment;
+   typedef ipcdetail::true_type                          propagate_on_container_swap;
+   typedef ipcdetail::false_type                         is_always_equal;
 
    //!Obtains node_allocator from other node_allocator
    template<class T2>
@@ -149,9 +158,16 @@ class private_node_allocator_base
 
    //!Move constructor from other private_node_allocator_base. Never throws
    private_node_allocator_base(BOOST_RV_REF(private_node_allocator_base) other)
-      : m_node_pool(other.get_segment_manager())
+      : m_node_pool(boost::move(BOOST_MOVE_TO_LV(other).m_node_pool))
+   {}
+
+   //!Move assignment: *this takes the pool of other. The nodes of the pool of *this
+   //!must be deallocated before (containers do it before they move assign the
+   //!allocator). Never throws
+   private_node_allocator_base& operator=(BOOST_RV_REF(private_node_allocator_base) other)
    {
-      m_node_pool.swap(BOOST_MOVE_TO_LV(other).m_node_pool);
+      m_node_pool = boost::move(BOOST_MOVE_TO_LV(other).m_node_pool);
+      return *this;
    }
 
    //!Copy constructor from related private_node_allocator_base. Never throws.
@@ -210,7 +226,7 @@ class private_node_allocator_base
    //!Swaps allocators. Does not throw. If each allocator is placed in a
    //!different shared memory segments, the result is undefined.
    friend void swap(self_t &alloc1,self_t &alloc2)
-   {  boost::adl_move_swap(alloc1.m_node_pool, alloc2.m_node_pool);  }
+   {  alloc1.m_node_pool.swap(alloc2.m_node_pool);  }
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
@@ -290,6 +306,19 @@ class private_node_allocator_v1
    private_node_allocator_v1(BOOST_RV_REF(private_node_allocator_v1) other)
       : base_t(BOOST_MOVE_BASE(base_t, other))
    {}
+
+   //!Move assignment: *this takes the pool of other. The nodes of the pool of *this
+   //!must be deallocated before (containers do it before they move assign the
+   //!allocator). Never throws
+   private_node_allocator_v1& operator=(BOOST_RV_REF(private_node_allocator_v1) other)
+   {
+      base_t::operator=(BOOST_MOVE_BASE(base_t, other));
+      return *this;
+   }
+
+   //!Swaps the pools. Never throws
+   friend void swap(private_node_allocator_v1 &alloc1, private_node_allocator_v1 &alloc2)
+   {  swap(static_cast<base_t&>(alloc1), static_cast<base_t&>(alloc2));  }
 };
 
 }  //namespace ipcdetail {
@@ -355,6 +384,19 @@ class private_node_allocator
    private_node_allocator(BOOST_RV_REF(private_node_allocator) other)
       : base_t(BOOST_MOVE_BASE(base_t, other))
    {}
+
+   //!Move assignment: *this takes the pool of other. The nodes of the pool of *this
+   //!must be deallocated before (containers do it before they move assign the
+   //!allocator). Never throws
+   private_node_allocator& operator=(BOOST_RV_REF(private_node_allocator) other)
+   {
+      base_t::operator=(BOOST_MOVE_BASE(base_t, other));
+      return *this;
+   }
+
+   //!Swaps the pools. Never throws
+   friend void swap(private_node_allocator &alloc1, private_node_allocator &alloc2)
+   {  swap(static_cast<base_t&>(alloc1), static_cast<base_t&>(alloc2));  }
 
    #else
    public:
