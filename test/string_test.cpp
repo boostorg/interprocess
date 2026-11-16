@@ -16,7 +16,6 @@
 #include <string>
 #include <algorithm>
 #include <cstring>
-#include <cstdio>
 #include <cstddef>
 #include "dummy_test_allocator.hpp"
 #include "check_equal_containers.hpp"
@@ -54,6 +53,24 @@ bool CheckEqualStringVector(StrVector1 *strvect1, StrVector2 *strvect2)
    StringEqual comp;
    return std::equal(strvect1->begin(), strvect1->end(),
                      strvect2->begin(), comp);
+}
+
+//Writes "number" as text without going through the CRT and avoiding warnings
+template<class CharType>
+void write_number(CharType *buffer, std::size_t number, const char *digits)
+{
+   CharType *buf = buffer;
+   bool go_ahead = true;
+   while(go_ahead){
+      const std::size_t rem = number % 10u;
+      number = number / 10u;
+      *buf = static_cast<CharType>(digits[rem]);
+      ++buf;
+      if(!number){
+         *buf = 0;
+         go_ahead = false;
+      }
+   }
 }
 
 template<class CharType, template<class T, class SegmentManager> class AllocatorType >
@@ -100,7 +117,7 @@ int string_test()
       for(std::size_t i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%u", (unsigned)i);
+         write_number(buffer, i, "0123456789");
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->push_back(auxShmString);
@@ -115,7 +132,7 @@ int string_test()
       for(std::size_t i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%u", (unsigned)i);
+         write_number(buffer, i, "0123456789");
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->push_back(boost::move(auxShmString));
@@ -130,7 +147,7 @@ int string_test()
       for(std::size_t i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%u", (unsigned)i);
+         write_number(buffer, i, "0123456789");
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->insert(shmStringVect->begin(), auxShmString);
@@ -145,7 +162,7 @@ int string_test()
       for(std::size_t i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%u", (unsigned)i);
+         write_number(buffer, i, "0123456789");
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->insert(shmStringVect->begin(), boost::move(auxShmString));
