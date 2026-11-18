@@ -139,7 +139,7 @@ class sharable_lock
    //!   upgr.mutex() == 0 owns() == the value of upgr.owns() before construction.
    //!   upgr.owns() == false after the construction.
    //!Notes: If upgr is locked, this constructor will lock this sharable_lock while
-   //!   unlocking upgr. Only a moved sharable_lock's will match this
+   //!   unlocking upgr. Only a moved upgradable_lock will match this
    //!   signature. An non-moved upgradable_lock can be moved with the expression:
    //!   "boost::move(lock);".
    template<class T>
@@ -234,7 +234,7 @@ class sharable_lock
    //!Effects: If mutex() == 0 or already locked, throws a lock_exception()
    //!   exception. Calls timed_lock_sharable(abs_time) on the referenced mutex.
    //!Postconditions: owns() == the value returned from
-   //!   mutex()->timed_lock_sharable(elps_time).
+   //!   mutex()->timed_lock_sharable(abs_time).
    //!Notes: The sharable_lock changes from a state of not owning the mutex,
    //!   to owning the mutex, but only if it can obtain ownership within the
    //!   specified time interval. If the mutex_type does not support
@@ -252,11 +252,11 @@ class sharable_lock
    //!Effects: If mutex() == 0 or already locked, throws a lock_exception()
    //!   exception. Calls try_lock_shared_until(abs_time) on the referenced mutex.
    //!Postconditions: owns() == the value returned from
-   //!   mutex()->timed_lock_sharable(elps_time).
+   //!   mutex()->try_lock_shared_until(abs_time).
    //!Notes: The sharable_lock changes from a state of not owning the mutex,
    //!   to owning the mutex, but only if it can obtain ownership within the
    //!   specified time interval. If the mutex_type does not support
-   //!   timed_lock_sharable(), this function will fail at compile time if
+   //!   try_lock_shared_until(), this function will fail at compile time if
    //!   instantiated, but otherwise have no effect.
    //!
    //!Note: Similar to timed_lock, but with a std-like interface
@@ -270,13 +270,13 @@ class sharable_lock
    }
 
    //!Effects: If mutex() == 0 or already locked, throws a lock_exception()
-   //!   exception. Calls try_lock_shared_until(abs_time) on the referenced mutex.
+   //!   exception. Calls try_lock_shared_for(dur) on the referenced mutex.
    //!Postconditions: owns() == the value returned from
-   //!   mutex()->timed_lock_sharable(elps_time).
+   //!   mutex()->try_lock_shared_for(dur).
    //!Notes: The sharable_lock changes from a state of not owning the mutex,
    //!   to owning the mutex, but only if it can obtain ownership within the
-   //!   specified time interval. If the mutex_type does not support
-   //!   timed_lock_sharable(), this function will fail at compile time if
+   //!   duration dur. If the mutex_type does not support
+   //!   try_lock_shared_for(), this function will fail at compile time if
    //!   instantiated, but otherwise have no effect.
    //!
    //!Note: Similar to timed_lock, but with a std-like interface
@@ -302,7 +302,7 @@ class sharable_lock
       m_locked = false;
    }
 
-   //!Effects: Returns true if this scoped_lock has
+   //!Effects: Returns true if this sharable_lock has
    //!acquired the referenced mutex.
    bool owns() const BOOST_NOEXCEPT
    {  return m_locked && mp_mutex;  }

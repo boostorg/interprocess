@@ -64,9 +64,9 @@ class xsi_key
       : m_key(key)
    {}
 
-   //!Creates a new XSI  shared memory with a key obtained from a call to ftok (with path
-   //!"path" and id "id"), of size "size" and permissions "perm".
-   //!If the shared memory previously exists, throws an error.
+   //!Creates a new XSI key obtained from a call to ftok with path "path"
+   //!and id "id". If "path" is null, the key is IPC_PRIVATE.
+   //!Throws interprocess_exception if ftok fails.
    xsi_key(const char *path, boost::uint8_t id)
    {
       key_t key;

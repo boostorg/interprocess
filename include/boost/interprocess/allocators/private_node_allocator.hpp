@@ -433,29 +433,32 @@ class private_node_allocator
    private_node_allocator& operator=(const private_node_allocator&);
 
    public:
-   //!Constructor from a segment manager. If not present, constructs a node
-   //!pool. Increments the reference count of the associated node pool.
-   //!Can throw boost::interprocess::bad_alloc
+   //!Constructor from a segment manager. Constructs a private node pool
+   //!that obtains memory from segment_mngr.
    private_node_allocator(segment_manager *segment_mngr);
 
-   //!Copy constructor from other private_node_allocator. Increments the reference
-   //!count of the associated node pool. Never throws
+   //!Copy constructor from other private_node_allocator. Constructs a new, empty
+   //!private node pool that uses the segment manager of other. Never throws
    private_node_allocator(const private_node_allocator &other);
 
-   //!Move constructor from other. Increments the reference
-   //!count of the associated node pool and captures the cache. Never throws
+   //!Move constructor from other. *this takes the private node pool of other.
+   //!Never throws
    private_node_allocator(private_node_allocator &&other);
 
-   //!Copy constructor from related private_node_allocator. If not present, constructs
-   //!a node pool. Increments the reference count of the associated node pool.
-   //!Can throw boost::interprocess::bad_alloc
+   //!Copy constructor from related private_node_allocator. Constructs a new, empty
+   //!private node pool that uses the segment manager of other. Never throws
    template<class T2>
    private_node_allocator
       (const private_node_allocator<T2, SegmentManager, NodesPerBlock> &other);
 
-   //!Destructor, removes node_pool_t from memory
-   //!if its reference count reaches to zero. Never throws
+   //!Destructor, destroys the private node pool and returns its
+   //!memory to the segment manager. Never throws
    ~private_node_allocator();
+
+   //!Move assignment: *this takes the private node pool of other. The nodes of
+   //!the pool of *this must be deallocated before (containers do it before
+   //!they move assign the allocator). Never throws
+   private_node_allocator& operator=(private_node_allocator &&other);
 
    //!Returns a pointer to the node pool.
    //!Never throws
@@ -514,27 +517,22 @@ class private_node_allocator
    //!This function is deprecated and will be removed in the future
    size_type size(const pointer &p) const;
 
-   //!Allocates many elements of size elem_size in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. The elements must be deallocated
-   //!with deallocate(...)
+   //!Allocates num_elements buffers. Each buffer has room for elem_size
+   //!objects of type T. The buffers are linked in chain.
+   //!Deallocate them with deallocate_many(...).
+   //!Throws boost::interprocess::bad_alloc if there is not enough memory.
    //!This function is deprecated and will be removed in the future
    void allocate_many(size_type elem_size, size_type num_elements, multiallocation_chain &chain);
 
-   //!Allocates n_elements elements, each one of size elem_sizes[i]in a
-   //!contiguous block
-   //!of memory. The elements must be deallocated
+   //!Allocates n_elements buffers. Buffer i has room for elem_sizes[i]
+   //!objects of type T. The buffers are linked in chain.
+   //!Deallocate them with deallocate_many(...).
+   //!Throws boost::interprocess::bad_alloc if there is not enough memory.
    //!This function is deprecated and will be removed in the future
    void allocate_many(const size_type *elem_sizes, size_type n_elements, multiallocation_chain &chain);
 
-   //!Allocates many elements of size elem_size in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. The elements must be deallocated
-   //!with deallocate(...)
+   //!Deallocates all the buffers linked in chain. The buffers must be
+   //!allocated with allocate_many(...). Never throws.
    //!This function is deprecated and will be removed in the future
    void deallocate_many(multiallocation_chain &chain);
 
@@ -543,12 +541,9 @@ class private_node_allocator
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate_one();
 
-   //!Allocates many elements of size == 1 in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. Memory allocated with this function
-   //!must be deallocated only with deallocate_one().
+   //!Allocates num_elements objects of type T and links them in chain.
+   //!Deallocate them with deallocate_one() or deallocate_individual().
+   //!Throws boost::interprocess::bad_alloc if there is not enough memory.
    void allocate_individual(size_type num_elements, multiallocation_chain &chain);
 
    //!Deallocates memory previously allocated with allocate_one().
@@ -556,12 +551,8 @@ class private_node_allocator
    //!with other functions different from allocate_one(). Never throws
    void deallocate_one(const pointer &p);
 
-   //!Allocates many elements of size == 1 in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. Memory allocated with this function
-   //!must be deallocated only with deallocate_one().
+   //!Deallocates all the objects linked in chain. The objects must be
+   //!allocated with allocate_one() or allocate_individual(). Never throws.
    void deallocate_individual(multiallocation_chain &chain);
    #endif
 };
@@ -570,27 +561,27 @@ class private_node_allocator
 
 //!Equality test for same type
 //!of private_node_allocator
-template<class T, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
-bool operator==(const private_node_allocator<T, S, NodesPerBlock, F, OP> &alloc1,
-                const private_node_allocator<T, S, NodesPerBlock, F, OP> &alloc2);
+template<class T, class S, std::size_t NodesPerBlock> inline
+bool operator==(const private_node_allocator<T, S, NodesPerBlock> &alloc1,
+                const private_node_allocator<T, S, NodesPerBlock> &alloc2);
 
 //!Inequality test for same type
 //!of private_node_allocator
-template<class T, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
-bool operator!=(const private_node_allocator<T, S, NodesPerBlock, F, OP> &alloc1,
-                const private_node_allocator<T, S, NodesPerBlock, F, OP> &alloc2);
+template<class T, class S, std::size_t NodesPerBlock> inline
+bool operator!=(const private_node_allocator<T, S, NodesPerBlock> &alloc1,
+                const private_node_allocator<T, S, NodesPerBlock> &alloc2);
 
 //!Equality test for private_node_allocator with different value types.
 //!Always false: a rebound copy creates a new private pool.
-template<class T1, class T2, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
-bool operator==(const private_node_allocator<T1, S, NodesPerBlock, F, OP> &alloc1,
-                const private_node_allocator<T2, S, NodesPerBlock, F, OP> &alloc2);
+template<class T1, class T2, class S, std::size_t NodesPerBlock> inline
+bool operator==(const private_node_allocator<T1, S, NodesPerBlock> &alloc1,
+                const private_node_allocator<T2, S, NodesPerBlock> &alloc2);
 
 //!Inequality test for private_node_allocator with different value types.
 //!Always true.
-template<class T1, class T2, class S, std::size_t NodesPerBlock, std::size_t F, unsigned char OP> inline
-bool operator!=(const private_node_allocator<T1, S, NodesPerBlock, F, OP> &alloc1,
-                const private_node_allocator<T2, S, NodesPerBlock, F, OP> &alloc2);
+template<class T1, class T2, class S, std::size_t NodesPerBlock> inline
+bool operator!=(const private_node_allocator<T1, S, NodesPerBlock> &alloc1,
+                const private_node_allocator<T2, S, NodesPerBlock> &alloc2);
 
 #endif
 

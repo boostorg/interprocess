@@ -47,11 +47,11 @@ class interprocess_upgradable_mutex
    friend class interprocess_condition;
    public:
 
-   //!Constructs the upgradable lock.
+   //!Constructs the upgradable mutex.
    //!Throws interprocess_exception on error.
    interprocess_upgradable_mutex();
 
-   //!Destroys the upgradable lock.
+   //!Destroys the upgradable mutex.
    //!Does not throw.
    ~interprocess_upgradable_mutex();
 
@@ -289,7 +289,7 @@ class interprocess_upgradable_mutex
 
    //!Precondition: The thread must have sharable ownership of the mutex.
    //!Effects: The thread atomically releases sharable ownership and tries to acquire
-   //!   upgradable ownership. This operation will fail if there are threads with sharable
+   //!   upgradable ownership. This operation will fail if there are threads with exclusive
    //!   or upgradable ownership, but it will maintain sharable ownership.
    //!Returns: If acquires upgradable ownership, returns true. Otherwise returns false.
    //!Throws: An exception derived from interprocess_exception on error.

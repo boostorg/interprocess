@@ -147,8 +147,9 @@ class basic_vectorbuf
       return m_vect;
    }
 
-   //!Preallocates memory from the internal vector.
-   //!Resets the stream to the first position.
+   //!If the stream is in output mode and size is greater than the size of
+   //!the internal vector, preallocates memory in the internal vector.
+   //!Keeps the read and write positions.
    //!Throws if the internals vector's memory allocation throws.
    void reserve(typename vector_type::size_type size)
    {
@@ -447,8 +448,9 @@ class basic_ivectorstream
    const vector_type &vector() const
    {  return get_buf().vector();   }
 
-   //!Calls reserve() method of the internal vector.
-   //!Resets the stream to the first position.
+   //!If the stream is in output mode and size is greater than the size of
+   //!the internal vector, calls reserve() method of the internal vector.
+   //!Keeps the read and write positions.
    //!Throws if the internals vector's reserve throws.
    void reserve(typename vector_type::size_type size)
    {  get_buf().reserve(size);   }
@@ -527,8 +529,9 @@ class basic_ovectorstream
    const vector_type &vector() const
    {  return get_buf().vector();   }
 
-   //!Calls reserve() method of the internal vector.
-   //!Resets the stream to the first position.
+   //!If the stream is in output mode and size is greater than the size of
+   //!the internal vector, calls reserve() method of the internal vector.
+   //!Keeps the read and write positions.
    //!Throws if the internals vector's reserve throws.
    void reserve(typename vector_type::size_type size)
    {  get_buf().reserve(size);   }
@@ -587,7 +590,7 @@ class basic_vectorstream
    {  this->base_t::rdbuf(&get_buf()); }
 
    public:
-   //Returns the address of the stored stream buffer.
+   //!Returns the address of the stored stream buffer.
    basic_vectorbuf<CharVector, CharTraits>* rdbuf() const
    { return const_cast<basic_vectorbuf<CharVector, CharTraits>*>(&get_buf()); }
 
@@ -602,8 +605,9 @@ class basic_vectorstream
    const vector_type &vector() const
    {  return get_buf().vector();   }
 
-   //!Calls reserve() method of the internal vector.
-   //!Resets the stream to the first position.
+   //!If the stream is in output mode and size is greater than the size of
+   //!the internal vector, calls reserve() method of the internal vector.
+   //!Keeps the read and write positions.
    //!Throws if the internals vector's reserve throws.
    void reserve(typename vector_type::size_type size)
    {  get_buf().reserve(size);   }

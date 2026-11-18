@@ -106,31 +106,33 @@ class mapped_region
    //!or the function might fail. Check `shared_memory_object/file_mapping::get_size() != 0`
    //!before trying to map the empty object and obtain an error.
    //!
-   //!The "size" parameter must be bigger than zero or the function will fail
+   //!If "size" is zero, the region maps from "offset" to the end of the
+   //!mappable object.
    //!
-   //! 
    //!If an address is specified, both the offset and the address must be
    //!multiples of the page size.
    //!
-   //!The map is created using "default_map_options". This flag is OS
+   //!The map is created using "map_options" ("default_map_options" by default). This flag is OS
    //!dependant and it should not be changed unless the user needs to
    //!specify special options.
    //!
    //!In Windows systems "map_options" is a DWORD value passed as
    //!"dwDesiredAccess" to "MapViewOfFileEx". If "default_map_options" is passed
-   //!it's initialized to zero. "map_options" is XORed with FILE_MAP_[COPY|READ|WRITE].
+   //!it's initialized to zero. "map_options" is ORed with FILE_MAP_[COPY|READ|WRITE].
    //!
    //!In UNIX systems and POSIX mappings "map_options" is an int value passed as "flags"
    //!to "mmap". If "default_map_options" is specified it's initialized to MAP_NOSYNC
-   //!if that option exists and to zero otherwise. "map_options" XORed with MAP_PRIVATE or MAP_SHARED.
+   //!if that option exists and to zero otherwise. "map_options" is ORed with MAP_PRIVATE or MAP_SHARED.
    //!
    //!In UNIX systems and XSI mappings "map_options" is an int value passed as "shmflg"
    //!to "shmat". If "default_map_options" is specified it's initialized to zero.
-   //!"map_options" is XORed with SHM_RDONLY if needed.
+   //!"map_options" is ORed with SHM_RDONLY if needed.
    //!
    //!The OS could allocate more pages than size/page_size(), but get_address()
    //!will always return the address passed in this function (if not null) and
    //!get_size() will return the specified size.
+   //!
+   //!Throws interprocess_exception on error.
    template<class MemoryMappable>
    mapped_region(const MemoryMappable& mapping
                 ,mode_t mode

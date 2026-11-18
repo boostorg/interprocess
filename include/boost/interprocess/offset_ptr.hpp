@@ -510,7 +510,7 @@ namespace ipcdetail {
 //! \tparam OffsetAlignment Alignment of the OffsetType stored inside. In some systems might be necessary
 //!   to align it to 64 bits in order to communicate 32 and 64 bit processes using 64 bit offsets.
 //!
-//!<b>Note</b>: offset_ptr uses implementation defined properties, present in most platforms, for
+//! <b>Note</b>: offset_ptr uses implementation defined properties, present in most platforms, for
 //!performance reasons:
 //!   - Assumes that OffsetType representation of nullptr is (OffsetType)zero.
 //!   - Assumes that incrementing a OffsetType obtained from a pointer is equivalent
@@ -771,12 +771,12 @@ class offset_ptr
       return tmp;
    }
 
-   //!--offset_ptr.
+   //!Pre-decrement (\-\-offset_ptr).
    //!Never throws.
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr& operator-- (void) BOOST_NOEXCEPT
    {  this->dec_offset(sizeof (PointedType));   return *this;  }
 
-   //!offset_ptr--.
+   //!Post-decrement (offset_ptr\-\-).
    //!Never throws.
    BOOST_INTERPROCESS_FORCEINLINE offset_ptr operator-- (int) BOOST_NOEXCEPT
    {

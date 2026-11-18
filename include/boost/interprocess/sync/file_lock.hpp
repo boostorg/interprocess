@@ -51,7 +51,7 @@ class file_lock
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
-   //!Constructs an empty file mapping.
+   //!Constructs an empty file lock that is not associated with a file.
    //!Does not throw
    file_lock() BOOST_NOEXCEPT
       :  m_file_hnd(file_handle_t(ipcdetail::invalid_file()))
@@ -91,15 +91,15 @@ class file_lock
    file_lock(open_or_create_t, const wchar_t *name, const permissions &perm = permissions());
    #endif
 
-   //!Moves the ownership of "moved"'s file mapping object to *this.
-   //!After the call, "moved" does not represent any file mapping object.
+   //!Moves the ownership of "moved"'s file lock to *this.
+   //!After the call, "moved" does not represent any file lock.
    //!Does not throw
    file_lock(BOOST_RV_REF(file_lock) moved) BOOST_NOEXCEPT
       :  m_file_hnd(file_handle_t(ipcdetail::invalid_file()))
    {  this->swap(moved);   }
 
-   //!Moves the ownership of "moved"'s file mapping to *this.
-   //!After the call, "moved" does not represent any file mapping.
+   //!Moves the ownership of "moved"'s file lock to *this.
+   //!After the call, "moved" does not represent any file lock.
    //!Does not throw
    file_lock &operator=(BOOST_RV_REF(file_lock) moved) BOOST_NOEXCEPT
    {

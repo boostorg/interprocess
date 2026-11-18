@@ -390,8 +390,8 @@ class adaptive_pool
    adaptive_pool& operator=
       (const adaptive_pool<T2, SegmentManager2, N2, F2, OP2>&);
 
-   //!Not assignable from
-   //!other adaptive_pool
+   //Not assignable from
+   //other adaptive_pool
    //adaptive_pool& operator=(const adaptive_pool&);
 
    public:
@@ -472,27 +472,22 @@ class adaptive_pool
    //!This function is deprecated and will be removed in the future
    size_type size(const pointer &p) const;
 
-   //!Allocates many elements of size elem_size in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. The elements must be deallocated
-   //!with deallocate(...).
+   //!Allocates num_elements buffers. Each buffer has room for elem_size
+   //!objects of type T. The buffers are linked in chain.
+   //!Deallocate them with deallocate_many(...).
+   //!Throws boost::interprocess::bad_alloc if there is not enough memory.
    //!This function is deprecated and will be removed in the future
    void allocate_many(size_type elem_size, size_type num_elements, multiallocation_chain &chain);
 
-   //!Allocates n_elements elements, each one of size elem_sizes[i]in a
-   //!contiguous block
-   //!of memory. The elements must be deallocated
+   //!Allocates n_elements buffers. Buffer i has room for elem_sizes[i]
+   //!objects of type T. The buffers are linked in chain.
+   //!Deallocate them with deallocate_many(...).
+   //!Throws boost::interprocess::bad_alloc if there is not enough memory.
    //!This function is deprecated and will be removed in the future
    void allocate_many(const size_type *elem_sizes, size_type n_elements, multiallocation_chain &chain);
 
-   //!Allocates many elements of size elem_size in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. The elements must be deallocated
-   //!with deallocate(...)
+   //!Deallocates all the buffers linked in chain. The buffers must be
+   //!allocated with allocate_many(...). Never throws.
    //!This function is deprecated and will be removed in the future
    void deallocate_many(multiallocation_chain &chain);
 
@@ -501,12 +496,9 @@ class adaptive_pool
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate_one();
 
-   //!Allocates many elements of size == 1 in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. Memory allocated with this function
-   //!must be deallocated only with deallocate_one().
+   //!Allocates num_elements objects of type T and links them in chain.
+   //!Deallocate them with deallocate_one() or deallocate_individual().
+   //!Throws boost::interprocess::bad_alloc if there is not enough memory.
    void allocate_individual(size_type num_elements, multiallocation_chain &chain);
 
    //!Deallocates memory previously allocated with allocate_one().
@@ -514,12 +506,8 @@ class adaptive_pool
    //!with other functions different from allocate_one(). Never throws
    void deallocate_one(const pointer &p);
 
-   //!Allocates many elements of size == 1 in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. Memory allocated with this function
-   //!must be deallocated only with deallocate_one().
+   //!Deallocates all the objects linked in chain. The objects must be
+   //!allocated with allocate_one() or allocate_individual(). Never throws.
    void deallocate_individual(multiallocation_chain &chain);
    #endif
 };

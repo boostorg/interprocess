@@ -34,8 +34,6 @@ namespace interprocess {
 
 //!A deleter that uses the segment manager's destroy_ptr
 //!function to destroy the passed pointer resource.
-//!
-//!This deleter is used
 template<class T, class SegmentManager>
 class deleter
 {

@@ -45,7 +45,7 @@ namespace interprocess {
 //!with an embedded reference count. intrusive_ptr is parameterized on
 //!T (the type of the object pointed to) and VoidPointer(a void pointer type
 //!that defines the type of pointer that intrusive_ptr will store).
-//!intrusive_ptr<T, void *> defines a class with a T* member whereas
+//!intrusive_ptr<T, void \*> defines a class with a T\* member whereas
 //!intrusive_ptr<T, offset_ptr<void> > defines a class with a offset_ptr<T> member.
 //!Relies on unqualified calls to:
 //!
@@ -91,8 +91,8 @@ class intrusive_ptr
       if(m_ptr != 0 && add_ref) intrusive_ptr_add_ref(ipcdetail::to_raw_pointer(m_ptr));
    }
 
-   //!Copy constructor. Copies the internal pointer and if "p" is not
-   //!zero calls intrusive_ptr_add_ref(to_raw_pointer(p)). Does not throw
+   //!Copy constructor. Copies the internal pointer and if rhs.get() is not
+   //!zero calls intrusive_ptr_add_ref(to_raw_pointer(rhs.get())). Does not throw
    intrusive_ptr(intrusive_ptr const & rhs) BOOST_NOEXCEPT
       :  m_ptr(rhs.m_ptr)
    {
@@ -106,8 +106,8 @@ class intrusive_ptr
 	   rhs.m_ptr = 0;
    }
 
-   //!Constructor from related. Copies the internal pointer and if "p" is not
-   //!zero calls intrusive_ptr_add_ref(to_raw_pointer(p)). Does not throw
+   //!Constructor from related. Copies the internal pointer and if rhs.get() is not
+   //!zero calls intrusive_ptr_add_ref(to_raw_pointer(rhs.get())). Does not throw
    template<class U> intrusive_ptr(intrusive_ptr<U, VP> const & rhs) BOOST_NOEXCEPT
       :  m_ptr(rhs.get())
    {
@@ -120,7 +120,7 @@ class intrusive_ptr
       reset();
    }
 
-   //!Assignment operator. Equivalent to intrusive_ptr(r).swap(*this).
+   //!Assignment operator. Equivalent to intrusive_ptr(rhs).swap(*this).
    //!Does not throw
    intrusive_ptr & operator=(BOOST_COPY_ASSIGN_REF(intrusive_ptr) rhs) BOOST_NOEXCEPT
    {
@@ -137,7 +137,7 @@ class intrusive_ptr
 	   return *this;
    }
 
-   //!Assignment from related. Equivalent to intrusive_ptr(r).swap(*this).
+   //!Assignment from related. Equivalent to intrusive_ptr(rhs).swap(*this).
    //!Does not throw
    template<class U> intrusive_ptr & operator=(intrusive_ptr<U, VP> const & rhs) BOOST_NOEXCEPT
    {
@@ -145,7 +145,7 @@ class intrusive_ptr
       return *this;
    }
 
-   //!Assignment from pointer. Equivalent to intrusive_ptr(r).swap(*this).
+   //!Assignment from pointer. Equivalent to intrusive_ptr(rhs).swap(*this).
    //!Does not throw
    intrusive_ptr & operator=(const pointer &rhs) BOOST_NOEXCEPT
    {
@@ -178,7 +178,7 @@ class intrusive_ptr
    T & operator*() const BOOST_NOEXCEPT
    {  return *m_ptr; }
 
-   //!Returns *get().
+   //!Returns get().
    //!Does not throw
    const pointer &operator->() const BOOST_NOEXCEPT
    {  return m_ptr;  }

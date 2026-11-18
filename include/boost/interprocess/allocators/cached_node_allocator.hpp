@@ -112,6 +112,18 @@ class cached_node_allocator_v1
 
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
+//!An STL node allocator that uses a segment manager as memory
+//!source. The internal pointer type will of the same type (raw, smart) as
+//!"typename SegmentManager::void_pointer" type. This allows
+//!placing the allocator in shared memory, memory mapped-files, etc...
+//!
+//!This node allocator shares a segregated storage between all instances of
+//!cached_node_allocator with equal sizeof(T) placed in the same
+//!memory segment. But also caches some nodes privately to
+//!avoid some synchronization overhead.
+//!
+//!NodesPerBlock is the number of nodes allocated at once when the allocator
+//!runs out of nodes.
 template < class T
          , class SegmentManager
          , std::size_t NodesPerBlock
@@ -267,7 +279,13 @@ class cached_node_allocator
 
    //!Returns address of mutable object.
    //!Never throws
+   //!This function is deprecated and will be removed in the future
    pointer address(reference value) const;
+
+   //!Returns address of non mutable object.
+   //!Never throws
+   //!This function is deprecated and will be removed in the future
+   const_pointer address(const_reference value) const;
 
    //! <b>Requires</b>: Uses-allocator construction of T with allocator argument
    //!   `uses_segment_manager_t` and additional constructor arguments `std::forward<Args>(args)...`
@@ -292,27 +310,22 @@ class cached_node_allocator
    //!This function is deprecated and will be removed in the future
    size_type size(const pointer &p) const;
 
-   //!Allocates many elements of size elem_size in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. The elements must be deallocated
-   //!with deallocate(...)
+   //!Allocates num_elements buffers. Each buffer has room for elem_size
+   //!objects of type T. The buffers are linked in chain.
+   //!Deallocate them with deallocate_many(...).
+   //!Throws boost::interprocess::bad_alloc if there is not enough memory.
    //!This function is deprecated and will be removed in the future
    void allocate_many(size_type elem_size, size_type num_elements, multiallocation_chain &chain);
 
-   //!Allocates n_elements elements, each one of size elem_sizes[i]in a
-   //!contiguous block
-   //!of memory. The elements must be deallocated
+   //!Allocates n_elements buffers. Buffer i has room for elem_sizes[i]
+   //!objects of type T. The buffers are linked in chain.
+   //!Deallocate them with deallocate_many(...).
+   //!Throws boost::interprocess::bad_alloc if there is not enough memory.
    //!This function is deprecated and will be removed in the future
    void allocate_many(const size_type *elem_sizes, size_type n_elements, multiallocation_chain &chain);
 
-   //!Allocates many elements of size elem_size in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. The elements must be deallocated
-   //!with deallocate(...)
+   //!Deallocates all the buffers linked in chain. The buffers must be
+   //!allocated with allocate_many(...). Never throws.
    //!This function is deprecated and will be removed in the future
    void deallocate_many(multiallocation_chain &chain);
 
@@ -321,26 +334,19 @@ class cached_node_allocator
    //!Throws boost::interprocess::bad_alloc if there is no enough memory
    pointer allocate_one();
 
-   //!Allocates many elements of size == 1 in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. Memory allocated with this function
-   //!must be deallocated only with deallocate_one().
-   multiallocation_chain allocate_individual(size_type num_elements);
+   //!Allocates num_elements objects of type T and links them in chain.
+   //!Deallocate them with deallocate_one() or deallocate_individual().
+   //!Throws boost::interprocess::bad_alloc if there is not enough memory.
+   void allocate_individual(size_type num_elements, multiallocation_chain &chain);
 
    //!Deallocates memory previously allocated with allocate_one().
    //!You should never use deallocate_one to deallocate memory allocated
    //!with other functions different from allocate_one(). Never throws
    void deallocate_one(const pointer &p);
 
-   //!Allocates many elements of size == 1 in a contiguous block
-   //!of memory. The minimum number to be allocated is min_elements,
-   //!the preferred and maximum number is
-   //!preferred_elements. The number of actually allocated elements is
-   //!will be assigned to received_size. Memory allocated with this function
-   //!must be deallocated only with deallocate_one().
-   void deallocate_individual(multiallocation_chain it);
+   //!Deallocates all the objects linked in chain. The objects must be
+   //!allocated with allocate_one() or allocate_individual(). Never throws.
+   void deallocate_individual(multiallocation_chain &chain);
    //!Sets the new max cached nodes value. This can provoke deallocations
    //!if "newmax" is less than current cached nodes. Never throws
    void set_max_cached_nodes(size_type newmax);

@@ -68,17 +68,13 @@ class named_condition
    //!named_condition(create_only_t, ... )
    //!If the condition is already created, this call is equivalent
    //!named_condition(open_only_t, ... )
-   //!Does not throw
+   //!Throws interprocess_exception on error.
    named_condition(open_or_create_t, const char *name, const permissions &perm = permissions());
 
    //!Opens a global condition with a name if that condition is previously
    //!created. If it is not previously created this function throws
    //!interprocess_exception.
    named_condition(open_only_t, const char *name);
-
-   //!Opens a global condition with a name if that condition is previously
-   //!created. If it is not previously created this function throws
-   //!interprocess_exception.
 
    #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    //!Creates a global condition with a name.
@@ -93,7 +89,7 @@ class named_condition
    //!named_condition(create_only_t, ... )
    //!If the condition is already created, this call is equivalent
    //!named_condition(open_only_t, ... )
-   //!Does not throw
+   //!Throws interprocess_exception on error.
    //! 
    //!Note: This function is only available on operating systems with
    //!      native wchar_t APIs (e.g. Windows).

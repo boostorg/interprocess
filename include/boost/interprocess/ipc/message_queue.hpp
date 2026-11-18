@@ -159,14 +159,14 @@ class message_queue_t
 
    //!Sends a message stored in buffer "buffer" with size "buffer_size" in the
    //!message queue with priority "priority". If the message queue is full
-   //!the sender is blocked. Throws interprocess_error on error.
+   //!the sender is blocked. Throws interprocess_exception on error.
    void send (const void *buffer,     size_type buffer_size,
               unsigned int priority);
 
    //!Sends a message stored in buffer "buffer" with size "buffer_size" through the
    //!message queue with priority "priority". If the message queue is full
    //!the sender is not blocked and returns false, otherwise returns true.
-   //!Throws interprocess_error on error.
+   //!Throws interprocess_exception on error.
    bool try_send    (const void *buffer,     size_type buffer_size,
                          unsigned int priority);
 
@@ -174,7 +174,7 @@ class message_queue_t
    //!message queue with priority "priority". If the message queue is full
    //!the sender retries until time "abs_time" is reached. Returns true if
    //!the message has been successfully sent. Returns false if timeout is reached.
-   //!Throws interprocess_error on error.
+   //!Throws interprocess_exception on error.
    template<class TimePoint>
    bool timed_send    (const void *buffer,     size_type buffer_size,
                            unsigned int priority,  const TimePoint& abs_time);
@@ -182,7 +182,7 @@ class message_queue_t
    //!Receives a message from the message queue. The message is stored in buffer
    //!"buffer", which has size "buffer_size". The received message has size
    //!"recvd_size" and priority "priority". If the message queue is empty
-   //!the receiver is blocked. Throws interprocess_error on error.
+   //!the receiver is blocked. Throws interprocess_exception on error.
    void receive (void *buffer,           size_type buffer_size,
                  size_type &recvd_size,unsigned int &priority);
 
@@ -190,7 +190,7 @@ class message_queue_t
    //!"buffer", which has size "buffer_size". The received message has size
    //!"recvd_size" and priority "priority". If the message queue is empty
    //!the receiver is not blocked and returns false, otherwise returns true.
-   //!Throws interprocess_error on error.
+   //!Throws interprocess_exception on error.
    bool try_receive (void *buffer,           size_type buffer_size,
                      size_type &recvd_size,unsigned int &priority);
 
@@ -198,8 +198,8 @@ class message_queue_t
    //!"buffer", which has size "buffer_size". The received message has size
    //!"recvd_size" and priority "priority". If the message queue is empty
    //!the receiver retries until time "abs_time" is reached. Returns true if
-   //!the message has been successfully sent. Returns false if timeout is reached.
-   //!Throws interprocess_error on error.
+   //!the message has been successfully received. Returns false if timeout is reached.
+   //!Throws interprocess_exception on error.
    template<class TimePoint>
    bool timed_receive (void *buffer,           size_type buffer_size,
                        size_type &recvd_size,unsigned int &priority,

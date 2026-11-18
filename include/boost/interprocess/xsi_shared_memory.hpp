@@ -109,7 +109,7 @@ class xsi_shared_memory
       return *this;
    }
 
-   //!Swaps two xsi_shared_memorys. Does not throw
+   //!Swaps two xsi_shared_memory objects. Does not throw
    void swap(xsi_shared_memory &other) BOOST_NOEXCEPT;
 
    //!Destroys *this. The shared memory won't be destroyed, just

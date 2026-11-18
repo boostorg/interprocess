@@ -185,7 +185,7 @@ class weak_ptr
    long use_count() const // never throws
    {  return m_pn.use_count();  }
 
-   //!Returns: Returns: use_count() == 0.
+   //!Returns: use_count() == 0.
    //!
    //!Throws: nothing.
    //!

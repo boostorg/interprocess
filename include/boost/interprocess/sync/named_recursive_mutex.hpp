@@ -64,7 +64,7 @@ class named_recursive_mutex
    //!named_recursive_mutex(create_only_t, ... )
    //!If the recursive_mutex is already created, this call is equivalent
    //!named_recursive_mutex(open_only_t, ... )
-   //!Does not throw
+   //!Throws interprocess_exception on error.
    named_recursive_mutex(open_or_create_t, const char *name, const permissions &perm = permissions());
 
    //!Opens a global recursive_mutex with a name if that recursive_mutex is previously
@@ -86,7 +86,7 @@ class named_recursive_mutex
    //!named_recursive_mutex(create_only_t, ... )
    //!If the recursive_mutex is already created, this call is equivalent
    //!named_recursive_mutex(open_only_t, ... )
-   //!Does not throw
+   //!Throws interprocess_exception on error.
    //! 
    //!Note: This function is only available on operating systems with
    //!      native wchar_t APIs (e.g. Windows).
@@ -114,7 +114,7 @@ class named_recursive_mutex
    //!named_recursive_mutex.
    void unlock();
 
-   //!Locks named_recursive_mutex, sleeps when named_recursive_mutex is already locked.
+   //!Locks named_recursive_mutex, sleeps when named_recursive_mutex is locked by another thread.
    //!Throws interprocess_exception if a severe error is found.
    //! 
    //!Note: A program shall not deadlock if the thread that has ownership calls 
@@ -122,7 +122,7 @@ class named_recursive_mutex
    void lock();
 
    //!Tries to lock the named_recursive_mutex, returns false when named_recursive_mutex
-   //!is already locked, returns true when success.
+   //!is locked by another thread, returns true when success.
    //!Throws interprocess_exception if a severe error is found.
    //! 
    //!Note: A program shall not deadlock if the thread that has ownership calls 
@@ -148,13 +148,13 @@ class named_recursive_mutex
    template<class Duration>  bool try_lock_for(const Duration &dur)
    {  return this->timed_lock(ipcdetail::duration_to_ustime(dur)); }
 
-   //!Erases a named recursive mutex
-   //!from the system
+   //!Erases a named recursive mutex from the system.
+   //!Returns false on error. Never throws.
    static bool remove(const char *name);
 
    #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
-   //!Erases a named recursive mutex
-   //!from the system
+   //!Erases a named recursive mutex from the system.
+   //!Returns false on error. Never throws.
    //! 
    //!Note: This function is only available on operating systems with
    //!      native wchar_t APIs (e.g. Windows).

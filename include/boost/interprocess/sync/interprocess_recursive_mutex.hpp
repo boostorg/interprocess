@@ -96,7 +96,7 @@ class interprocess_recursive_mutex
    //!Effects: The calling thread tries to obtain ownership of the mutex, and
    //!   if another thread has ownership of the mutex, it waits until it can
    //!   obtain the ownership. If a thread takes ownership of the mutex the
-   //!   mutex must be unlocked by the same mutex. The mutex must be unlocked
+   //!   mutex must be unlocked by the same thread. The mutex must be unlocked
    //!   the same number of times it is locked.
    //!Throws: interprocess_exception on error.
    //! 
@@ -105,7 +105,7 @@ class interprocess_recursive_mutex
    void lock();
 
    //!Tries to lock the interprocess_mutex, returns false when interprocess_mutex
-   //!is already locked, returns true when success. The mutex must be unlocked
+   //!is locked by another thread, returns true when success. The mutex must be unlocked
    //!the same number of times it is locked.
    //!Throws: interprocess_exception if a severe error is found
    //! 
@@ -134,8 +134,7 @@ class interprocess_recursive_mutex
    {  return this->timed_lock(ipcdetail::duration_to_ustime(dur)); }
 
    //!Effects: The calling thread releases the exclusive ownership of the mutex.
-   //!   If the mutex supports recursive locking, the mutex must be unlocked the
-   //!   same number of times it is locked.
+   //!   The mutex must be unlocked the same number of times it is locked.
    //!Throws: interprocess_exception on error.
    void unlock();
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)

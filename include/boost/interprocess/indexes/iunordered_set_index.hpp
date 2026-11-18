@@ -139,8 +139,8 @@ struct iunordered_set_index_aux
 };
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
-//!Index type based in boost::intrusive::set.
-//!Just derives from boost::intrusive::set
+//!Index type based in boost::intrusive::unordered_set.
+//!Just derives from boost::intrusive::unordered_set
 //!and defines the interface needed by managed memory segments
 template <class MapConfig>
 class iunordered_set_index

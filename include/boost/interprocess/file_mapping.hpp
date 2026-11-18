@@ -54,15 +54,13 @@ class file_mapping
    //!Does not throw
    file_mapping() BOOST_NOEXCEPT;
 
-   //!Opens a file mapping of file "filename", starting in offset
-   //!"file_offset", and the mapping's size will be "size". The mapping
+   //!Opens a file mapping of file "filename". The mapping
    //!can be opened for read-only "read_only" or read-write "read_write"
    //!modes. Throws interprocess_exception on error.
    file_mapping(const char *filename, mode_t mode);
 
    #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES) || defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
-   //!Opens a file mapping of file "filename", starting in offset
-   //!"file_offset", and the mapping's size will be "size". The mapping
+   //!Opens a file mapping of file "filename". The mapping
    //!can be opened for read-only "read_only" or read-write "read_write"
    //!modes. Throws interprocess_exception on error.
    //! 

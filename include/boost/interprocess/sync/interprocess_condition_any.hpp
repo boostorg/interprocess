@@ -92,7 +92,7 @@ class interprocess_condition_any
    void notify_all()
    {  m_cond.notify_all();  }
 
-   //!Releases the lock on the interprocess_mutex object associated with lock, blocks
+   //!Releases the lock associated with lock, blocks
    //!the current thread of execution until readied by a call to
    //!this->notify_one() or this->notify_all(), and then reacquires the lock.
    template <typename L>
@@ -105,7 +105,7 @@ class interprocess_condition_any
    void wait(L& lock, Pr pred)
    {  m_cond.wait(lock, pred);  }
 
-   //!Releases the lock on the interprocess_mutex object associated with lock, blocks
+   //!Releases the lock associated with lock, blocks
    //!the current thread of execution until readied by a call to
    //!this->notify_one() or this->notify_all(), or until time abs_time is reached,
    //!and then reacquires the lock.

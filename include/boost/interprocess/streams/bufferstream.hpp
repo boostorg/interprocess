@@ -58,7 +58,7 @@
 namespace boost {  namespace interprocess {
 
 //!A streambuf class that controls the transmission of elements to and from
-//!a basic_xbufferstream. The elements are transmitted from a to a fixed
+//!a basic_xbufferstream. The elements are transmitted to and from a fixed
 //!size buffer
 template <class CharT, class CharTraits>
 class basic_bufferbuf

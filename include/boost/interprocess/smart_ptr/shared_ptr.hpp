@@ -150,7 +150,7 @@ class shared_ptr
    {}
 
    //!Constructs a shared_ptr that shares ownership with other and stores p.
-   //!Postconditions: get() == p && use_count() == r.use_count().
+   //!Postconditions: get() == p && use_count() == other.use_count().
    //!Throws: nothing.
    shared_ptr(const shared_ptr &other, const pointer &p)
       :  m_pn(other.m_pn, p)
@@ -165,6 +165,7 @@ class shared_ptr
 
    //!Constructs a shared_ptr that shares ownership with r and stores
    //!a copy of the pointer stored in r.
+   //!Throws: bad_weak_ptr if r.expired().
    template<class Y>
    explicit shared_ptr(weak_ptr<Y, VoidAllocator, Deleter> const & r)
       :  m_pn(r.m_pn) // may throw
@@ -218,7 +219,7 @@ class shared_ptr
       return *this;
    }
 
-   //!Move-assignment. Equivalent to shared_ptr(other).swap(*this).
+   //!Move-assignment. Equivalent to shared_ptr(boost::move(other)).swap(*this).
    //!Never throws
    shared_ptr & operator=(BOOST_RV_REF(shared_ptr) other) // never throws
    {
@@ -279,7 +280,7 @@ class shared_ptr
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    //!Not operator.
-   //!Returns true if this->get() != 0, false otherwise
+   //!Returns true if this->get() == 0, false otherwise
    bool operator! () const // never throws
    {  return !m_pn.to_raw_pointer();   }
 

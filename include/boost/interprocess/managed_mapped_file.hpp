@@ -108,8 +108,8 @@ class basic_managed_mapped_file
    //!the size of a basic_managed_mapped_file.
    typedef typename BOOST_INTERPROCESS_IMPDEF(base_t::size_type) size_type;
 
-   //!Creates mapped file and creates and places the segment manager.
-   //!This can throw.
+   //!Default constructor. Does nothing.
+   //!Useful in combination with move semantics
    basic_managed_mapped_file() BOOST_NOEXCEPT
    {}
 

@@ -49,11 +49,11 @@ class interprocess_sharable_mutex
    friend class interprocess_condition;
    public:
 
-   //!Constructs the sharable lock.
+   //!Constructs the sharable mutex.
    //!Throws interprocess_exception on error.
    interprocess_sharable_mutex();
 
-   //!Destroys the sharable lock.
+   //!Destroys the sharable mutex.
    //!Does not throw.
    ~interprocess_sharable_mutex();
 

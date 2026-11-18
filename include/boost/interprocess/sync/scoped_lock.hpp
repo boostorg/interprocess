@@ -111,7 +111,7 @@ class scoped_lock
    //!Notes: The constructor will take ownership of the mutex if it can do
    //!   it until abs_time is reached. Whether or not this constructor
    //!   handles recursive locking depends upon the mutex. If the mutex_type
-   //!   does not support try_lock, this constructor will fail at compile
+   //!   does not support timed_lock, this constructor will fail at compile
    //!   time if instantiated, but otherwise have no effect.
    template<class TimePoint>
    scoped_lock(mutex_type& m, const TimePoint& abs_time)
@@ -119,8 +119,8 @@ class scoped_lock
    {}
 
    //!Postconditions: mutex() == the value scop.mutex() had before the
-   //!   constructor executes. s1.mutex() == 0. owns() == the value of
-   //!   scop.owns() before the constructor executes. scop.owns().
+   //!   constructor executes. scop.mutex() == 0. owns() == the value of
+   //!   scop.owns() before the constructor executes. scop.owns() == false.
    //!Notes: If the scop scoped_lock owns the mutex, ownership is moved
    //!   to thisscoped_lock with no blocking. If the scop scoped_lock does not
    //!   own the mutex, then neither will this scoped_lock. Only a moved
@@ -162,15 +162,15 @@ class scoped_lock
    //!   a)if try_unlock_upgradable_and_lock() returns true then mutex() obtains
    //!      the value from upgr.release() and owns() is set to true.
    //!   b)if try_unlock_upgradable_and_lock() returns false then upgr is
-   //!      unaffected and this scoped_lock construction as the same effects as
+   //!      unaffected and this scoped_lock construction has the same effects as
    //!      a default construction.
    //!   c)Else upgr.owns() is false. mutex() obtains the value from upgr.release()
    //!      and owns() is set to false
    //!Notes: This construction will not block. It will try to obtain mutex
-   //!   ownership from upgr immediately, while changing the lock type from a
-   //!   "read lock" to a "write lock". If the "read lock" isn't held in the
+   //!   ownership from upgr immediately, while changing the lock type from an
+   //!   "upgradable lock" to a "write lock". If the "upgradable lock" isn't held in the
    //!   first place, the mutex merely changes type to an unlocked "write lock".
-   //!   If the "read lock" is held, then mutex transfer occurs only if it can
+   //!   If the "upgradable lock" is held, then mutex transfer occurs only if it can
    //!   do so in a non-blocking manner.
    template<class T>
    scoped_lock(BOOST_RV_REF(upgradable_lock<T>) upgr, try_to_lock_type
@@ -193,15 +193,16 @@ class scoped_lock
    //!   a)if timed_unlock_upgradable_and_lock(abs_time) returns true then mutex()
    //!      obtains the value from upgr.release() and owns() is set to true.
    //!   b)if timed_unlock_upgradable_and_lock(abs_time) returns false then upgr
-   //!      is unaffected and this scoped_lock construction as the same effects
+   //!      is unaffected and this scoped_lock construction has the same effects
    //!      as a default construction.
    //!   c)Else upgr.owns() is false. mutex() obtains the value from upgr.release()
    //!      and owns() is set to false
-   //!Notes: This construction will not block. It will try to obtain mutex ownership
-   //!   from upgr immediately, while changing the lock type from a "read lock" to a
-   //!   "write lock". If the "read lock" isn't held in the first place, the mutex
-   //!   merely changes type to an unlocked "write lock". If the "read lock" is held,
-   //!   then mutex transfer occurs only if it can do so in a non-blocking manner.
+   //!Notes: This construction can block until abs_time is reached. It will try to
+   //!   obtain mutex ownership from upgr, while changing the lock type from an
+   //!   "upgradable lock" to a "write lock". If the "upgradable lock" isn't held in
+   //!   the first place, the mutex merely changes type to an unlocked "write lock".
+   //!   If the "upgradable lock" is held, then mutex transfer occurs only if it can
+   //!   do so before abs_time is reached.
    template<class T, class TimePoint>
    scoped_lock(BOOST_RV_REF(upgradable_lock<T>) upgr, const TimePoint &abs_time
                , typename ipcdetail::enable_if< ipcdetail::is_same<T, Mutex> >::type * = 0)
@@ -318,10 +319,10 @@ class scoped_lock
 
    //!Effects: If mutex() == 0 or if already locked, throws a lock_exception()
    //!   exception. Calls try_lock_until(abs_time) on the referenced mutex.
-   //!Postconditions: owns() == the value returned from mutex()-> timed_lock(abs_time).
+   //!Postconditions: owns() == the value returned from mutex()->try_lock_until(abs_time).
    //!Notes: The scoped_lock changes from a state of not owning the mutex, to
    //!   owning the mutex, but only if it can obtain ownership by the specified
-   //!   time. If the mutex_type does not support timed_lock (), this function
+   //!   time. If the mutex_type does not support try_lock_until(), this function
    //!   will fail at compile time if instantiated, but otherwise have no effect.
    template<class TimePoint>
    bool try_lock_until(const TimePoint& abs_time)
@@ -333,11 +334,11 @@ class scoped_lock
    }
 
    //!Effects: If mutex() == 0 or if already locked, throws a lock_exception()
-   //!   exception. Calls try_lock_until(abs_time) on the referenced mutex.
-   //!Postconditions: owns() == the value returned from mutex()-> timed_lock(abs_time).
+   //!   exception. Calls try_lock_for(dur) on the referenced mutex.
+   //!Postconditions: owns() == the value returned from mutex()->try_lock_for(dur).
    //!Notes: The scoped_lock changes from a state of not owning the mutex, to
-   //!   owning the mutex, but only if it can obtain ownership by the specified
-   //!   time. If the mutex_type does not support timed_lock (), this function
+   //!   owning the mutex, but only if it can obtain ownership within the
+   //!   duration dur. If the mutex_type does not support try_lock_for(), this function
    //!   will fail at compile time if instantiated, but otherwise have no effect.
    template<class Duration>
    bool try_lock_for(const Duration& dur)

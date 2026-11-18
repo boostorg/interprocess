@@ -47,7 +47,7 @@ namespace ipcdetail{ class interprocess_tester; }
 #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 //! A global condition variable that can be created by name.
-//! This condition variable is designed to work with named_mutex and
+//! This condition variable can work with any lock type and
 //! can't be placed in shared memory or memory mapped files.
 class named_condition_any
 {
@@ -70,7 +70,7 @@ class named_condition_any
    //!named_condition_any(create_only_t, ... )
    //!If the condition is already created, this call is equivalent
    //!named_condition_any(open_only_t, ... )
-   //!Does not throw
+   //!Throws interprocess_exception on error.
    named_condition_any(open_or_create_t, const char *name, const permissions &perm = permissions())
       :  m_cond(open_or_create_t(), name, perm)
    {}
@@ -98,7 +98,7 @@ class named_condition_any
    //!named_condition_any(create_only_t, ... )
    //!If the condition is already created, this call is equivalent
    //!named_condition_any(open_only_t, ... )
-   //!Does not throw
+   //!Throws interprocess_exception on error.
    //! 
    //!Note: This function is only available on operating systems with
    //!      native wchar_t APIs (e.g. Windows).
@@ -137,7 +137,7 @@ class named_condition_any
    void notify_all()
    {  m_cond.notify_all();  }
 
-   //!Releases the lock on the named_mutex object associated with lock, blocks
+   //!Releases the lock associated with lock, blocks
    //!the current thread of execution until readied by a call to
    //!this->notify_one() or this->notify_all(), and then reacquires the lock.
    template <typename L>
@@ -150,7 +150,7 @@ class named_condition_any
    void wait(L& lock, Pr pred)
    {  return m_cond.wait(lock, pred); }
 
-   //!Releases the lock on the named_mutex object associated with lock, blocks
+   //!Releases the lock associated with lock, blocks
    //!the current thread of execution until readied by a call to
    //!this->notify_one() or this->notify_all(), or until time abs_time is reached,
    //!and then reacquires the lock.

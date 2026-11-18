@@ -69,7 +69,7 @@ class named_mutex
    //!named_mutex(create_only_t, ... )
    //!If the mutex is already created, this call is equivalent
    //!named_mutex(open_only_t, ... )
-   //!Does not throw
+   //!Throws interprocess_exception on error.
    named_mutex(open_or_create_t, const char *name, const permissions &perm = permissions());
 
    //!Opens a global mutex with a name if that mutex is previously
@@ -91,7 +91,7 @@ class named_mutex
    //!named_mutex(create_only_t, ... )
    //!If the mutex is already created, this call is equivalent
    //!named_mutex(open_only_t, ... )
-   //!Does not throw
+   //!Throws interprocess_exception on error.
    //! 
    //!Note: This function is only available on operating systems with
    //!      native wchar_t APIs (e.g. Windows).

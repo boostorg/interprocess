@@ -229,7 +229,7 @@ class basic_managed_windows_shared_memory
    ~basic_managed_windows_shared_memory()
    {}
 
-   //!Swaps the ownership of the managed mapped memories managed by *this and other.
+   //!Swaps the ownership of the managed shared memories managed by *this and other.
    //!Never throws.
    void swap(basic_managed_windows_shared_memory &other) BOOST_NOEXCEPT
    {

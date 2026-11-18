@@ -86,9 +86,9 @@ class interprocess_semaphore
 
    //!Decrements the interprocess_semaphore if the interprocess_semaphore's value is greater
    //!than zero and returns true. Otherwise, waits for the interprocess_semaphore
-   //!to the posted or the timeout expires. If the timeout expires, the
+   //!to be posted or the timeout expires. If the timeout expires, the
    //!function returns false. If the interprocess_semaphore is posted the function
-   //!returns true. If there is an error throws sem_exception
+   //!returns true. If there is an error throws interprocess_exception
    template<class TimePoint>
    bool timed_wait(const TimePoint &abs_time);
 

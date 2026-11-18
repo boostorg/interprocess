@@ -70,6 +70,14 @@ class upgradable_lock
       : mp_mutex(0), m_locked(false)
    {}
 
+   //!Effects: m.lock_upgradable().
+   //!Postconditions: owns() == true and mutex() == &m.
+   //!Notes: The constructor will take upgradable ownership of the mutex. If
+   //!   another thread already owns the mutex with exclusive or upgradable
+   //!   ownership, this thread will block until the mutex is released.
+   //!   If another thread owns the mutex with sharable ownership, then no
+   //!   blocking will occur. Whether or not this constructor handles recursive
+   //!   locking depends upon the mutex.
    explicit upgradable_lock(mutex_type& m)
       : mp_mutex(&m), m_locked(false)
    {  mp_mutex->lock_upgradable();   m_locked = true;  }
@@ -133,8 +141,8 @@ class upgradable_lock
    //!   construction, scop.owns() == false.
    //!Notes: If scop is locked, this constructor will transfer the exclusive-ownership
    //!   to an upgradable-ownership of this upgradable_lock.
-   //!   Only a moved sharable_lock's will match this
-   //!   signature. An non-moved sharable_lock can be moved with the
+   //!   Only a moved scoped_lock will match this
+   //!   signature. An non-moved scoped_lock can be moved with the
    //!   expression: "boost::move(lock);".
    template<class T>
    upgradable_lock(BOOST_RV_REF(scoped_lock<T>) scop
@@ -208,7 +216,7 @@ class upgradable_lock
    //!Effects: If mutex() == 0 or if already locked, throws a lock_exception()
    //!   exception. Calls lock_upgradable() on the referenced mutex.
    //!Postconditions: owns() == true.
-   //!Notes: The sharable_lock changes from a state of not owning the mutex,
+   //!Notes: The upgradable_lock changes from a state of not owning the mutex,
    //!   to owning the mutex, blocking if necessary.
    void lock()
    {
@@ -265,7 +273,7 @@ class upgradable_lock
       m_locked = false;
    }
 
-   //!Effects: Returns true if this scoped_lock has acquired the
+   //!Effects: Returns true if this upgradable_lock has acquired the
    //!referenced mutex.
    bool owns() const BOOST_NOEXCEPT
    {  return m_locked && mp_mutex;  }

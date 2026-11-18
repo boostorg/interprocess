@@ -41,8 +41,9 @@ struct open_read_only_t {};
 //!be only opened privately for reading
 struct open_read_private_t {};
 
-//!Tag to indicate that the resource must
-//!be only opened for reading
+//!Tag to indicate that the resource must be only opened
+//!in copy-on-write mode: changes are private to the process
+//!and are not written to the resource
 struct open_copy_on_write_t {};
 
 //!Tag to indicate that the resource must
@@ -65,8 +66,9 @@ static const open_read_only_t open_read_only = open_read_only_t();
 //!be created. If already created, it must be opened.
 static const open_or_create_t open_or_create = open_or_create_t();
 
-//!Value to indicate that the resource must
-//!be only opened for reading
+//!Value to indicate that the resource must be only opened
+//!in copy-on-write mode: changes are private to the process
+//!and are not written to the resource
 static const open_copy_on_write_t open_copy_on_write = open_copy_on_write_t();
 
 namespace ipcdetail {

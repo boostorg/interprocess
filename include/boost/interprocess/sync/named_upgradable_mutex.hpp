@@ -344,7 +344,7 @@ class named_upgradable_mutex
 
    //!Precondition: The thread must have sharable ownership of the mutex.
    //!Effects: The thread atomically releases sharable ownership and tries to acquire
-   //!   upgradable ownership. This operation will fail if there are threads with sharable
+   //!   upgradable ownership. This operation will fail if there are threads with exclusive
    //!   or upgradable ownership, but it will maintain sharable ownership.
    //!Returns: If acquires upgradable ownership, returns true. Otherwise returns false.
    //!Throws: An exception derived from interprocess_exception on error.

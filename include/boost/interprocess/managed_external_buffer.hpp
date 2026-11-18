@@ -63,7 +63,7 @@ class basic_managed_external_buffer
    basic_managed_external_buffer() BOOST_NOEXCEPT
    {}
 
-   //!Creates and places the segment manager. This can throw
+   //!Creates and places the segment manager. This can throw.
    //!The external memory supplied by the user shall be aligned to the maximum value between 
    //!`alignof(std::max_align_t)` and the strictest alignment of any over-aligned type to be built
    //!inside that memory.
@@ -77,8 +77,8 @@ class basic_managed_external_buffer
       }
    }
 
-   //!Creates and places the segment manager. This can throw
-   //!The external memory supplied by the user shall be aligned to the maximum value between 
+   //!Connects to a segment manager already created in the user buffer. This can throw.
+   //!The external memory supplied by the user shall be aligned to the maximum value between
    //!`alignof(std::max_align_t)` and the strictest alignment of any over-aligned type to be built
    //!inside that memory.
    basic_managed_external_buffer
@@ -105,12 +105,13 @@ class basic_managed_external_buffer
       return *this;
    }
 
-   //!Tries to resize internal heap memory so that
-   //!we have room for more objects.
+   //!Tells the segment manager that the user buffer has extra_bytes more
+   //!bytes at its end, so that there is room for more objects.
+   //!The user must make sure that this memory is available.
    void grow(size_type extra_bytes)
    {  base_t::grow(extra_bytes);   }
 
-   //!Swaps the ownership of the managed heap memories managed by *this and other.
+   //!Swaps the ownership of the managed buffers managed by *this and other.
    //!Never throws.
    void swap(basic_managed_external_buffer &other) BOOST_NOEXCEPT
    {  base_t::swap(other); }

@@ -138,12 +138,14 @@ class segment_manager_base
       return ret;
    }
 
-   //!Allocates nbytes bytes. This function is only used in
-   //!single-segment management. Never throws
+   //!Allocates nbytes bytes aligned to "alignment" bytes. "alignment"
+   //!must be a power of two. This function is only used in
+   //!single-segment management. Never throws (returns 0 on failure)
    void * allocate_aligned (size_type nbytes, size_type alignment, const std::nothrow_t &)
    {  return MemoryAlgorithm::allocate_aligned(nbytes, alignment);   }
 
-   //!Allocates nbytes bytes. This function is only used in
+   //!Allocates nbytes bytes aligned to "alignment" bytes. "alignment"
+   //!must be a power of two. This function is only used in
    //!single-segment management. Throws bad_alloc when fails
    void * allocate_aligned(size_type nbytes, size_type alignment)
    {
@@ -369,7 +371,7 @@ class segment_manager
    #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    //!Constructor of the segment manager
-   //!"size" is the size of the memory segment where
+   //!"segment_size" is the size of the memory segment where
    //!the segment manager is being constructed.
    //!Can throw
    explicit segment_manager(size_type segment_size)
@@ -516,8 +518,8 @@ class segment_manager
    static size_type get_instance_length(const T *ptr)
    {  return priv_get_instance_length(block_header_t::block_header_from_value(ptr), sizeof(T));  }
 
-   //!Returns is the the name of an object created with construct/find_or_construct
-   //!functions. Does not throw
+   //!Returns the instance type (named, unique or anonymous) of an object created
+   //!with construct/find_or_construct functions. Does not throw
    template<class T>
    static instance_type get_instance_type(const T *ptr)
    {  return priv_get_instance_type(block_header_t::block_header_from_value(ptr));  }

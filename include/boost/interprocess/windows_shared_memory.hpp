@@ -121,7 +121,7 @@ class windows_shared_memory
       return *this;
    }
 
-   //!Swaps to shared_memory_objects. Does not throw
+   //!Swaps two windows_shared_memory objects. Does not throw
    void swap(windows_shared_memory &other) BOOST_NOEXCEPT;
 
    //!Destroys *this. All mapped regions are still valid after
