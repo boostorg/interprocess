@@ -936,6 +936,49 @@ jobs:
             cxxstd: "14,17,20,latest"
             addrmd: 64
             os: windows-2022
+         #Older MSVC toolsets: "vs_component" is installed as a side-by-side
+         #toolset in a new Build Tools 2022 instance and "vcvars_ver" selects it.
+         #One job for each toolset and address model, so they run in parallel.
+         #"winsdk" (optional) installs and selects an older Windows 11 SDK, for
+         #toolsets that cannot compile the headers of the default SDK
+          - toolset: msvc-14.2
+            cxxstd: "14,17,20,latest"
+            addrmd: 32
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.14.29.16.11.x86.x64
+            vcvars_ver: "14.29"
+          - toolset: msvc-14.2
+            cxxstd: "14,17,20,latest"
+            addrmd: 64
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.14.29.16.11.x86.x64
+            vcvars_ver: "14.29"
+          - toolset: msvc-14.1
+            cxxstd: "14,17,latest"
+            addrmd: 32
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.v141.x86.x64
+            vcvars_ver: "14.16"
+          - toolset: msvc-14.1
+            cxxstd: "14,17,latest"
+            addrmd: 64
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.v141.x86.x64
+            vcvars_ver: "14.16"
+          - toolset: msvc-14.0
+            cxxstd: "14,latest"
+            addrmd: 32
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.140
+            vcvars_ver: "14.0"
+            winsdk: "22621"
+          - toolset: msvc-14.0
+            cxxstd: "14,latest"
+            addrmd: 64
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.140
+            vcvars_ver: "14.0"
+            winsdk: "22621"
           - toolset: clang-win
             cxxstd: "14,17,latest"
             addrmd: 64
@@ -1020,11 +1063,66 @@ jobs:
                 b2 -d0 headers
             )
 
+      # A new, minimal "Build Tools for Visual Studio 2022" instance with only the
+      # C++ core build tools and the older toolset. This is faster than to modify
+      # the full Visual Studio instance of the runner, as the installer does not
+      # have to examine and update all its workloads.
+      # VC.Tools.x86.x64 (the latest toolset) is a recommended component of the
+      # VCTools workload, so it is not installed by default. Some older toolsets
+      # (VC.140, VC.14.29) do not depend on it, but vcvarsall.bat is part of it
+      - name: Install older MSVC toolset
+        if: matrix.vs_component != ''
+        shell: cmd
+        run: |
+            set "VSPATH=C:\BuildTools"
+            echo VSPATH=%VSPATH%>>%GITHUB_ENV%
+            set WINSDK_ADD=
+            if not "${{matrix.winsdk}}" == "" set "WINSDK_ADD=--add Microsoft.VisualStudio.Component.Windows11SDK.${{matrix.winsdk}}"
+            curl -L --retry %NET_RETRY_COUNT% -o vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe
+            start "" /wait vs_buildtools.exe --installPath "%VSPATH%" --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add ${{matrix.vs_component}} %WINSDK_ADD% --quiet --wait --norestart --nocache
+            set RET=%ERRORLEVEL%
+            echo vs_buildtools.exe exit code: %RET%
+            del /f vs_buildtools.exe
+            rem 3010: success, reboot required
+            if %RET% == 3010 set RET=0
+            rem The installer can return 0 and install nothing: check the result
+            "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -all -products * -format text -property installationPath
+            if not exist "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" (
+                echo ERROR: "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" not found
+                dir "%VSPATH%"
+                for /f "delims=" %%f in ('dir /b /o-d "%TEMP%\dd_*.log" 2^>nul') do type "%TEMP%\%%f"
+                exit /b 1
+            )
+            set "WINSDK_INC=%ProgramFiles(x86)%\Windows Kits\10\Include\10.0.${{matrix.winsdk}}.0\ucrt"
+            if not "${{matrix.winsdk}}" == "" if not exist "%WINSDK_INC%\wchar.h" (
+                echo ERROR: Windows SDK 10.0.${{matrix.winsdk}}.0 not found
+                dir "%ProgramFiles(x86)%\Windows Kits\10\Include"
+                exit /b 1
+            )
+            exit /b %RET%
+
       - name: Run tests
         if: matrix.cmake_tests == ''
         shell: cmd
         run: |
             cd boost-root
+            rem Older toolset: older-msvc-setup.bat calls vcvarsall with the toolset
+            rem and SDK versions. The toolset is declared with this script as <setup>:
+            rem else b2 can find and call the vcvarsall.bat of the toolset (for
+            rem msvc-14.0, the one of VS 2015), which selects the newest SDK
+            set VCARCH=x64
+            if "${{matrix.addrmd}}" == "32" set VCARCH=x86
+            set TSVER=${{matrix.toolset}}
+            rem Without an SDK version, vcvarsall selects the newest installed SDK
+            set WINSDK_VER=
+            if not "${{matrix.winsdk}}" == "" set WINSDK_VER=10.0.${{matrix.winsdk}}.0
+            set "OLDER_SETUP=%CD:\=/%/older-msvc-setup.bat"
+            if not "${{matrix.vcvars_ver}}" == "" > older-msvc-setup.bat echo @call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCARCH% %WINSDK_VER% -vcvars_ver=${{matrix.vcvars_ver}}
+            if not "${{matrix.vcvars_ver}}" == "" type older-msvc-setup.bat
+            if not "${{matrix.vcvars_ver}}" == "" call older-msvc-setup.bat || exit /b 1
+            if not "${{matrix.vcvars_ver}}" == "" >> project-config.jam echo using msvc : %TSVER:msvc-=% : : ^<setup^>"%OLDER_SETUP%" ;
+            if not "${{matrix.vcvars_ver}}" == "" type project-config.jam
+            if not "${{matrix.vcvars_ver}}" == "" where cl rc || exit /b 1
             set B2_ARM64EC=
             if not "${{matrix.arm64ec}}" == "" set B2_ARM64EC=architecture=arm cflags=/arm64EC linkflags=/MACHINE:ARM64EC
             rem --remove-test-targets: delete the object files and executables of the passed tests, so the runner disk does not fill up
