@@ -785,6 +785,14 @@ jobs:
             cxxstd: "11,14,17"
             os: ubuntu-latest
             container: ubuntu:26.04
+          - nvhpc_version: "26.9"
+            cxxstd: "11,14,17"
+            os: ubuntu-latest
+            container: ubuntu:26.04
+          - nvhpc_version: "26.11"
+            cxxstd: "11,14,17"
+            os: ubuntu-latest
+            container: ubuntu:26.04
 
     timeout-minutes: 240
     runs-on: ${{matrix.os}}
@@ -1100,6 +1108,21 @@ jobs:
                 exit /b 1
             )
             exit /b %RET%
+
+      # The MSVC STL of the newest VS requires a minimum Clang version (error
+      # STL1000), and the LLVM in "C:\Program Files\LLVM" can be older. b2 finds
+      # clang-cl.exe in PATH first, so put there the clang-cl of the same VS
+      - name: Use the clang-cl of Visual Studio
+        if: matrix.toolset == 'clang-win'
+        shell: pwsh
+        run: |
+            $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+            $vspath = & $vswhere -latest -requires Microsoft.VisualStudio.Component.VC.Llvm.Clang -property installationPath
+            if (-not $vspath) { Write-Error "No VS installation with the clang-cl component"; exit 1 }
+            $llvmbin = Join-Path $vspath 'VC\Tools\Llvm\x64\bin'
+            if (-not (Test-Path (Join-Path $llvmbin 'clang-cl.exe'))) { Write-Error "clang-cl.exe not found in $llvmbin"; exit 1 }
+            & (Join-Path $llvmbin 'clang-cl.exe') --version
+            Add-Content -Path $env:GITHUB_PATH -Value $llvmbin
 
       - name: Run tests
         if: matrix.cmake_tests == ''
