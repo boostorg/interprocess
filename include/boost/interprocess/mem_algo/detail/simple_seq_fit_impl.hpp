@@ -143,7 +143,7 @@ class simple_seq_fit_impl
 
    //!Allocates bytes, returns 0 if there is not more memory
    BOOST_INTERPROCESS_NODISCARD
-   void* allocate             (size_type nbytes);
+   BOOST_INTERPROCESS_MALLOC_LIKE void* allocate             (size_type nbytes);
 
    #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
@@ -216,7 +216,7 @@ class simple_seq_fit_impl
    //!Allocates aligned bytes, returns 0 if there is not more memory.
    //!Alignment must be power of 2
    BOOST_INTERPROCESS_NODISCARD
-   void* allocate_aligned     (size_type nbytes, size_type alignment);
+   BOOST_INTERPROCESS_MALLOC_LIKE void* allocate_aligned     (size_type nbytes, size_type alignment);
 
    private:
 
@@ -554,7 +554,7 @@ inline bool simple_seq_fit_impl<MutexFamily, VoidPointer>::
 }
 
 template<class MutexFamily, class VoidPointer>
-inline void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
+BOOST_INTERPROCESS_MALLOC_LIKE inline void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
    allocate(size_type nbytes)
 {
    //-----------------------
@@ -566,7 +566,7 @@ inline void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
 }
 
 template<class MutexFamily, class VoidPointer>
-inline void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
+BOOST_INTERPROCESS_MALLOC_LIKE inline void* simple_seq_fit_impl<MutexFamily, VoidPointer>::
    allocate_aligned(size_type nbytes, size_type alignment)
 {
    //-----------------------

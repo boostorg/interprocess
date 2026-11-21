@@ -125,12 +125,12 @@ class segment_manager_base
 
    //!Allocates nbytes bytes. This function is only used in
    //!single-segment management. Never throws
-   void * allocate (size_type nbytes, const std::nothrow_t &)
+   BOOST_INTERPROCESS_MALLOC_LIKE void * allocate (size_type nbytes, const std::nothrow_t &)
    {  return MemoryAlgorithm::allocate(nbytes);   }
 
    //!Allocates nbytes bytes. Throws boost::interprocess::bad_alloc
    //!on failure
-   void * allocate(size_type nbytes)
+   BOOST_INTERPROCESS_MALLOC_LIKE void * allocate(size_type nbytes)
    {
       void * ret = MemoryAlgorithm::allocate(nbytes);
       if(!ret)
@@ -141,13 +141,13 @@ class segment_manager_base
    //!Allocates nbytes bytes aligned to "alignment" bytes. "alignment"
    //!must be a power of two. This function is only used in
    //!single-segment management. Never throws (returns 0 on failure)
-   void * allocate_aligned (size_type nbytes, size_type alignment, const std::nothrow_t &)
+   BOOST_INTERPROCESS_MALLOC_LIKE void * allocate_aligned (size_type nbytes, size_type alignment, const std::nothrow_t &)
    {  return MemoryAlgorithm::allocate_aligned(nbytes, alignment);   }
 
    //!Allocates nbytes bytes aligned to "alignment" bytes. "alignment"
    //!must be a power of two. This function is only used in
    //!single-segment management. Throws bad_alloc when fails
-   void * allocate_aligned(size_type nbytes, size_type alignment)
+   BOOST_INTERPROCESS_MALLOC_LIKE void * allocate_aligned(size_type nbytes, size_type alignment)
    {
       void * ret = MemoryAlgorithm::allocate_aligned(nbytes, alignment);
       if(!ret)

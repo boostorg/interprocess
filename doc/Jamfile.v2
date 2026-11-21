@@ -53,6 +53,7 @@ doxygen autodoc
                                    \"BOOST_OVERRIDE=override\" \\
                                    \"BOOST_INTERPROCESS_NODISCARD=[[nodiscard]] \" \\
                                    \"BOOST_INTERPROCESS_FORCEINLINE=inline\" \\
+                                   \"BOOST_INTERPROCESS_MALLOC_LIKE=\" \\
                                    \"op_nullptr_t=std::nullptr_t\" \\
                                    "
 

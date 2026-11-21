@@ -476,6 +476,23 @@ namespace boost {
    #endif
 #endif
 
+//Marks a function that returns a new block pointer that does not alias any 
+//pointer that is valid when the function returns
+//Never use it on a function that can return a block that is already in use
+//(expansion in place, allocation_command).
+//Put it before the return type of the declaration.
+#if defined(__has_attribute)
+   #if __has_attribute(malloc)
+      #define BOOST_INTERPROCESS_MALLOC_LIKE __attribute__((malloc))
+   #endif
+#endif
+#if !defined(BOOST_INTERPROCESS_MALLOC_LIKE) && defined(_MSC_VER)
+   #define BOOST_INTERPROCESS_MALLOC_LIKE __declspec(restrict)
+#endif
+#if !defined(BOOST_INTERPROCESS_MALLOC_LIKE)
+   #define BOOST_INTERPROCESS_MALLOC_LIKE
+#endif
+
 
 
 #endif   //#ifndef BOOST_INTERPROCESS_DETAIL_WORKAROUND_HPP
