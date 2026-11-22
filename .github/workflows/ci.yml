@@ -949,17 +949,19 @@ jobs:
          #One job for each toolset and address model, so they run in parallel.
          #"winsdk" (optional) installs and selects an older Windows 11 SDK, for
          #toolsets that cannot compile the headers of the default SDK
+         #vcvarsall.bat comes with the 14.2 component group and the 14.1 component,
+         #but not with VC.140, so 14.0 also installs the (smallest) 14.1 toolset
           - toolset: msvc-14.2
             cxxstd: "14,17,20,latest"
             addrmd: 32
             os: windows-2022
-            vs_component: Microsoft.VisualStudio.Component.VC.14.29.16.11.x86.x64
+            vs_component: Microsoft.VisualStudio.ComponentGroup.VC.Tools.142.x86.x64
             vcvars_ver: "14.29"
           - toolset: msvc-14.2
             cxxstd: "14,17,20,latest"
             addrmd: 64
             os: windows-2022
-            vs_component: Microsoft.VisualStudio.Component.VC.14.29.16.11.x86.x64
+            vs_component: Microsoft.VisualStudio.ComponentGroup.VC.Tools.142.x86.x64
             vcvars_ver: "14.29"
           - toolset: msvc-14.1
             cxxstd: "14,17,latest"
@@ -977,14 +979,14 @@ jobs:
             cxxstd: "14,latest"
             addrmd: 32
             os: windows-2022
-            vs_component: Microsoft.VisualStudio.Component.VC.140
+            vs_component: Microsoft.VisualStudio.Component.VC.140 --add Microsoft.VisualStudio.Component.VC.v141.x86.x64
             vcvars_ver: "14.0"
             winsdk: "22621"
           - toolset: msvc-14.0
             cxxstd: "14,latest"
             addrmd: 64
             os: windows-2022
-            vs_component: Microsoft.VisualStudio.Component.VC.140
+            vs_component: Microsoft.VisualStudio.Component.VC.140 --add Microsoft.VisualStudio.Component.VC.v141.x86.x64
             vcvars_ver: "14.0"
             winsdk: "22621"
           - toolset: clang-win
@@ -1075,9 +1077,12 @@ jobs:
       # C++ core build tools and the older toolset. This is faster than to modify
       # the full Visual Studio instance of the runner, as the installer does not
       # have to examine and update all its workloads.
-      # VC.Tools.x86.x64 (the latest toolset) is a recommended component of the
-      # VCTools workload, so it is not installed by default. Some older toolsets
-      # (VC.140, VC.14.29) do not depend on it, but vcvarsall.bat is part of it
+      # Only VC.CoreBuildTools (~3 MB, the vcvars scripts and MSBuild support)
+      # is installed with "vs_component", not the full VCTools workload and the
+      # latest toolset (VC.Tools.x86.x64): ~1.5 GB less to download.
+      # vcvarsall.bat is in the Microsoft.VisualCpp.Tools.Core.x86 package, so
+      # each "vs_component" must include a component that depends on it (see
+      # the comment of the matrix)
       - name: Install older MSVC toolset
         if: matrix.vs_component != ''
         shell: cmd
@@ -1087,7 +1092,7 @@ jobs:
             set WINSDK_ADD=
             if not "${{matrix.winsdk}}" == "" set "WINSDK_ADD=--add Microsoft.VisualStudio.Component.Windows11SDK.${{matrix.winsdk}}"
             curl -L --retry %NET_RETRY_COUNT% -o vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe
-            start "" /wait vs_buildtools.exe --installPath "%VSPATH%" --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add ${{matrix.vs_component}} %WINSDK_ADD% --quiet --wait --norestart --nocache
+            start "" /wait vs_buildtools.exe --installPath "%VSPATH%" --add Microsoft.VisualStudio.Component.VC.CoreBuildTools --add ${{matrix.vs_component}} %WINSDK_ADD% --quiet --wait --norestart --nocache
             set RET=%ERRORLEVEL%
             echo vs_buildtools.exe exit code: %RET%
             del /f vs_buildtools.exe
