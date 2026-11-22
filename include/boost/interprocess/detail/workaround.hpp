@@ -316,7 +316,8 @@
   do{                                    \
     if(!(cond)) __builtin_unreachable(); \
   } while(0)
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && (_MSC_VER >= 1910)
+//MSVC 14.0 miscompiles __assume
 #define BOOST_INTERPROCESS_ASSUME(cond) __assume(cond)
 #else
 #define BOOST_INTERPROCESS_ASSUME(cond) \
