@@ -28,6 +28,7 @@
 #include <boost/interprocess/errors.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <string>
+#include <cstring>
 #include <boost/assert.hpp>
 
 namespace boost {
@@ -83,6 +84,7 @@ inline void windows_named_sync::close(windows_named_sync_interface &sync_interfa
 {
    const unsigned long buflen = static_cast<unsigned long>(sync_interface.get_data_size());
    winapi::interprocess_overlapped overlapped;
+   std::memset(&overlapped, 0, sizeof(overlapped));
    if(winapi::lock_file_ex
       (m_file_hnd, winapi::lockfile_exclusive_lock, 0, 1, 0, &overlapped)){
       if(winapi::set_file_pointer(m_file_hnd, sizeof(sync_id::internal_type), 0, winapi::file_begin)){
@@ -133,6 +135,7 @@ inline void windows_named_sync::open_or_create
          typedef sync_id::internal_type unique_id_type;
          const std::size_t sizeof_file_info = sizeof(unique_id_type) + buflen;
          winapi::interprocess_overlapped overlapped;
+         std::memset(&overlapped, 0, sizeof(overlapped));
          if(winapi::lock_file_ex
             (m_file_hnd, winapi::lockfile_exclusive_lock, 0, 1, 0, &overlapped)){
             __int64 filesize = 0;
